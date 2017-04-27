@@ -49,9 +49,9 @@ class OSMState implements ICanvasState
     }
 
     @Override
-    public CanvasStateOptions getState()
+    public CanvasOption getState()
     {
-        return CanvasStateOptions.OSMState;
+        return CanvasOption.OSMState;
     }
 
     @Override

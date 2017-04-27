@@ -24,7 +24,7 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.IVisualizationCallback;
 import com.net2plan.gui.plugins.networkDesign.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.plugins.networkDesign.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.CanvasOperation;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.CanvasFunction;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
@@ -783,10 +783,10 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
     }
 
-    public void runCanvasOperation(CanvasOperation... canvasOperation)
+    public void runCanvasOperation(CanvasFunction... canvasOperation)
     {
         // NOTE: The operations should executed in the same order as their are brought.
-        for (CanvasOperation operation : canvasOperation)
+        for (CanvasFunction operation : canvasOperation)
         {
             switch (operation)
             {

@@ -3,13 +3,13 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateOptions;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.patterns.IObserver;
-import com.net2plan.interfaces.patterns.ISubject;
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.ISubject;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 import org.apache.commons.collections15.BidiMap;
@@ -175,7 +175,7 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
     @Override
     public void update()
     {
-        final CanvasStateOptions stateDefinition = canvas.getState();
+        final CanvasOption stateDefinition = canvas.getState();
         if (stateDefinition == null) return;
         switch (stateDefinition)
         {
@@ -245,14 +245,14 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
             {
                 try
                 {
-                    canvas.setState(CanvasStateOptions.OSMState);
+                    canvas.setState(CanvasOption.OSMState);
                 } catch (OSMException ex)
                 {
                     btn_osmMap.setSelected(false);
                 }
             } else if (!btn_osmMap.isSelected())
             {
-                canvas.setState(CanvasStateOptions.ViewState);
+                canvas.setState(CanvasOption.ViewState);
             }
         } else if (src == btn_increaseNodeSize)
         {
@@ -290,7 +290,7 @@ public class TopologyTopBar extends JToolBar implements IObserver, ActionListene
                     if (vs.getPickedNetworkElements().size() == 1)
                     {
                         final Node node = (Node) vs.getPickedNetworkElements().get(0);
-                        canvas.setState(CanvasStateOptions.SiteState, node);
+                        canvas.setState(CanvasOption.SiteState, node);
                     }
                 } else
                 {

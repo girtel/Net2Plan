@@ -55,9 +55,9 @@ class SiteState extends ViewState
     }
 
     @Override
-    public CanvasStateOptions getState()
+    public CanvasOption getState()
     {
-        return CanvasStateOptions.SiteState;
+        return CanvasOption.SiteState;
     }
 
     public void setSiteName(String siteName)

@@ -14,14 +14,14 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.GraphMousePluginAdapter;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateOptions;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateController;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.patterns.IObserver;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.utils.Triple;
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
@@ -33,7 +33,6 @@ import edu.uci.ics.jung.graph.util.Context;
 import edu.uci.ics.jung.graph.util.EdgeIndexFunction;
 import edu.uci.ics.jung.visualization.Layer;
 import edu.uci.ics.jung.visualization.RenderContext;
-import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.*;
 import edu.uci.ics.jung.visualization.decorators.ConstantDirectionalEdgeValueTransformer;
@@ -70,8 +69,6 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     private double currentInterLayerDistanceInNpCoordinates;
 
-    private List<IObserver> observers;
-
     private final Graph<GUINode, GUILink> g;
     private final Layout<GUINode, GUILink> l;
     private final VisualizationViewer<GUINode, GUILink> vv;
@@ -79,9 +76,10 @@ public final class JUNGCanvas implements ITopologyCanvas
     private final ScalingControl scalingControl;
     private final Transformer<GUINode, Point2D> transformNetPlanCoordinatesToJungCoordinates;
     private final Transformer<Context<Graph<GUINode, GUILink>, GUILink>, Shape> originalEdgeShapeTransformer;
-    private VisualizationServer.Paintable paintableAssociatedToBackgroundImage;
 
     private final CanvasStateController stateController;
+
+    private List<IObserver> observers;
 
     /**
      * Default constructor.
@@ -164,9 +162,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         });
         vv.setEdgeToolTipTransformer(link -> link.getToolTip());
         vv.getRenderContext().setEdgeShapeTransformer(c -> c.element.isShownSeparated() ? originalEdgeShapeTransformer.transform(c) : new Line2D.Float(0.0f, 0.0f, 1.0f, 0.0f));
-
-        // Background controller
-        this.paintableAssociatedToBackgroundImage = null;
 
         gm = new PluggableGraphMouse();
         vv.setGraphMouse(gm);
@@ -424,14 +419,14 @@ public final class JUNGCanvas implements ITopologyCanvas
     /** STATE CONTROL **/
 
     @Override
-    public void setState(CanvasStateOptions state, Object... stateParams)
+    public void setState(CanvasOption state, Object... stateParams)
     {
         stateController.setState(state, stateParams);
         notifyAllObservers();
     }
 
     @Override
-    public CanvasStateOptions getState()
+    public CanvasOption getState()
     {
         return stateController.getState();
     }

@@ -20,9 +20,10 @@
 
 package com.net2plan.gui.plugins.networkDesign.interfaces;
 
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.ISubject;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.ICanvasSubject;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.Plugin;
 
@@ -35,7 +36,7 @@ import java.util.Set;
 /**
  * Base class for topology canvas.
  */
-public interface ITopologyCanvas extends Plugin, ICanvasSubject
+public interface ITopologyCanvas extends Plugin, ISubject
 {
 	Map<String, String> getCurrentOptions();
 
@@ -115,6 +116,10 @@ public interface ITopologyCanvas extends Plugin, ICanvasSubject
 	void addNode(Point2D position);
 
 	void removeNode(Node node);
+
+	void setState(CanvasOption state, Object... stateParams);
+
+	CanvasOption getState();
 
 	void returnToPreviousState();
 

@@ -1,4 +1,4 @@
-package com.net2plan.interfaces.patterns;
+package com.net2plan.gui.plugins.networkDesign.interfaces.patterns;
 
 /**
  * @author Jorge San Emeterio
