@@ -54,7 +54,16 @@ public class CanvasStateController
         assert state != null;
 
         // Save state information
-        stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
+        switch (currentState.getState())
+        {
+            case SiteState:
+            case ViewState:
+                stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
+                break;
+            case OSMState:
+                stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
+                break;
+        }
 
         // Change state
         currentState.stop();
@@ -126,12 +135,7 @@ public class CanvasStateController
             canvas.zoom(canvas.getCanvasCenter(), (float) prevZoom);
         } else if (prevState == osmState)
         {
-            final Point2D referenceCenter = canvas.getCanvasPointFromMovement(canvas.getCanvasCenter());
-
-            final Point2D canvasPointFromMovement = canvas.getCanvasPointFromMovement(canvas.getCanvasCenter());
-
-            System.out.println(canvasPointFromMovement);
-            System.out.println(canvas.getCanvasCenter());
+            final Point2D referenceCenter = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
 
             final double dxPanelPixelCoord = (referenceCenter.getX() - prevCenter.getX());
             final double dyPanelPixelCoord = (referenceCenter.getY() - prevCenter.getY());
