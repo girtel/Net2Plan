@@ -6,6 +6,7 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
+import org.jxmapviewer.viewer.GeoPosition;
 
 import java.awt.geom.Point2D;
 
@@ -61,7 +62,7 @@ public class CanvasStateController
                 stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
                 break;
             case OSMState:
-                stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter()), canvas.getCurrentCanvasScale());
+                stateMirror = new CanvasStateMirror(currentState, canvas.getCanvasPointFromMovement(canvas.getCanvasCenter()), mapController.getZoomLevel());
                 break;
         }
 
@@ -129,18 +130,14 @@ public class CanvasStateController
             final double dxJungCoord = (referenceCenter.getX() - prevCenter.getX());
             final double dyJungCoord = (referenceCenter.getY() - prevCenter.getY());
 
-            canvas.moveCanvasTo(new Point2D.Double(dxJungCoord, -dyJungCoord));
-
             canvas.zoom(canvas.getCanvasCenter(), 1 / ((float) canvas.getCurrentCanvasScale()));
             canvas.zoom(canvas.getCanvasCenter(), (float) prevZoom);
+
+            canvas.moveCanvasTo(new Point2D.Double(dxJungCoord, -dyJungCoord));
         } else if (prevState == osmState)
         {
-            final Point2D referenceCenter = canvas.getCanvasPointFromNetPlanPoint(canvas.getCanvasCenter());
-
-            final double dxPanelPixelCoord = (referenceCenter.getX() - prevCenter.getX());
-            final double dyPanelPixelCoord = (referenceCenter.getY() - prevCenter.getY());
-
-            mapController.moveMap(-dxPanelPixelCoord, -dyPanelPixelCoord);
+            mapController.zoomToLevel(((Double) prevZoom).intValue());
+            mapController.moveMapTo(new GeoPosition(prevCenter.getY(), prevCenter.getX()));
         }
 
         canvas.notifyAllListeners();

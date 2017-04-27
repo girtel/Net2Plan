@@ -10,6 +10,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactory;
+import org.jxmapviewer.viewer.TileFactoryInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -283,20 +284,6 @@ public class OSMController
     }
 
     /**
-     * Restores the topology to its original state.
-     */
-    public void zoomAll()
-    {
-        if (canvas.getState() == CanvasOption.OSMState)
-        {
-            restartMap();
-        } else
-        {
-            throw new OSMException("Map is currently deactivated");
-        }
-    }
-
-    /**
      * Moves the OSM map center a given amount of pixels.
      *
      * @param dx Moves OSM map dx pixels over the X axis.
@@ -315,6 +302,57 @@ public class OSMController
 
             // Align the topology to the newly change OSM map.
             alignPanJUNGToOSMMap();
+        } else
+        {
+            throw new OSMException("Map is currently deactivated");
+        }
+    }
+
+    public void moveMapTo(GeoPosition position)
+    {
+        if (canvas.getState() == CanvasOption.OSMState)
+        {
+            mapViewer.setCenterPosition(position);
+
+            // Align the topology to the newly change OSM map.
+            alignPanJUNGToOSMMap();
+        } else
+        {
+            throw new OSMException("Map is currently deactivated");
+        }
+    }
+
+    public int getZoomLevel()
+    {
+        return mapViewer.getZoom();
+    }
+
+    public void zoomToLevel(int level)
+    {
+        if (canvas.getState() == CanvasOption.OSMState)
+        {
+            final TileFactoryInfo info = mapViewer.getTileFactory().getInfo();
+            if (level > info.getMaximumZoomLevel()) level = info.getMaximumZoomLevel();
+            if (level < info.getMinimumZoomLevel()) level = info.getMinimumZoomLevel();
+
+            mapViewer.setZoom(level);
+
+            // Align the topology to the newly change OSM map.
+            alignZoomJUNGToOSMMap();
+        } else
+        {
+            throw new OSMException("Map is currently deactivated");
+        }
+    }
+
+    /**
+     * Restores the topology to its original state.
+     */
+    public void zoomAll()
+    {
+        if (canvas.getState() == CanvasOption.OSMState)
+        {
+            restartMap();
         } else
         {
             throw new OSMException("Map is currently deactivated");
