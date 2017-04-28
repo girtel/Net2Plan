@@ -475,42 +475,6 @@ public class VisualizationState
         }
     }
 
-    // TODO: Test
-//    private void checkCacheConsistency()
-//    {
-//        for (Node n : currentNp.getNodes())
-//        {
-//            assertTrue(cache_canvasIntraNodeGUILinks.get(n) != null);
-//            assertTrue(cache_mapNode2IntraNodeCanvasGUILinkMap.get(n) != null);
-//            assertTrue(cache_mapNode2ListVerticallyStackedGUINodes.get(n) != null);
-//            for (Entry<Pair<Integer, Integer>, GUILink> entry : cache_mapNode2IntraNodeCanvasGUILinkMap.get(n).entrySet())
-//            {
-//                final int fromLayer = entry.getKey().getFirst();
-//                final int toLayer = entry.getKey().getSecond();
-//                final GUILink gl = entry.getValue();
-//                assertTrue(gl.isIntraNodeLink());
-//                assertTrue(gl.getOriginNode().getAssociatedNode() == n);
-//                assertTrue(getCanvasVisualizationOrderRemovingNonVisible(gl.getOriginNode().getLayer()) == fromLayer);
-//                assertTrue(getCanvasVisualizationOrderRemovingNonVisible(gl.getDestinationNode().getLayer()) == toLayer);
-//            }
-//            assertEquals(new HashSet<>(cache_mapNode2IntraNodeCanvasGUILinkMap.get(n).values()), cache_canvasIntraNodeGUILinks.get(n));
-//            for (GUILink gl : cache_canvasIntraNodeGUILinks.get(n))
-//            {
-//                assertTrue(gl.isIntraNodeLink());
-//                assertEquals(gl.getOriginNode().getAssociatedNode(), n);
-//                assertEquals(gl.getDestinationNode().getAssociatedNode(), n);
-//            }
-//            assertEquals(cache_mapNode2ListVerticallyStackedGUINodes.get(n).size(), getCanvasNumberOfVisibleLayers());
-//            int indexLayer = 0;
-//            for (GUINode gn : cache_mapNode2ListVerticallyStackedGUINodes.get(n))
-//            {
-//                assertEquals(gn.getLayer(), cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(indexLayer));
-//                assertEquals(getCanvasVisualizationOrderRemovingNonVisible(gn.getLayer()), indexLayer++);
-//                assertEquals(gn.getAssociatedNode(), n);
-//            }
-//        }
-//    }
-
     public boolean decreaseCanvasFontSizeAll()
     {
         boolean changedSize = false;

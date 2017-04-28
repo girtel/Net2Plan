@@ -50,7 +50,6 @@ public class GUINode
     {
         this.layer = layer;
         this.npNode = npNode;
-//        if (!callback.getVisualizationState().isLayerVisibleInCanvas(layer)) throw new RuntimeException ("Bad");
 
 		/* defaults */
         this.borderPaint = VisualizationConstants.DEFAULT_GUINODE_COLOR;
@@ -109,16 +108,6 @@ public class GUINode
         return font;
     }
 
-    public Shape getShape()
-    {
-        URL url = npNode.getUrlNodeIcon(layer);
-        if (url == null) url = layer.getDefaultNodeIconURL();
-        if (url == null) url = VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
-        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
-        final Color borderColor = getBorderPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getBorderPaint();
-        return VisualizationState.getIcon(url, height, borderColor).getSecond();
-    }
-
     public boolean decreaseFontSize()
     {
         final int currentSize = font.getSize();
@@ -130,6 +119,17 @@ public class GUINode
     public void increaseFontSize()
     {
         font = new Font("Helvetica", Font.BOLD, font.getSize() + 1);
+    }
+
+    public Icon getIcon()
+    {
+        URL url = npNode.getUrlNodeIcon(layer);
+        if (url == null) url = layer.getDefaultNodeIconURL();
+        if (url == null) url = VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
+        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
+        final Color borderColor = getBorderPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getBorderPaint();
+        final Icon icon = VisualizationState.getIcon(url, height, borderColor).getFirst();
+        return icon;
     }
 
     public String getToolTip()
@@ -186,24 +186,6 @@ public class GUINode
 //        return npNode.getName() + " - L" + layer.getIndex() + ", VL" + getVisualizationOrderRemovingNonVisibleLayers();
     }
 
-    public Icon getIcon()
-    {
-        URL url = npNode.getUrlNodeIcon(layer);
-        if (url == null) url = layer.getDefaultNodeIconURL();
-        if (url == null) url = VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
-        final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
-        final Color borderColor = getBorderPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getBorderPaint();
-        final Icon icon = VisualizationState.getIcon(url, height, borderColor).getFirst();
-        return icon;
-    }
-
-    //    private static Shape adjustShapeToSize (Shape s , double size_x , double size_y)
-//    {
-//    	AffineTransform transf = new AffineTransform();
-//    	final Rectangle currentShapeBounds = s.getBounds();
-//    	transf.scale(size_x / currentShapeBounds.getWidth() , size_y / currentShapeBounds.getHeight());
-//    	return transf.createTransformedShape(s);
-//    }
     private String getResourceName(Resource e)
     {
         return "Resource " + e.getIndex() + " (" + (e.getName().length() == 0 ? "No name" : e.getName()) + "). Type: " + e.getType();
