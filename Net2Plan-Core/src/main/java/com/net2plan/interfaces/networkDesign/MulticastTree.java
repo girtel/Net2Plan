@@ -52,9 +52,9 @@ public class MulticastTree extends NetworkElement
 	Map<Node,Set<Link>> cache_egressLinksOfNode;
 	
 
-	MulticastTree (NetPlan netPlan , long id , int index,  MulticastDemand demand , Set<Link> links , String planningDomain , AttributeMap attributes)
+	MulticastTree (NetPlan netPlan , long id , int index,  MulticastDemand demand , Set<Link> links , AttributeMap attributes)
 	{
-		super (netPlan , id , index , planningDomain , attributes);
+		super (netPlan , id , index , attributes);
 		
 		this.pathToEgressNode = netPlan.checkMulticastTreeValidityForDemand(links, demand).getFirst();
 		this.layer = demand.layer;
@@ -227,7 +227,6 @@ public class MulticastTree extends NetworkElement
 	 */
 	public List<Link> getSeqLinksToEgressNode(Node egressNode) 
 	{ 
-		egressNode.checkHasPlanningDomain(this.getPlanningDomain());
 		final List<Link> seqLinks = pathToEgressNode.get(egressNode); return (seqLinks == null)? null : Collections.unmodifiableList(seqLinks); 
 	}
 
@@ -239,7 +238,6 @@ public class MulticastTree extends NetworkElement
 	public void setLinks (Set<Link> newLinkSet)
 	{
 		checkAttachedToNetPlanObject();
-		newLinkSet.stream().forEach(e->e.checkSamePlanningDomain(this));
 		netPlan.checkIsModifiable();
 		Map<Node,List<Link>> newPathToEgressNode = netPlan.checkMulticastTreeValidityForDemand (newLinkSet , demand).getFirst();
 
@@ -311,7 +309,6 @@ public class MulticastTree extends NetworkElement
 	 */
 	public Link getIngressLinkOfNode (Node n) 
 	{ 
-		n.checkHasPlanningDomain(this.getPlanningDomain());
 		return cache_ingressLinkOfNode.get(n);  
 	}
 
@@ -322,7 +319,6 @@ public class MulticastTree extends NetworkElement
 	 */
 	public Set<Link> getOutputLinkOfNode (Node n) 
 	{
-		n.checkHasPlanningDomain(this.getPlanningDomain());
 		final Set<Link> res = this.cache_egressLinksOfNode.get(n);
 		return (res == null)? null : Collections.unmodifiableSet(res);
 	}

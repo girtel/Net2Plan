@@ -48,6 +48,7 @@ public class Node extends NetworkElement
 	boolean isUp;
 	double population;
 	String siteName;
+	Set<String> planningDomains;
 	
 	Set<Link> cache_nodeIncomingLinks;
 	Set<Link> cache_nodeOutgoingLinks;
@@ -60,7 +61,7 @@ public class Node extends NetworkElement
 	Set<MulticastTree> cache_nodeAssociatedulticastTrees;
 	Set<Resource> cache_nodeResources;
 	Map<NetworkLayer,URL> mapLayer2URLSpecificIcon;
-
+	
 	/**
 	 * Default constructor.
 	 *
@@ -73,9 +74,9 @@ public class Node extends NetworkElement
 	 * @param attributes Node attributes
 	 * @since 0.2.0
 	 */
-	protected Node (NetPlan netPlan , long id , int index , double xCoord, double yCoord, String name, Set<String> planningDomains , AttributeMap attributes)
+	protected Node (NetPlan netPlan , long id , int index , double xCoord, double yCoord, String name, AttributeMap attributes)
 	{
-		super (netPlan , id , index , planningDomains , attributes);
+		super (netPlan , id , index , attributes);
 		
 		this.nodeXYPositionMap = new UnmodifiablePoint2D(xCoord, yCoord);
 		this.name = name == null? "" : name;
@@ -92,6 +93,7 @@ public class Node extends NetworkElement
 		this.cache_nodeAssociatedRoutes = new HashSet<Route> ();
 		this.cache_nodeAssociatedulticastTrees = new HashSet<MulticastTree> ();
 		this.mapLayer2URLSpecificIcon = new HashMap <> ();
+		this.planningDomains = new HashSet<> ();
 		this.population = 0;
 		this.siteName = null;
 	}
@@ -820,7 +822,6 @@ public class Node extends NetworkElement
 	 */
 	public Map<Pair<Demand,Link>,Double> getForwardingRules (Demand demand)
 	{
-		checkSamePlanningDomain(demand);
 		NetworkLayer layer = demand.layer;
 		layer.checkAttachedToNetPlanObject(netPlan); 
 		layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
@@ -878,7 +879,27 @@ public class Node extends NetworkElement
 		for (MulticastTree tree : cache_nodeAssociatedulticastTrees) if (!tree.cache_traversedNodes.contains(this)) throw new RuntimeException ("Bad");
 	}
 
+	/** Remove this node from the given planning domain, if it belongs to it
+	 * @param planningDomain
+	 */
+	public void removeFromPlanningDomain (String planningDomain)
+	{
+		if (!this.planningDomains.contains(planningDomain)) return;
+		this.planningDomains.remove(planningDomain);
+		netPlan.cache_planningDomain2nodes.get(planningDomain).remove(this);
+	}
 
+	/** Remove this node from the given planning domain, if it belongs to it
+	 * @param planningDomain
+	 */
+	public void addToPlanningDomain (String planningDomain)
+	{
+		if (!netPlan.cache_planningDomain2nodes.keySet().contains(planningDomain)) throw new Net2PlanException ("Wrong planning domain");
+		if (this.planningDomains.contains(planningDomain)) return;
+		this.planningDomains.add(planningDomain);
+		netPlan.cache_planningDomain2nodes.get(planningDomain).add(this);
+	}
+	
 //	/** Removes a planning domain association of this node, if the node is not assigned to it, nothing happens. Before 
 //	 * changing it, 
 //	 * @param pd

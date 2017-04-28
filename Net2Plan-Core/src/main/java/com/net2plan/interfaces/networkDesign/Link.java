@@ -85,9 +85,9 @@ public class Link extends NetworkElement
 	 * @param capacity Link's capacity
 	 * @param attributes Link's attributes
 	 */
-	protected Link (NetPlan netPlan , long id , int index , NetworkLayer layer , Node originNode , Node destinationNode , double lengthInKm , double propagationSpeedInKmPerSecond , double capacity , String planningDomain , AttributeMap attributes)
+	protected Link (NetPlan netPlan , long id , int index , NetworkLayer layer , Node originNode , Node destinationNode , double lengthInKm , double propagationSpeedInKmPerSecond , double capacity , AttributeMap attributes)
 	{
-		super (netPlan , id , index , planningDomain , attributes);
+		super (netPlan , id , index , attributes);
 
 		if (!netPlan.equals(layer.netPlan)) throw new RuntimeException ("Bad");
 		if (!netPlan.equals(originNode.netPlan)) throw new RuntimeException ("Bad");
