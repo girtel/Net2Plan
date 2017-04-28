@@ -224,6 +224,13 @@ public class Resource extends NetworkElement
 		return capacityMeasurementUnits;
 	}
 	
+	/** Sets the units in which the capacity of this resource is measured
+	 * @param units see above
+	 */
+	public void setCapacityMeasurementUnits(String units) 
+	{
+		this.capacityMeasurementUnits = units;
+	}
 	
 	/** Gets the capacity in resource units of this resource
 	 * @return the capacity
@@ -273,7 +280,6 @@ public class Resource extends NetworkElement
 	 */
 	public double getCapacityOccupiedInBaseResource (Resource baseResource)
 	{
-		checkSamePlanningDomain(baseResource);
 		Double info = capacityIOccupyInBaseResource.get(baseResource);
 		if (info == null) return 0; else return info;
 	}
@@ -284,7 +290,6 @@ public class Resource extends NetworkElement
 	 */
 	public double getCapacityOccupiedByUpperResource (Resource upperResource)
 	{
-		checkSamePlanningDomain(upperResource);
 		Double info = capacityUpperResourcesOccupyInMe.get(upperResource);
 		if (info == null) return 0; else return info;
 	}
@@ -330,7 +335,6 @@ public class Resource extends NetworkElement
 	 */
 	public double getTraversingRouteOccupiedCapacity(Route route) 
 	{
-		checkSamePlanningDomain(route);
 		Double info = cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(route);
 		return (info == null) || (route.isDown())? 0.0 : info;
 	}
@@ -356,7 +360,6 @@ public class Resource extends NetworkElement
 	public void setCapacity(double newCapacity , Map<Resource,Double> newCapacityIOccupyInBaseResourcesMap) 
 	{
 		checkAttachedToNetPlanObject();
-		newCapacityIOccupyInBaseResourcesMap.keySet().stream().forEach(e->checkSamePlanningDomain(e));
 		netPlan.checkIsModifiable();
 		if (newCapacityIOccupyInBaseResourcesMap == null) newCapacityIOccupyInBaseResourcesMap = new HashMap<Resource,Double> ();
 		for (Entry<Resource,Double> entry : newCapacityIOccupyInBaseResourcesMap.entrySet())

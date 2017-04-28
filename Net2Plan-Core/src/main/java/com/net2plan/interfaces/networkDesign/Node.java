@@ -47,6 +47,7 @@ public class Node extends NetworkElement
 	Point2D nodeXYPositionMap;
 	boolean isUp;
 	double population;
+	String siteName;
 	
 	Set<Link> cache_nodeIncomingLinks;
 	Set<Link> cache_nodeOutgoingLinks;
@@ -59,7 +60,6 @@ public class Node extends NetworkElement
 	Set<MulticastTree> cache_nodeAssociatedulticastTrees;
 	Set<Resource> cache_nodeResources;
 	Map<NetworkLayer,URL> mapLayer2URLSpecificIcon;
-	String siteName;
 
 	/**
 	 * Default constructor.
@@ -878,41 +878,26 @@ public class Node extends NetworkElement
 		for (MulticastTree tree : cache_nodeAssociatedulticastTrees) if (!tree.cache_traversedNodes.contains(this)) throw new RuntimeException ("Bad");
 	}
 
-	/** Adds a planning domain to this node, if the node is already assigned to it, nothing happens
-	 * @param pd the planning domain to add
-	 */
-	public void addPlanningDomain (String pd)
-	{
-		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
-		netPlan.cache_planningDomain2networkElements.get(pd).add(this);
-		this.planningDomains.add(pd);
-	}
 
-	/** Removes a planning domain association of this node, if the node is not assigned to it, nothing happens. Before 
-	 * changing it, 
-	 * @param pd
-	 */
-	public void removePlanningDomain (String pd)
-	{
-		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
-		if (cache_nodeIncomingLinks.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		if (cache_nodeOutgoingLinks.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		if (cache_nodeIncomingDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		if (cache_nodeOutgoingDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		if (cache_nodeIncomingMulticastDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		if (cache_nodeOutgoingMulticastDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		if (cache_nodeSRGs.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		if (cache_nodeAssociatedRoutes.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		if (cache_nodeResources.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
-		this.planningDomains.remove(pd);
-	}
+//	/** Removes a planning domain association of this node, if the node is not assigned to it, nothing happens. Before 
+//	 * changing it, 
+//	 * @param pd
+//	 */
+//	public void removePlanningDomain (String pd)
+//	{
+//		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
+//		if (cache_nodeIncomingLinks.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		if (cache_nodeOutgoingLinks.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		if (cache_nodeIncomingDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		if (cache_nodeOutgoingDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		if (cache_nodeIncomingMulticastDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		if (cache_nodeOutgoingMulticastDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		if (cache_nodeSRGs.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		if (cache_nodeAssociatedRoutes.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		if (cache_nodeResources.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+//		this.planningDomains.remove(pd);
+//	}
 
-	/** Returns the planning domains this node is associated to. 
-	 * @return see above
-	 */
-	public Set<String> getPlanningDomains () { return Collections.unmodifiableSet(this.planningDomains); }
-
-	
 	/* (non-Javadoc)
 	 * @see com.net2plan.interfaces.networkDesign.NetworkElement#getNetworkElementsForcedToHaveCommonPlanningDomain()
 	 */

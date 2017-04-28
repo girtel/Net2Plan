@@ -42,11 +42,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.management.RuntimeErrorException;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.codehaus.stax2.XMLInputFactory2;
 import org.codehaus.stax2.XMLOutputFactory2;
@@ -55,6 +56,7 @@ import org.codehaus.stax2.XMLStreamWriter2;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
 import com.google.common.collect.Sets;
+import com.net2plan.interfaces.networkDesign.Demand.IntendedRecoveryType;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.Version;
@@ -68,6 +70,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
+import com.net2plan.utils.Triple;
 
 import cern.colt.function.tdouble.DoubleFunction;
 import cern.colt.list.tdouble.DoubleArrayList;
@@ -1963,6 +1966,236 @@ public class NetPlan extends NetworkElement
         return npCopy;
     }
 
+    
+    
+    /** Adds other design into this.  
+     * New elements are added 
+     * No elements are removed. If elements already exist, its characteristics are updated with those of the new design
+     * @param other
+     */
+    public void mergeIntoThisDesign (NetPlan otherDesign)
+    {
+    	final BidiMap<Long,Long> thisToThatIdTranslation = new DualHashBidiMap<>();
+
+    	/* All the elements in current design have the same id in the other */
+    	getAllIds().stream().forEach(x->thisToThatIdTranslation.put(x, x));
+    	
+    	for (Node other : otherDesign.getNodes())
+    	{
+    		Node e = this.getNodeFromId(other.getId());
+    		if (e == null)
+    		{
+    			e = this.addNode(0, 0, "", null);
+        		thisToThatIdTranslation.put(e.getId(), other.getId());
+    		}
+    		e.setName(other.getName());
+    		e.setXYPositionMap(other.getXYPositionMap());
+    		e.setPopulation(other.getPopulation());
+    		e.setFailureState(other.isUp());
+    		e.setSiteName(other.getSiteName());
+    		e.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+    	}
+    	/* Merge resources. This is made in order: the ones that are base to others naturally appear first */
+    	for (Resource other : otherDesign.getResources())
+    	{
+    		Resource e = this.getResourceFromId(other.getId());
+			final Map<Resource,Double> thisOccupMap = new HashMap<> ();
+			for (Entry<Resource,Double> entry : other.getCapacityOccupiedInBaseResourcesMap().entrySet())
+			{
+				final Long thisIdBaseResource = thisToThatIdTranslation.inverseBidiMap().get(entry.getKey().getId()); 
+				if (thisIdBaseResource == null) throw new RuntimeException (); 
+				thisOccupMap.put (getResourceFromId (thisIdBaseResource) , entry.getValue());
+			}
+    		if (e == null)
+    		{
+    			final Node thisHostNode = this.getNodeFromId(other.getHostNode().getId());
+    			if (thisHostNode == null) throw new RuntimeException ();
+    			e = this.addResource(other.getType(), other.getName(), thisHostNode, 0 , "" , thisOccupMap , 0 , null);
+        		thisToThatIdTranslation.put(e.getId(), other.getId());
+    		}
+    		e.setCapacityMeasurementUnits(other.getCapacityMeasurementUnits());
+    		e.setProcessingTimeToTraversingTrafficInMs(other.getProcessingTimeToTraversingTrafficInMs());
+    		e.setUrlIcon(other.getUrlIcon());
+    		e.setName(other.getName());
+    		e.setCapacity(other.getCapacity(), thisOccupMap);
+    		e.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+    	}
+    	for (NetworkLayer otherLayer : otherDesign.getNetworkLayers ())
+    	{
+    		/* first the network layer, may be created */
+    		NetworkLayer thisLayer = getNetworkLayerFromId (otherLayer .getId());
+    		if (thisLayer != null) if (!thisLayer.getName().equals(otherLayer.getName())) throw new Net2PlanException ("Layer mismatch. Output may be corrupted");
+    		if (thisLayer == null)
+    		{
+    			thisLayer = addLayer(otherLayer.getName(), "", otherDesign.getLinkCapacityUnitsName(otherLayer), 
+    					otherDesign.getDemandTrafficUnitsName(otherLayer), null, null);
+    		}
+    		this.setDemandTrafficUnitsName(otherLayer.demandTrafficUnitsName , thisLayer);
+    		this.setLinkCapacityUnitsName(otherLayer.linkCapacityUnitsName , thisLayer);
+    		thisLayer.setDescription(otherLayer.getDescription());
+    		thisLayer.setName(otherLayer.getName());
+    		this.setRoutingType(otherDesign.getRoutingType(otherLayer), thisLayer);
+    		thisLayer.setDefaultNodeIconURL(otherLayer.getDefaultNodeIconURL());
+    		thisLayer.setAttributeMap(otherLayer.getAttributes()); // previous attributes are not removed, just new added or existing updated
+    		
+        	for (Link other : otherDesign.getLinks(otherLayer))
+        	{
+        		Link e = this.getLinkFromId(other.getId());
+        		final Node this_ae = getNodeFromId(thisToThatIdTranslation.inverseBidiMap().get(other.getOriginNode().getId()));
+        		final Node this_be = getNodeFromId(thisToThatIdTranslation.inverseBidiMap().get(other.getDestinationNode().getId()));
+        		if (e == null)
+        		{
+        			e = this.addLink(this_ae, this_be, 0, 0, 0.1, null, thisLayer);
+            		thisToThatIdTranslation.put(e.getId(), other.getId());
+        		}
+        		e.setCapacity(other.getCapacity());
+        		e.setLengthInKm(other.getLengthInKm());
+        		e.setPropagationSpeedInKmPerSecond(other.getPropagationDelayInMs());
+        		e.setFailureState(!other.isDown());
+        		e.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+        	}
+        	for (Demand other : otherDesign.getDemands(otherLayer))
+        	{
+        		Demand e = this.getDemandFromId(other.getId());
+        		final Node this_ae = getNodeFromId(thisToThatIdTranslation.inverseBidiMap().get(other.getIngressNode().getId()));
+        		final Node this_be = getNodeFromId(thisToThatIdTranslation.inverseBidiMap().get(other.getEgressNode().getId()));
+        		if (this_ae != e.getIngressNode()) throw new RuntimeException ();
+        		if (this_be != e.getEgressNode()) throw new RuntimeException ();
+        		if (e == null)
+        		{
+        			e = this.addDemand(this_ae, this_be, 0, null, thisLayer);
+            		thisToThatIdTranslation.put(e.getId(), other.getId());
+        		}
+        		e.setOfferedTraffic(other.getOfferedTraffic());
+        		e.setIntendedRecoveryType(other.getIntendedRecoveryType());
+        		if (thisLayer.isSourceRouting())
+        		{
+        			for (Route r : new ArrayList<> (e.getRoutes())) r.remove(); // remove all routes
+        			e.setServiceChainSequenceOfTraversedResourceTypes(other.getServiceChainSequenceOfTraversedResourceTypes());
+        		}
+        		else
+        			e.removeAllForwardingRules();
+        		e.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+        	}
+        	for (MulticastDemand other : otherDesign.getMulticastDemands(otherLayer))
+        	{
+        		MulticastDemand e = this.getMulticastDemandFromId(other.getId());
+        		final Node this_ae = getNodeFromId(thisToThatIdTranslation.inverseBidiMap().get(other.getIngressNode().getId()));
+        		final Set<Node> this_be = other.getEgressNodes().stream().map(x->getNodeFromId(thisToThatIdTranslation.inverseBidiMap().get(x.getId()))).collect(Collectors.toSet());
+        		if (this_ae != e.getIngressNode()) throw new RuntimeException ();
+        		if (!this_be.equals(e.getEgressNodes())) throw new RuntimeException ();
+        		if (e == null)
+        		{
+        			e = this.addMulticastDemand(this_ae, this_be, 0, null, thisLayer);
+            		thisToThatIdTranslation.put(e.getId(), other.getId());
+        		}
+        		e.setOfferedTraffic(other.getOfferedTraffic());
+        		for (MulticastTree tree : new ArrayList<> (e.getMulticastTrees())) tree.remove();
+        		e.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+        	}
+
+        	/* Add the routing, that was previously removed */
+        	if (thisLayer.isSourceRouting())
+        	{
+            	for (Demand otherDemand : otherDesign.getDemands(otherLayer))
+            	{
+            		final Demand e = this.getDemandFromId(thisToThatIdTranslation.inverseBidiMap().get(otherDemand.getId()));
+                	for (Route other : otherDemand.getRoutes())
+                	{
+                		final Triple<Double,List<NetworkElement>,List<Double>> initialStateOther = other.getInitialState();  
+                		final List<NetworkElement> pathThisInitial = initialStateOther.getSecond().stream().
+                				map(x->getNetworkElement(thisToThatIdTranslation.inverseBidiMap().get(x.getId()))).
+                				collect(Collectors.toList());
+                		final List<NetworkElement> pathThis = other.getPath().stream().
+                				map(x->getNetworkElement(thisToThatIdTranslation.inverseBidiMap().get(x.getId()))).
+                				collect(Collectors.toList());
+                		if (pathThis.contains(null)) throw new RuntimeException ();
+                		Route r = null;
+                		if (!pathThisInitial.contains(null))
+                		{
+                    		r = this.addServiceChain(e, initialStateOther.getFirst(), new ArrayList<>(initialStateOther.getThird()), 
+                    				pathThisInitial, null);
+                    		r.setPath(other.getCarriedTraffic(), pathThis, new ArrayList<>(other.getSeqOccupiedCapacitiesIfNotFailing()));
+                		}
+                		else
+                		{
+                    		this.addServiceChain(e, other.getCarriedTraffic(), new ArrayList<>(other.getSeqOccupiedCapacitiesIfNotFailing()) , 
+                    				pathThis, null);
+                		}
+                		r.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+                		thisToThatIdTranslation.put(r.getId(), other.getId());
+                	}
+                	for (Route backupOther : otherDemand.getRoutesAreBackup())
+                	{
+                		final Route thisBackup = this.getRouteFromId(thisToThatIdTranslation.inverseBidiMap().get(backupOther.getId()));
+                		for (Route mainOther : backupOther.getRoutesIAmBackup())
+                		{
+                    		final Route thisMain = this.getRouteFromId(thisToThatIdTranslation.inverseBidiMap().get(mainOther.getId()));
+                    		thisMain.addBackupRoute(thisBackup);
+                		}
+                	}
+            	}
+        	}
+        	else
+        	{
+        		/* hop by hop */
+        		final List<Demand> frDemands = new ArrayList<> (otherDesign.getNumberOfForwardingRules(otherLayer));
+        		final List<Link> frLinks = new ArrayList<> (otherDesign.getNumberOfForwardingRules(otherLayer));
+        		final List<Double> frSplits = new ArrayList<> (otherDesign.getNumberOfForwardingRules(otherLayer));
+            	for (Demand otherDemand : otherDesign.getDemands(otherLayer))
+            	{
+            		final Demand thisDemand = this.getDemandFromId(thisToThatIdTranslation.inverseBidiMap().get(otherDemand.getId()));
+            		final Map<Pair<Demand,Link>,Double> otherFrs = otherDemand.getForwardingRules();
+            		for (Entry<Pair<Demand,Link>,Double> otherFr : otherFrs.entrySet())
+            		{
+            			final Link thisLink =  this.getLinkFromId(thisToThatIdTranslation.inverseBidiMap().get(otherFr.getKey().getSecond().getId()));
+            			frDemands.add(thisDemand);
+            			frLinks.add(thisLink);
+            			frSplits.add(otherFr.getValue());
+            		}
+            	}
+            	this.setForwardingRules(frDemands , frLinks , frSplits, false);
+        	}
+    	}
+
+    	for (NetworkLayer otherLayer : otherDesign.getNetworkLayers ())
+    	{
+    		for (Demand otherDemand : otherDesign.getDemands(otherLayer))
+    		{
+    			if (!otherDemand.isCoupled()) continue;
+        		final Demand thisDemand = this.getDemandFromId(thisToThatIdTranslation.inverseBidiMap().get(otherDemand.getId()));
+        		final Link otherUpperLink = otherDemand.getCoupledLink();
+        		final Link thisUpperLink = this.getLinkFromId(thisToThatIdTranslation.inverseBidiMap().get(otherUpperLink.getId()));
+    			thisDemand.coupleToUpperLayerLink(thisUpperLink);
+    		}
+    		for (MulticastDemand otherDemand : otherDesign.getMulticastDemands(otherLayer))
+    		{
+    			if (!otherDemand.isCoupled()) continue;
+        		final MulticastDemand thisDemand = this.getMulticastDemandFromId(thisToThatIdTranslation.inverseBidiMap().get(otherDemand.getId()));
+        		final Set<Link> otherUpperLinks = otherDemand.getCoupledLinks();
+        		final Set<Link> thisUpperLinks = otherUpperLinks.stream().map(x->this.getLinkFromId(thisToThatIdTranslation.inverseBidiMap().get(x.getId()))).collect(Collectors.toSet());
+    			thisDemand.couple(thisUpperLinks);
+    		}
+    	}
+    	
+    	for (SharedRiskGroup other : otherDesign.getSRGs())
+    	{
+    		SharedRiskGroup thisSrg = this.getSRGFromId(other.getId());
+    		final Set<Node> thisNodes = other.getNodes().stream().map(x->getNodeFromId(thisToThatIdTranslation.inverseBidiMap().get(x.getId()))).collect(Collectors.toSet());
+    		final Set<Link> thisLinks = other.getLinksAllLayers().stream().map(x->getLinkFromId(thisToThatIdTranslation.inverseBidiMap().get(x.getId()))).collect(Collectors.toSet());
+    		if (thisSrg == null)
+    		{
+    			thisSrg = this.addSRG(other.getMeanTimeToFailInHours(), other.getMeanTimeToRepairInHours(), null);
+        		thisToThatIdTranslation.put(thisSrg.getId(), other.getId());
+    		}
+    		thisNodes.forEach(n->thisSrg.addNode(n));
+    		thisLinks.forEach(n->thisSrg.addLink(n));
+    		thisSrg.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+    	}
+    	
+    }
+    
+    
     /**
      * First computes the nodes to keep in the planning: these are the selected nodes, 
      * the nodes involved in the demands/mDemands between them in this layer, 
@@ -7691,7 +7924,37 @@ public class NetPlan extends NetworkElement
         else throw new RuntimeException("Bad");
 
     }
-
+    private NetworkElement getFromId(long id)
+    {
+    	if (this.id == id) return this;
+    	NetworkElement el = cache_id2LinkMap.get(id); if (el != null) return el;
+    	el = cache_id2DemandMap.get(id); if (el != null) return el;
+    	el = cache_id2MulticastDemandMap.get(id); if (el != null) return el;
+    	el = cache_id2LayerMap.get(id); if (el != null) return el;
+    	el = cache_id2NodeMap.get(id); if (el != null) return el;
+    	el = cache_id2ResourceMap.get(id); if (el != null) return el;
+    	el = cache_id2RouteMap.get(id); if (el != null) return el;
+    	el = cache_id2srgMap.get(id); if (el != null) return el;
+    	el = cache_id2MulticastTreeMap.get(id); if (el != null) return el;
+        return null;
+    }
+    
+    private List<Long> getAllIds () 
+    { 
+    	final List<Long> res = new ArrayList<>();
+    	res.add(this.id);
+    	res.addAll(getNodeIds());
+    	res.addAll(getSRGIds());
+    	res.addAll(getResourceIds());
+    	res.addAll(getLinkIds());
+    	res.addAll(getDemandIds());
+    	res.addAll(getRouteIds());
+    	res.addAll(getMulticastDemandIds());
+    	res.addAll(getMulticastTreeIds());
+    	res.addAll(getNetworkLayerIds());
+    	return res; 
+    }
+    
 }
 
 
