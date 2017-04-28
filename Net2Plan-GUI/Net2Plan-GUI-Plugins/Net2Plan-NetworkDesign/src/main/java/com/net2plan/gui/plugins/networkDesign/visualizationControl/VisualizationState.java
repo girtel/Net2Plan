@@ -1017,10 +1017,4 @@ public class VisualizationState
     {
         return nodeSizeFactor;
     }
-
-    static BasicStroke resizedBasicStroke(BasicStroke a, float multFactorSize)
-    {
-        if (multFactorSize == 1) return a;
-        return new BasicStroke(a.getLineWidth() * multFactorSize, a.getEndCap(), a.getLineJoin(), a.getMiterLimit(), a.getDashArray(), a.getDashPhase());
-    }
 }

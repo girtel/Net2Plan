@@ -586,12 +586,24 @@ class PickManager implements ISubject
             if (demands != null)
                 for (Demand d : demands)
                     if (d.isCoupled()) res.add(d.getCoupledLink());
+
             if (mDemands != null)
+            {
                 for (Pair<MulticastDemand, Node> md : mDemands)
                 {
                     if (md.getFirst().isCoupled())
-                        res.add(md.getFirst().getCoupledLinks().stream().filter(e -> e.getDestinationNode() == md.getSecond()).findFirst().get());
+                    {
+                        for (Link link : md.getFirst().getCoupledLinks())
+                        {
+                            if (link.getDestinationNode() == md.getSecond())
+                            {
+                                res.add(link);
+                                break;
+                            }
+                        }
+                    }
                 }
+            }
             return res;
         }
 
@@ -625,7 +637,7 @@ class PickManager implements ISubject
 
         static void setCurrentDefaultEdgeStroke(VisualizationState vs, GUILink e, BasicStroke a, BasicStroke na)
         {
-            e.setEdgeStroke(vs.resizedBasicStroke(a, vs.getLinkWidthFactor()), vs.resizedBasicStroke(na, vs.getLinkWidthFactor()));
+            e.setEdgeStroke(VisualizationUtils.resizedBasicStroke(a, vs.getLinkWidthFactor()), VisualizationUtils.resizedBasicStroke(na, vs.getLinkWidthFactor()));
         }
     }
 }
