@@ -18,8 +18,8 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
-import java.util.List;
+import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -104,12 +104,12 @@ class ViewState implements ICanvasState
         canvas.resetTransformer();
 
         // Getting topology limits
-        final List<Double> nodeXCoordJUNG = nodes.stream()
+        final Set<Double> nodeXCoordJUNG = nodes.stream()
                 .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNode().getXYPositionMap()).getX())
-                .collect(Collectors.toList());
-        final List<Double> nodeYCoordJUNG = nodes.stream()
+                .collect(Collectors.toSet());
+        final Set<Double> nodeYCoordJUNG = nodes.stream()
                 .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNode().getXYPositionMap()).getY())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         final double xmaxJungCoords = Collections.max(nodeXCoordJUNG);
         final double xminJungCoords = Collections.min(nodeXCoordJUNG);
@@ -119,10 +119,13 @@ class ViewState implements ICanvasState
 
         double PRECISION_FACTOR = 0.00001;
 
-        Rectangle viewInLayoutUnits = canvas.getCurrentCanvasViewWindow();
-        float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxJungCoords - xminJungCoords));
-        float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxJungCoords - yminJungCoords));
+        final Rectangle viewInLayoutUnits = canvas.getCurrentCanvasViewWindow();
+
+        double ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : viewInLayoutUnits.getWidth() / (xmaxJungCoords - xminJungCoords);
+        double ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : viewInLayoutUnits.getHeight() / (ymaxJungCoords - yminJungCoords);
+
         float ratio = (float) (0.6 * Math.min(ratio_h, ratio_v));
+
         canvas.zoom(canvas.getCanvasCenter(), ratio);
 
         Point2D topologyCenterJungCoord = new Point2D.Double((xminJungCoords + xmaxJungCoords) / 2, (yminJungCoords + ymaxJungCoords) / 2);
@@ -177,9 +180,7 @@ class ViewState implements ICanvasState
     public void updateNodesXYPosition()
     {
         for (GUINode vertex : canvas.getAllVertices())
-        {
             canvas.getLayout().setLocation(vertex, canvas.getTransformer().transform(vertex));
-        }
     }
 
     @Override
