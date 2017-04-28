@@ -945,4 +945,19 @@ public class Demand extends NetworkElement
 	}
 
 
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(ingressNode);
+		res.add(egressNode);
+		res.addAll(cache_routes);
+		if (coupledUpperLayerLink != null) res.add(coupledUpperLayerLink);
+		res.addAll(cacheHbH_frs.keySet());
+		res.addAll(cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet());
+		res.addAll(cacheHbH_linksPerNodeWithNonZeroFr.keySet());
+		cacheHbH_linksPerNodeWithNonZeroFr.values().stream().flatMap(e->e.stream()).forEach(e->res.add(e));
+		return res;
+	}
+	
+
 }

@@ -11,13 +11,41 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.function.tdouble.DoubleFunction;
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+import org.apache.commons.lang3.mutable.MutableLong;
+import org.codehaus.stax2.XMLInputFactory2;
+import org.codehaus.stax2.XMLOutputFactory2;
+import org.codehaus.stax2.XMLStreamReader2;
+import org.codehaus.stax2.XMLStreamWriter2;
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
@@ -32,22 +60,14 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import org.apache.commons.lang3.mutable.MutableLong;
-import org.codehaus.stax2.XMLInputFactory2;
-import org.codehaus.stax2.XMLOutputFactory2;
-import org.codehaus.stax2.XMLStreamReader2;
-import org.codehaus.stax2.XMLStreamWriter2;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
-import java.awt.geom.Point2D;
-import java.io.*;
-import java.net.URL;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import cern.colt.function.tdouble.DoubleFunction;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * <p>Class defining a complete multi-layer network structure. Layers may
@@ -136,6 +156,7 @@ public class NetPlan extends NetworkElement
 
     Map<String,Set<NetworkElement>> cache_taggedElements;
     Map<String,Set<Node>> cache_nodesPerSiteName;
+    Map<String, Set<NetworkElement>> cache_planningDomain2networkElements;
 
     DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
 
@@ -176,6 +197,7 @@ public class NetPlan extends NetworkElement
         
         this.cache_taggedElements = new HashMap<> ();
         this.cache_nodesPerSiteName = new HashMap<> ();
+        this.cache_planningDomain2networkElements = new HashMap<> ();
         
         interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
 
@@ -363,8 +385,17 @@ public class NetPlan extends NetworkElement
         if (!this.tags.equals(np2.tags)) throw new RuntimeException("Bad. Tags: " + this.tags + ", otheR: " + np2.tags);
         if (!this.cache_taggedElements.keySet().equals(np2.cache_taggedElements.keySet())) throw new RuntimeException("Bad");
         if (!this.cache_nodesPerSiteName.keySet().equals(np2.cache_nodesPerSiteName.keySet())) throw new RuntimeException("Bad");
+        if (!this.cache_planningDomain2networkElements.keySet().equals(np2.cache_planningDomain2networkElements.keySet())) throw new RuntimeException("Bad");
         for (String tag : cache_taggedElements.keySet()) 
        		if (this.cache_taggedElements.get(tag).size() != np2.cache_taggedElements.get(tag).size())
+       			throw new RuntimeException("Bad");
+        for (String pd : cache_planningDomain2networkElements.keySet()) 
+        {
+       		if (NetPlan.getIds(this.cache_planningDomain2networkElements.get(pd)).equals(NetPlan.getIds(np2.cache_planningDomain2networkElements.get(pd))))
+       			throw new RuntimeException("Bad");
+        }
+        for (String pd : cache_planningDomain2networkElements.keySet()) 
+       		if (this.cache_planningDomain2networkElements.get(pd).size() != np2.cache_planningDomain2networkElements.get(pd).size())
        			throw new RuntimeException("Bad");
         for (String siteName : cache_nodesPerSiteName.keySet()) 
        		if (this.cache_nodesPerSiteName.get(siteName).size() != np2.cache_nodesPerSiteName.get(siteName).size())
@@ -374,6 +405,7 @@ public class NetPlan extends NetworkElement
         for (int cont = 0; cont < resources.size(); cont++)
             if (!this.getResource(cont).isDeepCopy(np2.getResource(cont)))
                 throw new RuntimeException("Bad"); //return false;
+        
         for (int cont = 0; cont < srgs.size(); cont++)
             if (!this.getSRG(cont).isDeepCopy(np2.getSRG(cont))) throw new RuntimeException("Bad"); //return false;
         for (int cont = 0; cont < layers.size(); cont++)
@@ -1490,6 +1522,7 @@ public class NetPlan extends NetworkElement
         this.cache_id2srgMap = netPlan.cache_id2srgMap;
         this.cache_taggedElements = netPlan.cache_taggedElements;
         this.cache_nodesPerSiteName = netPlan.cache_nodesPerSiteName;
+        this.cache_planningDomain2networkElements = netPlan.cache_planningDomain2networkElements;
         this.interLayerCoupling = netPlan.interLayerCoupling;
         this.tags.clear(); this.tags.addAll(netPlan.tags);
         for (String tag : this.tags) // remove reference to origin netPlan in tags (the other network elements do not change, but NetPlan does) 
@@ -1875,7 +1908,7 @@ public class NetPlan extends NetworkElement
      * @param restrictedSet Restricted set of nodes.
      * @return Deep copy of the restricted current design
      */
-    public NetPlan restrictedCopy(Set<Node> restrictedSet)
+    public NetPlan getRestrictedCopy(Set<Node> restrictedSet)
     {
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         NetPlan npCopy = this.copy();
@@ -1886,6 +1919,66 @@ public class NetPlan extends NetworkElement
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         if (ErrorHandling.isDebugEnabled()) npCopy.checkCachesConsistency();
         return npCopy;
+    }
+
+    /**
+     * First computes the nodes to keep in the planning: these are the selected nodes, 
+     * the nodes involved in the demands/mDemands between them in this layer, 
+     * the nodes involved in the links at this layer that carry traffic between the selected nodes, 
+     * and the nodes associated to the links/demands at lower layers, 
+     * that carry the traffic between the selected nodes in the given layer, or carry traffic 
+     * at lower layers, of the links at this layer between the selected nodes.
+     * After computing such nodes, removes from the design all the nodes outside such set.  
+     * If keepConnectivitySets is set, all the links in the shortest path between the selected nodes 
+     * in the given layer, and those that would carry its traffic, are kept. Then, the resulting design has the 
+     * same connected components than the original graph.
+     * @param selectedNodes the selected nodes
+     * @param trafficLayer see above
+     * @param keepConnectivitySets see above
+     */
+    public void restrictToPlanningDomain (Set<Node> selectedNodes , NetworkLayer trafficLayer , boolean keepConnectivitySets)
+    {
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+    	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return;
+    	final Set<Node> nodesToKeep = new HashSet<>(selectedNodes); 
+    	final Set<Link> linksThisLayerToKeepAndPropagateDown = new HashSet<> ();
+		for (Node n1 : selectedNodes)
+		{
+			for (Node n2 : selectedNodes)
+				if (n1 != n2)
+				{
+					linksThisLayerToKeepAndPropagateDown.addAll (Sets.intersection(n1.getOutgoingLinks(trafficLayer), n2.getIncomingLinks(trafficLayer)));
+					if (keepConnectivitySets)
+						linksThisLayerToKeepAndPropagateDown.addAll(GraphUtils.getShortestPath(getNodes(), getLinks(trafficLayer), n1, n2, null));
+				}
+		}
+		nodesToKeep.addAll(linksThisLayerToKeepAndPropagateDown.stream().map(e->e.getOriginNode()).collect(Collectors.toList()));
+		nodesToKeep.addAll(linksThisLayerToKeepAndPropagateDown.stream().map(e->e.getDestinationNode()).collect(Collectors.toList()));
+    	final Set<Demand> affectedDemandsThisLayer = getDemands (trafficLayer).stream().
+    			filter(d->selectedNodes.contains(d.getIngressNode())).
+    			filter(d->selectedNodes.contains(d.getEgressNode())).
+    			collect(Collectors.toSet());
+    	final Set<Pair<MulticastDemand,Node>> affectedMDemandsThisLayer = new HashSet<> ();
+    	for (MulticastDemand md : getMulticastDemands (trafficLayer))
+    		for (Node n : md.getEgressNodes ())
+    			affectedMDemandsThisLayer.add(Pair.of(md, n));
+        final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(affectedDemandsThisLayer , 
+        		linksThisLayerToKeepAndPropagateDown , affectedMDemandsThisLayer , false);
+        final Set<Demand> demandsToKeep = ipg.getDemandsInGraph();
+        final Set<Link> linksToKeep = ipg.getLinksInGraph();
+        final Set<MulticastDemand> mdemandsToKeep = ipg.getMulticastDemandFlowsInGraph().stream().map(d->d.getFirst()).collect(Collectors.toSet());
+        nodesToKeep.addAll(linksToKeep.stream().map(d->d.getOriginNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(linksToKeep.stream().map(d->d.getDestinationNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(demandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(demandsToKeep.stream().map(d->d.getEgressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(mdemandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(mdemandsToKeep.stream().map(d->d.getEgressNodes ()).flatMap(e->e.stream()).collect(Collectors.toList()));
+        
+        /* remove all nodes unconnected nodes */
+        for (Node n : new ArrayList<>(getNodes()))
+        	if (!nodesToKeep.contains(n))
+        		n.remove ();
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
     
@@ -1920,6 +2013,7 @@ public class NetPlan extends NetworkElement
         this.cache_id2MulticastTreeMap = new HashMap<Long, MulticastTree>();
         this.cache_taggedElements = new HashMap<> ();
         this.cache_nodesPerSiteName = new HashMap<> ();
+        this.cache_planningDomain2networkElements = new HashMap<> ();
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = true;
         this.networkDescription = originNetPlan.networkDescription;
@@ -4779,6 +4873,84 @@ public class NetPlan extends NetworkElement
     	if (res == null) return new HashSet<> (); else return res;
     }
 
+    /** Returns the set of defined planning domains in this network design 
+     */
+    public Set<String> getGlobalPlanningDomains ()
+    {
+    	return this.cache_planningDomain2networkElements.keySet();
+    }
+
+    /** Adds a new planning domain to which elements can be assigned in the design. If the planning domain already exists, an exception is raised
+     * @param planningDomain the name of the planning domain
+     */
+    public void addGlobalPlanningDomain (String planningDomain)
+    {
+    	if (this.cache_planningDomain2networkElements.containsKey(planningDomain)) throw new Net2PlanException ("Planning domain " + planningDomain + " already exists");
+    	this.cache_planningDomain2networkElements.put(planningDomain, new HashSet <> ());
+    }
+    
+    /** Removes a global planning domain, if no elements have it assigned, and there is left at least one planning domain
+     * @param planningDomain
+     */
+    public void removeGlobalPlanningDomain (String planningDomain)
+    {
+    	if (!this.cache_planningDomain2networkElements.containsKey(planningDomain)) return;
+    	if (!this.cache_planningDomain2networkElements.get(planningDomain).isEmpty()) throw new Net2PlanException ("Planning domain " + planningDomain + " cannot be removed while having elements in it");
+    	if (this.cache_planningDomain2networkElements.size () == 1) throw new RuntimeException ();
+    	this.cache_planningDomain2networkElements.remove(planningDomain);
+    }
+
+    /** Change globally the name of a planning domain
+     * @param oldName the old name (should exist)
+     * @param newName the new name (should not exist)
+     */
+    public void renameGlobalPlanningDomain (String oldName , String newName)
+    {
+    	if (!this.cache_planningDomain2networkElements.containsKey(oldName)) throw new Net2PlanException ("Planning domain " + oldName + " does not exist");
+    	if (this.cache_planningDomain2networkElements.containsKey(newName)) throw new Net2PlanException ("Planning domain " + newName + " already exists");
+    	final Set<NetworkElement> eToChangePd = this.cache_planningDomain2networkElements.get(oldName);
+    	for (NetworkElement e : eToChangePd)
+    	{
+    		if (e.planningDomains.contains(oldName)) throw new RuntimeException ();
+    		e.planningDomains.remove(oldName);
+    		e.planningDomains.add(newName);
+    	}
+    	this.cache_planningDomain2networkElements.remove (oldName);
+    	this.cache_planningDomain2networkElements.put (newName , eToChangePd);
+    }
+    
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		throw new Net2PlanException ("NetPlan objects do not have associated planning domains");
+	}
+
+
+    /** Returns all the elements in the design that must have a common planning domain with the rootElements (assuming they have a common planning domain)
+     * This function is used internally to check things are done correctly
+     * @param rootElements
+     * @return
+     */
+    public Set<NetworkElement> getPlanningDomainMandatoryConnectivity (Set<NetworkElement> rootElements)
+    {
+    	final Set<NetworkElement> res =  new HashSet<> ();
+    	final Set<NetworkElement> newElementsAdded = new HashSet<>(rootElements);
+    	while (!newElementsAdded.isEmpty())
+    	{
+    		for (NetworkElement e : newElementsAdded)
+    		{
+    			final Set<NetworkElement> elementsCommonPdThisElement = e.getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ();
+    			for (NetworkElement toAdd : elementsCommonPdThisElement)
+    			{
+    				final boolean isNew = res.add(toAdd);
+    				if (isNew) newElementsAdded.add(toAdd);
+    			}
+    			newElementsAdded.remove(e);
+    		}
+    	} 
+    	return res;
+    }
+    
+    
     /** Returns the set of all site names defined in the network
      * @return see above
      */

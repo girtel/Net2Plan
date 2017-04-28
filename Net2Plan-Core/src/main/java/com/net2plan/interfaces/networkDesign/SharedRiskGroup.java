@@ -376,5 +376,12 @@ public class SharedRiskGroup extends NetworkElement
 		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
 	}
 
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.addAll(nodes);
+		res.addAll(links);
+		return res;
+	}
 
 }

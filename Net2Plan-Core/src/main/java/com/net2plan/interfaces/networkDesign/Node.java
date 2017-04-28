@@ -473,6 +473,9 @@ public class Node extends NetworkElement
 		return res;
 	}
 
+	/** Returns true has at least one link, or demand, or multicast demand at the given layer associated to it. 
+	 * @return see above
+	 */
 	public boolean isConnectedRelevantAtLayer(NetworkLayer layer)
 	{
 		if (!getOutgoingLinks(layer).isEmpty()) return true;
@@ -483,7 +486,21 @@ public class Node extends NetworkElement
 		if (!getIncomingMulticastDemands(layer).isEmpty()) return true;
 		return false;
 	}
-	
+
+	/** Returns true if the node is fully isoltaed at all layers, with no links nor demands affecting it
+	 * @return see above
+	 */
+	public boolean isFullyIsolated ()
+	{
+		if (!getOutgoingLinksAllLayers().isEmpty()) return false;
+		if (!getIncomingLinksAllLayers().isEmpty()) return false;
+		if (!getOutgoingDemandsAllLayers().isEmpty()) return false;
+		if (!getIncomingDemandsAllLayers().isEmpty()) return false;
+		if (!getOutgoingMulticastDemandsAllLayers().isEmpty()) return false;
+		if (!getIncomingMulticastDemandsAllLayers().isEmpty()) return false;
+		return true;
+	}
+
 	/**
 	 * <p>Returns the set of links initiated in the node, in the given layer. If no layer is provided, the default layer is assumed.</p>
 	 * @param optionalLayerParameter Network layer (optional)
@@ -842,6 +859,59 @@ public class Node extends NetworkElement
 		for (SharedRiskGroup srg : cache_nodeSRGs) if (!srg.nodes.contains(this)) throw new RuntimeException ("Bad");
 		for (Route route : cache_nodeAssociatedRoutes) if (!route.cache_seqNodesRealPath.contains(this)) throw new RuntimeException ("Bad: " + cache_nodeAssociatedRoutes);
 		for (MulticastTree tree : cache_nodeAssociatedulticastTrees) if (!tree.cache_traversedNodes.contains(this)) throw new RuntimeException ("Bad");
+	}
+
+	/** Adds a planning domain to this node, if the node is already assigned to it, nothing happens
+	 * @param pd the planning domain to add
+	 */
+	public void addPlanningDomain (String pd)
+	{
+		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
+		this.planningDomains.add(pd);
+	}
+
+	/** Removes a planning domain association of this node, if the node is not assigned to it, nothing happens. Before 
+	 * changing it, 
+	 * @param pd
+	 */
+	public void removePlanningDomain (String pd)
+	{
+		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
+		if (cache_nodeIncomingLinks.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		if (cache_nodeOutgoingLinks.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		if (cache_nodeIncomingDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		if (cache_nodeOutgoingDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		if (cache_nodeIncomingMulticastDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		if (cache_nodeOutgoingMulticastDemands.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		if (cache_nodeSRGs.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		if (cache_nodeAssociatedRoutes.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		if (cache_nodeResources.stream().anyMatch(e->e.getPlanningDomain().equals(pd))) throw new Net2PlanException ("Planning domain cannot be removed");
+		this.planningDomains.remove(pd);
+	}
+
+	/** Returns the planning domains this node is associated to. 
+	 * @return see above
+	 */
+	public Set<String> getPlanningDomains () { return Collections.unmodifiableSet(this.planningDomains); }
+
+	
+	/* (non-Javadoc)
+	 * @see com.net2plan.interfaces.networkDesign.NetworkElement#getNetworkElementsForcedToHaveCommonPlanningDomain()
+	 */
+	public Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.addAll(cache_nodeIncomingLinks);
+		res.addAll(cache_nodeOutgoingLinks);
+		res.addAll(cache_nodeIncomingDemands);
+		res.addAll(cache_nodeOutgoingDemands);
+		res.addAll(cache_nodeIncomingMulticastDemands);
+		res.addAll(cache_nodeOutgoingMulticastDemands);
+		res.addAll(cache_nodeAssociatedulticastTrees);
+		res.addAll(cache_nodeAssociatedRoutes);
+		res.addAll(cache_nodeSRGs);
+		res.addAll(cache_nodeResources);
+		return res;
 	}
 
 }

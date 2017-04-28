@@ -488,5 +488,14 @@ public class Resource extends NetworkElement
 		}
 	}
 
-	
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(hostNode);
+		res.addAll(capacityUpperResourcesOccupyInMe.keySet());
+		res.addAll(capacityIOccupyInBaseResource.keySet());
+		res.addAll(cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet());
+		return res;
+	}
+
 }
