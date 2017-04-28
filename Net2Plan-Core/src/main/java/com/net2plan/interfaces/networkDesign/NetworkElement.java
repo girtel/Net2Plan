@@ -54,7 +54,11 @@ public abstract class NetworkElement
 				throw new RuntimeException ();
 		}
 		else
+		{
+			if (this instanceof NetPlan || this instanceof NetworkLayer)
+				throw new RuntimeException ();
 			this.planningDomains.addAll(planningDomains);
+		}
 	}
 
 	

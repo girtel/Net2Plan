@@ -42,6 +42,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.management.RuntimeErrorException;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
@@ -1977,25 +1978,38 @@ public class NetPlan extends NetworkElement
      * @param trafficLayer see above
      * @param keepConnectivitySets see above
      */
-    public void restrictToPlanningDomain (Set<Node> selectedNodes , NetworkLayer trafficLayer , boolean keepConnectivitySets)
+    public void setPlanningDomainToNodeSet (Set<Node> selectedNodes , boolean keepConnectivitySets)
     {
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return;
-    	final Set<Node> nodesToKeep = new HashSet<>(selectedNodes); 
-    	final Set<Link> linksThisLayerToKeepAndPropagateDown = new HashSet<> ();
+    	final Set<Node> nodesToKeep = new HashSet<>(selectedNodes);
+    	final Set<Link> linksToKeep = new HashSet<>();
+    	final Set<Demand> demandsToKeep = new HashSet<>();
+    	final Set<MulticastDemand> mDemandsToKeep = new HashSet<>();
+    	final Set<SharedRiskGroup> srgsToKeep = new HashSet<>();
+    	final Set<SharedRiskGroup> resourcesToKeep = new HashSet<>();
+    	
+    	/* Add all the internal links at all layers */
 		for (Node n1 : selectedNodes)
-		{
 			for (Node n2 : selectedNodes)
 				if (n1 != n2)
-				{
-					linksThisLayerToKeepAndPropagateDown.addAll (Sets.intersection(n1.getOutgoingLinks(trafficLayer), n2.getIncomingLinks(trafficLayer)));
-					if (keepConnectivitySets)
-						linksThisLayerToKeepAndPropagateDown.addAll(GraphUtils.getShortestPath(getNodes(), getLinks(trafficLayer), n1, n2, null));
-				}
-		}
-		nodesToKeep.addAll(linksThisLayerToKeepAndPropagateDown.stream().map(e->e.getOriginNode()).collect(Collectors.toList()));
-		nodesToKeep.addAll(linksThisLayerToKeepAndPropagateDown.stream().map(e->e.getDestinationNode()).collect(Collectors.toList()));
-    	final Set<Demand> affectedDemandsThisLayer = getDemands (trafficLayer).stream().
+					linksToKeep.addAll (Sets.intersection(n1.getOutgoingLinksAllLayers(), n2.getIncomingLinksAllLayers()));
+
+		/* If keep connectivity: add the shortest paths at all the layers */
+		if (keepConnectivitySets)
+			for (Node n1 : selectedNodes)
+				for (Node n2 : selectedNodes)
+					if (n1 != n2)
+						for (NetworkLayer trafficLayer : layers)
+							linksToKeep.addAll (GraphUtils.getShortestPath(getNodes(), getLinks(trafficLayer), n1, n2, null));
+
+		
+		
+		/* add all links end nodes */
+		nodesToKeep.addAll(linksToKeep.stream().map(e->e.getOriginNode()).collect(Collectors.toList()));
+		nodesToKeep.addAll(linksToKeep.stream().map(e->e.getDestinationNode()).collect(Collectors.toList()));
+
+		final Set<Demand> affectedDemandsThisLayer = getDemands (trafficLayer).stream().
     			filter(d->selectedNodes.contains(d.getIngressNode())).
     			filter(d->selectedNodes.contains(d.getEgressNode())).
     			collect(Collectors.toSet());
@@ -4982,7 +4996,7 @@ public class NetPlan extends NetworkElement
     	this.cache_planningDomain2networkElements.remove(planningDomain);
     }
 
-    /** Change globally the name of a planning domain
+    /** Change globally the name of a planning domain, updating the information in all the elements
      * @param oldName the old name (should exist)
      * @param newName the new name (should not exist)
      */
@@ -5006,13 +5020,19 @@ public class NetPlan extends NetworkElement
 		throw new Net2PlanException ("NetPlan objects do not have associated planning domains");
 	}
 
-
+	public void setPlanningDomainAsNodeSet (Set<Node> )
+	{
+		
+	}
+	
+	
+	
     /** Returns all the elements in the design that must have a common planning domain with the rootElements (assuming they have a common planning domain)
      * This function is used internally to check things are done correctly
      * @param rootElements
      * @return
      */
-    public Set<NetworkElement> getPlanningDomainMandatoryConnectivity (Set<NetworkElement> rootElements)
+    Set<NetworkElement> getPlanningDomainMandatoryConnectivity (Set<NetworkElement> rootElements)
     {
     	final Set<NetworkElement> res =  new HashSet<> ();
     	final Set<NetworkElement> newElementsAdded = new HashSet<>(rootElements);
@@ -7476,6 +7496,46 @@ public class NetPlan extends NetworkElement
             }
         }
 
+        /* Check the planning domains consistency */
+        final Set<String> globalPlanningDomains = this.cache_planningDomain2networkElements.keySet();
+        if (!this.planningDomains.isEmpty()) throw new RuntimeException();
+        if (!nodes.stream().allMatch(n->globalPlanningDomains.containsAll(n.getPlanningDomains()))) throw new RuntimeException();
+        if (!srgs.stream().allMatch(n->globalPlanningDomains.contains(n.getPlanningDomain()))) throw new RuntimeException();
+        if (!resources.stream().allMatch(n->globalPlanningDomains.contains(n.getPlanningDomain()))) throw new RuntimeException();
+        for (NetworkLayer layer : layers)
+        {
+        	if (!layer.planningDomains.isEmpty()) throw new RuntimeException();
+            if (!layer.demands.stream().allMatch(n->globalPlanningDomains.contains(n.getPlanningDomain()))) throw new RuntimeException();
+            if (!layer.links.stream().allMatch(n->globalPlanningDomains.contains(n.getPlanningDomain()))) throw new RuntimeException();
+            if (!layer.multicastDemands.stream().allMatch(n->globalPlanningDomains.contains(n.getPlanningDomain()))) throw new RuntimeException();
+            if (!layer.multicastTrees.stream().allMatch(n->globalPlanningDomains.contains(n.getPlanningDomain()))) throw new RuntimeException();
+            if (!layer.routes.stream().allMatch(n->globalPlanningDomains.contains(n.getPlanningDomain()))) throw new RuntimeException();
+        }
+        if (!nodes.stream().allMatch(n->n.planningDomains.size()>=1)) throw new RuntimeException();
+        if (!srgs.stream().allMatch(n->n.planningDomains.size()==1)) throw new RuntimeException();
+        if (!resources.stream().allMatch(n->n.planningDomains.size()==1)) throw new RuntimeException();
+        for (NetworkLayer layer : layers)
+        {
+            if (!layer.demands.stream().allMatch(n->n.planningDomains.size()==1)) throw new RuntimeException();
+            if (!layer.links.stream().allMatch(n->n.planningDomains.size()==1)) throw new RuntimeException();
+            if (!layer.multicastDemands.stream().allMatch(n->n.planningDomains.size()==1)) throw new RuntimeException();
+            if (!layer.multicastTrees.stream().allMatch(n->n.planningDomains.size()==1)) throw new RuntimeException();
+            if (!layer.routes.stream().allMatch(n->n.planningDomains.size()==1)) throw new RuntimeException();
+        }
+        for (Node n : netPlan.getNodes()) for (String pd : n.getPlanningDomains()) if (!this.cache_planningDomain2networkElements.get(pd).contains(n)) throw new RuntimeException();
+        if (!srgs.stream().allMatch(n->cache_planningDomain2networkElements.get(n.getPlanningDomain()).contains(n))) throw new RuntimeException();
+        if (!resources.stream().allMatch(n->cache_planningDomain2networkElements.get(n.getPlanningDomain()).contains(n))) throw new RuntimeException();
+        for (NetworkLayer layer : layers)
+        {
+            if (!layer.demands.stream().allMatch(n->cache_planningDomain2networkElements.get(n.getPlanningDomain()).contains(n))) throw new RuntimeException();
+            if (!layer.links.stream().allMatch(n->cache_planningDomain2networkElements.get(n.getPlanningDomain()).contains(n))) throw new RuntimeException();
+            if (!layer.multicastDemands.stream().allMatch(n->cache_planningDomain2networkElements.get(n.getPlanningDomain()).contains(n))) throw new RuntimeException();
+            if (!layer.multicastTrees.stream().allMatch(n->cache_planningDomain2networkElements.get(n.getPlanningDomain()).contains(n))) throw new RuntimeException();
+            if (!layer.routes.stream().allMatch(n->cache_planningDomain2networkElements.get(n.getPlanningDomain()).contains(n))) throw new RuntimeException();
+        }
+        for (String pd : globalPlanningDomains)
+        	this.cache_planningDomain2networkElements.get(pd).stream().allMatch(e->e.planningDomains.contains(pd));
+        
         if (layers.get(defaultLayer.index) != defaultLayer) throw new RuntimeException("Bad");
     }
 

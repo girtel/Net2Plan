@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import com.net2plan.internal.AttributeMap;
@@ -473,10 +474,25 @@ public class Node extends NetworkElement
 		return res;
 	}
 
+	/** Returns the layers where this node is working: has at least one link, or demand, or multicast demand at the given layer associated to it. 
+	 * @return see above
+	 */
+	public Set<NetworkLayer> getWorkingLayers ()
+	{
+		final Set<NetworkLayer> res = new HashSet<>();
+		res.addAll (cache_nodeIncomingLinks.stream().map(e->e.getLayer()).collect(Collectors.toSet()));
+		res.addAll (cache_nodeOutgoingLinks.stream().map(e->e.getLayer()).collect(Collectors.toSet()));
+		res.addAll (cache_nodeIncomingDemands.stream().map(e->e.getLayer()).collect(Collectors.toSet()));
+		res.addAll (cache_nodeOutgoingDemands.stream().map(e->e.getLayer()).collect(Collectors.toSet()));
+		res.addAll (cache_nodeIncomingMulticastDemands.stream().map(e->e.getLayer()).collect(Collectors.toSet()));
+		res.addAll (cache_nodeOutgoingMulticastDemands.stream().map(e->e.getLayer()).collect(Collectors.toSet()));
+		return res;
+	}
+
 	/** Returns true has at least one link, or demand, or multicast demand at the given layer associated to it. 
 	 * @return see above
 	 */
-	public boolean isConnectedRelevantAtLayer(NetworkLayer layer)
+	public boolean isWorkingAtLayer(NetworkLayer layer)
 	{
 		if (!getOutgoingLinks(layer).isEmpty()) return true;
 		if (!getIncomingLinks(layer).isEmpty()) return true;
@@ -490,7 +506,7 @@ public class Node extends NetworkElement
 	/** Returns true if the node is fully isolated at all layers, with no links nor demands affecting it
 	 * @return see above
 	 */
-	public boolean isFullyIsolated ()
+	public boolean isIsolated ()
 	{
 		if (!getOutgoingLinksAllLayers().isEmpty()) return false;
 		if (!getIncomingLinksAllLayers().isEmpty()) return false;
