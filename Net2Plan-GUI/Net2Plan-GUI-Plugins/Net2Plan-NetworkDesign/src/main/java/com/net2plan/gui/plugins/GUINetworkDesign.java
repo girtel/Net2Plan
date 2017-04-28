@@ -776,24 +776,7 @@ public class GUINetworkDesign extends IGUIModule
         }
     }
 
-    public void runCanvasOperation(CanvasFunction... canvasOperation)
-    {
-        // NOTE: The operations should executed in the same order as their are brought.
-        for (CanvasFunction operation : canvasOperation)
     public void runCanvasOperation(CanvasFunction operation)
-        {
-            switch (operation)
-            {
-                case ZOOM_ALL:
-                    topologyPanel.getCanvas().zoomAll();
-                    break;
-                case ZOOM_IN:
-                    topologyPanel.getCanvas().zoomIn();
-                    break;
-                case ZOOM_OUT:
-                    topologyPanel.getCanvas().zoomOut();
-                    break;
-            }
     {
         switch (operation)
         {

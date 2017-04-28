@@ -448,11 +448,11 @@ public class VisualizationState
                     final GUINode upperLayerGNode = guiNodesThisNode.get(trueVisualizationOrderIndex);
                     if (upperLayerGNode != gn) throw new RuntimeException();
                     final GUILink glLowerToUpper = new GUILink(null, lowerLayerGNode, gn,
-                            resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthFactor),
-                            resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthFactor));
+                            VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthFactor),
+                            VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthFactor));
                     final GUILink glUpperToLower = new GUILink(null, gn, lowerLayerGNode,
-                            resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthFactor),
-                            resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthFactor));
+                            VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthFactor),
+                            VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthFactor));
                     intraNodeGUILinksThisNode.add(glLowerToUpper);
                     intraNodeGUILinksThisNode.add(glUpperToLower);
                     thisNodeInterLayerLinksInfoMap.put(Pair.of(trueVisualizationOrderIndex - 1, trueVisualizationOrderIndex), glLowerToUpper);
@@ -468,8 +468,8 @@ public class VisualizationState
                 final GUINode gn1 = cache_mapNode2ListVerticallyStackedGUINodes.get(e.getOriginNode()).get(trueVisualizationOrderIndex);
                 final GUINode gn2 = cache_mapNode2ListVerticallyStackedGUINodes.get(e.getDestinationNode()).get(trueVisualizationOrderIndex);
                 final GUILink gl1 = new GUILink(e, gn1, gn2,
-                        resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, linkWidthFactor),
-                        resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE, linkWidthFactor));
+                        VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, linkWidthFactor),
+                        VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE, linkWidthFactor));
                 cache_canvasRegularLinkMap.put(e, gl1);
             }
         }
@@ -544,7 +544,7 @@ public class VisualizationState
         final float multFactor = VisualizationConstants.SCALE_OUT;
         linkWidthFactor *= multFactor;
         for (GUILink e : getCanvasAllGUILinks(true, true))
-            e.setEdgeStroke(resizedBasicStroke(e.getStrokeIfActiveLayer(), multFactor), resizedBasicStroke(e.getStrokeIfNotActiveLayer(), multFactor));
+            e.setEdgeStroke(VisualizationUtils.resizedBasicStroke(e.getStrokeIfActiveLayer(), multFactor), VisualizationUtils.resizedBasicStroke(e.getStrokeIfNotActiveLayer(), multFactor));
     }
 
     public void increaseCanvasLinkSizeAll()
@@ -552,7 +552,7 @@ public class VisualizationState
         final float multFactor = VisualizationConstants.SCALE_IN;
         linkWidthFactor *= multFactor;
         for (GUILink e : getCanvasAllGUILinks(true, true))
-            e.setEdgeStroke(resizedBasicStroke(e.getStrokeIfActiveLayer(), multFactor), resizedBasicStroke(e.getStrokeIfNotActiveLayer(), multFactor));
+            e.setEdgeStroke(VisualizationUtils.resizedBasicStroke(e.getStrokeIfActiveLayer(), multFactor), VisualizationUtils.resizedBasicStroke(e.getStrokeIfNotActiveLayer(), multFactor));
     }
 
     public int getCanvasNumberOfVisibleLayers()
