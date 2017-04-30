@@ -1966,7 +1966,7 @@ public class GraphUtils
 		{
 			DummyNode(long id, int index)
 			{
-				super(null, id, index, 0, 0, "", Sets.newHashSet("") , null);
+				super(null, id, index, 0, 0, "", null);
 			}
 		}
 
@@ -1974,12 +1974,12 @@ public class GraphUtils
 		{
 			DummyLink(long id, int index, Node originNode, Node destinationNode)
 			{
-				super(null, id, index, null, originNode, destinationNode, 0, 0, 1, "" , null);
+				super(null, id, index, null, originNode, destinationNode, 0, 0, 1, null);
 			}
 
 			DummyLink(long id, int index)
 			{
-				super(null, id, index, null, null, null, 0, 0, 0, "" , null);
+				super(null, id, index, null, null, null, 0, 0, 0, null);
 			}
 		}
 
@@ -2247,7 +2247,7 @@ public class GraphUtils
 		{
 			DummyNode(long id, int index)
 			{
-				super(null, id, index, 0, 0, "", Sets.newHashSet("") , null);
+				super(null, id, index, 0, 0, "", null);
 			}
 		}
 
@@ -2255,12 +2255,12 @@ public class GraphUtils
 		{
 			DummyLink(long id, int index, Node originNode, Node destinationNode)
 			{
-				super(null, id, index, null, originNode, destinationNode, 0, 0, 1, "" , null);
+				super(null, id, index, null, originNode, destinationNode, 0, 0, 1, null);
 			}
 
 			DummyLink(long id, int index)
 			{
-				super(null, id, index, null, null, null, 0, 0, 0, "" , null);
+				super(null, id, index, null, null, null, 0, 0, 0, null);
 			}
 		}
 

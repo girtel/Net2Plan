@@ -55,6 +55,7 @@ import org.codehaus.stax2.XMLStreamReader2;
 import org.codehaus.stax2.XMLStreamWriter2;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
@@ -1905,28 +1906,19 @@ public class NetPlan extends NetworkElement
         return netPlan;
     }
 
-    /**
-     * <p>Returns a deep copy of the current design, but restricting it to the given set of nodes (and thus keeping the same 
-     * ids of the network elements, but not necessarily the indexes). The links which are not between nodes in this set 
-     * are not included, as well as any route or tree traversing them, nor demands, resources, multicast demands etc. 
-     * affecting nodes that are not in the restricted set. Equivalent to making a copy, and then removing all the nodes not in 
-     * the restricted set.</p>
-     *
-     * @param restrictedSet Restricted set of nodes.
-     * @return Deep copy of the restricted current design
-     */
-    public NetPlan getRestrictedCopy(Set<Node> restrictedSet)
-    {
-        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-        NetPlan npCopy = this.copy();
-        Set<Long> restrictedSetIds = restrictedSet.stream().map(n->n.getId()).collect(Collectors.toSet());
-		for (Node n : new HashSet<> (npCopy.getNodes()))
-			if (!restrictedSetIds.contains(n.getId()))
-				n.remove();
-        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-        if (ErrorHandling.isDebugEnabled()) npCopy.checkCachesConsistency();
-        return npCopy;
-    }
+//    /**
+//     * <p>Removes from this design all the nodes but the ones indicated.</p>
+//     * @param restrictedSet Restricted set of nodes.
+//     * @return restricted current design
+//     */
+//    public void restrictToNodeSet (Set<Node> restrictedSet)
+//    {
+//        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+//		for (Node n : new HashSet<> (nodes))
+//			if (!restrictedSet.contains(n.getId()))
+//				n.remove();
+//        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+//    }
 
     
     
@@ -2172,24 +2164,51 @@ public class NetPlan extends NetworkElement
      * @param selectedNodes the selected nodes
      * @param trafficLayer see above
      * @param keepConnectivitySets see above
+     * @return this 
      */
-    public void setPlanningDomainToNodeSet (Set<Node> selectedNodes , boolean keepConnectivitySets)
+    public NetPlan restrictDesign (Set<Node> selectedNodes , boolean keepConnectivitySets)
     {
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-    	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return;
+    	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return this;
     	final Set<Node> nodesToKeep = new HashSet<>(selectedNodes);
     	final Set<Link> linksToKeep = new HashSet<>();
     	final Set<Demand> demandsToKeep = new HashSet<>();
     	final Set<MulticastDemand> mDemandsToKeep = new HashSet<>();
-    	final Set<SharedRiskGroup> srgsToKeep = new HashSet<>();
-    	final Set<SharedRiskGroup> resourcesToKeep = new HashSet<>();
     	
-    	/* Add all the internal links at all layers */
-		for (Node n1 : selectedNodes)
-			for (Node n2 : selectedNodes)
-				if (n1 != n2)
-					linksToKeep.addAll (Sets.intersection(n1.getOutgoingLinksAllLayers(), n2.getIncomingLinksAllLayers()));
-
+    	Set<Node> newNodesAdded = selectedNodes;
+    	while (!newNodesAdded.isEmpty())
+    	{
+        	/* Add all the internal links, demands and multicast demands at all layers, and the links of the routes/trees of them */
+    		for (Node n1 : selectedNodes)
+    			for (Node n2 : selectedNodes)
+    				if (n1 != n2)
+    				{
+    					demandsToKeep.addAll(Sets.intersection(n1.getOutgoingDemandsAllLayers(), n2.getIncomingDemandsAllLayers()));
+    					linksToKeep.addAll (Sets.intersection(n1.getOutgoingLinksAllLayers(), n2.getIncomingLinksAllLayers()));
+    				}
+    		for (NetworkLayer layer : layers)
+    			for (MulticastDemand d : getMulticastDemands(layer))
+    			{
+    				if (!selectedNodes.contains(d.getIngressNode())) continue;
+    				if (!selectedNodes.containsAll(d.getEgressNodes())) continue;
+    				mDemandsToKeep.add(d);
+    			}
+            for (Demand d : demandsToKeep)
+            {
+            	if (d.getLayer().isSourceRouting()) for (Route r : d.getRoutes()) linksToKeep.addAll(r.getSeqLinks());
+            	if (!d.getLayer().isSourceRouting()) d.getForwardingRules().keySet().stream().map(p->p.getSecond()).forEach(e->linksToKeep.add(e));
+            }
+            for (MulticastDemand d : mDemandsToKeep) for (MulticastTree t : d.getMulticastTrees()) linksToKeep.addAll(t.getLinkSet());
+            for (Link e : linksToKeep) 
+            {
+            	demandsToKeep.addAll(e.getTra)
+            }
+    	}
+    	
+    	
+		/* Expand: links to demands*/
+		
+		
 		/* If keep connectivity: add the shortest paths at all the layers */
 		if (keepConnectivitySets)
 			for (Node n1 : selectedNodes)
@@ -2198,37 +2217,185 @@ public class NetPlan extends NetworkElement
 						for (NetworkLayer trafficLayer : layers)
 							linksToKeep.addAll (GraphUtils.getShortestPath(getNodes(), getLinks(trafficLayer), n1, n2, null));
 
-		
-		
-		/* add all links end nodes */
-		nodesToKeep.addAll(linksToKeep.stream().map(e->e.getOriginNode()).collect(Collectors.toList()));
-		nodesToKeep.addAll(linksToKeep.stream().map(e->e.getDestinationNode()).collect(Collectors.toList()));
+		/* Loop: while I keep adding elements */
+		Set<Link> newLinksToKeep = linksToKeep;
+		Set<Demand> newDemandsToKeep = demandsToKeep;
+		Set<MulticastDemand> newMDemandsToKeep = mDemandsToKeep;
+		while (!newLinksToKeep.isEmpty() || !newDemandsToKeep.isEmpty() || !newMDemandsToKeep.isEmpty())
+		{
+	    	final Set<Pair<MulticastDemand,Node>> affectedMDemands = new HashSet<> ();
+	    	for (MulticastDemand md : newMDemandsToKeep)
+	    		for (Node n : md.getEgressNodes ())
+	    			affectedMDemands.add(Pair.of(md, n));
+	        
+	    	final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(newDemandsToKeep , 
+	        		newLinksToKeep , affectedMDemands , false);
+	        final Set<Demand> extraDemandsToKeep = ipg.getDemandsInGraph();
+	        final Set<Link> extraLinksToKeep = ipg.getLinksInGraph();
+	        final Set<MulticastDemand> extraMDemandsToKeep = ipg.getMulticastDemandFlowsInGraph().stream().map(d->d.getFirst()).collect(Collectors.toSet());
+	        for (Link e : extraLinksToKeep)
+	        {
+	        	
+	        }
+	        for (Demand d : extraDemandsToKeep)
+	        {
+	        	if (d.getLayer().isSourceRouting()) for (Route r : d.getRoutes()) extraLinksToKeep.addAll(r.getSeqLinks());
+	        	if (!d.getLayer().isSourceRouting()) d.getForwardingRules().keySet().stream().map(p->p.getSecond()).forEach(e->extraLinksToKeep.add(e));
+	        }
+	        for (MulticastDemand d : extraMDemandsToKeep) for (MulticastTree t : d.getMulticastTrees()) extraLinksToKeep.addAll(t.getLinkSet());
 
-		final Set<Demand> affectedDemandsThisLayer = getDemands (trafficLayer).stream().
-    			filter(d->selectedNodes.contains(d.getIngressNode())).
-    			filter(d->selectedNodes.contains(d.getEgressNode())).
-    			collect(Collectors.toSet());
-    	final Set<Pair<MulticastDemand,Node>> affectedMDemandsThisLayer = new HashSet<> ();
-    	for (MulticastDemand md : getMulticastDemands (trafficLayer))
-    		for (Node n : md.getEgressNodes ())
-    			affectedMDemandsThisLayer.add(Pair.of(md, n));
-        final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(affectedDemandsThisLayer , 
-        		linksThisLayerToKeepAndPropagateDown , affectedMDemandsThisLayer , false);
-        final Set<Demand> demandsToKeep = ipg.getDemandsInGraph();
-        final Set<Link> linksToKeep = ipg.getLinksInGraph();
-        final Set<MulticastDemand> mdemandsToKeep = ipg.getMulticastDemandFlowsInGraph().stream().map(d->d.getFirst()).collect(Collectors.toSet());
+	        extraDemandsToKeep.removeAll(demandsToKeep);
+	        extraLinksToKeep.removeAll(linksToKeep);
+	        extraMDemandsToKeep.removeAll(mDemandsToKeep);
+	        
+	    	linksToKeep.addAll(extraLinksToKeep);
+	    	demandsToKeep.addAll(extraDemandsToKeep);
+	    	mDemandsToKeep.addAll(extraMDemandsToKeep);
+
+	    	newLinksToKeep = extraLinksToKeep;
+	    	newDemandsToKeep = extraDemandsToKeep;
+	    	newMDemandsToKeep = extraMDemandsToKeep;
+		}
+
         nodesToKeep.addAll(linksToKeep.stream().map(d->d.getOriginNode ()).collect(Collectors.toList()));
         nodesToKeep.addAll(linksToKeep.stream().map(d->d.getDestinationNode ()).collect(Collectors.toList()));
         nodesToKeep.addAll(demandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
         nodesToKeep.addAll(demandsToKeep.stream().map(d->d.getEgressNode ()).collect(Collectors.toList()));
-        nodesToKeep.addAll(mdemandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
-        nodesToKeep.addAll(mdemandsToKeep.stream().map(d->d.getEgressNodes ()).flatMap(e->e.stream()).collect(Collectors.toList()));
+        nodesToKeep.addAll(mDemandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(mDemandsToKeep.stream().map(d->d.getEgressNodes ()).flatMap(e->e.stream()).collect(Collectors.toList()));
+
+    	System.out.println(nodesToKeep);
+
+        /* remove all elements that are not in the design. This implicitly removes resources in the removed nodes */
+        for (NetworkLayer layer : getNetworkLayerInTopologicalOrder())
+        {
+        	for (Demand d : new ArrayList<> (getDemands(layer))) if (!demandsToKeep.contains(d)) d.remove ();
+        	for (MulticastDemand d : new ArrayList<> (getMulticastDemands(layer))) if (!mDemandsToKeep.contains(d)) d.remove ();
+        	for (Link e : new ArrayList<> (getLinks(layer))) if (!linksToKeep.contains(e)) e.remove ();
+        }
+        for (Node n : new ArrayList<>(getNodes())) if (!nodesToKeep.contains(n)) n.remove ();
         
-        /* remove all nodes unconnected nodes */
-        for (Node n : new ArrayList<>(getNodes()))
-        	if (!nodesToKeep.contains(n))
-        		n.remove ();
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+        
+        return this;
+    }
+
+    /**
+     * First computes the nodes to keep in the planning: these are the selected nodes, 
+     * the nodes involved in the demands/mDemands between them in this layer, 
+     * the nodes involved in the links at this layer that carry traffic between the selected nodes, 
+     * and the nodes associated to the links/demands at lower layers, 
+     * that carry the traffic between the selected nodes in the given layer, or carry traffic 
+     * at lower layers, of the links at this layer between the selected nodes.
+     * After computing such nodes, removes from the design all the nodes outside such set.  
+     * If keepConnectivitySets is set, all the links in the shortest path between the selected nodes 
+     * in the given layer, and those that would carry its traffic, are kept. Then, the resulting design has the 
+     * same connected components than the original graph.
+     * @param selectedNodes the selected nodes
+     * @param trafficLayer see above
+     * @param keepConnectivitySets see above
+     * @return this 
+     */
+    public NetPlan restrictDesignOld (Set<Node> selectedNodes , boolean keepConnectivitySets)
+    {
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+    	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return this;
+    	final Set<Node> nodesToKeep = new HashSet<>(selectedNodes);
+    	final Set<Link> linksToKeep = new HashSet<>();
+    	final Set<Demand> demandsToKeep = new HashSet<>();
+    	final Set<MulticastDemand> mDemandsToKeep = new HashSet<>();
+    	
+    	/* Add all the internal links, demands and multicast demands at all layers, and the links of the routes/trees of them */
+		for (Node n1 : selectedNodes)
+			for (Node n2 : selectedNodes)
+				if (n1 != n2)
+				{
+					demandsToKeep.addAll(Sets.intersection(n1.getOutgoingDemandsAllLayers(), n2.getIncomingDemandsAllLayers()));
+					linksToKeep.addAll (Sets.intersection(n1.getOutgoingLinksAllLayers(), n2.getIncomingLinksAllLayers()));
+				}
+		for (NetworkLayer layer : Lists.reverse(this.getNetworkLayerInTopologicalOrder()))
+			for (MulticastDemand d : getMulticastDemands(layer))
+			{
+				if (!selectedNodes.contains(d.getIngressNode())) continue;
+				if (!selectedNodes.containsAll(d.getEgressNodes())) continue;
+				mDemandsToKeep.add(d);
+			}
+        for (Demand d : demandsToKeep)
+        {
+        	if (d.getLayer().isSourceRouting()) for (Route r : d.getRoutes()) linksToKeep.addAll(r.getSeqLinks());
+        	if (!d.getLayer().isSourceRouting()) d.getForwardingRules().keySet().stream().map(p->p.getSecond()).forEach(e->linksToKeep.add(e));
+        }
+        for (MulticastDemand d : mDemandsToKeep) for (MulticastTree t : d.getMulticastTrees()) linksToKeep.addAll(t.getLinkSet());
+		
+		/* If keep connectivity: add the shortest paths at all the layers */
+		if (keepConnectivitySets)
+			for (Node n1 : selectedNodes)
+				for (Node n2 : selectedNodes)
+					if (n1 != n2)
+						for (NetworkLayer trafficLayer : layers)
+							linksToKeep.addAll (GraphUtils.getShortestPath(getNodes(), getLinks(trafficLayer), n1, n2, null));
+
+		/* Loop: while I keep adding elements */
+		Set<Link> newLinksToKeep = linksToKeep;
+		Set<Demand> newDemandsToKeep = demandsToKeep;
+		Set<MulticastDemand> newMDemandsToKeep = mDemandsToKeep;
+		while (!newLinksToKeep.isEmpty() || !newDemandsToKeep.isEmpty() || !newMDemandsToKeep.isEmpty())
+		{
+	    	final Set<Pair<MulticastDemand,Node>> affectedMDemands = new HashSet<> ();
+	    	for (MulticastDemand md : newMDemandsToKeep)
+	    		for (Node n : md.getEgressNodes ())
+	    			affectedMDemands.add(Pair.of(md, n));
+	        
+	    	final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(newDemandsToKeep , 
+	        		newLinksToKeep , affectedMDemands , false);
+	        final Set<Demand> extraDemandsToKeep = ipg.getDemandsInGraph();
+	        final Set<Link> extraLinksToKeep = ipg.getLinksInGraph();
+	        final Set<MulticastDemand> extraMDemandsToKeep = ipg.getMulticastDemandFlowsInGraph().stream().map(d->d.getFirst()).collect(Collectors.toSet());
+	        for (Link e : extraLinksToKeep)
+	        {
+	        	
+	        }
+	        for (Demand d : extraDemandsToKeep)
+	        {
+	        	if (d.getLayer().isSourceRouting()) for (Route r : d.getRoutes()) extraLinksToKeep.addAll(r.getSeqLinks());
+	        	if (!d.getLayer().isSourceRouting()) d.getForwardingRules().keySet().stream().map(p->p.getSecond()).forEach(e->extraLinksToKeep.add(e));
+	        }
+	        for (MulticastDemand d : extraMDemandsToKeep) for (MulticastTree t : d.getMulticastTrees()) extraLinksToKeep.addAll(t.getLinkSet());
+
+	        extraDemandsToKeep.removeAll(demandsToKeep);
+	        extraLinksToKeep.removeAll(linksToKeep);
+	        extraMDemandsToKeep.removeAll(mDemandsToKeep);
+	        
+	    	linksToKeep.addAll(extraLinksToKeep);
+	    	demandsToKeep.addAll(extraDemandsToKeep);
+	    	mDemandsToKeep.addAll(extraMDemandsToKeep);
+
+	    	newLinksToKeep = extraLinksToKeep;
+	    	newDemandsToKeep = extraDemandsToKeep;
+	    	newMDemandsToKeep = extraMDemandsToKeep;
+		}
+
+        nodesToKeep.addAll(linksToKeep.stream().map(d->d.getOriginNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(linksToKeep.stream().map(d->d.getDestinationNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(demandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(demandsToKeep.stream().map(d->d.getEgressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(mDemandsToKeep.stream().map(d->d.getIngressNode ()).collect(Collectors.toList()));
+        nodesToKeep.addAll(mDemandsToKeep.stream().map(d->d.getEgressNodes ()).flatMap(e->e.stream()).collect(Collectors.toList()));
+
+    	System.out.println(nodesToKeep);
+
+        /* remove all elements that are not in the design. This implicitly removes resources in the removed nodes */
+        for (NetworkLayer layer : getNetworkLayerInTopologicalOrder())
+        {
+        	for (Demand d : new ArrayList<> (getDemands(layer))) if (!demandsToKeep.contains(d)) d.remove ();
+        	for (MulticastDemand d : new ArrayList<> (getMulticastDemands(layer))) if (!mDemandsToKeep.contains(d)) d.remove ();
+        	for (Link e : new ArrayList<> (getLinks(layer))) if (!linksToKeep.contains(e)) e.remove ();
+        }
+        for (Node n : new ArrayList<>(getNodes())) if (!nodesToKeep.contains(n)) n.remove ();
+        
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+        
+        return this;
     }
 
     
@@ -2265,7 +2432,6 @@ public class NetPlan extends NetworkElement
         this.cache_nodesPerSiteName = new HashMap<> ();
         this.cache_planningDomain2nodes = new HashMap<> (); 
         for (String pd : originNetPlan.cache_planningDomain2nodes.keySet()) this.cache_planningDomain2nodes.put(pd, new HashSet<> ());
-        this.defaultPlanningDomainForNewElements = originNetPlan.defaultPlanningDomainForNewElements; 
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = true;
         this.networkDescription = originNetPlan.networkDescription;
@@ -2279,8 +2445,8 @@ public class NetPlan extends NetworkElement
         for (Node originNode : originNetPlan.nodes)
         {
             Node newElement = new Node(this, originNode.id, originNode.index, originNode.nodeXYPositionMap.getX(), originNode.nodeXYPositionMap.getY(), 
-            		originNode.name, originNode.getPlanningDomains() , originNode.attributes);
-            for (String pd : originNode.getPlanningDomains ()) newElement.addPlanningDomain(pd);
+            		originNode.name, originNode.attributes);
+            for (String pd : originNode.getPlanningDomains ()) newElement.addToPlanningDomain(pd);
             for (String tag : originNode.getTags ()) newElement.addTag (tag);
             newElement.setSiteName(originNode.siteName);
             cache_id2NodeMap.put(originNode.id, newElement);
@@ -2294,10 +2460,9 @@ public class NetPlan extends NetworkElement
             Resource newElement = new Resource(this, originResource.id, originResource.index, originResource.type,
                     originResource.name, this.cache_id2NodeMap.get(originResource.hostNode.id),
                     originResource.capacity, originResource.capacityMeasurementUnits, null, 
-                    originResource.processingTimeToTraversingTrafficInMs, originResource.getPlanningDomain() , originResource.attributes);
+                    originResource.processingTimeToTraversingTrafficInMs, originResource.attributes);
             for (String tag : originResource.getTags ()) newElement.addTag (tag);
             cache_id2ResourceMap.put(originResource.id, newElement);
-           	cache_planningDomain2nodes.get(originResource.getPlanningDomain()).add(newElement);
             Set<Resource> resOfThisType = cache_type2Resources.get(originResource.type);
             if (resOfThisType == null)
             {
@@ -2309,10 +2474,9 @@ public class NetPlan extends NetworkElement
         }
         for (SharedRiskGroup originSrg : originNetPlan.srgs)
         {
-            SharedRiskGroup newElement = new SharedRiskGroup(this, originSrg.id, originSrg.index, null, null, originSrg.meanTimeToFailInHours, originSrg.meanTimeToRepairInHours, originSrg.getPlanningDomain() , originSrg.attributes);
+            SharedRiskGroup newElement = new SharedRiskGroup(this, originSrg.id, originSrg.index, null, null, originSrg.meanTimeToFailInHours, originSrg.meanTimeToRepairInHours, originSrg.attributes);
             for (String tag : originSrg.getTags ()) newElement.addTag (tag);
             cache_id2srgMap.put(originSrg.id, newElement);
-           	cache_planningDomain2nodes.get(originSrg.getPlanningDomain()).add(newElement);
             srgs.add(newElement);
         }
         for (NetworkLayer originLayer : originNetPlan.layers)
@@ -2326,11 +2490,10 @@ public class NetPlan extends NetworkElement
 
             for (Demand originDemand : originLayer.demands)
             {
-                Demand newElement = new Demand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), this.cache_id2NodeMap.get(originDemand.egressNode.id), originDemand.offeredTraffic, originDemand.getPlanningDomain() , originDemand.attributes);
+                Demand newElement = new Demand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), this.cache_id2NodeMap.get(originDemand.egressNode.id), originDemand.offeredTraffic, originDemand.attributes);
                 for (String tag : originDemand.getTags ()) newElement.addTag (tag);
                 newElement.mandatorySequenceOfTraversedResourceTypes = new LinkedList<String>(originDemand.mandatorySequenceOfTraversedResourceTypes);
                 cache_id2DemandMap.put(originDemand.id, newElement);
-               	cache_planningDomain2nodes.get(originDemand.getPlanningDomain()).add(newElement);
                 newLayer.demands.add(newElement);
             }
             for (MulticastDemand originDemand : originLayer.multicastDemands)
@@ -2338,40 +2501,36 @@ public class NetPlan extends NetworkElement
                 Set<Node> newEgressNodes = new HashSet<Node>();
                 for (Node oldEgressNode : originDemand.egressNodes)
                     newEgressNodes.add(this.cache_id2NodeMap.get(oldEgressNode.id));
-                MulticastDemand newElement = new MulticastDemand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), newEgressNodes, originDemand.offeredTraffic, originDemand.getPlanningDomain() , originDemand.attributes);
+                MulticastDemand newElement = new MulticastDemand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), newEgressNodes, originDemand.offeredTraffic, originDemand.attributes);
                 for (String tag : originDemand.getTags ()) newElement.addTag (tag);
                 cache_id2MulticastDemandMap.put(originDemand.id, newElement);
-               	cache_planningDomain2nodes.get(originDemand.getPlanningDomain()).add(newElement);
                 newLayer.multicastDemands.add(newElement);
             }
             for (Link originLink : originLayer.links)
             {
-                Link newElement = new Link(this, originLink.id, originLink.index, newLayer, this.cache_id2NodeMap.get(originLink.originNode.id), this.cache_id2NodeMap.get(originLink.destinationNode.id), originLink.lengthInKm, originLink.propagationSpeedInKmPerSecond, originLink.capacity, originLink.getPlanningDomain() , originLink.attributes);
+                Link newElement = new Link(this, originLink.id, originLink.index, newLayer, this.cache_id2NodeMap.get(originLink.originNode.id), this.cache_id2NodeMap.get(originLink.destinationNode.id), originLink.lengthInKm, originLink.propagationSpeedInKmPerSecond, originLink.capacity, originLink.attributes);
                 for (String tag : originLink.getTags ()) newElement.addTag (tag);
                 cache_id2LinkMap.put(originLink.id, newElement);
-               	cache_planningDomain2nodes.get(originLink.getPlanningDomain()).add(newElement);
                 newLayer.links.add(newElement);
             }
             for (Route originRoute : originLayer.routes)
             {
                 Route newElement = new Route(this, originRoute.id, originRoute.index, cache_id2DemandMap.get(originRoute.demand.id),
                         (List<NetworkElement>) translateCollectionToThisNetPlan(originRoute.currentPath),
-                        originRoute.getPlanningDomain() , originRoute.attributes);
+                        originRoute.attributes);
                 for (String tag : originRoute.getTags ()) newElement.addTag (tag);
                 newElement.currentCarriedTrafficIfNotFailing = originRoute.currentCarriedTrafficIfNotFailing;
                 newElement.currentLinksAndResourcesOccupationIfNotFailing = new ArrayList<Double>(originRoute.currentLinksAndResourcesOccupationIfNotFailing);
                 cache_id2RouteMap.put(originRoute.id, newElement);
-               	cache_planningDomain2nodes.get(originRoute.getPlanningDomain()).add(newElement);
                 newLayer.routes.add(newElement);
             }
             for (MulticastTree originTree : originLayer.multicastTrees)
             {
                 Set<Link> newSetLinks = new HashSet<Link>();
                 for (Link oldLink : originTree.linkSet) newSetLinks.add(this.cache_id2LinkMap.get(oldLink.id));
-                MulticastTree newElement = new MulticastTree(this, originTree.id, originTree.index, cache_id2MulticastDemandMap.get(originTree.demand.id), newSetLinks, originTree.getPlanningDomain() , originTree.attributes);
+                MulticastTree newElement = new MulticastTree(this, originTree.id, originTree.index, cache_id2MulticastDemandMap.get(originTree.demand.id), newSetLinks, originTree.attributes);
                 for (String tag : originTree.getTags ()) newElement.addTag (tag);
                 cache_id2MulticastTreeMap.put(originTree.id, newElement);
-               	cache_planningDomain2nodes.get(originTree.getPlanningDomain()).add(newElement);
                 newLayer.multicastTrees.add(newElement);
                 newElement.carriedTrafficIfNotFailing = originTree.carriedTrafficIfNotFailing;
                 newElement.occupiedLinkCapacityIfNotFailing = originTree.occupiedLinkCapacityIfNotFailing;
@@ -7831,9 +7990,9 @@ public class NetPlan extends NetworkElement
         return null;
     }
     
-    private List<Long> getAllIds () 
+    Set<Long> getAllIds () 
     { 
-    	final List<Long> res = new ArrayList<>();
+    	final Set<Long> res = new HashSet<>();
     	res.add(this.id);
     	res.addAll(getNodeIds());
     	res.addAll(getSRGIds());

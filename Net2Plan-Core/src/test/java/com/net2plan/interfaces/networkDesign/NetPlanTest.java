@@ -128,11 +128,13 @@ public class NetPlanTest
 		this.upperMd123 = np.addMulticastDemand (n1 , endNodes , 100 , null , upperLayer);
 		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
 		d123.couple(new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
-
+		np.addGlobalPlanningDomain("pd1");
+		np.addGlobalPlanningDomain("pd2");
+		n1.addToPlanningDomain("pd1");
+		
 		/* Triangle link cap 100, length 1, demands offered 1 */
 		this.netTriangle = new NetPlan ();
 		this.netTriangle.addGlobalPlanningDomain("new");
-		this.netTriangle.setDefaultPlanningDomain("new");
 		this.netTriangle_n1 = this.netTriangle.addNode(0 , 0 , "node1" , null);
 		this.netTriangle_n2 = this.netTriangle.addNode(0 , 0 , "node2" , null);
 		this.netTriangle_n3 = this.netTriangle.addNode(0 , 0 , "node3" , null);
@@ -402,11 +404,11 @@ public class NetPlanTest
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 
-		K=3; maxRouteCostFactorRespectToShortestPath = 0.1; cpl = cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		K=3; maxRouteCostFactorRespectToShortestPath = 0.1; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		maxRouteCostFactorRespectToShortestPath = -1;
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
-		K=3; maxRouteCostFactorRespectToShortestPath = 2; cpl = cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		K=3; maxRouteCostFactorRespectToShortestPath = 2; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		maxRouteCostFactorRespectToShortestPath = -1;
 		for (Demand d : netTriangle.getDemands())
 		{
@@ -418,7 +420,7 @@ public class NetPlanTest
 			final Link secondLink = netTriangle.getNodePairLinks(intermNode , d.getEgressNode(),false).iterator().next();
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(directLink) , Arrays.asList(firstLink,secondLink)));
 		}
-		K=3; maxRouteCostRespectToShortestPath = 0.1; cpl = cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		K=3; maxRouteCostRespectToShortestPath = 0.1; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		maxRouteCostRespectToShortestPath = -1;
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
@@ -989,142 +991,148 @@ public class NetPlanTest
 	}
 
 	@Test
+	public void testAddPlanningDomain ()
+	{
+		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("pd1","pd2"));
+		np.addGlobalPlanningDomain("new1");
+		np.addGlobalPlanningDomain("new2");
+		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("pd1","pd2","new1" , "new2"));
+
+		try { n1.addToPlanningDomain("xx"); fail (); } catch (Exception e) {}
+		n1.addToPlanningDomain("new1");
+		n2.addToPlanningDomain("new1");
+		assertEquals(np.getGlobalPlanningDomainNodes("new1"), Sets.newHashSet(n1,n2));
+		assertEquals(np.getGlobalPlanningDomainNodes("new2"), Sets.newHashSet());
+		assertEquals(np.getGlobalPlanningDomainNodes("aaa"), null);
+		try { np.removeGlobalPlanningDomain("new1"); fail (); } catch (Exception e) {}
+		np.removeGlobalPlanningDomain("new2"); 
+		assertEquals(np.getGlobalPlanningDomainNodes("new1"), Sets.newHashSet(n1,n2));
+		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("pd1","pd2","new1"));
+	}
+		
+	@Test
 	public void testRestrictCopy ()
 	{
 		NetPlan np = new NetPlan ();
 		final NetworkLayer lowerLayer = np.getNetworkLayerDefault();
 		final NetworkLayer upperLayer = np.addLayer("", "", "", "", null, null);
-		final Node n1 = np.addNode(0, 0, "", null);
-		final Node n2 = np.addNode(0, 0, "", null);
-		final Node n3 = np.addNode(0, 0, "", null);
-		final Node n4 = np.addNode(0, 0, "", null);
+		final Node n1 = np.addNode(0, 0, "", null); final long idn1 = n1.getId();
+		final Node n2 = np.addNode(0, 0, "", null); final long idn2 = n2.getId();
+		final Node n3 = np.addNode(0, 0, "", null); final long idn3 = n3.getId();
+		final Node n4 = np.addNode(0, 0, "", null); final long idn4 = n4.getId();
 		final Link low12 = np.addLink(n1, n2, 0, 0, 200000, null , lowerLayer);
 		final Link low23 = np.addLink(n2, n3, 0, 0, 200000, null , lowerLayer);
 		final Demand dlow12 = np.addDemand(n1, n2, 0, null, lowerLayer);
 		
-		final NetPlan npCopy = np.getRestrictedCopy(Sets.newHashSet(n1,n2));
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId()));
-	}
+		NetPlan np2 = np.copy();
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3),np2.getNodeFromId(idn4)) , false);
+		assertEquals(np2.getAllIds() , np.getAllIds());
 
-	@Test
-	public void testAddPlanningDomain ()
-	{
-		assertEquals (np.getDefaultPlanningDomain() , "");
-		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet(""));
-		np.addGlobalPlanningDomain("new");
-		assertEquals (np.getDefaultPlanningDomain() , "");
-		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("" , "new"));
-		np.setDefaultPlanningDomain("new");
-		assertEquals (np.getDefaultPlanningDomain() , "new");
-		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("" , "new"));
-		try { np.setDefaultPlanningDomain("tofail"); fail (); } catch (Exception e) {}
-
-		Set<NetworkElement> allElements = new HashSet<> ();
-		allElements.addAll(np.getNodes());
-		allElements.addAll(np.getResources());
-		allElements.addAll(np.getSRGs());
-		for (NetworkLayer layer : np.getNetworkLayers())
-		{
-			allElements.addAll(np.getLinks (layer));
-			allElements.addAll(np.getDemands (layer));
-			allElements.addAll(np.getRoutes (layer));
-			allElements.addAll(np.getMulticastDemands (layer));
-			allElements.addAll(np.getMulticastTrees (layer));
-		}
-		assertEquals (np.getGlobalPlanningDomainElements("") , allElements);
-		assertEquals (np.getGlobalPlanningDomainElements("new") , Sets.newHashSet());
-		assertEquals (np.getGlobalPlanningDomainElements("other") , null);
+		np2 = np.copy();
+		np2.restrictDesign(Sets.newHashSet() , false);
+		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np , lowerLayer , upperLayer)));
 		
-		np.setDefaultPlanningDomain("new");
-		n1.addPlanningDomain("new");
-		assertEquals(n1.getPlanningDomains(), Sets.newHashSet("","new"));
-		try { np.addLink(n1, n2, 0, 0, 200000, null, lowerLayer); fail (); } catch (Exception e) {}
-		n2.addPlanningDomain("new");
-		final Link new12 = np.addLink(n1, n2, 0, 0, 200000, null, lowerLayer); 
-		assertEquals (np.getGlobalPlanningDomainElements("new") , Sets.newHashSet(n1,n2,new12));
+		np2 = np.copy();
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2)) , false);
+		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np , lowerLayer , upperLayer , n1,n2,low12,dlow12)));
 
-		allElements = new HashSet<> ();
-		allElements.addAll(netTriangle.getNodes());
-		allElements.addAll(netTriangle.getResources());
-		allElements.addAll(netTriangle.getSRGs());
-		for (NetworkLayer layer : netTriangle.getNetworkLayers())
-		{
-			allElements.addAll(netTriangle.getLinks (layer));
-			allElements.addAll(netTriangle.getDemands (layer));
-			allElements.addAll(netTriangle.getRoutes (layer));
-			allElements.addAll(netTriangle.getMulticastDemands (layer));
-			allElements.addAll(netTriangle.getMulticastTrees (layer));
-		}
-		assertEquals (netTriangle.getGlobalPlanningDomainElements("new") , allElements);
-		assertEquals (netTriangle.getGlobalPlanningDomainElements("") , Sets.newHashSet());
-		assertEquals (netTriangle.getGlobalPlanningDomainElements("other") , null);
-	}
-	
-	@Test
-	public void testRestrictPlanning ()
-	{
-		NetPlan np = new NetPlan ();
-		final NetworkLayer lowerLayer = np.getNetworkLayerDefault();
-		final NetworkLayer upperLayer = np.addLayer("", "", "", "", null, null);
-		final Node n1 = np.addNode(0, 0, "", null);
-		final Node n2 = np.addNode(0, 0, "", null);
-		final Node n3 = np.addNode(0, 0, "", null);
-		final Link low12 = np.addLink(n1, n2, 0, 0, 200000, null , lowerLayer);
-		final Link low13 = np.addLink(n1, n3, 0, 0, 200000, null , lowerLayer);
-		final Link low23 = np.addLink(n2, n3, 0, 0, 200000, null , lowerLayer);
+		np2 = np.copy();
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3)) , false);
+		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,n1,n2,n3,low12,low23,dlow12)));
+
 		final Demand dlow13 = np.addDemand(n1, n3, 0, null, lowerLayer);
-		final long idn1 = n1.getId ();
-		final long idn2 = n2.getId ();
-		final long idn3 = n3.getId ();
-		NetworkLayer copyLowerLayer = null;
-		NetworkLayer copyUpperLayer = null;
-		
-		NetPlan npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
-		
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(idn1 , idn3));
-		
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(idn1 , idn3));
+		final Route rlow13 = np.addRoute(dlow13, 0, 0, Arrays.asList(low12,low23), null);
+		np2 = np.copy();
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)) , false);
+		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,n1,n2,n3,low12,low23,dlow12,dlow13,rlow13)));
 
-		final Link up13 = dlow13.coupleToNewLinkCreated(upperLayer);
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
-		
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
-		
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, false);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
-		
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
+		final Link upperLink13 = dlow13.coupleToNewLinkCreated(upperLayer);
 
-		final Route r123 = np.addRoute(dlow13, 1, 1, Arrays.asList(low12 , low23), null);
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
-		
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
-		
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, false);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
+	}		
+//		allElements = new HashSet<> ();
+//		allElements.addAll(netTriangle.getNodes());
+//		allElements.addAll(netTriangle.getResources());
+//		allElements.addAll(netTriangle.getSRGs());
+//		for (NetworkLayer layer : netTriangle.getNetworkLayers())
+//		{
+//			allElements.addAll(netTriangle.getLinks (layer));
+//			allElements.addAll(netTriangle.getDemands (layer));
+//			allElements.addAll(netTriangle.getRoutes (layer));
+//			allElements.addAll(netTriangle.getMulticastDemands (layer));
+//			allElements.addAll(netTriangle.getMulticastTrees (layer));
+//		}
+//		assertEquals (netTriangle.getGlobalPlanningDomainElements("new") , allElements);
+//		assertEquals (netTriangle.getGlobalPlanningDomainElements("") , Sets.newHashSet());
+//		assertEquals (netTriangle.getGlobalPlanningDomainElements("other") , null);
+//
+//	}
 
-		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
-		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
-	}
-
+//	
+//	@Test
+//	public void testRestrictPlanning ()
+//	{
+//		NetPlan np = new NetPlan ();
+//		final NetworkLayer lowerLayer = np.getNetworkLayerDefault();
+//		final NetworkLayer upperLayer = np.addLayer("", "", "", "", null, null);
+//		final Node n1 = np.addNode(0, 0, "", null);
+//		final Node n2 = np.addNode(0, 0, "", null);
+//		final Node n3 = np.addNode(0, 0, "", null);
+//		final Link low12 = np.addLink(n1, n2, 0, 0, 200000, null , lowerLayer);
+//		final Link low13 = np.addLink(n1, n3, 0, 0, 200000, null , lowerLayer);
+//		final Link low23 = np.addLink(n2, n3, 0, 0, 200000, null , lowerLayer);
+//		final Demand dlow13 = np.addDemand(n1, n3, 0, null, lowerLayer);
+//		final long idn1 = n1.getId ();
+//		final long idn2 = n2.getId ();
+//		final long idn3 = n3.getId ();
+//		NetworkLayer copyLowerLayer = null;
+//		NetworkLayer copyUpperLayer = null;
+//		
+//		NetPlan npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
+//		
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(idn1 , idn3));
+//		
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(idn1 , idn3));
+//
+//		final Link up13 = dlow13.coupleToNewLinkCreated(upperLayer);
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
+//		
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
+//		
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, false);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
+//		
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
+//
+//		final Route r123 = np.addRoute(dlow13, 1, 1, Arrays.asList(low12 , low23), null);
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
+//		
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
+//		
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, false);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
+//
+//		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
+//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
+//		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
+//	}
+//
 
 }
