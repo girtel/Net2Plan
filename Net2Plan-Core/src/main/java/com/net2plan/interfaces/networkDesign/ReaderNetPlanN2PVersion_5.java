@@ -82,9 +82,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		netPlan.setNetworkName(networkName_thisNetPlan);
 		netPlan.nextElementId = new MutableLong(nexElementId_thisNetPlan);
 		if (netPlan.nextElementId.toLong() <= 0) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
-		if (!netPlan.getGlobalPlanningDomains().equals(Sets.newHashSet(""))) throw new RuntimeException ();
-		String read_defaultPlanningDomain = ""; try { getString ("defaultPlanningDomain"); } catch (Exception e) {}
-		String initialPlanningDomainToRemove = "";
+		while (true) { try { netPlan.addGlobalPlanningDomain(getString ("planningDomain_" + (netPlan.getGlobalPlanningDomains().size())));  } catch(Exception e) { break; }   } 
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -97,11 +95,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					{
 						case "tag":
 							netPlan.addTag(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value")));
-							break;
-						case "planningDomain":
-							final String pd = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "name"));
-							if (pd.equals(initialPlanningDomainToRemove)) initialPlanningDomainToRemove = null;
-							netPlan.addGlobalPlanningDomain(pd);
 							break;
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
@@ -155,11 +148,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 			}
 		}
 		
-		/* remove "" planning domain if it is not in the design, and update the default planning domain */
-		if (initialPlanningDomainToRemove != null)
-			netPlan.removeGlobalPlanningDomain(initialPlanningDomainToRemove);
-		netPlan.setDefaultPlanningDomain(read_defaultPlanningDomain);
-		
 		throw new RuntimeException("'Network' element not parsed correctly (end tag not found)");
 	}
 	
@@ -175,9 +163,9 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 		final Set<String> planningDomains = new HashSet<> ();
 		while (true) { try { planningDomains.add(getString ("planningDomain_" + (planningDomains.size())));  } catch(Exception e) { break; }   } 
-		if (planningDomains.isEmpty()) planningDomains.add(""); // default planning domain if none defined
 
-		Node newNode = netPlan.addNode(nodeId , xCoord, yCoord, nodeName, planningDomains , null);
+		Node newNode = netPlan.addNode(nodeId , xCoord, yCoord, nodeName, null);
+		for (String pd : planningDomains) newNode.addToPlanningDomain(pd);
 		newNode.setFailureState(isUp);
 		newNode.setPopulation(population);
 		if (siteName != null) newNode.setSiteName(siteName);
@@ -205,9 +193,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		try { recoveryType = Demand.IntendedRecoveryType.valueOf(getString("intendedRecoveryType")); } 
 		catch (XMLStreamException e) { recoveryType = Demand.IntendedRecoveryType.NOTSPECIFIED; }
 		catch (Exception e) { recoveryType = Demand.IntendedRecoveryType.UNKNOWNTYPE; }
-		String planningDomain = ""; try { planningDomain = getString ("planningDomain"); } catch (Exception e) {}
 		
-		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, planningDomain , null , netPlan.getNetworkLayerFromId(layerId));
+		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
 		newDemand.setIntendedRecoveryType(recoveryType);
 		
 		List<String> mandatorySequenceOfTraversedResourceTypes = new LinkedList<String> ();
@@ -261,7 +248,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double currentCarriedTrafficIfNotFailing = getDouble ("currentCarriedTrafficIfNotFailing");
 		final List<Double> currentLinksAndResourcesOccupationIfNotFailing = getListDouble("currentLinksAndResourcesOccupationIfNotFailing");
 		final List<NetworkElement> currentPath = getLinkAndResorceListFromIds(netPlan, getListLong("currentPath"));
-		String planningDomain = ""; try { planningDomain = getString ("planningDomain"); } catch (Exception e) {}
 
 		/* Initial route may not exist, if so current equals the initial */
 		List<NetworkElement> initialStatePath = new ArrayList<NetworkElement> (currentPath);
@@ -271,7 +257,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final List<Double> initialStateOccupationIfNotFailing = initialPathExists? getListDouble("initialStateOccupationIfNotFailing") : new ArrayList<Double> (currentLinksAndResourcesOccupationIfNotFailing);
 		
 		final Route newRoute = netPlan.addServiceChain(routeId , netPlan.getDemandFromId(demandId), initialStateCarriedTrafficIfNotFailing, 
-				initialStateOccupationIfNotFailing, initialStatePath, planningDomain , null);
+				initialStateOccupationIfNotFailing, initialStatePath, null);
 		newRoute.setPath(currentCarriedTrafficIfNotFailing, currentPath, currentLinksAndResourcesOccupationIfNotFailing);
 
 		/* To be added at the end: backup routes may not exist yet */
@@ -343,9 +329,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double lengthInKm = getDouble ("lengthInKm");
 		final double propagationSpeedInKmPerSecond = getDouble ("propagationSpeedInKmPerSecond");
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
-		String planningDomain = ""; try { planningDomain = getString ("planningDomain"); } catch (Exception e) {}
 
-		Link newLink = netPlan.addLink(linkId , netPlan.getNodeFromId(originNodeId), netPlan.getNodeFromId(destinationNodeId), capacity, lengthInKm, propagationSpeedInKmPerSecond, planningDomain , null , netPlan.getNetworkLayerFromId(layerId));
+		Link newLink = netPlan.addLink(linkId , netPlan.getNodeFromId(originNodeId), netPlan.getNodeFromId(destinationNodeId), capacity, lengthInKm, propagationSpeedInKmPerSecond, null , netPlan.getNetworkLayerFromId(layerId));
 		newLink.setFailureState(isUp);
 		readAndAddAttributesToEndAndPdForNodes(newLink, "link");
 	}
@@ -357,9 +342,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		if (srgId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		final double meanTimeToFailInHours = getDouble ("meanTimeToFailInHours");
 		final double meanTimeToRepairInHours = getDouble ("meanTimeToRepairInHours");
-		String planningDomain = ""; try { planningDomain = getString ("planningDomain"); } catch (Exception e) {}
 
-		SharedRiskGroup newSRG = netPlan.addSRG(srgId , meanTimeToFailInHours, meanTimeToRepairInHours, planningDomain , null);
+		SharedRiskGroup newSRG = netPlan.addSRG(srgId , meanTimeToFailInHours, meanTimeToRepairInHours, null);
 		Set<Node> srgNodes = getNodeSetFromIds(netPlan, getListLong("nodes"));
 		Set<Link> srgLinks = getLinkSetFromIds(netPlan, getListLong("links"));
 		for (Node n : srgNodes) newSRG.addNode(n);
@@ -378,13 +362,12 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final String capacityMeasurementUnits = getString ("capacityMeasurementUnits");
 		final double processingTimeToTraversingTrafficInMs = getDouble ("processingTimeToTraversingTrafficInMs");
 		final double capacity = getDouble ("capacity");
-		String planningDomain = ""; try { planningDomain = getString ("planningDomain"); } catch (Exception e) {}
 
 		URL urlIcon = null; try { urlIcon = new URL (getString ("urlIcon")); } catch (Exception e) {}
 		final List<Double> baseResourceAndOccupiedCapacitiesMap = getListDouble("baseResourceAndOccupiedCapacitiesMap");
 		Map<Resource,Double> occupiedCapacitiesInBaseResources = getResourceOccupationMap(netPlan, baseResourceAndOccupiedCapacitiesMap); 
 		Resource newResource = netPlan.addResource(resId , type , name , netPlan.getNodeFromId(hostNodeId) , capacity , capacityMeasurementUnits , 
-				occupiedCapacitiesInBaseResources , processingTimeToTraversingTrafficInMs , planningDomain , null);
+				occupiedCapacitiesInBaseResources , processingTimeToTraversingTrafficInMs , null);
 		newResource.setUrlIcon(urlIcon);
 		readAndAddAttributesToEndAndPdForNodes(newResource, "resource");
 	}
@@ -497,9 +480,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final long ingressNodeId = getLong ("ingressNodeId");
 		Set<Node> newEgressNodes = getNodeSetFromIds(netPlan ,  getListLong("egressNodeIds"));
 		final double offeredTraffic = getDouble ("offeredTraffic");
-		String planningDomain = ""; try { planningDomain = getString ("planningDomain"); } catch (Exception e) {}
 
-		final MulticastDemand newDemand = netPlan.addMulticastDemand(demandId , netPlan.getNodeFromId(ingressNodeId), newEgressNodes , offeredTraffic, planningDomain , null , netPlan.getNetworkLayerFromId(layerId));
+		final MulticastDemand newDemand = netPlan.addMulticastDemand(demandId , netPlan.getNodeFromId(ingressNodeId), newEgressNodes , offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
 		readAndAddAttributesToEndAndPdForNodes(newDemand, "multicastDemand");
 	}
 
@@ -556,12 +538,11 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		double carriedTrafficIfNotFailing = carriedTraffic; try { carriedTrafficIfNotFailing = getDouble ("carriedTrafficIfNotFailing"); } catch (Exception e) {} 
 		double occupiedLinkCapacityIfNotFailing = occupiedCapacity; try { occupiedLinkCapacityIfNotFailing = getDouble ("occupiedLinkCapacityIfNotFailing"); } catch (Exception e) {} 
 		if (occupiedCapacity < 0) occupiedCapacity = carriedTraffic;
-		String planningDomain = ""; try { planningDomain = getString ("planningDomain"); } catch (Exception e) {}
 
 		final MulticastDemand demand = netPlan.getMulticastDemandFromId(demandId);
 		final Set<Link> initialSetLinks_link = getLinkSetFromIds(netPlan, getListLong ("initialSetLinks"));
 		final Set<Link> currentSetLinks_link = getLinkSetFromIds(netPlan, getListLong ("currentSetLinks"));
-		final MulticastTree newTree = netPlan.addMulticastTree(treeId , demand , carriedTrafficIfNotFailing , occupiedLinkCapacityIfNotFailing , initialSetLinks_link , planningDomain , null);
+		final MulticastTree newTree = netPlan.addMulticastTree(treeId , demand , carriedTrafficIfNotFailing , occupiedLinkCapacityIfNotFailing , initialSetLinks_link , null);
 		newTree.setLinks(currentSetLinks_link);
 		readAndAddAttributesToEndAndPdForNodes (newTree , "multicastTree");
 	}
@@ -623,11 +604,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					String startElementName = xmlStreamReader.getName().toString();
 					switch(startElementName)
 					{
-						case "planningDomain": // just for nodes
-							if (!(updateElement instanceof Node)) throw new Net2PlanException ("Wrong format");
-							((Node) updateElement).addPlanningDomain(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "name")));
-							break;
-
 						case "tag":
 							updateElement.addTag(xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value")));
 							break;

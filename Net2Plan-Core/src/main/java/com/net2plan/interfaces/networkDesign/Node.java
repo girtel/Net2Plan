@@ -879,6 +879,14 @@ public class Node extends NetworkElement
 		for (MulticastTree tree : cache_nodeAssociatedulticastTrees) if (!tree.cache_traversedNodes.contains(this)) throw new RuntimeException ("Bad");
 	}
 
+	/** Returns the set of planning domains this node belongs to (could be empty)
+	 * @return see above
+	 */
+	public Set<String> getPlanningDomains ()
+	{
+		return Collections.unmodifiableSet(this.planningDomains);
+	}
+	
 	/** Remove this node from the given planning domain, if it belongs to it
 	 * @param planningDomain
 	 */

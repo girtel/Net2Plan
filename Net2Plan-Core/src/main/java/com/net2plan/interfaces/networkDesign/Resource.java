@@ -55,9 +55,9 @@ public class Resource extends NetworkElement
 	Resource (NetPlan netPlan , long id , int index , String type , String name , Node hostNode , 
 			double capacity , String capacityMeasurementUnits,
 			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , 
-			String planningDomain, AttributeMap attributes)
+			AttributeMap attributes)
 	{
-		super (netPlan , id , index , planningDomain, attributes);
+		super (netPlan , id , index , attributes);
 
 		if (!netPlan.equals(hostNode.netPlan)) throw new Net2PlanException ("The Resource host node is in a different NetPlan object (or removed)"); 
 		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative");

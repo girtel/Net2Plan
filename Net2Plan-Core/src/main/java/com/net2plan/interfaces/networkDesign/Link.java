@@ -479,7 +479,6 @@ public class Link extends NetworkElement
 	public void coupleToLowerLayerDemand (Demand demand)
 	{
 		checkAttachedToNetPlanObject();
-		checkSamePlanningDomain(demand);
 		netPlan.checkIsModifiable();
 		demand.coupleToUpperLayerLink(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
@@ -496,10 +495,7 @@ public class Link extends NetworkElement
 		netPlan.checkIsModifiable();
 		newDemandLayer.checkAttachedToNetPlanObject(this.netPlan);
 		if (this.layer.equals (newDemandLayer)) throw new Net2PlanException ("Cannot couple a link and a demand in the same layer");
-		String oldPd = netPlan.defaultPlanningDomainForNewElements;
-		netPlan.defaultPlanningDomainForNewElements = this.getPlanningDomain();
 		Demand newDemand = netPlan.addDemand(originNode ,  destinationNode , capacity , null , newDemandLayer);
-		netPlan.defaultPlanningDomainForNewElements = oldPd;
 		try { newDemand.coupleToUpperLayerLink(this); } catch (RuntimeException e) { newDemand.remove (); throw e; }
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 		return newDemand;
