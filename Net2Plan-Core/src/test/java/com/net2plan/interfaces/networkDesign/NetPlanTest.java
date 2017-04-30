@@ -1044,7 +1044,8 @@ public class NetPlanTest
 		final Route rlow13 = np.addRoute(dlow13, 0, 0, Arrays.asList(low12,low23), null);
 		np2 = np.copy();
 		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)) , false);
-		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,n1,n2,n3,low12,low23,dlow12,dlow13,rlow13)));
+		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,
+				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13)));
 
 		final Link upperLink13 = dlow13.coupleToNewLinkCreated(upperLayer);
 
