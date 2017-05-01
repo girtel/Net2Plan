@@ -1021,28 +1021,28 @@ public class NetPlanTest
 		checkEqual(np, merged);
 		
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId())) , false);
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId())));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId())) , false);
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId())));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n3.getId())) , false);
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n3.getId())));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n2.getId()),restricted.getNodeFromId(n2.getId())) , false);
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n2.getId()),restricted.getNodeFromId(n2.getId())));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 
 
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId()) , restricted.getNodeFromId(n3.getId())) , false);
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId()) , restricted.getNodeFromId(n3.getId())));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 		
@@ -1063,31 +1063,31 @@ public class NetPlanTest
 		final Demand dlow12 = np.addDemand(n1, n2, 0, null, lowerLayer);
 		
 		NetPlan np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3),np2.getNodeFromId(idn4)) , false);
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3),np2.getNodeFromId(idn4)));
 		assertEquals(np2.getAllIds() , np.getAllIds());
 
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet() , false);
+		np2.restrictDesign(Sets.newHashSet());
 		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np , lowerLayer , upperLayer)));
 		
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2)) , false);
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2)));
 		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np , lowerLayer , upperLayer , n1,n2,low12,dlow12)));
 
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3)) , false);
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3)));
 		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,n1,n2,n3,low12,low23,dlow12)));
 
 		final Demand dlow13 = np.addDemand(n1, n3, 0, null, lowerLayer);
 		final Route rlow13 = np.addRoute(dlow13, 0, 0, Arrays.asList(low12,low23), null);
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)) , false);
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)));
 		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,
 				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13)));
 
 		final Link upperLink13 = dlow13.coupleToNewLinkCreated(upperLayer);
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)) , false);
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)));
 		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,
 				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13,upperLink13)));
 
