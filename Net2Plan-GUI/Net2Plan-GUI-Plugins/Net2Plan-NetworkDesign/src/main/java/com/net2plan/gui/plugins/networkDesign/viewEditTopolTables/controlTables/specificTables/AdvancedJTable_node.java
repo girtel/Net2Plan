@@ -603,8 +603,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             this.addActionListener(e ->
             {
         		final NetPlan np = callback.getDesign();
-        		final NetworkLayer layer = np.getNetworkLayerDefault();
-        		np.restrictToPlanningDomain (new HashSet<> (selectedNodes) , layer , true);
+        		np.restrictDesign(new HashSet<> (selectedNodes));
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                 callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
