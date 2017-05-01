@@ -14,6 +14,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -1011,6 +1013,42 @@ public class NetPlanTest
 	}
 		
 	@Test
+	public void testMerge ()
+	{
+		/* Merge with a copy of itself */
+		NetPlan restricted = np.copy();
+		NetPlan merged = np.copy().mergeIntoThisDesign(restricted);
+		checkEqual(np, merged);
+		
+		restricted = np.copy();
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId())) , false);
+		merged = np.copy().mergeIntoThisDesign(restricted);
+		checkEqual(np, merged);
+
+		restricted = np.copy();
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId())) , false);
+		merged = np.copy().mergeIntoThisDesign(restricted);
+		checkEqual(np, merged);
+
+		restricted = np.copy();
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n3.getId())) , false);
+		merged = np.copy().mergeIntoThisDesign(restricted);
+		checkEqual(np, merged);
+
+		restricted = np.copy();
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n2.getId()),restricted.getNodeFromId(n2.getId())) , false);
+		merged = np.copy().mergeIntoThisDesign(restricted);
+		checkEqual(np, merged);
+
+
+		restricted = np.copy();
+		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId()) , restricted.getNodeFromId(n3.getId())) , false);
+		merged = np.copy().mergeIntoThisDesign(restricted);
+		checkEqual(np, merged);
+		
+	}
+	
+	@Test
 	public void testRestrictCopy ()
 	{
 		NetPlan np = new NetPlan ();
@@ -1048,6 +1086,10 @@ public class NetPlanTest
 				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13)));
 
 		final Link upperLink13 = dlow13.coupleToNewLinkCreated(upperLayer);
+		np2 = np.copy();
+		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)) , false);
+		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,
+				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13,upperLink13)));
 
 	}		
 //		allElements = new HashSet<> ();
@@ -1136,4 +1178,47 @@ public class NetPlanTest
 //	}
 //
 
+	private void checkEqual (NetPlan np1 , NetPlan np2)
+	{
+		assertEquals(np1.getNetworkLayers().stream().map(e->e.getName()).collect(Collectors.toSet()) , np2.getNetworkLayers().stream().map(e->e.getName()).collect(Collectors.toSet()));
+		if (np1.getNumberOfNodes() != np2.getNumberOfNodes())throw new RuntimeException();
+		if (np1.getNumberOfResources() != np2.getNumberOfResources())throw new RuntimeException();
+		if (np1.getNumberOfSRGs() != np2.getNumberOfSRGs())throw new RuntimeException();
+		for (int index = 0; index < np1.getNumberOfLayers() ; index ++)
+		{
+			final NetworkLayer l1 = np1.getNetworkLayer(index);
+			final NetworkLayer l2 = np2.getNetworkLayer(index);
+			if (np1.getNumberOfLinks(l1) != np2.getNumberOfLinks(l2)) throw new RuntimeException();
+			if (np1.getNumberOfDemands(l1) != np2.getNumberOfDemands(l2)) throw new RuntimeException();
+			if (np1.getNumberOfMulticastDemands(l1) != np2.getNumberOfMulticastDemands(l2)) throw new RuntimeException();
+			if (np1.getNumberOfMulticastTrees(l1) != np2.getNumberOfMulticastTrees(l2)) throw new RuntimeException();
+			if (l1.isSourceRouting())
+			{
+				if (np1.getNumberOfRoutes(l1) != np2.getNumberOfRoutes(l2)) throw new RuntimeException();
+			}
+			else
+			{
+				if (np1.getNumberOfForwardingRules(l1) != np2.getNumberOfForwardingRules(l2)) throw new RuntimeException();
+			}
+			assertEquals(np1.getVectorDemandOfferedTraffic(l1).zSum() , np2.getVectorDemandOfferedTraffic(l2).zSum() , 0.0001);
+			assertEquals(np1.getVectorDemandCarriedTraffic(l1).zSum() , np2.getVectorDemandCarriedTraffic(l2).zSum() , 0.0001);
+			assertEquals(np1.getVectorMulticastDemandOfferedTraffic(l1).zSum() , np2.getVectorMulticastDemandOfferedTraffic(l2).zSum() , 0.0001);
+			assertEquals(np1.getVectorMulticastDemandCarriedTraffic(l1).zSum() , np2.getVectorMulticastDemandCarriedTraffic(l2).zSum() , 0.0001);
+			assertEquals(np1.getVectorLinkCarriedTraffic(l1).zSum() , np2.getVectorLinkCarriedTraffic(l2).zSum() , 0.0001);
+			assertEquals(np1.getVectorLinkOccupiedCapacity(l1).zSum() , np2.getVectorLinkOccupiedCapacity(l2).zSum() , 0.0001);
+			assertEquals(np1.getVectorMulticastTreeCarriedTraffic(l1).zSum() , np2.getVectorMulticastTreeCarriedTraffic(l2).zSum() , 0.0001);
+			if (l1.isSourceRouting())
+				assertEquals(np1.getVectorRouteCarriedTraffic(l1).zSum() , np2.getVectorRouteCarriedTraffic(l2).zSum() , 0.0001);
+			final long numCoupledLinks_1 = np1.getLinks(l1).stream().filter(e->e.isCoupled()).count();
+			final long numCoupledLinks_2 = np2.getLinks(l2).stream().filter(e->e.isCoupled()).count();
+			final long numCoupledDemands_1 = np1.getDemands(l1).stream().filter(e->e.isCoupled()).count();
+			final long numCoupledDemands_2 = np2.getDemands(l2).stream().filter(e->e.isCoupled()).count();
+			final long numCoupledMDemands_1 = np1.getMulticastDemands(l1).stream().filter(e->e.isCoupled()).count();
+			final long numCoupledMDemands_2 = np2.getMulticastDemands(l2).stream().filter(e->e.isCoupled()).count();
+			assertEquals (numCoupledLinks_1 , numCoupledLinks_2);
+			assertEquals (numCoupledDemands_1 , numCoupledDemands_2);
+			assertEquals (numCoupledMDemands_1 , numCoupledMDemands_2);
+		}
+	}
+	
 }
