@@ -2,17 +2,13 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Jorge San Emeterio
@@ -21,8 +17,6 @@ import java.util.Set;
 class SiteState extends ViewState
 {
     private String siteName;
-
-    private final double DISTANCE_GOAL = 1 + (1e-4);
 
     SiteState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
@@ -44,34 +38,12 @@ class SiteState extends ViewState
 
     public void zoomSite()
     {
-        final VisualizationState visualizationState = callback.getVisualizationState();
         final NetPlan netPlan = callback.getDesign();
 
         // Finding site nodes
         final List<Node> nodeList = new ArrayList<>(netPlan.getSiteNodes(siteName));
-        final Set<GUINode> visibleGUINodes = new HashSet<>();
 
-        for (Node siteNode : nodeList)
-            visibleGUINodes.addAll(visualizationState.getCanvasVerticallyStackedGUINodes(siteNode));
-
-        zoomNodes(visibleGUINodes);
-
-        // When only one node, the zoom must be corrected.
-        if (nodeList.size() == 1)
-        {
-            final Point2D referencePoint = canvas.getCanvasPointFromScreenPoint(canvas.getCanvasCenter());
-            final Node node = nodeList.get(0);
-
-            double prevDistance = Double.MAX_VALUE;
-            double distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
-
-            while (prevDistance / distance > DISTANCE_GOAL)
-            {
-                zoomIn();
-                prevDistance = distance;
-                distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
-            }
-        }
+        zoomNodes(nodeList);
     }
 
     private double calculateDistance(Point2D point0, Point2D point1)

@@ -19,6 +19,8 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -90,24 +92,29 @@ class ViewState implements ICanvasState
     @Override
     public void zoomAll()
     {
-        final VisualizationState vs = callback.getVisualizationState();
-        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(vs::isVisibleInCanvas).collect(Collectors.toSet());
-
-        zoomNodes(visibleGUINodes);
+        zoomNodes(callback.getDesign().getNodes());
     }
 
-    protected void zoomNodes(Set<GUINode> nodes)
+    protected void zoomNodes(List<Node> nodes)
     {
         if (nodes.isEmpty()) return;
+
+        // Saving previous zoom
+        float previousZoom = (float) canvas.getCurrentCanvasScale();
 
         // Returns the canvas transformer to its original state, so that Layout = View.
         canvas.resetTransformer();
 
+        final VisualizationState vs = callback.getVisualizationState();
+        final Set<GUINode> guiNodes = new HashSet<>();
+        for (Node node : nodes)
+            guiNodes.addAll(vs.getCanvasVerticallyStackedGUINodes(node));
+
         // Getting topology limits
-        final Set<Double> nodeXCoordJUNG = nodes.stream()
+        final Set<Double> nodeXCoordJUNG = guiNodes.stream()
                 .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNode().getXYPositionMap()).getX())
                 .collect(Collectors.toSet());
-        final Set<Double> nodeYCoordJUNG = nodes.stream()
+        final Set<Double> nodeYCoordJUNG = guiNodes.stream()
                 .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNode().getXYPositionMap()).getY())
                 .collect(Collectors.toSet());
 
@@ -126,7 +133,7 @@ class ViewState implements ICanvasState
 
         float ratio = (float) (0.6 * Math.min(ratio_h, ratio_v));
 
-        canvas.zoom(canvas.getCanvasCenter(), ratio);
+        canvas.zoom(canvas.getCanvasCenter(), nodes.size() == 1 ? previousZoom : ratio);
 
         Point2D topologyCenterJungCoord = new Point2D.Double((xminJungCoords + xmaxJungCoords) / 2, (yminJungCoords + ymaxJungCoords) / 2);
         Point2D windowCenterJungCoord = canvas.getCanvasPointFromScreenPoint(canvas.getCanvasCenter());
