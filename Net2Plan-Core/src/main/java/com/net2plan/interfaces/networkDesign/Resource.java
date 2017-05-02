@@ -54,7 +54,8 @@ public class Resource extends NetworkElement
 	
 	Resource (NetPlan netPlan , long id , int index , String type , String name , Node hostNode , 
 			double capacity , String capacityMeasurementUnits,
-			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
+			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , 
+			AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 
@@ -223,6 +224,13 @@ public class Resource extends NetworkElement
 		return capacityMeasurementUnits;
 	}
 	
+	/** Sets the units in which the capacity of this resource is measured
+	 * @param units see above
+	 */
+	public void setCapacityMeasurementUnits(String units) 
+	{
+		this.capacityMeasurementUnits = units;
+	}
 	
 	/** Gets the capacity in resource units of this resource
 	 * @return the capacity
@@ -437,7 +445,7 @@ public class Resource extends NetworkElement
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.resources , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+		removeIdAndFromPlanningDomain ();
 	}
 
 	

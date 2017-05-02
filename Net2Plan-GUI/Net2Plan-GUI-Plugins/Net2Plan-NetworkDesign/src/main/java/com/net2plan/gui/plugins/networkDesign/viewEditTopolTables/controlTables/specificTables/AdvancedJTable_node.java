@@ -118,7 +118,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         
         for (Node node : rowVisibleNodes)
         {
-        	if (!node.isFullyIsolated() && !node.isConnectedRelevantAtLayer(layer)) continue;
+        	final Set<NetworkLayer> workingLayers = node.getWorkingLayers();
+        	if (!workingLayers.isEmpty() && !workingLayers.contains(layer)) continue;
             Object[] nodeData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
             nodeData[COLUMN_ID] = node.getId();
             nodeData[COLUMN_INDEX] = node.getIndex();
@@ -578,8 +579,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             this.addActionListener(e ->
             {
         		final NetPlan np = callback.getDesign();
-        		final NetworkLayer layer = np.getNetworkLayerDefault();
-        		np.restrictToPlanningDomain (new HashSet<> (selectedNodes) , layer , true);
+        		np.restrictDesign(new HashSet<> (selectedNodes));
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
                 callback.runCanvasOperation(CanvasFunction.ZOOM_ALL);

@@ -584,7 +584,7 @@ public class Link extends NetworkElement
 
 		ErrorHandling.DEBUG = previousErrorHandling;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 	
 	/**
@@ -844,63 +844,63 @@ public class Link extends NetworkElement
 		return Triple.of(resPrimary,resBackup,resMCast);
 	}
 
-	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>
-		getLinksUpperLayersPotentiallyPuttingTrafficInThisLink  (boolean assumeNoFailureState , Triple<Set<Demand>,Set<Demand>,Set<Pair<MulticastDemand,Node>>> thisLayerDemandsPuttingTrafficThisLink)
-	{
-		if (thisLayerDemandsPuttingTrafficThisLink == null)
-		{
-			Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
-					this.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
-			thisLayerDemandsPuttingTrafficThisLink = Triple.of(triple.getFirst().keySet(), triple.getSecond().keySet(), triple.getThird().keySet());
-		}
-		
-		/* Add upper layer info*/
-		final Map<Demand,Set<Link>> res_unicastPrimary = new HashMap<> ();
-		final Map<Demand,Set<Link>> res_unicastBackup = new HashMap<> ();
-		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> ();
-
-		/* Propagate to two layers up, and accumulate results */
-		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getFirst())
-		{
-			if (thisLayerDemand.isCoupled())
-			{
-				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
-				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
-						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
-				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
-				res_multicast.putAll(res_upperLayer.getThird()); 
-			}
-		}
-		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getSecond())
-		{
-			if (thisLayerDemand.isCoupled())
-			{
-				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
-				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
-						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-				res_unicastBackup.putAll(res_upperLayer.getFirst()); // backup traffic in primary links -> backup
-				res_unicastBackup.putAll(res_upperLayer.getSecond()); // backup traffic in backup links -> backup
-				res_multicast.putAll(res_upperLayer.getThird()); 
-			}
-		}
-
-		for (Pair<MulticastDemand,Node> thisLayerMDemandInfo : thisLayerDemandsPuttingTrafficThisLink.getThird())
-		{
-			final MulticastDemand thisLayerMDemand = thisLayerMDemandInfo.getFirst();
-			final Node mDemandEgressNode = thisLayerMDemandInfo.getSecond();
-			if (thisLayerMDemand.isCoupled()) 
-			{
-				final Link upperLayerLink = thisLayerMDemand.coupledUpperLayerLinks.get(mDemandEgressNode);
-				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
-						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
-				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
-				res_multicast.putAll(res_upperLayer.getThird()); 
-			}
-		}
-		return Triple.of(res_unicastPrimary, res_unicastBackup , res_multicast);
-	}
+//	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>
+//		getLinksUpperLayersPotentiallyPuttingTrafficInThisLink  (boolean assumeNoFailureState , Triple<Set<Demand>,Set<Demand>,Set<Pair<MulticastDemand,Node>>> thisLayerDemandsPuttingTrafficThisLink)
+//	{
+//		if (thisLayerDemandsPuttingTrafficThisLink == null)
+//		{
+//			Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+//					this.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
+//			thisLayerDemandsPuttingTrafficThisLink = Triple.of(triple.getFirst().keySet(), triple.getSecond().keySet(), triple.getThird().keySet());
+//		}
+//		
+//		/* Add upper layer info*/
+//		final Map<Demand,Set<Link>> res_unicastPrimary = new HashMap<> ();
+//		final Map<Demand,Set<Link>> res_unicastBackup = new HashMap<> ();
+//		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> ();
+//
+//		/* Propagate to two layers up, and accumulate results */
+//		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getFirst())
+//		{
+//			if (thisLayerDemand.isCoupled())
+//			{
+//				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
+//				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+//						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
+//				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
+//				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
+//				res_multicast.putAll(res_upperLayer.getThird()); 
+//			}
+//		}
+//		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getSecond())
+//		{
+//			if (thisLayerDemand.isCoupled())
+//			{
+//				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
+//				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+//						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
+//				res_unicastBackup.putAll(res_upperLayer.getFirst()); // backup traffic in primary links -> backup
+//				res_unicastBackup.putAll(res_upperLayer.getSecond()); // backup traffic in backup links -> backup
+//				res_multicast.putAll(res_upperLayer.getThird()); 
+//			}
+//		}
+//
+//		for (Pair<MulticastDemand,Node> thisLayerMDemandInfo : thisLayerDemandsPuttingTrafficThisLink.getThird())
+//		{
+//			final MulticastDemand thisLayerMDemand = thisLayerMDemandInfo.getFirst();
+//			final Node mDemandEgressNode = thisLayerMDemandInfo.getSecond();
+//			if (thisLayerMDemand.isCoupled()) 
+//			{
+//				final Link upperLayerLink = thisLayerMDemand.coupledUpperLayerLinks.get(mDemandEgressNode);
+//				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+//						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
+//				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
+//				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
+//				res_multicast.putAll(res_upperLayer.getThird()); 
+//			}
+//		}
+//		return Triple.of(res_unicastPrimary, res_unicastBackup , res_multicast);
+//	}
 
 
 	private void updateWorstCasePropagationTraversingUnicastDemandsAndMaybeRoutes ()

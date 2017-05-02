@@ -569,8 +569,6 @@ public class Demand extends NetworkElement
 	{
 		netPlan.checkIsModifiable();
 		checkAttachedToNetPlanObject();
-		link.checkAttachedToNetPlanObject(this.netPlan);
-		
 		final NetworkLayer upperLayer = link.layer;
 		final NetworkLayer lowerLayer = this.layer;
 		
@@ -740,7 +738,7 @@ public class Demand extends NetworkElement
 		ingressNode.cache_nodeOutgoingDemands.remove (this);
 		egressNode.cache_nodeIncomingDemands.remove (this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 	
 	/**

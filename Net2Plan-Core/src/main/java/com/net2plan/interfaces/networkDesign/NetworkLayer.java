@@ -249,25 +249,6 @@ public class NetworkLayer extends NetworkElement
 		this.name = name;
 	}
 
-	/** Returns the set of planning domains used by at least one element in this layer (demand, mdemand, route, tree, link, resource 
-	 * (if traversed by a service chain in this layer)) 
-	 * @return see above
-	 */
-	public Set<String> getPlanningDomainsInUse ()
-	{
-		final Set<String> res = new HashSet<>();
-		links.stream().forEach(e->res.add(e.getPlanningDomain()));
-		demands.stream().forEach(e->res.add(e.getPlanningDomain()));
-		multicastDemands.stream().forEach(e->res.add(e.getPlanningDomain()));
-		multicastTrees.stream().forEach(e->res.add(e.getPlanningDomain()));
-		if (this.isSourceRouting())
-		{
-			routes.stream().forEach(e->res.add(e.getPlanningDomain()));
-			routes.stream().map(e->e.getSeqResourcesTraversed()).flatMap(r->r.stream()).forEach(e->res.add(e.getPlanningDomain()));
-		}
-		return res;
-	}
-	
 	/**
 	 * Checks whether routing type is the expected one. When negative, an exception will be thrown.
 	 * @param routingType Expected {@link com.net2plan.utils.Constants.RoutingType RoutingType}

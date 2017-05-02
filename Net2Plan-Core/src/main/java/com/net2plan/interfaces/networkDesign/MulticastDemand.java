@@ -401,7 +401,7 @@ public class MulticastDemand extends NetworkElement
 		for (Node egressNode : egressNodes) egressNode.cache_nodeIncomingMulticastDemands.remove (this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 
 	

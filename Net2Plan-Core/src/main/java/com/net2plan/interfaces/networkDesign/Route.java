@@ -528,7 +528,7 @@ public class Route extends NetworkElement
         }
 
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 
 	/** Sets the route carried traffic and the occupied capacity in the traversed links and resources (typically the same as the carried traffic),

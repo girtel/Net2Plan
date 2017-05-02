@@ -60,6 +60,7 @@ import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.jgrapht.graph.Subgraph;
 import org.jgrapht.graph.UndirectedSubgraph;
 
+import com.google.common.collect.Sets;
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;

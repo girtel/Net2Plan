@@ -329,7 +329,7 @@ public class SharedRiskGroup extends NetworkElement
 		netPlan.cache_id2srgMap.remove (id);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.srgs , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+		removeIdAndFromPlanningDomain ();
 	}
 
 	/**
