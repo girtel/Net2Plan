@@ -48,31 +48,29 @@ class SiteState extends ViewState
         final NetPlan netPlan = callback.getDesign();
 
         // Finding site nodes
-        final Set<Node> siteNodes = netPlan.getSiteNodes(siteName);
+        final List<Node> nodeList = new ArrayList<>(netPlan.getSiteNodes(siteName));
         final Set<GUINode> visibleGUINodes = new HashSet<>();
 
-        for (Node siteNode : siteNodes)
+        for (Node siteNode : nodeList)
             visibleGUINodes.addAll(visualizationState.getCanvasVerticallyStackedGUINodes(siteNode));
 
         zoomNodes(visibleGUINodes);
-        frameSite(siteNodes);
-    }
 
-    private void frameSite(Set<Node> nodes)
-    {
-        List<Node> nodeList = new ArrayList<>(nodes);
-
-        final Point2D referencePoint = canvas.getCanvasPointFromScreenPoint(canvas.getCanvasCenter());
-        final Node node = nodeList.get(0);
-
-        double prevDistance = Double.MAX_VALUE;
-        double distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
-
-        while (prevDistance / distance > DISTANCE_GOAL)
+        // When only one node, the zoom must be corrected.
+        if (nodeList.size() == 1)
         {
-            zoomIn();
-            prevDistance = distance;
-            distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
+            final Point2D referencePoint = canvas.getCanvasPointFromScreenPoint(canvas.getCanvasCenter());
+            final Node node = nodeList.get(0);
+
+            double prevDistance = Double.MAX_VALUE;
+            double distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
+
+            while (prevDistance / distance > DISTANCE_GOAL)
+            {
+                zoomIn();
+                prevDistance = distance;
+                distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
+            }
         }
     }
 

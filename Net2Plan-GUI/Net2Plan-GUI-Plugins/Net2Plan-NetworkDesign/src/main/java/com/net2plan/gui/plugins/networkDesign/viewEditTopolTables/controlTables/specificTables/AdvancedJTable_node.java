@@ -128,26 +128,23 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             nodeData[COLUMN_STATE] = node.isUp();
             nodeData[COLUMN_XCOORD] = node.getXYPositionMap().getX();
             nodeData[COLUMN_YCOORD] = node.getXYPositionMap().getY();
-            updateRowSum(nodeData, dataAggregator, COLUMN_NUMOUTLINKS, (double) node.getOutgoingLinks(layer).size());
-            updateRowSum(nodeData, dataAggregator, COLUMN_NUMINLINKS, (double) node.getIncomingLinks(layer).size());
-            updateRowSum(nodeData, dataAggregator, COLUMN_INCOMINGLINKTRAFFIC, (double) node.getIncomingLinksTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_OUTGOINGLINKTRAFFIC, (double) node.getOutgoingLinksTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_OUTTRAFFICUNICAST, (double) node.getIngressCarriedTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_INTRAFFICUNICAST, (double) node.getEgressCarriedTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_OUTTRAFFICMULTICAST, (double) node.getIngressCarriedMulticastTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_INTRAFFICMULTICAST, (double) node.getEgressCarriedMulticastTraffic(layer));
+            updateRowSum(nodeData, dataAggregator, COLUMN_NUMOUTLINKS, node.getOutgoingLinks(layer).size());
+            updateRowSum(nodeData, dataAggregator, COLUMN_NUMINLINKS, node.getIncomingLinks(layer).size());
+            updateRowSum(nodeData, dataAggregator, COLUMN_INCOMINGLINKTRAFFIC, node.getIncomingLinksTraffic(layer));
+            updateRowSum(nodeData, dataAggregator, COLUMN_OUTGOINGLINKTRAFFIC, node.getOutgoingLinksTraffic(layer));
+            updateRowSum(nodeData, dataAggregator, COLUMN_OUTTRAFFICUNICAST, node.getIngressCarriedTraffic(layer));
+            updateRowSum(nodeData, dataAggregator, COLUMN_INTRAFFICUNICAST, node.getEgressCarriedTraffic(layer));
+            updateRowSum(nodeData, dataAggregator, COLUMN_OUTTRAFFICMULTICAST, node.getIngressCarriedMulticastTraffic(layer));
+            updateRowSum(nodeData, dataAggregator, COLUMN_INTRAFFICMULTICAST, node.getEgressCarriedMulticastTraffic(layer));
             nodeData[COLUMN_SRGS] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(NetPlan.getIndexes(node.getSRGs()), ", ") + ")";
-            updateRowSum(nodeData, dataAggregator, COLUMN_POPULATION, (double) node.getPopulation());
-            nodeData[COLUMN_SITE] = node.getSiteName();
+            updateRowSum(nodeData, dataAggregator, COLUMN_POPULATION, node.getPopulation());
+            nodeData[COLUMN_SITE] = node.getSiteName() != null ? node.getSiteName() : "";
             nodeData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(node.getTags()));
             nodeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(node.getAttributes());
+
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size(); i++)
-            {
                 if (node.getAttributes().containsKey(attributesTitles.get(i - netPlanViewTableHeader.length)))
-                {
                     nodeData[i] = node.getAttribute(attributesTitles.get(i - netPlanViewTableHeader.length));
-                }
-            }
 
             allNodeData.add(nodeData);
         }
@@ -711,5 +708,4 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             });
         }
     }
-
 }
