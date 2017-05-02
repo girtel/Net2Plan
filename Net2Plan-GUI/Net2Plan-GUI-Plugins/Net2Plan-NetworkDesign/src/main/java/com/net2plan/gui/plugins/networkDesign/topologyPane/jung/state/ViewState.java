@@ -124,7 +124,7 @@ class ViewState implements ICanvasState
         final double ymaxJungCoords = Collections.max(nodeYCoordJUNG);
         final double yminJungCoords = Collections.min(nodeYCoordJUNG);
 
-        double PRECISION_FACTOR = 0.00001;
+        double PRECISION_FACTOR = 1e-6;
 
         final Rectangle viewInLayoutUnits = canvas.getCurrentCanvasViewWindow();
 

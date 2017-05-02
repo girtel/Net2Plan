@@ -6,7 +6,6 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMCo
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,13 +41,10 @@ class SiteState extends ViewState
 
         // Finding site nodes
         final List<Node> nodeList = new ArrayList<>(netPlan.getSiteNodes(siteName));
+        callback.getVisualizationState().pickElement(nodeList);
+        callback.updateVisualizationAfterPick();
 
         zoomNodes(nodeList);
-    }
-
-    private double calculateDistance(Point2D point0, Point2D point1)
-    {
-        return Math.sqrt(Math.pow(point1.getX() - point0.getX(), 2) + Math.pow(point1.getY() - point0.getY(), 2));
     }
 
     @Override
