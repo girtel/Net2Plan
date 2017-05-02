@@ -19,7 +19,6 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.CanvasFunction;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -147,9 +146,6 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             actions.add(unidirectionalMenu);
             actions.add(bidirectionalMenu);
         }
-
-        actions.add(new JPopupMenu.Separator());
-        actions.add(new JMenuItem(new ActivateSiteViewAction("Activate site view", node)));
 
         return actions;
     }
@@ -284,23 +280,6 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         public void actionPerformed(ActionEvent e)
         {
             canvas.addNode(positionInNetPlanCoordinates);
-        }
-    }
-
-    private class ActivateSiteViewAction extends AbstractAction
-    {
-        private final Node node;
-
-        public ActivateSiteViewAction(String name, Node node)
-        {
-            super(name);
-            this.node = node;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent actionEvent)
-        {
-            canvas.setState(CanvasOption.OSMState, node);
         }
     }
 

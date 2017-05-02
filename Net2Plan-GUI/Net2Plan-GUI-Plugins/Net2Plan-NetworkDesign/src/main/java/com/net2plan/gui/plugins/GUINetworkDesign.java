@@ -733,6 +733,7 @@ public class GUINetworkDesign extends IGUIModule
             viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
 
         topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
+        topologyPanel.updateTopToolbar();
         focusPanel.updateView();
     }
 
@@ -744,6 +745,11 @@ public class GUINetworkDesign extends IGUIModule
         topologyPanel.getCanvas().zoomAll();
         viewEditTopTables.updateView();
         focusPanel.updateView();
+    }
+
+    public void updateVisualizationAfterCanvasState()
+    {
+        topologyPanel.updateMultilayerPanel();
     }
 
     public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()

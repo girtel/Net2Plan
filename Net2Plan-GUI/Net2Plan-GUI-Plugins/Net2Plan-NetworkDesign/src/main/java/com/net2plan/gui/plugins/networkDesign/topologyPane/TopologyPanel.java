@@ -292,6 +292,11 @@ public class TopologyPanel extends JPanel
         }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
     }
 
+    public final void updateTopToolbar()
+    {
+        topBar.update();
+    }
+
     public final void updateMultilayerPanel()
     {
         sideBar.getMultilayerControlPanel().refreshTable();

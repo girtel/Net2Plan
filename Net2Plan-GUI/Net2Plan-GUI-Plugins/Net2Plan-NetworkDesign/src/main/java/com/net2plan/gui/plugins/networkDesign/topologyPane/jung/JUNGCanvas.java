@@ -14,7 +14,6 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.GraphMousePluginAdapter;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
@@ -79,8 +78,6 @@ public final class JUNGCanvas implements ITopologyCanvas
 
     private final CanvasStateController stateController;
 
-    private List<IObserver> observers;
-
     /**
      * Default constructor.
      *
@@ -89,7 +86,6 @@ public final class JUNGCanvas implements ITopologyCanvas
     public JUNGCanvas(GUINetworkDesign callback, TopologyPanel topologyPanel)
     {
         this.callback = callback;
-        this.observers = new ArrayList<>();
 
     	transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
@@ -422,26 +418,12 @@ public final class JUNGCanvas implements ITopologyCanvas
     public void setState(CanvasOption state, Object... stateParams)
     {
         stateController.setState(state, stateParams);
-        notifyAllListeners();
     }
 
     @Override
     public CanvasOption getState()
     {
         return stateController.getState();
-    }
-
-    @Override
-    public void addListener(IObserver observer)
-    {
-        observers.add(observer);
-    }
-
-    @Override
-    public void notifyAllListeners()
-    {
-        for (IObserver observer : observers)
-            observer.update();
     }
 
     @Override

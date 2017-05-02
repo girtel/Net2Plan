@@ -1,8 +1,6 @@
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
 import com.google.common.collect.Sets;
-import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
-import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.ISubject;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.interfaces.networkDesign.*;
@@ -18,13 +16,11 @@ import java.util.stream.Collectors;
  * @author Jorge San Emeterio
  * @date 25/04/17
  */
-class PickManager implements ISubject
+class PickManager
 {
     private final VisualizationState vs;
 
     private final PickTimeLineManager pickTimeLineManager;
-
-    private final List<IObserver> observers;
 
     private List<? extends NetworkElement> pickedElement;
     private List<Pair<Demand, Link>> pickedForwardingRule;
@@ -34,7 +30,6 @@ class PickManager implements ISubject
         this.vs = vs;
 
         this.pickTimeLineManager = new PickTimeLineManager();
-        this.observers = new ArrayList<>();
     }
 
     void reset()
@@ -60,8 +55,6 @@ class PickManager implements ISubject
         this.pickedForwardingRule = null;
         this.pickedElement = Arrays.asList(pickedLayer);
         this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedLayer);
-
-        notifyAllListeners();
     }
 
     void pickDemand(List<Demand> pickedDemands)
@@ -126,8 +119,6 @@ class PickManager implements ISubject
                 gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
-
-        notifyAllListeners();
     }
 
     void pickSRG(List<SharedRiskGroup> pickedSRGs)
@@ -193,8 +184,6 @@ class PickManager implements ISubject
                 gl.setShownSeparated(true);
             }
         }
-
-        notifyAllListeners();
     }
 
     void pickMulticastDemand(List<MulticastDemand> pickedDemands)
@@ -248,8 +237,6 @@ class PickManager implements ISubject
                 gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
             }
         }
-
-        notifyAllListeners();
     }
 
     void pickRoute(List<Route> pickedRoutes)
@@ -291,8 +278,6 @@ class PickManager implements ISubject
                 gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
             }
         }
-
-        notifyAllListeners();
     }
 
     void pickMulticastTree(List<MulticastTree> pickedTrees)
@@ -341,8 +326,6 @@ class PickManager implements ISubject
                 gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
             }
         }
-
-        notifyAllListeners();
     }
 
     void pickLink(List<Link> pickedLinks)
@@ -393,8 +376,6 @@ class PickManager implements ISubject
                 gl.setShownSeparated(true);
             }
         }
-
-        notifyAllListeners();
     }
 
     void pickNode(List<Node> pickedNodes)
@@ -418,8 +399,6 @@ class PickManager implements ISubject
                 gl.setHasArrow(true);
             }
         }
-
-        notifyAllListeners();
     }
 
     void pickResource(List<Resource> pickedResources)
@@ -437,8 +416,6 @@ class PickManager implements ISubject
                 gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
             }
         }
-
-        notifyAllListeners();
     }
 
     void pickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
@@ -530,23 +507,6 @@ class PickManager implements ISubject
             DrawUtils.setCurrentDefaultEdgeStroke(vs, e, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE);
             e.setEdgeDrawPaint(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGEDRAWCOLOR);
             e.setShownSeparated(false);
-        }
-
-        notifyAllListeners();
-    }
-
-    @Override
-    public void addListener(IObserver observer)
-    {
-        observers.add(observer);
-    }
-
-    @Override
-    public void notifyAllListeners()
-    {
-        for (IObserver observer : observers)
-        {
-            observer.update();
         }
     }
 

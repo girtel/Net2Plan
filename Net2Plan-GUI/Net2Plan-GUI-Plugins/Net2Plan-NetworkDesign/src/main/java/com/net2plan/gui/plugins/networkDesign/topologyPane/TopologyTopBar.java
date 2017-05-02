@@ -2,7 +2,6 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
@@ -48,64 +47,6 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         this.callback = callback;
         this.topologyPanel = topologyPanel;
         this.canvas = canvas;
-        this.canvas.addListener(new IObserver()
-        {
-            @Override
-            public void update()
-            {
-                final CanvasOption stateDefinition = canvas.getState();
-                if (stateDefinition == null) return;
-                switch (stateDefinition)
-                {
-                    case ViewState:
-                        btn_siteMode.setSelected(false);
-                        btn_osmMap.setSelected(false);
-                        break;
-                    case SiteState:
-                        btn_siteMode.setSelected(true);
-                        btn_osmMap.setSelected(false);
-                        break;
-                    case OSMState:
-                        btn_osmMap.setSelected(true);
-                        btn_siteMode.setSelected(false);
-                        break;
-                }
-            }
-        });
-
-        final VisualizationState vs = this.callback.getVisualizationState();
-        vs.addPickListener(new IObserver()
-        {
-            @Override
-            public void update()
-            {
-                final NetworkElementType pickedElementType = vs.getPickedElementType();
-
-                if (pickedElementType != null)
-                {
-                    if (pickedElementType == NetworkElementType.NODE)
-                    {
-                        final List<NetworkElement> pickedElements = vs.getPickedNetworkElements();
-
-                        if (pickedElements.size() == 1)
-                        {
-                            final Node node = (Node) pickedElements.get(0);
-
-                            if (node.getSiteName() != null)
-                                btn_siteMode.setEnabled(true);
-
-                        } else
-                        {
-                            btn_siteMode.setEnabled(false);
-                        }
-                    }
-                } else
-                {
-                    if (canvas.getState() != CanvasOption.SiteState)
-                        btn_siteMode.setEnabled(false);
-                }
-            }
-        });
 
         this.setOrientation(JToolBar.HORIZONTAL);
         this.setRollover(true);
@@ -340,6 +281,56 @@ public class TopologyTopBar extends JToolBar implements ActionListener
                 canvas.returnToPreviousState();
                 btn_siteMode.setSelected(false);
             }
+        }
+    }
+
+    public void update()
+    {
+        final CanvasOption stateDefinition = canvas.getState();
+
+        if (stateDefinition == null) return;
+        switch (stateDefinition)
+        {
+            case ViewState:
+                btn_siteMode.setSelected(false);
+                btn_osmMap.setSelected(false);
+                break;
+            case SiteState:
+                btn_siteMode.setSelected(true);
+                btn_osmMap.setSelected(false);
+                break;
+            case OSMState:
+                btn_osmMap.setSelected(true);
+                btn_siteMode.setSelected(false);
+                break;
+        }
+
+        final VisualizationState vs = callback.getVisualizationState();
+        final NetworkElementType pickedElementType = vs.getPickedElementType();
+
+        if (pickedElementType != null)
+        {
+            if (pickedElementType == NetworkElementType.NODE)
+            {
+                final List<NetworkElement> pickedElements = vs.getPickedNetworkElements();
+
+                if (pickedElements.size() == 1)
+                {
+                    final Node node = (Node) pickedElements.get(0);
+
+                    if (node.getSiteName() != null)
+                        btn_siteMode.setEnabled(true);
+
+                } else
+                {
+                    if (stateDefinition != CanvasOption.SiteState)
+                        btn_siteMode.setEnabled(false);
+                }
+            }
+        } else
+        {
+            if (canvas.getState() != CanvasOption.SiteState)
+                btn_siteMode.setEnabled(false);
         }
     }
 }

@@ -85,6 +85,7 @@ public class CanvasStateController
             }
 
             currentState.start();
+            callback.updateVisualizationAfterCanvasState();
         } catch (RuntimeException e)
         {
             ErrorHandling.showErrorDialog("Error");
@@ -131,8 +132,6 @@ public class CanvasStateController
             mapController.zoomToLevel(((Double) prevZoom).intValue());
             mapController.moveMapTo(new GeoPosition(prevCenter.getY(), prevCenter.getX()));
         }
-
-        canvas.notifyAllListeners();
     }
 
     // ** Mediator interface **

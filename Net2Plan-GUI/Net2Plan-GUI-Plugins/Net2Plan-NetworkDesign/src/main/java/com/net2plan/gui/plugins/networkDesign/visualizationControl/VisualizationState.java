@@ -3,7 +3,6 @@ package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
-import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IObserver;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.interfaces.networkDesign.*;
@@ -960,11 +959,6 @@ public class VisualizationState
             ErrorHandling.showErrorDialog("Error");
             e.printStackTrace();
         }
-    }
-
-    public void addPickListener(IObserver observer)
-    {
-        pickManager.addListener(observer);
     }
 
     public void resetPickedState()

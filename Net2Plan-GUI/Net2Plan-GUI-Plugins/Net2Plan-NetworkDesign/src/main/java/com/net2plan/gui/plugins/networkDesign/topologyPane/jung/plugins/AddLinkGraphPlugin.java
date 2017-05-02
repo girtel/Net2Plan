@@ -105,7 +105,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             Node node = guiNode == null? null : guiNode.getAssociatedNode();
             if (node != null) {
                 callback.getVisualizationState().pickElement(node);
-                callback.updateVisualizationAfterPick();
+
                 e.consume();
             } else {
                 GUILink link = canvas.getEdge(e);
@@ -114,11 +114,11 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
                 	if (!link.isIntraNodeLink())
                 	{ 
                 		callback.getVisualizationState().pickElement(link.getAssociatedNetPlanLink());
-                        callback.updateVisualizationAfterPick();
                 	}
                     e.consume();
                 }
             }
+            callback.updateVisualizationAfterPick();
         }
     }
 
