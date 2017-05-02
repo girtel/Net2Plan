@@ -121,63 +121,21 @@ public class RunnableSelector extends JPanel {
                 try {
                     File fileName = new File(txt_file.getText());
                     String className = (String) ((StringLabeller) algorithmSelector.getSelectedItem()).getObject();
+
                     Class<? extends IExternal> _class = implementations.get(className);
-
                     IExternal instance = ClassLoaderUtils.getInstance(fileName, className, _class , null);
-                    String aux_description = null;
-                    try {
-                        aux_description = instance.getDescription();
-                    } catch (UnsupportedOperationException ex) {
-                    }
-                    if (aux_description == null) aux_description = "No description";
 
-                    List<Triple<String, String, String>> aux_parameters = null;
-                    try {
-                        aux_parameters = instance.getParameters();
-                    } catch (UnsupportedOperationException ex) {
-                    }
-                    if (aux_parameters == null) aux_parameters = new LinkedList<Triple<String, String, String>>();
+                    String aux_description = instance.getDescription() == null ? "No description" : instance.getDescription();
+                    List<Triple<String, String, String>> aux_parameters = instance.getParameters() == null ? new LinkedList<>() : instance.getParameters();
 
                     ((Closeable) instance.getClass().getClassLoader()).close();
 
-//                    String solverName = null;
-//                    Triple<String, String, String> solverLibraryNameItem = null;
-//
-//                    Iterator<Triple<String, String, String>> it = aux_parameters.iterator();
-//                    while (it.hasNext()) {
-//                        Triple<String, String, String> aux = it.next();
-//                        String paramName = aux.getFirst();
-//                        if (paramName.equals("solverName")) {
-//                            solverName = aux.getSecond();
-//                        }
-//
-//                        if (paramName.equals("solverLibraryName")) {
-//                            solverLibraryNameItem = aux;
-//                        }
-//                    }
-//
-//                    if (solverName != null && solverLibraryNameItem != null && solverLibraryNameItem.getSecond().isEmpty()) 
-//                    {
-//                    	try { solverLibraryNameItem.setSecond(Configuration.getDefaultSolverLibraryName(solverName)); } catch (Exception ex) {} // in case the default name is not one solver
-//                    }
-//                   } 
-//                    {
-//                        try {
-//                            String solverLibraryName = null;
-//                            if (solverName.equalsIgnoreCase("glpk")) solverLibraryName = Configuration.getOption("glpkSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("ipopt")) solverLibraryName = Configuration.getOption("ipoptSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("cplex")) solverLibraryName = Configuration.getOption("cplexSolverLibraryName");
-//                            else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
-//                            if (solverLibraryName != null) solverLibraryNameItem.setSecond(solverLibraryName);
-//                        } catch (Throwable ex) {
-//                        }
-//                    }
-
                     txt_description.setText(aux_description);
                     if (!txt_description.getText().isEmpty()) txt_description.setCaretPosition(0);
+
                     parametersPanel.setParameters(aux_parameters);
                 } catch (Throwable ex) {
-                    ErrorHandling.addErrorOrException(ex, RunnableSelector.class);
+                    ex.printStackTrace();
                     ErrorHandling.showErrorDialog("Error selecting " + label.toLowerCase(getLocale()));
                 }
             }
