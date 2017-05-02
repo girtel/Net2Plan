@@ -22,6 +22,8 @@ class SiteState extends ViewState
 {
     private String siteName;
 
+    private final double DISTANCE_GOAL = 1 + (1e-4);
+
     SiteState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
         super(callback, canvas, mapController);
@@ -61,28 +63,16 @@ class SiteState extends ViewState
         List<Node> nodeList = new ArrayList<>(nodes);
 
         final Point2D referencePoint = canvas.getCanvasPointFromScreenPoint(canvas.getCanvasCenter());
+        final Node node = nodeList.get(0);
 
-        if (nodeList.size() == 1)
+        double prevDistance = Double.MAX_VALUE;
+        double distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
+
+        while (prevDistance / distance > DISTANCE_GOAL)
         {
-            final Node node = nodeList.get(0);
-
-            double prevDistance = Double.MAX_VALUE;
-            double distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
-
-            System.out.println(prevDistance / distance);
-
-            int iter = 0;
-            while (prevDistance / distance > 1.0001)
-            {
-                zoomIn();
-                prevDistance = distance;
-                distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
-
-                System.out.println(prevDistance / distance);
-                iter++;
-            }
-
-            System.out.println(iter);
+            zoomIn();
+            prevDistance = distance;
+            distance = calculateDistance(canvas.getCanvasPointFromNetPlanPoint(node.getXYPositionMap()), referencePoint);
         }
     }
 
