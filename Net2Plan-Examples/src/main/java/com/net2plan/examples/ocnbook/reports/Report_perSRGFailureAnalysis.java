@@ -191,7 +191,7 @@ public class Report_perSRGFailureAnalysis implements IReport
 			{
 				out.append("<h3>Unicast traffic</h3>");
 				out.append("<table border='1'>");
-				out.append("<tr><th><b>SRG Index failed</b></th><th><b>Offered traffic</b></th><th><b>Blocked traffic (%)</b></th><th><b>Offered traffic traversing oversubscribed links (%)</b></th><th><b>Offered traffic of demands with excessive latency (%)</b></th><b>Total blocked traffic [out of contract] (%)</b></th><th><b>% of demands fully ok</b></th></tr>");
+				out.append("<tr><th><b>SRG Index failed</b></th><th><b>Offered traffic</b></th><th><b>Blocked traffic (%)</b></th><th><b>Offered traffic traversing oversubscribed links (%)</b></th><th><b>Offered traffic of demands with excessive latency (%)</b></th><th><b>Total blocked traffic [out of contract] (%)</b></th><th><b>% of demands fully ok</b></th></tr>");
 				printReport (npNoFailure , noFailureLayer , out , "No failure" , true);
 				for (int srgIndex = 0 ; srgIndex < npNoFailure.getNumberOfSRGs() ; srgIndex ++)
 					printReport (npFailureStates.get(srgIndex) , npFailureStates.get(srgIndex).getNetworkLayer (layerIndex) , out , "" + srgIndex , true);
@@ -202,7 +202,7 @@ public class Report_perSRGFailureAnalysis implements IReport
 			{
 				out.append("<h3>Multicast traffic</h3>");
 				out.append("<table border='1'>");
-				out.append("<tr><th><b>SRG Index failed</b></th><th><b>Offered traffic</b></th><th><b>Blocked traffic (%)</b></th><th><b>Offered traffic traversing oversubscribed links (%)</b></th><th><b>Offered traffic of demands with excessive latency (%)</b></th><b>Total blocked traffic [out of contract] (%)</b></th><th><b>% of demands fully ok</b></th></tr>");
+				out.append("<tr><th><b>SRG Index failed</b></th><th><b>Offered traffic</b></th><th><b>Blocked traffic (%)</b></th><th><b>Offered traffic traversing oversubscribed links (%)</b></th><th><b>Offered traffic of demands with excessive latency (%)</b></th><th><b>Total blocked traffic [out of contract] (%)</b></th><th><b>% of demands fully ok</b></th></tr>");
 				printReport (npNoFailure , noFailureLayer , out , "No failure" , false);
 				for (int srgIndex = 0 ; srgIndex < npNoFailure.getNumberOfSRGs() ; srgIndex ++)
 					printReport (npFailureStates.get(srgIndex) , npFailureStates.get(srgIndex).getNetworkLayer (layerIndex) , out , "" + srgIndex , false);
