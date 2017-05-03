@@ -46,6 +46,13 @@ public class VisualizationState
     private boolean whatIfAnalysisActive;
     private ITableRowFilter tableRowFilter;
 
+    private List<Double> linkUtilizationColorThresholdList;
+    private List<Double> linkRunoutTimeColorThresholdList;
+    private List<Double> linkCapacityThicknessThresholdList;
+    private boolean isActiveLinkUtilizationColorThresholdList;
+    private boolean isActiveLinkRunoutTimeColorThresholdList;
+    private boolean isActiveLinkCapacityThicknessThresholdList;
+    
     private boolean showInCanvasNonConnectedNodes;
     private int interLayerSpaceInPixels;
     private Set<Node> nodesToHideInCanvasAsMandatedByUserInTable;
@@ -88,6 +95,12 @@ public class VisualizationState
         this.pickedForwardingRule = null;
         this.linkWidthIncreaseFactorRespectToDefault = 1;
         this.nodeSizeIncreaseFactorRespectToDefault = 1;
+        this.linkUtilizationColorThresholdList = new ArrayList<> (VisualizationConstants.DEFAULT_LINKCOLORINGUTILIZATIONTHRESHOLDS);
+        this.linkRunoutTimeColorThresholdList = new ArrayList<> (VisualizationConstants.DEFAULT_LINKCOLORINGRUNOUTTHRESHOLDS);
+        this.linkCapacityThicknessThresholdList = new ArrayList<> (VisualizationConstants.DEFAULT_LINKTHICKNESSTHRESHPOLDS);
+        this.isActiveLinkUtilizationColorThresholdList = true;
+        this.isActiveLinkRunoutTimeColorThresholdList = false;
+        this.isActiveLinkCapacityThicknessThresholdList = true;
 
         this.setCanvasLayerVisibilityAndOrder(currentNp, mapLayer2VisualizationOrder, layerVisibilityMap);
     }
@@ -451,10 +464,10 @@ public class VisualizationState
                     final GUINode lowerLayerGNode = guiNodesThisNode.get(trueVisualizationOrderIndex - 1);
                     final GUINode upperLayerGNode = guiNodesThisNode.get(trueVisualizationOrderIndex);
                     if (upperLayerGNode != gn) throw new RuntimeException();
-                    final GUILink glLowerToUpper = new GUILink(null, lowerLayerGNode, gn,
+                    final GUILink glLowerToUpper = new GUILink(this , null, lowerLayerGNode, gn,
                             resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault),
                             resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
-                    final GUILink glUpperToLower = new GUILink(null, gn, lowerLayerGNode,
+                    final GUILink glUpperToLower = new GUILink(this , null, gn, lowerLayerGNode,
                             resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault),
                             resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
                     intraNodeGUILinksThisNode.add(glLowerToUpper);
@@ -471,7 +484,7 @@ public class VisualizationState
             {
                 final GUINode gn1 = cache_mapNode2ListVerticallyStackedGUINodes.get(e.getOriginNode()).get(trueVisualizationOrderIndex);
                 final GUINode gn2 = cache_mapNode2ListVerticallyStackedGUINodes.get(e.getDestinationNode()).get(trueVisualizationOrderIndex);
-                final GUILink gl1 = new GUILink(e, gn1, gn2,
+                final GUILink gl1 = new GUILink(this , e, gn1, gn2,
                         resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, linkWidthIncreaseFactorRespectToDefault),
                         resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
                 cache_canvasRegularLinkMap.put(e, gl1);
@@ -981,6 +994,7 @@ public class VisualizationState
                 setCurrentDefaultEdgeStroke(gl, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
                 final Paint color = link.isDown() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED;
                 gl.setEdgeDrawPaint(color);
+                gl.setOverrideLinkColoringByUtilizationOrRunOut(true);
                 gl.setShownSeparated(true);
             }
         }
@@ -1178,6 +1192,7 @@ public class VisualizationState
                 setCurrentDefaultEdgeStroke(gl, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_PICKED);
                 final Paint color = pickedLink.isDown() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
                 gl.setEdgeDrawPaint(color);
+                gl.setOverrideLinkColoringByUtilizationOrRunOut(true);
                 gl.setShownSeparated(true);
             }
         }
@@ -1270,6 +1285,7 @@ public class VisualizationState
                 final Paint color = pickedLink.isDown() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED;
                 gl.setEdgeDrawPaint(color);
                 gl.setShownSeparated(true);
+                gl.setOverrideLinkColoringByUtilizationOrRunOut(true);
                 gl.getOriginNode().setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
                 gl.getOriginNode().setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
                 gl.getDestinationNode().setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
@@ -1322,6 +1338,7 @@ public class VisualizationState
             final boolean isDown = e.getAssociatedNetPlanLink().isDown();
             final Paint color = isDown ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
             e.setEdgeDrawPaint(color);
+            e.setOverrideLinkColoringByUtilizationOrRunOut(false);
             e.setShownSeparated(isDown);
         }
         for (GUILink e : getCanvasAllGUILinks(false, true))
@@ -1372,6 +1389,7 @@ public class VisualizationState
             glColateral.setEdgeDrawPaint(color);
             glColateral.setShownSeparated(true);
             glColateral.setHasArrow(true);
+            glColateral.setOverrideLinkColoringByUtilizationOrRunOut(true);
         }
     }
 
@@ -1461,6 +1479,55 @@ public class VisualizationState
     }
 
 
+    /* Changes */
+    public List<Double> getLinkUtilizationColor()
+    {
+        return linkUtilizationColorThresholdList;
+    }
+    
+    public List<Double> getLinkRunoutTimeColor()
+    {
+        return linkRunoutTimeColorThresholdList;
+    }
+    
+    public List<Double> getLinkCapacityThickness()
+    {
+        return linkCapacityThicknessThresholdList;
+    }
+        
+    public void setIsActiveLinkUtilizationColorThresholdList(boolean isActive) { this.isActiveLinkUtilizationColorThresholdList = isActive; }
+    public void setIsActiveLinkRunoutTimeColorThresholdList(boolean isActive) { this.isActiveLinkRunoutTimeColorThresholdList = isActive; }
+    public void setIsActiveLinkCapacityThicknessThresholdList(boolean isActive) { this.isActiveLinkCapacityThicknessThresholdList = isActive; }
+    public boolean getIsActiveLinkUtilizationColorThresholdList() { return isActiveLinkUtilizationColorThresholdList; }
+    public boolean getIsActiveLinkRunoutTimeColorThresholdList() { return isActiveLinkRunoutTimeColorThresholdList; }
+    public boolean getIsActiveLinkCapacityThicknessThresholdList() { return isActiveLinkCapacityThicknessThresholdList; }
+
+    public void setLinkUtilizationColor(List<Double> linkUtilizationColorList)
+    {
+        this.linkUtilizationColorThresholdList = linkUtilizationColorList;
+    }
+    
+    public void setLinkRunoutTimeColor(List<Double> linkRunoutTimeColor)
+    {
+        this.linkRunoutTimeColorThresholdList = linkRunoutTimeColor;
+    }
+    public void setLinkCapacityThickness(List<Double> linkCapacityThickness)
+    {
+        this.linkCapacityThicknessThresholdList = linkCapacityThickness;
+    }
+    public Color getLinkColorAccordingToUtilization (double linkUtilization)
+    {
+        for(int i = 0; i < this.linkUtilizationColorThresholdList.size(); i++)
+            if(linkUtilization < this.linkUtilizationColorThresholdList.get(i)) return VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i);
+        return VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(this.linkUtilizationColorThresholdList.size());
+    }
+    public double getLinkRelativeThicknessAccordingToCapacity (double linkCapacity)
+    {
+        for(int i = 0; i < this.linkCapacityThicknessThresholdList.size(); i++)
+            if(linkCapacity < this.linkCapacityThicknessThresholdList.get(i)) return VisualizationConstants.DEFAULT_LINKRELATIVETHICKNESSVALUES.get(i);
+        return VisualizationConstants.DEFAULT_LINKRELATIVETHICKNESSVALUES.get(this.linkCapacityThicknessThresholdList.size());
+    }
+    
     /**
      * @param showUpperLayerPropagation the showUpperLayerPropagation to set
      */

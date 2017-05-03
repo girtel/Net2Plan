@@ -57,6 +57,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
     private final JToggleButton btn_osmMap;
+    private final JButton btn_linkStyle;
     private final JButton btn_tableControlWindow;
     private final JLabel position;
     private final JPanel canvasPanel;
@@ -199,7 +200,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_npChangeRedo = new JButton();
         btn_npChangeRedo.setToolTipText("Navigate forward to the next state of the network (when network design was changed");
 
-
+        btn_linkStyle = new JButton();
+        btn_linkStyle.setToolTipText("Change link style");
+        
         btn_osmMap = new JToggleButton();
         btn_osmMap.setToolTipText("Toggle between on/off the OSM support. An internet connection is required in order for this to work.");
         btn_tableControlWindow = new JButton();
@@ -241,6 +244,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_osmMap.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showOSM.png")));
         btn_npChangeUndo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/undoButton.png")));
         btn_npChangeRedo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/redoButton.png")));
+        btn_linkStyle.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/linkStyle.png")));
 
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
@@ -268,6 +272,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         btn_npChangeRedo.addActionListener(this);
         btn_osmMap.addActionListener(this);
         btn_tableControlWindow.addActionListener(this);
+        btn_linkStyle.addActionListener(this);
 
         toolbar.add(btn_load);
         toolbar.add(btn_loadDemand);
@@ -288,6 +293,8 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
         toolbar.add(btn_decreaseLinkSize);
         toolbar.add(btn_increaseFontSize);
         toolbar.add(btn_decreaseFontSize);
+        toolbar.add(btn_linkStyle);
+
         toolbar.add(new JToolBar.Separator());
         toolbar.add(Box.createHorizontalGlue());
         toolbar.add(btn_osmMap);
@@ -517,6 +524,12 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             final boolean somethingChanged = callback.getVisualizationState().decreaseCanvasFontSizeAll();
             if (somethingChanged) canvas.refresh();
         }
+        else if (src == btn_linkStyle)
+        {
+            new LinkStyleSelector(getVisualizationState());
+            canvas.refresh();
+        }
+
     }
 
     /**
