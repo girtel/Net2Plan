@@ -85,7 +85,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             "Total traffic (unicast and multicast) in the node input links",
             "Total traffic (unicast and multicast) in the node output links",
             "SRGs including this node", "Total population in this node", "Node-specific tags", "Node-specific attributes");
-    private boolean updateVisualization = true;
 
     /**
      * Default constructor.
@@ -96,7 +95,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     public AdvancedJTable_node(final GUINetworkDesign callback)
     {
         super(createTableModel(callback), callback, NetworkElementType.NODE);
-        this.updateVisualization = true;
         setDefaultCellRenderers(callback);
         setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
@@ -345,7 +343,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 } catch (Throwable ex)
                 {
                     ex.printStackTrace();
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying node");
+                    ErrorHandling.showErrorDialog();
                     return;
                 }
 

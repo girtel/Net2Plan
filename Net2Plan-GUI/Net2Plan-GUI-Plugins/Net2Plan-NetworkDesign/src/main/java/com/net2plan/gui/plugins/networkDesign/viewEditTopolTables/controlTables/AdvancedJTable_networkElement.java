@@ -1147,7 +1147,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         saveColumnsPositions();
         setEnabled(false);
         String[] header = getCurrentTableHeaders();
-        ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
+        // ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
 
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
