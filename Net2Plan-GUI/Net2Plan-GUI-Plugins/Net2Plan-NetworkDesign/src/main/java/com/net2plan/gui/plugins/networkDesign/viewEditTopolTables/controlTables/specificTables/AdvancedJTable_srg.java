@@ -74,7 +74,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         super(createTableModel(callback), callback, NetworkElementType.SRG);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -189,16 +189,6 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasSRGs() : rf.hasSRGs(layer);
     }
 
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfSRGs();
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfSRGs(layer);
-    }
-
     @Override
     public int getAttributesColumnIndex()
     {
@@ -283,7 +273,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_AFFECTEDROUTES, COLUMN_AFFECTEDBACKUPROUTES, COLUMN_AFFECTEDTREES);
@@ -407,6 +397,12 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 
         callback.getVisualizationState().pickSRG((List<SharedRiskGroup>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
+    }
+
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
     }
 
     @Nonnull

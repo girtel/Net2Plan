@@ -85,7 +85,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             "Total traffic (unicast and multicast) in the node input links",
             "Total traffic (unicast and multicast) in the node output links",
             "SRGs including this node", "Total population in this node", "Node-specific tags", "Node-specific attributes");
-    private boolean updateVisualization = true;
 
     /**
      * Default constructor.
@@ -96,10 +95,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     public AdvancedJTable_node(final GUINetworkDesign callback)
     {
         super(createTableModel(callback), callback, NetworkElementType.NODE);
-        this.updateVisualization = true;
         setDefaultCellRenderers(callback);
-        setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -215,16 +212,6 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasNodes() : rf.hasNodes(layer);
     }
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfNodes();
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfNodes(layer);
-    }
-
 
     @Override
     public int getAttributesColumnIndex()
@@ -356,7 +343,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 } catch (Throwable ex)
                 {
                     ex.printStackTrace();
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Error modifying node");
+                    ErrorHandling.showErrorDialog();
                     return;
                 }
 
@@ -387,12 +374,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         setDefaultRenderer(String.class, new CellRenderers.UpDownRenderer(getDefaultRenderer(String.class), callback, NetworkElementType.NODE));
     }
 
-    private void setSpecificCellRenderers()
-    {
-    }
-
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_OUTLINKS, COLUMN_INLINKS, COLUMN_INGRESSTRAFFIC, COLUMN_EGRESSTRAFFIC, COLUMN_INGRESSMULTICASTTRAFFIC, COLUMN_EGRESSMULTICASTTRAFFIC);
@@ -406,11 +389,11 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
     }
 
+    @Override
     public int getNumberOfDecoratorColumns()
     {
         return 2;
     }
-
 
     @Override
     protected JPopupMenu getPopup(ElementSelection selection)
@@ -473,6 +456,12 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
         callback.getVisualizationState().pickNode((List<Node>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
+    }
+
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
     }
 
     @Nonnull

@@ -297,6 +297,16 @@ public class ErrorHandling
 
 	/**
 	 * Shows a popup error indicating that user should check the output console (only for GUI).
+	 *
+	 * @since 0.2.0
+	 */
+	public static void showErrorDialog()
+	{
+		showErrorDialog("Error");
+	}
+
+	/**
+	 * Shows a popup error indicating that user should check the output console (only for GUI).
 	 * 
 	 * @param title Title for the error dialog
 	 * @since 0.2.0

@@ -73,7 +73,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         super(createTableModel(callback), callback, NetworkElementType.ROUTE);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -200,26 +200,11 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasRoutes(layer) : rf.hasRoutes(layer);
     }
     
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfRoutes(layer);
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfRoutes(layer);
-    }
-
-
     @Override
     public int getAttributesColumnIndex()
     {
         return COLUMN_ATTRIBUTES;
     }
-
-//    public int[] getColumnsOfSpecialComparatorForSorting() {
-//        return new int[]{};
-//    }
 
     private static TableModel createTableModel(final GUINetworkDesign callback)
     {
@@ -312,7 +297,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
@@ -440,6 +425,12 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
         callback.getVisualizationState().pickRoute((List<Route>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
+    }
+
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
     }
 
     @Nonnull
