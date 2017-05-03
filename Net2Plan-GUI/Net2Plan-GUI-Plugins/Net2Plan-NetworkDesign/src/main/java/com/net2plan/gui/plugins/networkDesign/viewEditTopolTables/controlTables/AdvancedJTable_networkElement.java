@@ -100,7 +100,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private final JScrollPane scroll;
     private final FixedColumnDecorator decorator;
 
-    private ArrayList<String> attributesColumnsNames;
     private boolean expandAttributes = false;
 
     /**
@@ -177,8 +176,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 Object value = null;
                 if (changedColumn > getAttributesColumnIndex())
                 {
-                    attributesColumnsNames = getAttributesColumnsHeaders();
-                    for (String title : attributesColumnsNames)
+                    for (String title : getAttributesColumnsHeaders())
                     {
                         if (getModel().getColumnName(changedColumn).equals("Att: " + title))
                         {
@@ -990,7 +988,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private void attributesInDifferentColumns()
     {
         saveColumnsPositions();
-        attributesColumnsNames = getAttributesColumnsHeaders();
         boolean attributesColumnInMainTable = false;
         String currentColumnName = null;
         for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
@@ -1009,7 +1006,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             attributesItem.setSelected(false);
         } else
         {
-            if (attributesColumnsNames.size() > 0)
+            if (getAttributesColumnsHeaders().size() > 0)
             {
                 callback.updateVisualizationJustTables();
                 createDefaultColumnsFromModel();
@@ -1037,10 +1034,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private void attributesInOneColumn()
     {
         saveColumnsPositions();
-        attributesColumnsNames = getAttributesColumnsHeaders();
         int attributesCounter = 0;
         String columnToCheck = null;
-        for (String att : attributesColumnsNames)
+        for (String att : getAttributesColumnsHeaders())
         {
             for (int j = 0; j < mainTable.getColumnModel().getColumnCount(); j++)
             {
@@ -1052,20 +1048,20 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 }
             }
         }
-        if (!(attributesCounter == attributesColumnsNames.size()))
+        if (!(attributesCounter == getAttributesColumnsHeaders().size()))
         {
             JOptionPane.showMessageDialog(null, "All attributes columns must be unlocked and visible to contract them in one column");
             attributesItem.setSelected(true);
         } else
         {
 
-            if (attributesColumnsNames.size() > 0)
+            if (getAttributesColumnsHeaders().size() > 0)
             {
 
                 callback.updateVisualizationJustTables();
                 createDefaultColumnsFromModel();
                 removedColumns.clear();
-                for (String att : attributesColumnsNames)
+                for (String att : getAttributesColumnsHeaders())
                 {
                     removeNewColumn("Att: " + att);
                 }

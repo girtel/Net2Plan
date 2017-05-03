@@ -156,10 +156,6 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         return 0;
     }
 
-//    public int[] getColumnsOfSpecialComparatorForSorting() {
-//        return new int[]{0, 1, 2};
-//    }
-
     private static TableModel createTableModel(final GUINetworkDesign callback)
     {
         TableModel forwardingRuleTableModel = new ClassAwareTableModel(new Object[1][netPlanViewTableHeader.length], netPlanViewTableHeader)
