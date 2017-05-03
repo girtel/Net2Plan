@@ -1154,10 +1154,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             return;
 
         final List<? extends SortKey> sortKeys = this.getRowSorter().getSortKeys();
+        final String[] tableHeaders = getCurrentTableHeaders();
+
+        if (!hasElements())
+            ((DefaultTableModel) getModel()).setDataVector(new Object [1][tableHeaders.length], tableHeaders);
 
         if (hasElements())
         {
-            String[] tableHeaders = getCurrentTableHeaders();
             ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
 
             List<Object[]> allData = getAllData(currentState, attColumnsHeaders);
