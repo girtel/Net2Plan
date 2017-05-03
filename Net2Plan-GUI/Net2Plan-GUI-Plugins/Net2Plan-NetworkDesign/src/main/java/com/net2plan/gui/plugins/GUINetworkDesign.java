@@ -473,7 +473,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
     public void setDesign(@Nonnull NetPlan netPlan)
     {
-    	if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         this.currentNetPlan = netPlan;
     }
 
@@ -798,7 +798,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         for (NetworkElement networkElement : vs.getPickedNetworkElements())
             viewEditTopTables.selectItem(NetworkElementType.getType(networkElement), networkElement);
 
-        for (Pair<Demand,Link> fr : vs.getPickedForwardingRules())
+        for (Pair<Demand, Link> fr : vs.getPickedForwardingRules())
             viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
 
         topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo

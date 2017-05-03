@@ -141,12 +141,6 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     {
         return true;
     }
-    
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        return callback.getDesign().getNumberOfLayers();
-    }
-
 
     @Override
     public int getAttributesColumnIndex()
@@ -192,7 +186,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     {
     }
 
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
         final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
@@ -272,7 +266,6 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
                     addPopupMenuAttributeOptions(selection, popup);
                 }
             }
-
         }
 
         return popup;
@@ -282,6 +275,12 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     public void showInCanvas(ElementSelection selection)
     {
         return;
+    }
+
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
     }
 
     @Nonnull
