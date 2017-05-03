@@ -70,7 +70,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -186,16 +186,6 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return rf == null ? callback.getDesign().hasMulticastDemands(layer) : rf.hasMulticastDemands(layer);
     }
 
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfMulticastDemands(layer);
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfMulticastDemands(layer);
-    }
-
     @Override
     public int getAttributesColumnIndex()
     {
@@ -307,7 +297,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_INGRESSNODE, COLUMN_EGRESSNODES, COLUMN_NUMTREES);
@@ -437,7 +427,13 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         callback.updateVisualizationAfterPick();
     }
 
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
 
+    @Nonnull
     @Override
     protected JMenuItem getAddOption()
     {

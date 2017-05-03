@@ -86,7 +86,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         super(createTableModel(callback), callback, NetworkElementType.LINK);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -234,17 +234,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasLinks(layer) : rf.hasLinks(layer);
     }
-    
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfLinks(layer);
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfLinks(layer);
-    }
-
 
     @Override
     public int getAttributesColumnIndex()
@@ -481,7 +470,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_ORIGINNODE, COLUMN_DESTNODE, COLUMN_NUMROUTES, COLUMN_NUMSEGMENTS, COLUMN_NUMFORWRULES, COLUMN_NUMTREES);
@@ -581,7 +570,13 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
 
+    @Nonnull
     @Override
     protected JMenuItem getAddOption()
     {

@@ -232,7 +232,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             {
                 final int numEntries = table.getModel().getRowCount() - 1; // last columns is for the aggregation
                 if (callback.getVisualizationState().getTableRowFilter() != null)
-                    label.setText("Number of entries: " + numEntries + " / " + table.getNumberOfElements(false) + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
+                    label.setText("Number of entries: " + numEntries + " / " + table.getModel().getRowCount() + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
                 else
                     label.setText("Number of entries: " + numEntries);
             }
@@ -307,17 +307,18 @@ public class ViewEditTopologyTablesPane extends JPanel
         	if (linkInTable == null) continue;
         	final Pair<Integer,Integer> obj = Pair.of(
                 Integer.parseInt(demandInTable.toString().split(" ")[0]),Integer.parseInt(linkInTable.toString().split(" ")[0]));
-            if (obj.equals(fr)) 
+            if (obj.equals(fr))
             {
                 table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));
             	return;
             }
         }
     }
-    
+
     public void selectItem (NetworkElementType type, NetworkElement element)
     {
         final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
+
         final int numRows = table.getRowCount();
 
         for (int row = 0; row < numRows; row++)
