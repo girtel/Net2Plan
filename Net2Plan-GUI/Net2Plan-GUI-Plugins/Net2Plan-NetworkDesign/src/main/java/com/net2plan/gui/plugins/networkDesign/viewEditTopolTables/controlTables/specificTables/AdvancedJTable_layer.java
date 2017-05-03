@@ -272,7 +272,6 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
                     addPopupMenuAttributeOptions(selection, popup);
                 }
             }
-
         }
 
         return popup;
@@ -282,6 +281,12 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     public void showInCanvas(ElementSelection selection)
     {
         return;
+    }
+
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
     }
 
     @Nonnull

@@ -434,6 +434,12 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
     @Nonnull
     @Override
     protected JMenuItem getAddOption()

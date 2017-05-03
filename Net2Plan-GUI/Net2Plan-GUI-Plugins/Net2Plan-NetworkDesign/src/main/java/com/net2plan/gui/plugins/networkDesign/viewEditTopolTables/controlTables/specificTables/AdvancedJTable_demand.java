@@ -470,6 +470,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
     @Nonnull
     @Override
     protected List<JComponent> getExtraAddOptions()

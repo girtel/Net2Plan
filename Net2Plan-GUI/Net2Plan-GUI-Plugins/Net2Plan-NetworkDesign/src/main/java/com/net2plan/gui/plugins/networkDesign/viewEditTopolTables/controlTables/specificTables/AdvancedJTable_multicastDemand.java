@@ -437,6 +437,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         callback.updateVisualizationAfterPick();
     }
 
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
     @Nonnull
     @Override
     protected JMenuItem getAddOption()

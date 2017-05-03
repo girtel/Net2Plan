@@ -307,22 +307,23 @@ public class ViewEditTopologyTablesPane extends JPanel
         	if (linkInTable == null) continue;
         	final Pair<Integer,Integer> obj = Pair.of(
                 Integer.parseInt(demandInTable.toString().split(" ")[0]),Integer.parseInt(linkInTable.toString().split(" ")[0]));
-            if (obj.equals(fr)) 
+            if (obj.equals(fr))
             {
                 table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));
             	return;
             }
         }
     }
-    
+
     public void selectItem (NetworkElementType type, NetworkElement element)
     {
         final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
+
         final int numRows = table.getRowCount();
 
         for (int row = 0; row < numRows; row++)
         {
-            final long elementID = table.getElementID(row);
+            final long elementID = table.getValueAt(table.convertRowIndexToView());
             if (elementID == element.getId())
             {
                 table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));

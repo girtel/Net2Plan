@@ -87,11 +87,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     protected final JTable mainTable;
     protected final JTable fixedTable;
 
-    public static final String COLUMN_ID = "Unique identifier";
-    public static final String COLUMN_INDEX = "Index";
-
-    public static final String COLUMN_ATTRIBUTES = "Attributes";
-
     private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
     private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
@@ -989,31 +984,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         mainTable.getColumnModel().addColumn(columnToRecover);
     }
 
-    public long getElementID(int row)
-    {
-        for (int i = 0; i < mainTable.getColumnCount(); i++)
-        {
-            if (COLUMN_ID.equals(mainTable.getColumnName(i)))
-            {
-                final Object value = mainTable.getValueAt(row, i);
-                if (!(value instanceof Long)) return -1;
-                return (long) value;
-            }
-        }
-
-        for (int i = 0; i < fixedTable.getColumnCount(); i++)
-        {
-            if (COLUMN_ID.equals(fixedTable.getColumnName(i)))
-            {
-                final Object value = fixedTable.getValueAt(row, i);
-                if (!(value instanceof Long)) return -1;
-                return (long) value;
-            }
-        }
-
-        return -1;
-    }
-
     /**
      * Expands attributes in different columns, one for each attribute
      */
@@ -1851,15 +1821,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
     }
 
-    public boolean hasAttributes()
-    {
-        for (int i = 0; i < this.getColumnCount(); i++)
-            if (this.getColumnName(i).equals(COLUMN_ATTRIBUTES))
-                return true;
-
-        return false;
-    }
-
     private Object[][] buildData()
     {
         final int fixedColumnCount = fixedTable.getColumnCount();
@@ -1925,6 +1886,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     protected abstract JPopupMenu getPopup(ElementSelection selection);
 
     protected abstract void showInCanvas(ElementSelection selection);
+
+    protected abstract boolean hasAttributes();
 
     static class MenuItem_RemovedFiltered extends JMenuItem
     {

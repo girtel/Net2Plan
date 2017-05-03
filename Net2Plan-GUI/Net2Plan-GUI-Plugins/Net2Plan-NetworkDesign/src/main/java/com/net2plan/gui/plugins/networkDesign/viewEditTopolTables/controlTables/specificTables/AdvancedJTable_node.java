@@ -475,6 +475,12 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
     @Nonnull
     @Override
     protected JMenuItem getAddOption()

@@ -740,6 +740,12 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
     private class ClassAwareTableModelImpl extends ClassAwareTableModel
     {
         private final Set<Integer> editableColumns;

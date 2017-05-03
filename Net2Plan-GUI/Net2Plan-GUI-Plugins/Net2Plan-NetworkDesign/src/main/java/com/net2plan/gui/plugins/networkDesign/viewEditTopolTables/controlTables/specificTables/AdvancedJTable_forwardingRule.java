@@ -289,6 +289,12 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         callback.updateVisualizationAfterPick();
     }
 
+    @Override
+    protected boolean hasAttributes()
+    {
+        return false;
+    }
+
     public JPopupMenu getPopup(final ElementSelection selection)
     {
         assert selection != null;
