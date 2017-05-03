@@ -661,8 +661,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     private void updateTables()
     {
-        String fixedTableColumn = null;
-        String mainTableColumn = null;
+        String fixedTableColumn;
+        String mainTableColumn;
         ArrayList<Integer> columnIndexesToRemove = new ArrayList<>();
 
         for (int i = 0; i < fixedTable.getColumnModel().getColumnCount(); i++)
@@ -759,8 +759,8 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      */
     private void restoreColumnsPositions()
     {
-        TableColumn columnToHide = null;
-        String hiddenColumnHeader = null;
+        TableColumn columnToHide;
+        String hiddenColumnHeader;
         while (mainTable.getColumnModel().getColumnCount() > 0)
         {
             columnToHide = mainTable.getColumnModel().getColumn(0);
@@ -771,12 +771,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             mainTable.getColumnModel().removeColumn(columnToHide);
             shownColumns.remove(columnToHide);
         }
-        String currentColumnName = "";
+        String currentColumnName;
         for (int j = 0; j < mapToSaveState.size(); j++)
         {
             currentColumnName = mapToSaveState.get(j);
             showColumn(currentColumnName, j, false);
         }
+
         checkNewIndexes();
     }
 
@@ -1144,48 +1145,50 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public void updateView(NetPlan currentState)
     {
-        saveColumnsPositions();
-        setEnabled(false);
-        String[] header = getCurrentTableHeaders();
-        // ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
+        this.setEnabled(false);
+
+        this.saveColumnsPositions();
 
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
         if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE)))
             return;
+
+        final List<? extends SortKey> sortKeys = this.getRowSorter().getSortKeys();
+
         if (hasElements())
         {
             String[] tableHeaders = getCurrentTableHeaders();
             ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+
             List<Object[]> allData = getAllData(currentState, attColumnsHeaders);
-            setEnabled(true);
             ((DefaultTableModel) getModel()).setDataVector(allData.toArray(new Object[allData.size()][tableHeaders.length]), tableHeaders);
+            this.createDefaultColumnsFromModel();
+
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
             {
-                createDefaultColumnsFromModel();
+
                 final String[] columnTips = getTableTips();
                 final String[] columnHeader = getTableHeaders();
+
+                // Tips
                 final ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
+
                 for (int c = 0; c < columnHeader.length; c++)
                     tips.setToolTip(getColumnModel().getColumn(c), columnTips[c]);
-                getTableHeader().addMouseMotionListener(tips);
+
+                this.getTableHeader().addMouseMotionListener(tips);
 
                 if (isAttributeCellExpanded())
-                {
                     removeNewColumn("Attributes");
-                } else
-                {
-                    if (attColumnsHeaders.size() > 0)
-                    {
-                        for (String att : attColumnsHeaders)
-                        {
+                else if (attColumnsHeaders.size() > 0)
+                    for (String att : attColumnsHeaders)
+                        removeNewColumn("Att: " + att);
 
-                            removeNewColumn("Att: " + att);
-                        }
-                    }
-                }
                 updateTables();
+
                 restoreColumnsPositions();
+
                 hiddenColumnsAux = new ArrayList<>();
                 if (isAttributeCellExpanded())
                 {
@@ -1208,12 +1211,11 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 }
             }
             setColumnRowSorting();
-//            for (int columnId : getColumnsOfSpecialComparatorForSorting())
-//                ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
         }
 
-        // here update the number of entries label
+        this.getRowSorter().setSortKeys(sortKeys);
 
+        setEnabled(true);
     }
 
     private class PopupMenuMouseAdapter extends MouseAdapter
