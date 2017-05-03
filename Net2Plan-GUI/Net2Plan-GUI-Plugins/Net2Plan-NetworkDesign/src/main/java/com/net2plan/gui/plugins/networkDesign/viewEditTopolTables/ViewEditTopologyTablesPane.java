@@ -232,7 +232,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             {
                 final int numEntries = table.getModel().getRowCount() - 1; // last columns is for the aggregation
                 if (callback.getVisualizationState().getTableRowFilter() != null)
-                    label.setText("Number of entries: " + numEntries + " / " + table.getNumberOfElements(false) + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
+                    label.setText("Number of entries: " + numEntries + " / " + table.getModel().getRowCount() + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
                 else
                     label.setText("Number of entries: " + numEntries);
             }
@@ -323,7 +323,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         for (int row = 0; row < numRows; row++)
         {
-            final long elementID = table.getValueAt(table.convertRowIndexToView());
+            final long elementID = 1;
             if (elementID == element.getId())
             {
                 table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));

@@ -56,7 +56,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE);
         setDefaultCellRenderers();
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -165,16 +165,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasResources() : rf.hasResources(layer);
     }
     
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfResources();
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfResources(layer);
-    }
-
 
     @Override
     public int getAttributesColumnIndex()
@@ -282,7 +272,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_CAPACITY);

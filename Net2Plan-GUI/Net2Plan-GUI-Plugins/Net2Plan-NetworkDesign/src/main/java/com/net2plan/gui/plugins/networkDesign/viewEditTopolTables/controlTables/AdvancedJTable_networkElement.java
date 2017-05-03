@@ -1211,7 +1211,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     }
                 }
             }
-            setColumnRowSortingFixedAndNonFixedTable();
+            setColumnRowSorting();
 //            for (int columnId : getColumnsOfSpecialComparatorForSorting())
 //                ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
         }
@@ -1861,15 +1861,13 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract boolean hasElements();
 
-    public abstract int getNumberOfElements(boolean consideringFilters);
-
     public abstract int getAttributesColumnIndex();
-
-    public abstract void setColumnRowSortingFixedAndNonFixedTable();
 
     public abstract int getNumberOfDecoratorColumns();
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
+
+    protected abstract void setColumnRowSorting();
 
     @Nonnull
     protected abstract List<JComponent> getExtraAddOptions();

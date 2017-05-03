@@ -59,7 +59,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         super(createTableModel(callback), callback, NetworkElementType.FORWARDING_RULE);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -148,15 +148,6 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasForwardingRules(layer) : rf.hasForwardingRules(layer);
-    }
-    
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfForwardingRules(layer);
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfForwardingRules(layer);
     }
 
     @Override
@@ -253,7 +244,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_NODE, COLUMN_DEMAND, COLUMN_OUTGOINGLINK);
