@@ -1845,6 +1845,33 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         return data;
     }
 
+    public long getElementID(int row)
+    {
+        final String COLUMN_ID = "Unique identifier";
+
+        for (int i = 0; i < mainTable.getColumnCount(); i++)
+        {
+            if (COLUMN_ID.equals(mainTable.getColumnName(i)))
+            {
+                final Object value = mainTable.getValueAt(row, i);
+                if (!(value instanceof Long)) return -1;
+                return (long) value;
+            }
+        }
+
+        for (int i = 0; i < fixedTable.getColumnCount(); i++)
+        {
+            if (COLUMN_ID.equals(fixedTable.getColumnName(i)))
+            {
+                final Object value = fixedTable.getValueAt(row, i);
+                if (!(value instanceof Long)) return -1;
+                return (long) value;
+            }
+        }
+
+        return -1;
+    }
+
     public abstract List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles);
 
     public abstract String getTabName();
