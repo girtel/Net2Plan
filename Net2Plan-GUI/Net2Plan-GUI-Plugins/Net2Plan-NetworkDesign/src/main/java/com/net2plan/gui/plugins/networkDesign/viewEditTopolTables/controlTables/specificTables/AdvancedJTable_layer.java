@@ -283,7 +283,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {

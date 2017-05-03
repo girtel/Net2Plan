@@ -467,7 +467,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {

@@ -430,7 +430,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {

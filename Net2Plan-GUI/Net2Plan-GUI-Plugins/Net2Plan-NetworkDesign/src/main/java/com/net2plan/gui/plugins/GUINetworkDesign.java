@@ -749,7 +749,7 @@ public class GUINetworkDesign extends IGUIModule
 
     public void updateVisualizationAfterCanvasState()
     {
-        topologyPanel.updateMultilayerPanel();
+        topologyPanel.updateTopToolbar();
     }
 
     public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()

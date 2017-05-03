@@ -433,7 +433,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {

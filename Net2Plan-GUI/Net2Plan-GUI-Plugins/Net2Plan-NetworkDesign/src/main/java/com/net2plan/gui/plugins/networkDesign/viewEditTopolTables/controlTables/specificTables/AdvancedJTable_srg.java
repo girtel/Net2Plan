@@ -405,7 +405,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
