@@ -853,9 +853,9 @@ public class GraphUtils
 	 * @return All loopless shortest paths */
 	public static List<List<Link>> getAllLooplessShortestPaths(List<Node> nodes, List<Link> links, Node originNode, Node destinationNode, Map<Link, Double> linkCostMap)
 	{
-		Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, links);
+		final List<Link> filteredLinks = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, filteredLinks);
 		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-		g = JUNGUtils.filterGraph(g, nev);
 
 		YenAlgorithm<Node, Link> paths = new YenAlgorithm<Node, Link>(g, nev)
 		{
@@ -974,16 +974,12 @@ public class GraphUtils
 		if (maxRouteCostFactorRespectToShortestPath <= 0) maxRouteCostFactorRespectToShortestPath = Double.MAX_VALUE;
 		if (maxRouteCostRespectToShortestPath <= 0) maxRouteCostRespectToShortestPath = Double.MAX_VALUE;
 
-		if (linkCostMap == null)
-		{
-			linkCostMap = new HashMap<Link, Double>();
-			for (Link e : links)
-				linkCostMap.put(e, 1.0);
-		}
-
-		Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, links);
-
-		YenAlgorithm<Node, Link> paths = new YenAlgorithm<Node, Link>(g, (Transformer<Link, Double>) JUNGUtils.getEdgeWeightTransformer(linkCostMap), K, maxNumHops, maxLengthInKm, maxPropDelayInMs, maxRouteCost, maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath)
+		final List<Link> filteredListLinks = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		final Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, filteredListLinks);
+		YenAlgorithm<Node, Link> paths = new YenAlgorithm<Node, Link>(g, 
+				(Transformer<Link, Double>) JUNGUtils.getEdgeWeightTransformer(linkCostMap), 
+				K, maxNumHops, maxLengthInKm, maxPropDelayInMs, maxRouteCost, 
+				maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath)
 		{
 			@Override
 			public boolean acceptPath(GraphPath<Link> candidate)
@@ -1014,10 +1010,6 @@ public class GraphUtils
 			}
 		};
 		return paths.getPaths(originNode, destinationNode, K);
-		//		////////////////////////////////////
-		//		Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes , linkMap);
-		//		final Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-		//		return JUNGUtils.getKLooplessShortestPaths(graph, nev, originNode, destinationNode , K);
 	}
 
 	/** Returns the K minimum cost service chains between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
@@ -2524,19 +2516,19 @@ public class GraphUtils
 			return filteredGraph;
 		}
 
-		/** <p>Filters a graph removing those edges whose weight is equal to {@code Double.MAX_VALUE}.</p>
-		 * 
-		 * <p><b>Important</b>: Returned graph is not backed in the input one, so changes will not be reflected on it.
-		 * 
-		 * @param <V> Class type for vertices
-		 * @param <E> Class type for edges
-		 * @param graph Graph representing the network
-		 * @param nev Object responsible for returning weights for edges
-		 * @return Filtered graph */
-		public static <V, E> Graph<V, E> filterGraph(Graph<V, E> graph, final Transformer<E, Double> nev)
-		{
-			return filterGraph(graph, nev, null, 0);
-		}
+//		/** <p>Filters a graph removing those edges whose weight is equal to {@code Double.MAX_VALUE}.</p>
+//		 * 
+//		 * <p><b>Important</b>: Returned graph is not backed in the input one, so changes will not be reflected on it.
+//		 * 
+//		 * @param <V> Class type for vertices
+//		 * @param <E> Class type for edges
+//		 * @param graph Graph representing the network
+//		 * @param nev Object responsible for returning weights for edges
+//		 * @return Filtered graph */
+//		public static <V, E> Graph<V, E> filterGraph(Graph<V, E> graph, final Transformer<E, Double> nev)
+//		{
+//			return filterGraph(graph, nev, null, 0);
+//		}
 
 		/** <p>Filters a graph removing those edges whose weight is equal to {@code Double.MAX_VALUE}, or whose capacity is below a certain threshold.</p>
 		 * 
@@ -2678,29 +2670,29 @@ public class GraphUtils
 		//			return graph;
 		//		}
 
-		/** Returns the K-loopless shortest paths between two nodes. If <i>n</i> shortest paths are found (n&lt;K), those are returned.
-		 * Links with cost {@code Double.MAX_VALUE} are not considered.
-		 * 
-		 * @param <V> Class type for vertices
-		 * @param <E> Class type for edges
-		 * @param graph Graph representing the network
-		 * @param nev Object responsible for returning weights for edges
-		 * @param originNodeId Origin node
-		 * @param destinationNodeId Destination node
-		 * @param K Number of different paths
-		 * @return K-shortest paths */
-		public static <V, E> List<List<E>> getKLooplessShortestPaths(Graph<V, E> graph, Transformer<E, Double> nev, V originNodeId, V destinationNodeId, int K)
-		{
-			if (!graph.containsVertex(originNodeId)) return new LinkedList<List<E>>();
-			if (!graph.containsVertex(destinationNodeId)) return new LinkedList<List<E>>();
-
-			if (nev == null) nev = getEdgeWeightTransformer(null);
-
-			Graph<V, E> filteredGraph = filterGraph(graph, nev);
-			YenAlgorithm<V, E> paths = new YenAlgorithm<V, E>(filteredGraph, nev);
-			List<List<E>> pathList = paths.getPaths(originNodeId, destinationNodeId, K);
-			return pathList;
-		}
+//		/** Returns the K-loopless shortest paths between two nodes. If <i>n</i> shortest paths are found (n&lt;K), those are returned.
+//		 * Links with cost {@code Double.MAX_VALUE} are not considered.
+//		 * 
+//		 * @param <V> Class type for vertices
+//		 * @param <E> Class type for edges
+//		 * @param graph Graph representing the network
+//		 * @param nev Object responsible for returning weights for edges
+//		 * @param originNodeId Origin node
+//		 * @param destinationNodeId Destination node
+//		 * @param K Number of different paths
+//		 * @return K-shortest paths */
+//		public static <V, E> List<List<E>> getKLooplessShortestPaths(Graph<V, E> graph, Transformer<E, Double> nev, V originNodeId, V destinationNodeId, int K)
+//		{
+//			if (!graph.containsVertex(originNodeId)) return new LinkedList<List<E>>();
+//			if (!graph.containsVertex(destinationNodeId)) return new LinkedList<List<E>>();
+//
+//			if (nev == null) nev = getEdgeWeightTransformer(null);
+//
+//			Graph<V, E> filteredGraph = filterGraph(graph, nev);
+//			YenAlgorithm<V, E> paths = new YenAlgorithm<V, E>(filteredGraph, nev);
+//			List<List<E>> pathList = paths.getPaths(originNodeId, destinationNodeId, K);
+//			return pathList;
+//		}
 
 		/** Returns the weight of a path given the sequence of edges.
 		 * 
@@ -3212,8 +3204,7 @@ public class GraphUtils
 	 * <p>Reference: {@code J.Y. Yen, "Finding the K Shortest Loopless Paths in a Network," <i>Management Science</i>, vol. 17, no. 11, pp. 712-716, Jul. 1971}</p>
 	 * 
 	 * @param <V> Vertex type
-	 * @param <E> Edge type
-	 * @author Pablo Pavon-Marino, Jose-Luis Izquierdo Zaragoza */
+	 * @param <E> Edge type */
 	static class YenAlgorithm<V, E>
 	{
 		private final Graph<V, E> graph;
@@ -3241,16 +3232,8 @@ public class GraphUtils
 			this.maxRouteCost = maxRouteCost;
 			this.maxRouteCostFactorRespectToShortestPath = maxRouteCostFactorRespectToShortestPath;
 			this.maxRouteCostRespectToShortestPath = maxRouteCostRespectToShortestPath;
-			if (nev == null)
-			{
-				this.graph = graph;
-				this.nev = JUNGUtils.getEdgeWeightTransformer(null);
-			} else
-			{
-				this.nev = nev;
-				this.graph = JUNGUtils.filterGraph(graph, nev);
-			}
-
+			this.graph = graph;
+			this.nev = nev;
 			dijkstra = new DijkstraShortestPath<V, E>(graph, nev);
 		}
 
@@ -3267,16 +3250,8 @@ public class GraphUtils
 			this.maxRouteCost = -1;
 			this.maxRouteCostFactorRespectToShortestPath = -1;
 			this.maxRouteCostRespectToShortestPath = -1;
-			if (nev == null)
-			{
-				this.graph = graph;
-				this.nev = JUNGUtils.getEdgeWeightTransformer(null);
-			} else
-			{
-				this.nev = nev;
-				this.graph = JUNGUtils.filterGraph(graph, nev);
-			}
-
+			this.graph = graph;
+			this.nev = nev;
 			dijkstra = new DijkstraShortestPath<V, E>(graph, nev);
 		}
 

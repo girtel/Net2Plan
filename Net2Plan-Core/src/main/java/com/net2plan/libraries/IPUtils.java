@@ -16,6 +16,8 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import edu.uci.ics.jung.algorithms.shortestpath.DijkstraDistance;
+
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.GraphUtils.JUNGUtils;
 import com.net2plan.utils.CollectionUtils;
@@ -178,106 +180,106 @@ public class IPUtils
 		return Quadruple.of(f_de, x_de, r_d, y_e);
 	}
 
-	/**
-	 *
-	 * @param nodes List of nodes
-	 * @param links List of links
-	 * @param demands List of demands
-	 * @param linkWeightVector Cost per link vector
-	 * @return Forwarding rule mapping, where key is the demand-outgoing link pair and the value is the splitting ratio
-	 */
-	public static DoubleMatrix2D computeECMPForwardingRules_fde (List<Node> nodes , List<Link> links , List<Demand> demands , DoubleMatrix1D linkWeightVector)
-	{
-		final int N = nodes.size();
-		DoubleMatrix2D splittingRatioMap = DoubleFactory2D.sparse.make (demands.size() , links.size());
-		
-		double[][] costMatrix = new double[N][N];
-		for(int n = 0; n < N; n++)
-		{
-			Arrays.fill(costMatrix[n], Double.MAX_VALUE);
-			costMatrix[n][n] = 0;
-		}
-		Map<Link,Double> linkWeightMap = CollectionUtils.toMap (links , linkWeightVector);
-		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
-		
-		Map<Pair<Node, Node>, Set<Link>> linksPerNodePair = new LinkedHashMap<Pair<Node, Node>, Set<Link>>();
-		for(Link link : links)
-		{
-			Pair<Node, Node> nodePair_thisLink = Pair.of (link.getOriginNode() , link.getDestinationNode());
-			final int a_e = link.getOriginNode().getIndex();
-			final int b_e = link.getDestinationNode().getIndex();
-			costMatrix[a_e][b_e] = Math.min(costMatrix[a_e][b_e], nev.transform(link));
-			
-			Set<Link> links_thisNodePair = linksPerNodePair.get(nodePair_thisLink);
-			if (links_thisNodePair == null)
-			{
-				links_thisNodePair = new LinkedHashSet<Link>();
-				linksPerNodePair.put(nodePair_thisLink, links_thisNodePair);
-			}
-			
-			links_thisNodePair.add(link);
-		}
-
-		for(int k = 0; k < N; k++)
-		{
-			for(int i = 0; i < N; i++)
-			{
-				if (i == k) continue;
-				
-				for(int j = 0; j < N; j++)
-				{
-					if (j == k || j == i) continue;
-					
-					double newValue = costMatrix[i][k] + costMatrix[k][j];
-					if (newValue < costMatrix[i][j]) costMatrix[i][j] = newValue;
-				}
-			}
-		}
-		
-		for(Demand demand : demands)
-		{
-			final int b_d = demand.getEgressNode().getIndex ();
-			for (Node node : nodes)
-			{
-				final int n = node.getIndex ();
-				if (n == b_d) continue;
-
-				double distNodeToEgress = costMatrix[n][b_d];
-				if (distNodeToEgress == Double.MAX_VALUE) continue;
-
-				Set<Link> A_t = new LinkedHashSet<Link>();
-				for (Node intermediateNode : nodes)
-				{
-					if (node.equals (intermediateNode)) continue;
-
-					final int m = intermediateNode.getIndex();
-
-					double distIntermediateToEgress = costMatrix[m][b_d];
-					if (distIntermediateToEgress == Double.MAX_VALUE) continue;
-
-					Collection<Link> linksFromNodeToIntermediate = linksPerNodePair.get(Pair.of(node, intermediateNode));
-					if (linksFromNodeToIntermediate == null) continue;
-
-					for (Link link : linksFromNodeToIntermediate)
-					{
-						double weight_thisLink = linkWeightMap.get(link);
-						checkIPWeight(weight_thisLink);
-
-						if (Math.abs(weight_thisLink - (distNodeToEgress - distIntermediateToEgress)) < 1E-10)
-							A_t.add(link);
-					}
-				}
-
-				int outdegree = A_t.size();
-
-				if (outdegree > 0)
-					for (Link link : A_t)
-						splittingRatioMap.set (demand.getIndex () , link.getIndex () , 1.0 / outdegree);
-			}
-		}
-
-		return splittingRatioMap;
-	}
+//	/**
+//	 *
+//	 * @param nodes List of nodes
+//	 * @param links List of links
+//	 * @param demands List of demands
+//	 * @param linkWeightVector Cost per link vector
+//	 * @return Forwarding rule mapping, where key is the demand-outgoing link pair and the value is the splitting ratio
+//	 */
+//	public static DoubleMatrix2D computeECMPForwardingRules_fde (List<Node> nodes , List<Link> links , List<Demand> demands , DoubleMatrix1D linkWeightVector)
+//	{
+//		final int N = nodes.size();
+//		DoubleMatrix2D splittingRatioMap = DoubleFactory2D.sparse.make (demands.size() , links.size());
+//		
+//		double[][] costMatrix = new double[N][N];
+//		for(int n = 0; n < N; n++)
+//		{
+//			Arrays.fill(costMatrix[n], Double.MAX_VALUE);
+//			costMatrix[n][n] = 0;
+//		}
+//		Map<Link,Double> linkWeightMap = CollectionUtils.toMap (links , linkWeightVector);
+//		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
+//		
+//		Map<Pair<Node, Node>, Set<Link>> linksPerNodePair = new LinkedHashMap<Pair<Node, Node>, Set<Link>>();
+//		for(Link link : links)
+//		{
+//			Pair<Node, Node> nodePair_thisLink = Pair.of (link.getOriginNode() , link.getDestinationNode());
+//			final int a_e = link.getOriginNode().getIndex();
+//			final int b_e = link.getDestinationNode().getIndex();
+//			costMatrix[a_e][b_e] = Math.min(costMatrix[a_e][b_e], nev.transform(link));
+//			
+//			Set<Link> links_thisNodePair = linksPerNodePair.get(nodePair_thisLink);
+//			if (links_thisNodePair == null)
+//			{
+//				links_thisNodePair = new LinkedHashSet<Link>();
+//				linksPerNodePair.put(nodePair_thisLink, links_thisNodePair);
+//			}
+//			
+//			links_thisNodePair.add(link);
+//		}
+//
+//		for(int k = 0; k < N; k++)
+//		{
+//			for(int i = 0; i < N; i++)
+//			{
+//				if (i == k) continue;
+//				
+//				for(int j = 0; j < N; j++)
+//				{
+//					if (j == k || j == i) continue;
+//					
+//					double newValue = costMatrix[i][k] + costMatrix[k][j];
+//					if (newValue < costMatrix[i][j]) costMatrix[i][j] = newValue;
+//				}
+//			}
+//		}
+//		
+//		for(Demand demand : demands)
+//		{
+//			final int b_d = demand.getEgressNode().getIndex ();
+//			for (Node node : nodes)
+//			{
+//				final int n = node.getIndex ();
+//				if (n == b_d) continue;
+//
+//				double distNodeToEgress = costMatrix[n][b_d];
+//				if (distNodeToEgress == Double.MAX_VALUE) continue;
+//
+//				Set<Link> A_t = new LinkedHashSet<Link>();
+//				for (Node intermediateNode : nodes)
+//				{
+//					if (node.equals (intermediateNode)) continue;
+//
+//					final int m = intermediateNode.getIndex();
+//
+//					double distIntermediateToEgress = costMatrix[m][b_d];
+//					if (distIntermediateToEgress == Double.MAX_VALUE) continue;
+//
+//					Collection<Link> linksFromNodeToIntermediate = linksPerNodePair.get(Pair.of(node, intermediateNode));
+//					if (linksFromNodeToIntermediate == null) continue;
+//
+//					for (Link link : linksFromNodeToIntermediate)
+//					{
+//						double weight_thisLink = linkWeightMap.get(link);
+//						checkIPWeight(weight_thisLink);
+//
+//						if (Math.abs(weight_thisLink - (distNodeToEgress - distIntermediateToEgress)) < 1E-10)
+//							A_t.add(link);
+//					}
+//				}
+//
+//				int outdegree = A_t.size();
+//
+//				if (outdegree > 0)
+//					for (Link link : A_t)
+//						splittingRatioMap.set (demand.getIndex () , link.getIndex () , 1.0 / outdegree);
+//			}
+//		}
+//
+//		return splittingRatioMap;
+//	}
 
 	/**
 	 * Computes the routing table matrix according to an OSPF/ECMP scheme. For
@@ -298,6 +300,12 @@ public class IPUtils
 	{
 		final int N = nodes.size();
 		final int E = links.size();
+
+		final Map<Link,Double> linkWeightMap = CollectionUtils.toMap(links, linkWeightVector);
+		final Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
+
+		
+		
 		DoubleMatrix2D f_te = DoubleFactory2D.sparse.make(N,E);
 		
 		double[][] costMatrix = new double[N][N];
@@ -306,9 +314,6 @@ public class IPUtils
 			Arrays.fill(costMatrix[n], Double.MAX_VALUE);
 			costMatrix[n][n] = 0;
 		}
-		Map<Link,Double> linkWeightMap = CollectionUtils.toMap(links, linkWeightVector);
-		
-		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
 		
 		Map<Pair<Node, Node>, Set<Link>> linksPerNodePair = new LinkedHashMap<Pair<Node, Node>, Set<Link>>();
 		for(Link link : links)
