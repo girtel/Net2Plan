@@ -124,14 +124,18 @@ class ViewState implements ICanvasState
         final double ymaxJungCoords = Collections.max(nodeYCoordJUNG);
         final double yminJungCoords = Collections.min(nodeYCoordJUNG);
 
-        double PRECISION_FACTOR = 1e-6;
-
         final Rectangle viewInLayoutUnits = canvas.getCurrentCanvasViewWindow();
 
-        double ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : viewInLayoutUnits.getWidth() / (xmaxJungCoords - xminJungCoords);
-        double ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : viewInLayoutUnits.getHeight() / (ymaxJungCoords - yminJungCoords);
+        double xDiff = Math.abs(xmaxJungCoords - xminJungCoords);
+        double yDiff = Math.abs(ymaxJungCoords - yminJungCoords);
 
-        float ratio = (float) (0.6 * Math.min(ratio_h, ratio_v));
+        double ratio_h = xDiff == 0 ? 1 : viewInLayoutUnits.getWidth() / xDiff;
+        double ratio_v = yDiff == 0 ? 1 : viewInLayoutUnits.getHeight() / yDiff;
+
+        float ratio;
+        if (ratio_h == 1) ratio = (float) (0.6 * ratio_v);
+        else if (ratio_v == 1) ratio = (float) (0.6 * ratio_h);
+        else ratio = (float) (0.6 * Math.min(ratio_h, ratio_v));
 
         canvas.zoom(canvas.getCanvasCenter(), nodes.size() == 1 ? previousZoom : ratio);
 
