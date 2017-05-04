@@ -132,10 +132,14 @@ class ViewState implements ICanvasState
         double ratio_h = xDiff == 0 ? 1 : viewInLayoutUnits.getWidth() / xDiff;
         double ratio_v = yDiff == 0 ? 1 : viewInLayoutUnits.getHeight() / yDiff;
 
-        float ratio;
-        if (ratio_h == 1) ratio = (float) (0.6 * ratio_v);
-        else if (ratio_v == 1) ratio = (float) (0.6 * ratio_h);
-        else ratio = (float) (0.6 * Math.min(ratio_h, ratio_v));
+        // Checking for 1s.
+        double minRatio;
+        if (ratio_h != 1 && ratio_v != 1)
+            minRatio = Math.min(ratio_h, ratio_v);
+        else
+            minRatio = (ratio_h * ratio_v == ratio_h ? ratio_h : ratio_v);
+
+        float ratio = (float) (0.6 * minRatio);
 
         canvas.zoom(canvas.getCanvasCenter(), nodes.size() == 1 ? previousZoom : ratio);
 
