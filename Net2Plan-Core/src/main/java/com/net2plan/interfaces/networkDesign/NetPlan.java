@@ -2706,10 +2706,7 @@ public class NetPlan extends NetworkElement
     public Set<Link> getLinksWithZeroCapacity(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-        Set<Link> res = new HashSet<Link>();
-        for (Link e : layer.links) if (e.capacity < PRECISION_FACTOR) res.add(e);
-        return res;
+        return layer.cache_linksZeroCap;
     }
 
     /**
@@ -5624,7 +5621,11 @@ public class NetPlan extends NetworkElement
         	d.cache_worstCasePropagationTimeMs = Double.MAX_VALUE;
             d.routingCycleType = RoutingCycleType.LOOPLESS;
             d.carriedTraffic = 0;
-            if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = d.carriedTraffic;
+            if (d.coupledUpperLayerLink != null)
+            {
+            	d.coupledUpperLayerLink.capacity = d.carriedTraffic;
+            	d.coupledUpperLayerLink.updateZeroCapacityLinksCache();
+            }
         }
         for (Link e : layer.links)
         {
@@ -5762,7 +5763,11 @@ public class NetPlan extends NetworkElement
         {
         	d.carriedTraffic = 0;
         	d.routingCycleType = RoutingCycleType.LOOPLESS;
-        	if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = 0;
+        	if (d.coupledUpperLayerLink != null)
+        	{
+        		d.coupledUpperLayerLink.capacity = 0;
+        		d.coupledUpperLayerLink.updateZeroCapacityLinksCache();
+        	}
     		d.cache_routes.clear ();
     		d.cache_worstCasePropagationTimeMs = 0;        
     		d.cache_worstCaseLengthInKm = 0;
@@ -6997,7 +7002,10 @@ public class NetPlan extends NetworkElement
             if ((e.coupledLowerLayerDemand != null) || (e.coupledLowerLayerMulticastDemand != null))
                 throw new Net2PlanException("Coupled links cannot change its capacity");
         for (Link e : layer.links)
+        {
             e.capacity = linkCapacities.get(e.index);
+            e.updateZeroCapacityLinksCache();
+        }
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 

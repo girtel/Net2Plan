@@ -495,7 +495,12 @@ public class MulticastTree extends NetworkElement
 		for (Link link : linkSet)
 			link.updateLinkTrafficAndOccupation();
 		demand.carriedTraffic = 0; for (MulticastTree t : demand.cache_multicastTrees) demand.carriedTraffic += t.getCarriedTraffic();
-		if (demand.coupledUpperLayerLinks != null) for (Link e : demand.coupledUpperLayerLinks.values()) e.capacity = demand.carriedTraffic;
+		if (demand.coupledUpperLayerLinks != null) 
+			for (Link e : demand.coupledUpperLayerLinks.values())
+			{
+				e.capacity = demand.carriedTraffic;
+				e.updateZeroCapacityLinksCache();  
+			}
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 

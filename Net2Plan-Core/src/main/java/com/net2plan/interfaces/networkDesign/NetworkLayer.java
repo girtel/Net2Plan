@@ -60,6 +60,7 @@ public class NetworkLayer extends NetworkElement
 //	DoubleMatrix2D forwardingRules_Aout_ne; // 1 if link e is outgoing from n, 0 otherwise
 //	DoubleMatrix2D forwardingRules_Ain_ne; // 1 if link e is incominng from n, 0 otherwise
 	Set<Link> cache_linksDown;
+	Set<Link> cache_linksZeroCap;
 	Set<Link> cache_coupledLinks;
 	Set<Demand> cache_coupledDemands;
 	Set<MulticastDemand> cache_coupledMulticastDemands;
@@ -85,6 +86,7 @@ public class NetworkLayer extends NetworkElement
 		this.multicastTrees = new ArrayList<MulticastTree> ();
 
 		this.cache_linksDown = new HashSet<Link> ();
+		this.cache_linksZeroCap = new HashSet<>();
 		this.cache_coupledLinks = new HashSet<Link> ();
 		this.cache_coupledDemands = new HashSet<Demand> ();
 		this.cache_coupledMulticastDemands = new HashSet<MulticastDemand> ();
@@ -130,6 +132,7 @@ public class NetworkLayer extends NetworkElement
 		}
 		
 		this.cache_linksDown.clear (); for (Link e : origin.cache_linksDown) this.cache_linksDown.add(this.netPlan.getLinkFromId (e.id));
+		this.cache_linksZeroCap.clear (); for (Link e : origin.cache_linksZeroCap) this.cache_linksZeroCap.add(this.netPlan.getLinkFromId (e.id));
 		this.cache_coupledLinks.clear (); for (Link e : origin.cache_coupledLinks) this.cache_coupledLinks.add(this.netPlan.getLinkFromId (e.id));
 		this.cache_coupledDemands.clear (); for (Demand d : origin.cache_coupledDemands) this.cache_coupledDemands.add(this.netPlan.getDemandFromId (d.id));
 		this.cache_coupledMulticastDemands.clear (); for (MulticastDemand d : origin.cache_coupledMulticastDemands) this.cache_coupledMulticastDemands.add(this.netPlan.getMulticastDemandFromId(d.id));
@@ -178,6 +181,7 @@ public class NetworkLayer extends NetworkElement
 //		if ((this.forwardingRules_Aout_ne != null) && (!this.forwardingRules_Aout_ne.equals(e2.forwardingRules_Aout_ne))) return false;
 //		if ((this.forwardingRules_Ain_ne != null) && (!this.forwardingRules_Ain_ne.equals(e2.forwardingRules_Ain_ne))) return false;
 		if (!NetPlan.isDeepCopy(this.cache_linksDown , e2.cache_linksDown)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_linksZeroCap , e2.cache_linksZeroCap)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_coupledLinks , e2.cache_coupledLinks)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_coupledDemands , e2.cache_coupledDemands)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_coupledMulticastDemands , e2.cache_coupledMulticastDemands)) return false;
@@ -270,6 +274,7 @@ public class NetworkLayer extends NetworkElement
 		super.checkCachesConsistency ();
 
 		for (Link link : cache_linksDown) if (link.isUp) throw new RuntimeException ("Bad");
+		for (Link link : cache_linksZeroCap) if (link.getCapacity() != 0) throw new RuntimeException ("Bad");
 		for (Link link : cache_coupledLinks) if ((link.coupledLowerLayerDemand == null) && (link.coupledLowerLayerMulticastDemand == null)) throw new RuntimeException ("Bad");
 		for (Demand demand : cache_coupledDemands) if (demand.coupledUpperLayerLink == null) throw new RuntimeException ("Bad");
 		for (MulticastDemand demand : cache_coupledMulticastDemands) if (demand.coupledUpperLayerLinks == null) throw new RuntimeException ("Bad");

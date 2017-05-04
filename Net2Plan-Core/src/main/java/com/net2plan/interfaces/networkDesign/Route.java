@@ -587,7 +587,11 @@ public class Route extends NetworkElement
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
 
 		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
-		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
+		if (demand.coupledUpperLayerLink != null)
+		{
+			demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
+			demand.coupledUpperLayerLink.updateZeroCapacityLinksCache();
+		}
 
 		for (NetworkElement e : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet())
 			if (e instanceof Resource)

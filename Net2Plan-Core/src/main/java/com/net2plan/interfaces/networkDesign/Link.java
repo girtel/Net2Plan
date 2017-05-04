@@ -95,7 +95,8 @@ public class Link extends NetworkElement
 		this.layer = layer;
 		this.originNode = originNode;
 		this.destinationNode = destinationNode;
-		this.capacity = capacity;
+		this.capacity = capacity; 
+		updateZeroCapacityLinksCache();
 		this.cache_carriedTraffic = 0;
 		this.cache_occupiedCapacity = 0;
 		this.lengthInKm = lengthInKm;
@@ -103,7 +104,6 @@ public class Link extends NetworkElement
 		this.isUp = true;
 		this.coupledLowerLayerDemand = null;
 		this.coupledLowerLayerMulticastDemand = null;
-		
 		this.cache_srgs = new HashSet<SharedRiskGroup> ();
 		this.cache_traversingRoutes = new HashMap<Route,Integer> ();
 		this.cache_traversingTrees = new HashSet<MulticastTree> ();
@@ -252,7 +252,13 @@ public class Link extends NetworkElement
 		if (linkCapacity < 0) throw new Net2PlanException ("Negative link capacities are not possible");
 		if ((coupledLowerLayerDemand != null) || (coupledLowerLayerMulticastDemand != null)) throw new Net2PlanException ("Coupled links cannot change its capacity");
 		this.capacity = linkCapacity;
+		updateZeroCapacityLinksCache ();
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+	}
+
+	void updateZeroCapacityLinksCache () 
+	{
+		if (capacity < Configuration.precisionFactor) layer.cache_linksZeroCap.add(this); else layer.cache_linksZeroCap.remove(this);  
 	}
 
 	/**
@@ -575,6 +581,7 @@ public class Link extends NetworkElement
 			this.coupledLowerLayerMulticastDemand.decouple();
 		
 		layer.cache_linksDown.remove (this);
+		layer.cache_linksZeroCap.remove(this);
 		netPlan.cache_id2LinkMap.remove(id);
 		originNode.cache_nodeOutgoingLinks.remove (this);
 		destinationNode.cache_nodeIncomingLinks.remove (this);
@@ -624,6 +631,8 @@ public class Link extends NetworkElement
 
 		if (isUp && layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp && !layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
+		if (capacity < Configuration.precisionFactor && !layer.cache_linksZeroCap.contains(this)) throw new RuntimeException ("Bad");
+		if (capacity >= Configuration.precisionFactor && layer.cache_linksZeroCap.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp)
 		{
 			if (Math.abs(cache_carriedTraffic) > 1e-3)
@@ -937,5 +946,4 @@ public class Link extends NetworkElement
 		return res;
 	}
 
-	
 }
