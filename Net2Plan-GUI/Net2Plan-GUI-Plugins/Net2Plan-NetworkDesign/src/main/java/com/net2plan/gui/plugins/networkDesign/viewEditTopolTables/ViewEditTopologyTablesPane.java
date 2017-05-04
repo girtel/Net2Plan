@@ -323,7 +323,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         for (int row = 0; row < numRows; row++)
         {
-            final long elementID = table.getElementID(row);
+            final long elementID = (long) table.getModel().getValueAt(row, 0);
             if (elementID == element.getId())
             {
                 table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));
