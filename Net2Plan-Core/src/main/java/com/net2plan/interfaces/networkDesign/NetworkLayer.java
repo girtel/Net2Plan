@@ -66,6 +66,7 @@ public class NetworkLayer extends NetworkElement
 	Set<MulticastDemand> cache_coupledMulticastDemands;
 	
 	Set<Route> cache_routesDown;
+	Set<Route> cache_routesTravLinkZeroCap;
 	Set<MulticastTree> cache_multicastTreesDown;
 	URL defaultNodeIconURL;
 
@@ -92,6 +93,7 @@ public class NetworkLayer extends NetworkElement
 		this.cache_coupledMulticastDemands = new HashSet<MulticastDemand> ();
 
 		this.cache_routesDown = new HashSet<Route> ();
+		this.cache_routesTravLinkZeroCap = new HashSet<>();
 		this.cache_multicastTreesDown = new HashSet<MulticastTree> ();
 //		this.forwardingRulesNoFailureState_f_de = null;
 //		this.forwardingRulesCurrentFailureState_x_de = null;
@@ -137,6 +139,7 @@ public class NetworkLayer extends NetworkElement
 		this.cache_coupledDemands.clear (); for (Demand d : origin.cache_coupledDemands) this.cache_coupledDemands.add(this.netPlan.getDemandFromId (d.id));
 		this.cache_coupledMulticastDemands.clear (); for (MulticastDemand d : origin.cache_coupledMulticastDemands) this.cache_coupledMulticastDemands.add(this.netPlan.getMulticastDemandFromId(d.id));
 		this.cache_routesDown.clear (); for (Route r : origin.cache_routesDown) this.cache_routesDown.add(this.netPlan.getRouteFromId (r.id));
+		this.cache_routesTravLinkZeroCap.clear(); for (Route r : origin.cache_routesTravLinkZeroCap) this.cache_routesTravLinkZeroCap.add(this.netPlan.getRouteFromId (r.id));
 		this.cache_multicastTreesDown.clear (); for (MulticastTree t : origin.cache_multicastTreesDown) this.cache_multicastTreesDown.add(this.netPlan.getMulticastTreeFromId (t.id));
 		
 		for (Link e : origin.links) this.links.get(e.index).copyFrom(e);
@@ -186,6 +189,7 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_coupledDemands , e2.cache_coupledDemands)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_coupledMulticastDemands , e2.cache_coupledMulticastDemands)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_routesDown , e2.cache_routesDown)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_routesTravLinkZeroCap , e2.cache_routesTravLinkZeroCap)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_multicastTreesDown , e2.cache_multicastTreesDown)) return false;
 		return true;
 	}
@@ -278,7 +282,9 @@ public class NetworkLayer extends NetworkElement
 		for (Link link : cache_coupledLinks) if ((link.coupledLowerLayerDemand == null) && (link.coupledLowerLayerMulticastDemand == null)) throw new RuntimeException ("Bad");
 		for (Demand demand : cache_coupledDemands) if (demand.coupledUpperLayerLink == null) throw new RuntimeException ("Bad");
 		for (MulticastDemand demand : cache_coupledMulticastDemands) if (demand.coupledUpperLayerLinks == null) throw new RuntimeException ("Bad");
-		for (Route route : cache_routesDown) if (!route.isDown()) throw new RuntimeException ("Bad");
+		for (Route route : cache_routesDown) { if (!(route.getSeqLinks().stream().anyMatch(e->!e.isUp) || (route.getSeqNodes().stream().anyMatch(n->!n.isUp)))) throw new RuntimeException ("Bad"); }
+		for (Route route : cache_routesTravLinkZeroCap) { if (route.getSeqLinks().stream().allMatch(e->e.capacity >= Configuration.precisionFactor)) throw new RuntimeException ("Bad"); }
+		
 		for (MulticastTree tree : cache_multicastTreesDown) if (!tree.isDown()) throw new RuntimeException ("Bad");
 	}
 

@@ -982,6 +982,7 @@ public class NetPlan extends NetworkElement
         layer.routes.add(route);
         cache_id2RouteMap.put(routeId, route);
         boolean isUpThisRoute = true;
+        boolean isTraversingZeroCapLinks = false;
         for (Node node : route.cache_seqNodesRealPath)
         {
             node.cache_nodeAssociatedRoutes.add(route);
@@ -994,9 +995,11 @@ public class NetPlan extends NetworkElement
             else numPassingTimes++;
             link.cache_traversingRoutes.put(route, numPassingTimes);
             if (!link.isUp) isUpThisRoute = false;
+            if (link.capacity < Configuration.precisionFactor) isTraversingZeroCapLinks = true;
         }
         demand.cache_routes.add(route);
         if (!isUpThisRoute) layer.cache_routesDown.add(route);
+        if (isTraversingZeroCapLinks) layer.cache_routesTravLinkZeroCap.add(route);
         route.setCarriedTraffic(carriedTraffic, occupiedLinkAndResourceCapacities);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return route;
@@ -5756,6 +5759,7 @@ public class NetPlan extends NetworkElement
     		for (Node node : r.cache_seqNodesRealPath) node.cache_nodeAssociatedRoutes.remove(r);
     		netPlan.cache_id2RouteMap.remove(r.id);
     		layer.cache_routesDown.remove (r);
+    		layer.cache_routesTravLinkZeroCap.remove(r);
             for (String tag : r.tags) netPlan.cache_taggedElements.get(tag).remove(r);
             r.removeIdAndFromPlanningDomain();
         }
