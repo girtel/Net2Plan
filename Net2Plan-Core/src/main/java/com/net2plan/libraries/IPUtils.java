@@ -317,7 +317,9 @@ public class IPUtils
 					final Pair<Set<Link>,Double> nodePairLinks = linksPerNodeSameMinimumCost.get(Pair.of(sourceNode, intermediateNode));
 					if (nodePairLinks == null) continue;
 					if (nodePairLinks.getFirst().isEmpty()) continue;
-					final double costThroghThisIntermediate = nodePairLinks.getSecond() + shortestDistanceMatrix.getDistance(intermediateNode, egressNode).doubleValue();
+					final Number costFromIntermediateToEnd = shortestDistanceMatrix.getDistance(intermediateNode, egressNode);
+					if (costFromIntermediateToEnd == null) continue;
+					final double costThroghThisIntermediate = nodePairLinks.getSecond() + costFromIntermediateToEnd.doubleValue();
 					if (Math.abs(shortestPathDistance_ij.doubleValue() - costThroghThisIntermediate) < 1E-10)
 						minCostLinks.addAll(nodePairLinks.getFirst());
 				}
