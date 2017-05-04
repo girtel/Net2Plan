@@ -266,12 +266,11 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     }
 
 
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelectionAndShowInCanvas(ElementSelection selection)
     {
         if (selection.getElementType() != NetworkElementType.FORWARDING_RULE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        final NetPlan np = callback.getDesign();
         callback.getVisualizationState().pickForwardingRule(selection.getForwardingRules());
         callback.updateVisualizationAfterPick();
     }
@@ -297,6 +296,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         final List<Pair<Demand, Link>> selectedFRs = selection.getForwardingRules();
         if (!frRowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }

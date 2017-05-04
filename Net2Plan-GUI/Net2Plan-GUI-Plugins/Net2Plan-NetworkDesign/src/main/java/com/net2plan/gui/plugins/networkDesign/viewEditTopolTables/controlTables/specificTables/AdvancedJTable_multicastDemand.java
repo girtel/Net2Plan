@@ -346,6 +346,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
         if (!demandRowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -416,7 +417,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelectionAndShowInCanvas(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.MULTICAST_DEMAND)

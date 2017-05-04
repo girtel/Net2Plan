@@ -417,6 +417,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         /* Add the popup menu option of the filters */
         if (!rowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -451,7 +452,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     }
 
     @Override
-    protected void showInCanvas(ElementSelection selection)
+    protected void pickSelectionAndShowInCanvas(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.NODE)

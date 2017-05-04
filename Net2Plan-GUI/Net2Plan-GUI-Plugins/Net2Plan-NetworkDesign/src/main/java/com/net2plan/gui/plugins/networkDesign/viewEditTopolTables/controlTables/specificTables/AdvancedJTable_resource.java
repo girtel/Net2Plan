@@ -385,6 +385,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
         if (!rowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -720,7 +721,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelectionAndShowInCanvas(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.RESOURCE)

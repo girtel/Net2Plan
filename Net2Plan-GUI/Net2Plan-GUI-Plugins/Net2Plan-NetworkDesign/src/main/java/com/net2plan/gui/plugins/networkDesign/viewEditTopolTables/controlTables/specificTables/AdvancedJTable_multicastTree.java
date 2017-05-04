@@ -343,7 +343,8 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
 
         if (!rowsInTheTable.isEmpty())
         {
-            addFilterOptions(selection, popup);
+        	addPickOption(selection, popup);
+        	addFilterOptions(selection, popup);
             popup.addSeparator();
         }
 
@@ -414,7 +415,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelectionAndShowInCanvas(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.MULTICAST_TREE)

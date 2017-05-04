@@ -348,6 +348,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         final JMenu submenuFilters = new JMenu("Filters");
         if (!routeRowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -417,7 +418,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelectionAndShowInCanvas(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.ROUTE)
