@@ -1562,33 +1562,35 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      */
     private ElementSelection getSelectedElements()
     {
-        final int[] rowIndexes = this.getSelectedRows();
+        final int[] rowViewIndexes = this.getSelectedRows();
         final NetPlan np = callback.getDesign();
 
         final List<NetworkElement> elementList = new ArrayList<>();
         final List<Pair<Demand, Link>> frList = new ArrayList<>();
 
-        if (rowIndexes.length != 0)
+        if (rowViewIndexes.length != 0)
         {
             final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow() ? 1 : 0);
             final List<Integer> validRows = new ArrayList<Integer>();
-            for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
+            for (int a : rowViewIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
 
             if (networkElementType == NetworkElementType.FORWARDING_RULE)
             {
-                for (int rowIndex : validRows)
+                for (int rowViewIndex : validRows)
                 {
-                    final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
-                    final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+                    final int viewRowIndex = this.convertRowIndexToModel(rowViewIndex);
+                    final String demandInfo = (String) getModel().getValueAt(viewRowIndex, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
+                    final String linkInfo = (String) getModel().getValueAt(viewRowIndex, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
                     final int demandIndex = Integer.parseInt(demandInfo.substring(0, demandInfo.indexOf("(")).trim());
                     final int linkIndex = Integer.parseInt(linkInfo.substring(0, linkInfo.indexOf("(")).trim());
                     frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
                 }
             } else
             {
-                for (int rowIndex : validRows)
+                for (int rowViewIndex : validRows)
                 {
-                    final long id = (long) getModel().getValueAt(rowIndex, 0);
+                    final int viewRowIndex = this.convertRowIndexToModel(rowViewIndex);
+                    final long id = (long) getModel().getValueAt(viewRowIndex, 0);
                     elementList.add(np.getNetworkElement(id));
                 }
             }
@@ -1857,33 +1859,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
 
         return data;
-    }
-
-    public long getElementID(int row)
-    {
-        final String COLUMN_ID = "Unique identifier";
-
-        for (int i = 0; i < mainTable.getColumnCount(); i++)
-        {
-            if (COLUMN_ID.equals(mainTable.getColumnName(i)))
-            {
-                final Object value = mainTable.getValueAt(row, i);
-                if (!(value instanceof Long)) return -1;
-                return (long) value;
-            }
-        }
-
-        for (int i = 0; i < fixedTable.getColumnCount(); i++)
-        {
-            if (COLUMN_ID.equals(fixedTable.getColumnName(i)))
-            {
-                final Object value = fixedTable.getValueAt(row, i);
-                if (!(value instanceof Long)) return -1;
-                return (long) value;
-            }
-        }
-
-        return -1;
     }
 
     public abstract List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesTitles);
