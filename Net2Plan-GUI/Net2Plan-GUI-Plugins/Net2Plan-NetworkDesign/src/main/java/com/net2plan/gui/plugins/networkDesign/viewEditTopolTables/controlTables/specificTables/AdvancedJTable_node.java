@@ -457,7 +457,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.NODE)
             throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickElement((List<Node>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement(selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

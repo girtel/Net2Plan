@@ -27,6 +27,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.*;
+
 /**
  * <p>This class contains a representation of a unidirectional route, an structure used to carry traffic of unicast demands at a layer,
  *  when the layer routing type is source routing. Routes are characterized by the unicast demand they carry traffic of, the traversed links which should 
