@@ -2712,7 +2712,7 @@ public class NetPlan extends NetworkElement
     public Set<Link> getLinksWithZeroCapacity(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return layer.cache_linksZeroCap;
+        return Collections.unmodifiableSet(layer.cache_linksZeroCap);
     }
 
     /**
@@ -3769,10 +3769,20 @@ public class NetPlan extends NetworkElement
      */
     public Set<MulticastTree> getMulticastTreesDown(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Set<MulticastTree> res = new HashSet<MulticastTree>();
-        for (MulticastTree r : layer.multicastTrees) if (r.isDown()) res.add(r);
-        return res;
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        return Collections.unmodifiableSet(layer.cache_multicastTreesDown);
+    }
+
+    /**
+     * <p>Returns the set of multicast trees that are down (i.e. that traverse a link or node that has failed).</p>
+     *
+     * @param optionalLayerParameter Network layer (optional)
+     * @return the {@code Set} of multicast trees that are down
+     */
+    public Set<MulticastTree> getMulticastTreesTraversingZeroCapLinks (NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        return Collections.unmodifiableSet(layer.cache_multicastTreesTravLinkZeroCap);
     }
 
     /**
@@ -4313,11 +4323,22 @@ public class NetPlan extends NetworkElement
      */
     public Set<Route> getRoutesDown(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-        Set<Route> res = new HashSet<Route>();
-        for (Route r : layer.routes) if (r.isDown()) res.add(r);
-        return res;
+        return Collections.unmodifiableSet(layer.cache_routesDown);
+    }
+
+    /**
+     * <p>Returns the set of routes that are traversing a link with zero capacity. If no layer is provided, default layer is assumed</p>
+     *
+     * @param optionalLayerParameter network layer (optional)
+     * @return see above
+     */
+    public Set<Route> getRoutesTraversingZeroCapacityLinks (NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+        return Collections.unmodifiableSet(layer.cache_routesTravLinkZeroCap);
     }
 
     /**
@@ -4329,7 +4350,7 @@ public class NetPlan extends NetworkElement
      */
     public RoutingType getRoutingType(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         return layer.routingType;
     }
 
