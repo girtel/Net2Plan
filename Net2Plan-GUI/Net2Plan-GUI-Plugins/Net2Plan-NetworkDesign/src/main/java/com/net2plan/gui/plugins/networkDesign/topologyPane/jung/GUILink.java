@@ -111,10 +111,15 @@ public class GUILink
     	if (!npLink.isUp()) return Color.RED;
     	if (overrideLinkColoringByUtilizationOrRunOut) return edgeDrawPaint;
     	if (vs.getIsActiveLinkUtilizationColorThresholdList())
-    		return vs.getLinkColorAccordingToUtilization(npLink.getUtilization()); 
+        {
+                if(npLink.getLayer().isDefaultLayer())
+                    return vs.getLinkColorAccordingToUtilization(npLink.getUtilization()); 
+                else
+                    return edgeDrawPaint;
+        }
     	else if (vs.getIsActiveLinkRunoutTimeColorThresholdList())
     	{
-    		return edgeDrawPaint;
+                 return edgeDrawPaint;   
     	} else
     		return edgeDrawPaint;
     }

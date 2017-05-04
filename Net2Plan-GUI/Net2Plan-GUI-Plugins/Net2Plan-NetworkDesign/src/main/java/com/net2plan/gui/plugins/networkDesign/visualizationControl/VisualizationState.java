@@ -1517,8 +1517,12 @@ public class VisualizationState
     }
     public Color getLinkColorAccordingToUtilization (double linkUtilization)
     {
+        linkUtilization*=100;
+        
         for(int i = 0; i < this.linkUtilizationColorThresholdList.size(); i++)
-            if(linkUtilization < this.linkUtilizationColorThresholdList.get(i)) return VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i);
+            if(linkUtilization < this.linkUtilizationColorThresholdList.get(i))
+                return VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i);    
+        
         return VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(this.linkUtilizationColorThresholdList.size());
     }
     public double getLinkRelativeThicknessAccordingToCapacity (double linkCapacity)

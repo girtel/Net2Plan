@@ -22,14 +22,17 @@ public final class VisualizationConstants
     {
     }
 
-    public final static List<Double> DEFAULT_LINKCOLORINGUTILIZATIONTHRESHOLDS = Arrays.asList (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0 , 80.0, 90.0, 100.0);
+    public final static List<Double> DEFAULT_LINKCOLORINGUTILIZATIONTHRESHOLDS = Arrays.asList (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0 , 80.0, 90.0);
     public final static List<Double> DEFAULT_LINKCOLORINGRUNOUTTHRESHOLDS = Arrays.asList (2.0, 3.0, 6.0, 9.0, 12.0, 18.0, 24.0, 32.0, 38.0, 48.0);
     public final static List<Double> DEFAULT_LINKTHICKNESSTHRESHPOLDS = Arrays.asList (0.2, 0.5, 1.0, 2.5, 5.0, 10.0, 40.0, 100.0);
-    public final static List<Color> DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT = 
-    		Arrays.asList (new Color(0, 255, 0) , new Color(50, 255, 0) ,
-    				new Color(100, 255, 0) ,new Color(150, 255, 0) ,new Color(200, 255, 0) ,
-    				new Color(255, 255, 0) ,new Color(255, 200, 0) ,new Color(255, 150, 0) ,
-    				new Color(255, 100, 0) ,new Color(255, 50, 0) ,new Color(255, 0, 0));
+    /*public final static List<Color> DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT = Arrays.asList (
+            new Color(0, 255, 0) , new Color(50, 255, 0) , new Color(100, 255, 0) , 
+            new Color(150, 255, 0) , new Color(200, 255, 0) , new Color(255, 255, 0) , 
+            new Color(255, 200, 0) , new Color(255, 150, 0) , new Color(255, 100, 0) , new Color(255, 50, 0) , new Color(255, 0, 0));*/
+    public final static List<Color> DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT = Arrays.asList (
+            new Color(0, 0, 0) , new Color(0, 75, 0) , new Color(0, 125, 0) , 
+            new Color(0, 200, 0) , new Color(75, 200, 0) , new Color(125, 200, 0) , 
+            new Color(200, 200, 0) , new Color(200, 150, 0) , new Color(200, 100, 0) , new Color(200, 50, 0) , new Color(200, 0, 0));
     public final static List<Double> DEFAULT_LINKRELATIVETHICKNESSVALUES = Arrays.asList (0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9);
     
     public static Color TRANSPARENTCOLOR = new Color(0, 0, 0, 0);

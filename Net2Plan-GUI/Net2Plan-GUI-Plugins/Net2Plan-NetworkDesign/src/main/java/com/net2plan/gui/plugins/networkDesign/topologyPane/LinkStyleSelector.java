@@ -22,6 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
@@ -30,40 +31,39 @@ import java.util.LinkedList;
  */
 public final class LinkStyleSelector extends JDialog implements ActionListener
 {
-	
-    private final JTabbedPane tabbedPane;
-    private final VisualizationState _visualizationState;
-    JDialog _dialog;
 
+    private final VisualizationState _visualizationState;
+    private final Color _errorBackgroundColor = new Color(255, 50, 50);
 
     public LinkStyleSelector(VisualizationState visualizationState)
     {
         super();
 
-        _dialog = this;
         _visualizationState = visualizationState;
         
-        _dialog.setTitle("Link Style");
-        _dialog.setLayout(new BorderLayout());
+        this.setTitle("Link Style");
+        this.setLayout(new BorderLayout());
 
-        tabbedPane = new JTabbedPane();
-        _dialog.add(tabbedPane, BorderLayout.CENTER);
+        JTabbedPane tabbedPane = new JTabbedPane();
 
         //Link-utilization coloring Tab
         tabbedPane.addTab("Link-utilization coloring", getLinkUtilizationColoringPanel());
 
         //Link run-out time coloring Tab
         tabbedPane.addTab("Link run-out time coloring", getLinkRunoutTimeColoringPanel());
-        
+
         //Link thickness Tab
         tabbedPane.addTab("Link relative thickness", getLinkThicknessPanel());
+        
+        this.add(tabbedPane, BorderLayout.CENTER);
+        this.pack();
 
-        SwingUtils.configureCloseDialogOnEscape(_dialog);
-        _dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
-        _dialog.setSize(400, 440);
-        _dialog.setLocationRelativeTo(null);
-        _dialog.setResizable(false);
-        _dialog.setVisible(true);
+        SwingUtils.configureCloseDialogOnEscape(this);
+        this.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+        this.setSize(475, 475);
+        this.setLocationRelativeTo(null);
+        this.setResizable(true);
+        this.setVisible(true);
     }
 
     @Override
@@ -74,92 +74,31 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
     public JPanel getLinkUtilizationColoringPanel()
     {
         List<Double> linkUtilizationColor = _visualizationState.getLinkUtilizationColor();
-        if (linkUtilizationColor.size() != VisualizationConstants.DEFAULT_LINKCOLORINGRUNOUTTHRESHOLDS.size()) throw new RuntimeException();
+       
+        if (linkUtilizationColor.size() != VisualizationConstants.DEFAULT_LINKCOLORINGUTILIZATIONTHRESHOLDS.size()) throw new RuntimeException();
+        
+        //Create JTextField array
         JTextField[] fieldArray = new JTextField[linkUtilizationColor.size()];
         
-        for(int i = 0; i < linkUtilizationColor.size(); i++)
+        for(int i = 0; i < fieldArray.length; i++)
         {
             fieldArray[i] = new JTextField("" + linkUtilizationColor.get(i));
             fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
         }
         
-        JButton btn1 = new JButton("");
-        btn1.setPreferredSize(new Dimension(20, 20));
-        btn1.setBackground(new Color(0, 255, 0));
-        btn1.setEnabled(false);
-        btn1.setContentAreaFilled(false);
-        btn1.setOpaque(true);
+        //Create JButton array
+        JButton[] buttonArray = new JButton[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
         
-        JButton btn2 = new JButton("");
-        btn2.setPreferredSize(new Dimension(20, 20));
-        btn2.setBackground(new Color(50, 255, 0));
-        btn2.setEnabled(false);
-        btn2.setContentAreaFilled(false);
-        btn2.setOpaque(true);
-        
-        JButton btn3 = new JButton("");
-        btn3.setPreferredSize(new Dimension(20, 20));
-        btn3.setBackground(new Color(100, 255, 0));
-        btn3.setEnabled(false);
-        btn3.setContentAreaFilled(false);
-        btn3.setOpaque(true);
-        
-        JButton btn4 = new JButton("");
-        btn4.setPreferredSize(new Dimension(20, 20));
-        btn4.setBackground(new Color(150, 255, 0));
-        btn4.setEnabled(false);
-        btn4.setContentAreaFilled(false);
-        btn4.setOpaque(true);
-        
-        JButton btn5 = new JButton("");
-        btn5.setPreferredSize(new Dimension(20, 20));
-        btn5.setBackground(new Color(200, 255, 0));
-        btn5.setEnabled(false);
-        btn5.setContentAreaFilled(false);
-        btn5.setOpaque(true);
-        
-        JButton btn6 = new JButton("");
-        btn6.setPreferredSize(new Dimension(20, 20));
-        btn6.setBackground(new Color(255, 255, 0));
-        btn6.setEnabled(false);
-        btn6.setContentAreaFilled(false);
-        btn6.setOpaque(true);
-        
-        JButton btn7 = new JButton("");
-        btn7.setPreferredSize(new Dimension(20, 20));
-        btn7.setBackground(new Color(255, 200, 0));
-        btn7.setEnabled(false);
-        btn7.setContentAreaFilled(false);
-        btn7.setOpaque(true);
-        
-        JButton btn8 = new JButton("");
-        btn8.setPreferredSize(new Dimension(20, 20));
-        btn8.setBackground(new Color(255, 150, 0));
-        btn8.setEnabled(false);
-        btn8.setContentAreaFilled(false);
-        btn8.setOpaque(true);
-        
-        JButton btn9 = new JButton("");
-        btn9.setPreferredSize(new Dimension(20, 20));
-        btn9.setBackground(new Color(255, 100, 0));
-        btn9.setEnabled(false);
-        btn9.setContentAreaFilled(false);
-        btn9.setOpaque(true);
-        
-        JButton btn10 = new JButton("");
-        btn10.setPreferredSize(new Dimension(20, 20));
-        btn10.setBackground(new Color(255, 50, 0));
-        btn10.setEnabled(false);
-        btn10.setContentAreaFilled(false);
-        btn10.setOpaque(true);
-        
-        JButton btn11 = new JButton("");
-        btn11.setPreferredSize(new Dimension(20, 20));
-        btn11.setBackground(new Color(255, 0, 0));
-        btn11.setEnabled(false);
-        btn11.setContentAreaFilled(false);
-        btn11.setOpaque(true);
-
+        for(int i = 0; i < buttonArray.length; i++)
+        {
+            buttonArray[i] = new JButton("");
+            buttonArray[i].setPreferredSize(new Dimension(20, 20));
+            buttonArray[i].setBackground(VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i));
+            buttonArray[i].setEnabled(false);
+            buttonArray[i].setContentAreaFilled(false);
+            buttonArray[i].setOpaque(true);
+        }
+    
         JToggleButton btn_apply = new JToggleButton("Is applied" , _visualizationState.getIsActiveLinkUtilizationColorThresholdList());
         btn_apply.setToolTipText("The link coloring per utilization is active or not");
         btn_apply.addActionListener(new ActionListener()
@@ -210,14 +149,14 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
                     {
                         if(previousValue != -1 && value >= previousValue)
                         {
-                           fieldArray[i].setBackground(new Color(255, 51, 51));
+                           fieldArray[i].setBackground(_errorBackgroundColor);
                            isValid = false;
                         }
                         else
                             fieldArray[i].setBackground(Color.WHITE);
                     } else
                     {
-                        fieldArray[i].setBackground(new Color(255, 51, 51));
+                        fieldArray[i].setBackground(_errorBackgroundColor);
                         isValid = false;
                     }
                 }
@@ -232,9 +171,8 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
                     dispose();
                 }
                 else
-                {
                     ErrorHandling.showErrorDialog("Some fields are incorrect!", "Error");
-                }
+                
             }
         });
 
@@ -284,67 +222,22 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         pane.add(new JLabel("Utilization (%)"), gbc);
 
         gbc.gridwidth = 1;
-        pane.add(btn11, gbc);
+        pane.add(buttonArray[buttonArray.length-1], gbc);
         pane.add(new Label(">="), gbc);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(label_100, gbc);
         
-        gbc.gridwidth = 1;
-        pane.add(btn10, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[8], gbc);
-
-        gbc.gridwidth = 1;
-        pane.add(btn9, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[7], gbc);
+        for(int i = fieldArray.length-1; i >= 0; i--)
+        {
+            gbc.gridwidth = 1;
+            pane.add(buttonArray[i+1], gbc);
+            pane.add(new Label(">="), gbc);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            pane.add(fieldArray[i], gbc);
+        }
         
         gbc.gridwidth = 1;
-        pane.add(btn8, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[6], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn7, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[5], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn6, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[4], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn5, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[3], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn4, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[2], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn3, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[1], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn2, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[0], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn1, gbc);
+        pane.add(buttonArray[0], gbc);
         pane.add(new Label(">="), gbc);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(label_0, gbc);
@@ -356,6 +249,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         JPanel buttonBar = new JPanel();
 
         buttonBar.add(btn_save);
+        buttonBar.add(btn_apply);
         buttonBar.add(btn_reset);
         buttonBar.add(btn_cancel);
 
@@ -368,7 +262,10 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
     public JPanel getLinkRunoutTimeColoringPanel()
     {
         List<Double> linkRunoutTimeColor = _visualizationState.getLinkRunoutTimeColor();
-                               
+        
+        if (linkRunoutTimeColor.size() != VisualizationConstants.DEFAULT_LINKCOLORINGRUNOUTTHRESHOLDS.size()) throw new RuntimeException();
+             
+        //Create JTextField array
         JTextField[] fieldArray = new JTextField[linkRunoutTimeColor.size()];
         
         for(int i = 0; i < linkRunoutTimeColor.size(); i++)
@@ -377,83 +274,19 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
             fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
         }
         
-        JButton btn1 = new JButton("");
-        btn1.setPreferredSize(new Dimension(20, 20));
-        btn1.setBackground(new Color(0, 255, 0));
-        btn1.setEnabled(false);
-        btn1.setContentAreaFilled(false);
-        btn1.setOpaque(true);
+        //Create JButton array
+        JButton[] buttonArray = new JButton[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
         
-        JButton btn2 = new JButton("");
-        btn2.setPreferredSize(new Dimension(20, 20));
-        btn2.setBackground(new Color(50, 255, 0));
-        btn2.setEnabled(false);
-        btn2.setContentAreaFilled(false);
-        btn2.setOpaque(true);
-        
-        JButton btn3 = new JButton("");
-        btn3.setPreferredSize(new Dimension(20, 20));
-        btn3.setBackground(new Color(100, 255, 0));
-        btn3.setEnabled(false);
-        btn3.setContentAreaFilled(false);
-        btn3.setOpaque(true);
-        
-        JButton btn4 = new JButton("");
-        btn4.setPreferredSize(new Dimension(20, 20));
-        btn4.setBackground(new Color(150, 255, 0));
-        btn4.setEnabled(false);
-        btn4.setContentAreaFilled(false);
-        btn4.setOpaque(true);
-        
-        JButton btn5 = new JButton("");
-        btn5.setPreferredSize(new Dimension(20, 20));
-        btn5.setBackground(new Color(200, 255, 0));
-        btn5.setEnabled(false);
-        btn5.setContentAreaFilled(false);
-        btn5.setOpaque(true);
-        
-        JButton btn6 = new JButton("");
-        btn6.setPreferredSize(new Dimension(20, 20));
-        btn6.setBackground(new Color(255, 255, 0));
-        btn6.setEnabled(false);
-        btn6.setContentAreaFilled(false);
-        btn6.setOpaque(true);
-        
-        JButton btn7 = new JButton("");
-        btn7.setPreferredSize(new Dimension(20, 20));
-        btn7.setBackground(new Color(255, 200, 0));
-        btn7.setEnabled(false);
-        btn7.setContentAreaFilled(false);
-        btn7.setOpaque(true);
-        
-        JButton btn8 = new JButton("");
-        btn8.setPreferredSize(new Dimension(20, 20));
-        btn8.setBackground(new Color(255, 150, 0));
-        btn8.setEnabled(false);
-        btn8.setContentAreaFilled(false);
-        btn8.setOpaque(true);
-        
-        JButton btn9 = new JButton("");
-        btn9.setPreferredSize(new Dimension(20, 20));
-        btn9.setBackground(new Color(255, 100, 0));
-        btn9.setEnabled(false);
-        btn9.setContentAreaFilled(false);
-        btn9.setOpaque(true);
-        
-        JButton btn10 = new JButton("");
-        btn10.setPreferredSize(new Dimension(20, 20));
-        btn10.setBackground(new Color(255, 50, 0));
-        btn10.setEnabled(false);
-        btn10.setContentAreaFilled(false);
-        btn10.setOpaque(true);
-        
-        JButton btn11 = new JButton("");
-        btn11.setPreferredSize(new Dimension(20, 20));
-        btn11.setBackground(new Color(255, 0, 0));
-        btn11.setEnabled(false);
-        btn11.setContentAreaFilled(false);
-        btn11.setOpaque(true);
-        
+        for(int i = 0; i < buttonArray.length; i++)
+        {
+            buttonArray[i] = new JButton("");
+            buttonArray[i].setPreferredSize(new Dimension(20, 20));
+            buttonArray[i].setBackground(VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i));
+            buttonArray[i].setEnabled(false);
+            buttonArray[i].setContentAreaFilled(false);
+            buttonArray[i].setOpaque(true);
+        }
+
         JToggleButton btn_apply = new JToggleButton("Is applied" , _visualizationState.getIsActiveLinkRunoutTimeColorThresholdList());
         btn_apply.setToolTipText("The link coloring per run-out capacity time is active or not");
         btn_apply.addActionListener(new ActionListener()
@@ -504,14 +337,14 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
                     {
                         if(previousValue != -1 && value >= previousValue)
                         {
-                           fieldArray[i].setBackground(new Color(255, 51, 51));
+                           fieldArray[i].setBackground(_errorBackgroundColor);
                            isValid = false;
                         }
                         else
                             fieldArray[i].setBackground(Color.WHITE);
                     } else
                     {
-                        fieldArray[i].setBackground(new Color(255, 51, 51));
+                        fieldArray[i].setBackground(_errorBackgroundColor);
                         isValid = false;
                     }
                 }
@@ -573,68 +406,17 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(new JLabel("Run-out time (months)"), gbc);
 
+        for(int i = fieldArray.length-1; i >= 0; i--)
+        {
+            gbc.gridwidth = 1;
+            pane.add(buttonArray[i+1], gbc);
+            pane.add(new Label(">="), gbc);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            pane.add(fieldArray[i], gbc);
+        }
+ 
         gbc.gridwidth = 1;
-        pane.add(btn11, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[9], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn10, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[8], gbc);
-
-        gbc.gridwidth = 1;
-        pane.add(btn9, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[7], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn8, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[6], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn7, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[5], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn6, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[4], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn5, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[3], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn4, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[2], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn3, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[1], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn2, gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[0], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(btn1, gbc);
+        pane.add(buttonArray[0], gbc);
         pane.add(new Label(">="), gbc);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(label_0, gbc);
@@ -646,6 +428,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         JPanel buttonBar = new JPanel();
 
         buttonBar.add(btn_save);
+        buttonBar.add(btn_apply);
         buttonBar.add(btn_reset);
         buttonBar.add(btn_cancel);
 
@@ -659,6 +442,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
     {
         List<Double> linkCapacityThickness = _visualizationState.getLinkCapacityThickness();
               
+        //Create JTextField array
         JTextField[] fieldArray = new JTextField[linkCapacityThickness.size()];
         
         for(int i = 0; i < linkCapacityThickness.size(); i++)
@@ -666,6 +450,13 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
             fieldArray[i] = new JTextField("" + linkCapacityThickness.get(i));
             fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
         }
+        
+        //Create Line array
+        Line[] lineArray = new Line[VisualizationConstants.DEFAULT_LINKRELATIVETHICKNESSVALUES.size()];
+        
+        for(int i = 0; i < lineArray.length; i++)
+            lineArray[i] = new Line(i+1);
+       
         
         JToggleButton btn_apply = new JToggleButton("Is applied" , _visualizationState.getIsActiveLinkCapacityThicknessThresholdList());
         btn_apply.setToolTipText("The link thickness dependent on its capacity is active or not");
@@ -718,14 +509,14 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
                     {
                         if(previousValue != -1 && value >= previousValue)
                         {
-                           fieldArray[i].setBackground(new Color(255, 51, 51));
+                           fieldArray[i].setBackground(_errorBackgroundColor);
                            isValid = false;
                         }
                         else
                             fieldArray[i].setBackground(Color.WHITE);
                     } else
                     {
-                        fieldArray[i].setBackground(new Color(255, 51, 51));
+                        fieldArray[i].setBackground(_errorBackgroundColor);
                         isValid = false;
                     }
                 }
@@ -788,56 +579,17 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(new JLabel("Capacity (Gbps)"), gbc);
 
-        gbc.gridwidth = 1;
-        pane.add(new RectPane(11), gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[7], gbc);
-       
-        gbc.gridwidth = 1;
-        pane.add(new RectPane(8), gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[6], gbc);
+        for(int i = fieldArray.length-1; i >= 0; i--)
+        {
+            gbc.gridwidth = 1;
+            pane.add(lineArray[i+1], gbc);
+            pane.add(new Label(">="), gbc);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            pane.add(fieldArray[i], gbc);
+        }
         
         gbc.gridwidth = 1;
-        pane.add(new RectPane(7), gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[5], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(new RectPane(6), gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[4], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(new RectPane(5), gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[3], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(new RectPane(4), gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[2], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(new RectPane(3), gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[1], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(new RectPane(2), gbc);
-        pane.add(new Label(">="), gbc);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        pane.add(fieldArray[0], gbc);
-        
-        gbc.gridwidth = 1;
-        pane.add(new RectPane(1), gbc);
+        pane.add(lineArray[0], gbc);
         pane.add(new Label(">="), gbc);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(label_0, gbc);
@@ -849,6 +601,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         JPanel buttonBar = new JPanel();
 
         buttonBar.add(btn_save);
+        buttonBar.add(btn_apply);
         buttonBar.add(btn_reset);
         buttonBar.add(btn_cancel);
 
@@ -859,13 +612,13 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
     }
 }
 
-class RectPane extends JPanel 
+class Line extends JPanel 
 {
     private Point p1 = new Point(0, 8);
     private Point p2 = new Point(30, 8);
     private int height;
 
-    public RectPane(int height) 
+    public Line(int height) 
     {
         this.height = height;
     }
