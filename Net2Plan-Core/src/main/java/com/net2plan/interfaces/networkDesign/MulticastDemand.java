@@ -307,8 +307,7 @@ public class MulticastDemand extends NetworkElement
 		layer.cache_coupledMulticastDemands.add (this);
 		for (Link link : links)
 		{
-			link.capacity = carriedTraffic;
-			link.updateZeroCapacityLinksCache();  
+			link.updateCapacityAndZeroCapacityLinksAndRoutesCaches(carriedTraffic);  
 			link.coupledLowerLayerMulticastDemand = this;
 			link.layer.cache_coupledLinks.add (link);
 			this.coupledUpperLayerLinks.put(link.destinationNode, link);

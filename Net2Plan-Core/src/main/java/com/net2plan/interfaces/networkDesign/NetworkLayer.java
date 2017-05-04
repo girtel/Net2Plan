@@ -68,6 +68,7 @@ public class NetworkLayer extends NetworkElement
 	Set<Route> cache_routesDown;
 	Set<Route> cache_routesTravLinkZeroCap;
 	Set<MulticastTree> cache_multicastTreesDown;
+	Set<MulticastTree> cache_multicastTreesTravLinkZeroCap;
 	URL defaultNodeIconURL;
 
 	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, URL defaultNodeIconURL , AttributeMap attributes)
@@ -95,6 +96,7 @@ public class NetworkLayer extends NetworkElement
 		this.cache_routesDown = new HashSet<Route> ();
 		this.cache_routesTravLinkZeroCap = new HashSet<>();
 		this.cache_multicastTreesDown = new HashSet<MulticastTree> ();
+		this.cache_multicastTreesTravLinkZeroCap = new HashSet<> ();
 //		this.forwardingRulesNoFailureState_f_de = null;
 //		this.forwardingRulesCurrentFailureState_x_de = null;
 //		this.forwardingRules_Aout_ne = null;
@@ -141,6 +143,7 @@ public class NetworkLayer extends NetworkElement
 		this.cache_routesDown.clear (); for (Route r : origin.cache_routesDown) this.cache_routesDown.add(this.netPlan.getRouteFromId (r.id));
 		this.cache_routesTravLinkZeroCap.clear(); for (Route r : origin.cache_routesTravLinkZeroCap) this.cache_routesTravLinkZeroCap.add(this.netPlan.getRouteFromId (r.id));
 		this.cache_multicastTreesDown.clear (); for (MulticastTree t : origin.cache_multicastTreesDown) this.cache_multicastTreesDown.add(this.netPlan.getMulticastTreeFromId (t.id));
+		this.cache_multicastTreesTravLinkZeroCap.clear(); for (MulticastTree t : origin.cache_multicastTreesTravLinkZeroCap) this.cache_multicastTreesTravLinkZeroCap.add(this.netPlan.getMulticastTreeFromId (t.id));
 		
 		for (Link e : origin.links) this.links.get(e.index).copyFrom(e);
 		for (Demand d : origin.demands) this.demands.get(d.index).copyFrom(d);
@@ -191,6 +194,8 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_routesDown , e2.cache_routesDown)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_routesTravLinkZeroCap , e2.cache_routesTravLinkZeroCap)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_multicastTreesDown , e2.cache_multicastTreesDown)) return false;
+		if (!NetPlan.isDeepCopy(this.cache_multicastTreesTravLinkZeroCap , e2.cache_multicastTreesTravLinkZeroCap )) return false;
+			
 		return true;
 	}
 	
@@ -282,10 +287,24 @@ public class NetworkLayer extends NetworkElement
 		for (Link link : cache_coupledLinks) if ((link.coupledLowerLayerDemand == null) && (link.coupledLowerLayerMulticastDemand == null)) throw new RuntimeException ("Bad");
 		for (Demand demand : cache_coupledDemands) if (demand.coupledUpperLayerLink == null) throw new RuntimeException ("Bad");
 		for (MulticastDemand demand : cache_coupledMulticastDemands) if (demand.coupledUpperLayerLinks == null) throw new RuntimeException ("Bad");
-		for (Route route : cache_routesDown) { if (!(route.getSeqLinks().stream().anyMatch(e->!e.isUp) || (route.getSeqNodes().stream().anyMatch(n->!n.isUp)))) throw new RuntimeException ("Bad"); }
-		for (Route route : cache_routesTravLinkZeroCap) { if (route.getSeqLinks().stream().allMatch(e->e.capacity >= Configuration.precisionFactor)) throw new RuntimeException ("Bad"); }
-		
-		for (MulticastTree tree : cache_multicastTreesDown) if (!tree.isDown()) throw new RuntimeException ("Bad");
+		for (Route route : routes)
+		{
+			final boolean shoulbBeUp = (route.getSeqLinks().stream().allMatch(e->e.isUp) && (route.getSeqNodes().stream().allMatch(n->n.isUp)));
+			final boolean travZeroCapLinks = route.getSeqLinks().stream().anyMatch(e->e.capacity < Configuration.precisionFactor);
+			if (shoulbBeUp && cache_routesDown.contains(route)) throw new RuntimeException ();
+			if (!shoulbBeUp && !cache_routesDown.contains(route)) throw new RuntimeException ();
+			if (travZeroCapLinks && !cache_routesTravLinkZeroCap.contains(route)) throw new RuntimeException ();
+			if (!travZeroCapLinks && cache_routesTravLinkZeroCap.contains(route)) throw new RuntimeException ();
+		}
+		for (MulticastTree tree : multicastTrees)
+		{
+			final boolean shoulbBeUp = (tree.getLinkSet().stream().allMatch(e->e.isUp) && (tree.getNodeSet().stream().allMatch(n->n.isUp)));
+			final boolean travZeroCapLinks = tree.getLinkSet().stream().anyMatch(e->e.capacity < Configuration.precisionFactor);
+			if (shoulbBeUp && cache_multicastTreesDown.contains(tree)) throw new RuntimeException ();
+			if (!shoulbBeUp && !cache_multicastTreesDown.contains(tree)) throw new RuntimeException ();
+			if (travZeroCapLinks && !cache_multicastTreesTravLinkZeroCap.contains(tree)) throw new RuntimeException ();
+			if (!travZeroCapLinks && cache_multicastTreesTravLinkZeroCap.contains(tree)) throw new RuntimeException ();
+		}
 	}
 
 	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
