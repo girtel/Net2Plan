@@ -320,13 +320,13 @@ public class ViewEditTopologyTablesPane extends JPanel
         final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
 
         final int numRows = table.getRowCount();
-
         for (int row = 0; row < numRows; row++)
         {
             final long elementID = (long) table.getModel().getValueAt(row, 0);
             if (elementID == element.getId())
             {
-                table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));
+                final int viewRow = table.convertRowIndexToView(row);
+                table.addRowSelectionInterval(viewRow, viewRow);
             	return;
             }
         }
