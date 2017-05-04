@@ -14,7 +14,7 @@ public interface ICanvasState extends IState
 {
     CanvasOption getState();
 
-    Color getStateBackgroundColor();
+    Color getBackgroundColor();
 
     void panTo(Point2D initialPoint, Point2D currentPoint);
 

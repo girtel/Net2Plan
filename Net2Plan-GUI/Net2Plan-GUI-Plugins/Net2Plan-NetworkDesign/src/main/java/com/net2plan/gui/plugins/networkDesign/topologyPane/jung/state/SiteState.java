@@ -64,7 +64,7 @@ class SiteState extends ViewState
     }
 
     @Override
-    public Color getStateBackgroundColor()
+    public Color getBackgroundColor()
     {
         return UIManager.getColor("Panel.background").brighter();
     }

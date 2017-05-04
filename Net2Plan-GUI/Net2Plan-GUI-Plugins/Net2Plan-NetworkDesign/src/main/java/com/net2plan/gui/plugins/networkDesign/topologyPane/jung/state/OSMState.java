@@ -56,9 +56,9 @@ class OSMState implements ICanvasState
     }
 
     @Override
-    public Color getStateBackgroundColor()
+    public Color getBackgroundColor()
     {
-        return null;
+        return new Color(0, 0, 0, 0);
     }
 
     @Override

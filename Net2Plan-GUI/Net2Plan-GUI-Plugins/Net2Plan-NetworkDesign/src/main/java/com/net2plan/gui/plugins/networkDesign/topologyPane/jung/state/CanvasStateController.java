@@ -8,7 +8,6 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import org.jxmapviewer.viewer.GeoPosition;
 
-import java.awt.*;
 import java.awt.geom.Point2D;
 
 /**
@@ -86,13 +85,10 @@ public class CanvasStateController
             }
 
             currentState.start();
+            callback.updateVisualizationAfterCanvasState();
 
             // Changing background color
-            final Color bgColor = currentState.getStateBackgroundColor();
-            if (bgColor == null) canvas.getCanvasComponent().setBackground(new Color(0, 0, 0, 0));
-            else canvas.getCanvasComponent().setBackground(bgColor);
-
-            callback.updateVisualizationAfterCanvasState();
+            canvas.getCanvasComponent().setBackground(currentState.getBackgroundColor());
         } catch (RuntimeException e)
         {
             ErrorHandling.showErrorDialog("Error");
