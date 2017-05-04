@@ -2080,7 +2080,7 @@ public class NetPlan extends NetworkElement
             			frLinks.add(thisLink);
             			frSplits.add(otherFr.getValue());
             		}
-                	this.setForwardingRules(frDemands , frLinks , frSplits, false);
+                	this.setForwardingRules(frDemands , frLinks , frSplits, true);
         		}
         	}
         	for (MulticastDemand otherDemand : otherDesign.getMulticastDemands(otherLayer))
@@ -6514,22 +6514,26 @@ public class NetPlan extends NetworkElement
      * @param links              Links
      * @param splittingFactors   Splitting ratios (fraction of traffic from demand 'd' entering to the origin node of link 'e', going through link 'e').
      *                           Each value must be equal or greater than 0 and equal or lesser than 1.
-     * @param includeUnusedRules Inclue {@code true} or not {@code false} unused rules
+     * @param removePreviousRulesAffectedDemands Inclue {@code true} or not {@code false} unused rules
      */
-    public void setForwardingRules(Collection<Demand> demands, Collection<Link> links, Collection<Double> splittingFactors, boolean includeUnusedRules)
+    public void setForwardingRules(Collection<Demand> demands, Collection<Link> links, Collection<Double> splittingFactors, boolean removePreviousRulesAffectedDemands)
     {
         checkIsModifiable();
         if ((demands.size() != links.size()) || (demands.size() != splittingFactors.size()))
             throw new Net2PlanException("The number of demands, links and aplitting factors must be the same");
         if (demands.isEmpty()) return;
-        
-        NetworkLayer layer = demands.iterator().next().layer;
+        final NetworkLayer layer = demands.iterator().next().layer;
         checkInThisNetPlanAndLayer(demands, layer);
         checkInThisNetPlanAndLayer(links, layer);
-        
+
+        /* If asked, remove previous forwarding rules of the affected demands */
+    	final Set<Demand> affectedDemands = new HashSet<> (demands);
+        if (removePreviousRulesAffectedDemands)
+        	for (Demand d : affectedDemands) d.removeAllForwardingRules();
+
         /* Initialize the map with existing demands */
         Map<Demand,Map<Link,Double>> newForwardingRules = new HashMap<> ();
-        for (Demand d : layer.demands) newForwardingRules.put(d, d.cacheHbH_frs);
+        for (Demand d : affectedDemands) newForwardingRules.put(d, d.cacheHbH_frs);
         
         /* Update with new demands */
         Iterator<Demand> it_d = demands.iterator();
