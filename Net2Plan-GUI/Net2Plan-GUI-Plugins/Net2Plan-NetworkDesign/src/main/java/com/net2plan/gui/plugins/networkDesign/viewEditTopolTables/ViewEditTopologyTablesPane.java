@@ -1,30 +1,59 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.*;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
-import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.SwingUtils;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.LayoutManager;
+import java.util.List;
 import java.io.File;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.net2plan.utils.Constants.RoutingType;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.TableModel;
+
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_multicastDemand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_multicastTree;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_resource;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_srg;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
+import com.net2plan.gui.utils.FullScrollPaneLayout;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.SwingUtils;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
@@ -302,21 +331,23 @@ public class ViewEditTopologyTablesPane extends JPanel
         }
     }
 
-    public void selectItem(NetworkElementType type, NetworkElement element)
+    public void selectItems(NetworkElementType type, List<NetworkElement> elements)
     {
         final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
+        final Set<Long> idstoSelect = elements.stream().map(e->e.getId()).collect(Collectors.toSet());
 
         final int numRows = table.getRowCount();
+        int numSelected = 0;
         for (int row = 0; row < numRows; row++)
         {
             try
             {
                 final long elementID = (long) table.getModel().getValueAt(row, 0);
-                if (elementID == element.getId())
+                if (idstoSelect.contains(elementID))
                 {
                     final int viewRow = table.convertRowIndexToView(row);
                     table.addRowSelectionInterval(viewRow, viewRow);
-                    return;
+                    numSelected ++; if (numSelected == elements.size()) return;
                 }
             } catch (ClassCastException e)
             {
@@ -324,4 +355,5 @@ public class ViewEditTopologyTablesPane extends JPanel
             }
         }
     }
+
 }

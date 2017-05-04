@@ -719,19 +719,14 @@ public class GUINetworkDesign extends IGUIModule
 
     public void updateVisualizationAfterPick()
     {
-        if (vs.getPickedElementType() != null) // can be null if picked a resource type
-            selectNetPlanViewItem(vs.getPickedElementType(), null);
-
-        for (NetworkElement networkElement : vs.getPickedNetworkElements())
-        {
-            final NetworkElementType type = NetworkElementType.getType(networkElement);
-            if (type != null)
-                viewEditTopTables.selectItem(type, networkElement);
-        }
-
-        for (Pair<Demand, Link> fr : vs.getPickedForwardingRules())
-            viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
-
+        final NetworkElementType type = vs.getPickedElementType();
+        if (type != null) // can be null if picked a resource type
+            selectNetPlanViewItem(type, null);
+        if (type != null)
+            viewEditTopTables.selectItems(type, vs.getPickedNetworkElements());
+        if (type == NetworkElementType.FORWARDING_RULE)
+        	for (Pair<Demand,Link> fr : vs.getPickedForwardingRules())
+        		viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
         topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
         topologyPanel.updateTopToolbar();
         focusPanel.updateView();
