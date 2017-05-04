@@ -88,7 +88,6 @@ public class Link extends NetworkElement
 		this.layer = layer;
 		this.originNode = originNode;
 		this.destinationNode = destinationNode;
-		this.capacity = capacity;
 		this.cache_carriedTraffic = 0;
 		this.cache_occupiedCapacity = 0;
 		this.lengthInKm = lengthInKm;
@@ -96,12 +95,13 @@ public class Link extends NetworkElement
 		this.isUp = true;
 		this.coupledLowerLayerDemand = null;
 		this.coupledLowerLayerMulticastDemand = null;
-		
 		this.cache_srgs = new HashSet<SharedRiskGroup> ();
 		this.cache_traversingRoutes = new HashMap<Route,Integer> ();
 		this.cache_traversingTrees = new HashSet<MulticastTree> ();
 		this.cacheHbH_frs = new HashMap<> ();
 		this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState = new HashMap<> ();
+		this.capacity = capacity; 
+		if (capacity < Configuration.precisionFactor) layer.cache_linksZeroCap.add(this); // do not call here the regular updae function on purpose, there is no previous capacity info
 	}
 
 	void copyFrom (Link origin)
@@ -235,17 +235,44 @@ public class Link extends NetworkElement
 
 	/**
 	 * <p>Sets the link capacity.</p>
-	 * @param linkCapacity The link capacity (must be non-negative)
+	 * @param newLinkCapacity The link capacity (must be non-negative)
 	 */
-	public void setCapacity(double linkCapacity)
+	public void setCapacity(double newLinkCapacity)
 	{
-		linkCapacity = NetPlan.adjustToTolerance(linkCapacity);
+		newLinkCapacity = NetPlan.adjustToTolerance(newLinkCapacity);
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		if (linkCapacity < 0) throw new Net2PlanException ("Negative link capacities are not possible");
+		if (newLinkCapacity < 0) throw new Net2PlanException ("Negative link capacities are not possible");
 		if ((coupledLowerLayerDemand != null) || (coupledLowerLayerMulticastDemand != null)) throw new Net2PlanException ("Coupled links cannot change its capacity");
-		this.capacity = linkCapacity;
+		updateCapacityAndZeroCapacityLinksAndRoutesCaches (newLinkCapacity);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+	}
+
+	void updateCapacityAndZeroCapacityLinksAndRoutesCaches (double newCapacity) 
+	{
+		final boolean fromZeroToMore = (this.capacity < Configuration.precisionFactor) && (newCapacity >= Configuration.precisionFactor); 
+		final boolean fromMoreToZero = (this.capacity >= Configuration.precisionFactor) && (newCapacity < Configuration.precisionFactor); 
+		this.capacity = newCapacity;
+		if (fromMoreToZero)
+		{
+			layer.cache_linksZeroCap.add(this);
+			for (Route r : cache_traversingRoutes.keySet()) layer.cache_routesTravLinkZeroCap.add(r);
+			for (MulticastTree t : cache_traversingTrees) layer.cache_multicastTreesTravLinkZeroCap.add(t);
+		}
+		else if (fromZeroToMore)
+		{
+			layer.cache_linksZeroCap.remove(this);
+			for (Route r : cache_traversingRoutes.keySet())
+			{
+				if (r.cache_seqLinksRealPath.stream().allMatch(e->e.getCapacity() >= Configuration.precisionFactor))
+					layer.cache_routesTravLinkZeroCap.remove(r);
+			}
+			for (MulticastTree t : cache_traversingTrees)
+			{
+				if (t.linkSet.stream().allMatch(e->e.getCapacity() >= Configuration.precisionFactor))
+					layer.cache_multicastTreesTravLinkZeroCap.remove(t);
+			}
+		}
 	}
 
 	/**
@@ -568,6 +595,7 @@ public class Link extends NetworkElement
 			this.coupledLowerLayerMulticastDemand.decouple();
 		
 		layer.cache_linksDown.remove (this);
+		layer.cache_linksZeroCap.remove(this);
 		netPlan.cache_id2LinkMap.remove(id);
 		originNode.cache_nodeOutgoingLinks.remove (this);
 		destinationNode.cache_nodeIncomingLinks.remove (this);
@@ -617,6 +645,8 @@ public class Link extends NetworkElement
 
 		if (isUp && layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp && !layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
+		if (capacity < Configuration.precisionFactor && !layer.cache_linksZeroCap.contains(this)) throw new RuntimeException ("Bad");
+		if (capacity >= Configuration.precisionFactor && layer.cache_linksZeroCap.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp)
 		{
 			if (Math.abs(cache_carriedTraffic) > 1e-3)
@@ -940,5 +970,4 @@ public class Link extends NetworkElement
 		return res;
 	}
 
-	
 }

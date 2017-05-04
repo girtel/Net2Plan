@@ -479,6 +479,14 @@ public class Route extends NetworkElement
 	{
 		return layer.cache_routesDown.contains(this);
 	}
+
+	/** Returns true if the route is traversing a link with zero capacity
+	 * @return see above
+	 */
+	public boolean isTraversingZeroCapLinks () 
+	{
+		return layer.cache_routesTravLinkZeroCap.contains(this);
+	}
 	
 	/**
 	 * <p>Removes this route.</p>
@@ -500,6 +508,7 @@ public class Route extends NetworkElement
 		
 		netPlan.cache_id2RouteMap.remove(id);
 		layer.cache_routesDown.remove (this);
+		layer.cache_linksZeroCap.remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(layer.routes , index);
 		
 		/* remove the resources info */
@@ -584,7 +593,8 @@ public class Route extends NetworkElement
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
 
 		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
-		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
+		if (demand.coupledUpperLayerLink != null)
+			demand.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(demand.carriedTraffic);
 
 		for (NetworkElement e : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet())
 			if (e instanceof Resource)
@@ -622,19 +632,22 @@ public class Route extends NetworkElement
 		for (Node node : cache_seqNodesRealPath)
 			node.cache_nodeAssociatedRoutes.remove (this);
 		layer.cache_routesDown.remove(this);
+		layer.cache_routesTravLinkZeroCap.remove(this);
 
 		/* Update this route info */
 		this.currentPath = new LinkedList<NetworkElement> (newPath);
 		this.cache_seqLinksRealPath = new LinkedList<Link> (newSeqLinks); 
 		boolean isRouteUp = demand.ingressNode.isUp;
+		boolean isRouteTravZeroCapLinks = false;
 		this.cache_seqNodesRealPath = new LinkedList<Node> (); cache_seqNodesRealPath.add (demand.getIngressNode()); 
 		for (Link e : cache_seqLinksRealPath) 
 		{
 			cache_seqNodesRealPath.add (e.getDestinationNode());
 			isRouteUp = (isRouteUp && e.isUp && e.destinationNode.isUp);
+			if (e.capacity < Configuration.precisionFactor) isRouteTravZeroCapLinks = true;
 		}
 		if (!isRouteUp) layer.cache_routesDown.add(this);
-		
+		if (isRouteTravZeroCapLinks) layer.cache_routesTravLinkZeroCap.add(this);
 		/* Update traversed links and nodes caches  */
 		for (Link link : newSeqLinks) 
 		{
@@ -672,130 +685,92 @@ public class Route extends NetworkElement
 
 	public String toString () { return "r" + index + " (id " + id + ")"; }
 
+	
+	void checkCachesConsistency ()
+	{
+		super.checkCachesConsistency ();
 
-    void checkCachesConsistency()
-    {
-        super.checkCachesConsistency();
+		assertTrue (layer.routes.contains(this));
+		assertTrue (demand.cache_routes.contains(this));
+		assertNotNull (ingressNode.netPlan);
+		assertNotNull (egressNode.netPlan);
+		assertNotNull (layer.netPlan);
+		assertNotNull (initialStatePath);
+		assertNotNull (currentLinksAndResourcesOccupationIfNotFailing);
+		assertNotNull (currentPath);
+		assertNotNull (cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap);
+		assertNotNull (backupRoutes);
+		assertNotNull (cache_seqLinksRealPath);
+		assertNotNull (cache_seqNodesRealPath);
+		assertNotNull (cache_routesIAmBackUp);
+		assertEquals (!this.cache_hasLoops , new HashSet<> (cache_seqNodesRealPath).size() == cache_seqNodesRealPath.size());
 
-        if (!layer.routes.contains(this)) throw new RuntimeException();
-        if (!demand.cache_routes.contains(this)) throw new RuntimeException();
-        if (ingressNode.netPlan == null) throw new RuntimeException();
-        if (egressNode.netPlan == null) throw new RuntimeException();
-        if (layer.netPlan == null) throw new RuntimeException();
-        if (initialStatePath == null) throw new RuntimeException();
-        if (currentLinksAndResourcesOccupationIfNotFailing == null) throw new RuntimeException();
-        if (currentPath == null) throw new RuntimeException();
-        if (cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap == null) throw new RuntimeException();
-        if (backupRoutes == null) throw new RuntimeException();
-        if (cache_seqLinksRealPath == null) throw new RuntimeException();
-        if (cache_seqNodesRealPath == null) throw new RuntimeException();
-        if (cache_routesIAmBackUp == null) throw new RuntimeException();
+		netPlan.checkInThisNetPlanAndLayer(currentPath , layer);
+		netPlan.checkInThisNetPlanAndLayer(cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet() , layer);
+		netPlan.checkInThisNetPlanAndLayer(cache_seqLinksRealPath , layer);
+		netPlan.checkInThisNetPlanAndLayer(cache_seqNodesRealPath , layer);
+		netPlan.checkInThisNetPlanAndLayer(cache_routesIAmBackUp , layer);
+		for (NetworkElement e : currentPath)
+		{
+			assertNotNull(e);
+			if (e instanceof Link) { final Link ee = (Link) e; assertTrue (ee.cache_traversingRoutes.containsKey(this)); }
+			if (e instanceof Resource) { final Resource ee = (Resource) e; assertTrue (ee.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.containsKey(this)); }
+		}
+		for (Entry<NetworkElement,Double> entry : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.entrySet())
+		{
+			assertNotNull(entry.getKey());
+			assertNotNull(entry.getValue());
+			if (entry.getKey() instanceof Resource)
+			{
+				assertNotNull(((Resource) entry.getKey()).cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute);
+				assertEquals(((Resource) entry.getKey()).cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) , entry.getValue() , 0);
+			}
+			else if (entry.getKey() instanceof Link)
+			{
+				assertNotNull(((Link) entry.getKey()).cache_traversingRoutes.containsKey(this));
+				assertTrue(((Link) entry.getKey()).cache_traversingRoutes.get(this) > 0);
+			}
+		}
+		List<Resource> travResources = new LinkedList<Resource> ();
+		for (NetworkElement el : currentPath) if (el instanceof Resource) travResources.add((Resource) el);
+		for (Resource res : travResources)
+		{
+			assertEquals (netPlan.cache_id2ResourceMap.get(res.id) , res);
+			assertEquals (netPlan.resources.get(res.index) , res);
+			assertNotNull(res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this));
+			assertNotNull(cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(res));
+			assertEquals (res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) , cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(res) , 0);
+		}
 
-        if (!((!this.cache_hasLoops) == (new HashSet<>(cache_seqNodesRealPath).size() == cache_seqNodesRealPath.size())))
-            throw new RuntimeException();
-
-        netPlan.checkInThisNetPlanAndLayer(currentPath, layer);
-        netPlan.checkInThisNetPlanAndLayer(cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet(), layer);
-        netPlan.checkInThisNetPlanAndLayer(cache_seqLinksRealPath, layer);
-        netPlan.checkInThisNetPlanAndLayer(cache_seqNodesRealPath, layer);
-        netPlan.checkInThisNetPlanAndLayer(cache_routesIAmBackUp, layer);
-        for (NetworkElement e : currentPath)
-        {
-            if (e == null) throw new RuntimeException();
-
-            if (e instanceof Link)
-            {
-                final Link ee = (Link) e;
-                if (!(ee.cache_traversingRoutes.containsKey(this))) throw new RuntimeException();
-            }
-            if (e instanceof Resource)
-            {
-                final Resource ee = (Resource) e;
-                if (!(ee.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.containsKey(this))) ;
-            }
-        }
-        for (Entry<NetworkElement, Double> entry : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.entrySet())
-        {
-            if (entry.getKey() == null) throw new RuntimeException();
-            if (entry.getValue() == null) throw new RuntimeException();
-
-            if (entry.getKey() instanceof Resource)
-            {
-                if (((Resource) entry.getKey()).cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute == null)
-                    throw new RuntimeException();
-                if (!(((Resource) entry.getKey()).cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) == entry.getValue()))
-                    throw new RuntimeException();
-            } else if (entry.getKey() instanceof Link)
-            {
-                if (!(((Link) entry.getKey()).cache_traversingRoutes.containsKey(this))) throw new RuntimeException();
-                if (!(((Link) entry.getKey()).cache_traversingRoutes.get(this) > 0)) throw new RuntimeException();
-            }
-        }
-        List<Resource> travResources = new LinkedList<Resource>();
-        for (NetworkElement el : currentPath) if (el instanceof Resource) travResources.add((Resource) el);
-        for (Resource res : travResources)
-        {
-            if (netPlan.cache_id2ResourceMap.get(res.id) != res) throw new RuntimeException();
-            if (netPlan.resources.get(res.index) != res) throw new RuntimeException();
-            if (res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) == null)
-                throw new RuntimeException();
-            if (cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(res) == null) throw new RuntimeException();
-            if (res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) != cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(res))
-                throw new RuntimeException();
-        }
-
-        for (Link link : cache_seqLinksRealPath)
-            if (!link.cache_traversingRoutes.containsKey(this)) throw new RuntimeException();
-
-        for (Node node : cache_seqNodesRealPath)
-            if (!node.cache_nodeAssociatedRoutes.contains(this)) throw new RuntimeException();
-
-        boolean shouldBeUp = true;
-        for (Link e : cache_seqLinksRealPath)
-            if (!e.isUp)
-            {
-                shouldBeUp = false;
-                break;
-            }
-        if (shouldBeUp) for (Node n : cache_seqNodesRealPath)
-            if (!n.isUp)
-            {
-                shouldBeUp = false;
-                break;
-            }
-        if (!shouldBeUp != this.isDown())
-        {
-            System.out.println("Route : " + this + ", should be up: " + shouldBeUp + ", isDown: " + isDown() + ", carried traffic: " + this.getCarriedTraffic() + ", carried all ok: " + currentCarriedTrafficIfNotFailing);
-            for (Link e : cache_seqLinksRealPath)
-                System.out.println("Link e: " + e + ", isUp " + e.isUp);
-            for (Node n : cache_seqNodesRealPath)
-                System.out.println("Node n: " + n + ", isUp " + n.isUp);
-            throw new RuntimeException("Bad.");
-        }
-        if (shouldBeUp)
-        {
-            if (getCarriedTraffic() != currentCarriedTrafficIfNotFailing)
-            {
-                if (currentCarriedTrafficIfNotFailing != 0)
-                {
-                    if ((getCarriedTraffic() / currentCarriedTrafficIfNotFailing) > 0.001)
-                        throw new RuntimeException();
-                } else
-                {
-                    if (getCarriedTraffic() > 0.001 || getCarriedTraffic() < -0.001)
-                        throw new RuntimeException();
-                }
-            }
-        } else
-        {
-            if (getCarriedTraffic() != 0)
-                if (getCarriedTraffic() > 0.001 || getCarriedTraffic() < -0.001)
-                    throw new RuntimeException();
-        }
-
-        for (Route r : backupRoutes) if (!r.cache_routesIAmBackUp.contains(this)) throw new RuntimeException();
-        for (Route r : cache_routesIAmBackUp) if (!r.backupRoutes.contains(this)) throw new RuntimeException();
-    }
+		for (Link link : cache_seqLinksRealPath) assertTrue (link.cache_traversingRoutes.containsKey(this));
+		for (Node node : cache_seqNodesRealPath) assertTrue (node.cache_nodeAssociatedRoutes.contains(this));
+		boolean shouldBeUp = true; for (Link e : cache_seqLinksRealPath) if (!e.isUp) { shouldBeUp = false; break; }
+		boolean travZeroCapLinks = cache_seqLinksRealPath.stream().anyMatch(e->e.capacity<Configuration.precisionFactor);
+		if (shouldBeUp) for (Node n : cache_seqNodesRealPath) if (!n.isUp) { shouldBeUp = false; break; }
+		if (!shouldBeUp != this.isDown())
+		{
+			System.out.println ("Route : " + this + ", should be up: " + shouldBeUp + ", isDown: " + isDown() + ", carried traffic: " + this.getCarriedTraffic() + ", carried all ok: " + currentCarriedTrafficIfNotFailing);
+			for (Link e : cache_seqLinksRealPath)
+				System.out.println ("Link e: " + e + ", isUp " + e.isUp);
+			for (Node n : cache_seqNodesRealPath)
+				System.out.println ("Node n: " + n + ", isUp " + n.isUp);
+			throw new RuntimeException("Bad.");
+		}
+		if (shouldBeUp)
+		{
+			assertEquals(getCarriedTraffic() , currentCarriedTrafficIfNotFailing , 0.001);
+		}
+		else
+		{
+			assertEquals(getCarriedTraffic() , 0 , 0.001);
+		}
+		if (travZeroCapLinks)
+			assertTrue(layer.cache_routesTravLinkZeroCap.contains(this));
+		else
+			assertTrue(!layer.cache_routesTravLinkZeroCap.contains(this));
+		for (Route r : backupRoutes) assertTrue (r.cache_routesIAmBackUp.contains(this));
+		for (Route r : cache_routesIAmBackUp) assertTrue (r.backupRoutes.contains(this));
+	}
 
 	/** Given a path, composed of a sequence of links and resources, extracts the list of links, filtering out the resources
 	 * @param seqLinksAndResources sequence of links and resources

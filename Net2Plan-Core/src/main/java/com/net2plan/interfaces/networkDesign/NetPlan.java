@@ -814,6 +814,7 @@ public class NetPlan extends NetworkElement
         cache_id2MulticastTreeMap.put(treeId, tree);
         layer.multicastTrees.add(tree);
         boolean treeIsUp = true;
+        boolean treeTravZeroCapLinks = false;
         for (Node node : tree.cache_traversedNodes)
         {
             node.cache_nodeAssociatedulticastTrees.add(tree);
@@ -822,9 +823,11 @@ public class NetPlan extends NetworkElement
         for (Link link : linkSet)
         {
             if (!link.isUp) treeIsUp = false;
+            if (link.capacity < Configuration.precisionFactor) treeTravZeroCapLinks = true;
             link.cache_traversingTrees.add(tree);
         }
         if (!treeIsUp) layer.cache_multicastTreesDown.add(tree);
+        if (treeTravZeroCapLinks) layer.cache_multicastTreesTravLinkZeroCap.add(tree);
         demand.cache_multicastTrees.add(tree);
         tree.setCarriedTraffic(carriedTraffic, occupiedLinkCapacity);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -982,6 +985,7 @@ public class NetPlan extends NetworkElement
         layer.routes.add(route);
         cache_id2RouteMap.put(routeId, route);
         boolean isUpThisRoute = true;
+        boolean isTraversingZeroCapLinks = false;
         for (Node node : route.cache_seqNodesRealPath)
         {
             node.cache_nodeAssociatedRoutes.add(route);
@@ -994,9 +998,11 @@ public class NetPlan extends NetworkElement
             else numPassingTimes++;
             link.cache_traversingRoutes.put(route, numPassingTimes);
             if (!link.isUp) isUpThisRoute = false;
+            if (link.capacity < Configuration.precisionFactor) isTraversingZeroCapLinks = true;
         }
         demand.cache_routes.add(route);
         if (!isUpThisRoute) layer.cache_routesDown.add(route);
+        if (isTraversingZeroCapLinks) layer.cache_routesTravLinkZeroCap.add(route);
         route.setCarriedTraffic(carriedTraffic, occupiedLinkAndResourceCapacities);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return route;
@@ -2706,10 +2712,7 @@ public class NetPlan extends NetworkElement
     public Set<Link> getLinksWithZeroCapacity(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-        Set<Link> res = new HashSet<Link>();
-        for (Link e : layer.links) if (e.capacity < PRECISION_FACTOR) res.add(e);
-        return res;
+        return layer.cache_linksZeroCap;
     }
 
     /**
@@ -5624,7 +5627,8 @@ public class NetPlan extends NetworkElement
         	d.cache_worstCasePropagationTimeMs = Double.MAX_VALUE;
             d.routingCycleType = RoutingCycleType.LOOPLESS;
             d.carriedTraffic = 0;
-            if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = d.carriedTraffic;
+            if (d.coupledUpperLayerLink != null)
+            	d.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(d.carriedTraffic);
         }
         for (Link e : layer.links)
         {
@@ -5755,6 +5759,7 @@ public class NetPlan extends NetworkElement
     		for (Node node : r.cache_seqNodesRealPath) node.cache_nodeAssociatedRoutes.remove(r);
     		netPlan.cache_id2RouteMap.remove(r.id);
     		layer.cache_routesDown.remove (r);
+    		layer.cache_routesTravLinkZeroCap.remove(r);
             for (String tag : r.tags) netPlan.cache_taggedElements.get(tag).remove(r);
             r.removeIdAndFromPlanningDomain();
         }
@@ -5762,7 +5767,8 @@ public class NetPlan extends NetworkElement
         {
         	d.carriedTraffic = 0;
         	d.routingCycleType = RoutingCycleType.LOOPLESS;
-        	if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = 0;
+        	if (d.coupledUpperLayerLink != null)
+        		d.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(0);
     		d.cache_routes.clear ();
     		d.cache_worstCasePropagationTimeMs = 0;        
     		d.cache_worstCaseLengthInKm = 0;
@@ -6997,7 +7003,7 @@ public class NetPlan extends NetworkElement
             if ((e.coupledLowerLayerDemand != null) || (e.coupledLowerLayerMulticastDemand != null))
                 throw new Net2PlanException("Coupled links cannot change its capacity");
         for (Link e : layer.links)
-            e.capacity = linkCapacities.get(e.index);
+            e.updateCapacityAndZeroCapacityLinksAndRoutesCaches(linkCapacities.get(e.index));
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
