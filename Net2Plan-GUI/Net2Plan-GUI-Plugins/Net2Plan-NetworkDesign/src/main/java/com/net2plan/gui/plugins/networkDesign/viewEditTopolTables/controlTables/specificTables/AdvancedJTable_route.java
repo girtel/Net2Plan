@@ -21,7 +21,7 @@ import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
@@ -244,7 +244,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.getVisualizationState().pickRoute(route);
+                            callback.getVisualizationState().pickElement(route);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -252,7 +252,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.getVisualizationState().pickRoute(route);
+                            callback.getVisualizationState().pickElement(route);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -423,7 +423,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.ROUTE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickRoute((List<Route>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Route>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -433,7 +433,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -728,7 +728,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         c.setMaximumSize(max);
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -856,7 +856,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -1078,7 +1078,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.resetPickedStateAndUpdateView();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

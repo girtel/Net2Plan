@@ -38,7 +38,7 @@ import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
@@ -330,7 +330,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                                 vs.showOnCanvas(link);
                             }
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState().pickLink(link);
+                            callback.getVisualizationState().pickElement(link);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -359,7 +359,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             {
                                 link.setFailureState(isLinkUp);
                                 callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                                callback.getVisualizationState().pickLink(link);
+                                callback.getVisualizationState().pickElement(link);
                                 callback.updateVisualizationAfterPick();
                             }
                             break;
@@ -369,21 +369,21 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             link.setCapacity(text.equalsIgnoreCase("inf") ? Double.MAX_VALUE : Double.parseDouble(text));
                             newValue = link.getCapacity();
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState().pickLink(link);
+                            callback.getVisualizationState().pickElement(link);
                             callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_LENGTH:
                             link.setLengthInKm(Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState().pickLink(link);
+                            callback.getVisualizationState().pickElement(link);
                             callback.updateVisualizationAfterPick();
                             break;
 
                         case COLUMN_PROPSPEED:
                             link.setPropagationSpeedInKmPerSecond(Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
-                            callback.getVisualizationState().pickLink(link);
+                            callback.getVisualizationState().pickElement(link);
                             callback.updateVisualizationAfterPick();
                             break;
 
@@ -566,7 +566,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.LINK)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickLink((List<Link>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Link>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -576,7 +576,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -600,7 +600,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -621,7 +621,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -978,7 +978,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
@@ -1049,7 +1049,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_RemoveLinks extends JMenuItem
     {
-        MenuItem_RemoveLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        MenuItem_RemoveLinks( GUINetworkDesign callback,  List<Link> selectedLinks)
         {
             this.setText("Remove selected links");
             this.addActionListener(new ActionListener()
@@ -1076,7 +1076,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_ShowLinks extends JMenuItem
     {
-        MenuItem_ShowLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> links)
+        MenuItem_ShowLinks( GUINetworkDesign callback,  List<Link> links)
         {
             this.setText("Show selected links");
             this.addActionListener(e ->
@@ -1092,7 +1092,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_HideLinks extends JMenuItem
     {
-        MenuItem_HideLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> links)
+        MenuItem_HideLinks( GUINetworkDesign callback,  List<Link> links)
         {
             this.setText("Hide selected links");
             this.addActionListener(e ->
@@ -1108,7 +1108,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_DecoupleLinks extends JMenuItem
     {
-        MenuItem_DecoupleLinks(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        MenuItem_DecoupleLinks( GUINetworkDesign callback,  List<Link> selectedLinks)
         {
             this.setText("Decouple coupled links from selection");
             this.addActionListener(e ->
@@ -1125,7 +1125,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_LengthToEuclidean extends JMenuItem
     {
-        MenuItem_LengthToEuclidean(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        MenuItem_LengthToEuclidean( GUINetworkDesign callback,  List<Link> selectedLinks)
         {
             this.setText("Set selected links length to node-pair Euclidean distance");
             this.addActionListener(e ->
@@ -1147,7 +1147,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_LengthToHaversine extends JMenuItem
     {
-        MenuItem_LengthToHaversine(@Nonnull GUINetworkDesign callback, @Nonnull List<Link> selectedLinks)
+        MenuItem_LengthToHaversine( GUINetworkDesign callback,  List<Link> selectedLinks)
         {
             this.setText("Set selected links length to node-pair Haversine distance (longitude-latitude) in km");
             this.addActionListener(e ->

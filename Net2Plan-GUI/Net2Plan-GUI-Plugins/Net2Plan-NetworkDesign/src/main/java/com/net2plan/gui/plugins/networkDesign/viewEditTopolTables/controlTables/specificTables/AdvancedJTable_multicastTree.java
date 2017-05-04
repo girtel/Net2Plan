@@ -31,7 +31,7 @@ import com.net2plan.libraries.GraphUtils;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.StringUtils;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -241,14 +241,14 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             tree.setCarriedTraffic(Double.parseDouble(newValue.toString()), tree.getOccupiedLinkCapacity());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
-                            callback.getVisualizationState().pickMulticastTree(tree);
+                            callback.getVisualizationState().pickElement(tree);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
 
                         case COLUMN_OCCUPIEDCAPACITY:
                             tree.setCarriedTraffic(tree.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
-                            callback.getVisualizationState().pickMulticastTree(tree);
+                            callback.getVisualizationState().pickElement(tree);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.MULTICAST_TREE));
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
@@ -420,7 +420,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.MULTICAST_TREE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickMulticastTree((List<MulticastTree>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<MulticastTree>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -430,7 +430,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -495,7 +495,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         }
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -522,14 +522,14 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         return new LinkedList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(ElementSelection selection)
     {

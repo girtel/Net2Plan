@@ -30,6 +30,7 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -293,6 +294,19 @@ public class ErrorHandling
 				/* Note: Calling repaint explicitly should not be necessary */
 			}
 		});
+	}
+
+	/**
+	 * Prints a text into the console log in case the debug mode is activated.
+	 * @param text Text to print.
+	 */
+	public static void log(String text)
+	{
+		if (isDebugEnabled())
+		{
+			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+			System.out.println(timestamp + ": " + text);
+		}
 	}
 
 	/**

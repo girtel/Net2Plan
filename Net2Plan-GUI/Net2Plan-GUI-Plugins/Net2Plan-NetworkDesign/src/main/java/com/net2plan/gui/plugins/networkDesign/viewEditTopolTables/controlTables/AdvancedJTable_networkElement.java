@@ -36,7 +36,7 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.*;
@@ -51,7 +51,6 @@ import java.util.*;
 import java.util.List;
 
 import static com.net2plan.gui.plugins.networkDesign.ElementSelection.SelectionType;
-import static com.net2plan.gui.plugins.networkDesign.ElementSelection.getElementType;
 import static com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 
 
@@ -1606,7 +1605,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         if (!nothingSelected)
         {
             if (!selection.getFirst().isEmpty())
-                elementHolder = new ElementSelection(getElementType(selection.getFirst()), selection.getFirst());
+                elementHolder = new ElementSelection(NetworkElementType.getType(selection.getFirst()), selection.getFirst());
             else if (!selection.getSecond().isEmpty())
                 elementHolder = new ElementSelection(selection.getSecond());
             else elementHolder = new ElementSelection();
@@ -1703,59 +1702,64 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
                         for (NetworkElement element : selectedElements)
                         {
-                            switch (NetworkElementType.getType(element))
+                            final NetworkElementType type = NetworkElementType.getType(element);
+                            if (type != null)
                             {
-                                case NODE:
-                                    if (filter == null)
-                                        filter = new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer);
-                                    else
-                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer));
-                                    break;
-                                case LINK:
-                                    if (filter == null)
-                                        filter = new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer);
-                                    else
-                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer));
-                                    break;
-                                case DEMAND:
-                                    if (filter == null)
-                                        filter = new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer);
-                                    else
-                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer));
-                                    break;
-                                case MULTICAST_DEMAND:
-                                    if (filter == null)
-                                        filter = new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer);
-                                    else
-                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer));
-                                    break;
-                                case ROUTE:
-                                    if (filter == null)
-                                        filter = new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer);
-                                    else
-                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer));
-                                    break;
-                                case MULTICAST_TREE:
-                                    if (filter == null)
-                                        filter = new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer);
-                                    else
-                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer));
-                                    break;
-                                case RESOURCE:
-                                    if (filter == null)
-                                        filter = new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer);
-                                    else
-                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer));
-                                    break;
-                                case SRG:
-                                    if (filter == null)
-                                        filter = new TBFToFromCarriedTraffic((SharedRiskGroup) element);
-                                    else
-                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((SharedRiskGroup) element));
-                                    break;
-                                default:
-                                    // TODO: Control exceptions on filters.
-                                    throw new RuntimeException();
+
+                                switch (type)
+                                {
+                                    case NODE:
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer));
+                                        break;
+                                    case LINK:
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer));
+                                        break;
+                                    case DEMAND:
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer));
+                                        break;
+                                    case MULTICAST_DEMAND:
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer));
+                                        break;
+                                    case ROUTE:
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer));
+                                        break;
+                                    case MULTICAST_TREE:
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer));
+                                        break;
+                                    case RESOURCE:
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer));
+                                        break;
+                                    case SRG:
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic((SharedRiskGroup) element);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((SharedRiskGroup) element));
+                                        break;
+                                    default:
+                                        // TODO: Control exceptions on filters.
+                                        throw new RuntimeException();
+                                }
                             }
                         }
                     } else
@@ -1819,7 +1823,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    public void writeTableToFile(@Nonnull File file)
+    public void writeTableToFile(File file)
     {
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
     }
@@ -1881,16 +1885,12 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     protected abstract void setColumnRowSorting();
 
-    @Nonnull
     protected abstract List<JComponent> getExtraAddOptions();
 
-    @Nonnull
     protected abstract JMenuItem getAddOption();
 
-    @Nonnull
     protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
 
-    @Nonnull
     protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
 
     protected abstract JPopupMenu getPopup(ElementSelection selection);
@@ -1901,7 +1901,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     static class MenuItem_RemovedFiltered extends JMenuItem
     {
-        MenuItem_RemovedFiltered(@Nonnull GUINetworkDesign callback, @Nonnull NetworkElementType networkElementType)
+        MenuItem_RemovedFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
         {
             final NetPlan netPlan = callback.getDesign();
 
@@ -1975,7 +1975,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     static class MenuItem_HideFiltered extends JMenuItem
     {
-        MenuItem_HideFiltered(@Nonnull GUINetworkDesign callback, @Nonnull NetworkElementType networkElementType)
+        MenuItem_HideFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
         {
             final NetPlan netPlan = callback.getDesign();
             this.setText("Hide all filtered out " + networkElementType + "s");

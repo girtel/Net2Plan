@@ -28,7 +28,7 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.collections15.BidiMap;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -283,21 +283,21 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new ArrayList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         return null;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(ElementSelection selection)
     {
@@ -309,7 +309,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return false;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {

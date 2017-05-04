@@ -1,12 +1,13 @@
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.utils.ImageUtils;
@@ -18,6 +19,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,22 +28,44 @@ import java.util.stream.Collectors;
  * @author Jorge San Emeterio
  * @date 19-Jan-17
  */
-public class OSMJUNGOffState implements OSMState
+class ViewState implements ICanvasState
 {
-    private final GUINetworkDesign callback;
-    private final JUNGCanvas canvas;
+    protected final GUINetworkDesign callback;
+    protected final JUNGCanvas canvas;
+    protected final OSMController mapController;
 
-    @SuppressWarnings("unchecked")
-    OSMJUNGOffState(final GUINetworkDesign callback, final ITopologyCanvas canvas)
+    ViewState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
+        assert canvas instanceof JUNGCanvas;
+
         this.callback = callback;
-
-        if (!(canvas instanceof JUNGCanvas))
-        {
-            throw new RuntimeException("Trying to use JUNG canvas state controller with another type of canvas.");
-        }
-
         this.canvas = (JUNGCanvas) canvas;
+        this.mapController = mapController;
+    }
+
+    @Override
+    public void start()
+    {
+        // Reset nodes' original position
+        canvas.updateAllVerticesXYPosition();
+        canvas.zoomAll();
+    }
+
+    @Override
+    public void stop()
+    {
+    }
+
+    @Override
+    public CanvasOption getState()
+    {
+        return CanvasOption.ViewState;
+    }
+
+    @Override
+    public Color getBackgroundColor()
+    {
+        return new Color(0, 0, 0, 0);
     }
 
     @Override
@@ -74,20 +98,31 @@ public class OSMJUNGOffState implements OSMState
     @Override
     public void zoomAll()
     {
-        final VisualizationState vs = callback.getVisualizationState();
-        final Set<GUINode> visibleGUINodes = canvas.getAllVertices().stream().filter(vs::isVisibleInCanvas).collect(Collectors.toSet());
-        if (visibleGUINodes.isEmpty()) return;
+        zoomNodes(callback.getDesign().getNodes());
+    }
+
+    protected void zoomNodes(List<Node> nodes)
+    {
+        if (nodes.isEmpty()) return;
+
+        // Saving previous zoom
+        float previousZoom = (float) canvas.getCurrentCanvasScale();
 
         // Returns the canvas transformer to its original state, so that Layout = View.
         canvas.resetTransformer();
 
+        final VisualizationState vs = callback.getVisualizationState();
+        final Set<GUINode> guiNodes = new HashSet<>();
+        for (Node node : nodes)
+            guiNodes.addAll(vs.getCanvasVerticallyStackedGUINodes(node));
+
         // Getting topology limits
-        final List<Double> nodeXCoordJUNG = visibleGUINodes.stream()
+        final Set<Double> nodeXCoordJUNG = guiNodes.stream()
                 .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNode().getXYPositionMap()).getX())
-                .collect(Collectors.toList());
-        final List<Double> nodeYCoordJUNG = visibleGUINodes.stream()
+                .collect(Collectors.toSet());
+        final Set<Double> nodeYCoordJUNG = guiNodes.stream()
                 .map(node -> canvas.getCanvasPointFromNetPlanPoint(node.getAssociatedNode().getXYPositionMap()).getY())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         final double xmaxJungCoords = Collections.max(nodeXCoordJUNG);
         final double xminJungCoords = Collections.min(nodeXCoordJUNG);
@@ -95,13 +130,24 @@ public class OSMJUNGOffState implements OSMState
         final double ymaxJungCoords = Collections.max(nodeYCoordJUNG);
         final double yminJungCoords = Collections.min(nodeYCoordJUNG);
 
-        double PRECISION_FACTOR = 0.00001;
+        final Rectangle viewInLayoutUnits = canvas.getCurrentCanvasViewWindow();
 
-        Rectangle viewInLayoutUnits = canvas.getCurrentCanvasViewWindow();
-        float ratio_h = Math.abs(xmaxJungCoords - xminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getWidth() / (xmaxJungCoords - xminJungCoords));
-        float ratio_v = Math.abs(ymaxJungCoords - yminJungCoords) < PRECISION_FACTOR ? 1 : (float) (viewInLayoutUnits.getHeight() / (ymaxJungCoords - yminJungCoords));
-        float ratio = (float) (0.8 * Math.min(ratio_h, ratio_v));
-        canvas.zoom(canvas.getCanvasCenter(), ratio);
+        double xDiff = Math.abs(xmaxJungCoords - xminJungCoords);
+        double yDiff = Math.abs(ymaxJungCoords - yminJungCoords);
+
+        double ratio_h = xDiff == 0 ? 1 : viewInLayoutUnits.getWidth() / xDiff;
+        double ratio_v = yDiff == 0 ? 1 : viewInLayoutUnits.getHeight() / yDiff;
+
+        // Checking for 1s.
+        double minRatio;
+        if (ratio_h != 1 && ratio_v != 1)
+            minRatio = Math.min(ratio_h, ratio_v);
+        else
+            minRatio = (ratio_h * ratio_v == ratio_h ? ratio_h : ratio_v);
+
+        float ratio = (float) (0.6 * minRatio);
+
+        canvas.zoom(canvas.getCanvasCenter(), nodes.size() == 1 ? previousZoom : ratio);
 
         Point2D topologyCenterJungCoord = new Point2D.Double((xminJungCoords + xmaxJungCoords) / 2, (yminJungCoords + ymaxJungCoords) / 2);
         Point2D windowCenterJungCoord = canvas.getCanvasPointFromScreenPoint(canvas.getCanvasCenter());
@@ -109,7 +155,7 @@ public class OSMJUNGOffState implements OSMState
         double dy = (windowCenterJungCoord.getY() - topologyCenterJungCoord.getY());
 
         canvas.moveCanvasTo(new Point2D.Double(dx, dy));
-        canvas.updateInterLayerDistanceInNpCoordinates(vs.getInterLayerSpaceInPixels());
+        canvas.updateInterLayerDistanceInNpCoordinates(callback.getVisualizationState().getInterLayerSpaceInPixels());
         canvas.updateAllVerticesXYPosition();
     }
 
@@ -155,9 +201,7 @@ public class OSMJUNGOffState implements OSMState
     public void updateNodesXYPosition()
     {
         for (GUINode vertex : canvas.getAllVertices())
-        {
             canvas.getLayout().setLocation(vertex, canvas.getTransformer().transform(vertex));
-        }
     }
 
     @Override

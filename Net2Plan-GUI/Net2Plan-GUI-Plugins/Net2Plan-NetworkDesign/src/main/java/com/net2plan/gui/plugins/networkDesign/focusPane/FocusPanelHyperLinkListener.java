@@ -56,15 +56,15 @@ public class FocusPanelHyperLinkListener implements HyperlinkListener
         		ep.scrollToReference(hlInfo);
         	}
         	else if (hlType.equals(PREFIXNODE))
-        		vs.pickNode (np.getNodeFromId(Long.parseLong(hlInfo)));
+        		vs.pickElement (np.getNodeFromId(Long.parseLong(hlInfo)));
         	else if (hlType.equals(PREFIXLINK))
-        		vs.pickLink(np.getLinkFromId(Long.parseLong(hlInfo)));
+        		vs.pickElement(np.getLinkFromId(Long.parseLong(hlInfo)));
         	else if (hlType.equals(PREFIXDEMAND))
-        		vs.pickDemand(np.getDemandFromId(Long.parseLong(hlInfo)));
+        		vs.pickElement(np.getDemandFromId(Long.parseLong(hlInfo)));
         	else if (hlType.equals(PREFIXMULTICASTDEMAND))
-        		vs.pickMulticastDemand(np.getMulticastDemandFromId(Long.parseLong(hlInfo)));
+        		vs.pickElement(np.getMulticastDemandFromId(Long.parseLong(hlInfo)));
         	else if (hlType.equals(PREFIXROUTE))
-        		vs.pickRoute(np.getRouteFromId(Long.parseLong(hlInfo)));
+        		vs.pickElement(np.getRouteFromId(Long.parseLong(hlInfo)));
         	else if (hlType.equals(PREFIXFR))
         	{
         		final Demand demand = np.getDemandFromId(Long.parseLong(hlInfo.substring(0 , hlInfo.indexOf(SEPARATOR))));
@@ -72,16 +72,16 @@ public class FocusPanelHyperLinkListener implements HyperlinkListener
         		vs.pickForwardingRule(Pair.of(demand,link));
         	}
         	else if (hlType.equals(PREFIXMULTICASTTREE))
-        		vs.pickMulticastTree(np.getMulticastTreeFromId(Long.parseLong(hlInfo)));
+        		vs.pickElement(np.getMulticastTreeFromId(Long.parseLong(hlInfo)));
         	else if (hlType.equals(PREFIXRESOURCE))
-        		vs.pickResource(np.getResourceFromId(Long.parseLong(hlInfo)));
+        		vs.pickElement(np.getResourceFromId(Long.parseLong(hlInfo)));
         	else if (hlType.equals(PREFIXSRG))
-        		vs.pickSRG(np.getSRGFromId(Long.parseLong(hlInfo)));
+        		vs.pickElement(np.getSRGFromId(Long.parseLong(hlInfo)));
         	else if (hlType.equals(PREFIXLAYER))
         	{
         		final NetworkLayer layer = np.getNetworkLayerFromId(Long.parseLong(hlInfo));
         		np.setNetworkLayerDefault(layer);
-        		vs.pickLayer(layer);
+        		vs.pickElement(layer);
         	} else if (hlType.equals(PREFIXRESOURCETYPE))
         	{
         	}

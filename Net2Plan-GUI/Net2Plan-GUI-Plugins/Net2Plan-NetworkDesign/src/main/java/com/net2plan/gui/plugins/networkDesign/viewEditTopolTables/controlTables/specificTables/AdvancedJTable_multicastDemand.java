@@ -33,7 +33,7 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.collections15.BidiMap;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -258,7 +258,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                             {
                                 demand.setOfferedTraffic(newOfferedTraffic);
                                 callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
-                                callback.getVisualizationState().pickMulticastDemand(demand);
+                                callback.getVisualizationState().pickElement(demand);
                                 callback.updateVisualizationAfterPick();
                                 callback.addNetPlanChange();
                             }
@@ -423,7 +423,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
 
-        callback.getVisualizationState().pickMulticastDemand((List<MulticastDemand>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<MulticastDemand>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
@@ -433,7 +433,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return true;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -509,7 +509,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         }
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -527,7 +527,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -658,7 +658,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

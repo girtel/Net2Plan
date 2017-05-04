@@ -15,7 +15,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -215,7 +215,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         case COLUMN_NAME:
                             res.setName(newValue.toString());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -224,7 +224,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                             if (newValue == null) return;
                             res.setCapacity((Double) newValue, netPlan.getResourceFromId(resId).getCapacityOccupiedInBaseResourcesMap());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -233,7 +233,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                             if (newValue == null) return;
                             res.setProcessingTimeToTraversingTrafficInMs((Double) newValue);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -449,7 +449,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return popup;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -547,14 +547,14 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new LinkedList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -712,7 +712,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
@@ -726,7 +726,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         if (selection.getElementType() != NetworkElementType.RESOURCE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickResource((List<Resource>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Resource>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 

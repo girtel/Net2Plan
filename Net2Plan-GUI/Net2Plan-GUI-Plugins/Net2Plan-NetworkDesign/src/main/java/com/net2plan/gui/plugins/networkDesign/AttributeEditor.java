@@ -523,7 +523,11 @@ public class AttributeEditor extends JDialog implements ActionListener
         final List<String> shownColumns = new ArrayList<>();
         shownColumns.add("Attribute");
         for (NetworkElement networkElement : networkElements)
-            shownColumns.add(generateColumnName(NetworkElementType.getType(networkElement), networkElement.getId()));
+        {
+            final NetworkElementType type = NetworkElementType.getType(networkElement);
+            if (type != null)
+                shownColumns.add(generateColumnName(type, networkElement.getId()));
+        }
 
         final List<String> toHideColumns = new ArrayList<>();
         for (int i = 0; i < table.getColumnCount(); i++)
