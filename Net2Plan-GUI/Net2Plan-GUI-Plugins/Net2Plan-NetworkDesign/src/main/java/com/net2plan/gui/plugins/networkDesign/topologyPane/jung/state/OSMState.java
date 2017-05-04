@@ -14,6 +14,7 @@ import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -52,6 +53,12 @@ class OSMState implements ICanvasState
     public CanvasOption getState()
     {
         return CanvasOption.OSMState;
+    }
+
+    @Override
+    public Color getStateBackgroundColor()
+    {
+        return null;
     }
 
     @Override

@@ -6,6 +6,8 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMCo
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +17,7 @@ import java.util.List;
  */
 class SiteState extends ViewState
 {
-    private String siteName;
+    private Node siteNode;
 
     SiteState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
@@ -30,6 +32,14 @@ class SiteState extends ViewState
     }
 
     @Override
+    public void stop()
+    {
+        callback.resetPickedStateAndUpdateView();
+        callback.getVisualizationState().pickElement(siteNode);
+        callback.updateVisualizationAfterPick();
+    }
+
+    @Override
     public void zoomAll()
     {
         zoomSite();
@@ -40,7 +50,7 @@ class SiteState extends ViewState
         final NetPlan netPlan = callback.getDesign();
 
         // Finding site nodes
-        final List<Node> nodeList = new ArrayList<>(netPlan.getSiteNodes(siteName));
+        final List<Node> nodeList = new ArrayList<>(netPlan.getSiteNodes(siteNode.getSiteName()));
         callback.getVisualizationState().pickElement(nodeList);
         callback.updateVisualizationAfterPick();
 
@@ -53,8 +63,15 @@ class SiteState extends ViewState
         return CanvasOption.SiteState;
     }
 
-    public void setSiteName(String siteName)
+    @Override
+    public Color getStateBackgroundColor()
     {
-        this.siteName = siteName;
+        return UIManager.getColor("Panel.background").brighter();
+    }
+
+    public void setNode(Node node)
+    {
+        assert node != null;
+        this.siteNode = node;
     }
 }

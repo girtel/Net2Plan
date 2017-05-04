@@ -71,10 +71,6 @@ public class OSMController
             }
         }
 
-        this.topologyPanel = topologyPanel;
-        this.canvas = canvas;
-        this.callback = callback;
-
         mapViewer = new OSMPanel();
 
         // Activating maps on the canvas

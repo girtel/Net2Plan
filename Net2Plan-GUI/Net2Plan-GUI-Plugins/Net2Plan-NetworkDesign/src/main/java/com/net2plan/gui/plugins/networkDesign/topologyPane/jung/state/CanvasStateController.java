@@ -8,6 +8,7 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.ErrorHandling;
 import org.jxmapviewer.viewer.GeoPosition;
 
+import java.awt.*;
 import java.awt.geom.Point2D;
 
 /**
@@ -79,12 +80,18 @@ public class CanvasStateController
 
                     final Node node = (Node) stateParameters[0];
 
-                    siteState.setSiteName(node.getSiteName());
+                    siteState.setNode(node);
                     currentState = siteState;
                     break;
             }
 
             currentState.start();
+
+            // Changing background color
+            final Color bgColor = currentState.getStateBackgroundColor();
+            if (bgColor == null) canvas.getCanvasComponent().setBackground(new Color(0, 0, 0, 0));
+            else canvas.getCanvasComponent().setBackground(bgColor);
+
             callback.updateVisualizationAfterCanvasState();
         } catch (RuntimeException e)
         {

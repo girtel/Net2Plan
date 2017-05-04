@@ -3,6 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IState;
 
+import java.awt.*;
 import java.awt.geom.Point2D;
 
 /**
@@ -12,6 +13,8 @@ import java.awt.geom.Point2D;
 public interface ICanvasState extends IState
 {
     CanvasOption getState();
+
+    Color getStateBackgroundColor();
 
     void panTo(Point2D initialPoint, Point2D currentPoint);
 
