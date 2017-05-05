@@ -40,6 +40,10 @@ public class FocusPane extends JPanel
 
 	public void updateView ()
 	{
+
+
+		this.removeAll();
+		this.repaint();
 		final VisualizationState vs = callback.getVisualizationState();
 		final NetworkElementType elementType = vs.getPickedElementType();
 
