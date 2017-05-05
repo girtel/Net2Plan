@@ -31,9 +31,11 @@ public class TableViewController {
     protected ArrayList<String> hiddenColumnsNames, hiddenColumnsAux;
     protected final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
     protected final Map<Integer, String> mapToSaveState;
+    protected final Map<String, Integer> mapToSaveWidths;
     protected JCheckBoxMenuItem lockColumn, unfixCheckBox, attributesItem, hideColumn;
     protected ArrayList<JMenuItem> hiddenHeaderItems;
     protected JTable mainTable, fixedTable;
+    private boolean expandAttributes = false;
 
     public TableViewController(AdvancedJTable_networkElement table)
     {
@@ -47,6 +49,7 @@ public class TableViewController {
         indexForEachColumn = new HashMap<>();
         indexForEachHiddenColumn = new HashMap<>();
         mapToSaveState = new HashMap<>();
+        mapToSaveWidths = new HashMap<>();
 
         for (int j = 0; j < mainTable.getColumnModel().getColumnCount(); j++)
         {
@@ -291,13 +294,13 @@ public class TableViewController {
         {
             if (attributesItem.isSelected())
             {
-                if (!table.isAttributeCellExpanded())
+                if (!isAttributeCellExpanded())
                 {
                     attributesInDifferentColumns();
                 }
             } else
             {
-                if (table.isAttributeCellExpanded())
+                if (isAttributeCellExpanded())
                 {
                     attributesInOneColumn();
                 }
@@ -556,14 +559,18 @@ public class TableViewController {
      *
      * @param
      */
-    protected void saveColumnsPositions()
+    protected void saveColumnsPositionsAndWidths()
     {
         mapToSaveState.clear();
+        TableColumn currentColumn = null;
         String currentColumnName = "";
         for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
         {
-            currentColumnName = mainTable.getColumnModel().getColumn(i).getHeaderValue().toString();
+            currentColumn = mainTable.getColumnModel().getColumn(i);
+            currentColumnName = currentColumn.getHeaderValue().toString();
             mapToSaveState.put(i, currentColumnName);
+            mapToSaveWidths.put(currentColumnName, currentColumn.getWidth());
+            System.out.println("Columna "+currentColumnName+" tiene anchura "+currentColumn.getWidth());
         }
     }
 
@@ -572,7 +579,7 @@ public class TableViewController {
      *
      * @param
      */
-    protected void restoreColumnsPositions()
+    protected void restoreColumnsPositionsAndWidths()
     {
         TableColumn columnToHide;
         String hiddenColumnHeader;
@@ -586,11 +593,19 @@ public class TableViewController {
             mainTable.getColumnModel().removeColumn(columnToHide);
             shownColumns.remove(columnToHide);
         }
-        String currentColumnName;
+        String currentColumnName = "";
+        int columnWidth = 0;
         for (int j = 0; j < mapToSaveState.size(); j++)
         {
             currentColumnName = mapToSaveState.get(j);
             showColumn(currentColumnName, j, false);
+        }
+
+        for (Map.Entry<String, Integer> entry : mapToSaveWidths.entrySet())
+        {
+            currentColumnName = entry.getKey();
+            columnWidth = entry.getValue();
+            setWidth(currentColumnName, columnWidth);
         }
 
         checkNewIndexes();
@@ -727,7 +742,7 @@ public class TableViewController {
         {
             removeNewColumn("Att: " + s);
         }
-        table.expandAttributes = false;
+        setAttributesCellExpanded(false);
         attributesItem.setSelected(false);
         updateTables();
         checkNewIndexes();
@@ -803,7 +818,7 @@ public class TableViewController {
      */
     protected void attributesInDifferentColumns()
     {
-        saveColumnsPositions();
+        saveColumnsPositionsAndWidths();
         boolean attributesColumnInMainTable = false;
         String currentColumnName = null;
         for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
@@ -830,8 +845,8 @@ public class TableViewController {
                 removedColumns.clear();
                 removeNewColumn("Attributes");
                 updateTables();
-                table.expandAttributes = true;
-                restoreColumnsPositions();
+                setAttributesCellExpanded(true);
+                restoreColumnsPositionsAndWidths();
                 for (String att : table.getAttributesColumnsHeaders())
                 {
                     showColumn("Att: " + att, 0, false);
@@ -850,7 +865,7 @@ public class TableViewController {
 
     protected void attributesInOneColumn()
     {
-        saveColumnsPositions();
+        saveColumnsPositionsAndWidths();
         int attributesCounter = 0;
         String columnToCheck = null;
         for (String att : table.getAttributesColumnsHeaders())
@@ -884,13 +899,27 @@ public class TableViewController {
                     removeNewColumn("Att: " + att);
                 }
                 updateTables();
-                table.expandAttributes = false;
-                restoreColumnsPositions();
+                setAttributesCellExpanded(false);
+                restoreColumnsPositionsAndWidths();
                 showColumn("Attributes", 0, false);
                 checkNewIndexes();
             } else
             {
                 attributesItem.setSelected(true);
+            }
+        }
+    }
+
+    public void setWidth(String columnName, int columnWidth)
+    {
+        TableColumn tc = null;
+        for(int i = 0; i < table.getColumnModel().getColumnCount(); i++)
+        {
+            tc = table.getColumnModel().getColumn(i);
+            if(tc.getHeaderValue().toString().equals(columnName))
+            {
+                tc.setWidth(columnWidth);
+                System.out.println("A la columna "+tc.getHeaderValue().toString()+ " se le ha puesto el valor de anchura "+columnWidth);
             }
         }
     }
@@ -928,6 +957,18 @@ public class TableViewController {
         }
 
         return hiddenTableColumns;
+    }
+
+
+
+    public boolean isAttributeCellExpanded()
+    {
+        return expandAttributes;
+    }
+
+    public void setAttributesCellExpanded(boolean flag)
+    {
+        expandAttributes = flag;
     }
 
 }
