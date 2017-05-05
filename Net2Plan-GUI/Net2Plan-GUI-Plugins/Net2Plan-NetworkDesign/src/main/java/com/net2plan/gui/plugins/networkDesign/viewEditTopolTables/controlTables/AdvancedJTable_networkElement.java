@@ -13,15 +13,12 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables;
 
 import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
@@ -36,14 +33,11 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
-
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
-import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
-import javax.xml.stream.XMLStreamException;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -131,26 +125,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     private void addKeyboardActions()
     {
-//        // Key input
-//        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK), "shiftUpArrow");
-//        this.getActionMap().put("shiftUpArrow", new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent actionEvent)
-//            {
-//                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-//                final int upRow = Ints.min(table.getSelectedRows());
-//                final int downRow = Ints.max(table.getSelectedRows());
-//
-//                int row = upRow - 1;
-//                if (row < 0) return;
-//                table.setRowSelectionInterval(row, downRow);
-//
-//                final ElementSelection selectedElements = getSelectedElements();
-//                if (selectedElements.isEmpty()) return;
-//                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
-//            }
-//        });
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.VK_UNDEFINED), "pickElements");
         this.getActionMap().put("pickElements", new AbstractAction()
         {
@@ -159,68 +133,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             {
                 final ElementSelection selectedElements = getSelectedElements();
                 if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
+                SwingUtilities.invokeLater(() -> pickSelection(selectedElements));
             }
         });
-
-//        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "upArrow");
-//        this.getActionMap().put("upArrow", new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent e)
-//            {
-//                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-//                final int upRow = Ints.min(table.getSelectedRows());
-//
-//                int row = upRow - 1;
-//                if (row < 0) return;
-//                table.setRowSelectionInterval(row, row);
-//
-//                final ElementSelection selectedElements = getSelectedElements();
-//                if (selectedElements.isEmpty()) return;
-//                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
-//            }
-//        });
-//
-//        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK), "shiftDownArrow");
-//        this.getActionMap().put("shiftDownArrow", new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent actionEvent)
-//            {
-//                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-//                final int upRow = Ints.min(table.getSelectedRows());
-//                final int downRow = Ints.max(table.getSelectedRows());
-//
-//                int row = downRow + 1;
-//                if (hasAggregationRow() && row == (table.getRowCount() - 1)) return;
-//                table.setRowSelectionInterval(upRow, row);
-//
-//                final ElementSelection selectedElements = getSelectedElements();
-//                if (selectedElements.isEmpty()) return;
-//                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
-//            }
-//        });
-//
-//        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "downArrow");
-//        this.getActionMap().put("downArrow", new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent e)
-//            {
-//                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-//                final int downRow = Ints.max(table.getSelectedRows());
-//
-//                int row = downRow + 1;
-//
-//                if (hasAggregationRow() && row == table.getRowCount() - 1) return;
-//                table.setRowSelectionInterval(row, row);
-//
-//                final ElementSelection selectedElements = getSelectedElements();
-//                if (selectedElements.isEmpty()) return;
-//                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
-//            }
-//        });
     }
 
 
@@ -348,7 +263,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     if (selection.isEmpty())
                         callback.resetPickedStateAndUpdateView();
 //                    else
-//                        SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selection));
+//                        SwingUtilities.invokeLater(() -> pickSelection(selection));
                 }
             } catch (Exception ex)
             {
@@ -936,7 +851,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final JMenuItem menu = new JMenuItem("Pick");
         popup.add(menu);
         menu.setEnabled(!selection.isEmpty());
-        menu.addActionListener(e->{SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selection));  });
+        menu.addActionListener(e->{SwingUtilities.invokeLater(() -> pickSelection(selection));  });
     }
 
 
@@ -1027,7 +942,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     protected abstract JPopupMenu getPopup(ElementSelection selection);
 
-    protected abstract void pickSelectionAndShowInCanvas(ElementSelection selection);
+    protected abstract void pickSelection(ElementSelection selection);
 
     protected abstract boolean hasAttributes();
 

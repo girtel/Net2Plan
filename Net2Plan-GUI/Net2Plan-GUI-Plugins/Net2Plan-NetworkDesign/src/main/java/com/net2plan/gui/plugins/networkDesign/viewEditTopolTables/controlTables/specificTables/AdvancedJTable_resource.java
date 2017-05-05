@@ -721,7 +721,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void pickSelectionAndShowInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.RESOURCE)

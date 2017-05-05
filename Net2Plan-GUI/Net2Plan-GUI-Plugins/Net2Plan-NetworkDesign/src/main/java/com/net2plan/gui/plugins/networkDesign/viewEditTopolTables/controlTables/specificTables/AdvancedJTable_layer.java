@@ -272,7 +272,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void pickSelectionAndShowInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         return;
     }

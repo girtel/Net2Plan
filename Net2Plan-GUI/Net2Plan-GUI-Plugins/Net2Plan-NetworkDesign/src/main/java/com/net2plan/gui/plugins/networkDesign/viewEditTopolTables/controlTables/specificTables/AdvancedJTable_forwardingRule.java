@@ -266,7 +266,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     }
 
 
-    public void pickSelectionAndShowInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (selection.getElementType() != NetworkElementType.FORWARDING_RULE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());

@@ -417,7 +417,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
     @Override
-    public void pickSelectionAndShowInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.MULTICAST_DEMAND)

@@ -451,7 +451,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return popup;
     }
 
-    public void pickSelectionAndShowInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (selection.getElementType() != NetworkElementType.DEMAND)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
