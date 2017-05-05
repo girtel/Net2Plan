@@ -121,8 +121,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         tableController = new TableViewController(this);
     }
 
-
-
     private void addKeyboardActions()
     {
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.VK_UNDEFINED), "pickElements");
@@ -137,7 +135,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             }
         });
     }
-
 
     public boolean isAttributeCellExpanded()
     {
@@ -189,7 +186,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final String[] tableHeaders = getCurrentTableHeaders();
 
         if (!hasElements())
-            ((DefaultTableModel) getModel()).setDataVector(new Object [1][tableHeaders.length], tableHeaders);
+            ((DefaultTableModel) getModel()).setDataVector(new Object[1][tableHeaders.length], tableHeaders);
 
         if (hasElements())
         {
@@ -851,7 +848,10 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final JMenuItem menu = new JMenuItem("Pick");
         popup.add(menu);
         menu.setEnabled(!selection.isEmpty());
-        menu.addActionListener(e->{SwingUtilities.invokeLater(() -> pickSelection(selection));  });
+        menu.addActionListener(e ->
+        {
+            SwingUtilities.invokeLater(() -> pickSelection(selection));
+        });
     }
 
 
@@ -867,7 +867,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             tips.setToolTip(col, columnTips[c]);
         }
         getTableHeader().addMouseMotionListener(tips);
-
     }
 
     public void writeTableToFile(File file)
@@ -875,13 +874,16 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
     }
 
-    protected static void updateRowSum (Object [] data , double [] aggreg , int index , double val)
+    protected static void updateRowSum(Object[] data, double[] aggreg, int index, double val)
     {
-    	data [index] = val; aggreg [index] += val;
+        data[index] = val;
+        aggreg[index] += val;
     }
-    protected static void updateRowMax (Object [] data , double [] aggreg , int index , double val)
+
+    protected static void updateRowMax(Object[] data, double[] aggreg, int index, double val)
     {
-    	data [index] = val; aggreg [index] = Math.max(val, aggreg[index]);
+        data[index] = val;
+        aggreg[index] = Math.max(val, aggreg[index]);
     }
 
     private Object[][] buildData()
