@@ -116,16 +116,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         this.callback = networkViewer;
         this.networkElementType = networkElementType;
 
-		/* configure the tips */
-        String[] columnTips = getTableTips();
-        String[] columnHeader = getTableHeaders();
-        ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
-        for (int c = 0; c < columnHeader.length; c++)
-        {
-            TableColumn col = getColumnModel().getColumn(c);
-            tips.setToolTip(col, columnTips[c]);
-        }
-        getTableHeader().addMouseMotionListener(tips);
+        setTips();
 
 		/* add the popup menu listener (this) */
         addMouseListener(new PopupMenuMouseAdapter());
@@ -1021,6 +1012,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             {
                 callback.updateVisualizationJustTables();
                 createDefaultColumnsFromModel();
+                setTips();
                 removedColumns.clear();
                 removeNewColumn("Attributes");
                 updateTables();
@@ -1071,6 +1063,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                 callback.updateVisualizationJustTables();
                 createDefaultColumnsFromModel();
+                setTips();
                 removedColumns.clear();
                 for (String att : getAttributesColumnsHeaders())
                 {
@@ -1181,16 +1174,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
             {
 
-                final String[] columnTips = getTableTips();
-                final String[] columnHeader = getTableHeaders();
-
-                // Tips
-                final ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
-
-                for (int c = 0; c < columnHeader.length; c++)
-                    tips.setToolTip(getColumnModel().getColumn(c), columnTips[c]);
-
-                this.getTableHeader().addMouseMotionListener(tips);
+                setTips();
 
                 if (isAttributeCellExpanded())
                     removeNewColumn("Attributes");
@@ -1840,6 +1824,22 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         popup.add(menu);
         menu.setEnabled(!selection.isEmpty());
         menu.addActionListener(e->{SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selection));  });
+    }
+
+
+    protected void setTips()
+    {
+        /* configure the tips */
+        String[] columnTips = getTableTips();
+        String[] columnHeader = getTableHeaders();
+        ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
+        for (int c = 0; c < columnHeader.length; c++)
+        {
+            TableColumn col = getColumnModel().getColumn(c);
+            tips.setToolTip(col, columnTips[c]);
+        }
+        getTableHeader().addMouseMotionListener(tips);
+
     }
 
     public void writeTableToFile(File file)
