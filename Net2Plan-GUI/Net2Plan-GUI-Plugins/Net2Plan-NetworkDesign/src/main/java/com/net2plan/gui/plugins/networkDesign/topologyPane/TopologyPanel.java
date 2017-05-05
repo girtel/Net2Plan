@@ -53,8 +53,6 @@ public class TopologyPanel extends JPanel
     private final TopologyTopBar topBar;
     private final TopologySideBar sideBar;
 
-    private final File defaultDesignDirectory, defaultDemandDirectory;
-
     private FileChooserNetworkDesign fc_netPlan, fc_demands;
 
     /**
@@ -100,12 +98,12 @@ public class TopologyPanel extends JPanel
             // File chooser default directory.
             final File currentDir = SystemUtils.getCurrentDir();
 
-            this.defaultDesignDirectory = defaultDesignDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "networkTopologies") : defaultDesignDirectory;
-            this.defaultDemandDirectory = defaultDemandDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "trafficMatrices") : defaultDemandDirectory;
+            File defaultDesignDirectoryFilter = defaultDesignDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "networkTopologies") : defaultDesignDirectory;
+            File defaultDemandDirectoryFilter = defaultDemandDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "trafficMatrices") : defaultDemandDirectory;
 
             // File chooser
-            this.fc_netPlan = new FileChooserNetworkDesign(defaultDesignDirectory, DialogType.NETWORK_DESIGN);
-            this.fc_demands = new FileChooserNetworkDesign(defaultDemandDirectory, DialogType.DEMANDS);
+            this.fc_netPlan = new FileChooserNetworkDesign(defaultDesignDirectoryFilter, DialogType.NETWORK_DESIGN);
+            this.fc_demands = new FileChooserNetworkDesign(defaultDemandDirectoryFilter, DialogType.DEMANDS);
 
             // Declare canvas : Reflections
             this.canvas = canvasType.getDeclaredConstructor(GUINetworkDesign.class, TopologyPanel.class).newInstance(callback, this);
