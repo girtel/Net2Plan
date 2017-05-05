@@ -14,7 +14,7 @@ import javax.swing.*;
  * @author Jorge San Emeterio
  * @date 24/04/17
  */
-public class AdvancedJTable_networkElement_Test
+public class AdvancedJTable_networkElementTest
 {
     private static AdvancedJTable_networkElement table;
 
