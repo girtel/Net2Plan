@@ -826,6 +826,7 @@ public class TableViewController {
             {
                 table.callback.updateVisualizationJustTables();
                 table.createDefaultColumnsFromModel();
+                table.setTips();
                 removedColumns.clear();
                 removeNewColumn("Attributes");
                 updateTables();
@@ -876,6 +877,7 @@ public class TableViewController {
 
                 table.callback.updateVisualizationJustTables();
                 table.createDefaultColumnsFromModel();
+                table.setTips();
                 removedColumns.clear();
                 for (String att : table.getAttributesColumnsHeaders())
                 {
