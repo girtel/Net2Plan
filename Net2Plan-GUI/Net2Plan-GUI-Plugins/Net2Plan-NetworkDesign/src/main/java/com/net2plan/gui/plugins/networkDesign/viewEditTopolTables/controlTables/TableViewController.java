@@ -2,6 +2,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
+import com.net2plan.internal.Constants;
 import com.net2plan.internal.ErrorHandling;
 
 import javax.swing.*;
@@ -562,6 +563,7 @@ public class TableViewController {
     protected void saveColumnsPositionsAndWidths()
     {
         mapToSaveState.clear();
+        mapToSaveWidths.clear();
         TableColumn currentColumn = null;
         String currentColumnName = "";
         for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
@@ -570,6 +572,7 @@ public class TableViewController {
             currentColumnName = currentColumn.getHeaderValue().toString();
             mapToSaveState.put(i, currentColumnName);
             mapToSaveWidths.put(currentColumnName, currentColumn.getWidth());
+            if(table.getNetworkElementType() == Constants.NetworkElementType.NODE)
             System.out.println("Columna "+currentColumnName+" tiene anchura "+currentColumn.getWidth());
         }
     }
@@ -918,7 +921,8 @@ public class TableViewController {
             tc = table.getColumnModel().getColumn(i);
             if(tc.getHeaderValue().toString().equals(columnName))
             {
-                tc.setWidth(columnWidth);
+                tc.setPreferredWidth(columnWidth);
+                if(table.getNetworkElementType() == Constants.NetworkElementType.NODE)
                 System.out.println("A la columna "+tc.getHeaderValue().toString()+ " se le ha puesto el valor de anchura "+columnWidth);
             }
         }
