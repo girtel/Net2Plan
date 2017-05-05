@@ -144,7 +144,7 @@ public final class TableStateController
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("mainTableColumns");
                 XMLUtils.indent(writer, 3);
-                ArrayList<String> mainTableColumns = table.getMainTableColumns();
+                ArrayList<String> mainTableColumns = table.getTableController().getMainTableColumns();
                 for (int i = 0; i < mainTableColumns.size(); i++)
                 {
                     writer.writeEmptyElement("column");
@@ -157,7 +157,7 @@ public final class TableStateController
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("fixedTableColumns");
                 XMLUtils.indent(writer, 3);
-                ArrayList<String> fixedTableColumns = table.getFixedTableColumns();
+                ArrayList<String> fixedTableColumns = table.getTableController().getFixedTableColumns();
                 for (int i = 0; i < fixedTableColumns.size(); i++)
                 {
                     writer.writeEmptyElement("column");
@@ -170,7 +170,7 @@ public final class TableStateController
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("hiddenTableColumns");
 
-                HashMap<String, Integer> hiddenMap = table.getHiddenColumns();
+                HashMap<String, Integer> hiddenMap = table.getTableController().getHiddenColumns();
                 final ArrayList<Map.Entry<String, Integer>> hiddenMapEntries = new ArrayList<>(hiddenMap.entrySet());
 
                 for (int i = 0; i < hiddenMapEntries.size(); i++)
