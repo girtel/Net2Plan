@@ -572,8 +572,7 @@ public class TableViewController {
             currentColumnName = currentColumn.getHeaderValue().toString();
             mapToSaveState.put(i, currentColumnName);
             mapToSaveWidths.put(currentColumnName, currentColumn.getWidth());
-            if(table.getNetworkElementType() == Constants.NetworkElementType.NODE)
-            System.out.println("Columna "+currentColumnName+" tiene anchura "+currentColumn.getWidth());
+
         }
     }
 
@@ -922,8 +921,6 @@ public class TableViewController {
             if(tc.getHeaderValue().toString().equals(columnName))
             {
                 tc.setPreferredWidth(columnWidth);
-                if(table.getNetworkElementType() == Constants.NetworkElementType.NODE)
-                System.out.println("A la columna "+tc.getHeaderValue().toString()+ " se le ha puesto el valor de anchura "+columnWidth);
             }
         }
     }
