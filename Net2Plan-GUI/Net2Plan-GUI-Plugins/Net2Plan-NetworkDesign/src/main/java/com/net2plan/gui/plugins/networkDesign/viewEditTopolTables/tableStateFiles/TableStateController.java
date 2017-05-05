@@ -186,7 +186,7 @@ public final class TableStateController
                 writer.writeEndElement();
                 XMLUtils.indent(writer, 2);
                 writer.writeStartElement("attributesState");
-                writer.writeAttribute("expandAttributes", String.valueOf(table.isAttributeCellExpanded()));
+                writer.writeAttribute("expandAttributes", String.valueOf(table.getTableController().isAttributeCellExpanded()));
                 writer.writeEndElement();
 
                 XMLUtils.indent(writer, 1);

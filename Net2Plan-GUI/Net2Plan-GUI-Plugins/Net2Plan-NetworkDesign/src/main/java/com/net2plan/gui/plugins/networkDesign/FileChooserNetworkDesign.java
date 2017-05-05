@@ -19,7 +19,7 @@ import com.net2plan.internal.Constants.IOFeature;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.internal.plugins.PluginSystem;
-import com.net2plan.io.IONet2Plan;
+import com.net2plan.io.*;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -42,8 +42,15 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
     private Set<IOFilter> saveFilters;
     private IOFilter lastLoadFilter, lastSaveFilter;
 
-    static {
+    static
+    {
         PluginSystem.addPlugin(IOFilter.class, IONet2Plan.class);
+        PluginSystem.addPlugin(IOFilter.class, IOSNDLibNative.class);
+        PluginSystem.addPlugin(IOFilter.class, IOBrite.class);
+        PluginSystem.addPlugin(IOFilter.class, IOVisum.class);
+        PluginSystem.addPlugin(IOFilter.class, IOMatPlanWDM_design.class);
+        PluginSystem.addPlugin(IOFilter.class, IOMatPlanWDM_trafficMatrix.class);
+        PluginSystem.addPlugin(IOFilter.class, IOTrafficMatrix2DFile.class);
     }
 
     /**
@@ -53,13 +60,15 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
      * @param type             Dialog type
      * @since 0.3.0
      */
-    public FileChooserNetworkDesign(File currentDirectory, DialogType type) {
+    public FileChooserNetworkDesign(File currentDirectory, DialogType type)
+    {
         super(currentDirectory);
 
         loadFilters = new LinkedHashSet<IOFilter>();
         saveFilters = new LinkedHashSet<IOFilter>();
 
-        switch (type) {
+        switch (type)
+        {
             case NETWORK_DESIGN:
                 loadFilters.addAll(IOFilter.getIOFiltersByFeatures(EnumSet.of(IOFeature.LOAD_DESIGN)));
                 saveFilters.addAll(IOFilter.getIOFiltersByFeatures(EnumSet.of(IOFeature.SAVE_DESIGN)));
@@ -83,40 +92,50 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
     }
 
     @Override
-    public void addChoosableFileFilter(FileFilter filter) {
-        if (finishConfiguration) {
+    public void addChoosableFileFilter(FileFilter filter)
+    {
+        if (finishConfiguration)
+        {
             throw new UnsupportedOperationException("Unsupported operation");
-        } else {
+        } else
+        {
             super.addChoosableFileFilter(filter);
         }
     }
 
     @Override
-    public void setAcceptAllFileFilterUsed(boolean b) {
-        if (finishConfiguration) {
+    public void setAcceptAllFileFilterUsed(boolean b)
+    {
+        if (finishConfiguration)
+        {
             throw new UnsupportedOperationException("Unsupported operation");
-        } else {
+        } else
+        {
             super.setAcceptAllFileFilterUsed(b);
         }
     }
 
     @Override
-    public void setFileSelectionMode(int mode) {
+    public void setFileSelectionMode(int mode)
+    {
         if (finishConfiguration) throw new UnsupportedOperationException("Unsupported operation");
         else super.setFileSelectionMode(mode);
     }
 
     @Override
-    public int showOpenDialog(Component parent) throws HeadlessException {
+    public int showOpenDialog(Component parent) throws HeadlessException
+    {
         return showDialog(parent, true);
     }
 
     @Override
-    public int showSaveDialog(Component parent) throws HeadlessException {
+    public int showSaveDialog(Component parent) throws HeadlessException
+    {
         return showDialog(parent, false);
     }
 
-    private IOFilter getCurrentIOFilter() {
+    private IOFilter getCurrentIOFilter()
+    {
         FileFilter currentFilter = getFileFilter();
         if (!(currentFilter instanceof IOFilter))
             throw new RuntimeException("Bad filter");
@@ -130,7 +149,8 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
      * @return Network design with the demands from the input file
      * @since 0.3.0
      */
-    public NetPlan readDemands() {
+    public NetPlan readDemands()
+    {
         IOFilter importer = getCurrentIOFilter();
         NetPlan netPlan = importer.readDemandSetFromFile(getSelectedFile());
 
@@ -143,7 +163,8 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
      * @return Network design
      * @since 0.2.2
      */
-    public NetPlan readNetPlan() {
+    public NetPlan readNetPlan()
+    {
         IOFilter importer = getCurrentIOFilter();
         NetPlan netPlan = importer.readFromFile(getSelectedFile());
         return netPlan;
@@ -155,7 +176,8 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
      * @return Network design
      * @since 0.2.2
      */
-    public Collection<NetPlan> readNetPlans() {
+    public Collection<NetPlan> readNetPlans()
+    {
         List<NetPlan> netPlans = new LinkedList<NetPlan>();
         IOFilter importer = getCurrentIOFilter();
         File[] files = getSelectedFiles();
@@ -170,7 +192,8 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
      * @param netPlan Network design
      * @since 0.3.0
      */
-    public void saveDemands(NetPlan netPlan) {
+    public void saveDemands(NetPlan netPlan)
+    {
         IOFilter exporter = getCurrentIOFilter();
         File file = getSelectedFile();
         exporter.saveDemandSetToFile(netPlan, file);
@@ -182,8 +205,10 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
      * @param netPlans Collection of network designs to be saved
      * @since 0.3.0
      */
-    public void saveDemands(Collection<NetPlan> netPlans) {
-        if (netPlans.size() == 1) {
+    public void saveDemands(Collection<NetPlan> netPlans)
+    {
+        if (netPlans.size() == 1)
+        {
             saveDemands(netPlans.iterator().next());
             return;
         }
@@ -198,7 +223,8 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
 
         int i = 0;
         Iterator<NetPlan> it = netPlans.iterator();
-        while (it.hasNext()) {
+        while (it.hasNext())
+        {
             NetPlan netPlan = it.next();
 
             if (extension.isEmpty())
@@ -216,18 +242,21 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
      * @param netPlan Network design
      * @since 0.2.2
      */
-    public void saveNetPlan(NetPlan netPlan) {
+    public void saveNetPlan(NetPlan netPlan)
+    {
         IOFilter exporter = getCurrentIOFilter();
         File file = getSelectedFile();
         exporter.saveToFile(netPlan, file);
     }
 
-    private int showDialog(Component parent, boolean isOpenDialog) throws HeadlessException {
+    private int showDialog(Component parent, boolean isOpenDialog) throws HeadlessException
+    {
         finishConfiguration = false;
         for (FileFilter existingFilter : super.getChoosableFileFilters())
             super.removeChoosableFileFilter(existingFilter);
 
-        for (IOFilter ioFilter : isOpenDialog ? loadFilters : saveFilters) {
+        for (IOFilter ioFilter : isOpenDialog ? loadFilters : saveFilters)
+        {
             addChoosableFileFilter(ioFilter);
 
             if ((isOpenDialog && ioFilter.equals(lastLoadFilter)) || (!isOpenDialog && ioFilter.equals(lastSaveFilter)))
@@ -237,7 +266,8 @@ public class FileChooserNetworkDesign extends FileChooserConfirmOverwrite
         finishConfiguration = true;
 
         int out = isOpenDialog ? super.showOpenDialog(parent) : super.showSaveDialog(parent);
-        if (out == JFileChooser.APPROVE_OPTION) {
+        if (out == JFileChooser.APPROVE_OPTION)
+        {
             IOFilter ioFilter = getCurrentIOFilter();
 
             if (loadFilters.contains(ioFilter)) lastLoadFilter = ioFilter;

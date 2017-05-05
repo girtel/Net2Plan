@@ -83,7 +83,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     private final JScrollPane scroll;
     private final FixedColumnDecorator decorator;
 
-    public boolean expandAttributes = false;
 
     /**
      * Constructor that allows to set the table model.
@@ -135,10 +134,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         });
     }
 
-    public boolean isAttributeCellExpanded()
-    {
-        return expandAttributes;
-    }
 
     public JScrollPane getScroll()
     {
@@ -174,7 +169,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     {
         this.setEnabled(false);
 
-        tableController.saveColumnsPositions();
+        tableController.saveColumnsPositionsAndWidths();
 
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
@@ -200,7 +195,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                 setTips();
 
-                if (isAttributeCellExpanded())
+                if (tableController.isAttributeCellExpanded())
                     tableController.removeNewColumn("Attributes");
                 else if (attColumnsHeaders.size() > 0)
                     for (String att : attColumnsHeaders)
@@ -208,10 +203,10 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                 tableController.updateTables();
 
-                tableController.restoreColumnsPositions();
+                tableController.restoreColumnsPositionsAndWidths();
 
                 tableController.hiddenColumnsAux = new ArrayList<>();
-                if (isAttributeCellExpanded())
+                if (tableController.isAttributeCellExpanded())
                 {
                     for (TableColumn col : tableController.hiddenColumns)
                     {
@@ -441,10 +436,10 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     for (NetworkElement selectedElement : selectedElements)
                         selectedElement.removeAllAttributes();
 
-                    if (isAttributeCellExpanded())
+                    if (tableController.isAttributeCellExpanded())
                     {
                         tableController.recoverRemovedColumn("Attributes");
-                        expandAttributes = false;
+                        tableController.setAttributesCellExpanded(false);
                         tableController.attributesItem.setSelected(false);
                     }
 
