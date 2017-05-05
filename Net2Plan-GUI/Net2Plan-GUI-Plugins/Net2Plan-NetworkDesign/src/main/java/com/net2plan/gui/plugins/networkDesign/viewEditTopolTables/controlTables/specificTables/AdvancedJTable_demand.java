@@ -375,7 +375,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
         final List<Demand> demandRowsInTheTable = this.getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.DEMAND)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());

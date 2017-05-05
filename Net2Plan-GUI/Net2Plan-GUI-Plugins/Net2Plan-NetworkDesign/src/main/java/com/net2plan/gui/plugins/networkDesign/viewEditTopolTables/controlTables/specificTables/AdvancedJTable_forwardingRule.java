@@ -288,7 +288,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<Pair<Demand, Link>> frRowsInTheTable = getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
             if (selection.getElementType() != NetworkElementType.FORWARDING_RULE)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 

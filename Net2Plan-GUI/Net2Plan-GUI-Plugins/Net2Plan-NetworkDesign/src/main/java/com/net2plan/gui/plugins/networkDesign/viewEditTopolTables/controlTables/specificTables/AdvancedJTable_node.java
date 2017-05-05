@@ -405,7 +405,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
 
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.NODE)
                 throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());

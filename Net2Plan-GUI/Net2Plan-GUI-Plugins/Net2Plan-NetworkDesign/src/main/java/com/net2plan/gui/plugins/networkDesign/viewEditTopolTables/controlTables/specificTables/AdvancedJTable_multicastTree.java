@@ -332,7 +332,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<MulticastTree> rowsInTheTable = getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.MULTICAST_TREE)
                 throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());

@@ -66,7 +66,6 @@ public class ElementSelectionTest
         final ElementSelection invertedSelection = this.elementSelection.invertSelection();
 
         assertNotNull(invertedSelection);
-        assertEquals(invertedSelection.getSelectionType(), ElementSelection.SelectionType.NETWORK_ELEMENT);
         assertEquals(invertedSelection.getElementType(), NetworkElementType.NODE);
 
         final List<? extends NetworkElement> networkElements = invertedSelection.getNetworkElements();
@@ -97,7 +96,6 @@ public class ElementSelectionTest
     {
         elementSelection = new ElementSelection();
 
-        assertEquals(ElementSelection.SelectionType.EMPTY, elementSelection.getSelectionType());
         assertTrue(elementSelection.getNetworkElements().isEmpty());
         assertTrue(elementSelection.getForwardingRules().isEmpty());
     }

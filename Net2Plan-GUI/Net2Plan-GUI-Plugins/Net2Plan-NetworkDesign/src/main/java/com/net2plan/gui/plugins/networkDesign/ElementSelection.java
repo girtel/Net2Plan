@@ -22,7 +22,6 @@ import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,17 +37,8 @@ public class ElementSelection
     private final List<NetworkElement> networkElementList;
     private final List<Pair<Demand, Link>> forwardingRuleList;
 
-    private final SelectionType selectionType;
-
-    public enum SelectionType
-    {
-        EMPTY, NETWORK_ELEMENT, FORWARDING_RULE
-    }
-
     public ElementSelection()
     {
-        this.selectionType = SelectionType.EMPTY;
-
         this.elementType = null;
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
@@ -58,8 +48,6 @@ public class ElementSelection
     {
         if (elementType == null) throw new NullPointerException();
         this.elementType = elementType;
-
-        this.selectionType = SelectionType.NETWORK_ELEMENT;
 
         final NetworkElementType aux = NetworkElementType.getType(networkElements);
         if (aux == null) throw new RuntimeException("All elements in selection do not belong to the same type");
@@ -73,15 +61,13 @@ public class ElementSelection
     {
         this.elementType = NetworkElementType.FORWARDING_RULE;
 
-        this.selectionType = SelectionType.FORWARDING_RULE;
-
         this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
         this.forwardingRuleList = new ArrayList<>(forwardingRuleList);
     }
 
     public boolean isEmpty()
     {
-        return selectionType == SelectionType.EMPTY || (networkElementList.isEmpty() && forwardingRuleList.isEmpty()) || elementType == null;
+        return (networkElementList.isEmpty() && forwardingRuleList.isEmpty()) || elementType == null;
     }
 
     public List<? extends NetworkElement> getNetworkElements()
@@ -99,81 +85,68 @@ public class ElementSelection
         return elementType;
     }
 
-    public SelectionType getSelectionType()
-    {
-        return selectionType;
-    }
-
-
     public ElementSelection invertSelection()
     {
-        if (selectionType == SelectionType.EMPTY) return null;
-
         final ElementSelection elementSelection;
-        if (selectionType == SelectionType.NETWORK_ELEMENT)
+        // Check all elements belong to the same NetPlan
+        NetPlan netPlan = null;
+        for (NetworkElement networkElement : networkElementList)
         {
-            // Check all elements belong to the same NetPlan
-            NetPlan netPlan = null;
-            for (NetworkElement networkElement : networkElementList)
-            {
-                if (netPlan == null) netPlan = networkElement.getNetPlan();
-                else if (netPlan != networkElement.getNetPlan()) return null;
-            }
-            if (netPlan == null) return null;
+            if (netPlan == null) netPlan = networkElement.getNetPlan();
+            else if (netPlan != networkElement.getNetPlan()) return null;
+        }
+        if (netPlan == null) return null;
 
-            final List<NetworkElement> invertedElements;
-            switch (elementType)
-            {
-                case NODE:
-                    invertedElements = new ArrayList<>(netPlan.getNodes());
-                    invertedElements.removeAll(getNetworkElements());
-                    break;
-                case LINK:
-                    invertedElements = new ArrayList<>(netPlan.getLinks());
-                    invertedElements.removeAll(getNetworkElements());
-                    break;
-                case DEMAND:
-                    invertedElements = new ArrayList<>(netPlan.getDemands());
-                    invertedElements.removeAll(getNetworkElements());
-                    break;
-                case MULTICAST_DEMAND:
-                    invertedElements = new ArrayList<>(netPlan.getMulticastDemands());
-                    invertedElements.removeAll(getNetworkElements());
-                    break;
-                case ROUTE:
-                    invertedElements = new ArrayList<>(netPlan.getRoutes());
-                    invertedElements.removeAll(getNetworkElements());
-                    break;
-                case MULTICAST_TREE:
-                    invertedElements = new ArrayList<>(netPlan.getMulticastTrees());
-                    invertedElements.removeAll(getNetworkElements());
-                    break;
-                case RESOURCE:
-                    invertedElements = new ArrayList<>(netPlan.getResources());
-                    invertedElements.removeAll(getNetworkElements());
-                    break;
-                case SRG:
-                    invertedElements = new ArrayList<>(netPlan.getSRGs());
-                    invertedElements.removeAll(getNetworkElements());
-                    break;
-                default:
-                    return null;
-            }
-
-            elementSelection = new ElementSelection(elementType, invertedElements);
-        } else
+        final List<NetworkElement> invertedElements;
+        switch (elementType)
         {
-            NetPlan netPlan = null;
-            for (Pair<Demand, Link> forwardingRule : forwardingRuleList)
-            {
-                if (netPlan == null) netPlan = forwardingRule.getFirst().getNetPlan();
-                else if (netPlan != forwardingRule.getFirst().getNetPlan()) return null;
-            }
-            if (netPlan == null) return null;
-
-            final List<Pair<Demand, Link>> forwardingRules = new ArrayList<>(netPlan.getForwardingRules().keySet());
-            forwardingRules.removeAll(getForwardingRules());
-            elementSelection = new ElementSelection(forwardingRules);
+            case NODE:
+                invertedElements = new ArrayList<>(netPlan.getNodes());
+                invertedElements.removeAll(getNetworkElements());
+                elementSelection = new ElementSelection(elementType, invertedElements);
+                break;
+            case LINK:
+                invertedElements = new ArrayList<>(netPlan.getLinks());
+                invertedElements.removeAll(getNetworkElements());
+                elementSelection = new ElementSelection(elementType, invertedElements);
+                break;
+            case DEMAND:
+                invertedElements = new ArrayList<>(netPlan.getDemands());
+                invertedElements.removeAll(getNetworkElements());
+                elementSelection = new ElementSelection(elementType, invertedElements);
+                break;
+            case MULTICAST_DEMAND:
+                invertedElements = new ArrayList<>(netPlan.getMulticastDemands());
+                invertedElements.removeAll(getNetworkElements());
+                elementSelection = new ElementSelection(elementType, invertedElements);
+                break;
+            case ROUTE:
+                invertedElements = new ArrayList<>(netPlan.getRoutes());
+                invertedElements.removeAll(getNetworkElements());
+                elementSelection = new ElementSelection(elementType, invertedElements);
+                break;
+            case MULTICAST_TREE:
+                invertedElements = new ArrayList<>(netPlan.getMulticastTrees());
+                invertedElements.removeAll(getNetworkElements());
+                elementSelection = new ElementSelection(elementType, invertedElements);
+                break;
+            case RESOURCE:
+                invertedElements = new ArrayList<>(netPlan.getResources());
+                invertedElements.removeAll(getNetworkElements());
+                elementSelection = new ElementSelection(elementType, invertedElements);
+                break;
+            case SRG:
+                invertedElements = new ArrayList<>(netPlan.getSRGs());
+                invertedElements.removeAll(getNetworkElements());
+                elementSelection = new ElementSelection(elementType, invertedElements);
+                break;
+            case FORWARDING_RULE:
+                final List<Pair<Demand, Link>> forwardingRules = new ArrayList<>(netPlan.getForwardingRules().keySet());
+                forwardingRules.removeAll(getForwardingRules());
+                elementSelection = new ElementSelection(forwardingRules);
+                break;
+            default:
+                return null;
         }
 
         return elementSelection;

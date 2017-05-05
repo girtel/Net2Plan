@@ -506,7 +506,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         assert selection != null;
 
         /* Add the popup menu option of the filters */
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.LINK)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
