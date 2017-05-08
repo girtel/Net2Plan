@@ -98,20 +98,21 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         this.model = model;
         this.callback = networkViewer;
         this.networkElementType = networkElementType;
-        this.tableController = new TableViewController(callback, this);
+
+        this.setTips();
+        this.addMouseListener(new PopupMenuMouseAdapter());
+        this.addKeyboardActions();
 
         this.scrollPane = new JScrollPane(this);
         this.decorator = new FixedColumnDecorator(scrollPane, getNumberOfDecoratorColumns());
         this.mainTable = decorator.getMainTable();
         this.fixedTable = decorator.getFixedTable();
 
-        this.setTips();
-        this.addMouseListener(new PopupMenuMouseAdapter());
-        this.addKeyboardActions();
-
         this.setRowSelectionAllowed(true);
         this.getTableHeader().setReorderingAllowed(true);
         this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        this.tableController = new TableViewController(callback, this);
     }
 
     private void addKeyboardActions()
@@ -174,9 +175,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
             {
 
-                setTips();
+                this.setTips();
 
-                if (tableController.isAttributeCellExpanded())
+                if (tableController.isAttributeExpanded())
                     tableController.removeNewColumn("Attributes");
                 else if (attColumnsHeaders.size() > 0)
                     for (String att : attColumnsHeaders)
@@ -186,7 +187,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                 tableController.restoreColumnsPositionsAndWidths();
 
-                if (tableController.isAttributeCellExpanded())
+                if (tableController.isAttributeExpanded())
                 {
                     for (TableColumn col : tableController.getHiddenColumns())
                     {
@@ -384,10 +385,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     for (NetworkElement selectedElement : selectedElements)
                         selectedElement.removeAllAttributes();
 
-                    if (tableController.isAttributeCellExpanded())
+                    if (tableController.isAttributeExpanded())
                     {
                         tableController.recoverRemovedColumn("Attributes");
-                        tableController.setAttributesCellExpanded(false);
                     }
 
                     callback.updateVisualizationJustTables();

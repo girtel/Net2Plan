@@ -21,7 +21,7 @@ public class TableViewController
 
     private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
-    private final JMenuItem showAllItem, hideAllItem, resetItem;
+    private final JMenuItem showAllItem, resetItem;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private final JCheckBoxMenuItem lockColumn, unfixCheckBox, attributesItem, hideColumn;
     private final JTable mainTable, fixedTable;
@@ -57,8 +57,6 @@ public class TableViewController
         this.unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
         this.showAllItem = new JMenuItem("Unhide all columns");
         this.hideColumn = new JCheckBoxMenuItem("Hide column", false);
-        this.hideAllItem = new JMenuItem("Hide all columns");
-        this.hideAllItem.setToolTipText("All columns will be hidden except for the first one.");
         this.attributesItem = new JCheckBoxMenuItem("Attributes in different columns", false);
         this.resetItem = new JMenuItem("Reset columns positions");
 
@@ -172,7 +170,6 @@ public class TableViewController
                 @Override
                 public void mouseReleased(MouseEvent e)
                 {
-                    //Checking if right button is clicked
                     if (SwingUtilities.isRightMouseButton(e))
                     {
                         // Build menu
@@ -180,29 +177,29 @@ public class TableViewController
                         fixedTableMenu.repaint();
                         fixedTableMenu.add(unfixCheckBox);
                         fixedTableMenu.add(new JPopupMenu.Separator());
-                        //fixedTableMenu.add(loadStateItem);
-                        //fixedTableMenu.add(saveStateItem);
-                        //fixedTableMenu.add(new JPopupMenu.Separator());
                         fixedTableMenu.add(resetItem);
                         fixedTableMenu.add(new JPopupMenu.Separator());
                         fixedTableMenu.add(showMenu);
                         fixedTableMenu.add(new JPopupMenu.Separator());
                         fixedTableMenu.add(showAllItem);
-                        fixedTableMenu.add(hideAllItem);
 
                         updateShowMenu();
+
                         TableColumn clickedColumn = fixedTable.getColumnModel().getColumn(fixedTable.columnAtPoint(e.getPoint()));
                         int clickedColumnIndex = fixedTable.getColumnModel().getColumnIndex(clickedColumn.getIdentifier());
                         showMenu.setEnabled(true);
                         unfixCheckBox.setEnabled(true);
+
                         if (hiddenColumns.size() == 0)
                         {
                             showMenu.setEnabled(false);
                         }
+
                         if (fixedTable.getColumnModel().getColumnCount() <= 1)
                         {
                             unfixCheckBox.setEnabled(false);
                         }
+
                         fixedTableMenu.show(e.getComponent(), e.getX(), e.getY());
                         unfixCheckBox.addItemListener(new ItemListener()
                         {
@@ -244,32 +241,27 @@ public class TableViewController
         }
     }
 
-    protected void buildAttributeControls()
+    private void buildAttributeControls()
     {
         showAllItem.addActionListener(e ->
         {
             showAllColumns();
         });
-        hideAllItem.addActionListener(e ->
-        {
-            hideAllColumns();
-        });
         resetItem.addActionListener(e ->
         {
             resetColumnsPositions();
         });
-
         attributesItem.addItemListener(e ->
         {
             if (attributesItem.isSelected())
             {
-                if (!isAttributeCellExpanded())
+                if (!isAttributeExpanded())
                 {
                     attributesInDifferentColumns();
                 }
             } else
             {
-                if (isAttributeCellExpanded())
+                if (isAttributeExpanded())
                 {
                     attributesInOneColumn();
                 }
@@ -280,7 +272,7 @@ public class TableViewController
     /**
      * Re-configures the menu to show hidden columns
      */
-    protected void updateShowMenu()
+    private void updateShowMenu()
     {
         showMenu.removeAll();
         hiddenHeaderItems.clear();
@@ -294,7 +286,7 @@ public class TableViewController
     /**
      * Show all columns which are hidden
      */
-    protected void showAllColumns()
+    private void showAllColumns()
     {
         while (hiddenColumnsNames.size() > 0)
         {
@@ -311,26 +303,6 @@ public class TableViewController
     }
 
     /**
-     * Hide all columns unless the first one of mainTable which are shown
-     */
-
-    protected void hideAllColumns()
-    {
-        TableColumn columnToHide = null;
-        String hiddenColumnHeader = null;
-        while (mainTable.getColumnModel().getColumnCount() > 1)
-        {
-            columnToHide = mainTable.getColumnModel().getColumn(1);
-            hiddenColumnHeader = columnToHide.getHeaderValue().toString();
-            hiddenColumns.add(columnToHide);
-            hiddenColumnsNames.add(columnToHide.getHeaderValue().toString());
-            indexForEachHiddenColumn.put(hiddenColumnHeader, 1);
-            mainTable.getColumnModel().removeColumn(columnToHide);
-            shownColumns.remove(columnToHide);
-        }
-    }
-
-    /**
      * Show one column which is hidden
      *
      * @param columnName  Name of the column which we want to show
@@ -338,7 +310,7 @@ public class TableViewController
      * @param move        true if column will be moved, false if column will be shown at the end
      * @return The column to be shown
      */
-    protected void showColumn(String columnName, int columnIndex, boolean move)
+    public void showColumn(String columnName, int columnIndex, boolean move)
     {
 
         String hiddenColumnName;
@@ -371,7 +343,7 @@ public class TableViewController
      * @param columnIndex Index which the column has in the current Table
      * @return The column to be hidden
      */
-    protected void hideColumn(int columnIndex)
+    private void hideColumn(int columnIndex)
     {
         TableColumn columnToHide = mainTable.getColumnModel().getColumn(columnIndex);
         String hiddenColumnHeader = columnToHide.getHeaderValue().toString();
@@ -387,7 +359,7 @@ public class TableViewController
      *
      * @param columnIndex Index which the column has in mainTable
      */
-    protected void fromMainTableToFixedTable(int columnIndex)
+    private void fromMainTableToFixedTable(int columnIndex)
     {
         TableColumn columnToFix = mainTable.getColumnModel().getColumn(columnIndex);
         mainTable.getColumnModel().removeColumn(columnToFix);
@@ -400,7 +372,7 @@ public class TableViewController
      * @param columnIndex Index which the column has in fixedTable
      */
 
-    protected void fromFixedTableToMainTable(int columnIndex)
+    private void fromFixedTableToMainTable(int columnIndex)
     {
         TableColumn columnToUnfix = fixedTable.getColumnModel().getColumn(columnIndex);
         fixedTable.getColumnModel().removeColumn(columnToUnfix);
@@ -411,11 +383,8 @@ public class TableViewController
 
     /**
      * When a new column is added, update the tables
-     *
-     * @param
      */
-
-    protected void updateTables()
+    public void updateTables()
     {
         String fixedTableColumn;
         String mainTableColumn;
@@ -433,6 +402,7 @@ public class TableViewController
                 }
             }
         }
+
         int counter = 0;
         for (int i = 0; i < columnIndexesToRemove.size(); i++)
         {
@@ -451,6 +421,7 @@ public class TableViewController
             mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(columnIndexesToRemove.get(i) - counter));
             counter = 0;
         }
+
         if (removedColumns.size() > 0)
         {
             TableColumn columnRemoved = null;
@@ -467,13 +438,10 @@ public class TableViewController
                     }
                 }
             }
-
-
         }
+
         if (hiddenColumns.size() > 0)
         {
-
-
             String hiddenColumnName = null;
             String mainTableColumnName = null;
             for (TableColumn tc : hiddenColumns)
@@ -497,7 +465,7 @@ public class TableViewController
      *
      * @param
      */
-    protected void saveColumnsPositionsAndWidths()
+    public void saveColumnsPositionsAndWidths()
     {
         mapToSaveState.clear();
         mapToSaveWidths.clear();
@@ -509,7 +477,6 @@ public class TableViewController
             currentColumnName = currentColumn.getHeaderValue().toString();
             mapToSaveState.put(i, currentColumnName);
             mapToSaveWidths.put(currentColumnName, currentColumn.getWidth());
-
         }
     }
 
@@ -518,7 +485,7 @@ public class TableViewController
      *
      * @param
      */
-    protected void restoreColumnsPositionsAndWidths()
+    public void restoreColumnsPositionsAndWidths()
     {
         TableColumn columnToHide;
         String hiddenColumnHeader;
@@ -544,7 +511,14 @@ public class TableViewController
         {
             currentColumnName = entry.getKey();
             columnWidth = entry.getValue();
-            setWidth(currentColumnName, columnWidth);
+            for (int i = 0; i < table.getColumnModel().getColumnCount(); i++)
+            {
+                TableColumn tc = table.getColumnModel().getColumn(i);
+                if (tc.getHeaderValue().toString().equals(currentColumnName))
+                {
+                    tc.setPreferredWidth(columnWidth);
+                }
+            }
         }
     }
 
@@ -553,7 +527,7 @@ public class TableViewController
      *
      * @param
      */
-    protected void resetColumnsPositions()
+    private void resetColumnsPositions()
     {
         hiddenColumns.clear();
         removedColumns.clear();
@@ -576,7 +550,7 @@ public class TableViewController
         {
             removeNewColumn("Att: " + s);
         }
-        setAttributesCellExpanded(false);
+        expandAttributes = false;
         attributesItem.setSelected(false);
         updateTables();
     }
@@ -599,7 +573,7 @@ public class TableViewController
      *
      * @param columnToRemoveName name of the column which is going to be removed
      */
-    protected void removeNewColumn(String columnToRemoveName)
+    public void removeNewColumn(String columnToRemoveName)
     {
         TableColumn columnToRemove = null;
         for (int j = 0; j < table.getColumnModel().getColumnCount(); j++)
@@ -629,7 +603,7 @@ public class TableViewController
      *
      * @param columnToRecoverName column of the column which is going to be recovered
      */
-    protected void recoverRemovedColumn(String columnToRecoverName)
+    public void recoverRemovedColumn(String columnToRecoverName)
     {
         TableColumn columnToRecover = null;
         for (TableColumn tc : removedColumns)
@@ -647,7 +621,7 @@ public class TableViewController
     /**
      * Expands attributes in different columns, one for each attribute
      */
-    protected void attributesInDifferentColumns()
+    private void attributesInDifferentColumns()
     {
         saveColumnsPositionsAndWidths();
         boolean attributesColumnInMainTable = false;
@@ -676,7 +650,7 @@ public class TableViewController
                 removedColumns.clear();
                 removeNewColumn("Attributes");
                 updateTables();
-                setAttributesCellExpanded(true);
+                expandAttributes = true;
                 restoreColumnsPositionsAndWidths();
                 for (String att : table.getAttributesColumnsHeaders())
                 {
@@ -693,7 +667,7 @@ public class TableViewController
      * Contracts attributes in different columns, one for each attribute
      */
 
-    protected void attributesInOneColumn()
+    private void attributesInOneColumn()
     {
         saveColumnsPositionsAndWidths();
         int attributesCounter = 0;
@@ -729,7 +703,7 @@ public class TableViewController
                     removeNewColumn("Att: " + att);
                 }
                 updateTables();
-                setAttributesCellExpanded(false);
+                expandAttributes = false;
                 restoreColumnsPositionsAndWidths();
                 showColumn("Attributes", 0, false);
             } else
@@ -739,39 +713,9 @@ public class TableViewController
         }
     }
 
-    public void setWidth(String columnName, int columnWidth)
+    public void update()
     {
-        TableColumn tc = null;
-        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++)
-        {
-            tc = table.getColumnModel().getColumn(i);
-            if (tc.getHeaderValue().toString().equals(columnName))
-            {
-                tc.setPreferredWidth(columnWidth);
-            }
-        }
-    }
-
-    public ArrayList<String> getMainTableColumns()
-    {
-        ArrayList<String> mainTableColumns = new ArrayList<>();
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            mainTableColumns.add(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString());
-        }
-
-        return mainTableColumns;
-    }
-
-    public ArrayList<String> getFixedTableColumns()
-    {
-        ArrayList<String> fixedTableColumns = new ArrayList<>();
-        for (int i = 0; i < fixedTable.getColumnModel().getColumnCount(); i++)
-        {
-            fixedTableColumns.add(fixedTable.getColumnModel().getColumn(i).getHeaderValue().toString());
-        }
-
-        return fixedTableColumns;
+        saveColumnsPositionsAndWidths();
     }
 
     public List<TableColumn> getHiddenColumns()
@@ -779,15 +723,8 @@ public class TableViewController
         return hiddenColumns;
     }
 
-
-    public boolean isAttributeCellExpanded()
+    public boolean isAttributeExpanded()
     {
         return expandAttributes;
-    }
-
-    public void setAttributesCellExpanded(boolean flag)
-    {
-        expandAttributes = flag;
-        if (!expandAttributes) attributesItem.setSelected(false);
     }
 }
