@@ -179,9 +179,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final List<? extends SortKey> sortKeys = this.getRowSorter().getSortKeys();
         final String[] tableHeaders = getCurrentTableHeaders();
 
-        if (!hasElements())
-            ((DefaultTableModel) getModel()).setDataVector(new Object[1][tableHeaders.length], tableHeaders);
-
         if (hasElements())
         {
             ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
@@ -205,28 +202,26 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                 tableController.restoreColumnsPositionsAndWidths();
 
-                tableController.hiddenColumnsAux = new ArrayList<>();
                 if (tableController.isAttributeCellExpanded())
                 {
-                    for (TableColumn col : tableController.hiddenColumns)
+                    for (TableColumn col : tableController.getHiddenColumns())
                     {
-                        tableController.hiddenColumnsAux.add(col.getHeaderValue().toString());
-                    }
-                    for (String hCol : tableController.hiddenColumnsAux)
-                    {
+                        String columnName = col.getHeaderValue().toString();
+
                         for (String att : getAttributesColumnsHeaders())
                         {
-                            if (hCol.equals("Att: " + att))
+                            if (columnName.equals("Att: " + att))
                             {
                                 tableController.showColumn("Att: " + att, 0, false);
-                                break;
                             }
-
                         }
                     }
                 }
             }
             setColumnRowSorting();
+        } else
+        {
+            ((DefaultTableModel) getModel()).setDataVector(new Object[1][tableHeaders.length], tableHeaders);
         }
 
         this.getRowSorter().setSortKeys(sortKeys);
@@ -428,7 +423,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             popup.add(removeAttribute);
 
             JMenuItem removeAttributes = new JMenuItem("Remove all attributes" + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
-
             removeAttributes.addActionListener(e1 ->
             {
                 try
@@ -440,7 +434,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     {
                         tableController.recoverRemovedColumn("Attributes");
                         tableController.setAttributesCellExpanded(false);
-                        tableController.attributesItem.setSelected(false);
                     }
 
                     callback.updateVisualizationJustTables();
