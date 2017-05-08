@@ -102,12 +102,15 @@ public class TableViewController
                         TableColumn clickedColumn = mainTable.getColumnModel().getColumn(mainTable.columnAtPoint(ev.getPoint()));
                         String clickedColumnName = clickedColumn.getHeaderValue().toString();
                         int clickedColumnIndex = getColumnToIndexMap().get(clickedColumnName);
-                        lockColumn.setEnabled(true);
-                        hideColumn.setEnabled(true);
+
                         if (mainTable.getColumnModel().getColumnCount() <= 1)
                         {
                             lockColumn.setEnabled(false);
                             hideColumn.setEnabled(false);
+                        } else
+                        {
+                            lockColumn.setEnabled(true);
+                            hideColumn.setEnabled(true);
                         }
 
                         // Individual column options
@@ -711,11 +714,6 @@ public class TableViewController
                 attributesItem.setSelected(true);
             }
         }
-    }
-
-    public void update()
-    {
-        saveColumnsPositionsAndWidths();
     }
 
     public List<TableColumn> getHiddenColumns()
