@@ -51,15 +51,13 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
     private static final int COLUMN_OFFEREDTRAFFIC = 5;
     private static final int COLUMN_CARRIEDTRAFFIC = 6;
     private static final int COLUMN_OCCUPIEDCAPACITY = 7;
-    private static final int COLUMN_SETOFLINKS = 8;
-    private static final int COLUMN_NUMLINKS = 9;
-    private static final int COLUMN_SETOFNODES = 10;
-    private static final int COLUMN_WORSECASENUMHOPS = 11;
-    private static final int COLUMN_WORSECASELENGTH = 12;
-    private static final int COLUMN_WORSECASEPROPDELAY = 13;
-    private static final int COLUMN_BOTTLENECKUTILIZATION = 14;
-    private static final int COLUMN_TAGS = 15;
-    private static final int COLUMN_ATTRIBUTES = 16;
+    private static final int COLUMN_NUMLINKS = 8;
+    private static final int COLUMN_WORSECASENUMHOPS = 9;
+    private static final int COLUMN_WORSECASELENGTH = 10;
+    private static final int COLUMN_WORSECASEPROPDELAY = 11;
+    private static final int COLUMN_BOTTLENECKUTILIZATION = 12;
+    private static final int COLUMN_TAGS = 13;
+    private static final int COLUMN_ATTRIBUTES = 14;
     private static final String netPlanViewTabName = "Multicast trees";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Multicast demand", "Ingress node", "Egress nodes",
             "Demand offered traffic", "Carried traffic", "Occupied capacity", "Set of links", "Number of links", "Set of nodes", "Worst case number of hops",
@@ -111,9 +109,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
             treeData[COLUMN_OFFEREDTRAFFIC] = demand.getOfferedTraffic();
             treeData[COLUMN_CARRIEDTRAFFIC] = demand.getCarriedTraffic();
             treeData[COLUMN_OCCUPIEDCAPACITY] = tree.getOccupiedLinkCapacity();
-            treeData[COLUMN_SETOFLINKS] = CollectionUtils.join(NetPlan.getIndexes(tree.getLinkSet()), " ; ");
             treeData[COLUMN_NUMLINKS] = tree.getLinkSet().size();
-            treeData[COLUMN_SETOFNODES] = CollectionUtils.join(NetPlan.getIndexes(tree.getNodeSet()), " ; ");
             treeData[COLUMN_WORSECASENUMHOPS] = tree.getTreeMaximumPathLengthInHops();
             treeData[COLUMN_WORSECASELENGTH] = tree.getTreeMaximumPathLengthInKm();
             treeData[COLUMN_WORSECASEPROPDELAY] = tree.getTreeMaximumPropagationDelayInMs();
@@ -141,12 +137,12 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
         final double aggWCPropDelay = rowVisibleTrees.stream().mapToDouble(e -> e.getTreeMaximumPropagationDelayInMs()).max().orElse(0);
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered);
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCap);
-        aggregatedData[COLUMN_WORSECASENUMHOPS] = new LastRowAggregatedValue(aggWCNumHops);
-        aggregatedData[COLUMN_WORSECASELENGTH] = new LastRowAggregatedValue(aggWCLength);
-        aggregatedData[COLUMN_WORSECASEPROPDELAY] = new LastRowAggregatedValue(aggWCPropDelay);
+        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered); // sum
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried); // sum
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCap); // sum
+        aggregatedData[COLUMN_WORSECASENUMHOPS] = new LastRowAggregatedValue(aggWCNumHops); // max
+        aggregatedData[COLUMN_WORSECASELENGTH] = new LastRowAggregatedValue(aggWCLength); // max
+        aggregatedData[COLUMN_WORSECASEPROPDELAY] = new LastRowAggregatedValue(aggWCPropDelay); // max
         allTreeData.add(aggregatedData);
 
         return allTreeData;

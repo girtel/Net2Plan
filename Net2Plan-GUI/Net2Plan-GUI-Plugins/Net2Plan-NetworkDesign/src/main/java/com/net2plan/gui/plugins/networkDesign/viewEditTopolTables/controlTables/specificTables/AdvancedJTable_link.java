@@ -70,7 +70,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     public static final int COLUMN_PROPSPEED = 12;
     public static final int COLUMN_PROPDELAYMS = 13;
     public static final int COLUMN_NUMROUTES = 14;
-    public static final int COLUMN_NUMSEGMENTS = 15;
+    public static final int COLUMN_NUMBACKUPROUTES = 15;
     public static final int COLUMN_NUMFORWRULES = 16;
     public static final int COLUMN_NUMTREES = 17;
     public static final int COLUMN_SRGS = 18;
@@ -78,8 +78,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     public static final int COLUMN_TAGS = 20;
     public static final int COLUMN_ATTRIBUTES = 21;
     private static final String netPlanViewTabName = "Links";
-    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Origin node", "Destination node", "State", "Capacity", "Carried traffic", "Occupation BU routes", "Utilization", "Is bottleneck?", "Length (km)", "Propagation speed (km/s)", "Propagation delay (ms)", "# Routes", "# Segments", "# Forwarding rules", "# Multicast trees", "SRGs", "Coupled to demand", "Tags", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Indicates whether or not the link is visible in the topology canvas (if some of the end-nodes is hidden, this link will become hidden, even though the link is set as visible)", "Origin node", "Destination node", "Indicates whether the link is in up/down state", "Capacity", "Carried traffic (summing unicast and multicast)", "Capacity occupied by routes that are designated as backup routes", "Utilization (occupied capacity divided by link capacity)", "Indicates whether this link has the highest utilization in the network", "Length (km)", "Propagation speed (km/s)", "Propagation delay (ms)", "Number of routes traversing the link", "Number of protection segments traversing the link", "Number of forwarding rules for this link", "Number of multicast trees traversing the link", "SRGs including this link", "Indicates the coupled lower layer demand, if any, or empty", "Link-specific tags", "Link-specific attributes");
+    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Origin node", "Destination node", "State", "Capacity", "Carried traffic", "Occupation BU routes", "Utilization", "Is bottleneck?", "Length (km)", "Propagation speed (km/s)", "Propagation delay (ms)", "# Routes", "# Segments", "# Forwarding rules", "# Multicast trees", "# SRGs", "Coupled to demand", "Tags", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Indicates whether or not the link is visible in the topology canvas (if some of the end-nodes is hidden, this link will become hidden, even though the link is set as visible)", "Origin node", "Destination node", "Indicates whether the link is in up/down state", "Capacity", "Carried traffic (summing unicast and multicast)", "Capacity occupied by routes that are designated as backup routes", "Utilization (occupied capacity divided by link capacity)", "Indicates whether this link has the highest utilization in the network", "Length (km)", "Propagation speed (km/s)", "Propagation delay (ms)", "Number of routes traversing the link", "Number of protection segments traversing the link", "Number of forwarding rules for this link", "Number of multicast trees traversing the link", "Number of SRGs including this link", "Indicates the coupled lower layer demand, if any, or empty", "Link-specific tags", "Link-specific attributes");
 
     public AdvancedJTable_link(final GUINetworkDesign callback)
     {
@@ -103,35 +103,20 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         final boolean isSourceRouting = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING;
         final List<Link> rowVisibleLinks = getVisibleElementsInTable();
         final double max_rho_e = currentState.getLinks().stream().mapToDouble(e -> e.getUtilization()).max().orElse(0);
-        List<Object[]> allLinkData = new LinkedList<Object[]>();
+        final List<Object[]> allLinkData = new LinkedList<Object[]>();
         for (Link link : rowVisibleLinks)
         {
-            Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
-            Set<Route> traversingRoutes = isSourceRouting ? link.getTraversingRoutes() : new LinkedHashSet<Route>();
-            Set<Route> traversingBURoutes = isSourceRouting ? link.getTraversingBackupRoutes() : new LinkedHashSet<Route>();
-            Set<MulticastTree> traversingMulticastTrees = link.getTraversingTrees();
-            DoubleMatrix1D forwardingRules = !isSourceRouting ? currentState.getMatrixDemandBasedForwardingRules().viewColumn(link.getIndex()).copy() : DoubleFactory1D.sparse.make(currentState.getNumberOfDemands(), 0);
-            int numRoutes = traversingRoutes.size();
-            int numSegments = traversingBURoutes.size();
-            int numForwardingRules = 0;
-            for (int d = 0; d < forwardingRules.size(); d++) if (forwardingRules.get(d) != 0) numForwardingRules++;
-            int numMulticastTrees = traversingMulticastTrees.size();
+            final Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
+            final Demand coupledDemand = link.getCoupledDemand();
+            final MulticastDemand coupledMulticastDemand = link.getCoupledMulticastDemand();
 
-            String routesString = numRoutes + (numRoutes > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingRoutes), ", ") + ")" : "");
-            String segmentsString = numSegments + (numSegments > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingBURoutes), ", ") + ")" : "");
-            String multicastTreesString = numMulticastTrees + (numMulticastTrees > 0 ? " (" + CollectionUtils.join(NetPlan.getIndexes(traversingMulticastTrees), ", ") + ")" : "");
-            StringBuilder forwardingRulesString = new StringBuilder(Integer.toString(numForwardingRules));
+            final Node originNode = link.getOriginNode();
+            final Node destinationNode = link.getDestinationNode();
+            final String originNodeName = originNode.getName();
+            final String destinationNodeName = destinationNode.getName();
 
-            Demand coupledDemand = link.getCoupledDemand();
-            MulticastDemand coupledMulticastDemand = link.getCoupledMulticastDemand();
-
-            Node originNode = link.getOriginNode();
-            Node destinationNode = link.getDestinationNode();
-            String originNodeName = originNode.getName();
-            String destinationNodeName = destinationNode.getName();
-
-            double rho_e = link.getOccupiedCapacity() == 0 ? 0 : link.getCapacity() == 0 ? Double.MAX_VALUE : link.getOccupiedCapacity() / link.getCapacity();
-            Object[] linkData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
+            final double rho_e = link.getUtilization();
+            final Object[] linkData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             linkData[COLUMN_ID] = link.getId();
             linkData[COLUMN_INDEX] = link.getIndex();
             linkData[COLUMN_SHOWHIDE] = !callback.getVisualizationState().isHiddenOnCanvas(link);
@@ -146,11 +131,11 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             linkData[COLUMN_LENGTH] = link.getLengthInKm();
             linkData[COLUMN_PROPSPEED] = link.getPropagationSpeedInKmPerSecond();
             linkData[COLUMN_PROPDELAYMS] = link.getPropagationDelayInMs();
-            linkData[COLUMN_NUMROUTES] = routesString;
-            linkData[COLUMN_NUMSEGMENTS] = segmentsString;
-            linkData[COLUMN_NUMFORWRULES] = forwardingRulesString.toString();
-            linkData[COLUMN_NUMTREES] = multicastTreesString.toString();
-            linkData[COLUMN_SRGS] = srgIds_thisLink.isEmpty() ? "none" : srgIds_thisLink.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(srgIds_thisLink), ", ") + ")";
+            linkData[COLUMN_NUMROUTES] = link.getNumberOfTraversingRoutes();
+            linkData[COLUMN_NUMBACKUPROUTES] = link.getNumberOfTraversingBackupRoutes();
+            linkData[COLUMN_NUMFORWRULES] = link.getNumberOfForwardingRules();
+            linkData[COLUMN_NUMTREES] = link.getNumberOfTraversingTrees();
+            linkData[COLUMN_SRGS] = srgIds_thisLink.size();
             linkData[COLUMN_COUPLEDTODEMAND] = coupledDemand != null ? "d" + coupledDemand.getIndex() + " (layer " + coupledDemand.getLayer() + ")" : (coupledMulticastDemand == null ? "" : "d" + coupledMulticastDemand.getIndex() + " (layer " + coupledMulticastDemand.getLayer() + ")");
             linkData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(link.getTags()));
             linkData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(link.getAttributes());
@@ -178,16 +163,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         final int aggNumCouplings = (int) rowVisibleLinks.stream().filter(e -> e.isCoupled()).count();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity);
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCapacity);
-        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(aggLengthKm);
-        aggregatedData[COLUMN_PROPDELAYMS] = new LastRowAggregatedValue(aggPropDelayMs);
-        aggregatedData[COLUMN_NUMROUTES] = new LastRowAggregatedValue(aggNumRoutes);
-        aggregatedData[COLUMN_NUMSEGMENTS] = new LastRowAggregatedValue(aggNumBackupRoutes);
-        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees);
-        aggregatedData[COLUMN_SRGS] = new LastRowAggregatedValue(aggNumSRGs);
-        aggregatedData[COLUMN_COUPLEDTODEMAND] = new LastRowAggregatedValue(aggNumCouplings);
+        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity); // sum
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried); // sum
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCapacity); // sum
+        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(aggLengthKm); // max
+        aggregatedData[COLUMN_PROPDELAYMS] = new LastRowAggregatedValue(aggPropDelayMs); // max
+        aggregatedData[COLUMN_NUMROUTES] = new LastRowAggregatedValue(aggNumRoutes); // sum
+        aggregatedData[COLUMN_NUMBACKUPROUTES] = new LastRowAggregatedValue(aggNumBackupRoutes); // sum
+        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees); // sum
+        aggregatedData[COLUMN_SRGS] = new LastRowAggregatedValue(aggNumSRGs); // sum
+        aggregatedData[COLUMN_COUPLEDTODEMAND] = new LastRowAggregatedValue(aggNumCouplings); // count
         allLinkData.add(aggregatedData);
 
 
@@ -272,7 +257,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                     case COLUMN_ISBOTTLENECK:
                     case COLUMN_PROPDELAYMS:
                     case COLUMN_NUMROUTES:
-                    case COLUMN_NUMSEGMENTS:
+                    case COLUMN_NUMBACKUPROUTES:
                     case COLUMN_NUMFORWRULES:
                     case COLUMN_NUMTREES:
                     case COLUMN_SRGS:
@@ -473,7 +458,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
     public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
-        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_ORIGINNODE, COLUMN_DESTNODE, COLUMN_NUMROUTES, COLUMN_NUMSEGMENTS, COLUMN_NUMFORWRULES, COLUMN_NUMTREES);
+        final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_ORIGINNODE, COLUMN_DESTNODE, COLUMN_NUMROUTES, COLUMN_NUMBACKUPROUTES, COLUMN_NUMFORWRULES, COLUMN_NUMTREES);
         DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
             rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));

@@ -53,7 +53,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (days)", "MTTR (days)", "Availability",
             "Nodes", "Links", "Links (other layers)", "# Affected routes", "# Affected backup routes", "# Affected multicast trees", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
-            "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Tags", "Attributes");
+            "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes in this layer (primary or backup)", "# Affected routes in this layer that are designated as backup routes", "# Affected multicast trees in this layer ", "Tags", "Attributes");
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_MTTF = 2;
@@ -110,9 +110,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
             srgData[COLUMN_NODES] = nodeIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(nodeIds_thisSRG), ", ");
             srgData[COLUMN_LINKS] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinksAllLayers()), ", ");
             srgData[COLUMN_LINKSOTHERLAYERS] = srg.getLinks(layer).isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks(layer)), ", ");
-            srgData[COLUMN_AFFECTEDROUTES] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
-            srgData[COLUMN_AFFECTEDBACKUPROUTES] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
-            srgData[COLUMN_AFFECTEDTREES] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
+            srgData[COLUMN_AFFECTEDROUTES] = numRoutes;
+            srgData[COLUMN_AFFECTEDBACKUPROUTES] = numSegments;
+            srgData[COLUMN_AFFECTEDTREES] = numMulticastTrees;
             srgData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(srg.getTags()));
             srgData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(srg.getAttributes());
 
@@ -136,12 +136,12 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         final int aggNumAffectedTrees = rowVisibleSRGs.stream().mapToInt(e -> (int) e.getAffectedMulticastTrees(layer).size()).sum();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_NODES] = new LastRowAggregatedValue(aggNumNodes);
-        aggregatedData[COLUMN_LINKS] = new LastRowAggregatedValue(aggNumLinks);
-        aggregatedData[COLUMN_LINKSOTHERLAYERS] = new LastRowAggregatedValue(aggNumLinksOtherLayers);
-        aggregatedData[COLUMN_AFFECTEDROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
-        aggregatedData[COLUMN_AFFECTEDBACKUPROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
-        aggregatedData[COLUMN_AFFECTEDTREES] = new LastRowAggregatedValue(aggNumAffectedTrees);
+        aggregatedData[COLUMN_NODES] = new LastRowAggregatedValue(aggNumNodes); // sum
+        aggregatedData[COLUMN_LINKS] = new LastRowAggregatedValue(aggNumLinks); // sum
+        aggregatedData[COLUMN_LINKSOTHERLAYERS] = new LastRowAggregatedValue(aggNumLinksOtherLayers);  // sum
+        aggregatedData[COLUMN_AFFECTEDROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);  // sum
+        aggregatedData[COLUMN_AFFECTEDBACKUPROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes); // sum
+        aggregatedData[COLUMN_AFFECTEDTREES] = new LastRowAggregatedValue(aggNumAffectedTrees); // sum
         allSRGData.add(aggregatedData);
 
         return allSRGData;

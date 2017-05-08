@@ -146,14 +146,14 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         final int aggHasBackup = (int) rowVisibleRoutes.stream().filter(e -> e.hasBackupRoutes()).count();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_DEMANDOFFEREDTRAFFIC] = new LastRowAggregatedValue(aggDemandOffered);
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggLinkOccupied);
-        aggregatedData[COLUMN_NUMHOPS] = new LastRowAggregatedValue(aggMaxNumHops);
-        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(aggMaxLength);
-        aggregatedData[COLUMN_PROPDELAY] = new LastRowAggregatedValue(aggMaxPropDelay);
-        aggregatedData[COLUMN_ISBACKUP] = new LastRowAggregatedValue(aggIsBackup);
-        aggregatedData[COLUMN_HASBACKUPROUTES] = new LastRowAggregatedValue(aggHasBackup);
+        aggregatedData[COLUMN_DEMANDOFFEREDTRAFFIC] = new LastRowAggregatedValue(aggDemandOffered); // sum
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried); // sum
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggLinkOccupied); // sum
+        aggregatedData[COLUMN_NUMHOPS] = new LastRowAggregatedValue(aggMaxNumHops); // max
+        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(aggMaxLength); // max
+        aggregatedData[COLUMN_PROPDELAY] = new LastRowAggregatedValue(aggMaxPropDelay); // max
+        aggregatedData[COLUMN_ISBACKUP] = new LastRowAggregatedValue(aggIsBackup);  // sum
+        aggregatedData[COLUMN_HASBACKUPROUTES] = new LastRowAggregatedValue(aggHasBackup); // sum
         allRouteData.add(aggregatedData);
 
         return allRouteData;

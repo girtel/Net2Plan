@@ -88,16 +88,15 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         final List<MulticastDemand> rowVisibleDemands = getVisibleElementsInTable();
         for (MulticastDemand demand : rowVisibleDemands)
         {
-            Set<MulticastTree> multicastTreeIds_thisDemand = demand.getMulticastTrees();
-            Set<Link> coupledLinks = demand.getCoupledLinks();
-            Node ingressNode = demand.getIngressNode();
-            Set<Node> egressNodes = demand.getEgressNodes();
-            String ingressNodeName = ingressNode.getName();
+            final Set<Link> coupledLinks = demand.getCoupledLinks();
+            final Node ingressNode = demand.getIngressNode();
+            final Set<Node> egressNodes = demand.getEgressNodes();
+            final String ingressNodeName = ingressNode.getName();
             String egressNodesString = "";
             for (Node n : egressNodes) egressNodesString += n.getIndex() + "(" + n.getName() + ") ";
 
-            double h_d = demand.getOfferedTraffic();
-            double lostTraffic_d = demand.getBlockedTraffic();
+            final double h_d = demand.getOfferedTraffic();
+            final double lostTraffic_d = demand.getBlockedTraffic();
             Object[] demandData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             demandData[COLUMN_ID] = demand.getId();
             demandData[COLUMN_INDEX] = demand.getIndex();
@@ -109,7 +108,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             demandData[COLUMN_LOSTTRAFFIC] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
             demandData[COLUMN_ROUTINGCYCLES] = "Loopless by definition";
             demandData[COLUMN_BIFURCATED] = demand.isBifurcated() ? String.format("Yes (%d)", demand.getMulticastTrees().size()) : "No";
-            demandData[COLUMN_NUMTREES] = multicastTreeIds_thisDemand.isEmpty() ? "none" : multicastTreeIds_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(multicastTreeIds_thisDemand), ",") + ")";
+            demandData[COLUMN_NUMTREES] = demand.getMulticastTrees().size();
             demandData[COLUMN_MAXE2ELATENCY] = demand.getWorseCasePropagationTimeInMs();
             demandData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(demand.getTags()));
             demandData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(demand.getAttributes());
@@ -133,12 +132,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         final double aggMaxLatency = rowVisibleDemands.stream().mapToDouble(e -> e.getWorseCasePropagationTimeInMs()).sum();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(aggNumCouplings);
-        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered);
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
-        aggregatedData[COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(aggOffered == 0 ? 0 : 100 * aggLost / aggOffered);
-        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees);
-        aggregatedData[COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(aggMaxLatency);
+        aggregatedData[COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(aggNumCouplings); // count
+        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered); // sum
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried); // sum
+        aggregatedData[COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(aggOffered == 0 ? 0 : 100 * aggLost / aggOffered); // sum
+        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees); // sum
+        aggregatedData[COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(aggMaxLatency); // max
         allDemandData.add(aggregatedData);
 
 

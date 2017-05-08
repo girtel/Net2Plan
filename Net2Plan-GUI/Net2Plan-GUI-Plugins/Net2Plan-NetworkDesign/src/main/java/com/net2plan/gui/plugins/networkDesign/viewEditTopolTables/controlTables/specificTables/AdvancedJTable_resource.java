@@ -48,8 +48,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     public static final int COLUMN_TAGS = 12;
     public static final int COLUMN_ATTRIBUTES = 13;
     private static final String netPlanViewTabName = "Resources";
-    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique Identifier", "Index", "Name", "Type", "Host Node", "Capacity", "Cap. Units", "Ocuppied capacity", "Traversing Routes", "Upper Resources", "Base Resources", "Processing Time", "Tags", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier", "Index", "Name", "Type", "Host Node", "Capacity", "Cap. Units", "Ocuppied capacity", "Traversing Routes", "Upper Resources", "Base Resources", "Processing Time", "Tags", "Attributes");
+    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique Identifier", "Index", "Name", "Type", "Host Node", "Capacity", "Cap. Units", "Ocuppied capacity", "# Trav. Routes", "# Upper Resources", "# Base Resources", "Processing Time", "Tags", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier", "Index", "Name", "Type", "Host Node", "Capacity", "Cap. Units", "Ocuppied capacity", "Number of service chains traversing this resource", "Number of resources in this node that has this resource as its bsae resource", "Number of resources in this node, that this resource has as its base resource", "Processing Time", "Tags", "Attributes");
 
     public AdvancedJTable_resource(final GUINetworkDesign callback)
     {
@@ -84,9 +84,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             resData[COLUMN_CAPACITY] = res.getCapacity();
             resData[COLUMN_CAPACITYMUNITS] = res.getCapacityMeasurementUnits();
             resData[COLUMN_OCCUPIEDCAPACITY] = res.getOccupiedCapacity();
-            resData[COLUMN_TRAVERSINGROUTES] = joinTraversingRoutesWithTheirCapacities(res);
-            resData[COLUMN_UPPERRESOURCES] = joinUpperResourcesWithTheirCapacities(res);
-            resData[COLUMN_BASERESOURCES] = joinBaseResourcesWithTheirCapacities(res);
+            resData[COLUMN_TRAVERSINGROUTES] = res.getTraversingRoutes().size();
+            resData[COLUMN_UPPERRESOURCES] = res.getUpperResources().size();
+            resData[COLUMN_BASERESOURCES] = res.getBaseResources().size();
             resData[COLUMN_PROCESSINGTIME] = res.getProcessingTimeToTraversingTrafficInMs();
             resData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(res.getTags()));
             resData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(res.getAttributes());
@@ -110,10 +110,14 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         final double aggMaxProcTime = rowVisibleResources.stream().mapToDouble(e -> e.getProcessingTimeToTraversingTrafficInMs()).max().orElse(0);
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesTitles.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity);
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCapacity);
-        aggregatedData[COLUMN_TRAVERSINGROUTES] = new LastRowAggregatedValue(aggTravSCs);
-        aggregatedData[COLUMN_PROCESSINGTIME] = new LastRowAggregatedValue(aggMaxProcTime);
+        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity); // sum 
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCapacity); // sum 
+        aggregatedData[COLUMN_TRAVERSINGROUTES] = new LastRowAggregatedValue(aggTravSCs); // sum 
+        aggregatedData[COLUMN_PROCESSINGTIME] = new LastRowAggregatedValue(aggMaxProcTime); // sum 
+
+        // JORGE!!! HACER LO MISMO PARA OLUMN_UPPERRESOURCES Y COLUMN_BASERESOURCES como // sum
+
+        
         allResourceData.add(aggregatedData);
 
         return allResourceData;
