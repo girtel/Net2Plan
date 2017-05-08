@@ -52,14 +52,12 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     /**
      * Default constructor.
      *
-     * @param scroll Reference to the main table ScrollPane
-     * @param frozenColumns         Number of columns to be fixed
+     * @param scroll        Reference to the main table ScrollPane
+     * @param frozenColumns Number of columns to be fixed
      * @since 0.2.0
      */
     public FixedColumnDecorator(JScrollPane scroll, int frozenColumns)
     {
-
-
         this.scroll = scroll;
         this.frozenColumns = frozenColumns;
         mainTable = (JTable) scroll.getViewport().getView();
@@ -94,9 +92,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         fixedTable.setUpdateSelectionOnSort(false);
 
 
-
-
-
         for (MouseMotionListener listener : mainTable.getTableHeader().getMouseMotionListeners())
         {
             if (!(listener instanceof BasicTableHeaderUI.MouseInputHandler))
@@ -117,7 +112,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         for (MouseListener listener : fixedTable.getMouseListeners())
             fixedTableCurrentMouseListenerClass.add(listener.getClass());
 
-        for (MouseListener listener : mainTable.getMouseListeners()) {
+        for (MouseListener listener : mainTable.getMouseListeners())
+        {
             if (fixedTableCurrentMouseListenerClass.contains(listener.getClass())) continue;
             fixedTable.addMouseListener(listener);
         }
@@ -126,7 +122,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         for (KeyListener listener : fixedTable.getKeyListeners())
             fixedTableCurrentKeyListenerClass.add(listener.getClass());
 
-        for (KeyListener listener : mainTable.getKeyListeners()) {
+        for (KeyListener listener : mainTable.getKeyListeners())
+        {
             if (fixedTableCurrentKeyListenerClass.contains(listener.getClass())) continue;
             fixedTable.addKeyListener(listener);
         }
@@ -173,7 +170,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     }
 
 
-
     @Override
     public void propertyChange(PropertyChangeEvent e)
     {
@@ -193,7 +189,8 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
+    public void stateChanged(ChangeEvent e)
+    {
         /* keeping fixed table stays in sync with the main table when stateChanged */
         JViewport viewport = (JViewport) e.getSource();
         scroll.getVerticalScrollBar().setValue(viewport.getViewPosition().y);
@@ -349,7 +346,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         {
             return getPreferredSize().height < getParent().getHeight();
         }
-
 
 
     }

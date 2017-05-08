@@ -72,17 +72,16 @@ import static com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.
 @SuppressWarnings("unchecked")
 public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 {
-    protected final TableModel model;
-    protected final GUINetworkDesign callback;
     protected final NetworkElementType networkElementType;
+    protected final GUINetworkDesign callback;
+    protected final TableModel model;
 
     protected final JTable mainTable;
     protected final JTable fixedTable;
 
-    private TableViewController tableController;
-    private final JScrollPane scroll;
+    private final JScrollPane scrollPane;
+    private final TableViewController tableController;
     private final FixedColumnDecorator decorator;
-
 
     /**
      * Constructor that allows to set the table model.
@@ -95,28 +94,24 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     public AdvancedJTable_networkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType)
     {
         super(model);
+
         this.model = model;
         this.callback = networkViewer;
         this.networkElementType = networkElementType;
+        this.tableController = new TableViewController(callback, this);
 
-        setTips();
+        this.scrollPane = new JScrollPane(this);
+        this.decorator = new FixedColumnDecorator(scrollPane, getNumberOfDecoratorColumns());
+        this.mainTable = decorator.getMainTable();
+        this.fixedTable = decorator.getFixedTable();
 
-		/* add the popup menu listener (this) */
-        addMouseListener(new PopupMenuMouseAdapter());
-
-        addKeyboardActions();
-
-        this.getTableHeader().setReorderingAllowed(true);
-
-        scroll = new JScrollPane(this);
-        this.decorator = new FixedColumnDecorator(scroll, getNumberOfDecoratorColumns());
-        mainTable = decorator.getMainTable();
-        fixedTable = decorator.getFixedTable();
-
+        this.setTips();
+        this.addMouseListener(new PopupMenuMouseAdapter());
+        this.addKeyboardActions();
 
         this.setRowSelectionAllowed(true);
+        this.getTableHeader().setReorderingAllowed(true);
         this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        tableController = new TableViewController(this);
     }
 
     private void addKeyboardActions()
@@ -134,10 +129,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         });
     }
 
-
-    public JScrollPane getScroll()
+    public JScrollPane getScrollPane()
     {
-        return scroll;
+        return scrollPane;
     }
 
     public NetworkElementType getNetworkElementType()
@@ -145,24 +139,14 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         return networkElementType;
     }
 
-    public FixedColumnDecorator getDecorator()
-    {
-        return decorator;
-    }
-
-    public JTable getMainTable()
+    protected JTable getMainTable()
     {
         return mainTable;
     }
 
-    public JTable getFixedTable()
+    protected JTable getFixedTable()
     {
         return fixedTable;
-    }
-
-    public TableViewController getTableController()
-    {
-        return tableController;
     }
 
     public void updateView(NetPlan currentState)
@@ -227,36 +211,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         this.getRowSorter().setSortKeys(sortKeys);
 
         setEnabled(true);
-    }
-
-    private class PopupMenuMouseAdapter extends MouseAdapter
-    {
-        @Override
-        public void mouseClicked(final MouseEvent e)
-        {
-            try
-            {
-                final ElementSelection selection = getSelectedElements();
-
-                if (SwingUtilities.isRightMouseButton(e))
-                {
-                    getPopup(selection).show(e.getComponent(), e.getX(), e.getY());
-                    return;
-                }
-
-                if (SwingUtilities.isLeftMouseButton(e))
-                {
-                    if (selection.isEmpty())
-                        callback.resetPickedStateAndUpdateView();
-//                    else
-//                        SwingUtilities.invokeLater(() -> pickSelection(selection));
-                }
-            } catch (Exception ex)
-            {
-                ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
-                ex.printStackTrace();
-            }
-        }
     }
 
     protected final void addPopupMenuAttributeOptions(ElementSelection selection, JPopupMenu popup)
@@ -901,6 +855,34 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     protected abstract JPopupMenu getPopup(ElementSelection selection);
 
     protected abstract boolean hasAttributes();
+
+    private class PopupMenuMouseAdapter extends MouseAdapter
+    {
+        @Override
+        public void mouseClicked(final MouseEvent e)
+        {
+            try
+            {
+                final ElementSelection selection = getSelectedElements();
+
+                if (SwingUtilities.isRightMouseButton(e))
+                {
+                    getPopup(selection).show(e.getComponent(), e.getX(), e.getY());
+                    return;
+                }
+
+                if (SwingUtilities.isLeftMouseButton(e))
+                {
+                    if (selection.isEmpty())
+                        callback.resetPickedStateAndUpdateView();
+                }
+            } catch (Exception ex)
+            {
+                ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
+                ex.printStackTrace();
+            }
+        }
+    }
 
     public static class LastRowAggregatedValue
     {

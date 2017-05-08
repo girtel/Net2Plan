@@ -1,5 +1,6 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
 
 import javax.swing.*;
@@ -15,11 +16,12 @@ import java.util.Map;
  */
 public class TableViewController
 {
-    private AdvancedJTable_networkElement table;
+    private final AdvancedJTable_networkElement table;
+    private final GUINetworkDesign callback;
 
     private final JPopupMenu fixedTableMenu, mainTableMenu;
     private final JMenu showMenu;
-    private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
+    private final JMenuItem showAllItem, hideAllItem, resetItem;
     private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
     private final JCheckBoxMenuItem lockColumn, unfixCheckBox, attributesItem, hideColumn;
     private final JTable mainTable, fixedTable;
@@ -30,9 +32,10 @@ public class TableViewController
     private final ArrayList<JMenuItem> hiddenHeaderItems;
     private boolean expandAttributes = false;
 
-    public TableViewController(AdvancedJTable_networkElement table)
+    public TableViewController(GUINetworkDesign callback, AdvancedJTable_networkElement table)
     {
         this.table = table;
+        this.callback = callback;
         this.mainTable = table.getMainTable();
         this.fixedTable = table.getFixedTable();
         this.hiddenColumnsNames = new ArrayList<>();
@@ -58,8 +61,6 @@ public class TableViewController
         this.hideAllItem.setToolTipText("All columns will be hidden except for the first one.");
         this.attributesItem = new JCheckBoxMenuItem("Attributes in different columns", false);
         this.resetItem = new JMenuItem("Reset columns positions");
-        this.loadStateItem = new JMenuItem("Load tables visualization profile");
-        this.saveStateItem = new JMenuItem("Save tables visualization profile");
 
         if (table.hasAttributes())
         {
