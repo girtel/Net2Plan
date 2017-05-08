@@ -13,15 +13,12 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables;
 
 import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
@@ -36,21 +33,17 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
-
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
-import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
-import javax.xml.stream.XMLStreamException;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 
-import static com.net2plan.gui.plugins.networkDesign.ElementSelection.SelectionType;
 import static com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 
 
@@ -79,17 +72,16 @@ import static com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.
 @SuppressWarnings("unchecked")
 public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 {
-    protected final TableModel model;
-    protected final GUINetworkDesign callback;
     protected final NetworkElementType networkElementType;
+    protected final GUINetworkDesign callback;
+    protected final TableModel model;
 
     protected final JTable mainTable;
     protected final JTable fixedTable;
 
-    private TableViewController tableController;
-    private final JScrollPane scroll;
+    private final JScrollPane scrollPane;
+    private final TableViewController tableController;
     private final FixedColumnDecorator decorator;
-
 
     /**
      * Constructor that allows to set the table model.
@@ -102,54 +94,29 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     public AdvancedJTable_networkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType)
     {
         super(model);
+
         this.model = model;
         this.callback = networkViewer;
         this.networkElementType = networkElementType;
 
-        setTips();
+        this.setTips();
+        this.addMouseListener(new PopupMenuMouseAdapter());
+        this.addKeyboardActions();
 
-		/* add the popup menu listener (this) */
-        addMouseListener(new PopupMenuMouseAdapter());
-
-        addKeyboardActions();
-
-        this.getTableHeader().setReorderingAllowed(true);
-
-        scroll = new JScrollPane(this);
-        this.decorator = new FixedColumnDecorator(scroll, getNumberOfDecoratorColumns());
-        mainTable = decorator.getMainTable();
-        fixedTable = decorator.getFixedTable();
-
+        this.scrollPane = new JScrollPane(this);
+        this.decorator = new FixedColumnDecorator(scrollPane, getNumberOfDecoratorColumns());
+        this.mainTable = decorator.getMainTable();
+        this.fixedTable = decorator.getFixedTable();
 
         this.setRowSelectionAllowed(true);
+        this.getTableHeader().setReorderingAllowed(true);
         this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        tableController = new TableViewController(this);
+
+        this.tableController = new TableViewController(callback, this);
     }
-
-
 
     private void addKeyboardActions()
     {
-//        // Key input
-//        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK), "shiftUpArrow");
-//        this.getActionMap().put("shiftUpArrow", new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent actionEvent)
-//            {
-//                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-//                final int upRow = Ints.min(table.getSelectedRows());
-//                final int downRow = Ints.max(table.getSelectedRows());
-//
-//                int row = upRow - 1;
-//                if (row < 0) return;
-//                table.setRowSelectionInterval(row, downRow);
-//
-//                final ElementSelection selectedElements = getSelectedElements();
-//                if (selectedElements.isEmpty()) return;
-//                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
-//            }
-//        });
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.VK_UNDEFINED), "pickElements");
         this.getActionMap().put("pickElements", new AbstractAction()
         {
@@ -158,74 +125,14 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             {
                 final ElementSelection selectedElements = getSelectedElements();
                 if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
+                SwingUtilities.invokeLater(() -> pickSelection(selectedElements));
             }
         });
-
-//        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "upArrow");
-//        this.getActionMap().put("upArrow", new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent e)
-//            {
-//                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-//                final int upRow = Ints.min(table.getSelectedRows());
-//
-//                int row = upRow - 1;
-//                if (row < 0) return;
-//                table.setRowSelectionInterval(row, row);
-//
-//                final ElementSelection selectedElements = getSelectedElements();
-//                if (selectedElements.isEmpty()) return;
-//                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
-//            }
-//        });
-//
-//        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK), "shiftDownArrow");
-//        this.getActionMap().put("shiftDownArrow", new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent actionEvent)
-//            {
-//                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-//                final int upRow = Ints.min(table.getSelectedRows());
-//                final int downRow = Ints.max(table.getSelectedRows());
-//
-//                int row = downRow + 1;
-//                if (hasAggregationRow() && row == (table.getRowCount() - 1)) return;
-//                table.setRowSelectionInterval(upRow, row);
-//
-//                final ElementSelection selectedElements = getSelectedElements();
-//                if (selectedElements.isEmpty()) return;
-//                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
-//            }
-//        });
-//
-//        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "downArrow");
-//        this.getActionMap().put("downArrow", new AbstractAction()
-//        {
-//            @Override
-//            public void actionPerformed(ActionEvent e)
-//            {
-//                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-//                final int downRow = Ints.max(table.getSelectedRows());
-//
-//                int row = downRow + 1;
-//
-//                if (hasAggregationRow() && row == table.getRowCount() - 1) return;
-//                table.setRowSelectionInterval(row, row);
-//
-//                final ElementSelection selectedElements = getSelectedElements();
-//                if (selectedElements.isEmpty()) return;
-//                SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selectedElements));
-//            }
-//        });
     }
 
-
-    public JScrollPane getScroll()
+    public JScrollPane getScrollPane()
     {
-        return scroll;
+        return scrollPane;
     }
 
     public NetworkElementType getNetworkElementType()
@@ -233,24 +140,14 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         return networkElementType;
     }
 
-    public FixedColumnDecorator getDecorator()
-    {
-        return decorator;
-    }
-
-    public JTable getMainTable()
+    protected JTable getMainTable()
     {
         return mainTable;
     }
 
-    public JTable getFixedTable()
+    protected JTable getFixedTable()
     {
         return fixedTable;
-    }
-
-    public TableViewController getTableController()
-    {
-        return tableController;
     }
 
     public void updateView(NetPlan currentState)
@@ -267,9 +164,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final List<? extends SortKey> sortKeys = this.getRowSorter().getSortKeys();
         final String[] tableHeaders = getCurrentTableHeaders();
 
-        if (!hasElements())
-            ((DefaultTableModel) getModel()).setDataVector(new Object [1][tableHeaders.length], tableHeaders);
-
         if (hasElements())
         {
             ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
@@ -281,9 +175,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
             {
 
-                setTips();
+                this.setTips();
 
-                if (tableController.isAttributeCellExpanded())
+                if (tableController.isAttributeExpanded())
                     tableController.removeNewColumn("Attributes");
                 else if (attColumnsHeaders.size() > 0)
                     for (String att : attColumnsHeaders)
@@ -293,63 +187,31 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                 tableController.restoreColumnsPositionsAndWidths();
 
-                tableController.hiddenColumnsAux = new ArrayList<>();
-                if (tableController.isAttributeCellExpanded())
+                if (tableController.isAttributeExpanded())
                 {
-                    for (TableColumn col : tableController.hiddenColumns)
+                    for (TableColumn col : tableController.getHiddenColumns())
                     {
-                        tableController.hiddenColumnsAux.add(col.getHeaderValue().toString());
-                    }
-                    for (String hCol : tableController.hiddenColumnsAux)
-                    {
+                        String columnName = col.getHeaderValue().toString();
+
                         for (String att : getAttributesColumnsHeaders())
                         {
-                            if (hCol.equals("Att: " + att))
+                            if (columnName.equals("Att: " + att))
                             {
                                 tableController.showColumn("Att: " + att, 0, false);
-                                break;
                             }
-
                         }
                     }
                 }
             }
             setColumnRowSorting();
+        } else
+        {
+            ((DefaultTableModel) getModel()).setDataVector(new Object[1][tableHeaders.length], tableHeaders);
         }
 
         this.getRowSorter().setSortKeys(sortKeys);
 
         setEnabled(true);
-    }
-
-    private class PopupMenuMouseAdapter extends MouseAdapter
-    {
-        @Override
-        public void mouseClicked(final MouseEvent e)
-        {
-            try
-            {
-                final ElementSelection selection = getSelectedElements();
-
-                if (SwingUtilities.isRightMouseButton(e))
-                {
-                    getPopup(selection).show(e.getComponent(), e.getX(), e.getY());
-                    return;
-                }
-
-                if (SwingUtilities.isLeftMouseButton(e))
-                {
-                    if (selection.isEmpty())
-                        callback.resetPickedStateAndUpdateView();
-//                    else
-//                        SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selection));
-                }
-            } catch (Exception ex)
-            {
-                ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
-                ex.printStackTrace();
-            }
-        }
     }
 
     protected final void addPopupMenuAttributeOptions(ElementSelection selection, JPopupMenu popup)
@@ -516,7 +378,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             popup.add(removeAttribute);
 
             JMenuItem removeAttributes = new JMenuItem("Remove all attributes" + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
-
             removeAttributes.addActionListener(e1 ->
             {
                 try
@@ -524,11 +385,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     for (NetworkElement selectedElement : selectedElements)
                         selectedElement.removeAllAttributes();
 
-                    if (tableController.isAttributeCellExpanded())
+                    if (tableController.isAttributeExpanded())
                     {
                         tableController.recoverRemovedColumn("Attributes");
-                        tableController.setAttributesCellExpanded(false);
-                        tableController.attributesItem.setSelected(false);
                     }
 
                     callback.updateVisualizationJustTables();
@@ -618,41 +477,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             {
                 return oo1.compareTo(oo2);
             }
-        }
-    }
-
-    public static class LastRowAggregatedValue
-    {
-        private String value;
-
-        public LastRowAggregatedValue()
-        {
-            value = "---";
-        }
-
-        public LastRowAggregatedValue(int val)
-        {
-            value = "" + val;
-        }
-
-        public LastRowAggregatedValue(double val)
-        {
-            value = String.format("%.2f", val);
-        }
-
-        public LastRowAggregatedValue(String value)
-        {
-            this.value = value;
-        }
-
-        String getValue()
-        {
-            return value;
-        }
-
-        public String toString()
-        {
-            return value;
         }
     }
 
@@ -795,85 +619,82 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 filterCombinationSubMenu.add(trafficBasedFilterMenu);
                 trafficBasedFilterMenu.addActionListener(e1 ->
                 {
-                    if (selection.getSelectionType() == SelectionType.EMPTY) return;
+                    if (selection.isEmpty()) return;
+
                     TBFToFromCarriedTraffic filter = null;
-
-                    if (selection.getSelectionType() == SelectionType.NETWORK_ELEMENT)
+                    final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
+                    final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+                    for (NetworkElement element : selectedElements)
                     {
-                        final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
-                        final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
-                        for (NetworkElement element : selectedElements)
+                        final NetworkElementType type = NetworkElementType.getType(element);
+                        if (type != null)
                         {
-                            final NetworkElementType type = NetworkElementType.getType(element);
-                            if (type != null)
+
+                            switch (type)
                             {
+                                case NODE:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer));
+                                    break;
+                                case LINK:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer));
+                                    break;
+                                case DEMAND:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer));
+                                    break;
+                                case MULTICAST_DEMAND:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer));
+                                    break;
+                                case ROUTE:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer));
+                                    break;
+                                case MULTICAST_TREE:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer));
+                                    break;
+                                case RESOURCE:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer));
+                                    break;
+                                case SRG:
+                                    if (filter == null)
+                                        filter = new TBFToFromCarriedTraffic((SharedRiskGroup) element);
+                                    else
+                                        filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((SharedRiskGroup) element));
+                                    break;
+                                case FORWARDING_RULE:
+                                    final List<Pair<Demand, Link>> forwardingRules = selection.getForwardingRules();
 
-                                switch (type)
-                                {
-                                    case NODE:
+                                    for (Pair<Demand, Link> forwardingRule : forwardingRules)
+                                    {
                                         if (filter == null)
-                                            filter = new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer);
+                                            filter = new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer);
                                         else
-                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Node) element, layer, applyJustToThisLayer));
-                                        break;
-                                    case LINK:
-                                        if (filter == null)
-                                            filter = new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer);
-                                        else
-                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Link) element, applyJustToThisLayer));
-                                        break;
-                                    case DEMAND:
-                                        if (filter == null)
-                                            filter = new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer);
-                                        else
-                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Demand) element, applyJustToThisLayer));
-                                        break;
-                                    case MULTICAST_DEMAND:
-                                        if (filter == null)
-                                            filter = new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer);
-                                        else
-                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastDemand) element, applyJustToThisLayer));
-                                        break;
-                                    case ROUTE:
-                                        if (filter == null)
-                                            filter = new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer);
-                                        else
-                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Route) element, applyJustToThisLayer));
-                                        break;
-                                    case MULTICAST_TREE:
-                                        if (filter == null)
-                                            filter = new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer);
-                                        else
-                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((MulticastTree) element, applyJustToThisLayer));
-                                        break;
-                                    case RESOURCE:
-                                        if (filter == null)
-                                            filter = new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer);
-                                        else
-                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((Resource) element, layer, applyJustToThisLayer));
-                                        break;
-                                    case SRG:
-                                        if (filter == null)
-                                            filter = new TBFToFromCarriedTraffic((SharedRiskGroup) element);
-                                        else
-                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((SharedRiskGroup) element));
-                                        break;
-                                    default:
-                                        // TODO: Control exceptions on filters.
-                                        throw new RuntimeException();
-                                }
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer));
+                                    }
+                                    break;
+                                default:
+                                    // TODO: Control exceptions on filters.
+                                    throw new RuntimeException();
                             }
-                        }
-                    } else
-                    {
-                        final List<Pair<Demand, Link>> forwardingRules = selection.getForwardingRules();
-
-                        for (Pair<Demand, Link> forwardingRule : forwardingRules)
-                        {
-                            if (filter == null)
-                                filter = new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer);
-                            else
-                                filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer));
                         }
                     }
 
@@ -930,9 +751,19 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         final JMenuItem menu = new JMenuItem("Pick");
         popup.add(menu);
         menu.setEnabled(!selection.isEmpty());
-        menu.addActionListener(e->{SwingUtilities.invokeLater(() -> pickSelectionAndShowInCanvas(selection));  });
+        menu.addActionListener(e ->
+        {
+            SwingUtilities.invokeLater(() -> pickSelection(selection));
+        });
     }
 
+    protected void pickSelection(ElementSelection selection)
+    {
+        assert selection != null;
+
+        callback.getVisualizationState().pickElement(selection.getNetworkElements());
+        callback.updateVisualizationAfterPick();
+    }
 
     protected void setTips()
     {
@@ -946,7 +777,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             tips.setToolTip(col, columnTips[c]);
         }
         getTableHeader().addMouseMotionListener(tips);
-
     }
 
     public void writeTableToFile(File file)
@@ -954,13 +784,16 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
     }
 
-    protected static void updateRowSum (Object [] data , double [] aggreg , int index , double val)
+    protected static void updateRowSum(Object[] data, double[] aggreg, int index, double val)
     {
-    	data [index] = val; aggreg [index] += val;
+        data[index] = val;
+        aggreg[index] += val;
     }
-    protected static void updateRowMax (Object [] data , double [] aggreg , int index , double val)
+
+    protected static void updateRowMax(Object[] data, double[] aggreg, int index, double val)
     {
-    	data [index] = val; aggreg [index] = Math.max(val, aggreg[index]);
+        data[index] = val;
+        aggreg[index] = Math.max(val, aggreg[index]);
     }
 
     private Object[][] buildData()
@@ -1021,11 +854,72 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     protected abstract JPopupMenu getPopup(ElementSelection selection);
 
-    protected abstract void pickSelectionAndShowInCanvas(ElementSelection selection);
-
     protected abstract boolean hasAttributes();
 
-    static class MenuItem_RemovedFiltered extends JMenuItem
+    private class PopupMenuMouseAdapter extends MouseAdapter
+    {
+        @Override
+        public void mouseClicked(final MouseEvent e)
+        {
+            try
+            {
+                final ElementSelection selection = getSelectedElements();
+
+                if (SwingUtilities.isRightMouseButton(e))
+                {
+                    getPopup(selection).show(e.getComponent(), e.getX(), e.getY());
+                    return;
+                }
+
+                if (SwingUtilities.isLeftMouseButton(e))
+                {
+                    if (selection.isEmpty())
+                        callback.resetPickedStateAndUpdateView();
+                }
+            } catch (Exception ex)
+            {
+                ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public static class LastRowAggregatedValue
+    {
+        private String value;
+
+        public LastRowAggregatedValue()
+        {
+            value = "---";
+        }
+
+        public LastRowAggregatedValue(int val)
+        {
+            value = "" + val;
+        }
+
+        public LastRowAggregatedValue(double val)
+        {
+            value = String.format("%.2f", val);
+        }
+
+        public LastRowAggregatedValue(String value)
+        {
+            this.value = value;
+        }
+
+        String getValue()
+        {
+            return value;
+        }
+
+        public String toString()
+        {
+            return value;
+        }
+    }
+
+    protected static class MenuItem_RemovedFiltered extends JMenuItem
     {
         MenuItem_RemovedFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
         {
@@ -1099,7 +993,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    static class MenuItem_HideFiltered extends JMenuItem
+    protected static class MenuItem_HideFiltered extends JMenuItem
     {
         MenuItem_HideFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
         {

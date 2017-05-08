@@ -2,7 +2,6 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_node;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import org.junit.Assert;
 import org.junit.Before;
@@ -14,7 +13,7 @@ import javax.swing.*;
  * @author Jorge San Emeterio
  * @date 24/04/17
  */
-public class AdvancedJTable_networkElement_Test
+public class AdvancedJTable_networkElementTest
 {
     private static AdvancedJTable_networkElement table;
 
@@ -34,11 +33,8 @@ public class AdvancedJTable_networkElement_Test
     }
 
     @Test
-    public void hasAttributesTest()
+    public void forwardingRuleNoAttributesTest()
     {
-        table = new AdvancedJTable_node(networkDesign);
-        Assert.assertTrue(table.hasAttributes());
-
         table = new AdvancedJTable_forwardingRule(networkDesign);
         Assert.assertFalse(table.hasAttributes());
     }

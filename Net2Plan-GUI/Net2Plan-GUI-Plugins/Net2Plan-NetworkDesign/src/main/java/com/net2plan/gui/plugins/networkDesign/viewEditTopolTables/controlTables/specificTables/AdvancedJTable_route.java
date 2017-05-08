@@ -337,7 +337,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
         /* Add the popup menu option of the filters */
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.ROUTE)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
@@ -418,7 +418,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void pickSelectionAndShowInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.ROUTE)

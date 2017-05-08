@@ -213,7 +213,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
             if (selection.getElementType() != NetworkElementType.LAYER)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
@@ -272,7 +272,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void pickSelectionAndShowInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         return;
     }

@@ -335,7 +335,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<MulticastDemand> demandRowsInTheTable = this.getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.MULTICAST_DEMAND)
                 throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
@@ -417,7 +417,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
     @Override
-    public void pickSelectionAndShowInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.MULTICAST_DEMAND)
