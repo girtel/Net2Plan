@@ -15,6 +15,71 @@
 
 package com.net2plan.libraries;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.swing.JComponent;
+
+import org.apache.commons.collections15.ListUtils;
+import org.apache.commons.collections15.Predicate;
+import org.apache.commons.collections15.Transformer;
+import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.apache.commons.collections15.functors.MapTransformer;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.UndirectedGraph;
+import org.jgrapht.alg.ConnectivityInspector;
+import org.jgrapht.alg.StrongConnectivityInspector;
+import org.jgrapht.graph.AsWeightedGraph;
+import org.jgrapht.graph.DirectedSubgraph;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.jgrapht.graph.Subgraph;
+import org.jgrapht.graph.UndirectedSubgraph;
+
+import com.google.common.collect.Sets;
+import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Constants;
+import com.net2plan.utils.Constants.CheckRoutingCycleType;
+import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.ImageUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.Quintuple;
+
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
@@ -26,13 +91,6 @@ import cern.colt.matrix.tdouble.algo.SparseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
 import cern.jet.math.tdouble.DoublePlusMultFirst;
-import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.utils.*;
-import com.net2plan.utils.Constants.CheckRoutingCycleType;
-import com.net2plan.utils.Constants.RoutingCycleType;
-import com.net2plan.utils.Constants.RoutingType;
-
 import edu.uci.ics.jung.algorithms.filters.EdgePredicateFilter;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
@@ -49,32 +107,11 @@ import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.DefaultVertexLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
-import org.apache.commons.collections15.ListUtils;
-import org.apache.commons.collections15.Predicate;
-import org.apache.commons.collections15.Transformer;
-import org.apache.commons.collections15.functors.ConstantTransformer;
-import org.apache.commons.collections15.functors.MapTransformer;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.UndirectedGraph;
-import org.jgrapht.alg.ConnectivityInspector;
-import org.jgrapht.alg.StrongConnectivityInspector;
-import org.jgrapht.graph.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.util.*;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /** <p>Auxiliary static methods to work with graphs.</p>
  * 
  * <p>These methods make intensive use of several Java libraries (i.e. <a href='#jom'>JOM</a>, <a href='#jgrapht'>JGraphT</a> or <a href='#jung'>JUNG</a>) hiding low-level details to users.</p>
  * 
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  * @see <a name='jom'></a><a href='http://www.net2plan.com/jom'>Java Optimization Modeler (JOM) website</a>
  * @see <a name='jgrapht'></a><a href='http://jgrapht.org/'>JGraphT website</a>
@@ -815,9 +852,9 @@ public class GraphUtils
 	 * @return All loopless shortest paths */
 	public static List<List<Link>> getAllLooplessShortestPaths(List<Node> nodes, List<Link> links, Node originNode, Node destinationNode, Map<Link, Double> linkCostMap)
 	{
-		Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, links);
+		final List<Link> filteredLinks = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, filteredLinks);
 		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-		g = JUNGUtils.filterGraph(g, nev);
 
 		YenAlgorithm<Node, Link> paths = new YenAlgorithm<Node, Link>(g, nev)
 		{
@@ -840,85 +877,31 @@ public class GraphUtils
 	 * @param linkSpareCapacityMap Current available capacity per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required. If <code>null</code> the spare capacity of each link is its capacity minus its carried traffic (summing the regular traffic and the ones in the protection segments), truncated to zero (negative values are not admitted).
 	 * @param capacityGoal Minimum capacity required
 	 * @return Shortest path fulfilling a minimum capacity requirement */
-	public static List<Link> getCapacitatedShortestPath(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, final Map<Link, Double> linkCostMap, final Map<Link, Double> linkSpareCapacityMap, final double capacityGoal)
+	public static List<Link> getCapacitatedShortestPath(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, final Map<Link, Double> linkCostMap, Map<Link, Double> linkSpareCapacityMap, final double capacityGoal)
 	{
-		Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, links);
+		if (linkSpareCapacityMap == null)
+		{
+			linkSpareCapacityMap = new HashMap<Link, Double>();
+			for (Link e : links)
+				linkSpareCapacityMap.put(e, Math.max(0, e.getCapacity() - e.getOccupiedCapacity()));
+		}
+		final Map<Link,Double> auxMapLinkCost = linkSpareCapacityMap;
+		final List<Link> validLinks = linkCostMap == null? links.stream().filter(e->auxMapLinkCost.get(e) >= capacityGoal).collect(Collectors.toList()) : 
+			links.stream().filter(e->auxMapLinkCost.get(e) >= capacityGoal && linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		final Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, validLinks);
 		if (!graph.containsVertex(originNode)) return new LinkedList<Link>();
 		if (!graph.containsVertex(destinationNode)) return new LinkedList<Link>();
 		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-		Transformer<Link, Double> capacityTransformer;
-		if (linkSpareCapacityMap == null)
-		{
-			final Map<Link, Double> linkSpareCapacityMapToUse = new HashMap<Link, Double>();
-			for (Link e : links)
-				linkSpareCapacityMapToUse.put(e, Math.max(0, e.getCapacity() - e.getOccupiedCapacity()));
-			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMapToUse);
-		} else
-			capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMap);
-		return JUNGUtils.getCapacitatedShortestPath(graph, nev, originNode, destinationNode, capacityTransformer, capacityGoal);
+		return JUNGUtils.getShortestPath(graph, nev, originNode, destinationNode);
 	}
 
-	/** Returns the shortest path that fulfills a given minimum capacity requirement along its traversed links. In case no path can be found, an empty list will be returned.
-	 * @param nodes Collection of nodes
-	 * @param linkMap Map of links, where the key is the unique link identifier and the value is a {@link com.net2plan.utils.Pair Pair} representing the origin node and the destination node of the link, respectively
-	 * @param originNodeId Origin node
-	 * @param destinationNodeId Destination node
-	 * @param linkCostMap Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required
-	 * @param linkSpareCapacityMap Current available capacity per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required
-	 * @param capacityGoal Minimum capacity required
-	 * @return Shortest path fulfilling a minimum capacity requirement */
-	//	public static List<Long> getCapacitatedShortestPath(Collection <Long> nodes , Map<Long, Pair<Long, Long>> linkMap, long originNodeId, long destinationNodeId, final Map<Long, Double> linkCostMap, final Map<Long, Double> linkSpareCapacityMap, final double capacityGoal)
-	//	{
-	//		Graph<Long, Long> graph = JUNGUtils.getGraphFromLinkMap(nodes , linkMap);
-	//		if (!graph.containsVertex(originNodeId)) return new LinkedList<Long>();
-	//		if (!graph.containsVertex(destinationNodeId)) return new LinkedList<Long>();
-	//
-	//		Transformer<Long, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-	//		Transformer<Long, Double> capacityTransformer = JUNGUtils.getEdgeWeightTransformer(linkSpareCapacityMap);
-	//		return JUNGUtils.getCapacitatedShortestPath(graph, nev, originNodeId, destinationNodeId, capacityTransformer, capacityGoal);
-	//	}
-
-//	/** Receives a candidate path list indexed by demands, and converts it into a CPL indexed by node pairs. 
-//	 * If more than one demand exists with the same end node pairs, the paths used are the ones of the first found when iterating the input CPL 
-//	 * @param cpl thw input CPL
-//	 * @return
-//	 */
-//	public static Map<Pair<Node,Node>,List<List<NetworkElement>>> transformCPLToNodePairMap (Map<Demand,List<List<? extends NetworkElement>>> cpl)
-//	{
-//		Map<Pair<Node,Node>,List<List<NetworkElement>>> res = new HashMap<> ();
-//		for (Entry<Demand,List<List<? extends NetworkElement>>> entry : cpl.entrySet())
-//		{
-//			final Pair<Node,Node> pair = Pair.of(entry.getKey().getIngressNode() , entry.getKey().getEgressNode());
-//			if (res.containsKey(pair)) continue;
-//			res.put(pair , (List<List<NetworkElement>>) (List<?>) entry.getValue());
-//		}
-//		return res;
-//	}
 	
-	/** Obtains the sequence of links representing the (unidirectional) shortest path between two nodes.
-	 * 
-	 * @param nodes Collection of nodes
-	 * @param linkMap Map of links, where the key is the unique link identifier and the value is a {@link com.net2plan.utils.Pair Pair} representing the origin node and the destination node of the link, respectively
-	 * @param originNodeId Origin node identifier
-	 * @param destinationNodeId Destination node identifier
-	 * @param linkCostMap Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required
-	 * @return Sequence of links in the shortest path (empty, if destination not reachable from origin) */
-	//	public static List<Long> getShortestPath(Collection<Long> nodes , Map<Long, Pair<Long, Long>> linkMap, long originNodeId, long destinationNodeId, Map<Long, Double> linkCostMap)
-	//	{
-	//		Graph<Long, Long> graph = JUNGUtils.getGraphFromLinkMap(nodes , linkMap);
-	//		if (!graph.containsVertex(originNodeId)) return new LinkedList<Long>();
-	//		if (!graph.containsVertex(destinationNodeId)) return new LinkedList<Long>();
-	//
-	//		Transformer<Long, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-	//		return JUNGUtils.getShortestPath(graph, nev, originNodeId, destinationNodeId);
-	//	}
-
 	/** Returns the K-loopless shortest paths between two nodes, satisfying some user-defined constraints. If only <i>n</i> shortest path are found (n&lt;K), those are returned.
 	 * @param nodes List of nodes
 	 * @param links List of links
 	 * @param originNode Origin node
 	 * @param destinationNode Destination node
-	 * @param linkCostMap Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required. If {@code null}, all links have weight one
+	 * @param linkCostMap Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required. If {@code null}, all links have weight one. A value of Double.MAX_VALUE means that the link cannot be used
 	 * @param K Desired nummber of paths (a lower number of paths may be returned if there are less than {@code K} loop-less paths admissible)
 	 * @param maxLengthInKm Maximum length of the path. If non-positive, no maximum limit is assumed
 	 * @param maxNumHops Maximum number of hops. If non-positive, no maximum limit is assumed
@@ -936,16 +919,12 @@ public class GraphUtils
 		if (maxRouteCostFactorRespectToShortestPath <= 0) maxRouteCostFactorRespectToShortestPath = Double.MAX_VALUE;
 		if (maxRouteCostRespectToShortestPath <= 0) maxRouteCostRespectToShortestPath = Double.MAX_VALUE;
 
-		if (linkCostMap == null)
-		{
-			linkCostMap = new HashMap<Link, Double>();
-			for (Link e : links)
-				linkCostMap.put(e, 1.0);
-		}
-
-		Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, links);
-
-		YenAlgorithm<Node, Link> paths = new YenAlgorithm<Node, Link>(g, (Transformer<Link, Double>) JUNGUtils.getEdgeWeightTransformer(linkCostMap), K, maxNumHops, maxLengthInKm, maxPropDelayInMs, maxRouteCost, maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath)
+		final List<Link> filteredListLinks = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		final Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, filteredListLinks);
+		YenAlgorithm<Node, Link> paths = new YenAlgorithm<Node, Link>(g, 
+				(Transformer<Link, Double>) JUNGUtils.getEdgeWeightTransformer(linkCostMap), 
+				K, maxNumHops, maxLengthInKm, maxPropDelayInMs, maxRouteCost, 
+				maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath)
 		{
 			@Override
 			public boolean acceptPath(GraphPath<Link> candidate)
@@ -976,10 +955,6 @@ public class GraphUtils
 			}
 		};
 		return paths.getPaths(originNode, destinationNode, K);
-		//		////////////////////////////////////
-		//		Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes , linkMap);
-		//		final Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-		//		return JUNGUtils.getKLooplessShortestPaths(graph, nev, originNode, destinationNode , K);
 	}
 
 	/** Returns the K minimum cost service chains between two nodes (summing costs of links and resources traversed), traversing a given set of resource types, satisfying some user-defined constraints.
@@ -1158,7 +1133,11 @@ public class GraphUtils
 		return res.isEmpty()? Pair.of(new LinkedList<NetworkElement> () , Double.MAX_VALUE) : res.get(0);
 	}	
 	
-	/** Returns the shortest pair of link-disjoint paths, where each item represents a path. The number of returned items will be equal to the number of paths found: when empty, no path was found; when {@code size()} = 1, only one path was found; and when {@code size()} = 2, the link-disjoint paths were found. Internally it uses the Suurballe-Tarjan algorithm.
+	/** Returns the shortest pair of link-disjoint paths, where each item represents a path. Links with cost Double.MAX_VALUE are not considered 
+	 * The number of returned items will be equal to the number of paths found: 
+	 * when empty, no path was found; when {@code size()} = 1, only one path was found; 
+	 * and when {@code size()} = 2, the link-disjoint paths were found. 
+	 * Internally it uses the Suurballe-Tarjan algorithm.
 	 * @param nodes Collection of nodes
 	 * @param links Collection of links
 	 * @param originNode Origin node
@@ -1167,13 +1146,19 @@ public class GraphUtils
 	 * @return Shortest pair of link-disjoint paths */
 	public static List<List<Link>> getTwoLinkDisjointPaths(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, Map<Link, Double> linkCostMap)
 	{
-		Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, links);
-		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-		List<List<Link>> linkDisjointSPs = JUNGUtils.getTwoLinkDisjointPaths(graph, nev, originNode, destinationNode);
+		final Collection<Link> linksToUse = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		final Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, linksToUse);
+		final Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
+		final List<List<Link>> linkDisjointSPs = JUNGUtils.getTwoLinkDisjointPaths(graph, nev, originNode, destinationNode);
 		return linkDisjointSPs;
 	}
 
-	/** Returns the shortest pair of node-disjoint paths, where each item represents a path. The number of returned items will be equal to the number of paths found: when empty, no path was found; when {@code size()} = 1, only one path was found; and when {@code size()} = 2, the node-disjoint paths were found. Internally it uses the Suurballe-Tarjan algorithm.
+	/** Returns the shortest pair of node-disjoint paths, where each item represents a path. 
+	 * Links with cost Double.MAX_VALUE are not considered 
+	 * The number of returned items will be equal to the number of paths found: 
+	 * when empty, no path was found; when {@code size()} = 1, only one path was found; 
+	 * and when {@code size()} = 2, the node-disjoint paths were found. 
+	 * Internally it uses the Suurballe-Tarjan algorithm.
 	 * 
 	 * @param nodes Collection of nodes
 	 * @param links Collection of links
@@ -1183,9 +1168,10 @@ public class GraphUtils
 	 * @return Shortest pair of node-disjoint paths */
 	public static List<List<Link>> getTwoNodeDisjointPaths(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, Map<Link, Double> linkCostMap)
 	{
-		Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, links);
-		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-		List<List<Link>> nodeDisjointSPs = JUNGUtils.getTwoNodeDisjointPaths(graph, nev, originNode, destinationNode);
+		final Collection<Link> linksToUse = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		final Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, linksToUse);
+		final Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
+		final List<List<Link>> nodeDisjointSPs = JUNGUtils.getTwoNodeDisjointPaths(graph, nev, originNode, destinationNode);
 		return nodeDisjointSPs;
 	}
 
@@ -1493,12 +1479,14 @@ public class GraphUtils
 	 * @return Sequence of links in the shortest path (empty, if destination not reachable from origin) */
 	public static List<Link> getShortestPath(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, Map<Link, Double> linkCostMap)
 	{
-		Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, links);
-		if (!graph.containsVertex(originNode)) return new LinkedList<Link>();
-		if (!graph.containsVertex(destinationNode)) return new LinkedList<Link>();
-
-		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
-		return JUNGUtils.getShortestPath(graph, nev, originNode, destinationNode);
+		final Collection<Link> linksToUse = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		final Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, linksToUse);
+		if (!graph.containsVertex(originNode)) return new LinkedList<>();
+		if (!graph.containsVertex(destinationNode)) return new LinkedList<>();
+		final Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkCostMap);
+		final DijkstraShortestPath<Node, Link> dsp = new DijkstraShortestPath<Node, Link>(graph, nev);
+		final List<Link> path = dsp.getPath(originNode, destinationNode);
+		return path;
 	}
 
 	
@@ -1745,6 +1733,18 @@ public class GraphUtils
 	{
 		org.jgrapht.Graph<Node, Link> graph = JGraphTUtils.getGraphFromLinkMap(nodes, links);
 		return JGraphTUtils.isConnected(graph, new HashSet<Node>(nodes));
+	}
+
+	/** Returns the connected components of the given graph
+	 * 
+	 * @param nodes List of nodes
+	 * @param links List of links
+	 * @return see above */
+	public static List<Set<Node>> getConnectedComponents (List<Node> nodes, List<Link> links)
+	{
+		org.jgrapht.Graph<Node, Link> graph = JGraphTUtils.getGraphFromLinkMap(nodes, links);
+		final ConnectivityInspector<Node, Link> inspector = new ConnectivityInspector<Node, Link>((DirectedGraph<Node,Link>) graph);
+		return inspector.connectedSets();
 	}
 
 	/** Check whether the physical topology is simple, that is, if it has at most one unidirectional link from a node to each other.
@@ -2474,19 +2474,19 @@ public class GraphUtils
 			return filteredGraph;
 		}
 
-		/** <p>Filters a graph removing those edges whose weight is equal to {@code Double.MAX_VALUE}.</p>
-		 * 
-		 * <p><b>Important</b>: Returned graph is not backed in the input one, so changes will not be reflected on it.
-		 * 
-		 * @param <V> Class type for vertices
-		 * @param <E> Class type for edges
-		 * @param graph Graph representing the network
-		 * @param nev Object responsible for returning weights for edges
-		 * @return Filtered graph */
-		public static <V, E> Graph<V, E> filterGraph(Graph<V, E> graph, final Transformer<E, Double> nev)
-		{
-			return filterGraph(graph, nev, null, 0);
-		}
+//		/** <p>Filters a graph removing those edges whose weight is equal to {@code Double.MAX_VALUE}.</p>
+//		 * 
+//		 * <p><b>Important</b>: Returned graph is not backed in the input one, so changes will not be reflected on it.
+//		 * 
+//		 * @param <V> Class type for vertices
+//		 * @param <E> Class type for edges
+//		 * @param graph Graph representing the network
+//		 * @param nev Object responsible for returning weights for edges
+//		 * @return Filtered graph */
+//		public static <V, E> Graph<V, E> filterGraph(Graph<V, E> graph, final Transformer<E, Double> nev)
+//		{
+//			return filterGraph(graph, nev, null, 0);
+//		}
 
 		/** <p>Filters a graph removing those edges whose weight is equal to {@code Double.MAX_VALUE}, or whose capacity is below a certain threshold.</p>
 		 * 
@@ -2517,28 +2517,22 @@ public class GraphUtils
 			return linkFilter.transform(graph);
 		}
 
-		/** Returns the shortest path that fulfills a given minimum capacity requirement along its traversed edges. 
-		 * In case no path can be found, an empty list will be returned. Links with cost {@code Double.MAX_VALUE} are not considered.
+		/** Returns the shortest path between two nodes using Dijkstra's algorithm. 
 		 * 
-		 * @param <V> Class type for vertices
-		 * @param <E> Class type for edges
+		 * @param <V> Vertex type
+		 * @param <E> Edge type
 		 * @param graph Graph representing the network
 		 * @param nev Object responsible for returning weights for edges
 		 * @param originNodeId Origin node
 		 * @param destinationNodeId Destination node
-		 * @param edgeSpareCapacityTransformer Object responsible for returning capacity for edges (if null, it will not applied)
-		 * @param requiredCapacity Capacity threshold. Edges whose capacity is below that value it will be removed
-		 * @return Shortest path fulfilling a minimum capacity requirement */
-		public static <V, E> List<E> getCapacitatedShortestPath(Graph<V, E> graph, Transformer<E, Double> nev, V originNodeId, V destinationNodeId, Transformer<E, Double> edgeSpareCapacityTransformer, double requiredCapacity)
+		 * @return Shortest path */
+		public static <V, E> List<E> getShortestPath(Graph<V, E> graph, Transformer<E, Double> nev, V originNodeId, V destinationNodeId)
 		{
 			if (!graph.containsVertex(originNodeId)) return new LinkedList<E>();
 			if (!graph.containsVertex(destinationNodeId)) return new LinkedList<E>();
-
 			if (nev == null) nev = getEdgeWeightTransformer(null);
-
-			Graph<V, E> filteredGraph = filterGraph(graph, nev, edgeSpareCapacityTransformer, requiredCapacity);
-			DijkstraShortestPath<V, E> dsp = new DijkstraShortestPath<V, E>(filteredGraph, nev);
-			List<E> path = dsp.getPath(originNodeId, destinationNodeId);
+			final DijkstraShortestPath<V, E> dsp = new DijkstraShortestPath<V, E>(graph, nev);
+			final List<E> path = dsp.getPath(originNodeId, destinationNodeId);
 			return path;
 		}
 
@@ -2579,7 +2573,7 @@ public class GraphUtils
 		 * @param nodes Collection of nodes
 		 * @param links Collection of links
 		 * @return {@code JUNG} graph */
-		public static Graph<Node, Link> getGraphFromLinkMap(Collection<Node> nodes, Collection<Link> links)//Map<Long, Pair<Long, Long>> linkMap)
+		public static Graph<Node, Link> getGraphFromLinkMap(Collection<Node> nodes, Collection<Link> links)
 		{
 			Graph<Node, Link> graph = new DirectedOrderedSparseMultigraph<Node, Link>();
 
@@ -2599,59 +2593,6 @@ public class GraphUtils
 			return graph;
 		}
 
-		/** <p>Obtains a <code>JUNG</code> graph from a given link map.</p>
-		 * 
-		 * @param nodes Collection of nodes
-		 * @param linkMap Map of links, where the key is the unique link identifier and the value is a {@link com.net2plan.utils.Pair Pair} representing the origin node and the destination node of the link, respectively. Origin/destination nodes will be added as needed
-		 * @return <code>JUNG</code> graph */
-		//		public static Graph<Long, Long> getGraphFromLinkMap(Collection<Long> nodes , Map<Long, Pair<Long, Long>> linkMap)
-		//		{
-		//			Graph<Long, Long> graph = new DirectedOrderedSparseMultigraph<Long, Long>();
-		//			
-		//			for (long nodeId : nodes) graph.addVertex(nodeId);
-		//			
-		//			if (linkMap != null)
-		//			{
-		//				for(Entry<Long, Pair<Long, Long>> entry : linkMap.entrySet())
-		//				{
-		//					long linkId = entry.getKey();
-		//					long originNodeId = entry.getValue().getFirst();
-		//					long destinationNodeId = entry.getValue().getSecond();
-		//
-		//					if (!graph.containsVertex(originNodeId)) throw new RuntimeException ("Bad"); //graph.addVertex(originNodeId);
-		//					if (!graph.containsVertex(destinationNodeId)) throw new RuntimeException ("Bad"); // graph.addVertex(destinationNodeId);
-		//
-		//					graph.addEdge(linkId, originNodeId, destinationNodeId);
-		//				}
-		//			}
-		//
-		//			return graph;
-		//		}
-
-		/** Returns the K-loopless shortest paths between two nodes. If <i>n</i> shortest paths are found (n&lt;K), those are returned.
-		 * Links with cost {@code Double.MAX_VALUE} are not considered.
-		 * 
-		 * @param <V> Class type for vertices
-		 * @param <E> Class type for edges
-		 * @param graph Graph representing the network
-		 * @param nev Object responsible for returning weights for edges
-		 * @param originNodeId Origin node
-		 * @param destinationNodeId Destination node
-		 * @param K Number of different paths
-		 * @return K-shortest paths */
-		public static <V, E> List<List<E>> getKLooplessShortestPaths(Graph<V, E> graph, Transformer<E, Double> nev, V originNodeId, V destinationNodeId, int K)
-		{
-			if (!graph.containsVertex(originNodeId)) return new LinkedList<List<E>>();
-			if (!graph.containsVertex(destinationNodeId)) return new LinkedList<List<E>>();
-
-			if (nev == null) nev = getEdgeWeightTransformer(null);
-
-			Graph<V, E> filteredGraph = filterGraph(graph, nev);
-			YenAlgorithm<V, E> paths = new YenAlgorithm<V, E>(filteredGraph, nev);
-			List<List<E>> pathList = paths.getPaths(originNodeId, destinationNodeId, K);
-			return pathList;
-		}
-
 		/** Returns the weight of a path given the sequence of edges.
 		 * 
 		 * @param <E> Class type for edges
@@ -2666,20 +2607,6 @@ public class GraphUtils
 				pathWeight += nev.transform(edge);
 
 			return pathWeight;
-		}
-
-		/** Returns the shortest path between two nodes using Dijkstra's algorithm. Links with cost {@code Double.MAX_VALUE} are not considered.
-		 * 
-		 * @param <V> Vertex type
-		 * @param <E> Edge type
-		 * @param graph Graph representing the network
-		 * @param nev Object responsible for returning weights for edges
-		 * @param originNodeId Origin node
-		 * @param destinationNodeId Destination node
-		 * @return Shortest path */
-		public static <V, E> List<E> getShortestPath(Graph<V, E> graph, Transformer<E, Double> nev, V originNodeId, V destinationNodeId)
-		{
-			return getCapacitatedShortestPath(graph, nev, originNodeId, destinationNodeId, null, 0);
 		}
 
 		/** Returns the shortest pair of link-disjoint paths, where each item represents a path. The number of returned items will be equal to the number of paths found: when empty, no path was found; when {@code size()} = 1, only one path was found; and when {@code size()} = 2, the link-disjoint paths were found. Internally it uses the Suurballe-Tarjan algorithm.
@@ -3162,8 +3089,7 @@ public class GraphUtils
 	 * <p>Reference: {@code J.Y. Yen, "Finding the K Shortest Loopless Paths in a Network," <i>Management Science</i>, vol. 17, no. 11, pp. 712-716, Jul. 1971}</p>
 	 * 
 	 * @param <V> Vertex type
-	 * @param <E> Edge type
-	 * @author Pablo Pavon-Marino, Jose-Luis Izquierdo Zaragoza */
+	 * @param <E> Edge type */
 	static class YenAlgorithm<V, E>
 	{
 		private final Graph<V, E> graph;
@@ -3191,16 +3117,8 @@ public class GraphUtils
 			this.maxRouteCost = maxRouteCost;
 			this.maxRouteCostFactorRespectToShortestPath = maxRouteCostFactorRespectToShortestPath;
 			this.maxRouteCostRespectToShortestPath = maxRouteCostRespectToShortestPath;
-			if (nev == null)
-			{
-				this.graph = graph;
-				this.nev = JUNGUtils.getEdgeWeightTransformer(null);
-			} else
-			{
-				this.nev = nev;
-				this.graph = JUNGUtils.filterGraph(graph, nev);
-			}
-
+			this.graph = graph;
+			this.nev = nev;
 			dijkstra = new DijkstraShortestPath<V, E>(graph, nev);
 		}
 
@@ -3217,16 +3135,8 @@ public class GraphUtils
 			this.maxRouteCost = -1;
 			this.maxRouteCostFactorRespectToShortestPath = -1;
 			this.maxRouteCostRespectToShortestPath = -1;
-			if (nev == null)
-			{
-				this.graph = graph;
-				this.nev = JUNGUtils.getEdgeWeightTransformer(null);
-			} else
-			{
-				this.nev = nev;
-				this.graph = JUNGUtils.filterGraph(graph, nev);
-			}
-
+			this.graph = graph;
+			this.nev = nev;
 			dijkstra = new DijkstraShortestPath<V, E>(graph, nev);
 		}
 

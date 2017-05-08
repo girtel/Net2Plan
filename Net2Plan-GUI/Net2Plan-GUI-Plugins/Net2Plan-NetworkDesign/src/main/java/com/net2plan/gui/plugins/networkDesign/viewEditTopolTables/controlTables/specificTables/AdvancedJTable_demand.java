@@ -31,7 +31,7 @@ import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -96,10 +96,10 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
      */
     public AdvancedJTable_demand(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.DEMAND, true);
+        super(createTableModel(callback), callback, NetworkElementType.DEMAND);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         //fixedTable.setRowSorter(this.getRowSorter());
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
@@ -230,17 +230,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasDemands(layer) : rf.hasDemands(layer);
     }
-    
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfDemands(layer);
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfDemands(layer);
-    }
-    
 
     private static TableModel createTableModel(final GUINetworkDesign callback)
     {
@@ -304,7 +293,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                             {
                                 demand.setOfferedTraffic(newOfferedTraffic);
                                 callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                                callback.getVisualizationState().pickDemand(demand);
+                                callback.getVisualizationState().pickElement(demand);
                                 callback.updateVisualizationAfterPick();
                                 callback.addNetPlanChange();
                             }
@@ -346,7 +335,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_INGRESSNODE, COLUMN_EGRESSNODE, COLUMN_NUMROUTES);
@@ -386,7 +375,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
         final List<Demand> demandRowsInTheTable = this.getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.DEMAND)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
@@ -397,6 +386,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
         if (!demandRowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -461,16 +451,22 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         return popup;
     }
 
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (selection.getElementType() != NetworkElementType.DEMAND)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickDemand((List<Demand>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Demand>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -481,14 +477,15 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
         {
             final JMenuItem oneDemandPerNodePair = new JMenuItem("Add one demand per node pair");
             options.add(oneDemandPerNodePair);
-
-            oneDemandPerNodePair.addActionListener(new FullMeshTrafficActionListener());
+            oneDemandPerNodePair.addActionListener(new FullMeshTrafficActionListener(false));
         }
-
+        final JMenuItem oneDemandPerNodePairConnectedThisLayer = new JMenuItem("Add one demand per node pair linked at this layer");
+        options.add(oneDemandPerNodePairConnectedThisLayer);
+        oneDemandPerNodePairConnectedThisLayer.addActionListener(new FullMeshTrafficActionListener(true));
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -515,7 +512,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
@@ -585,7 +582,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                     final Link e = netPlan.addLink(originNode, destinationNode, 0, 0, 200000, null);
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.LINK));
-                    callback.getVisualizationState().pickLink(e);
+                    callback.getVisualizationState().pickElement(e);
                     callback.updateVisualizationAfterPick();
                     callback.addNetPlanChange();
 
@@ -593,7 +590,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 {
                     final Demand d = netPlan.addDemand(originNode, destinationNode, 0, null);
                     callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                    callback.getVisualizationState().pickDemand(d);
+                    callback.getVisualizationState().pickElement(d);
                     callback.updateVisualizationAfterPick();
                     callback.addNetPlanChange();
                 }
@@ -608,6 +605,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
     private class FullMeshTrafficActionListener implements ActionListener
     {
+    	private final boolean onlyConnectedAtThisLayer;
+    	FullMeshTrafficActionListener (boolean onlyConnectedAtThisLayer) { this.onlyConnectedAtThisLayer = onlyConnectedAtThisLayer; }
         @Override
         public void actionPerformed(ActionEvent e)
         {
@@ -620,22 +619,18 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) return;
                 if (result == JOptionPane.YES_OPTION) netPlan.removeAllDemands();
             }
-
-            for (Node n1 : netPlan.getNodes())
-            {
-                for (Node n2 : netPlan.getNodes())
-                {
-                    if (n1.getIndex() >= n2.getIndex()) continue;
-                    netPlan.addDemandBidirectional(n1, n2, 0, null, layer);
-                }
-            }
+            final List<Node> nodes = onlyConnectedAtThisLayer? netPlan.getNodes().stream().filter(n->!n.getIncomingLinks(layer).isEmpty()).filter(n->!n.getOutgoingLinks(layer).isEmpty()).collect(Collectors.toList()): netPlan.getNodes();
+            for (Node n1 : nodes)
+                for (Node n2 : nodes)
+                    if (n1.getIndex() < n2.getIndex()) 
+                    	netPlan.addDemandBidirectional(n1, n2, 0, null, layer);
             callback.getVisualizationState().resetPickedState();
             callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
             callback.addNetPlanChange();
         }
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {

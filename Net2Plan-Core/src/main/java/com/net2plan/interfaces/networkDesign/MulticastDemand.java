@@ -307,7 +307,7 @@ public class MulticastDemand extends NetworkElement
 		layer.cache_coupledMulticastDemands.add (this);
 		for (Link link : links)
 		{
-			link.capacity = carriedTraffic;
+			link.updateCapacityAndZeroCapacityLinksAndRoutesCaches(carriedTraffic);  
 			link.coupledLowerLayerMulticastDemand = this;
 			link.layer.cache_coupledLinks.add (link);
 			this.coupledUpperLayerLinks.put(link.destinationNode, link);
@@ -401,7 +401,7 @@ public class MulticastDemand extends NetworkElement
 		for (Node egressNode : egressNodes) egressNode.cache_nodeIncomingMulticastDemands.remove (this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 
 	
@@ -466,54 +466,15 @@ public class MulticastDemand extends NetworkElement
 		return res;
 	}
 
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(ingressNode);
+		res.addAll(egressNodes);
+		res.addAll(cache_multicastTrees);
+		if (coupledUpperLayerLinks != null) { res.addAll(coupledUpperLayerLinks.keySet()); res.addAll(coupledUpperLayerLinks.values()); }
+		return res;
+	}
 
-//	/** Returns the set of links in this layer that could potentially carry traffic of this multicast demand, 
-//	 * according to the multicast trees defined. These are the links that are part of any path from demand ingress, the given egress node 
-//	 * defined, in any multicast tree. If one of these paths contains a failed link, none of these links of such multicast tree are considered.
-//	 * @param assumeNoFailureState in this case, the links are computed as if all network link/nodes are in no-failure state
-//	 * @return see above
-//	 */
-//	public Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> getLinksUpperLayersPotentiallyCarryingTrafficThisDemandToEgressNode  (Node egressNode , boolean assumeNoFailureState)
-//	{
-//		if (coupledUpperLayerLinks == null) return Pair.of(new HashMap<> (), new HashMap <> ());
-//		final Link coupledUpperLayerLink = coupledUpperLayerLinks.get(egressNode);
-//		
-//		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
-//				coupledUpperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  (assumeNoFailureState);
-//		Map<Demand,Set<Link>> upperLayerLinksPuttingUnicastTrafficThisLink = triple.getFirst();
-//		for (Demand d : triple.getSecond().keySet())
-//		{
-//			Set<Link> links = upperLayerLinksPuttingUnicastTrafficThisLink.get(d);
-//			if (links == null) { links = new HashSet<Link> (); upperLayerLinksPuttingUnicastTrafficThisLink.put(d, links); }
-//			links.addAll(triple.getSecond().get(d));
-//		}
-//		Map<Pair<MulticastDemand,Node>,Set<Link>> upperLayerLinksPuttingMulticastTrafficThisLink = triple.getThird();
-//		
-//		/* Add upper layer info*/
-//		final Map<Demand,Set<Link>> res_unicast = new HashMap<> (upperLayerLinksPuttingUnicastTrafficThisLink);
-//		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> (upperLayerLinksPuttingMulticastTrafficThisLink);
-//
-//		/* Propagate to two layers up, and accumulate results */
-//		for (Demand upperLayerDemand : upperLayerLinksPuttingUnicastTrafficThisLink.keySet())
-//		{
-//			if (upperLayerDemand.isCoupled())
-//			{
-//				Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_twoLayersUp = upperLayerDemand.getLinksUpperLayersPotentiallyCarryingTrafficThisDemand (assumeNoFailureState); 
-//				res_unicast.putAll(res_twoLayersUp.getFirst());
-//				res_multicast.putAll(res_twoLayersUp.getSecond());
-//			}
-//		}
-//		for (Pair<MulticastDemand,Node> upperLayerMDemandAndEgressNode : upperLayerLinksPuttingMulticastTrafficThisLink.keySet())
-//		{
-//			final MulticastDemand upperLayerMDemand = upperLayerMDemandAndEgressNode.getFirst();
-//			final Node mDemandEgressNode = upperLayerMDemandAndEgressNode.getSecond();
-//			if (upperLayerMDemand.isCoupled()) 
-//			{
-//				Pair<Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_twoLayersUp = upperLayerMDemand.getLinksUpperLayersPotentiallyCarryingTrafficThisDemandToEgressNode  (mDemandEgressNode , assumeNoFailureState);
-//				res_unicast.putAll(res_twoLayersUp.getFirst());
-//				res_multicast.putAll(res_twoLayersUp.getSecond());
-//			}
-//		}
-//		return Pair.of(res_unicast, res_multicast);
-//	}
+
 }

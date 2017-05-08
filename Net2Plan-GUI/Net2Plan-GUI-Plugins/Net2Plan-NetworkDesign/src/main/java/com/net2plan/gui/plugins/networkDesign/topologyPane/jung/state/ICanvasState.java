@@ -1,15 +1,21 @@
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.gui.plugins.networkDesign.interfaces.patterns.IState;
 
+import java.awt.*;
 import java.awt.geom.Point2D;
 
 /**
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-interface OSMState
+public interface ICanvasState extends IState
 {
+    CanvasOption getState();
+
+    Color getBackgroundColor();
+
     void panTo(Point2D initialPoint, Point2D currentPoint);
 
     void zoomIn();

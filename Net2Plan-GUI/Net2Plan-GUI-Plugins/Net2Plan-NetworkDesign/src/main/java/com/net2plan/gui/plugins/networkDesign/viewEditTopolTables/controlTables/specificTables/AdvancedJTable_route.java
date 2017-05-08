@@ -21,7 +21,7 @@ import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
@@ -70,10 +70,10 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
     public AdvancedJTable_route(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.ROUTE, true);
+        super(createTableModel(callback), callback, NetworkElementType.ROUTE);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -200,26 +200,11 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasRoutes(layer) : rf.hasRoutes(layer);
     }
     
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfRoutes(layer);
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfRoutes(layer);
-    }
-
-
     @Override
     public int getAttributesColumnIndex()
     {
         return COLUMN_ATTRIBUTES;
     }
-
-//    public int[] getColumnsOfSpecialComparatorForSorting() {
-//        return new int[]{};
-//    }
 
     private static TableModel createTableModel(final GUINetworkDesign callback)
     {
@@ -259,7 +244,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.getVisualizationState().pickRoute(route);
+                            callback.getVisualizationState().pickElement(route);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -267,7 +252,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.getVisualizationState().pickRoute(route);
+                            callback.getVisualizationState().pickElement(route);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -312,7 +297,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
@@ -352,7 +337,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
         /* Add the popup menu option of the filters */
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.ROUTE)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
@@ -363,6 +348,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         final JMenu submenuFilters = new JMenu("Filters");
         if (!routeRowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -432,17 +418,23 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.ROUTE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickRoute((List<Route>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Route>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -737,7 +729,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         c.setMaximumSize(max);
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -865,7 +857,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -1087,7 +1079,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.resetPickedStateAndUpdateView();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

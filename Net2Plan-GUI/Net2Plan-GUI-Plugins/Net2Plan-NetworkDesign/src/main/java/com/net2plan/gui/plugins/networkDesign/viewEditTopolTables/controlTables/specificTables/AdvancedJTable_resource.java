@@ -15,7 +15,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -53,10 +53,10 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
     public AdvancedJTable_resource(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE, true);
+        super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE);
         setDefaultCellRenderers();
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -165,16 +165,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasResources() : rf.hasResources(layer);
     }
     
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfResources();
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfResources(layer);
-    }
-
 
     @Override
     public int getAttributesColumnIndex()
@@ -225,7 +215,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         case COLUMN_NAME:
                             res.setName(newValue.toString());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -234,7 +224,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                             if (newValue == null) return;
                             res.setCapacity((Double) newValue, netPlan.getResourceFromId(resId).getCapacityOccupiedInBaseResourcesMap());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -243,7 +233,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                             if (newValue == null) return;
                             res.setProcessingTimeToTraversingTrafficInMs((Double) newValue);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -282,7 +272,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_CAPACITY);
@@ -386,7 +376,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<Resource> rowsInTheTable = getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
             if (selection.getElementType() != NetworkElementType.RESOURCE)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
@@ -395,6 +385,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
         if (!rowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -459,7 +450,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return popup;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -557,14 +548,14 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new LinkedList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -722,7 +713,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
@@ -730,14 +721,20 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.RESOURCE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickResource((List<Resource>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Resource>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
+    }
+
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
     }
 
     private class ClassAwareTableModelImpl extends ClassAwareTableModel

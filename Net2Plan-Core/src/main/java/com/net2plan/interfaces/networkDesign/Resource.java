@@ -54,7 +54,8 @@ public class Resource extends NetworkElement
 	
 	Resource (NetPlan netPlan , long id , int index , String type , String name , Node hostNode , 
 			double capacity , String capacityMeasurementUnits,
-			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , AttributeMap attributes)
+			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , 
+			AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 
@@ -223,6 +224,13 @@ public class Resource extends NetworkElement
 		return capacityMeasurementUnits;
 	}
 	
+	/** Sets the units in which the capacity of this resource is measured
+	 * @param units see above
+	 */
+	public void setCapacityMeasurementUnits(String units) 
+	{
+		this.capacityMeasurementUnits = units;
+	}
 	
 	/** Gets the capacity in resource units of this resource
 	 * @return the capacity
@@ -378,6 +386,7 @@ public class Resource extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		netPlan.checkInThisNetPlan(upperResource);
+		if (upperResource.hostNode != this.hostNode) throw new Net2PlanException ("Upper resource must be in the same node as this resource");
 		if (occupiedCapacity < 0) throw new Net2PlanException ("The occupied capacity cannot be negative");
 		capacityUpperResourcesOccupyInMe.put(upperResource , occupiedCapacity);
 		updateTotalOccupiedCapacity();
@@ -436,7 +445,7 @@ public class Resource extends NetworkElement
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.resources , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+		removeIdAndFromPlanningDomain ();
 	}
 
 	
@@ -474,8 +483,27 @@ public class Resource extends NetworkElement
 			if (r.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(this) != val) throw new RuntimeException ("Bad");
 			if (!r.isDown()) accumOccupCap += val;
 		}
-		org.junit.Assert.assertEquals (accumOccupCap , cache_totalOccupiedCapacity , 0.001);
+
+		if (accumOccupCap != cache_totalOccupiedCapacity)
+		{
+			if (cache_totalOccupiedCapacity != 0)
+			{
+				if ((accumOccupCap / cache_totalOccupiedCapacity) > 0.001) throw new RuntimeException();
+			} else
+			{
+				if (accumOccupCap > 0.001 || accumOccupCap < -0.001) throw new RuntimeException();
+			}
+		}
 	}
 
-	
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(hostNode);
+		res.addAll(capacityUpperResourcesOccupyInMe.keySet());
+		res.addAll(capacityIOccupyInBaseResource.keySet());
+		res.addAll(cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet());
+		return res;
+	}
+
 }

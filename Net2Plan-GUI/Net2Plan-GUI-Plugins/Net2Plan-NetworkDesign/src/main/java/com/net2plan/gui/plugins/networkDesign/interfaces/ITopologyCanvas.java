@@ -22,6 +22,7 @@ package com.net2plan.gui.plugins.networkDesign.interfaces;
 
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.plugins.Plugin;
 
@@ -36,8 +37,6 @@ import java.util.Set;
  */
 public interface ITopologyCanvas extends Plugin
 {
-	enum CanvasOperation { ZOOM_ALL, ZOOM_IN, ZOOM_OUT}
-
 	Map<String, String> getCurrentOptions();
 
 	/**
@@ -58,11 +57,28 @@ public interface ITopologyCanvas extends Plugin
 
 	double getCurrentCanvasScale();
 
+	/**
+	 * Gets the untransformed center of the canvas.
+	 * Have in mind that this point does not belong to any of the other coordinate systems and must be converted to the desired one.
+	 * Alas, it can be used for tasks such as zoom as it does not change with movement.
+	 * @return Center of the canvas
+	 */
 	Point2D getCanvasCenter();
 
+	/**
+	 * Converts a point from the Net2Plan coordinate system to the JUNG coordinate system
+	 */
 	Point2D getCanvasPointFromNetPlanPoint(Point2D screenPoint);
 
+	/**
+	 * Converts a point from the SWING coordinate system to the JUNG coordinate system
+	 */
 	Point2D getCanvasPointFromScreenPoint(Point2D netPlanPoint);
+
+	/**
+	 * Converts a point from the JUNG coordinate system to a translation difference.
+	 */
+	Point2D getCanvasPointFromMovement(Point2D point);
 
 	/**
 	 * Returns a reference to the internal component containing the canvas.
@@ -94,19 +110,17 @@ public interface ITopologyCanvas extends Plugin
 
 	Set<GUILink> getAllEdges();
 
-	Point2D getCanvasPointFromMovement(Point2D point);
-
 	void panTo(Point2D initialPoint, Point2D destinationPoint);
 
 	void addNode(Point2D position);
 
 	void removeNode(Node node);
 
-	void runOSMSupport();
+	void setState(CanvasOption state, Object... stateParams);
 
-	void stopOSMSupport();
+	CanvasOption getState();
 
-	boolean isOSMRunning();
+	void returnToPreviousState();
 
 	void moveCanvasTo(Point2D destinationPoint);
 
@@ -127,7 +141,7 @@ public interface ITopologyCanvas extends Plugin
 	 *
 	 * @since 0.3.0
 	 */
-	void resetPickedStateAndRefresh();
+	void cleanSelection();
 
 	/**
 	 * Refreshes the canvas.
@@ -141,7 +155,7 @@ public interface ITopologyCanvas extends Plugin
 	 *
 	 * @since 0.3.0
 	 */
-	void rebuildCanvasGraphAndRefresh();
+	void rebuildGraph();
 
 	/**
 	 * Takes a snapshot of the canvas.

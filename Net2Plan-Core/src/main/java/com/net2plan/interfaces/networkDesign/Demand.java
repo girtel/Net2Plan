@@ -569,8 +569,6 @@ public class Demand extends NetworkElement
 	{
 		netPlan.checkIsModifiable();
 		checkAttachedToNetPlanObject();
-		link.checkAttachedToNetPlanObject(this.netPlan);
-		
 		final NetworkLayer upperLayer = link.layer;
 		final NetworkLayer lowerLayer = this.layer;
 		
@@ -593,7 +591,7 @@ public class Demand extends NetworkElement
 		}
 
 		/* Link capacity at the upper layer is equal to the carried traffic at the lower layer */
-		link.capacity = carriedTraffic;
+		link.updateCapacityAndZeroCapacityLinksAndRoutesCaches(carriedTraffic);
 		link.coupledLowerLayerDemand = this;
 		this.coupledUpperLayerLink = link;
 		link.layer.cache_coupledLinks.add (link);
@@ -740,7 +738,7 @@ public class Demand extends NetworkElement
 		ingressNode.cache_nodeOutgoingDemands.remove (this);
 		egressNode.cache_nodeIncomingDemands.remove (this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 	
 	/**
@@ -904,7 +902,8 @@ public class Demand extends NetworkElement
 //		System.out.println("s_egress: "  + s_egressNode);
 		this.cacheHbH_linksPerNodeWithNonZeroFr = tentativeCacheHbH_linksPerNodeWithNonZeroFr;
 		carriedTraffic = offeredTraffic * M.get(egressNode.index) * s_egressNode;
-		if (coupledUpperLayerLink != null) coupledUpperLayerLink.capacity = carriedTraffic;
+		if (coupledUpperLayerLink != null)
+			coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(carriedTraffic);
 
 		if (carriedTraffic > offeredTraffic + 1E-5) throw new RuntimeException ("Bad");
 		
@@ -944,5 +943,20 @@ public class Demand extends NetworkElement
 //		System.out.println ("updateHopByHopRoutingDemand demand: " + demand + ", this demand x_e: " + forwardingRules_x_de.viewRow(demand.index));
 	}
 
+
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(ingressNode);
+		res.add(egressNode);
+		res.addAll(cache_routes);
+		if (coupledUpperLayerLink != null) res.add(coupledUpperLayerLink);
+		res.addAll(cacheHbH_frs.keySet());
+		res.addAll(cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet());
+		res.addAll(cacheHbH_linksPerNodeWithNonZeroFr.keySet());
+		cacheHbH_linksPerNodeWithNonZeroFr.values().stream().flatMap(e->e.stream()).forEach(e->res.add(e));
+		return res;
+	}
+	
 
 }

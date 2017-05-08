@@ -147,7 +147,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				+ "WDMUtils library conventions. Resource allocation clashings are not checked here. Any failure should be solved before this report can show any information</p>");
 		boolean correctFormat = true;
 		out.append("<table border='1'>");
-		out.append("<tr><th align=\"left\"><b>Format errors</b></th></tr>");
+		out.append("<tr><th align=\"left\" colspan=\"2\"><b>Format errors</b></th></tr>");
 		for (Link e : netPlan.getLinks()) if (!WDMUtils.isWDMFormatCorrect(e)) { correctFormat = false ; out.append("<tr><td>Fiber " + e.getIndex() + ": incorrect format</td></tr>"); }
 		for (Route r : netPlan.getRoutes(wdmLayer)) if (!WDMUtils.isWDMFormatCorrect(r)) { correctFormat = false ; out.append("<tr><td>Route " + r.getIndex() + ": incorrect format. Is backup route: " + r.isBackupRoute() + "</td></tr>"); }
 		if (correctFormat) out.append("<tr><td bgcolor=\"PaleGreen\">No format errors!!!</td></tr>"); 
@@ -157,18 +157,18 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		this.stat = new Statistics(netPlan,netPlan.getNetworkLayerDefault());
 		out.append("<h2><a name=\"generalStats\"></a>GENERAL STATISTICS - Signal metrics at the input of end OADM</h2>");
 		out.append("<table border='1'>");
-		out.append("<tr><th align=\"left\"><b>OADM stats</b></th></tr>");
+		out.append("<tr><th align=\"left\" colspan=\"2\"><b>OADM stats</b></th></tr>");
 		out.append("<tr><td align=\"left\">Number of OADMs</td><td>" + netPlan.getNumberOfNodes() + "</td></tr>");
 		out.append("<tr><td align=\"left\">Node in degree (min/average/max)</td><td>" + stat.nodeInDegree.toString(df_2) + "</td></tr>");
 		out.append("<tr><td align=\"left\">Node out degree (min/average/max)</td><td>" + stat.nodeOutDegree.toString(df_2) + "</td></tr>");
 		
-		out.append("<tr><th align=\"left\"><b>Fiber link stats</b></td></tr>");
+		out.append("<tr><th align=\"left\" colspan=\"2\"><b>Fiber link stats</b></td></tr>");
 		out.append("<tr><td align=\"left\">Number of fibers</td><td>" + netPlan.getNumberOfLinks() + "</td></tr>");
 		out.append("<tr><td align=\"left\">Number of frequency slots per fiber (min/average/max)</td><td>" + stat.numberFrequencySlotsPerLink + "</td></tr>");
 		out.append("<tr><td align=\"left\">Number of slots occupied per fiber (min/average/max)</td><td>" + stat.linkUtilization.toString(df_2) + "</td></tr>");
 		out.append("<tr><td align=\"left\">The topology of fibers is bidirectional (in fibers and number of slots)?</td><td>" + stat.bidirectionalLinks + "</td></tr>");
 		
-		out.append("<tr><th align=\"left\"><b>Traffic stats</b></td></tr>");
+		out.append("<tr><th align=\"left\" colspan=\"2\"><b>Traffic stats</b></td></tr>");
 		out.append("<tr><td align=\"left\">Number of demands</td><td>" + netPlan.getNumberOfDemands() + "</td></tr>");
 		final double offeredTraffic = netPlan.getVectorDemandOfferedTraffic().zSum();
 		final double blockedTraffic = netPlan.getVectorDemandBlockedTraffic().zSum();
@@ -176,7 +176,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<tr><td align=\"left\">Total blocked traffic</td><td>" + df_2.format(blockedTraffic) + "(block prob: " + df_2.format(offeredTraffic == 0? 0 : blockedTraffic / offeredTraffic) + ")" + "</td></tr>");
 		out.append("<tr><td align=\"left\">The offered traffic is symmetric?</td><td>" + stat.bidirectionalDemands + "</td></tr>");
 
-		out.append("<tr><th align=\"left\"><b>Lightpath stats</b></td></tr>");
+		out.append("<tr><th align=\"left\" colspan=\"2\"><b>Lightpath stats</b></td></tr>");
 		out.append("<tr><td align=\"left\">Number of lightpaths (route objects)</td><td>" + netPlan.getNumberOfRoutes() + "</td></tr>");
 		out.append("<tr><td align=\"left\">The lightpaths are bidirectional? (same number of the same line rate between each node pair)?</td><td>" + stat.bidirectionalRoutes + "</td></tr>");
 		out.append("<tr><td align=\"left\">Some demands are carried by more than one lightpath?</td><td>" + stat.unicastRoutingBifurcated + "</td></tr>");
@@ -186,7 +186,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 		out.append("<tr><td align=\"left\">Total number of signal regenerators placed</td><td>" + stat.numberOfSignalRegenerators + "</td></tr>");
 		out.append("<tr><td align=\"left\">Total number of frequency slot converters needed</td><td>" + stat.numberOfWavelengthConversions + "</td></tr>");
 		
-		out.append("<tr><th align=\"left\"><b>Resilience stats</b></th></tr>");
+		out.append("<tr><th align=\"left\" colspan=\"2\"><b>Resilience stats</b></th></tr>");
 		out.append("<tr><td align=\"left\">The protection lightpaths are bidirectional? (same number of the same number of slots reserved between each node pair)?</td><td>" + stat.bidirectionalProtectionSegments + "</td></tr>");
 		out.append("<tr><td align=\"left\">Fiber capacity (number of slots) reserved for protection (min/average/max)</td><td>" + stat.fiberCapacityOccupiedByBackupRoutes.toString(df_2) + "</td></tr>");
 		final double resilienceInfo = TrafficComputationEngine.getTrafficProtectionDegree(netPlan);
@@ -254,7 +254,7 @@ public class Report_wdm_routingSpectrumAndModulationAssignments implements IRepo
 				+ "<th><b>Dest. node</b></th><th><b>Trav. nodes</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
 				+ "<th><b>Line rate (Gbps)</b></th><th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Wavelength conversion?</b></th><th><b>Wavelength contiguity?</b></th></th>"
-				+ "<th><b>Num. regenerators (reg. nodes)</b></th><b>Backup routes assigned</b></th></tr><th><b>Ok?</b></th></tr>");
+				+ "<th><b>Num. regenerators (reg. nodes)</b></th><th><b>Backup routes assigned</b></th><th><b>Ok?</b></th></tr>");
 		for (Route r : netPlan.getRoutesAreNotBackup(wdmLayer))
 		{
 			WDMUtils.RSA rsa = new WDMUtils.RSA(r , false);

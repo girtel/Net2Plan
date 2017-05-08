@@ -32,6 +32,8 @@ import java.net.URI;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.swing.text.Document;
+import javax.swing.text.html.StyleSheet;
 
 /**
  * Class to show HTML files with images in a panel.
@@ -52,11 +54,32 @@ public class ReportBrowser extends JPanel {
         editor = new CustomJEditorPane();
         editor.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
 
-		/* Configure HTML viewer */
-        htmlEditorKit = new CustomHTMLEditorKit();
-        editor.setEditorKit(htmlEditorKit);
         editor.setContentType("text/html;charset=UTF-8");
         editor.setEditable(false);
+        
+	/* Configure HTML viewer */
+        htmlEditorKit = new CustomHTMLEditorKit();
+        editor.setEditorKit(htmlEditorKit);
+                
+        StyleSheet styleSheet = htmlEditorKit.getStyleSheet();
+        styleSheet.addRule("body {padding: 5px 5px 5px 5px;");  
+        styleSheet.addRule("p, ul, ol, table {font-family: Tahoma, Verdana, Segoe, sans-serif; font-size: 11px; "
+                + "font-style: normal; font-variant: normal; text-align: justify;}");
+        styleSheet.addRule("h1, h2, h3 {font-family: Tahoma, Verdana, Segoe, sans-serif; font-style: normal; "
+                + "font-variant: normal; font-weight: 500;}");
+	styleSheet.addRule("h1 {font-size: 16px; line-height: 20px;}");
+	styleSheet.addRule("h2 {font-size: 14px; line-height: 16px;}");
+	styleSheet.addRule("h3 {font-size: 12px; line-height: 12px;}");
+        styleSheet.addRule("table, td {font-size: 10px; text-align: justify;}");
+        styleSheet.addRule("table, tr, th {border: 0px;}");
+        styleSheet.addRule("td {border: 2px solid #ccccff;}");
+        styleSheet.addRule("th {background-color: #ccccff; text-align: center; height: 10px; padding: 5px;}");
+        styleSheet.addRule("caption {caption-side: bottom; padding-bottom: 15px; font-weight: bold;}");
+        
+        Document doc = htmlEditorKit.createDefaultDocument();
+        doc.putProperty("IgnoreCharsetDirective", true);
+        editor.setDocument(doc);
+                
         editor.setText(html);
         ((DefaultCaret) editor.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
         editor.addHyperlinkListener(new HyperlinkListener() {
@@ -74,7 +97,7 @@ public class ReportBrowser extends JPanel {
                 }
             }
         });
-
+        
 		/* Generate toolbar */
         JToolBar buttonBar = new JToolBar();
         JButton viewInNavigator = new JButton("View in navigator");
@@ -129,6 +152,7 @@ public class ReportBrowser extends JPanel {
 
     private void saveToFile(File file) {
         String html = CustomHTMLEditorKit.includeNet2PlanHeader(editor.getText());
+        html = CustomHTMLEditorKit.includeStyle(html);
         JEditorPane editor1 = new CustomJEditorPane();
         editor1.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
         CustomHTMLEditorKit htmlEditorKit1 = new CustomHTMLEditorKit();

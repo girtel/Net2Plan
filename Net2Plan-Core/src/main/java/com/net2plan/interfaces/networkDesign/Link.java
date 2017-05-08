@@ -12,11 +12,6 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
@@ -28,8 +23,6 @@ import com.net2plan.utils.Triple;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import org.jgrapht.event.TraversalListener;
 
 /** <p>This class contains a representation of a link. A link is characterized by its initial and end node, the network layer it belongs to, 
  * and its capacity, measured in the layer link capacity units. When the routing type at the link layer is {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, the link
@@ -95,7 +88,6 @@ public class Link extends NetworkElement
 		this.layer = layer;
 		this.originNode = originNode;
 		this.destinationNode = destinationNode;
-		this.capacity = capacity;
 		this.cache_carriedTraffic = 0;
 		this.cache_occupiedCapacity = 0;
 		this.lengthInKm = lengthInKm;
@@ -103,12 +95,13 @@ public class Link extends NetworkElement
 		this.isUp = true;
 		this.coupledLowerLayerDemand = null;
 		this.coupledLowerLayerMulticastDemand = null;
-		
 		this.cache_srgs = new HashSet<SharedRiskGroup> ();
 		this.cache_traversingRoutes = new HashMap<Route,Integer> ();
 		this.cache_traversingTrees = new HashSet<MulticastTree> ();
 		this.cacheHbH_frs = new HashMap<> ();
 		this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState = new HashMap<> ();
+		this.capacity = capacity; 
+		if (capacity < Configuration.precisionFactor) layer.cache_linksZeroCap.add(this); // do not call here the regular updae function on purpose, there is no previous capacity info
 	}
 
 	void copyFrom (Link origin)
@@ -242,17 +235,44 @@ public class Link extends NetworkElement
 
 	/**
 	 * <p>Sets the link capacity.</p>
-	 * @param linkCapacity The link capacity (must be non-negative)
+	 * @param newLinkCapacity The link capacity (must be non-negative)
 	 */
-	public void setCapacity(double linkCapacity)
+	public void setCapacity(double newLinkCapacity)
 	{
-		linkCapacity = NetPlan.adjustToTolerance(linkCapacity);
+		newLinkCapacity = NetPlan.adjustToTolerance(newLinkCapacity);
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		if (linkCapacity < 0) throw new Net2PlanException ("Negative link capacities are not possible");
+		if (newLinkCapacity < 0) throw new Net2PlanException ("Negative link capacities are not possible");
 		if ((coupledLowerLayerDemand != null) || (coupledLowerLayerMulticastDemand != null)) throw new Net2PlanException ("Coupled links cannot change its capacity");
-		this.capacity = linkCapacity;
+		updateCapacityAndZeroCapacityLinksAndRoutesCaches (newLinkCapacity);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+	}
+
+	void updateCapacityAndZeroCapacityLinksAndRoutesCaches (double newCapacity) 
+	{
+		final boolean fromZeroToMore = (this.capacity < Configuration.precisionFactor) && (newCapacity >= Configuration.precisionFactor); 
+		final boolean fromMoreToZero = (this.capacity >= Configuration.precisionFactor) && (newCapacity < Configuration.precisionFactor); 
+		this.capacity = newCapacity;
+		if (fromMoreToZero)
+		{
+			layer.cache_linksZeroCap.add(this);
+			for (Route r : cache_traversingRoutes.keySet()) layer.cache_routesTravLinkZeroCap.add(r);
+			for (MulticastTree t : cache_traversingTrees) layer.cache_multicastTreesTravLinkZeroCap.add(t);
+		}
+		else if (fromZeroToMore)
+		{
+			layer.cache_linksZeroCap.remove(this);
+			for (Route r : cache_traversingRoutes.keySet())
+			{
+				if (r.cache_seqLinksRealPath.stream().allMatch(e->e.getCapacity() >= Configuration.precisionFactor))
+					layer.cache_routesTravLinkZeroCap.remove(r);
+			}
+			for (MulticastTree t : cache_traversingTrees)
+			{
+				if (t.linkSet.stream().allMatch(e->e.getCapacity() >= Configuration.precisionFactor))
+					layer.cache_multicastTreesTravLinkZeroCap.remove(t);
+			}
+		}
 	}
 
 	/**
@@ -575,6 +595,7 @@ public class Link extends NetworkElement
 			this.coupledLowerLayerMulticastDemand.decouple();
 		
 		layer.cache_linksDown.remove (this);
+		layer.cache_linksZeroCap.remove(this);
 		netPlan.cache_id2LinkMap.remove(id);
 		originNode.cache_nodeOutgoingLinks.remove (this);
 		destinationNode.cache_nodeIncomingLinks.remove (this);
@@ -591,7 +612,7 @@ public class Link extends NetworkElement
 
 		ErrorHandling.DEBUG = previousErrorHandling;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 	
 	/**
@@ -624,6 +645,8 @@ public class Link extends NetworkElement
 
 		if (isUp && layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp && !layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
+		if (capacity < Configuration.precisionFactor && !layer.cache_linksZeroCap.contains(this)) throw new RuntimeException ("Bad");
+		if (capacity >= Configuration.precisionFactor && layer.cache_linksZeroCap.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp)
 		{
 			if (Math.abs(cache_carriedTraffic) > 1e-3)
@@ -687,8 +710,18 @@ public class Link extends NetworkElement
 
 		if (Math.abs(cache_carriedTraffic - check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) 
 			throw new RuntimeException ("Bad: Link: " + this + ". carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + cache_carriedTraffic + ", check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments: " + check_carriedTrafficSummingRoutesAndCarriedTrafficByProtectionSegments);
-		org.junit.Assert.assertEquals(cache_occupiedCapacity , check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments , 1E-3);
-		
+
+		if (cache_occupiedCapacity != check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments)
+		{
+			if (check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != 0)
+			{
+				if ((cache_occupiedCapacity / check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) throw new RuntimeException();
+			} else
+			{
+				if (cache_occupiedCapacity > 1E-3 || cache_occupiedCapacity < -1E-3) throw new RuntimeException();
+			}
+		}
+
 		if (coupledLowerLayerDemand != null)
 			if (!coupledLowerLayerDemand.coupledUpperLayerLink.equals (this)) throw new RuntimeException ("Bad");
 		if (coupledLowerLayerMulticastDemand != null)
@@ -841,63 +874,63 @@ public class Link extends NetworkElement
 		return Triple.of(resPrimary,resBackup,resMCast);
 	}
 
-	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>
-		getLinksUpperLayersPotentiallyPuttingTrafficInThisLink  (boolean assumeNoFailureState , Triple<Set<Demand>,Set<Demand>,Set<Pair<MulticastDemand,Node>>> thisLayerDemandsPuttingTrafficThisLink)
-	{
-		if (thisLayerDemandsPuttingTrafficThisLink == null)
-		{
-			Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
-					this.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
-			thisLayerDemandsPuttingTrafficThisLink = Triple.of(triple.getFirst().keySet(), triple.getSecond().keySet(), triple.getThird().keySet());
-		}
-		
-		/* Add upper layer info*/
-		final Map<Demand,Set<Link>> res_unicastPrimary = new HashMap<> ();
-		final Map<Demand,Set<Link>> res_unicastBackup = new HashMap<> ();
-		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> ();
-
-		/* Propagate to two layers up, and accumulate results */
-		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getFirst())
-		{
-			if (thisLayerDemand.isCoupled())
-			{
-				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
-				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
-						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
-				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
-				res_multicast.putAll(res_upperLayer.getThird()); 
-			}
-		}
-		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getSecond())
-		{
-			if (thisLayerDemand.isCoupled())
-			{
-				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
-				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
-						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-				res_unicastBackup.putAll(res_upperLayer.getFirst()); // backup traffic in primary links -> backup
-				res_unicastBackup.putAll(res_upperLayer.getSecond()); // backup traffic in backup links -> backup
-				res_multicast.putAll(res_upperLayer.getThird()); 
-			}
-		}
-
-		for (Pair<MulticastDemand,Node> thisLayerMDemandInfo : thisLayerDemandsPuttingTrafficThisLink.getThird())
-		{
-			final MulticastDemand thisLayerMDemand = thisLayerMDemandInfo.getFirst();
-			final Node mDemandEgressNode = thisLayerMDemandInfo.getSecond();
-			if (thisLayerMDemand.isCoupled()) 
-			{
-				final Link upperLayerLink = thisLayerMDemand.coupledUpperLayerLinks.get(mDemandEgressNode);
-				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
-						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
-				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
-				res_multicast.putAll(res_upperLayer.getThird()); 
-			}
-		}
-		return Triple.of(res_unicastPrimary, res_unicastBackup , res_multicast);
-	}
+//	public Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>>
+//		getLinksUpperLayersPotentiallyPuttingTrafficInThisLink  (boolean assumeNoFailureState , Triple<Set<Demand>,Set<Demand>,Set<Pair<MulticastDemand,Node>>> thisLayerDemandsPuttingTrafficThisLink)
+//	{
+//		if (thisLayerDemandsPuttingTrafficThisLink == null)
+//		{
+//			Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple = 
+//					this.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
+//			thisLayerDemandsPuttingTrafficThisLink = Triple.of(triple.getFirst().keySet(), triple.getSecond().keySet(), triple.getThird().keySet());
+//		}
+//		
+//		/* Add upper layer info*/
+//		final Map<Demand,Set<Link>> res_unicastPrimary = new HashMap<> ();
+//		final Map<Demand,Set<Link>> res_unicastBackup = new HashMap<> ();
+//		final Map<Pair<MulticastDemand,Node>,Set<Link>> res_multicast = new HashMap<> ();
+//
+//		/* Propagate to two layers up, and accumulate results */
+//		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getFirst())
+//		{
+//			if (thisLayerDemand.isCoupled())
+//			{
+//				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
+//				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+//						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
+//				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
+//				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
+//				res_multicast.putAll(res_upperLayer.getThird()); 
+//			}
+//		}
+//		for (Demand thisLayerDemand : thisLayerDemandsPuttingTrafficThisLink.getSecond())
+//		{
+//			if (thisLayerDemand.isCoupled())
+//			{
+//				final Link upperLayerLink = thisLayerDemand.coupledUpperLayerLink;
+//				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+//						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
+//				res_unicastBackup.putAll(res_upperLayer.getFirst()); // backup traffic in primary links -> backup
+//				res_unicastBackup.putAll(res_upperLayer.getSecond()); // backup traffic in backup links -> backup
+//				res_multicast.putAll(res_upperLayer.getThird()); 
+//			}
+//		}
+//
+//		for (Pair<MulticastDemand,Node> thisLayerMDemandInfo : thisLayerDemandsPuttingTrafficThisLink.getThird())
+//		{
+//			final MulticastDemand thisLayerMDemand = thisLayerMDemandInfo.getFirst();
+//			final Node mDemandEgressNode = thisLayerMDemandInfo.getSecond();
+//			if (thisLayerMDemand.isCoupled()) 
+//			{
+//				final Link upperLayerLink = thisLayerMDemand.coupledUpperLayerLinks.get(mDemandEgressNode);
+//				Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res_upperLayer =
+//						upperLayerLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
+//				res_unicastPrimary.putAll(res_upperLayer.getFirst()); // primary traffic in primary links -> primary
+//				res_unicastBackup.putAll(res_upperLayer.getSecond()); // primary traffic in backup links -> backup
+//				res_multicast.putAll(res_upperLayer.getThird()); 
+//			}
+//		}
+//		return Triple.of(res_unicastPrimary, res_unicastBackup , res_multicast);
+//	}
 
 
 	private void updateWorstCasePropagationTraversingUnicastDemandsAndMaybeRoutes ()
@@ -921,4 +954,20 @@ public class Link extends NetworkElement
 				}
 		}
 	}
+	
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(originNode);
+		res.add(destinationNode);
+		if (coupledLowerLayerDemand != null) res.add(coupledLowerLayerDemand);
+		if (coupledLowerLayerMulticastDemand != null) res.add(coupledLowerLayerMulticastDemand);
+		res.addAll(cache_srgs);
+		res.addAll(cache_traversingRoutes.keySet());
+		res.addAll(cache_traversingTrees);
+		res.addAll(cacheHbH_frs.keySet());
+		res.addAll(cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.keySet());
+		return res;
+	}
+
 }

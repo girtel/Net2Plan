@@ -33,7 +33,7 @@ import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -71,10 +71,10 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 
     public AdvancedJTable_srg(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.SRG, true);
+        super(createTableModel(callback), callback, NetworkElementType.SRG);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -189,16 +189,6 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasSRGs() : rf.hasSRGs(layer);
     }
 
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfSRGs();
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfSRGs(layer);
-    }
-
     @Override
     public int getAttributesColumnIndex()
     {
@@ -283,7 +273,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_AFFECTEDROUTES, COLUMN_AFFECTEDBACKUPROUTES, COLUMN_AFFECTEDTREES);
@@ -321,7 +311,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<SharedRiskGroup> rowsInTheTable = getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.SRG)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
@@ -332,6 +322,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 
         if (!rowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -399,17 +390,23 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.SRG)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickSRG((List<SharedRiskGroup>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<SharedRiskGroup>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -437,7 +434,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -542,7 +539,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -808,7 +805,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         dialog.setVisible(true);
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

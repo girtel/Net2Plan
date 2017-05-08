@@ -33,7 +33,7 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.collections15.BidiMap;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -67,10 +67,10 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
     public AdvancedJTable_multicastDemand(final GUINetworkDesign callback)
     {
-        super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND, true);
+        super(createTableModel(callback), callback, NetworkElementType.MULTICAST_DEMAND);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -186,16 +186,6 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return rf == null ? callback.getDesign().hasMulticastDemands(layer) : rf.hasMulticastDemands(layer);
     }
 
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfMulticastDemands(layer);
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfMulticastDemands(layer);
-    }
-
     @Override
     public int getAttributesColumnIndex()
     {
@@ -268,7 +258,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                             {
                                 demand.setOfferedTraffic(newOfferedTraffic);
                                 callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
-                                callback.getVisualizationState().pickMulticastDemand(demand);
+                                callback.getVisualizationState().pickElement(demand);
                                 callback.updateVisualizationAfterPick();
                                 callback.addNetPlanChange();
                             }
@@ -307,7 +297,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_INGRESSNODE, COLUMN_EGRESSNODES, COLUMN_NUMTREES);
@@ -345,7 +335,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<MulticastDemand> demandRowsInTheTable = this.getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.MULTICAST_DEMAND)
                 throw new RuntimeException("Unmatched selected items with table, selected items are of type: " + selection.getElementType());
@@ -356,6 +346,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
         if (!demandRowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -426,18 +417,24 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.MULTICAST_DEMAND)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
 
-        callback.getVisualizationState().pickMulticastDemand((List<MulticastDemand>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<MulticastDemand>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -513,7 +510,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         }
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -531,7 +528,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -662,7 +659,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

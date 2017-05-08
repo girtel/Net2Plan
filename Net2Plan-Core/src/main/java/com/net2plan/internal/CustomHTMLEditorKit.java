@@ -111,7 +111,7 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 	 */
 	public static String includeNet2PlanHeader(String html)
 	{
-		org.jsoup.nodes.Document doc = Jsoup.parse(html, StandardCharsets.UTF_8.name());
+            	org.jsoup.nodes.Document doc = Jsoup.parse(html, StandardCharsets.UTF_8.name());
 		org.jsoup.nodes.Element title = doc.head().getElementsByTag("title").first();
 		String reportTitle = title != null && title.hasText() ? title.text() : "Net2Plan Report";
 
@@ -123,6 +123,27 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 		html = html.replaceAll("<body>", "<body>" + header);
 		return html;
 	}
+        
+        public static String includeStyle(String html)
+        {
+                StringBuilder style = new StringBuilder();
+                style.append("<style>");
+                style.append("body {font-family: Tahoma, Verdana, Segoe, sans-serif; font-style: normal; "
+                        + "font-variant: normal; font-size: 12px; padding: 0px 30px 15px 10px; text-align: justify;}");    
+                style.append("h1, h2, h3 {font-weight: 500;}");
+                style.append("h1 {font-size: 24px; line-height: 26.4px;}");
+                style.append("h2 {font-size: 18px; line-height: 20.4px;}");
+                style.append("h3 {font-size: 14px; line-height: 15.4px;}");
+                style.append("table, td {font-size: 11px; text-align: justify;}");
+                style.append("table, tr, th {border: 0px;}");
+                style.append("td {border: 2px solid #ccccff;}");
+                style.append("th {background-color: #ccccff; text-align: center; height: 20px; padding: 10px; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;}");
+                style.append("caption {caption-side: bottom; padding-bottom: 10px; font-weight: bold;}");
+                style.append("</style>");
+            
+                html = html.replaceAll("</head>", style.toString() + "</head>");
+                return html;
+        }
 	
 	/**
 	 * <p>Saves an HTML content to a given file.</p>
@@ -176,8 +197,8 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 		@Override
 		public void setText(String t)
 		{
-			Document doc = getDocument();
-			doc.putProperty("IgnoreCharsetDirective", true);
+			//Document doc = getDocument();
+			//doc.putProperty("IgnoreCharsetDirective", true);
 			t = t.replaceAll("^-(?=0(.0*)?$)", ""); /* Remove negative zeros */
 
 			super.setText(t);

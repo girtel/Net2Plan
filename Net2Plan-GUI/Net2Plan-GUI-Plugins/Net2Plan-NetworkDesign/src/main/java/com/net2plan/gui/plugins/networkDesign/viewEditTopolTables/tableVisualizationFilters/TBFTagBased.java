@@ -3,8 +3,8 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualiz
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.interfaces.networkDesign.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -15,7 +15,7 @@ public class TBFTagBased extends ITableRowFilter
     private final NetworkLayer restrictToThisLayer;
     private final String tagContainsName, tagDoesNotContainName;
 
-    public TBFTagBased(@Nonnull NetPlan netPlan, @Nullable NetworkLayer restrictToThisLayer, String tagContainsName, String tagDoesNotContainName)
+    public TBFTagBased( NetPlan netPlan,  NetworkLayer restrictToThisLayer, String tagContainsName, String tagDoesNotContainName)
     {
         super(netPlan);
 

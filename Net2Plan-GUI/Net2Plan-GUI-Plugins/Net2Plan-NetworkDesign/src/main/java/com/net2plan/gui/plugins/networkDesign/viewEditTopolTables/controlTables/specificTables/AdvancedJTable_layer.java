@@ -28,7 +28,7 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.collections15.BidiMap;
 
-import javax.annotation.Nonnull;
+
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -65,7 +65,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
     public AdvancedJTable_layer(final GUINetworkDesign networkViewer)
     {
-        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER, false);
+        super(createTableModel(networkViewer), networkViewer, NetworkElementType.LAYER);
         setDefaultCellRenderers(networkViewer);
         setSpecificCellRenderers();
         this.getTableHeader().setReorderingAllowed(false);
@@ -141,12 +141,6 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     {
         return true;
     }
-    
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        return callback.getDesign().getNumberOfLayers();
-    }
-
 
     @Override
     public int getAttributesColumnIndex()
@@ -192,7 +186,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     {
     }
 
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
         final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
@@ -219,7 +213,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
             if (selection.getElementType() != NetworkElementType.LAYER)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
@@ -272,33 +266,38 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
                     addPopupMenuAttributeOptions(selection, popup);
                 }
             }
-
         }
 
         return popup;
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         return;
     }
 
-    @Nonnull
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new ArrayList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         return null;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(ElementSelection selection)
     {
@@ -310,7 +309,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
         return false;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {

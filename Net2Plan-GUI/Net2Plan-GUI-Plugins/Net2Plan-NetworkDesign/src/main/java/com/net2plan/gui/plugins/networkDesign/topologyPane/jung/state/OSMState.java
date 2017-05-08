@@ -1,4 +1,4 @@
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.state;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
@@ -14,6 +14,7 @@ import org.jxmapviewer.viewer.GeoPosition;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -23,13 +24,13 @@ import java.util.Collections;
  * @author Jorge San Emeterio
  * @date 01-Dec-16
  */
-class OSMOnState implements OSMState
+class OSMState implements ICanvasState
 {
     private final GUINetworkDesign callback;
     private final ITopologyCanvas canvas;
     private final OSMController mapController;
 
-    OSMOnState(final GUINetworkDesign callback, final ITopologyCanvas canvas, final OSMController mapController)
+    OSMState(GUINetworkDesign callback, ITopologyCanvas canvas, OSMController mapController)
     {
         this.callback = callback;
         this.canvas = canvas;
@@ -37,7 +38,31 @@ class OSMOnState implements OSMState
     }
 
     @Override
-    public void panTo(final Point2D initialPoint, final Point2D currentPoint)
+    public void start()
+    {
+        mapController.startMap();
+    }
+
+    @Override
+    public void stop()
+    {
+        mapController.cleanMap();
+    }
+
+    @Override
+    public CanvasOption getState()
+    {
+        return CanvasOption.OSMState;
+    }
+
+    @Override
+    public Color getBackgroundColor()
+    {
+        return new Color(0, 0, 0, 0);
+    }
+
+    @Override
+    public void panTo(Point2D initialPoint, Point2D currentPoint)
     {
         final double dxPanelPixelCoord = (currentPoint.getX() - initialPoint.getX());
         final double dyPanelPixelCoord = (currentPoint.getY() - initialPoint.getY());
@@ -64,7 +89,7 @@ class OSMOnState implements OSMState
     }
 
     @Override
-    public void addNode(final Point2D pos)
+    public void addNode(Point2D pos)
     {
         final double scale = canvas.getCurrentCanvasScale();
         final Point2D swingPoint = new Point2D.Double(pos.getX() * scale, -pos.getY() * scale);
@@ -84,7 +109,7 @@ class OSMOnState implements OSMState
     }
 
     @Override
-    public void removeNode(final Node node)
+    public void removeNode(Node node)
     {
         node.remove();
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();

@@ -1,4 +1,11 @@
+//- AÑADIR TESTS PARA PD [faltan de restrict PD]
+//- AÑADIR A CHECKCONSISTENCY Y REPETIR TESTS
+//- CAMBIO DE PLANNING DOMAIN DE ELEMENTOS YA HAYA SE PUEDA HACER (TODOS A LA VEZ)
+//- SE PUEDA RESTRICT TO PLANNING DOMAIN DESPUES (SE COGE LO QUE HAY EN LOS MAPAS Y YA ESTÁ)
+//- HACER MÁS RAPIDO LO DE LAS TABLAS
+
 /*******************************************************************************
+ * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Lesser Public License v2.1
  * which accompanies this distribution, and is available at
@@ -11,13 +18,41 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import cern.colt.function.tdouble.DoubleFunction;
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+import org.apache.commons.lang3.mutable.MutableLong;
+import org.codehaus.stax2.XMLInputFactory2;
+import org.codehaus.stax2.XMLOutputFactory2;
+import org.codehaus.stax2.XMLStreamReader2;
+import org.codehaus.stax2.XMLStreamWriter2;
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
@@ -32,22 +67,15 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import org.apache.commons.lang3.mutable.MutableLong;
-import org.codehaus.stax2.XMLInputFactory2;
-import org.codehaus.stax2.XMLOutputFactory2;
-import org.codehaus.stax2.XMLStreamReader2;
-import org.codehaus.stax2.XMLStreamWriter2;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+import com.net2plan.utils.Triple;
 
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
-import java.awt.geom.Point2D;
-import java.io.*;
-import java.net.URL;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import cern.colt.function.tdouble.DoubleFunction;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * <p>Class defining a complete multi-layer network structure. Layers may
@@ -136,9 +164,11 @@ public class NetPlan extends NetworkElement
 
     Map<String,Set<NetworkElement>> cache_taggedElements;
     Map<String,Set<Node>> cache_nodesPerSiteName;
+    Map<String, Set<Node>> cache_planningDomain2nodes;
 
     DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
-
+    
+    
     /**
      * <p>Default constructor. Creates an empty design</p>
      *
@@ -176,7 +206,7 @@ public class NetPlan extends NetworkElement
         
         this.cache_taggedElements = new HashMap<> ();
         this.cache_nodesPerSiteName = new HashMap<> ();
-        
+        this.cache_planningDomain2nodes = new HashMap<> ();
         interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
 
         defaultLayer = addLayer("Layer 0", null, null, null, null, null);
@@ -363,8 +393,12 @@ public class NetPlan extends NetworkElement
         if (!this.tags.equals(np2.tags)) throw new RuntimeException("Bad. Tags: " + this.tags + ", otheR: " + np2.tags);
         if (!this.cache_taggedElements.keySet().equals(np2.cache_taggedElements.keySet())) throw new RuntimeException("Bad");
         if (!this.cache_nodesPerSiteName.keySet().equals(np2.cache_nodesPerSiteName.keySet())) throw new RuntimeException("Bad");
+        if (!this.cache_planningDomain2nodes.keySet().equals(np2.cache_planningDomain2nodes.keySet())) throw new RuntimeException("Bad");
         for (String tag : cache_taggedElements.keySet()) 
        		if (this.cache_taggedElements.get(tag).size() != np2.cache_taggedElements.get(tag).size())
+       			throw new RuntimeException("Bad");
+        for (String pd : cache_planningDomain2nodes.keySet()) 
+       		if (!NetPlan.getIds(this.cache_planningDomain2nodes.get(pd)).equals(NetPlan.getIds(np2.cache_planningDomain2nodes.get(pd))))
        			throw new RuntimeException("Bad");
         for (String siteName : cache_nodesPerSiteName.keySet()) 
        		if (this.cache_nodesPerSiteName.get(siteName).size() != np2.cache_nodesPerSiteName.get(siteName).size())
@@ -374,6 +408,7 @@ public class NetPlan extends NetworkElement
         for (int cont = 0; cont < resources.size(); cont++)
             if (!this.getResource(cont).isDeepCopy(np2.getResource(cont)))
                 throw new RuntimeException("Bad"); //return false;
+        
         for (int cont = 0; cont < srgs.size(); cont++)
             if (!this.getSRG(cont).isDeepCopy(np2.getSRG(cont))) throw new RuntimeException("Bad"); //return false;
         for (int cont = 0; cont < layers.size(); cont++)
@@ -446,7 +481,7 @@ public class NetPlan extends NetworkElement
         checkInThisNetPlan(egressNode);
         if (ingressNode.equals(egressNode)) throw new Net2PlanException("Self-demands are not allowed");
         if (offeredTraffic < 0) throw new Net2PlanException("Offered traffic must be non-negative");
-
+        
         if (demandId == null)
         {
             demandId = nextElementId.longValue();
@@ -629,7 +664,7 @@ public class NetPlan extends NetworkElement
         if (capacity < 0) throw new Net2PlanException("Link capacity must be non-negative");
         if (lengthInKm < 0) throw new Net2PlanException("Link length must be non-negative");
         if (propagationSpeedInKmPerSecond <= 0) throw new Net2PlanException("Propagation speed must be positive");
-
+        
         if (linkId == null)
         {
             linkId = nextElementId.longValue();
@@ -715,7 +750,7 @@ public class NetPlan extends NetworkElement
         if (egressNodes.contains(ingressNode))
             throw new Net2PlanException("The ingress node cannot be also an egress node");
         if (offeredTraffic < 0) throw new Net2PlanException("Offered traffics must be non-negative");
-
+        
         for (Node n : egressNodes) n.checkAttachedToNetPlanObject(this);
         if (egressNodes.contains(ingressNode))
             throw new Net2PlanException("The ingress node is also an egress node of the multicast demand");
@@ -727,7 +762,8 @@ public class NetPlan extends NetworkElement
             nextElementId.increment();
         }
 
-        MulticastDemand demand = new MulticastDemand(this, demandId, layer.multicastDemands.size(), layer, ingressNode, egressNodes, offeredTraffic, new AttributeMap(attributes));
+        MulticastDemand demand = new MulticastDemand(this, demandId, layer.multicastDemands.size(), layer, ingressNode, egressNodes, 
+        		offeredTraffic, new AttributeMap(attributes));
 
         cache_id2MulticastDemandMap.put(demandId, demand);
         layer.multicastDemands.add(demand);
@@ -778,6 +814,7 @@ public class NetPlan extends NetworkElement
         cache_id2MulticastTreeMap.put(treeId, tree);
         layer.multicastTrees.add(tree);
         boolean treeIsUp = true;
+        boolean treeTravZeroCapLinks = false;
         for (Node node : tree.cache_traversedNodes)
         {
             node.cache_nodeAssociatedulticastTrees.add(tree);
@@ -786,9 +823,11 @@ public class NetPlan extends NetworkElement
         for (Link link : linkSet)
         {
             if (!link.isUp) treeIsUp = false;
+            if (link.capacity < Configuration.precisionFactor) treeTravZeroCapLinks = true;
             link.cache_traversingTrees.add(tree);
         }
         if (!treeIsUp) layer.cache_multicastTreesDown.add(tree);
+        if (treeTravZeroCapLinks) layer.cache_multicastTreesTravLinkZeroCap.add(tree);
         demand.cache_multicastTrees.add(tree);
         tree.setCarriedTraffic(carriedTraffic, occupiedLinkCapacity);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -818,7 +857,6 @@ public class NetPlan extends NetworkElement
             nodeId = nextElementId.longValue();
             nextElementId.increment();
         }
-
         Node node = new Node(this, nodeId, nodes.size(), xCoord, yCoord, name, new AttributeMap(attributes));
 
         nodes.add(node);
@@ -849,7 +887,8 @@ public class NetPlan extends NetworkElement
     }
 
     Resource addResource(Long resourceId, String type, String name, Node hostNode, double capacity, String capacityMeasurementUnits,
-                         Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, AttributeMap attributes)
+                         Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, 
+                         AttributeMap attributes)
     {
         checkIsModifiable();
         if (capacity < 0) throw new Net2PlanException("Resource capacity cannot be negative");
@@ -858,7 +897,7 @@ public class NetPlan extends NetworkElement
         if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new HashMap<Resource, Double>();
         for (Double val : capacityIOccupyInBaseResource.values())
             if (val < 0) throw new Net2PlanException("Resource capacity cannot be negative");
-
+        
         if (resourceId == null)
         {
             resourceId = nextElementId.longValue();
@@ -932,6 +971,7 @@ public class NetPlan extends NetworkElement
             throw new Net2PlanException("Wrong size of occupations vector");
         for (double val : occupiedLinkAndResourceCapacities)
             if (val < 0) throw new Net2PlanException("Occupied capacities cannot be negative");
+        
         NetworkLayer layer = demand.layer;
 
         if (routeId == null)
@@ -945,6 +985,7 @@ public class NetPlan extends NetworkElement
         layer.routes.add(route);
         cache_id2RouteMap.put(routeId, route);
         boolean isUpThisRoute = true;
+        boolean isTraversingZeroCapLinks = false;
         for (Node node : route.cache_seqNodesRealPath)
         {
             node.cache_nodeAssociatedRoutes.add(route);
@@ -957,9 +998,11 @@ public class NetPlan extends NetworkElement
             else numPassingTimes++;
             link.cache_traversingRoutes.put(route, numPassingTimes);
             if (!link.isUp) isUpThisRoute = false;
+            if (link.capacity < Configuration.precisionFactor) isTraversingZeroCapLinks = true;
         }
         demand.cache_routes.add(route);
         if (!isUpThisRoute) layer.cache_routesDown.add(route);
+        if (isTraversingZeroCapLinks) layer.cache_routesTravLinkZeroCap.add(route);
         route.setCarriedTraffic(carriedTraffic, occupiedLinkAndResourceCapacities);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return route;
@@ -1490,6 +1533,7 @@ public class NetPlan extends NetworkElement
         this.cache_id2srgMap = netPlan.cache_id2srgMap;
         this.cache_taggedElements = netPlan.cache_taggedElements;
         this.cache_nodesPerSiteName = netPlan.cache_nodesPerSiteName;
+        this.cache_planningDomain2nodes = netPlan.cache_planningDomain2nodes;
         this.interLayerCoupling = netPlan.interLayerCoupling;
         this.tags.clear(); this.tags.addAll(netPlan.tags);
         for (String tag : this.tags) // remove reference to origin netPlan in tags (the other network elements do not change, but NetPlan does) 
@@ -1865,30 +1909,306 @@ public class NetPlan extends NetworkElement
         return netPlan;
     }
 
-    /**
-     * <p>Returns a deep copy of the current design, but restricting it to the given set of nodes (and thus keeping the same 
-     * ids of the network elements, but not necessarily the indexes). The links which are not between nodes in this set 
-     * are not included, as well as any route or tree traversing them, nor demands, resources, multicast demands etc. 
-     * affecting nodes that are not in the restricted set. Equivalent to making a copy, and then removing all the nodes not in 
-     * the restricted set.</p>
-     *
-     * @param restrictedSet Restricted set of nodes.
-     * @return Deep copy of the restricted current design
+    /** Replaces the partition of the current design by this design. The node ids are used to 
+     * match this and other design. Nodes that are in both are assumed to be the scope of the 
+     * partition. Then, all the links, demands etc. among these nodes are removed from current 
+     * design, and all the elements in the other design are added to this.  
+     * This operation is idempotent: merging x with x is x, merging x with y and again with y, is 
+     * the same as merging x with y just once
+     * @param other
+     * @return this (for convenience only)
      */
-    public NetPlan restrictedCopy(Set<Node> restrictedSet)
+    public NetPlan mergeIntoThisDesign (NetPlan otherDesign)
+    {
+    	final Map<NetworkElement,NetworkElement> thatToThisTranslation = new HashMap<>();
+
+    	/* All the elements in current design have the same id in the other */
+    	final Set<Node> nodesThis_thisAndOther = new HashSet<> ();
+    	final Set<Node> nodesThis_otherNotThis = new HashSet<> ();
+    	for (Node other : otherDesign.getNodes())
+    	{
+    		Node e = this.getNodeFromId(other.getId());
+    		if (e == null)
+    		{
+    			e = this.addNode(0, 0, "", null);
+        		nodesThis_otherNotThis.add(e);
+    		}
+    		else nodesThis_thisAndOther.add(e);
+    		thatToThisTranslation.put(other , e);
+    			
+    		e.setName(other.getName());
+    		e.setXYPositionMap(other.getXYPositionMap());
+    		e.setPopulation(other.getPopulation());
+    		e.setFailureState(other.isUp());
+    		e.setSiteName(other.getSiteName());
+    		e.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+    		for (String tag : other.getTags()) e.addTag(tag);
+    	}
+    	/* Merge resources. This is made in order: the ones that are base to others naturally appear first */
+    	for (Resource other : otherDesign.getResources())
+    	{
+    		Resource e = this.getResourceFromId(other.getId());
+			final Map<Resource,Double> thisOccupMap = new HashMap<> ();
+			for (Entry<Resource,Double> entry : other.getCapacityOccupiedInBaseResourcesMap().entrySet())
+			{
+				final Resource thisIdBaseResource = (Resource) thatToThisTranslation.get(entry.getKey()); 
+				if (thisIdBaseResource == null) throw new RuntimeException (); 
+				thisOccupMap.put (thisIdBaseResource , entry.getValue());
+			}
+    		if (e == null)
+    		{
+    			final Node thisHostNode = (Node)thatToThisTranslation.get(other.getHostNode());
+    			if (thisHostNode == null) throw new RuntimeException ();
+    			e = this.addResource(other.getType(), other.getName(), thisHostNode, 0 , "" , thisOccupMap , 0 , null);
+    		}
+    		thatToThisTranslation.put(other , e);
+    		e.setCapacityMeasurementUnits(other.getCapacityMeasurementUnits());
+    		e.setProcessingTimeToTraversingTrafficInMs(other.getProcessingTimeToTraversingTrafficInMs());
+    		e.setUrlIcon(other.getUrlIcon());
+    		e.setName(other.getName());
+    		e.setCapacity(other.getCapacity(), thisOccupMap);
+    		e.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+    		for (String tag : other.getTags()) e.addTag(tag);
+    	}
+    	
+    	/* Remove the links, demands, routes, trees, FRs between two nodes that are in THAT */
+    	for (NetworkLayer thisLayer : this.getNetworkLayers ())
+    	{
+    		for (Link e : new ArrayList<> (this.getLinks(thisLayer))) 
+    			if (nodesThis_thisAndOther.contains(e.getOriginNode()) && nodesThis_thisAndOther.contains(e.getDestinationNode()))
+    				e.remove();
+    		for (Demand e : new ArrayList<> (this.getDemands(thisLayer))) 
+    			if (nodesThis_thisAndOther.contains(e.getIngressNode()) && nodesThis_thisAndOther.contains(e.getEgressNode()))
+    				e.remove();
+    		for (MulticastDemand e : new ArrayList<> (this.getMulticastDemands(thisLayer))) 
+    			if (nodesThis_thisAndOther.contains(e.getIngressNode()) && nodesThis_thisAndOther.containsAll(e.getEgressNodes()))
+    				e.remove();
+    	}
+    	
+    	for (NetworkLayer otherLayer : otherDesign.getNetworkLayers ())
+    	{
+    		/* first the network layer, may be created */
+    		NetworkLayer thisLayer = getNetworkLayerFromId (otherLayer .getId());
+    		if (thisLayer != null) if (!thisLayer.getName().equals(otherLayer.getName())) throw new Net2PlanException ("Layer mismatch. Output may be corrupted");
+    		if (thisLayer == null)
+    		{
+    			thisLayer = addLayer(otherLayer.getName(), "", otherDesign.getLinkCapacityUnitsName(otherLayer), 
+    					otherDesign.getDemandTrafficUnitsName(otherLayer), null, null);
+    		}
+    		this.setDemandTrafficUnitsName(otherLayer.demandTrafficUnitsName , thisLayer);
+    		this.setLinkCapacityUnitsName(otherLayer.linkCapacityUnitsName , thisLayer);
+    		thisLayer.setDescription(otherLayer.getDescription());
+    		thisLayer.setName(otherLayer.getName());
+    		this.setRoutingType(otherDesign.getRoutingType(otherLayer), thisLayer);
+    		thisLayer.setDefaultNodeIconURL(otherLayer.getDefaultNodeIconURL());
+    		thisLayer.setAttributeMap(otherLayer.getAttributes()); // previous attributes are not removed, just new added or existing updated
+    		for (String tag : otherLayer.getTags()) thisLayer.addTag(tag);
+    		
+        	for (Link other : otherDesign.getLinks(otherLayer))
+        	{
+        		if (this.getLinkFromId(other.getId()) != null) throw new RuntimeException();
+        		final Node this_ae = (Node) thatToThisTranslation.get(other.getOriginNode());
+        		final Node this_be = (Node) thatToThisTranslation.get(other.getDestinationNode());
+       			final Link e = this.addLink(this_ae, this_be, 0, 0, 0.1, null, thisLayer);
+       			thatToThisTranslation.put(other,e);
+        		e.setCapacity(other.getCapacity());
+        		e.setLengthInKm(other.getLengthInKm());
+        		e.setPropagationSpeedInKmPerSecond(other.getPropagationDelayInMs());
+        		e.setFailureState(!other.isDown());
+        		e.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+        		for (String tag : other.getTags()) e.addTag(tag);
+        	}
+        	for (Demand otherDemand : otherDesign.getDemands(otherLayer))
+        	{
+        		if (this.getDemandFromId(otherDemand.getId()) != null) throw new RuntimeException();
+        		final Node this_ae = (Node)thatToThisTranslation.get(otherDemand.getIngressNode());
+        		final Node this_be = (Node)thatToThisTranslation.get(otherDemand.getEgressNode());
+        		final Demand thisDemand = this.addDemand(this_ae, this_be, 0, null, thisLayer);
+        		thatToThisTranslation.put(otherDemand,thisDemand);
+        		thisDemand.setOfferedTraffic(otherDemand.getOfferedTraffic());
+        		thisDemand.setIntendedRecoveryType(otherDemand.getIntendedRecoveryType());
+        		thisDemand.setAttributeMap(otherDemand.getAttributes()); // previous attributes are not removed, just new added or existing updated
+        		for (String tag : otherDemand.getTags()) thisDemand.addTag(tag);
+        		if (thisLayer.isSourceRouting())
+        		{
+        			thisDemand.setServiceChainSequenceOfTraversedResourceTypes(otherDemand.getServiceChainSequenceOfTraversedResourceTypes());
+                	for (Route other : otherDemand.getRoutes())
+                	{
+                		final Triple<Double,List<NetworkElement>,List<Double>> initialStateOther = other.getInitialState();  
+                		final List<NetworkElement> pathThisInitial = initialStateOther.getSecond().stream().
+                				map(x->thatToThisTranslation.get(x)).
+                				collect(Collectors.toList());
+                		final List<NetworkElement> pathThis = other.getPath().stream().
+                				map(x->thatToThisTranslation.get(x)).
+                				collect(Collectors.toList());
+                		if (pathThis.contains(null)) throw new RuntimeException ();
+                		Route r = null;
+                		if (!pathThisInitial.contains(null))
+                		{
+                    		r = this.addServiceChain(thisDemand, initialStateOther.getFirst(), new ArrayList<>(initialStateOther.getThird()), pathThisInitial, null);
+                    		r.setPath(other.getCarriedTrafficInNoFailureState(), pathThis, new ArrayList<>(other.getSeqOccupiedCapacitiesIfNotFailing()));
+                		}
+                		else
+                		{
+                    		this.addServiceChain(thisDemand, other.getCarriedTrafficInNoFailureState(), new ArrayList<>(other.getSeqOccupiedCapacitiesIfNotFailing()) , pathThis, null);
+                		}
+                		r.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+                		for (String tag : other.getTags()) r.addTag(tag);
+                		thatToThisTranslation.put(other , r);
+                	}
+                	for (Route backupOther : otherDemand.getRoutesAreBackup())
+                	{
+                		final Route thisBackup = (Route) thatToThisTranslation.get(backupOther);
+                		for (Route mainOther : backupOther.getRoutesIAmBackup())
+                		{
+                    		final Route thisMain = (Route) thatToThisTranslation.get(mainOther);
+                    		thisMain.addBackupRoute(thisBackup);
+                		}
+                	}
+        		}
+        		else
+        		{
+        			thisDemand.removeAllForwardingRules();
+            		final Map<Pair<Demand,Link>,Double> otherFrs = otherDemand.getForwardingRules();
+            		final List<Demand> frDemands = new ArrayList<> (otherFrs.size());
+            		final List<Link> frLinks = new ArrayList<> (otherFrs.size());
+            		final List<Double> frSplits = new ArrayList<> (otherFrs.size());
+            		for (Entry<Pair<Demand,Link>,Double> otherFr : otherFrs.entrySet())
+            		{
+            			final Link thisLink =  (Link) thatToThisTranslation.get(otherFr.getKey().getSecond());
+            			frDemands.add(thisDemand);
+            			frLinks.add(thisLink);
+            			frSplits.add(otherFr.getValue());
+            		}
+                	this.setForwardingRules(frDemands , frLinks , frSplits, true);
+        		}
+        	}
+        	for (MulticastDemand otherDemand : otherDesign.getMulticastDemands(otherLayer))
+        	{
+       			if (this.getMulticastDemandFromId(otherDemand.getId()) != null) throw new RuntimeException();
+        		final Node this_ae = (Node)thatToThisTranslation.get(otherDemand.getIngressNode());
+        		final Set<Node> this_be = otherDemand.getEgressNodes().stream().map(x->(Node)thatToThisTranslation.get(x)).collect(Collectors.toSet());
+       			final MulticastDemand thisDemand = this.addMulticastDemand(this_ae, this_be, 0, null, thisLayer);
+        		thisDemand.setOfferedTraffic(otherDemand.getOfferedTraffic());
+        		thisDemand.setAttributeMap(otherDemand.getAttributes()); // previous attributes are not removed, just new added or existing updated
+        		for (String tag : otherDemand.getTags()) thisDemand.addTag(tag);
+        		thatToThisTranslation.put(otherDemand , thisDemand);
+        		for (MulticastTree other : otherDemand.getMulticastTrees())
+        		{
+            		final Set<Link> initialLinkSet = other.getInitialLinkSet().stream().
+            				map(x->(Link) thatToThisTranslation.get(x)).collect(Collectors.toSet());  
+            		final Set<Link> currentLinkSet = other.getLinkSet().stream().
+            				map(x->(Link)thatToThisTranslation.get(x)).
+            				collect(Collectors.toSet());
+            		if (currentLinkSet.contains(null)) throw new RuntimeException ();
+            		MulticastTree t = null;
+            		if (!initialLinkSet.contains(null))
+            		{
+                		t = this.addMulticastTree(thisDemand, 0, 0, initialLinkSet, null);
+                		t.setLinks(currentLinkSet);
+            		}
+            		else
+            		{
+                		t = this.addMulticastTree(thisDemand, 0, 0, currentLinkSet, null);
+            		}
+            		t.setCarriedTraffic(other.getCarriedTrafficInNoFailureState(), other.getOccupiedLinkCapacityInNoFailureState());
+            		t.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+            		for (String tag : other.getTags()) t.addTag(tag);
+            		thatToThisTranslation.put(other , t);
+        		}
+        	}
+    	}
+
+    	for (NetworkLayer otherLayer : otherDesign.getNetworkLayers ())
+    	{
+    		for (Demand otherDemand : otherDesign.getDemands(otherLayer))
+    		{
+    			if (!otherDemand.isCoupled()) continue;
+        		final Demand thisDemand = (Demand) thatToThisTranslation.get(otherDemand);
+        		final Link otherUpperLink = otherDemand.getCoupledLink();
+        		final Link thisUpperLink = (Link) thatToThisTranslation.get(otherUpperLink);
+    			thisDemand.coupleToUpperLayerLink(thisUpperLink);
+    		}
+    		for (MulticastDemand otherDemand : otherDesign.getMulticastDemands(otherLayer))
+    		{
+    			if (!otherDemand.isCoupled()) continue;
+        		final MulticastDemand thisDemand = (MulticastDemand) thatToThisTranslation.get(otherDemand);
+        		final Set<Link> otherUpperLinks = otherDemand.getCoupledLinks();
+        		final Set<Link> thisUpperLinks = otherUpperLinks.stream().map(x->(Link) thatToThisTranslation.get(x)).collect(Collectors.toSet());
+    			thisDemand.couple(thisUpperLinks);
+    		}
+    	}
+    	
+    	for (SharedRiskGroup other : otherDesign.getSRGs())
+    	{
+    		SharedRiskGroup thisSrg = this.getSRGFromId(other.getId());
+    		final Set<Node> thisNodes = other.getNodes().stream().map(x->(Node) thatToThisTranslation.get(x)).collect(Collectors.toSet());
+    		final Set<Link> thisLinks = other.getLinksAllLayers().stream().map(x->(Link) thatToThisTranslation.get(x)).collect(Collectors.toSet());
+    		if (thisSrg == null)
+    			thisSrg = this.addSRG(other.getMeanTimeToFailInHours(), other.getMeanTimeToRepairInHours(), null);
+    		for (Node n :  thisNodes) thisSrg.addNode(n);
+    		for (Link e :  thisLinks) thisSrg.addLink(e);
+    		thisSrg.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
+    		for (String tag : other.getTags()) thisSrg.addTag(tag);
+    	}
+    	return this;
+    }
+    
+    /**
+     * First computes the nodes to keep in the planning: these are the selected nodes, 
+     * the nodes involved in the demands/mDemands between them in this layer, 
+     * the nodes involved in the links at this layer that carry traffic between the selected nodes, 
+     * and the nodes associated to the links/demands at lower layers, 
+     * that carry the traffic between the selected nodes in the given layer, or carry traffic 
+     * at lower layers, of the links at this layer between the selected nodes.
+     * After computing such nodes, removes from the design all the nodes outside such set.  
+     * If keepConnectivitySets is set, all the links in the shortest path between the selected nodes 
+     * in the given layer, and those that would carry its traffic, are kept. Then, the resulting design has the 
+     * same connected components than the original graph.
+     * @param selectedNodes the selected nodes
+     * @param trafficLayer see above
+     * @param keepConnectivitySets see above
+     * @return this 
+     */
+    public NetPlan restrictDesign (Set<Node> selectedNodes)
     {
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-        NetPlan npCopy = this.copy();
-        Set<Long> restrictedSetIds = restrictedSet.stream().map(n->n.getId()).collect(Collectors.toSet());
-		for (Node n : new HashSet<> (npCopy.getNodes()))
-			if (!restrictedSetIds.contains(n.getId()))
-				n.remove();
-        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-        if (ErrorHandling.isDebugEnabled()) npCopy.checkCachesConsistency();
-        return npCopy;
+    	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return this;
+    	Set<Node> nodesToKeep = new HashSet<>(selectedNodes);
+    	
+    	while (true)
+    	{
+    		final Set<Node> nodesThisIteration = new HashSet<> (nodesToKeep);
+    		for (NetworkLayer layer : layers)
+    		{
+    			for (Demand d : getDemands (layer))
+    			{
+    				if (!nodesToKeep.contains(d.getIngressNode()) || !nodesToKeep.contains(d.getEgressNode())) continue;
+    				if (layer.isSourceRouting()) d.getRoutes().stream().forEach(r->nodesThisIteration.addAll(r.getSeqNodes()));
+    				if (!layer.isSourceRouting()) d.getForwardingRules().keySet().stream().map(p->p.getSecond()).forEach(e->nodesThisIteration.addAll(Sets.newHashSet(e.getOriginNode() , e.getDestinationNode())));
+    			}
+    			for (MulticastDemand d : getMulticastDemands (layer))
+    			{
+    				if (!nodesToKeep.contains(d.getIngressNode()) || !nodesToKeep.containsAll(d.getEgressNodes())) continue;
+    				d.getMulticastTrees().stream().forEach(t->nodesThisIteration.addAll(t.getNodeSet()));
+    			}
+    			for (Link e : getLinks (layer))
+    			{
+    				if (!nodesToKeep.contains(e.getOriginNode()) || !nodesToKeep.contains(e.getDestinationNode())) continue;
+    				if (layer.isSourceRouting()) e.getTraversingRoutes().stream().forEach(r->nodesThisIteration.addAll(r.getSeqNodes()));
+    				if (!layer.isSourceRouting()) e.getForwardingRules().keySet().stream().map(p->p.getFirst()).forEach(d->nodesThisIteration.addAll(Sets.newHashSet(d.getIngressNode() , d.getEgressNode())));
+    				e.getTraversingTrees().stream().forEach(t->nodesThisIteration.addAll(t.getNodeSet()));
+    			}
+    		}
+    		
+    		if (nodesToKeep.equals(nodesThisIteration)) break; 
+    		if (!Sets.difference(nodesToKeep, nodesThisIteration).isEmpty()) throw new RuntimeException(); // sets always grow
+    		nodesToKeep = nodesThisIteration; 
+    	}    
+    	for (Node n : new ArrayList<>(getNodes())) if (!nodesToKeep.contains(n)) n.remove ();
+    	return this;
     }
 
-    
     /**
      * <p>Removes all information from the current {@code NetPlan} and copy the information from the input {@code NetPlan}.</p>
      *
@@ -1920,6 +2240,8 @@ public class NetPlan extends NetworkElement
         this.cache_id2MulticastTreeMap = new HashMap<Long, MulticastTree>();
         this.cache_taggedElements = new HashMap<> ();
         this.cache_nodesPerSiteName = new HashMap<> ();
+        this.cache_planningDomain2nodes = new HashMap<> (); 
+        for (String pd : originNetPlan.cache_planningDomain2nodes.keySet()) this.cache_planningDomain2nodes.put(pd, new HashSet<> ());
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = true;
         this.networkDescription = originNetPlan.networkDescription;
@@ -1932,10 +2254,14 @@ public class NetPlan extends NetworkElement
 		/* Create the new network elements, not all the fields filled */
         for (Node originNode : originNetPlan.nodes)
         {
-            Node newElement = new Node(this, originNode.id, originNode.index, originNode.nodeXYPositionMap.getX(), originNode.nodeXYPositionMap.getY(), originNode.name, originNode.attributes);
+            Node newElement = new Node(this, originNode.id, originNode.index, originNode.nodeXYPositionMap.getX(), originNode.nodeXYPositionMap.getY(), 
+            		originNode.name, originNode.attributes);
+            for (String pd : originNode.getPlanningDomains ()) newElement.addToPlanningDomain(pd);
             for (String tag : originNode.getTags ()) newElement.addTag (tag);
             newElement.setSiteName(originNode.siteName);
             cache_id2NodeMap.put(originNode.id, newElement);
+            for (String pd : originNode.getPlanningDomains ()) 
+            	cache_planningDomain2nodes.get(pd).add(newElement);
             nodes.add(newElement);
             if (!originNode.isUp) cache_nodesDown.add(newElement);
         }
@@ -1943,7 +2269,8 @@ public class NetPlan extends NetworkElement
         {
             Resource newElement = new Resource(this, originResource.id, originResource.index, originResource.type,
                     originResource.name, this.cache_id2NodeMap.get(originResource.hostNode.id),
-                    originResource.capacity, originResource.capacityMeasurementUnits, null, originResource.processingTimeToTraversingTrafficInMs, originResource.attributes);
+                    originResource.capacity, originResource.capacityMeasurementUnits, null, 
+                    originResource.processingTimeToTraversingTrafficInMs, originResource.attributes);
             for (String tag : originResource.getTags ()) newElement.addTag (tag);
             cache_id2ResourceMap.put(originResource.id, newElement);
             Set<Resource> resOfThisType = cache_type2Resources.get(originResource.type);
@@ -2385,10 +2712,7 @@ public class NetPlan extends NetworkElement
     public Set<Link> getLinksWithZeroCapacity(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-        Set<Link> res = new HashSet<Link>();
-        for (Link e : layer.links) if (e.capacity < PRECISION_FACTOR) res.add(e);
-        return res;
+        return Collections.unmodifiableSet(layer.cache_linksZeroCap);
     }
 
     /**
@@ -3445,10 +3769,20 @@ public class NetPlan extends NetworkElement
      */
     public Set<MulticastTree> getMulticastTreesDown(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Set<MulticastTree> res = new HashSet<MulticastTree>();
-        for (MulticastTree r : layer.multicastTrees) if (r.isDown()) res.add(r);
-        return res;
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        return Collections.unmodifiableSet(layer.cache_multicastTreesDown);
+    }
+
+    /**
+     * <p>Returns the set of multicast trees that are down (i.e. that traverse a link or node that has failed).</p>
+     *
+     * @param optionalLayerParameter Network layer (optional)
+     * @return the {@code Set} of multicast trees that are down
+     */
+    public Set<MulticastTree> getMulticastTreesTraversingZeroCapLinks (NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        return Collections.unmodifiableSet(layer.cache_multicastTreesTravLinkZeroCap);
     }
 
     /**
@@ -3989,11 +4323,22 @@ public class NetPlan extends NetworkElement
      */
     public Set<Route> getRoutesDown(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-        Set<Route> res = new HashSet<Route>();
-        for (Route r : layer.routes) if (r.isDown()) res.add(r);
-        return res;
+        return Collections.unmodifiableSet(layer.cache_routesDown);
+    }
+
+    /**
+     * <p>Returns the set of routes that are traversing a link with zero capacity. If no layer is provided, default layer is assumed</p>
+     *
+     * @param optionalLayerParameter network layer (optional)
+     * @return see above
+     */
+    public Set<Route> getRoutesTraversingZeroCapacityLinks (NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+        return Collections.unmodifiableSet(layer.cache_routesTravLinkZeroCap);
     }
 
     /**
@@ -4005,7 +4350,7 @@ public class NetPlan extends NetworkElement
      */
     public RoutingType getRoutingType(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         return layer.routingType;
     }
 
@@ -4779,6 +5124,101 @@ public class NetPlan extends NetworkElement
     	if (res == null) return new HashSet<> (); else return res;
     }
 
+//    /** Sets the default planning domain, to the one specified (it should exist). 
+//     * @param defaultPlanningDomain
+//     */
+//    public void setDefaultPlanningDomain (String defaultPlanningDomain) 
+//    {
+//    	if (!this.cache_planningDomain2nodes.containsKey(defaultPlanningDomain)) throw new Net2PlanException ("Planning domain " + defaultPlanningDomain + " does not exist");
+//    	this.defaultPlanningDomainForNewElements = defaultPlanningDomain;
+//    }
+//    
+    /** Returns the set of defined planning domains in this network design 
+     * @return see above
+     */
+    public Set<String> getGlobalPlanningDomains ()
+    {
+    	return this.cache_planningDomain2nodes.keySet();
+    }
+
+    /** Returns the network elements associated to the given planning domain, or null if the planning domain was not defined
+     * @param planningDomain the planning domain
+     * @return see above
+     */
+    public Set<Node> getGlobalPlanningDomainNodes (String planningDomain)
+    {
+    	return this.cache_planningDomain2nodes.get(planningDomain);
+    }
+
+    /** Adds a new planning domain to which elements can be assigned in the design. If the planning domain already exists, an exception is raised
+     * @param planningDomain the name of the planning domain
+     */
+    public void addGlobalPlanningDomain (String planningDomain)
+    {
+    	if (this.cache_planningDomain2nodes.containsKey(planningDomain)) throw new Net2PlanException ("Planning domain " + planningDomain + " already exists");
+    	this.cache_planningDomain2nodes.put(planningDomain, new HashSet <> ());
+    }
+    
+    /** Removes a global planning domain, if no elements have it assigned, and there is left at least one planning domain
+     * @param planningDomain
+     */
+    public void removeGlobalPlanningDomain (String planningDomain)
+    {
+    	if (!this.cache_planningDomain2nodes.containsKey(planningDomain)) return;
+    	if (!this.cache_planningDomain2nodes.get(planningDomain).isEmpty()) throw new Net2PlanException ("Planning domain " + planningDomain + " cannot be removed while having elements in it");
+    	this.cache_planningDomain2nodes.remove(planningDomain);
+    }
+
+    /** Change globally the name of a planning domain, updating the information in all the elements
+     * @param oldName the old name (should exist)
+     * @param newName the new name (should not exist)
+     */
+    public void renameGlobalPlanningDomain (String oldName , String newName)
+    {
+    	if (!this.cache_planningDomain2nodes.containsKey(oldName)) throw new Net2PlanException ("Planning domain " + oldName + " does not exist");
+    	if (this.cache_planningDomain2nodes.containsKey(newName)) throw new Net2PlanException ("Planning domain " + newName + " already exists");
+    	final Set<Node> eToChangePd = this.cache_planningDomain2nodes.get(oldName);
+    	for (Node e : eToChangePd)
+    	{
+    		if (e.planningDomains.contains(oldName)) throw new RuntimeException ();
+    		e.planningDomains.remove(oldName);
+    		e.planningDomains.add(newName);
+    	}
+    	this.cache_planningDomain2nodes.remove (oldName);
+    	this.cache_planningDomain2nodes.put (newName , eToChangePd);
+    }
+    
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		throw new Net2PlanException ("NetPlan objects do not have associated planning domains");
+	}
+
+    /** Returns all the elements in the design that must have a common planning domain with the rootElements (assuming they have a common planning domain)
+     * This function is used internally to check things are done correctly
+     * @param rootElements
+     * @return
+     */
+    Set<NetworkElement> getPlanningDomainMandatoryConnectivity (Set<NetworkElement> rootElements)
+    {
+    	final Set<NetworkElement> res =  new HashSet<> ();
+    	final Set<NetworkElement> newElementsAdded = new HashSet<>(rootElements);
+    	while (!newElementsAdded.isEmpty())
+    	{
+    		for (NetworkElement e : newElementsAdded)
+    		{
+    			final Set<NetworkElement> elementsCommonPdThisElement = e.getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ();
+    			for (NetworkElement toAdd : elementsCommonPdThisElement)
+    			{
+    				final boolean isNew = res.add(toAdd);
+    				if (isNew) newElementsAdded.add(toAdd);
+    			}
+    			newElementsAdded.remove(e);
+    		}
+    	} 
+    	return res;
+    }
+    
+    
     /** Returns the set of all site names defined in the network
      * @return see above
      */
@@ -5172,7 +5612,7 @@ public class NetPlan extends NetworkElement
         NetPlan.removeNetworkElementAndShiftIndexes(netPlan.layers, layer.index);
         if (netPlan.defaultLayer.equals(layer)) netPlan.defaultLayer = netPlan.layers.get(0);
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-        layer.removeId();
+        layer.removeIdAndFromPlanningDomain();
     }
 
     /**
@@ -5208,7 +5648,8 @@ public class NetPlan extends NetworkElement
         	d.cache_worstCasePropagationTimeMs = Double.MAX_VALUE;
             d.routingCycleType = RoutingCycleType.LOOPLESS;
             d.carriedTraffic = 0;
-            if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = d.carriedTraffic;
+            if (d.coupledUpperLayerLink != null)
+            	d.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(d.carriedTraffic);
         }
         for (Link e : layer.links)
         {
@@ -5339,14 +5780,16 @@ public class NetPlan extends NetworkElement
     		for (Node node : r.cache_seqNodesRealPath) node.cache_nodeAssociatedRoutes.remove(r);
     		netPlan.cache_id2RouteMap.remove(r.id);
     		layer.cache_routesDown.remove (r);
+    		layer.cache_routesTravLinkZeroCap.remove(r);
             for (String tag : r.tags) netPlan.cache_taggedElements.get(tag).remove(r);
-            r.removeId();
+            r.removeIdAndFromPlanningDomain();
         }
         for (Demand d : netPlan.getDemands(layer))
         {
         	d.carriedTraffic = 0;
         	d.routingCycleType = RoutingCycleType.LOOPLESS;
-        	if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = 0;
+        	if (d.coupledUpperLayerLink != null)
+        		d.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(0);
     		d.cache_routes.clear ();
     		d.cache_worstCasePropagationTimeMs = 0;        
     		d.cache_worstCaseLengthInKm = 0;
@@ -5514,6 +5957,18 @@ public class NetPlan extends NetworkElement
             writer.writeAttribute("name", getNetworkName());
             writer.writeAttribute("version", Version.getFileFormatVersion());
             writer.writeAttribute("nextElementId", nextElementId.toString());
+            int counter = 0; 
+            for (String planningDomain : this.cache_planningDomain2nodes.keySet())
+            	writer.writeAttribute("planningDomain_" + (counter++), planningDomain); 
+            
+            
+//            for (String planningDomain : this.cache_planningDomain2nodes.keySet())
+//            {
+//                XMLUtils.indent(writer, 2);
+//                writer.writeEmptyElement("planningDomain");
+//                writer.writeAttribute("name", "");
+//                writer.writeAttribute("value", planningDomain);
+//            }
 
             //Set<Long> nodeIds_thisNetPlan = new HashSet<Long> (getNodeIds());
             for (Node node : nodes)
@@ -5528,8 +5983,10 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("name", node.name);
                 writer.writeAttribute("population", Double.toString(node.population));
                 if (node.siteName != null) writer.writeAttribute("siteName", node.siteName);
-                
                 writer.writeAttribute("isUp", Boolean.toString(node.isUp));
+                int pdCounter = 0; for (String pd : node.getPlanningDomains()) 
+                	writer.writeAttribute("planningDomain_" + (pdCounter++), pd); 
+                
                 final Set<NetworkLayer> layersWithIcons = layers.stream().filter(l -> node.getUrlNodeIcon(l) != null).collect(Collectors.toSet());
                 final List<Long> idsLayersWithIcons = layersWithIcons.stream().map(l -> l.getId()).collect(Collectors.toList());
                 writer.writeAttribute("layersWithIconsDefined", CollectionUtils.join(idsLayersWithIcons, " "));
@@ -5695,6 +6152,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("demandId", Long.toString(tree.demand.id));
                     writer.writeAttribute("carriedTrafficIfNotFailing", Double.toString(tree.carriedTrafficIfNotFailing));
                     writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(tree.occupiedLinkCapacityIfNotFailing));
+
                     List<Long> linkIds = new LinkedList<Long>();
                     for (Link e : tree.linkSet) linkIds.add(e.id);
                     writer.writeAttribute("currentSetLinks", CollectionUtils.join(linkIds, " "));
@@ -5848,7 +6306,7 @@ public class NetPlan extends NetworkElement
             
             
             for (String tag : this.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
-            
+
             for (Entry<String, String> entry : this.attributes.entrySet())
             {
                 XMLUtils.indent(writer, 1);
@@ -6056,21 +6514,26 @@ public class NetPlan extends NetworkElement
      * @param links              Links
      * @param splittingFactors   Splitting ratios (fraction of traffic from demand 'd' entering to the origin node of link 'e', going through link 'e').
      *                           Each value must be equal or greater than 0 and equal or lesser than 1.
-     * @param includeUnusedRules Inclue {@code true} or not {@code false} unused rules
+     * @param removePreviousRulesAffectedDemands Inclue {@code true} or not {@code false} unused rules
      */
-    public void setForwardingRules(Collection<Demand> demands, Collection<Link> links, Collection<Double> splittingFactors, boolean includeUnusedRules)
+    public void setForwardingRules(Collection<Demand> demands, Collection<Link> links, Collection<Double> splittingFactors, boolean removePreviousRulesAffectedDemands)
     {
         checkIsModifiable();
         if ((demands.size() != links.size()) || (demands.size() != splittingFactors.size()))
             throw new Net2PlanException("The number of demands, links and aplitting factors must be the same");
         if (demands.isEmpty()) return;
-        NetworkLayer layer = demands.iterator().next().layer;
+        final NetworkLayer layer = demands.iterator().next().layer;
         checkInThisNetPlanAndLayer(demands, layer);
         checkInThisNetPlanAndLayer(links, layer);
-        
+
+        /* If asked, remove previous forwarding rules of the affected demands */
+    	final Set<Demand> affectedDemands = new HashSet<> (demands);
+        if (removePreviousRulesAffectedDemands)
+        	for (Demand d : affectedDemands) d.removeAllForwardingRules();
+
         /* Initialize the map with existing demands */
         Map<Demand,Map<Link,Double>> newForwardingRules = new HashMap<> ();
-        for (Demand d : layer.demands) newForwardingRules.put(d, d.cacheHbH_frs);
+        for (Demand d : affectedDemands) newForwardingRules.put(d, d.cacheHbH_frs);
         
         /* Update with new demands */
         Iterator<Demand> it_d = demands.iterator();
@@ -6127,10 +6590,9 @@ public class NetPlan extends NetworkElement
         int E = layer.links.size();
         if (f_de.rows() != D || f_de.columns() != E)
             throw new Net2PlanException("'f_de' should be a " + D + " x" + E + " matrix (demands x links)");
-        
         if ((D == 0) || (E == 0))
             return;
-
+        
         if ((D > 0) && (E > 0))
             if ((f_de.getMinLocation()[0] < -1e-3) || (f_de.getMaxLocation()[0] > 1 + 1e-3))
                 throw new Net2PlanException("Splitting ratios must be greater or equal than zero and lower or equal than one");
@@ -6320,7 +6782,8 @@ public class NetPlan extends NetworkElement
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         final DoubleMatrix2D trafficBased_xde = xdeValueAsFractionsRespectToDemandOfferedTraffic ? DoubleFactory2D.sparse.diagonal(getVectorDemandOfferedTraffic(layer)).zMult(x_de, null) : x_de;
         checkMatrixDemandLinkCarriedTrafficFlowConservationConstraints(trafficBased_xde, false, layer);
-
+        if (x_de.rows() == 0) return;
+        
         if (removeCycles)
             x_de = GraphUtils.removeCyclesFrom_xde(nodes, layer.links, layer.demands, x_de, xdeValueAsFractionsRespectToDemandOfferedTraffic, Configuration.getOption("defaultILPSolver"), null, -1);
 
@@ -6372,6 +6835,7 @@ public class NetPlan extends NetworkElement
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         checkMatrixDestinationLinkCarriedTrafficFlowConservationConstraints(x_te, layer);
+        
 
         if (removeCycles)
             x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver"), null, -1);
@@ -6564,7 +7028,7 @@ public class NetPlan extends NetworkElement
             if ((e.coupledLowerLayerDemand != null) || (e.coupledLowerLayerMulticastDemand != null))
                 throw new Net2PlanException("Coupled links cannot change its capacity");
         for (Link e : layer.links)
-            e.capacity = linkCapacities.get(e.index);
+            e.updateCapacityAndZeroCapacityLinksAndRoutesCaches(linkCapacities.get(e.index));
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -7184,6 +7648,13 @@ public class NetPlan extends NetworkElement
             }
         }
 
+        /* Check the planning domains consistency */
+        final Set<String> globalPlanningDomains = this.cache_planningDomain2nodes.keySet();
+        if (!nodes.stream().allMatch(n->globalPlanningDomains.containsAll(n.getPlanningDomains()))) throw new RuntimeException();
+        for (Node n : netPlan.getNodes()) for (String pd : n.getPlanningDomains()) if (!this.cache_planningDomain2nodes.get(pd).contains(n)) throw new RuntimeException();
+        for (String pd : globalPlanningDomains)
+        	this.cache_planningDomain2nodes.get(pd).stream().allMatch(e->e.planningDomains.contains(pd));
+        
         if (layers.get(defaultLayer.index) != defaultLayer) throw new RuntimeException("Bad");
     }
 
@@ -7339,7 +7810,40 @@ public class NetPlan extends NetworkElement
         else throw new RuntimeException("Bad");
 
     }
-
+    private NetworkElement getFromId(long id)
+    {
+    	if (this.id == id) return this;
+    	NetworkElement el = cache_id2LinkMap.get(id); if (el != null) return el;
+    	el = cache_id2DemandMap.get(id); if (el != null) return el;
+    	el = cache_id2MulticastDemandMap.get(id); if (el != null) return el;
+    	el = cache_id2LayerMap.get(id); if (el != null) return el;
+    	el = cache_id2NodeMap.get(id); if (el != null) return el;
+    	el = cache_id2ResourceMap.get(id); if (el != null) return el;
+    	el = cache_id2RouteMap.get(id); if (el != null) return el;
+    	el = cache_id2srgMap.get(id); if (el != null) return el;
+    	el = cache_id2MulticastTreeMap.get(id); if (el != null) return el;
+        return null;
+    }
+    
+    Set<Long> getAllIds () 
+    { 
+    	final Set<Long> res = new HashSet<>();
+    	res.add(this.id);
+    	res.addAll(getNodeIds());
+    	res.addAll(getSRGIds());
+    	res.addAll(getResourceIds());
+    	res.addAll(getNetworkLayerIds());
+    	for (NetworkLayer layer : layers)
+    	{
+        	res.addAll(getLinkIds(layer));
+        	res.addAll(getDemandIds(layer));
+        	res.addAll(getRouteIds(layer));
+        	res.addAll(getMulticastDemandIds(layer));
+        	res.addAll(getMulticastTreeIds(layer));
+    	}
+    	return res; 
+    }
+    
 }
 
 

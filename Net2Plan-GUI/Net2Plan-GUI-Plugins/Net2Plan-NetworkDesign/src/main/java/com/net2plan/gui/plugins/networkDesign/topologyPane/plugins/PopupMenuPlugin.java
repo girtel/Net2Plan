@@ -10,15 +10,16 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.plugins.networkDesign.topologyPane;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.plugins;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.CanvasFunction;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -87,7 +88,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
                 actions = getLinkActions(link, positionInNetPlanCoordinates);
             } else {
             	callback.resetPickedStateAndUpdateView();
-                actions = getCanvasActionsMouseInNoNodeNorLinkPoint(positionInNetPlanCoordinates);
+                actions = getCanvasActions(positionInNetPlanCoordinates);
             }
 
             if (actions == null || actions.isEmpty()) return;
@@ -145,6 +146,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             actions.add(unidirectionalMenu);
             actions.add(bidirectionalMenu);
         }
+
         return actions;
     }
 
@@ -210,7 +212,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
 
     }
 
-    public List<JComponent> getCanvasActionsMouseInNoNodeNorLinkPoint(Point2D positionInNetPlanCoordinates)
+    public List<JComponent> getCanvasActions(Point2D positionInNetPlanCoordinates)
     {
         final List<JComponent> actions = new LinkedList<>();
         final VisualizationState vs = callback.getVisualizationState();
@@ -236,7 +238,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             	nodes.get(i).setXYPositionMap(new Point2D.Double(positionInNetPlanCoordinates.getX() + radius * Math.cos(Math.toRadians(angStep*i)) , positionInNetPlanCoordinates.getY() + radius * Math.sin(Math.toRadians(angStep*i))));
         	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.NODE));
-            callback.runCanvasOperation(ITopologyCanvas.CanvasOperation.ZOOM_ALL);
+            callback.runCanvasOperation(CanvasFunction.ZOOM_ALL);
             callback.addNetPlanChange();
          });
 

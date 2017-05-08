@@ -5,8 +5,6 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.*;
 
 /**
@@ -20,7 +18,7 @@ public class ExcelWriter
     private static String sheetName;
     private static ExcelExtension fileExtension;
 
-    public static void writeToFile(@Nonnull File file, @Nullable String sheetName, @Nullable Object[][] data) throws ExcelParserException
+    public static void writeToFile( File file,  String sheetName,  Object[][] data) throws ExcelParserException
     {
         // Reboot
         ExcelWriter.file = null;

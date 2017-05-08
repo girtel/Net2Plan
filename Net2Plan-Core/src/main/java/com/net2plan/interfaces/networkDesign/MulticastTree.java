@@ -246,6 +246,7 @@ public class MulticastTree extends NetworkElement
 		final double currentOccupiedCapacityIfAllOk = occupiedLinkCapacityIfNotFailing;
 		setCarriedTraffic(0, 0);
 		layer.cache_multicastTreesDown.remove(this);
+		layer.cache_multicastTreesTravLinkZeroCap.remove(this);
 		for (Link e : this.linkSet) 
 			e.cache_traversingTrees.remove (this);
 		for (Node node : this.cache_traversedNodes)
@@ -261,10 +262,17 @@ public class MulticastTree extends NetworkElement
 		
 		/* Update traversed links and nodes caches  */
 		boolean treeIsUp = demand.ingressNode.isUp;
-		for (Link e : newLinkSet) { e.cache_traversingTrees.add (this); treeIsUp = (treeIsUp && e.isUp && e.destinationNode.isUp); }
+		boolean treeIsTravZeroCapLink = false;
+		for (Link e : newLinkSet) 
+		{ 
+			e.cache_traversingTrees.add (this); 
+			treeIsUp = (treeIsUp && e.isUp && e.destinationNode.isUp);
+			if (e.capacity < Configuration.precisionFactor) treeIsTravZeroCapLink = true;
+		}
 		for (Node node : cache_traversedNodes)
 			node.cache_nodeAssociatedulticastTrees.add (this);
 		if (!treeIsUp) layer.cache_multicastTreesDown.add (this);
+		if (treeIsTravZeroCapLink) layer.cache_multicastTreesTravLinkZeroCap.add(this);
 		setCarriedTraffic(currentCarriedTrafficIfAllOk, currentOccupiedCapacityIfAllOk);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
@@ -290,6 +298,14 @@ public class MulticastTree extends NetworkElement
 		return layer.cache_multicastTreesDown.contains(this);
 	}
 
+	/** Returns true if the tree is traversing a link with zero capacity
+	 * @return see above
+	 */
+	public boolean isTraversingZeroCapLinks () 
+	{
+		return layer.cache_multicastTreesTravLinkZeroCap.contains(this);
+	}
+	
 	/**
 	 * <p>Returns the {@code Set} of {@link com.net2plan.interfaces.networkDesign.Node Nodes} in the tree: those that are the initial or end node of a
 	 * {@link com.net2plan.interfaces.networkDesign.Link Link} in the tree.
@@ -495,7 +511,9 @@ public class MulticastTree extends NetworkElement
 		for (Link link : linkSet)
 			link.updateLinkTrafficAndOccupation();
 		demand.carriedTraffic = 0; for (MulticastTree t : demand.cache_multicastTrees) demand.carriedTraffic += t.getCarriedTraffic();
-		if (demand.coupledUpperLayerLinks != null) for (Link e : demand.coupledUpperLayerLinks.values()) e.capacity = demand.carriedTraffic;
+		if (demand.coupledUpperLayerLinks != null) 
+			for (Link e : demand.coupledUpperLayerLinks.values())
+				e.updateCapacityAndZeroCapacityLinksAndRoutesCaches(demand.carriedTraffic);  
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -515,9 +533,10 @@ public class MulticastTree extends NetworkElement
 		for (Node node : cache_traversedNodes) node.cache_nodeAssociatedulticastTrees.remove(this);
 		demand.cache_multicastTrees.remove(this);
 		layer.cache_multicastTreesDown.remove(this);
+		layer.cache_multicastTreesTravLinkZeroCap.remove(this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		removeIdAndFromPlanningDomain();
 	}
 
 	
@@ -615,7 +634,17 @@ public class MulticastTree extends NetworkElement
 		{
 			if (getCarriedTraffic() != 0) throw new RuntimeException ("Bad");
 		}
-}
+	}
+
+	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+	{
+		final Set<NetworkElement> res = new HashSet<> ();
+		res.add(demand);
+		initialSetLinksWhenWasCreated.stream().filter(e->!e.wasRemoved()).forEach(e->res.add(e));
+		res.addAll(linkSet);
+		res.addAll(cache_traversedNodes);
+		return res;
+	}
 
 
 }
