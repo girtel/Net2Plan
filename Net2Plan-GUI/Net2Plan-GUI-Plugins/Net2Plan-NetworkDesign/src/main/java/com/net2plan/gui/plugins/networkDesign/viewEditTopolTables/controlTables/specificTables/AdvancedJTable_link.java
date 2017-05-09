@@ -151,16 +151,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         }
         
         /* Add the aggregation row with the aggregated statistics */
-        final double aggCapacity = rowVisibleLinks.stream().mapToDouble(e -> e.getCapacity()).sum();
-        final double aggOccupiedCapacity = rowVisibleLinks.stream().mapToDouble(e -> e.getOccupiedCapacity()).sum();
-        final double aggCarried = rowVisibleLinks.stream().mapToDouble(e -> e.getCarriedTraffic()).sum();
-        final double aggLengthKm = rowVisibleLinks.stream().mapToDouble(e -> e.getLengthInKm()).sum();
-        final double aggPropDelayMs = rowVisibleLinks.stream().mapToDouble(e -> e.getPropagationDelayInMs()).max().orElse(0);
-        final int aggNumRoutes = isSourceRouting ? rowVisibleLinks.stream().mapToInt(e -> e.getTraversingRoutes().size()).sum() : 0;
-        final int aggNumBackupRoutes = isSourceRouting ? rowVisibleLinks.stream().mapToInt(e -> e.getTraversingBackupRoutes().size()).sum() : 0;
-        final int aggNumTrees = rowVisibleLinks.stream().mapToInt(e -> e.getTraversingTrees().size()).sum();
-        final int aggNumSRGs = rowVisibleLinks.stream().mapToInt(e -> e.getSRGs().size()).sum();
-        final int aggNumCouplings = (int) rowVisibleLinks.stream().filter(e -> e.isCoupled()).count();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
         aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity); // sum
