@@ -55,13 +55,17 @@ public class GUILauncher
         LAUNCH_TYPE = new OptionGroup();
         LAUNCH_TYPE.setRequired(false);
 
-        final Option vanilla = new Option("v", "vanilla", false, "Launch GUI as if it was executed from outside.");
+        final Option vanilla = new Option("v", null, false, "Launch GUI as if it was executed from outside.");
         LAUNCH_TYPE.addOption(vanilla);
 
-        final Option robot = new Option("r", "robot", false, "Launch GUI under an automated tool.");
+        final Option robot = new Option("r", null, false, "Launch GUI under an automated tool.");
         LAUNCH_TYPE.addOption(robot);
 
+        final Option debug = new Option("d", null, false, "(Optional) Launch GUI in debug mode.");
+        debug.setRequired(false);
+
         OPTIONS.addOptionGroup(LAUNCH_TYPE);
+        OPTIONS.addOption(debug);
     }
 
     public static void main(String[] args)
@@ -70,7 +74,10 @@ public class GUILauncher
         HelpFormatter formatter = new HelpFormatter();
         try
         {
-            parser.parse(OPTIONS, args, true);
+            final CommandLine cl = parser.parse(OPTIONS, args, true);
+
+            boolean isDebug = cl.hasOption('d');
+            if (isDebug) args = (String[]) ArrayUtils.removeElement(args, "-d");
 
             if (LAUNCH_TYPE.getSelected() == null) LAUNCH_TYPE.setSelected(OPTIONS.getOption("v"));
 
@@ -82,6 +89,8 @@ public class GUILauncher
                 PluginSystem.addPlugin(IGUIModule.class, GUITrafficDesign.class);
                 PluginSystem.loadExternalPlugins();
                 GUINet2Plan.refreshMenu();
+
+                ErrorHandling.setDebug(isDebug);
             } else if (LAUNCH_TYPE.getSelected().equals("r"))
             {
                 // Robot launcher
@@ -139,6 +148,8 @@ public class GUILauncher
                 GUINet2Plan.main(new String[0]);
                 PluginSystem.addPlugin(IGUIModule.class, currentPlugin.getClass());
                 GUINet2Plan.refreshMenu();
+
+                ErrorHandling.setDebug(isDebug);
 
                 runPlugin();
 
