@@ -12,8 +12,6 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -21,6 +19,8 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
@@ -30,14 +30,11 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.CollectionUtils;
-import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
-
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -100,10 +97,11 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     public List<Object[]> getAllData(NetPlan currentState, ArrayList<String> attributesColumns)
     {
-        final boolean isSourceRouting = currentState.getRoutingType() == RoutingType.SOURCE_ROUTING;
         final List<Link> rowVisibleLinks = getVisibleElementsInTable();
         final double max_rho_e = currentState.getLinks().stream().mapToDouble(e -> e.getUtilization()).max().orElse(0);
         final List<Object[]> allLinkData = new LinkedList<Object[]>();
+        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
+
         for (Link link : rowVisibleLinks)
         {
             final Set<SharedRiskGroup> srgIds_thisLink = link.getSRGs();
@@ -147,6 +145,18 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                     linkData[i] = link.getAttribute(attributesColumns.get(i - netPlanViewTableHeader.length));
                 }
             }
+
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CAPACITY, linkData[COLUMN_CAPACITY]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, linkData[COLUMN_CARRIEDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OCCUPIEDCAPACITY, linkData[COLUMN_OCCUPIEDCAPACITY]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LENGTH, linkData[COLUMN_LENGTH]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_PROPDELAYMS, linkData[COLUMN_PROPDELAYMS]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMROUTES, linkData[COLUMN_NUMROUTES]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMBACKUPROUTES, linkData[COLUMN_NUMBACKUPROUTES]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMTREES, linkData[COLUMN_NUMTREES]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_SRGS, linkData[COLUMN_SRGS]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_COUPLEDTODEMAND, linkData[COLUMN_COUPLEDTODEMAND]);
+
             allLinkData.add(linkData);
         }
         
@@ -494,7 +504,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
         if (!linkRowsInTheTable.isEmpty())
         {
-        	addPickOption(selection, popup);
+            addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -1025,7 +1035,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_RemoveLinks extends JMenuItem
     {
-        MenuItem_RemoveLinks( GUINetworkDesign callback,  List<Link> selectedLinks)
+        MenuItem_RemoveLinks(GUINetworkDesign callback, List<Link> selectedLinks)
         {
             this.setText("Remove selected links");
             this.addActionListener(new ActionListener()
@@ -1052,7 +1062,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_ShowLinks extends JMenuItem
     {
-        MenuItem_ShowLinks( GUINetworkDesign callback,  List<Link> links)
+        MenuItem_ShowLinks(GUINetworkDesign callback, List<Link> links)
         {
             this.setText("Show selected links");
             this.addActionListener(e ->
@@ -1068,7 +1078,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_HideLinks extends JMenuItem
     {
-        MenuItem_HideLinks( GUINetworkDesign callback,  List<Link> links)
+        MenuItem_HideLinks(GUINetworkDesign callback, List<Link> links)
         {
             this.setText("Hide selected links");
             this.addActionListener(e ->
@@ -1084,7 +1094,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_DecoupleLinks extends JMenuItem
     {
-        MenuItem_DecoupleLinks( GUINetworkDesign callback,  List<Link> selectedLinks)
+        MenuItem_DecoupleLinks(GUINetworkDesign callback, List<Link> selectedLinks)
         {
             this.setText("Decouple coupled links from selection");
             this.addActionListener(e ->
@@ -1101,7 +1111,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_LengthToEuclidean extends JMenuItem
     {
-        MenuItem_LengthToEuclidean( GUINetworkDesign callback,  List<Link> selectedLinks)
+        MenuItem_LengthToEuclidean(GUINetworkDesign callback, List<Link> selectedLinks)
         {
             this.setText("Set selected links length to node-pair Euclidean distance");
             this.addActionListener(e ->
@@ -1123,7 +1133,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
 
     static class MenuItem_LengthToHaversine extends JMenuItem
     {
-        MenuItem_LengthToHaversine( GUINetworkDesign callback,  List<Link> selectedLinks)
+        MenuItem_LengthToHaversine(GUINetworkDesign callback, List<Link> selectedLinks)
         {
             this.setText("Set selected links length to node-pair Haversine distance (longitude-latitude) in km");
             this.addActionListener(e ->

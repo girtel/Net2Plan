@@ -144,15 +144,15 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
                 if (node.getAttributes().containsKey(attributesTitles.get(i - netPlanViewTableHeader.length)))
                     nodeData[i] = node.getAttribute(attributesTitles.get(i - netPlanViewTableHeader.length));
 
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMOUTLINKS, node.getOutgoingLinks(layer).size());
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMINLINKS, node.getIncomingLinks(layer).size());
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INCOMINGLINKTRAFFIC, node.getIncomingLinksTraffic(layer));
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTGOINGLINKTRAFFIC, node.getOutgoingLinksTraffic(layer));
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTTRAFFICUNICAST, node.getIngressCarriedTraffic(layer));
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INTRAFFICUNICAST, node.getEgressCarriedTraffic(layer));
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTTRAFFICMULTICAST, node.getIngressCarriedMulticastTraffic(layer));
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INTRAFFICMULTICAST, node.getEgressCarriedMulticastTraffic(layer));
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_POPULATION, node.getPopulation());
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMOUTLINKS, nodeData[COLUMN_NUMOUTLINKS]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMINLINKS, nodeData[COLUMN_NUMINLINKS]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INCOMINGLINKTRAFFIC, nodeData[COLUMN_INCOMINGLINKTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTGOINGLINKTRAFFIC, nodeData[COLUMN_OUTGOINGLINKTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTTRAFFICUNICAST, nodeData[COLUMN_OUTTRAFFICUNICAST]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INTRAFFICUNICAST, nodeData[COLUMN_INTRAFFICUNICAST]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTTRAFFICMULTICAST, nodeData[COLUMN_OUTTRAFFICMULTICAST]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INTRAFFICMULTICAST, nodeData[COLUMN_INTRAFFICMULTICAST]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_POPULATION, nodeData[COLUMN_POPULATION];
 
             allNodeData.add(nodeData);
         }
