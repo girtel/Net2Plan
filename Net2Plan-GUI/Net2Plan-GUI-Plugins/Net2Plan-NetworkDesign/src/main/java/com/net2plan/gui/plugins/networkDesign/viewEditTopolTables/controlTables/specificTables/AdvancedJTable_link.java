@@ -155,7 +155,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMBACKUPROUTES, linkData[COLUMN_NUMBACKUPROUTES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMTREES, linkData[COLUMN_NUMTREES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_SRGS, linkData[COLUMN_SRGS]);
-            AggregationUtils.updateRowCount(dataAggregator, COLUMN_COUPLEDTODEMAND, linkData[COLUMN_COUPLEDTODEMAND]);
+            if (coupledDemand != null) AggregationUtils.updateRowCount(dataAggregator, COLUMN_COUPLEDTODEMAND);
 
             allLinkData.add(linkData);
         }
@@ -163,16 +163,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         /* Add the aggregation row with the aggregated statistics */
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_CAPACITY]); // sum
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]); // sum
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_OCCUPIEDCAPACITY]); // sum
-        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(dataAggregator[COLUMN_LENGTH]); // max
-        aggregatedData[COLUMN_PROPDELAYMS] = new LastRowAggregatedValue(dataAggregator[COLUMN_PROPDELAYMS]); // max
-        aggregatedData[COLUMN_NUMROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMROUTES]); // sum
-        aggregatedData[COLUMN_NUMBACKUPROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMBACKUPROUTES]); // sum
-        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMTREES]); // sum
-        aggregatedData[COLUMN_SRGS] = new LastRowAggregatedValue(dataAggregator[COLUMN_SRGS]); // sum
-        aggregatedData[COLUMN_COUPLEDTODEMAND] = new LastRowAggregatedValue(dataAggregator[COLUMN_COUPLEDTODEMAND]); // count
+        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_CAPACITY]);
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]);
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_OCCUPIEDCAPACITY]);
+        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(dataAggregator[COLUMN_LENGTH]);
+        aggregatedData[COLUMN_PROPDELAYMS] = new LastRowAggregatedValue(dataAggregator[COLUMN_PROPDELAYMS]);
+        aggregatedData[COLUMN_NUMROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMROUTES]);
+        aggregatedData[COLUMN_NUMBACKUPROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMBACKUPROUTES]);
+        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMTREES]);
+        aggregatedData[COLUMN_SRGS] = new LastRowAggregatedValue(dataAggregator[COLUMN_SRGS]);
+        aggregatedData[COLUMN_COUPLEDTODEMAND] = new LastRowAggregatedValue(dataAggregator[COLUMN_COUPLEDTODEMAND]);
         allLinkData.add(aggregatedData);
 
 
