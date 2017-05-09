@@ -22,15 +22,15 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.StringUtils;
-
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -90,6 +90,8 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
     {
         final List<MulticastTree> rowVisibleTrees = getVisibleElementsInTable();
         List<Object[]> allTreeData = new LinkedList<Object[]>();
+        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
+
         for (MulticastTree tree : rowVisibleTrees)
         {
             final MulticastDemand demand = tree.getMulticastDemand();
@@ -125,24 +127,25 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
                 }
             }
 
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OFFEREDTRAFFIC, treeData[COLUMN_OFFEREDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, treeData[COLUMN_CARRIEDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OCCUPIEDCAPACITY, treeData[COLUMN_OCCUPIEDCAPACITY]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_WORSECASENUMHOPS, treeData[COLUMN_WORSECASENUMHOPS]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_WORSECASELENGTH, treeData[COLUMN_WORSECASELENGTH]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_WORSECASEPROPDELAY, treeData[COLUMN_WORSECASEPROPDELAY]);
+
             allTreeData.add(treeData);
         }
         
         /* Add the aggregation row with the aggregated statistics */
-        final double aggOffered = rowVisibleTrees.stream().map(e -> e.getMulticastDemand()).mapToDouble(e -> e.getOfferedTraffic()).sum();
-        final double aggCarried = rowVisibleTrees.stream().mapToDouble(e -> e.getCarriedTraffic()).sum();
-        final double aggOccupiedCap = rowVisibleTrees.stream().mapToDouble(e -> e.getOccupiedLinkCapacity()).sum();
-        final int aggWCNumHops = rowVisibleTrees.stream().mapToInt(e -> e.getTreeMaximumPathLengthInHops()).max().orElse(0);
-        final double aggWCLength = rowVisibleTrees.stream().mapToDouble(e -> e.getTreeMaximumPathLengthInKm()).max().orElse(0);
-        final double aggWCPropDelay = rowVisibleTrees.stream().mapToDouble(e -> e.getTreeMaximumPropagationDelayInMs()).max().orElse(0);
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered); // sum
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried); // sum
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCap); // sum
-        aggregatedData[COLUMN_WORSECASENUMHOPS] = new LastRowAggregatedValue(aggWCNumHops); // max
-        aggregatedData[COLUMN_WORSECASELENGTH] = new LastRowAggregatedValue(aggWCLength); // max
-        aggregatedData[COLUMN_WORSECASEPROPDELAY] = new LastRowAggregatedValue(aggWCPropDelay); // max
+        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_OFFEREDTRAFFIC]); // sum
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]); // sum
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_OCCUPIEDCAPACITY]); // sum
+        aggregatedData[COLUMN_WORSECASENUMHOPS] = new LastRowAggregatedValue(dataAggregator[COLUMN_WORSECASENUMHOPS]); // max
+        aggregatedData[COLUMN_WORSECASELENGTH] = new LastRowAggregatedValue(dataAggregator[COLUMN_WORSECASELENGTH]); // max
+        aggregatedData[COLUMN_WORSECASEPROPDELAY] = new LastRowAggregatedValue(dataAggregator[COLUMN_WORSECASEPROPDELAY]); // max
         allTreeData.add(aggregatedData);
 
         return allTreeData;
