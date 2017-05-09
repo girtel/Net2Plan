@@ -357,15 +357,17 @@ public class NetPlan extends NetworkElement
      */
     public static NetPlan loadFromFile(File file)
     {
-        try
+        try (InputStream inputStream = new FileInputStream(file))
         {
-            InputStream inputStream = new FileInputStream(file);
             NetPlan np = new NetPlan(inputStream);
             if (ErrorHandling.isDebugEnabled()) np.checkCachesConsistency();
             return np;
         } catch (FileNotFoundException e)
         {
             throw new Net2PlanException(e.getMessage());
+        } catch (IOException e)
+        {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
