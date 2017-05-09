@@ -2,35 +2,25 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import javax.swing.*;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Jorge San Emeterio
  * @date 24/04/17
  */
+@RunWith(MockitoJUnitRunner.class)
 public class AdvancedJTable_networkElementTest
 {
     private static AdvancedJTable_networkElement table;
 
-    private static GUINetworkDesign networkDesign;
-    private static NetPlan netPlan;
-
-    @Before
-    public void setUp()
-    {
-        networkDesign = new GUINetworkDesign();
-        networkDesign.configure(new JPanel());
-
-        netPlan = new NetPlan();
-
-        networkDesign.setDesign(netPlan);
-        networkDesign.updateVisualizationAfterNewTopology();
-    }
+    @Mock
+    private static GUINetworkDesign networkDesign = mock(GUINetworkDesign.class);
 
     @Test
     public void forwardingRuleNoAttributesTest()
