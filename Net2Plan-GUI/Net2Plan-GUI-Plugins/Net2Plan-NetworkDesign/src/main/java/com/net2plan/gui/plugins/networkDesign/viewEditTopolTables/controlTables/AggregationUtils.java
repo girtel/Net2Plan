@@ -24,8 +24,8 @@ public class AggregationUtils
             ErrorHandling.log("Could not aggregate value of type: " + val.getClass());
     }
 
-    public static void updateRowCount(double[] aggreg, int index)
+    public static void updateRowCount(double[] aggreg, int index, int amount)
     {
-        aggreg[index] = aggreg[index] + 1;
+        aggreg[index] = aggreg[index] + amount;
     }
 }

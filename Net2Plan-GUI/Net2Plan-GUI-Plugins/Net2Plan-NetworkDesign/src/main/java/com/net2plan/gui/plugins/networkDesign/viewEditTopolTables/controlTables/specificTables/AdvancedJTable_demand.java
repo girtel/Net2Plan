@@ -148,11 +148,6 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
             demandData[COLUMN_TRAVERSEDRESOURCESTYPES] = isSourceRouting ? joinTraversedResourcesTypes(demand) : "";
             demandData[COLUMN_ROUTINGCYCLES] = demand.getRoutingCycleType();
             demandData[COLUMN_BIFURCATED] = !isSourceRouting ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
-            if (isSourceRouting)
-            {
-                accum_numRoutes += routes_thisDemand.size();
-                accum_numBackupRoutes += routes_thisDemand.stream().filter(e -> e.isBackupRoute()).count();
-            }
             demandData[COLUMN_NUMROUTES] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e -> e.isBackupRoute()).count() + ")";
             demandData[COLUMN_MAXE2ELATENCY] = demand.getWorstCasePropagationTimeInMs();
             demandData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(demand.getTags()));
@@ -168,20 +163,26 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_OFFEREDTRAFFIC, demandData[COLUMN_OFFEREDTRAFFIC]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, demandData[COLUMN_CARRIEDTRAFFIC]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_LOSTTRAFFIC, demandData[COLUMN_LOSTTRAFFIC]);
-            AggregationUtils.updateRowCount(dataAggregator, COLUMN_ISSERVICECHAIN, demandData[COLUMN_ISSERVICECHAIN]);
+            if (demand.isServiceChainRequest()) AggregationUtils.updateRowCount(dataAggregator, COLUMN_ISSERVICECHAIN, 1);
+            if (isSourceRouting)
+            {
+                accum_numRoutes += routes_thisDemand.size();
+                accum_numBackupRoutes += routes_thisDemand.stream().filter(e -> e.isBackupRoute()).count();
+            }
             AggregationUtils.updateRowMax(dataAggregator, COLUMN_MAXE2ELATENCY, demandData[COLUMN_MAXE2ELATENCY]);
+
             allDemandData.add(demandData);
         }
         
         /* Add the aggregation row with the aggregated statistics */
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(accum_hd); // sum
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(accum_carriedTraffic); // sum
-        aggregatedData[COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(accum_hd == 0 ? 0 : 100 * accum_lostTraffic / accum_hd); // sum
-        aggregatedData[COLUMN_ISSERVICECHAIN] = new LastRowAggregatedValue(accum_numSCs); // count
-        aggregatedData[COLUMN_NUMROUTES] = new LastRowAggregatedValue(accum_numRoutes + "(" + accum_numBackupRoutes + ")"); // count
-        aggregatedData[COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(accum_worstCasePropDelayMs); // max
+        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_OFFEREDTRAFFIC]);
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]);
+        aggregatedData[COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_LOSTTRAFFIC]);
+        aggregatedData[COLUMN_ISSERVICECHAIN] = new LastRowAggregatedValue(dataAggregator[COLUMN_ISSERVICECHAIN]);
+        aggregatedData[COLUMN_NUMROUTES] = new LastRowAggregatedValue(accum_numRoutes + "(" + accum_numBackupRoutes + ")");
+        aggregatedData[COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(dataAggregator[COLUMN_MAXE2ELATENCY]);
         allDemandData.add(aggregatedData);
 
         return allDemandData;

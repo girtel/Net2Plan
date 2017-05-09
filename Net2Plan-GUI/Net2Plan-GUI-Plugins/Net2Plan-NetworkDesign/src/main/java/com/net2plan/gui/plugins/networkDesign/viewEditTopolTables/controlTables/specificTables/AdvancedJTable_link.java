@@ -155,7 +155,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMBACKUPROUTES, linkData[COLUMN_NUMBACKUPROUTES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMTREES, linkData[COLUMN_NUMTREES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_SRGS, linkData[COLUMN_SRGS]);
-            if (coupledDemand != null) AggregationUtils.updateRowCount(dataAggregator, COLUMN_COUPLEDTODEMAND);
+            if (coupledDemand != null) AggregationUtils.updateRowCount(dataAggregator, COLUMN_COUPLEDTODEMAND, 1);
 
             allLinkData.add(linkData);
         }
