@@ -149,13 +149,13 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_CAPACITY, linkData[COLUMN_CAPACITY]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, linkData[COLUMN_CARRIEDTRAFFIC]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_OCCUPIEDCAPACITY, linkData[COLUMN_OCCUPIEDCAPACITY]);
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LENGTH, linkData[COLUMN_LENGTH]);
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_PROPDELAYMS, linkData[COLUMN_PROPDELAYMS]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_LENGTH, linkData[COLUMN_LENGTH]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_PROPDELAYMS, linkData[COLUMN_PROPDELAYMS]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMROUTES, linkData[COLUMN_NUMROUTES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMBACKUPROUTES, linkData[COLUMN_NUMBACKUPROUTES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMTREES, linkData[COLUMN_NUMTREES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_SRGS, linkData[COLUMN_SRGS]);
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_COUPLEDTODEMAND, linkData[COLUMN_COUPLEDTODEMAND]);
+            AggregationUtils.updateRowCount(dataAggregator, COLUMN_COUPLEDTODEMAND, linkData[COLUMN_COUPLEDTODEMAND]);
 
             allLinkData.add(linkData);
         }
@@ -163,16 +163,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
         /* Add the aggregation row with the aggregated statistics */
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity); // sum
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried); // sum
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCapacity); // sum
-        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(aggLengthKm); // max
-        aggregatedData[COLUMN_PROPDELAYMS] = new LastRowAggregatedValue(aggPropDelayMs); // max
-        aggregatedData[COLUMN_NUMROUTES] = new LastRowAggregatedValue(aggNumRoutes); // sum
-        aggregatedData[COLUMN_NUMBACKUPROUTES] = new LastRowAggregatedValue(aggNumBackupRoutes); // sum
-        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees); // sum
-        aggregatedData[COLUMN_SRGS] = new LastRowAggregatedValue(aggNumSRGs); // sum
-        aggregatedData[COLUMN_COUPLEDTODEMAND] = new LastRowAggregatedValue(aggNumCouplings); // count
+        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_CAPACITY]); // sum
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]); // sum
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_OCCUPIEDCAPACITY]); // sum
+        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(dataAggregator[COLUMN_LENGTH]); // max
+        aggregatedData[COLUMN_PROPDELAYMS] = new LastRowAggregatedValue(dataAggregator[COLUMN_PROPDELAYMS]); // max
+        aggregatedData[COLUMN_NUMROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMROUTES]); // sum
+        aggregatedData[COLUMN_NUMBACKUPROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMBACKUPROUTES]); // sum
+        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMTREES]); // sum
+        aggregatedData[COLUMN_SRGS] = new LastRowAggregatedValue(dataAggregator[COLUMN_SRGS]); // sum
+        aggregatedData[COLUMN_COUPLEDTODEMAND] = new LastRowAggregatedValue(dataAggregator[COLUMN_COUPLEDTODEMAND]); // count
         allLinkData.add(aggregatedData);
 
 
