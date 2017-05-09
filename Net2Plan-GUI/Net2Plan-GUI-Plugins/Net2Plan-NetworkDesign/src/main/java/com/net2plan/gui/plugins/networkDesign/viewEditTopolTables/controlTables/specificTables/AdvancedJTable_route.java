@@ -141,8 +141,8 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
             AggregationUtils.updateRowMax(dataAggregator, COLUMN_NUMHOPS, routeData[COLUMN_NUMHOPS]);
             AggregationUtils.updateRowMax(dataAggregator, COLUMN_LENGTH, routeData[COLUMN_LENGTH]);
             AggregationUtils.updateRowMax(dataAggregator, COLUMN_PROPDELAY, routeData[COLUMN_PROPDELAY]);
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_ISBACKUP, routeData[COLUMN_ISBACKUP]);
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_HASBACKUPROUTES, routeData[COLUMN_HASBACKUPROUTES]);
+            if (route.isBackupRoute()) AggregationUtils.updateRowCount(dataAggregator, COLUMN_ISBACKUP, 1);
+            if (route.hasBackupRoutes()) AggregationUtils.updateRowCount(dataAggregator, COLUMN_HASBACKUPROUTES, 1);
 
             allRouteData.add(routeData);
         }

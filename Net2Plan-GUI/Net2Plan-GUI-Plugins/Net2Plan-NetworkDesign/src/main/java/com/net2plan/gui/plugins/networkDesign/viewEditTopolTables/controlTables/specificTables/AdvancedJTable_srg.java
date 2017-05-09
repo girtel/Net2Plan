@@ -127,9 +127,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
                 }
             }
 
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NODES, srgData[COLUMN_NODES]);
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LINKS, srgData[COLUMN_LINKS]);
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LINKSOTHERLAYERS, srgData[COLUMN_LINKSOTHERLAYERS]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NODES, nodeIds_thisSRG.size());
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LINKS, linkIds_thisSRG.size());
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LINKSOTHERLAYERS, srg.getLinks(layer).size());
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_AFFECTEDROUTES, srgData[COLUMN_AFFECTEDROUTES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_AFFECTEDBACKUPROUTES, srgData[COLUMN_AFFECTEDBACKUPROUTES]);
             AggregationUtils.updateRowSum(dataAggregator, COLUMN_AFFECTEDTREES, srgData[COLUMN_AFFECTEDTREES]);

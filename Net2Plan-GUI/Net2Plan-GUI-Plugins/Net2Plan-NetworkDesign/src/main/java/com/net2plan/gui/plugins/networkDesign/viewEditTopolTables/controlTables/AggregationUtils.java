@@ -10,27 +10,26 @@ public class AggregationUtils
 {
     public static void updateRowSum(double[] aggreg, int index, Object val)
     {
-        if (val instanceof String || val instanceof Number)
+        try
         {
-            try
-            {
-                aggreg[index] += Double.parseDouble(val.toString());
-            } catch (NumberFormatException e)
-            {
-                ErrorHandling.log("Wrong number format for: " + val.toString());
-            }
-        } else
+            double value = Double.parseDouble(val.toString());
+            aggreg[index] += value;
+        } catch (NumberFormatException e)
         {
-            ErrorHandling.log("Could not aggregate value of type: " + val.getClass());
+            ErrorHandling.log("Wrong number format for: " + val.toString());
         }
     }
 
     public static void updateRowMax(double[] aggreg, int index, Object val)
     {
-        if (val instanceof Double)
-            aggreg[index] = Math.max((Double) val, aggreg[index]);
-        else
-            ErrorHandling.log("Could not aggregate value of type: " + val.getClass());
+        try
+        {
+            double value = Double.parseDouble(val.toString());
+            aggreg[index] = Math.max(value, aggreg[index]);
+        } catch (NumberFormatException e)
+        {
+            ErrorHandling.log("Wrong number format for: " + val.toString());
+        }
     }
 
     public static void updateRowCount(double[] aggreg, int index, int amount)
