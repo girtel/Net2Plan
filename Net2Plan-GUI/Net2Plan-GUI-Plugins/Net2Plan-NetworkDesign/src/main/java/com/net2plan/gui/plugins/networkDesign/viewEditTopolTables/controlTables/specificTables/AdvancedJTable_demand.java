@@ -358,7 +358,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
     public ArrayList<String> getAttributesColumnsHeaders()
     {
         ArrayList<String> attColumnsHeaders = new ArrayList<>();
-        currentTopology = callback.getDesign();
+        NetPlan currentTopology = callback.getDesign();
         for (Demand demand : getVisibleElementsInTable())
             for (Map.Entry<String, String> entry : demand.getAttributes().entrySet())
                 if (!attColumnsHeaders.contains(entry.getKey()))
