@@ -19,6 +19,8 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
@@ -32,7 +34,6 @@ import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.collections15.BidiMap;
-
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -86,6 +87,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     {
         List<Object[]> allDemandData = new LinkedList<Object[]>();
         final List<MulticastDemand> rowVisibleDemands = getVisibleElementsInTable();
+        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
+
         for (MulticastDemand demand : rowVisibleDemands)
         {
             final Set<Link> coupledLinks = demand.getCoupledLinks();
@@ -120,24 +123,25 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 }
             }
 
+            if (demand.isCoupled()) AggregationUtils.updateRowCount(dataAggregator, COLUMN_COUPLEDTOLINKS, 1);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OFFEREDTRAFFIC, demandData[COLUMN_OFFEREDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, demandData[COLUMN_CARRIEDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LOSTTRAFFIC, demandData[COLUMN_LOSTTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMTREES, demandData[COLUMN_NUMTREES]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_MAXE2ELATENCY, demandData[COLUMN_MAXE2ELATENCY]);
+
             allDemandData.add(demandData);
         }
         
         /* Add the aggregation row with the aggregated statistics */
-        final int aggNumCouplings = (int) rowVisibleDemands.stream().filter(e -> e.isCoupled()).count();
-        final double aggOffered = rowVisibleDemands.stream().mapToDouble(e -> e.getOfferedTraffic()).sum();
-        final double aggCarried = rowVisibleDemands.stream().mapToDouble(e -> e.getCarriedTraffic()).sum();
-        final double aggLost = rowVisibleDemands.stream().mapToDouble(e -> e.getBlockedTraffic()).sum();
-        final int aggNumTrees = rowVisibleDemands.stream().mapToInt(e -> e.getMulticastTrees().size()).sum();
-        final double aggMaxLatency = rowVisibleDemands.stream().mapToDouble(e -> e.getWorseCasePropagationTimeInMs()).sum();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(aggNumCouplings); // count
-        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered); // sum
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried); // sum
-        aggregatedData[COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(aggOffered == 0 ? 0 : 100 * aggLost / aggOffered); // sum
-        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees); // sum
-        aggregatedData[COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(aggMaxLatency); // max
+        aggregatedData[COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(dataAggregator[COLUMN_COUPLEDTOLINKS]);
+        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_OFFEREDTRAFFIC]);
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]);
+        aggregatedData[COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_LOSTTRAFFIC]);
+        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMTREES]);
+        aggregatedData[COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(dataAggregator[COLUMN_MAXE2ELATENCY]);
         allDemandData.add(aggregatedData);
 
 
