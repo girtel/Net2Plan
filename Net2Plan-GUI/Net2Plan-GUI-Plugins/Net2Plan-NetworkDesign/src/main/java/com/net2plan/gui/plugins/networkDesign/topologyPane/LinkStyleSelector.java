@@ -50,17 +50,17 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         tabbedPane.addTab("Link-utilization coloring", getLinkUtilizationColoringPanel());
 
         //Link run-out time coloring Tab
-        tabbedPane.addTab("Link run-out time coloring", getLinkRunoutTimeColoringPanel());
+//        tabbedPane.addTab("Link run-out time coloring", getLinkRunoutTimeColoringPanel());
 
         //Link thickness Tab
-        tabbedPane.addTab("Link relative thickness", getLinkThicknessPanel());
+//        tabbedPane.addTab("Link relative thickness", getLinkThicknessPanel());
         
         this.add(tabbedPane, BorderLayout.CENTER);
         this.pack();
 
         SwingUtils.configureCloseDialogOnEscape(this);
         this.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
-        this.setSize(475, 475);
+        this.setSize(475, 525);
         this.setLocationRelativeTo(null);
         this.setResizable(true);
         this.setVisible(true);
@@ -242,14 +242,16 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(label_0, gbc);
         
+        gbc.gridwidth = 1;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        pane.add(btn_apply, gbc);
+        
         //Main pane
         JPanel mainPane = new JPanel(new BorderLayout());
         
         //Buttons bar
         JPanel buttonBar = new JPanel();
-
         buttonBar.add(btn_save);
-        buttonBar.add(btn_apply);
         buttonBar.add(btn_reset);
         buttonBar.add(btn_cancel);
 
