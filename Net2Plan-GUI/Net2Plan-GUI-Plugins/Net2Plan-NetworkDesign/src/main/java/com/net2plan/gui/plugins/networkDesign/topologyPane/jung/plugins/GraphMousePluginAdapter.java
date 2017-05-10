@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins;
 
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import edu.uci.ics.jung.visualization.control.GraphMousePlugin;

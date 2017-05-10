@@ -13,17 +13,18 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.FileChooserNetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.AddLinkGraphPlugin;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
-import com.net2plan.gui.utils.FileDrop;
-import com.net2plan.gui.utils.JPopUpButton;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.AddLinkGraphPlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.MoveNodePlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PanGraphPlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.plugins.PopupMenuPlugin;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.FileDrop;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.DialogType;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -42,28 +43,16 @@ import java.util.*;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-public class TopologyPanel extends JPanel implements ActionListener//FrequentisBackgroundPanel implements ActionListener//JPanel implements ActionListener
+public class TopologyPanel extends JPanel
 {
     private final GUINetworkDesign callback;
     private final ITopologyCanvas canvas;
 
-    //    private final JPanel layerChooserPane;
-//    private final JComboBox layerChooser;
-    private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
-    private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
-    private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
-    private final JButton btn_increaseLinkSize, btn_decreaseLinkSize;
-    private final JButton btn_npChangeUndo, btn_npChangeRedo;
-    private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
-    private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes;
-    private final JToggleButton btn_osmMap;
     private final JButton btn_linkStyle;
-    private final JButton btn_tableControlWindow;
-    private final JLabel position;
     private final JPanel canvasPanel;
-    private final MultiLayerControlPanel multilayerControlPanel;
 
-    private final File defaultDesignDirectory, defaultDemandDirectory;
+    private final TopologyTopBar topBar;
+    private final TopologySideBar sideBar;
 
     private FileChooserNetworkDesign fc_netPlan, fc_demands;
 
@@ -103,255 +92,87 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      */
     public TopologyPanel(final GUINetworkDesign callback, File defaultDesignDirectory, File defaultDemandDirectory, Class<? extends ITopologyCanvas> canvasType, List<ITopologyCanvasPlugin> plugins)
     {
-        File currentDir = SystemUtils.getCurrentDir();
-
         this.callback = callback;
-        this.defaultDesignDirectory = defaultDesignDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "networkTopologies") : defaultDesignDirectory;
-        this.defaultDemandDirectory = defaultDemandDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "trafficMatrices") : defaultDemandDirectory;
-        this.multilayerControlPanel = new MultiLayerControlPanel(callback);
 
         try
         {
-            canvas = canvasType.getDeclaredConstructor(GUINetworkDesign.class, TopologyPanel.class).newInstance(callback, this);
-        } catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
+            // File chooser default directory.
+            final File currentDir = SystemUtils.getCurrentDir();
 
-        if (plugins != null)
-            for (ITopologyCanvasPlugin plugin : plugins)
-                addPlugin(plugin);
+            File defaultDesignDirectoryFilter = defaultDesignDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "networkTopologies") : defaultDesignDirectory;
+            File defaultDemandDirectoryFilter = defaultDemandDirectory == null ? new File(currentDir + SystemUtils.getDirectorySeparator() + "workspace" + SystemUtils.getDirectorySeparator() + "data" + SystemUtils.getDirectorySeparator() + "trafficMatrices") : defaultDemandDirectory;
 
-        setLayout(new BorderLayout());
+            // File chooser
+            this.fc_netPlan = new FileChooserNetworkDesign(defaultDesignDirectoryFilter, DialogType.NETWORK_DESIGN);
+            this.fc_demands = new FileChooserNetworkDesign(defaultDemandDirectoryFilter, DialogType.DEMANDS);
 
-        JToolBar toolbar = new JToolBar();
-        toolbar.setRollover(true);
-        toolbar.setFloatable(false);
-        toolbar.setOpaque(false);
-        toolbar.setBorderPainted(false);
+            // Declare canvas : Reflections
+            this.canvas = canvasType.getDeclaredConstructor(GUINetworkDesign.class, TopologyPanel.class).newInstance(callback, this);
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(toolbar, BorderLayout.NORTH);
+            // Add given plugins
+            if (plugins != null)
+                for (ITopologyCanvasPlugin plugin : plugins)
+                    addPlugin(plugin);
 
-        add(topPanel, BorderLayout.NORTH);
+            this.setLayout(new BorderLayout());
 
-        JComponent canvasComponent = canvas.getCanvasComponent();
+            // Top bar menu
+            this.topBar = new TopologyTopBar(callback, this, canvas);
+            this.add(topBar, BorderLayout.NORTH);
 
-        canvasPanel = new JPanel(new BorderLayout());
-        canvasComponent.setBorder(LineBorder.createBlackLineBorder());
+            // Canvas panel
+            final JComponent canvasComponent = canvas.getCanvasComponent();
+            canvasComponent.setBorder(LineBorder.createBlackLineBorder());
 
-        JToolBar multiLayerToolbar = new JToolBar(JToolBar.VERTICAL);
-        multiLayerToolbar.setRollover(true);
-        multiLayerToolbar.setFloatable(false);
-        multiLayerToolbar.setOpaque(false);
+            this.canvasPanel = new JPanel(new BorderLayout());
 
-        canvasPanel.add(canvasComponent, BorderLayout.CENTER);
-        canvasPanel.add(multiLayerToolbar, BorderLayout.WEST);
-        add(canvasPanel, BorderLayout.CENTER);
+            this.sideBar = new TopologySideBar(callback, canvas);
 
-        btn_load = new JButton();
-        btn_load.setToolTipText("Load a network design");
-        btn_loadDemand = new JButton();
-        btn_loadDemand.setToolTipText("Load a traffic demand set");
-        btn_save = new JButton();
-        btn_save.setToolTipText("Save current state to a file");
-        btn_zoomIn = new JButton();
-        btn_zoomIn.setToolTipText("Zoom in");
-        btn_zoomOut = new JButton();
-        btn_zoomOut.setToolTipText("Zoom out");
-        btn_zoomAll = new JButton();
-        btn_zoomAll.setToolTipText("Zoom all");
-        btn_takeSnapshot = new JButton();
-        btn_takeSnapshot.setToolTipText("Take a snapshot of the canvas");
-        btn_showNodeNames = new JToggleButton();
-        btn_showNodeNames.setToolTipText("Show/hide node names");
-        btn_showLinkIds = new JToggleButton();
-        btn_showLinkIds.setToolTipText("Show/hide link utilization, measured as the ratio between the total traffic in the link (including that in protection segments) and total link capacity (including that reserved by protection segments)");
-        btn_showNonConnectedNodes = new JToggleButton();
-        btn_showNonConnectedNodes.setToolTipText("Show/hide non-connected nodes");
-        btn_increaseNodeSize = new JButton();
-        btn_increaseNodeSize.setToolTipText("Increase node size");
-        btn_decreaseNodeSize = new JButton();
-        btn_decreaseNodeSize.setToolTipText("Decrease node size");
-        btn_increaseLinkSize = new JButton();
-        btn_increaseLinkSize.setToolTipText("Increase link thickness");
-        btn_decreaseLinkSize = new JButton();
-        btn_decreaseLinkSize.setToolTipText("Decrease link thickness");
-        btn_increaseFontSize = new JButton();
-        btn_increaseFontSize.setToolTipText("Increase font size");
-        btn_decreaseFontSize = new JButton();
-        btn_decreaseFontSize.setToolTipText("Decrease font size");
-        /* Multilayer buttons */
-        btn_increaseInterLayerDistance = new JButton();
-        btn_increaseInterLayerDistance.setToolTipText("Increase the distance between layers (when more than one layer is visible)");
-        btn_decreaseInterLayerDistance = new JButton();
-        btn_decreaseInterLayerDistance.setToolTipText("Decrease the distance between layers (when more than one layer is visible)");
-        btn_showLowerLayerInfo = new JToggleButton();
-        btn_showLowerLayerInfo.setToolTipText("Shows the links in lower layers that carry traffic of the picked element");
-        btn_showLowerLayerInfo.setSelected(getVisualizationState().isShowInCanvasLowerLayerPropagation());
-        btn_showUpperLayerInfo = new JToggleButton();
-        btn_showUpperLayerInfo.setToolTipText("Shows the links in upper layers that carry traffic that appears in the picked element");
-        btn_showUpperLayerInfo.setSelected(getVisualizationState().isShowInCanvasUpperLayerPropagation());
-        btn_showThisLayerInfo = new JToggleButton();
-        btn_showThisLayerInfo.setToolTipText("Shows the links in the same layer as the picked element, that carry traffic that appears in the picked element");
-        btn_showThisLayerInfo.setSelected(getVisualizationState().isShowInCanvasThisLayerPropagation());
-        btn_npChangeUndo = new JButton();
-        btn_npChangeUndo.setToolTipText("Navigate back to the previous state of the network (last time the network design was changed)");
-        btn_npChangeRedo = new JButton();
-        btn_npChangeRedo.setToolTipText("Navigate forward to the next state of the network (when network design was changed");
+            this.canvasPanel.add(canvasComponent, BorderLayout.CENTER);
+            this.canvasPanel.add(sideBar, BorderLayout.WEST);
 
         btn_linkStyle = new JButton();
         btn_linkStyle.setToolTipText("Change link style");
-        
-        btn_osmMap = new JToggleButton();
-        btn_osmMap.setToolTipText("Toggle between on/off the OSM support. An internet connection is required in order for this to work.");
-        btn_tableControlWindow = new JButton();
-        btn_tableControlWindow.setToolTipText("Show the network topology control window.");
+            this.add(canvasPanel, BorderLayout.CENTER);
 
-        // MultiLayer control window
-        JPopupMenu multiLayerPopUp = new JPopupMenu();
-        multiLayerPopUp.add(multilayerControlPanel);
-        JPopUpButton btn_multilayer = new JPopUpButton("", multiLayerPopUp);
+            // Buttons cannot be focusable
+            List<Component> children = SwingUtils.getAllComponents(this);
+            for (Component component : children)
+                if (component instanceof AbstractButton)
+                    component.setFocusable(false);
 
-        btn_reset = new JButton("Reset");
-        btn_reset.setToolTipText("Reset the user interface");
-        btn_reset.setMnemonic(KeyEvent.VK_R);
+            // Action controllers
+            this.addPlugin(new PanGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK)); // Panning
+            this.addPlugin(new PopupMenuPlugin(callback, this.canvas)); // Right button pop-up
 
-        btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
-        btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
-        btn_save.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/saveDesign.png")));
-        btn_showNodeNames.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNodeName.png")));
-        btn_showLinkIds.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLinkUtilization.png")));
-        btn_showNonConnectedNodes.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNonConnectedNodes.png")));
-        //btn_whatIfActivated.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNonConnectedNodes.png")));
-        btn_zoomIn.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomIn.png")));
-        btn_zoomOut.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomOut.png")));
-        btn_zoomAll.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/zoomAll.png")));
-        btn_takeSnapshot.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/takeSnapshot.png")));
-        btn_increaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseNode.png")));
-        btn_decreaseNodeSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseNode.png")));
-        btn_increaseLinkSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseLink.png")));
-        btn_decreaseLinkSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseLink.png")));
-        btn_increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
-        btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
-        btn_increaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseLayerDistance.png")));
-        btn_decreaseInterLayerDistance.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseLayerDistance.png")));
-        btn_multilayer.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerControl.png")));
-        btn_showThisLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerPropagation.png")));
-        btn_showUpperLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerUpperPropagation.png")));
-        btn_showLowerLayerInfo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLayerLowerPropagation.png")));
-        btn_tableControlWindow.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showControl.png")));
-        btn_osmMap.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showOSM.png")));
-        btn_npChangeUndo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/undoButton.png")));
-        btn_npChangeRedo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/redoButton.png")));
-        btn_linkStyle.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/linkStyle.png")));
+            // Create links
+            if (callback.getVisualizationState().isNetPlanEditable() && this.getCanvas() instanceof JUNGCanvas)
+                addPlugin(new AddLinkGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
 
-        btn_load.addActionListener(this);
-        btn_loadDemand.addActionListener(this);
-        btn_save.addActionListener(this);
-        btn_showNodeNames.addActionListener(this);
-        btn_showLinkIds.addActionListener(this);
-        btn_showNonConnectedNodes.addActionListener(this);
-        btn_zoomIn.addActionListener(this);
-        btn_zoomOut.addActionListener(this);
-        btn_zoomAll.addActionListener(this);
-        btn_takeSnapshot.addActionListener(this);
-        btn_reset.addActionListener(this);
-        btn_increaseInterLayerDistance.addActionListener(this);
-        btn_decreaseInterLayerDistance.addActionListener(this);
-        btn_showLowerLayerInfo.addActionListener(this);
-        btn_showUpperLayerInfo.addActionListener(this);
-        btn_showThisLayerInfo.addActionListener(this);
-        btn_increaseNodeSize.addActionListener(this);
-        btn_decreaseNodeSize.addActionListener(this);
-        btn_increaseLinkSize.addActionListener(this);
-        btn_decreaseLinkSize.addActionListener(this);
-        btn_increaseFontSize.addActionListener(this);
-        btn_decreaseFontSize.addActionListener(this);
-        btn_npChangeUndo.addActionListener(this);
-        btn_npChangeRedo.addActionListener(this);
-        btn_osmMap.addActionListener(this);
-        btn_tableControlWindow.addActionListener(this);
-        btn_linkStyle.addActionListener(this);
+            // Move nodes
+            if (callback.getVisualizationState().isNetPlanEditable())
+                addPlugin(new MoveNodePlugin(callback, canvas, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
 
-        toolbar.add(btn_load);
-        toolbar.add(btn_loadDemand);
-        toolbar.add(btn_save);
-        toolbar.add(new JToolBar.Separator());
-        toolbar.add(btn_zoomIn);
-        toolbar.add(btn_zoomOut);
-        toolbar.add(btn_zoomAll);
-        toolbar.add(btn_takeSnapshot);
-        toolbar.add(new JToolBar.Separator());
-        toolbar.add(btn_showNodeNames);
-        toolbar.add(btn_showLinkIds);
-        toolbar.add(btn_showNonConnectedNodes);
-        toolbar.add(new JToolBar.Separator());
-        toolbar.add(btn_increaseNodeSize);
-        toolbar.add(btn_decreaseNodeSize);
-        toolbar.add(btn_increaseLinkSize);
-        toolbar.add(btn_decreaseLinkSize);
-        toolbar.add(btn_increaseFontSize);
-        toolbar.add(btn_decreaseFontSize);
-        toolbar.add(btn_linkStyle);
+            this.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
 
-        toolbar.add(new JToolBar.Separator());
-        toolbar.add(Box.createHorizontalGlue());
-        toolbar.add(btn_osmMap);
-        toolbar.add(btn_tableControlWindow);
-        toolbar.add(btn_reset);
-
-        multiLayerToolbar.add(new JToolBar.Separator());
-        multiLayerToolbar.add(btn_multilayer);
-        multiLayerToolbar.add(btn_increaseInterLayerDistance);
-        multiLayerToolbar.add(btn_decreaseInterLayerDistance);
-        multiLayerToolbar.add(btn_showLowerLayerInfo);
-        multiLayerToolbar.add(btn_showUpperLayerInfo);
-        multiLayerToolbar.add(btn_showThisLayerInfo);
-        multiLayerToolbar.add(Box.createVerticalGlue());
-        //multiLayerToolbar.add(btn_npChangeUndo);
-        //multiLayerToolbar.add(btn_npChangeRedo);
-
-        this.addComponentListener(new ComponentAdapter()
-        {
-            @Override
-            public void componentResized(ComponentEvent e)
-            {
-                if (e.getComponent().getSize().getHeight() != 0 && e.getComponent().getSize().getWidth() != 0)
-                {
-                    canvas.zoomAll();
-                }
-            }
-        });
-
-        List<Component> children = SwingUtils.getAllComponents(this);
-        for (Component component : children)
-            if (component instanceof AbstractButton)
-                component.setFocusable(false);
-
-        if (ErrorHandling.isDebugEnabled())
-        {
-            canvas.getCanvasComponent().addMouseMotionListener(new MouseMotionAdapter()
+            // Zoom all on resize
+            this.addComponentListener(new ComponentAdapter()
             {
                 @Override
-                public void mouseMoved(MouseEvent e)
+                public void componentResized(ComponentEvent e)
                 {
-                    Point point = e.getPoint();
-                    position.setText("view = " + point + ", NetPlan coord = " + canvas.getCanvasPointFromNetPlanPoint(point));
+                    if (e.getComponent().getSize().getHeight() != 0 && e.getComponent().getSize().getWidth() != 0)
+                    {
+                        canvas.zoomAll();
+                    }
                 }
             });
 
-            position = new JLabel();
-            add(position, BorderLayout.SOUTH);
-        } else
-        {
-            position = null;
-        }
+            // Key actions
+            this.addKeyCombinationActions();
 
-        new FileDrop(canvasComponent, new LineBorder(Color.BLACK), new FileDrop.Listener()
-        {
-            @Override
-            public void filesDropped(File[] files)
+            // File drop listener
+            new FileDrop(canvasComponent, new LineBorder(Color.BLACK), files ->
             {
                 for (File file : files)
                 {
@@ -365,164 +186,28 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
                         break;
                     }
                 }
-            }
-        });
+            });
 
-        btn_showNodeNames.setSelected(getVisualizationState().isCanvasShowNodeNames());
-        btn_showLinkIds.setSelected(getVisualizationState().isCanvasShowLinkLabels());
-        btn_showNonConnectedNodes.setSelected(getVisualizationState().isCanvasShowNonConnectedNodes());
-
-        final ITopologyCanvasPlugin popupPlugin = new PopupMenuPlugin(callback, this.canvas);
-        addPlugin(new PanGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK));
-        if (callback.getVisualizationState().isNetPlanEditable() && getCanvas() instanceof JUNGCanvas)
-            addPlugin(new AddLinkGraphPlugin(callback, canvas, MouseEvent.BUTTON1_MASK, MouseEvent.BUTTON1_MASK | MouseEvent.SHIFT_MASK));
-        addPlugin(popupPlugin);
-        if (callback.getVisualizationState().isNetPlanEditable())
-            addPlugin(new MoveNodePlugin(callback, canvas, MouseEvent.BUTTON1_MASK | MouseEvent.CTRL_MASK));
-
-        setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Network topology"));
-//        setAllowLoadTrafficDemand(callback.allowLoadTrafficDemands());
-    }
-
-    public VisualizationState getVisualizationState()
-    {
-        return callback.getVisualizationState();
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        Object src = e.getSource();
-        final VisualizationState vs = callback.getVisualizationState();
-        if (src == btn_load)
-        {
-            loadDesign();
-        } else if (src == btn_loadDemand)
-        {
-            loadTrafficDemands();
-        } else if (src == btn_save)
-        {
-            saveDesign();
-        } else if (src == btn_showNodeNames)
-        {
-            vs.setCanvasShowNodeNames(btn_showNodeNames.isSelected());
-            canvas.refresh();
-        } else if (src == btn_showLinkIds)
-        {
-            vs.setCanvasShowLinkLabels(btn_showLinkIds.isSelected());
-            canvas.refresh();
-        } else if (src == btn_showNonConnectedNodes)
-        {
-            vs.setCanvasShowNonConnectedNodes(btn_showNonConnectedNodes.isSelected());
-            canvas.refresh();
-        } else if (src == btn_takeSnapshot)
-        {
-            takeSnapshot();
-        } else if (src == btn_zoomIn)
-        {
-            canvas.zoomIn();
-        } else if (src == btn_zoomOut)
-        {
-            canvas.zoomOut();
-        } else if (src == btn_zoomAll)
-        {
-            canvas.zoomAll();
-        } else if (src == btn_reset)
-        {
-        	if (callback.inOnlineSimulationMode()) return;
-        	
-            callback.setDesign(new NetPlan());
-            Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                    vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
-            vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
-            callback.updateVisualizationAfterNewTopology();
-            callback.addNetPlanChange();
-        } else if (src == btn_increaseInterLayerDistance)
-        {
-            if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
-
-            final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
-            final int newInterLayerDistance = currentInterLayerDistance + (int) Math.ceil(currentInterLayerDistance * (VisualizationConstants.SCALE_IN - 1));
-
-            vs.setInterLayerSpaceInPixels(newInterLayerDistance);
-            canvas.updateInterLayerDistanceInNpCoordinates(newInterLayerDistance);
-            canvas.updateAllVerticesXYPosition();
-            canvas.refresh();
-        } else if (src == btn_decreaseInterLayerDistance)
-        {
-            if (vs.getCanvasNumberOfVisibleLayers() == 1) return;
-
-            final int currentInterLayerDistance = vs.getInterLayerSpaceInPixels();
-            int newInterLayerDistance = currentInterLayerDistance - (int) Math.ceil(currentInterLayerDistance * (1 - VisualizationConstants.SCALE_OUT));
-
-            if(newInterLayerDistance <= 0)
-                newInterLayerDistance = 1;
-
-            vs.setInterLayerSpaceInPixels(newInterLayerDistance);
-            canvas.updateInterLayerDistanceInNpCoordinates(newInterLayerDistance);
-            canvas.updateAllVerticesXYPosition();
-
-            canvas.refresh();
-        } else if (src == btn_showLowerLayerInfo)
-        {
-            vs.setShowInCanvasLowerLayerPropagation(btn_showLowerLayerInfo.isSelected());
-            canvas.refresh();
-        } else if (src == btn_showUpperLayerInfo)
-        {
-            vs.setShowInCanvasUpperLayerPropagation(btn_showUpperLayerInfo.isSelected());
-            canvas.refresh();
-        } else if (src == btn_showThisLayerInfo)
-        {
-            vs.setShowInCanvasThisLayerPropagation(btn_showThisLayerInfo.isSelected());
-            canvas.refresh();
-        } else if (src == btn_npChangeUndo)
-        {
-            callback.requestUndoAction();
-        } else if (src == btn_npChangeRedo)
-        {
-            callback.requestRedoAction();
-        } else if (src == btn_tableControlWindow)
-        {
-            callback.showTableControlWindow();
-        } else if (src == btn_osmMap)
-        {
-            if (btn_osmMap.isSelected())
+            // DEBUG
+            if (ErrorHandling.isDebugEnabled())
             {
-                try
+                final JLabel position = new JLabel();
+
+                canvas.getCanvasComponent().addMouseMotionListener(new MouseMotionAdapter()
                 {
-                    setOSMSupportTo(true);
-                } catch (OSMException ex)
-                {
-                    btn_osmMap.setSelected(false);
-                }
-            } else if (!btn_osmMap.isSelected())
-            {
-                setOSMSupportTo(false);
+                    @Override
+                    public void mouseMoved(MouseEvent e)
+                    {
+                        Point point = e.getPoint();
+                        position.setText("view = " + point + ", NetPlan coord = " + canvas.getCanvasPointFromNetPlanPoint(point));
+                    }
+                });
+
+                add(position, BorderLayout.SOUTH);
             }
-        } else if (src == btn_increaseNodeSize)
+        } catch (Exception e)
         {
-            callback.getVisualizationState().increaseCanvasNodeSizeAll();
-            canvas.refresh();
-        } else if (src == btn_decreaseNodeSize)
-        {
-            callback.getVisualizationState().decreaseCanvasNodeSizeAll();
-            canvas.refresh();
-        } else if (src == btn_increaseLinkSize)
-        {
-            callback.getVisualizationState().increaseCanvasLinkSizeAll();
-            canvas.refresh();
-        } else if (src == btn_decreaseLinkSize)
-        {
-            callback.getVisualizationState().decreaseCanvasLinkSizeAll();
-            canvas.refresh();
-        } else if (src == btn_increaseFontSize)
-        {
-            callback.getVisualizationState().increaseCanvasFontSizeAll();
-            canvas.refresh();
-        } else if (src == btn_decreaseFontSize)
-        {
-            final boolean somethingChanged = callback.getVisualizationState().decreaseCanvasFontSizeAll();
-            if (somethingChanged) canvas.refresh();
+            throw new RuntimeException(e);
         }
         else if (src == btn_linkStyle)
         {
@@ -538,32 +223,90 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      * @param plugin Plugin to be added
      * @since 0.3.0
      */
-
     public void addPlugin(ITopologyCanvasPlugin plugin)
     {
         canvas.addPlugin(plugin);
     }
 
-    private void checkNetPlanFileChooser()
+    private void addKeyCombinationActions()
     {
-        if (fc_netPlan == null)
+        final TopologyPanel topologyPanel = TopologyPanel.this;
+
+        callback.addKeyCombinationAction("Load design", new AbstractAction()
         {
-            fc_netPlan = new FileChooserNetworkDesign(defaultDesignDirectory, DialogType.NETWORK_DESIGN);
-        }
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                topologyPanel.loadDesign();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Save design", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                topologyPanel.saveDesign();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom in", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomIn();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom out", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomOut();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Zoom all", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
+                    topologyPanel.getCanvas().zoomAll();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Take snapshot", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                canvas.takeSnapshot();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
+
+        callback.addKeyCombinationAction("Load traffic demands", new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                topologyPanel.loadTrafficDemands();
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
     }
 
-    private void checkDemandFileChooser()
+    public final void updateTopToolbar()
     {
-        if (fc_demands == null)
-        {
-            fc_demands = new FileChooserNetworkDesign(defaultDemandDirectory, DialogType.DEMANDS);
-        }
+        topBar.update();
     }
 
-    private String createLayerName(long layerId)
+    public final void updateMultilayerPanel()
     {
-        final NetworkLayer layer = callback.getDesign().getNetworkLayerFromId(layerId);
-        return "Layer " + layer.getIndex() + (layer.getName().isEmpty() ? "" : ": " + layer.getName());
+        sideBar.getMultilayerControlPanel().refreshTable();
     }
 
     public JPanel getCanvasPanel()
@@ -589,18 +332,18 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
      */
     public void loadDesign()
     {
-    	if (callback.inOnlineSimulationMode()) return;
-    	
+        if (callback.inOnlineSimulationMode()) return;
+
         try
         {
-            checkNetPlanFileChooser();
+            assert fc_netPlan != null;
 
             int rc = fc_netPlan.showOpenDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
 
             // Disable OSM while loading the new topology
-            boolean isOSMRunning = canvas.isOSMRunning();
-            if (isOSMRunning) setOSMSupportTo(false);
+            boolean isOSMRunning = canvas.getState() == CanvasOption.OSMState;
+            if (isOSMRunning) canvas.setState(CanvasOption.ViewState);
 
             NetPlan aux = fc_netPlan.readNetPlan();
 
@@ -613,16 +356,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             callback.addNetPlanChange();
 
             // Reactivating the OSM Support
-            if  (isOSMRunning)
-            {
-                try
-                {
-                    setOSMSupportTo(true);
-                } catch (OSMException ex)
-                {
-                    btn_osmMap.setSelected(false);
-                }
-            }
+            if (isOSMRunning) canvas.setState(CanvasOption.OSMState);
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
@@ -638,8 +372,9 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     {
         try
         {
+            assert fc_netPlan != null;
+
             NetPlan netPlan = new NetPlan(file);
-            checkNetPlanFileChooser();
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
             callback.setDesign(netPlan);
@@ -669,7 +404,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     {
         try
         {
-            checkDemandFileChooser();
+            assert fc_demands != null;
 
             int rc = fc_demands.showOpenDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
@@ -720,17 +455,6 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     }
 
     /**
-     * Refreshes the name of a layer.
-     *
-     * @param layerId Layer identifier
-     * @since 0.3.1
-     */
-    public void refreshLayerName(long layerId)
-    {
-        multilayerControlPanel.refreshTable();
-    }
-
-    /**
      * Saves a network design to a {@code .n2p} file.
      *
      * @since 0.3.0
@@ -739,7 +463,7 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
     {
         try
         {
-            checkNetPlanFileChooser();
+            assert fc_netPlan != null;
 
             int rc = fc_netPlan.showSaveDialog(null);
             if (rc != JFileChooser.APPROVE_OPTION) return;
@@ -758,29 +482,5 @@ public class TopologyPanel extends JPanel implements ActionListener//FrequentisB
             ErrorHandling.addErrorOrException(ex, TopologyPanel.class);
             ErrorHandling.showErrorDialog("Error saving network design");
         }
-    }
-
-
-    /**
-     * Take a snapshot of the canvas.
-     *
-     * @since 0.3.0
-     */
-    public void takeSnapshot()
-    {
-        canvas.takeSnapshot();
-    }
-
-    public final void updateMultilayerVisibilityAndOrderPanel()
-    {
-        multilayerControlPanel.refreshTable();
-    }
-
-    private void setOSMSupportTo(final boolean doSwitch)
-    {
-        if (doSwitch)
-            canvas.runOSMSupport();
-        else
-            canvas.stopOSMSupport();
     }
 }

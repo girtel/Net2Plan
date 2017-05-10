@@ -13,15 +13,12 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables;
 
 import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.AttributeEditor;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableStateFiles.TableState;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
@@ -36,22 +33,17 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.RowSorter.SortKey;
-import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
-import javax.xml.stream.XMLStreamException;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 
-import static com.net2plan.gui.plugins.networkDesign.ElementSelection.SelectionType;
-import static com.net2plan.gui.plugins.networkDesign.ElementSelection.getElementType;
 import static com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 
 
@@ -80,33 +72,16 @@ import static com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.
 @SuppressWarnings("unchecked")
 public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 {
-    protected final TableModel model;
-    protected final GUINetworkDesign callback;
     protected final NetworkElementType networkElementType;
+    protected final GUINetworkDesign callback;
+    protected final TableModel model;
 
     protected final JTable mainTable;
     protected final JTable fixedTable;
 
-    public static final String COLUMN_ID = "Unique identifier";
-    public static final String COLUMN_INDEX = "Index";
-
-    public static final String COLUMN_ATTRIBUTES = "Attributes";
-
-    private final JPopupMenu fixedTableMenu, mainTableMenu;
-    private final JMenu showMenu;
-    private final JMenuItem showAllItem, hideAllItem, resetItem, saveStateItem, loadStateItem;
-    private final ArrayList<TableColumn> hiddenColumns, shownColumns, removedColumns;
-    private ArrayList<String> hiddenColumnsNames, hiddenColumnsAux;
-    private final Map<String, Integer> indexForEachColumn, indexForEachHiddenColumn;
-    private final Map<Integer, String> mapToSaveState;
-    private JCheckBoxMenuItem lockColumn, unfixCheckBox, attributesItem, hideColumn;
-    private ArrayList<JMenuItem> hiddenHeaderItems;
-
-    private final JScrollPane scroll;
+    private final JScrollPane scrollPane;
+    private final TableViewController tableController;
     private final FixedColumnDecorator decorator;
-
-    private ArrayList<String> attributesColumnsNames;
-    private boolean expandAttributes = false;
 
     /**
      * Constructor that allows to set the table model.
@@ -119,1041 +94,45 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
     public AdvancedJTable_networkElement(TableModel model, final GUINetworkDesign networkViewer, NetworkElementType networkElementType)
     {
         super(model);
+
         this.model = model;
         this.callback = networkViewer;
         this.networkElementType = networkElementType;
 
-		/* configure the tips */
-        String[] columnTips = getTableTips();
-        String[] columnHeader = getTableHeaders();
-        ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
-        for (int c = 0; c < columnHeader.length; c++)
-        {
-            TableColumn col = getColumnModel().getColumn(c);
-            tips.setToolTip(col, columnTips[c]);
-        }
-        getTableHeader().addMouseMotionListener(tips);
+        this.setTips();
+        this.addMouseListener(new PopupMenuMouseAdapter());
+        this.addKeyboardActions();
 
-		/* add the popup menu listener (this) */
-        addMouseListener(new PopupMenuMouseAdapter());
-
-        addKeyboardActions();
-
-        this.getTableHeader().setReorderingAllowed(true);
-
-        scroll = new JScrollPane(this);
-        this.decorator = new FixedColumnDecorator(scroll, getNumberOfDecoratorColumns());
-        mainTable = decorator.getMainTable();
-        fixedTable = decorator.getFixedTable();
-
-        hiddenColumnsNames = new ArrayList<>();
-        hiddenColumns = new ArrayList<>();
-        shownColumns = new ArrayList<>();
-        removedColumns = new ArrayList<>();
-        indexForEachColumn = new HashMap<>();
-        indexForEachHiddenColumn = new HashMap<>();
-        mapToSaveState = new HashMap<>();
-
-        for (int j = 0; j < mainTable.getColumnModel().getColumnCount(); j++)
-        {
-            shownColumns.add(mainTable.getColumnModel().getColumn(j));
-        }
-
-        fixedTableMenu = new JPopupMenu();
-        mainTableMenu = new JPopupMenu();
-        showMenu = new JMenu("Show column");
-        lockColumn = new JCheckBoxMenuItem("Lock column", false);
-        unfixCheckBox = new JCheckBoxMenuItem("Unlock column", true);
-        showAllItem = new JMenuItem("Unhide all columns");
-        hideColumn = new JCheckBoxMenuItem("Hide column", false);
-        hideAllItem = new JMenuItem("Hide all columns");
-        hideAllItem.setToolTipText("All columns will be hidden except for the first one.");
-        attributesItem = new JCheckBoxMenuItem("Attributes in different columns", false);
-        resetItem = new JMenuItem("Reset columns positions");
-        loadStateItem = new JMenuItem("Load tables visualization profile");
-        saveStateItem = new JMenuItem("Save tables visualization profile");
-
-        if (hasAttributes())
-        {
-            this.getModel().addTableModelListener(e ->
-            {
-                int changedColumn = e.getColumn();
-                int selectedRow = mainTable.getSelectedRow();
-                Object value = null;
-                if (changedColumn > getAttributesColumnIndex())
-                {
-                    attributesColumnsNames = getAttributesColumnsHeaders();
-                    for (String title : attributesColumnsNames)
-                    {
-                        if (getModel().getColumnName(changedColumn).equals("Att: " + title))
-                        {
-                            value = getModel().getValueAt(selectedRow, changedColumn);
-                            if (value != null)
-                                callback.getDesign().getNetworkElement((Long) getModel().getValueAt(selectedRow, 0)).setAttribute(title, (String) value);
-                        }
-                    }
-                    callback.updateVisualizationJustTables();
-                }
-            });
-        }
-
-        if (!(this instanceof AdvancedJTable_layer))
-        {
-            mainTable.getTableHeader().addMouseListener(new MouseAdapter()
-            {
-                @Override
-                public void mouseReleased(MouseEvent ev)
-                {
-                    if (SwingUtilities.isRightMouseButton(ev))
-                    {
-                        // Building menu
-                        mainTableMenu.removeAll();
-                        mainTableMenu.repaint();
-                        mainTableMenu.add(hideColumn);
-                        mainTableMenu.add(lockColumn);
-
-                        updateShowMenu();
-                        checkNewIndexes();
-                        TableColumn clickedColumn = mainTable.getColumnModel().getColumn(mainTable.columnAtPoint(ev.getPoint()));
-                        String clickedColumnName = clickedColumn.getHeaderValue().toString();
-                        int clickedColumnIndex = indexForEachColumn.get(clickedColumnName);
-                        lockColumn.setEnabled(true);
-                        hideColumn.setEnabled(true);
-                        if (mainTable.getColumnModel().getColumnCount() <= 1)
-                        {
-                            lockColumn.setEnabled(false);
-                            hideColumn.setEnabled(false);
-                        }
-
-                        // Individual column options
-                        final int col = tableHeader.columnAtPoint(ev.getPoint());
-                        final String columnName = mainTable.getColumnName(col);
-
-                        switch (columnName)
-                        {
-                            case "Attributes":
-                                mainTableMenu.add(new JPopupMenu.Separator());
-                                mainTableMenu.add(attributesItem);
-                                break;
-                            default:
-                                if (columnName.startsWith("Att:"))
-                                {
-                                    mainTableMenu.add(new JPopupMenu.Separator());
-                                    mainTableMenu.add(attributesItem);
-                                }
-                                break;
-                        }
-
-                        mainTableMenu.show(ev.getComponent(), ev.getX(), ev.getY());
-                        lockColumn.addItemListener(new ItemListener()
-                        {
-
-                            @Override
-                            public void itemStateChanged(ItemEvent e)
-                            {
-                                if (lockColumn.isSelected() == true)
-                                {
-                                    shownColumns.remove(mainTable.getColumnModel().getColumn(clickedColumnIndex));
-                                    fromMainTableToFixedTable(clickedColumnIndex);
-                                    updateShowMenu();
-                                    checkNewIndexes();
-                                    mainTableMenu.setVisible(false);
-                                    lockColumn.setSelected(false);
-                                }
-
-                            }
-                        });
-                        hideColumn.addItemListener(new ItemListener()
-                        {
-                            @Override
-                            public void itemStateChanged(ItemEvent e)
-                            {
-                                if (hideColumn.isSelected())
-                                {
-                                    hideColumn(clickedColumnIndex);
-                                    checkNewIndexes();
-                                    hideColumn.setSelected(false);
-                                }
-
-                            }
-                        });
-
-                    }
-                }
-            });
-            fixedTable.getTableHeader().addMouseListener(new MouseAdapter()
-            {
-                @Override
-                public void mouseReleased(MouseEvent e)
-                {
-                    //Checking if right button is clicked
-                    if (SwingUtilities.isRightMouseButton(e))
-                    {
-                        // Build menu
-                        fixedTableMenu.removeAll();
-                        fixedTableMenu.repaint();
-                        fixedTableMenu.add(unfixCheckBox);
-                        fixedTableMenu.add(new JPopupMenu.Separator());
-                        //fixedTableMenu.add(loadStateItem);
-                        //fixedTableMenu.add(saveStateItem);
-                        //fixedTableMenu.add(new JPopupMenu.Separator());
-                        fixedTableMenu.add(resetItem);
-                        fixedTableMenu.add(new JPopupMenu.Separator());
-                        fixedTableMenu.add(showMenu);
-                        fixedTableMenu.add(new JPopupMenu.Separator());
-                        fixedTableMenu.add(showAllItem);
-                        fixedTableMenu.add(hideAllItem);
-
-                        checkNewIndexes();
-                        updateShowMenu();
-                        TableColumn clickedColumn = fixedTable.getColumnModel().getColumn(fixedTable.columnAtPoint(e.getPoint()));
-                        int clickedColumnIndex = fixedTable.getColumnModel().getColumnIndex(clickedColumn.getIdentifier());
-                        showMenu.setEnabled(true);
-                        unfixCheckBox.setEnabled(true);
-                        if (hiddenColumns.size() == 0)
-                        {
-                            showMenu.setEnabled(false);
-                        }
-                        if (fixedTable.getColumnModel().getColumnCount() <= 1)
-                        {
-                            unfixCheckBox.setEnabled(false);
-                        }
-                        fixedTableMenu.show(e.getComponent(), e.getX(), e.getY());
-                        unfixCheckBox.addItemListener(new ItemListener()
-                        {
-
-                            @Override
-                            public void itemStateChanged(ItemEvent e)
-                            {
-                                if (unfixCheckBox.isSelected() == false)
-                                {
-                                    shownColumns.add(fixedTable.getColumnModel().getColumn(clickedColumnIndex));
-                                    fromFixedTableToMainTable(clickedColumnIndex);
-                                    updateShowMenu();
-                                    checkNewIndexes();
-                                    fixedTableMenu.setVisible(false);
-                                    unfixCheckBox.setSelected(true);
-                                }
-                            }
-                        });
-
-                        for (int j = 0; j < hiddenColumns.size(); j++)
-                        {
-                            JMenuItem currentItem = hiddenHeaderItems.get(j);
-                            String currentColumnName = hiddenColumns.get(j).getHeaderValue().toString();
-                            currentItem.addActionListener(new ActionListener()
-                            {
-
-                                @Override
-                                public void actionPerformed(ActionEvent e)
-                                {
-                                    showColumn(currentColumnName, indexForEachHiddenColumn.get(currentColumnName), true);
-                                    checkNewIndexes();
-                                }
-                            });
-                        }
-                    }
-                }
-
-            });
-
-            this.buildAttributeControls();
-        }
-
-        checkNewIndexes();
+        this.scrollPane = new JScrollPane(this);
+        this.decorator = new FixedColumnDecorator(scrollPane, getNumberOfDecoratorColumns());
+        this.mainTable = decorator.getMainTable();
+        this.fixedTable = decorator.getFixedTable();
 
         this.setRowSelectionAllowed(true);
+        this.getTableHeader().setReorderingAllowed(true);
         this.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    }
 
-    private void buildAttributeControls()
-    {
-        showAllItem.addActionListener(e ->
-        {
-            showAllColumns();
-            checkNewIndexes();
-        });
-        hideAllItem.addActionListener(e ->
-        {
-            hideAllColumns();
-            checkNewIndexes();
-        });
-        resetItem.addActionListener(e ->
-        {
-            resetColumnsPositions();
-            checkNewIndexes();
-        });
-        loadStateItem.addActionListener(e -> loadTableState());
-        saveStateItem.addActionListener(e ->
-        {
-            try
-            {
-                saveTableState();
-            } catch (XMLStreamException ex)
-            {
-                ErrorHandling.showErrorDialog("Error");
-                ex.printStackTrace();
-            }
-        });
-
-        attributesItem.addItemListener(e ->
-        {
-            if (attributesItem.isSelected())
-            {
-                if (!isAttributeCellExpanded())
-                {
-                    attributesInDifferentColumns();
-                }
-            } else
-            {
-                if (isAttributeCellExpanded())
-                {
-                    attributesInOneColumn();
-                }
-            }
-        });
-
-        mainTable.getColumnModel().addColumnModelListener(new TableColumnModelListener()
-        {
-            @Override
-            public void columnAdded(TableColumnModelEvent e)
-            {
-            }
-
-            @Override
-            public void columnRemoved(TableColumnModelEvent e)
-            {
-            }
-
-            @Override
-            public void columnMoved(TableColumnModelEvent e)
-            {
-                checkNewIndexes();
-            }
-
-            @Override
-            public void columnMarginChanged(ChangeEvent e)
-            {
-            }
-
-            @Override
-            public void columnSelectionChanged(ListSelectionEvent e)
-            {
-            }
-        });
+        this.tableController = new TableViewController(callback, this);
     }
 
     private void addKeyboardActions()
     {
-        // Key input
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK), "shiftUpArrow");
-        this.getActionMap().put("shiftUpArrow", new AbstractAction()
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.VK_UNDEFINED), "pickElements");
+        this.getActionMap().put("pickElements", new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent actionEvent)
             {
-                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int upRow = Ints.min(table.getSelectedRows());
-                final int downRow = Ints.max(table.getSelectedRows());
-
-                int row = upRow - 1;
-                if (row < 0) return;
-                table.setRowSelectionInterval(row, downRow);
-
                 final ElementSelection selectedElements = getSelectedElements();
                 if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
-            }
-        });
-
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "upArrow");
-        this.getActionMap().put("upArrow", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int upRow = Ints.min(table.getSelectedRows());
-
-                int row = upRow - 1;
-                if (row < 0) return;
-                table.setRowSelectionInterval(row, row);
-
-                final ElementSelection selectedElements = getSelectedElements();
-                if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
-            }
-        });
-
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK), "shiftDownArrow");
-        this.getActionMap().put("shiftDownArrow", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int upRow = Ints.min(table.getSelectedRows());
-                final int downRow = Ints.max(table.getSelectedRows());
-
-                int row = downRow + 1;
-                if (hasAggregationRow() && row == (table.getRowCount() - 1)) return;
-                table.setRowSelectionInterval(upRow, row);
-
-                final ElementSelection selectedElements = getSelectedElements();
-                if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
-            }
-        });
-
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "downArrow");
-        this.getActionMap().put("downArrow", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final AdvancedJTable_networkElement table = AdvancedJTable_networkElement.this;
-                final int downRow = Ints.max(table.getSelectedRows());
-
-                int row = downRow + 1;
-
-                if (hasAggregationRow() && row == table.getRowCount() - 1) return;
-                table.setRowSelectionInterval(row, row);
-
-                final ElementSelection selectedElements = getSelectedElements();
-                if (selectedElements.isEmpty()) return;
-                SwingUtilities.invokeLater(() -> showInCanvas(selectedElements));
+                SwingUtilities.invokeLater(() -> pickSelection(selectedElements));
             }
         });
     }
 
-    /**
-     * Re-configures the menu to show hidden columns
-     */
-    private void updateShowMenu()
+    public JScrollPane getScrollPane()
     {
-        showMenu.removeAll();
-        hiddenHeaderItems = new ArrayList<>();
-        for (int i = 0; i < hiddenColumns.size(); i++)
-        {
-            hiddenHeaderItems.add(new JMenuItem(hiddenColumns.get(i).getHeaderValue().toString()));
-            showMenu.add(hiddenHeaderItems.get(i));
-        }
-    }
-
-    /**
-     * Show all columns which are hidden
-     */
-    private void showAllColumns()
-    {
-        while (hiddenColumnsNames.size() > 0)
-        {
-            String s = hiddenColumnsNames.get(hiddenColumnsNames.size() - 1);
-            showColumn(s, indexForEachHiddenColumn.get(s), true);
-        }
-        checkNewIndexes();
-        hiddenColumns.clear();
-        hiddenColumnsNames.clear();
-        shownColumns.clear();
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            shownColumns.add(mainTable.getColumnModel().getColumn(i));
-        }
-    }
-
-    /**
-     * Hide all columns unless the first one of mainTable which are shown
-     */
-
-    private void hideAllColumns()
-    {
-        TableColumn columnToHide = null;
-        String hiddenColumnHeader = null;
-        while (mainTable.getColumnModel().getColumnCount() > 1)
-        {
-            columnToHide = mainTable.getColumnModel().getColumn(1);
-            hiddenColumnHeader = columnToHide.getHeaderValue().toString();
-            hiddenColumns.add(columnToHide);
-            hiddenColumnsNames.add(columnToHide.getHeaderValue().toString());
-            indexForEachHiddenColumn.put(hiddenColumnHeader, 1);
-            mainTable.getColumnModel().removeColumn(columnToHide);
-            shownColumns.remove(columnToHide);
-        }
-        checkNewIndexes();
-    }
-
-    /**
-     * Show one column which is hidden
-     *
-     * @param columnName  Name of the column which we want to show
-     * @param columnIndex Index which the column had when it was shown
-     * @param move        true if column will be moved, false if column will be shown at the end
-     * @return The column to be shown
-     */
-    private void showColumn(String columnName, int columnIndex, boolean move)
-    {
-
-        String hiddenColumnName;
-        TableColumn columnToShow = null;
-        for (TableColumn tc : hiddenColumns)
-        {
-            hiddenColumnName = tc.getHeaderValue().toString();
-            if (columnName.equals(hiddenColumnName))
-            {
-                mainTable.getColumnModel().addColumn(tc);
-                if (move)
-                    mainTable.getColumnModel().moveColumn(mainTable.getColumnCount() - 1, columnIndex);
-                shownColumns.add(tc);
-                indexForEachHiddenColumn.remove(columnName, columnIndex);
-                columnToShow = tc;
-                break;
-            }
-        }
-        hiddenColumns.remove(columnToShow);
-        hiddenColumnsNames.clear();
-        for (TableColumn tc : hiddenColumns)
-        {
-            hiddenColumnsNames.add(tc.getHeaderValue().toString());
-        }
-    }
-
-    /**
-     * Hide one column which is shown
-     *
-     * @param columnIndex Index which the column has in the current Table
-     * @return The column to be hidden
-     */
-    private void hideColumn(int columnIndex)
-    {
-        TableColumn columnToHide = mainTable.getColumnModel().getColumn(columnIndex);
-        String hiddenColumnHeader = columnToHide.getHeaderValue().toString();
-        hiddenColumns.add(columnToHide);
-        hiddenColumnsNames.add(hiddenColumnHeader);
-        shownColumns.remove(columnToHide);
-        indexForEachHiddenColumn.put(hiddenColumnHeader, columnIndex);
-        mainTable.getColumnModel().removeColumn(columnToHide);
-    }
-
-    /**
-     * Move one column from mainTable to fixedTable
-     *
-     * @param columnIndex Index which the column has in mainTable
-     */
-    private void fromMainTableToFixedTable(int columnIndex)
-    {
-        TableColumn columnToFix = mainTable.getColumnModel().getColumn(columnIndex);
-        mainTable.getColumnModel().removeColumn(columnToFix);
-        fixedTable.getColumnModel().addColumn(columnToFix);
-    }
-
-    /**
-     * Move one column from fixedTable to mainTable
-     *
-     * @param columnIndex Index which the column has in fixedTable
-     */
-
-    private void fromFixedTableToMainTable(int columnIndex)
-    {
-        TableColumn columnToUnfix = fixedTable.getColumnModel().getColumn(columnIndex);
-        fixedTable.getColumnModel().removeColumn(columnToUnfix);
-        mainTable.getColumnModel().addColumn(columnToUnfix);
-        mainTable.getColumnModel().moveColumn(mainTable.getColumnModel().getColumnCount() - 1, 0);
-
-    }
-
-    /**
-     * When a new column is added, update the tables
-     *
-     * @param
-     */
-
-    private void updateTables()
-    {
-        String fixedTableColumn = null;
-        String mainTableColumn = null;
-        ArrayList<Integer> columnIndexesToRemove = new ArrayList<>();
-
-        for (int i = 0; i < fixedTable.getColumnModel().getColumnCount(); i++)
-        {
-            fixedTableColumn = fixedTable.getColumnModel().getColumn(i).getHeaderValue().toString();
-            for (int j = 0; j < mainTable.getColumnModel().getColumnCount(); j++)
-            {
-                mainTableColumn = mainTable.getColumnModel().getColumn(j).getHeaderValue().toString();
-                if (mainTableColumn.equals(fixedTableColumn))
-                {
-                    columnIndexesToRemove.add(j);
-                }
-            }
-        }
-        int counter = 0;
-        for (int i = 0; i < columnIndexesToRemove.size(); i++)
-        {
-
-            if (i > 0)
-            {
-                for (int j = 0; j < i; j++)
-                {
-                    if (columnIndexesToRemove.get(j) < columnIndexesToRemove.get(i))
-                    {
-                        counter++;
-                    }
-                }
-
-            }
-            mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(columnIndexesToRemove.get(i) - counter));
-            counter = 0;
-        }
-        if (removedColumns.size() > 0)
-        {
-            TableColumn columnRemoved = null;
-            String mainTableColumnToCheck = null;
-            for (int j = 0; j < removedColumns.size(); j++)
-            {
-                columnRemoved = removedColumns.get(j);
-                for (int k = 0; k < mainTable.getColumnModel().getColumnCount(); k++)
-                {
-                    mainTableColumnToCheck = mainTable.getColumnModel().getColumn(k).getHeaderValue().toString();
-                    if (mainTableColumnToCheck.equals(columnRemoved.getHeaderValue().toString()))
-                    {
-                        mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(k));
-                    }
-                }
-            }
-
-
-        }
-        if (hiddenColumns.size() > 0)
-        {
-
-
-            String hiddenColumnName = null;
-            String mainTableColumnName = null;
-            for (TableColumn tc : hiddenColumns)
-            {
-                hiddenColumnName = tc.getHeaderValue().toString();
-                for (int k = 0; k < mainTable.getColumnModel().getColumnCount(); k++)
-                {
-                    mainTableColumnName = mainTable.getColumnModel().getColumn(k).getHeaderValue().toString();
-                    if (hiddenColumnName.equals(mainTableColumnName))
-                    {
-                        mainTable.getColumnModel().removeColumn(mainTable.getColumnModel().getColumn(k));
-                    }
-                }
-            }
-        }
-
-    }
-
-    /**
-     * Saves the current positions of the columns
-     *
-     * @param
-     */
-    private void saveColumnsPositions()
-    {
-        mapToSaveState.clear();
-        String currentColumnName = "";
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            currentColumnName = mainTable.getColumnModel().getColumn(i).getHeaderValue().toString();
-            mapToSaveState.put(i, currentColumnName);
-        }
-    }
-
-    /**
-     * Restore for each column its previous position
-     *
-     * @param
-     */
-    private void restoreColumnsPositions()
-    {
-        TableColumn columnToHide = null;
-        String hiddenColumnHeader = null;
-        while (mainTable.getColumnModel().getColumnCount() > 0)
-        {
-            columnToHide = mainTable.getColumnModel().getColumn(0);
-            hiddenColumnHeader = columnToHide.getHeaderValue().toString();
-            hiddenColumns.add(columnToHide);
-            hiddenColumnsNames.add(columnToHide.getHeaderValue().toString());
-            indexForEachHiddenColumn.put(hiddenColumnHeader, 0);
-            mainTable.getColumnModel().removeColumn(columnToHide);
-            shownColumns.remove(columnToHide);
-        }
-        String currentColumnName = "";
-        for (int j = 0; j < mapToSaveState.size(); j++)
-        {
-            currentColumnName = mapToSaveState.get(j);
-            showColumn(currentColumnName, j, false);
-        }
-        checkNewIndexes();
-    }
-
-    /**
-     * Loads a table state from a external file
-     *
-     * @param
-     */
-    private void loadTableState()
-    {
-//        Map<NetworkElementType, AdvancedJTable_networkElement> currentTables = callback.getTables();
-//        HashMap<NetworkElementType, TableState> tStateMap = null;
-//        try
-//        {
-//            tStateMap = TableStateController.loadTableState(currentTables);
-//        } catch (XMLStreamException e)
-//        {
-//            e.printStackTrace();
-//        }
-//        for (Map.Entry<NetworkElementType, AdvancedJTable_networkElement> entry : currentTables.entrySet())
-//        {
-//            entry.getValue().updateTableFromTableState(tStateMap.get(entry.getValue().getNetworkElementType()));
-//        }
-//        JOptionPane.showMessageDialog(null, "Tables visualization profile successfully loaded!");
-    }
-
-    /**
-     * Saves the current table state on a external file
-     */
-    private void saveTableState() throws XMLStreamException
-    {
-//        Map<NetworkElementType, AdvancedJTable_networkElement> currentTables = callback.getTables();
-//        TableStateController.saveTableState(currentTables);
-    }
-
-    /**
-     * Update columns positions from a table state
-     *
-     * @param state TableState where the table configuration is saved
-     */
-    private void updateTableFromTableState(TableState state)
-    {
-        resetColumnsPositions();
-        TableColumn fixedTableCol = null;
-        while (fixedTable.getColumnModel().getColumnCount() > 0)
-        {
-            fixedTableCol = fixedTable.getColumnModel().getColumn(0);
-            fixedTable.getColumnModel().removeColumn(fixedTableCol);
-        }
-        createDefaultColumnsFromModel();
-        ArrayList<String> fixedTableColumns = state.getFixedTableColumns();
-        ArrayList<String> mainTableColumns = state.getMainTableColumns();
-        HashMap<String, Integer> hiddenColumnsMap = state.getHiddenTableColumns();
-        boolean areAttributesExpanded = state.getExpandAttributes();
-
-        String[] currentHeaders = getCurrentTableHeaders();
-        ArrayList<String> currentHeadersList = new ArrayList<>();
-
-        for (int i = 0; i < currentHeaders.length; i++)
-        {
-            currentHeadersList.add(currentHeaders[i]);
-        }
-
-        if (areAttributesExpanded && getAttributesColumnsHeaders().size() > 0)
-        {
-            attributesInDifferentColumns();
-            attributesItem.setSelected(true);
-        }
-
-        for (String col : fixedTableColumns)
-        {
-            if (!currentHeadersList.contains(col))
-                continue;
-            TableColumn mainTableCol = null;
-            for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-            {
-                mainTableCol = mainTable.getColumnModel().getColumn(i);
-                if (col.equals(mainTableCol.getHeaderValue().toString()))
-                {
-                    mainTable.getColumnModel().removeColumn(mainTableCol);
-                    fixedTable.getColumnModel().addColumn(mainTableCol);
-                    break;
-                }
-            }
-        }
-
-        while (mainTable.getColumnModel().getColumnCount() > 0)
-        {
-            hideColumn(0);
-        }
-        for (String col : mainTableColumns)
-        {
-            if (!currentHeadersList.contains(col))
-                continue;
-            showColumn(col, 0, false);
-        }
-        indexForEachHiddenColumn.clear();
-        for (Map.Entry<String, Integer> entry : hiddenColumnsMap.entrySet())
-        {
-            if (!currentHeadersList.contains(entry.getKey()))
-                continue;
-            indexForEachHiddenColumn.put(entry.getKey(), entry.getValue());
-        }
-
-    }
-
-    /**
-     * Reset the column positions
-     *
-     * @param
-     */
-    private void resetColumnsPositions()
-    {
-        hiddenColumns.clear();
-        removedColumns.clear();
-        hiddenColumnsNames.clear();
-        indexForEachHiddenColumn.clear();
-        TableColumn tc = null;
-        while (fixedTable.getColumnModel().getColumnCount() > 0)
-        {
-            tc = fixedTable.getColumnModel().getColumn(0);
-            fixedTable.getColumnModel().removeColumn(tc);
-        }
-        mainTable.createDefaultColumnsFromModel();
-        for (int i = 0; i < getNumberOfDecoratorColumns(); i++)
-        {
-            tc = mainTable.getColumnModel().getColumn(0);
-            mainTable.getColumnModel().removeColumn(tc);
-            fixedTable.getColumnModel().addColumn(tc);
-        }
-        for (String s : getAttributesColumnsHeaders())
-        {
-            removeNewColumn("Att: " + s);
-        }
-        expandAttributes = false;
-        attributesItem.setSelected(false);
-        updateTables();
-        checkNewIndexes();
-    }
-
-    /**
-     * When a column is moved into mainTable,
-     * we have to know which are the new indexes and update indexForEachColumn
-     */
-    private void checkNewIndexes()
-    {
-        indexForEachColumn.clear();
-
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-            indexForEachColumn.put(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
-
-        for (int i = 0; i < fixedTable.getColumnModel().getColumnCount(); i++)
-            indexForEachColumn.put(fixedTable.getColumnModel().getColumn(i).getHeaderValue().toString(), i);
-    }
-
-    /**
-     * Remove a column from mainTable
-     *
-     * @param columnToRemoveName name of the column which is going to be removed
-     */
-    private void removeNewColumn(String columnToRemoveName)
-    {
-        TableColumn columnToRemove = null;
-        for (int j = 0; j < getColumnModel().getColumnCount(); j++)
-        {
-            if (columnToRemoveName.equals(getColumnModel().getColumn(j).getHeaderValue().toString()))
-            {
-                columnToRemove = getColumnModel().getColumn(j);
-                mainTable.getColumnModel().removeColumn(getColumnModel().getColumn(j));
-                break;
-            }
-        }
-        removedColumns.add(columnToRemove);
-        TableColumn columnToRemoveFromShownColumns = null;
-        for (TableColumn tc : shownColumns)
-        {
-            if (columnToRemoveName.equals(tc.getHeaderValue().toString()))
-            {
-                columnToRemoveFromShownColumns = tc;
-            }
-        }
-        shownColumns.remove(columnToRemoveFromShownColumns);
-
-    }
-
-    /**
-     * Recover a removed column and adds it in mainTable
-     *
-     * @param columnToRecoverName column of the column which is going to be recovered
-     */
-    private void recoverRemovedColumn(String columnToRecoverName)
-    {
-        TableColumn columnToRecover = null;
-        for (TableColumn tc : removedColumns)
-        {
-            if (tc.getHeaderValue().toString().equals(columnToRecoverName))
-            {
-                columnToRecover = tc;
-            }
-        }
-        removedColumns.remove(columnToRecover);
-        shownColumns.add(columnToRecover);
-        mainTable.getColumnModel().addColumn(columnToRecover);
-    }
-
-    public long getElementID(int row)
-    {
-        for (int i = 0; i < mainTable.getColumnCount(); i++)
-        {
-            if (COLUMN_ID.equals(mainTable.getColumnName(i)))
-            {
-                final Object value = mainTable.getValueAt(row, i);
-                if (!(value instanceof Long)) return -1;
-                return (long) value;
-            }
-        }
-
-        for (int i = 0; i < fixedTable.getColumnCount(); i++)
-        {
-            if (COLUMN_ID.equals(fixedTable.getColumnName(i)))
-            {
-                final Object value = fixedTable.getValueAt(row, i);
-                if (!(value instanceof Long)) return -1;
-                return (long) value;
-            }
-        }
-
-        return -1;
-    }
-
-    /**
-     * Expands attributes in different columns, one for each attribute
-     */
-    private void attributesInDifferentColumns()
-    {
-        saveColumnsPositions();
-        attributesColumnsNames = getAttributesColumnsHeaders();
-        boolean attributesColumnInMainTable = false;
-        String currentColumnName = null;
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            currentColumnName = mainTable.getColumnModel().getColumn(i).getHeaderValue().toString();
-            if (currentColumnName.equals("Attributes"))
-            {
-                attributesColumnInMainTable = true;
-                break;
-            }
-        }
-        if (!attributesColumnInMainTable)
-        {
-            JOptionPane.showMessageDialog(null, "Attributes column must " +
-                    "be unlocked and visible to expand attributes into different columns");
-            attributesItem.setSelected(false);
-        } else
-        {
-            if (attributesColumnsNames.size() > 0)
-            {
-                callback.updateVisualizationJustTables();
-                createDefaultColumnsFromModel();
-                removedColumns.clear();
-                removeNewColumn("Attributes");
-                updateTables();
-                expandAttributes = true;
-                restoreColumnsPositions();
-                for (String att : getAttributesColumnsHeaders())
-                {
-                    showColumn("Att: " + att, 0, false);
-                }
-                checkNewIndexes();
-            } else
-            {
-                attributesItem.setSelected(false);
-            }
-        }
-    }
-
-    /**
-     * Contracts attributes in different columns, one for each attribute
-     */
-
-    private void attributesInOneColumn()
-    {
-        saveColumnsPositions();
-        attributesColumnsNames = getAttributesColumnsHeaders();
-        int attributesCounter = 0;
-        String columnToCheck = null;
-        for (String att : attributesColumnsNames)
-        {
-            for (int j = 0; j < mainTable.getColumnModel().getColumnCount(); j++)
-            {
-                columnToCheck = mainTable.getColumnModel().getColumn(j).getHeaderValue().toString();
-                if (columnToCheck.equals("Att: " + att))
-                {
-                    attributesCounter++;
-                    break;
-                }
-            }
-        }
-        if (!(attributesCounter == attributesColumnsNames.size()))
-        {
-            JOptionPane.showMessageDialog(null, "All attributes columns must be unlocked and visible to contract them in one column");
-            attributesItem.setSelected(true);
-        } else
-        {
-
-            if (attributesColumnsNames.size() > 0)
-            {
-
-                callback.updateVisualizationJustTables();
-                createDefaultColumnsFromModel();
-                removedColumns.clear();
-                for (String att : attributesColumnsNames)
-                {
-                    removeNewColumn("Att: " + att);
-                }
-                updateTables();
-                expandAttributes = false;
-                restoreColumnsPositions();
-                showColumn("Attributes", 0, false);
-                checkNewIndexes();
-            } else
-            {
-                attributesItem.setSelected(true);
-            }
-        }
-    }
-
-    public ArrayList<String> getMainTableColumns()
-    {
-        ArrayList<String> mainTableColumns = new ArrayList<>();
-        for (int i = 0; i < mainTable.getColumnModel().getColumnCount(); i++)
-        {
-            mainTableColumns.add(mainTable.getColumnModel().getColumn(i).getHeaderValue().toString());
-        }
-
-        return mainTableColumns;
-    }
-
-    public ArrayList<String> getFixedTableColumns()
-    {
-        ArrayList<String> fixedTableColumns = new ArrayList<>();
-        for (int i = 0; i < fixedTable.getColumnModel().getColumnCount(); i++)
-        {
-            fixedTableColumns.add(fixedTable.getColumnModel().getColumn(i).getHeaderValue().toString());
-        }
-
-        return fixedTableColumns;
-    }
-
-    public HashMap<String, Integer> getHiddenColumns()
-    {
-        HashMap<String, Integer> hiddenTableColumns = new HashMap<>();
-
-        for (TableColumn hiddenColumn : hiddenColumns)
-        {
-            String col = hiddenColumn.getHeaderValue().toString();
-            hiddenTableColumns.put(col, indexForEachHiddenColumn.get(col));
-        }
-
-        return hiddenTableColumns;
-    }
-
-    public boolean isAttributeCellExpanded()
-    {
-        return expandAttributes;
-    }
-
-    public JScrollPane getScroll()
-    {
-        return scroll;
+        return scrollPane;
     }
 
     public NetworkElementType getNetworkElementType()
@@ -1161,123 +140,78 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         return networkElementType;
     }
 
-    public FixedColumnDecorator getDecorator()
-    {
-        return decorator;
-    }
-
-    public JTable getMainTable()
+    protected JTable getMainTable()
     {
         return mainTable;
     }
 
-    public JTable getFixedTable()
+    protected JTable getFixedTable()
     {
         return fixedTable;
     }
 
     public void updateView(NetPlan currentState)
     {
-        saveColumnsPositions();
-        setEnabled(false);
-        String[] header = getCurrentTableHeaders();
-        ((DefaultTableModel) getModel()).setDataVector(new Object[1][header.length], header);
+        this.setEnabled(false);
+
+        tableController.saveColumnsPositionsAndWidths();
 
         if (currentState.getRoutingType() == RoutingType.SOURCE_ROUTING && networkElementType.equals(NetworkElementType.FORWARDING_RULE))
             return;
         if (currentState.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING && (networkElementType.equals(NetworkElementType.ROUTE)))
             return;
+
+        final List<? extends SortKey> sortKeys = this.getRowSorter().getSortKeys();
+        final String[] tableHeaders = getCurrentTableHeaders();
+
         if (hasElements())
         {
-            String[] tableHeaders = getCurrentTableHeaders();
             ArrayList<String> attColumnsHeaders = getAttributesColumnsHeaders();
+
             List<Object[]> allData = getAllData(currentState, attColumnsHeaders);
-            setEnabled(true);
             ((DefaultTableModel) getModel()).setDataVector(allData.toArray(new Object[allData.size()][tableHeaders.length]), tableHeaders);
+            this.createDefaultColumnsFromModel();
+
             if (attColumnsHeaders != null && networkElementType != NetworkElementType.FORWARDING_RULE)
             {
-                createDefaultColumnsFromModel();
-                final String[] columnTips = getTableTips();
-                final String[] columnHeader = getTableHeaders();
-                final ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
-                for (int c = 0; c < columnHeader.length; c++)
-                    tips.setToolTip(getColumnModel().getColumn(c), columnTips[c]);
-                getTableHeader().addMouseMotionListener(tips);
 
-                if (isAttributeCellExpanded())
-                {
-                    removeNewColumn("Attributes");
-                } else
-                {
-                    if (attColumnsHeaders.size() > 0)
-                    {
-                        for (String att : attColumnsHeaders)
-                        {
+                this.setTips();
 
-                            removeNewColumn("Att: " + att);
-                        }
-                    }
-                }
-                updateTables();
-                restoreColumnsPositions();
-                hiddenColumnsAux = new ArrayList<>();
-                if (isAttributeCellExpanded())
+                if (tableController.isAttributeExpanded())
+                    tableController.removeNewColumn("Attributes");
+                else if (attColumnsHeaders.size() > 0)
+                    for (String att : attColumnsHeaders)
+                        tableController.removeNewColumn("Att: " + att);
+
+                tableController.updateTables();
+
+                tableController.restoreColumnsPositionsAndWidths();
+
+                if (tableController.isAttributeExpanded())
                 {
-                    for (TableColumn col : hiddenColumns)
+                    for (TableColumn col : tableController.getHiddenColumns())
                     {
-                        hiddenColumnsAux.add(col.getHeaderValue().toString());
-                    }
-                    for (String hCol : hiddenColumnsAux)
-                    {
+                        String columnName = col.getHeaderValue().toString();
+
                         for (String att : getAttributesColumnsHeaders())
                         {
-                            if (hCol.equals("Att: " + att))
+                            if (columnName.equals("Att: " + att))
                             {
-                                showColumn("Att: " + att, 0, false);
-                                break;
+                                tableController.showColumn("Att: " + att, 0, false);
                             }
-
                         }
                     }
                 }
             }
-            setColumnRowSortingFixedAndNonFixedTable();
-//            for (int columnId : getColumnsOfSpecialComparatorForSorting())
-//                ((DefaultRowSorter) getRowSorter()).setComparator(columnId, new ColumnComparator());
-        }
-
-        // here update the number of entries label
-
-    }
-
-    private class PopupMenuMouseAdapter extends MouseAdapter
-    {
-        @Override
-        public void mouseClicked(final MouseEvent e)
+            setColumnRowSorting();
+        } else
         {
-            try
-            {
-                final ElementSelection selection = getSelectedElements();
-
-                if (SwingUtilities.isRightMouseButton(e))
-                {
-                    getPopup(selection).show(e.getComponent(), e.getX(), e.getY());
-                    return;
-                }
-
-                if (SwingUtilities.isLeftMouseButton(e))
-                {
-                    if (selection.isEmpty())
-                        callback.resetPickedStateAndUpdateView();
-                    else
-                        SwingUtilities.invokeLater(() -> showInCanvas(selection));
-                }
-            } catch (Exception ex)
-            {
-                ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
-                ex.printStackTrace();
-            }
+            ((DefaultTableModel) getModel()).setDataVector(new Object[1][tableHeaders.length], tableHeaders);
         }
+
+        this.getRowSorter().setSortKeys(sortKeys);
+
+        setEnabled(true);
     }
 
     protected final void addPopupMenuAttributeOptions(ElementSelection selection, JPopupMenu popup)
@@ -1444,7 +378,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
             popup.add(removeAttribute);
 
             JMenuItem removeAttributes = new JMenuItem("Remove all attributes" + (networkElementType == NetworkElementType.LAYER ? "" : " from selected elements"));
-
             removeAttributes.addActionListener(e1 ->
             {
                 try
@@ -1452,11 +385,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                     for (NetworkElement selectedElement : selectedElements)
                         selectedElement.removeAllAttributes();
 
-                    if (isAttributeCellExpanded())
+                    if (tableController.isAttributeExpanded())
                     {
-                        recoverRemovedColumn("Attributes");
-                        expandAttributes = false;
-                        attributesItem.setSelected(false);
+                        tableController.recoverRemovedColumn("Attributes");
                     }
 
                     callback.updateVisualizationJustTables();
@@ -1549,41 +480,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    public static class LastRowAggregatedValue
-    {
-        private String value;
-
-        public LastRowAggregatedValue()
-        {
-            value = "---";
-        }
-
-        public LastRowAggregatedValue(int val)
-        {
-            value = "" + val;
-        }
-
-        public LastRowAggregatedValue(double val)
-        {
-            value = String.format("%.2f", val);
-        }
-
-        public LastRowAggregatedValue(String value)
-        {
-            this.value = value;
-        }
-
-        String getValue()
-        {
-            return value;
-        }
-
-        public String toString()
-        {
-            return value;
-        }
-    }
-
     /**
      * Gets the selected elements in this table.
      *
@@ -1591,33 +487,35 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
      */
     private ElementSelection getSelectedElements()
     {
-        final int[] rowIndexes = this.getSelectedRows();
+        final int[] rowViewIndexes = this.getSelectedRows();
         final NetPlan np = callback.getDesign();
 
         final List<NetworkElement> elementList = new ArrayList<>();
         final List<Pair<Demand, Link>> frList = new ArrayList<>();
 
-        if (rowIndexes.length != 0)
+        if (rowViewIndexes.length != 0)
         {
             final int maxValidRowIndex = model.getRowCount() - 1 - (hasAggregationRow() ? 1 : 0);
             final List<Integer> validRows = new ArrayList<Integer>();
-            for (int a : rowIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
+            for (int a : rowViewIndexes) if ((a >= 0) && (a <= maxValidRowIndex)) validRows.add(a);
 
             if (networkElementType == NetworkElementType.FORWARDING_RULE)
             {
-                for (int rowIndex : validRows)
+                for (int rowViewIndex : validRows)
                 {
-                    final String demandInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
-                    final String linkInfo = (String) ((DefaultTableModel) getModel()).getValueAt(rowIndex, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
+                    final int viewRowIndex = this.convertRowIndexToModel(rowViewIndex);
+                    final String demandInfo = (String) getModel().getValueAt(viewRowIndex, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
+                    final String linkInfo = (String) getModel().getValueAt(viewRowIndex, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
                     final int demandIndex = Integer.parseInt(demandInfo.substring(0, demandInfo.indexOf("(")).trim());
                     final int linkIndex = Integer.parseInt(linkInfo.substring(0, linkInfo.indexOf("(")).trim());
                     frList.add(Pair.of(np.getDemand(demandIndex), np.getLink(linkIndex)));
                 }
             } else
             {
-                for (int rowIndex : validRows)
+                for (int rowViewIndex : validRows)
                 {
-                    final long id = (long) getModel().getValueAt(rowIndex, 0);
+                    final int viewRowIndex = this.convertRowIndexToModel(rowViewIndex);
+                    final long id = (long) getModel().getValueAt(viewRowIndex, 0);
                     elementList.add(np.getNetworkElement(id));
                 }
             }
@@ -1633,7 +531,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         if (!nothingSelected)
         {
             if (!selection.getFirst().isEmpty())
-                elementHolder = new ElementSelection(getElementType(selection.getFirst()), selection.getFirst());
+                elementHolder = new ElementSelection(NetworkElementType.getType(selection.getFirst()), selection.getFirst());
             else if (!selection.getSecond().isEmpty())
                 elementHolder = new ElementSelection(selection.getSecond());
             else elementHolder = new ElementSelection();
@@ -1721,16 +619,18 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 filterCombinationSubMenu.add(trafficBasedFilterMenu);
                 trafficBasedFilterMenu.addActionListener(e1 ->
                 {
-                    if (selection.getSelectionType() == SelectionType.EMPTY) return;
-                    TBFToFromCarriedTraffic filter = null;
+                    if (selection.isEmpty()) return;
 
-                    if (selection.getSelectionType() == SelectionType.NETWORK_ELEMENT)
+                    TBFToFromCarriedTraffic filter = null;
+                    final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
+                    final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
+                    for (NetworkElement element : selectedElements)
                     {
-                        final List<? extends NetworkElement> selectedElements = selection.getNetworkElements();
-                        final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
-                        for (NetworkElement element : selectedElements)
+                        final NetworkElementType type = NetworkElementType.getType(element);
+                        if (type != null)
                         {
-                            switch (NetworkElementType.getType(element))
+
+                            switch (type)
                             {
                                 case NODE:
                                     if (filter == null)
@@ -1780,21 +680,21 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                                     else
                                         filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic((SharedRiskGroup) element));
                                     break;
+                                case FORWARDING_RULE:
+                                    final List<Pair<Demand, Link>> forwardingRules = selection.getForwardingRules();
+
+                                    for (Pair<Demand, Link> forwardingRule : forwardingRules)
+                                    {
+                                        if (filter == null)
+                                            filter = new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer);
+                                        else
+                                            filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer));
+                                    }
+                                    break;
                                 default:
                                     // TODO: Control exceptions on filters.
                                     throw new RuntimeException();
                             }
-                        }
-                    } else
-                    {
-                        final List<Pair<Demand, Link>> forwardingRules = selection.getForwardingRules();
-
-                        for (Pair<Demand, Link> forwardingRule : forwardingRules)
-                        {
-                            if (filter == null)
-                                filter = new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer);
-                            else
-                                filter.recomputeApplyingShowIf_ThisOrThat(new TBFToFromCarriedTraffic(forwardingRule, applyJustToThisLayer));
                         }
                     }
 
@@ -1846,27 +746,42 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    public void writeTableToFile(@Nonnull File file)
+    protected void addPickOption(ElementSelection selection, JPopupMenu popup)
+    {
+        final JMenuItem menu = new JMenuItem("Pick");
+        popup.add(menu);
+        menu.setEnabled(!selection.isEmpty());
+        menu.addActionListener(e ->
+        {
+            SwingUtilities.invokeLater(() -> pickSelection(selection));
+        });
+    }
+
+    protected void pickSelection(ElementSelection selection)
+    {
+        assert selection != null;
+
+        callback.getVisualizationState().pickElement(selection.getNetworkElements());
+        callback.updateVisualizationAfterPick();
+    }
+
+    protected void setTips()
+    {
+        /* configure the tips */
+        String[] columnTips = getTableTips();
+        String[] columnHeader = getTableHeaders();
+        ColumnHeaderToolTips tips = new ColumnHeaderToolTips();
+        for (int c = 0; c < columnHeader.length; c++)
+        {
+            TableColumn col = getColumnModel().getColumn(c);
+            tips.setToolTip(col, columnTips[c]);
+        }
+        getTableHeader().addMouseMotionListener(tips);
+    }
+
+    public void writeTableToFile(File file)
     {
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
-    }
-
-    public boolean hasAttributes()
-    {
-        for (int i = 0; i < this.getColumnCount(); i++)
-            if (this.getColumnName(i).equals(COLUMN_ATTRIBUTES))
-                return true;
-
-        return false;
-    }
-
-    protected static void updateRowSum (Object [] data , double [] aggreg , int index , double val)
-    {
-    	data [index] = val; aggreg [index] += val;
-    }
-    protected static void updateRowMax (Object [] data , double [] aggreg , int index , double val)
-    {
-    	data [index] = val; aggreg [index] = Math.max(val, aggreg[index]);
     }
 
     private Object[][] buildData()
@@ -1909,35 +824,57 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
     public abstract boolean hasElements();
 
-    public abstract int getNumberOfElements(boolean consideringFilters);
-
     public abstract int getAttributesColumnIndex();
-
-    public abstract void setColumnRowSortingFixedAndNonFixedTable();
 
     public abstract int getNumberOfDecoratorColumns();
 
     public abstract ArrayList<String> getAttributesColumnsHeaders();
 
-    @Nonnull
+    protected abstract void setColumnRowSorting();
+
     protected abstract List<JComponent> getExtraAddOptions();
 
-    @Nonnull
     protected abstract JMenuItem getAddOption();
 
-    @Nonnull
     protected abstract List<JComponent> getForcedOptions(ElementSelection selection);
 
-    @Nonnull
     protected abstract List<JComponent> getExtraOptions(ElementSelection selection);
 
     protected abstract JPopupMenu getPopup(ElementSelection selection);
 
-    protected abstract void showInCanvas(ElementSelection selection);
+    protected abstract boolean hasAttributes();
 
-    static class MenuItem_RemovedFiltered extends JMenuItem
+    private class PopupMenuMouseAdapter extends MouseAdapter
     {
-        MenuItem_RemovedFiltered(@Nonnull GUINetworkDesign callback, @Nonnull NetworkElementType networkElementType)
+        @Override
+        public void mouseClicked(final MouseEvent e)
+        {
+            try
+            {
+                final ElementSelection selection = getSelectedElements();
+
+                if (SwingUtilities.isRightMouseButton(e))
+                {
+                    getPopup(selection).show(e.getComponent(), e.getX(), e.getY());
+                    return;
+                }
+
+                if (SwingUtilities.isLeftMouseButton(e))
+                {
+                    if (selection.isEmpty())
+                        callback.resetPickedStateAndUpdateView();
+                }
+            } catch (Exception ex)
+            {
+                ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    protected static class MenuItem_RemovedFiltered extends JMenuItem
+    {
+        MenuItem_RemovedFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
         {
             final NetPlan netPlan = callback.getDesign();
 
@@ -2009,9 +946,9 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    static class MenuItem_HideFiltered extends JMenuItem
+    protected static class MenuItem_HideFiltered extends JMenuItem
     {
-        MenuItem_HideFiltered(@Nonnull GUINetworkDesign callback, @Nonnull NetworkElementType networkElementType)
+        MenuItem_HideFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
         {
             final NetPlan netPlan = callback.getDesign();
             this.setText("Hide all filtered out " + networkElementType + "s");

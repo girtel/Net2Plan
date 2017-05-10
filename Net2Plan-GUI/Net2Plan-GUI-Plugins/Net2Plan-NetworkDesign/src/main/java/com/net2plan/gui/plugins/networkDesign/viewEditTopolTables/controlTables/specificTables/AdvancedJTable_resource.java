@@ -7,6 +7,8 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
@@ -15,7 +17,6 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -48,15 +49,15 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     public static final int COLUMN_TAGS = 12;
     public static final int COLUMN_ATTRIBUTES = 13;
     private static final String netPlanViewTabName = "Resources";
-    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique Identifier", "Index", "Name", "Type", "Host Node", "Capacity", "Cap. Units", "Ocuppied capacity", "Traversing Routes", "Upper Resources", "Base Resources", "Processing Time", "Tags", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier", "Index", "Name", "Type", "Host Node", "Capacity", "Cap. Units", "Ocuppied capacity", "Traversing Routes", "Upper Resources", "Base Resources", "Processing Time", "Tags", "Attributes");
+    private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique Identifier", "Index", "Name", "Type", "Host Node", "Capacity", "Cap. Units", "Ocuppied capacity", "# Trav. Routes", "# Upper Resources", "# Base Resources", "Processing Time", "Tags", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique Identifier", "Index", "Name", "Type", "Host Node", "Capacity", "Cap. Units", "Ocuppied capacity", "Number of service chains traversing this resource", "Number of resources in this node that has this resource as its bsae resource", "Number of resources in this node, that this resource has as its base resource", "Processing Time", "Tags", "Attributes");
 
     public AdvancedJTable_resource(final GUINetworkDesign callback)
     {
         super(createTableModel(callback), callback, Constants.NetworkElementType.RESOURCE);
         setDefaultCellRenderers();
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -73,6 +74,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     {
         final List<Object[]> allResourceData = new LinkedList<Object[]>();
         final List<Resource> rowVisibleResources = getVisibleElementsInTable();
+        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
+
         for (Resource res : rowVisibleResources)
         {
             Object[] resData = new Object[netPlanViewTableHeader.length + attributesTitles.size()];
@@ -84,9 +87,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             resData[COLUMN_CAPACITY] = res.getCapacity();
             resData[COLUMN_CAPACITYMUNITS] = res.getCapacityMeasurementUnits();
             resData[COLUMN_OCCUPIEDCAPACITY] = res.getOccupiedCapacity();
-            resData[COLUMN_TRAVERSINGROUTES] = joinTraversingRoutesWithTheirCapacities(res);
-            resData[COLUMN_UPPERRESOURCES] = joinUpperResourcesWithTheirCapacities(res);
-            resData[COLUMN_BASERESOURCES] = joinBaseResourcesWithTheirCapacities(res);
+            resData[COLUMN_TRAVERSINGROUTES] = res.getTraversingRoutes().size();
+            resData[COLUMN_UPPERRESOURCES] = res.getUpperResources().size();
+            resData[COLUMN_BASERESOURCES] = res.getBaseResources().size();
             resData[COLUMN_PROCESSINGTIME] = res.getProcessingTimeToTraversingTrafficInMs();
             resData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(res.getTags()));
             resData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(res.getAttributes());
@@ -99,21 +102,26 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                 }
             }
 
-            allResourceData.add(resData);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CAPACITY, resData[COLUMN_CAPACITY]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OCCUPIEDCAPACITY, resData[COLUMN_OCCUPIEDCAPACITY]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_TRAVERSINGROUTES, resData[COLUMN_TRAVERSINGROUTES]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_PROCESSINGTIME, resData[COLUMN_PROCESSINGTIME]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_UPPERRESOURCES, resData[COLUMN_UPPERRESOURCES]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_BASERESOURCES, resData[COLUMN_BASERESOURCES]);
 
+            allResourceData.add(resData);
         }
 
         /* Add the aggregation row with the aggregated statistics */
-        final double aggCapacity = rowVisibleResources.stream().mapToDouble(e -> e.getCapacity()).sum();
-        final double aggOccupiedCapacity = rowVisibleResources.stream().mapToDouble(e -> e.getOccupiedCapacity()).sum();
-        final int aggTravSCs = rowVisibleResources.stream().mapToInt(e -> e.getTraversingRoutes().size()).sum();
-        final double aggMaxProcTime = rowVisibleResources.stream().mapToDouble(e -> e.getProcessingTimeToTraversingTrafficInMs()).max().orElse(0);
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesTitles.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(aggCapacity);
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggOccupiedCapacity);
-        aggregatedData[COLUMN_TRAVERSINGROUTES] = new LastRowAggregatedValue(aggTravSCs);
-        aggregatedData[COLUMN_PROCESSINGTIME] = new LastRowAggregatedValue(aggMaxProcTime);
+        aggregatedData[COLUMN_CAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_CAPACITY]);
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_OCCUPIEDCAPACITY]);
+        aggregatedData[COLUMN_TRAVERSINGROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_TRAVERSINGROUTES]);
+        aggregatedData[COLUMN_PROCESSINGTIME] = new LastRowAggregatedValue(dataAggregator[COLUMN_PROCESSINGTIME]);
+        aggregatedData[COLUMN_UPPERRESOURCES] = new LastRowAggregatedValue(dataAggregator[COLUMN_UPPERRESOURCES]);
+        aggregatedData[COLUMN_BASERESOURCES] = new LastRowAggregatedValue(dataAggregator[COLUMN_BASERESOURCES]);
+
         allResourceData.add(aggregatedData);
 
         return allResourceData;
@@ -165,16 +173,6 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasResources() : rf.hasResources(layer);
     }
     
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfResources();
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfResources(layer);
-    }
-
 
     @Override
     public int getAttributesColumnIndex()
@@ -225,7 +223,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                         case COLUMN_NAME:
                             res.setName(newValue.toString());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -234,7 +232,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                             if (newValue == null) return;
                             res.setCapacity((Double) newValue, netPlan.getResourceFromId(resId).getCapacityOccupiedInBaseResourcesMap());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -243,7 +241,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
                             if (newValue == null) return;
                             res.setProcessingTimeToTraversingTrafficInMs((Double) newValue);
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.RESOURCE));
-                            callback.getVisualizationState().pickResource(res);
+                            callback.getVisualizationState().pickElement(res);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -282,7 +280,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_CAPACITY);
@@ -386,7 +384,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<Resource> rowsInTheTable = getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
             if (selection.getElementType() != NetworkElementType.RESOURCE)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
@@ -395,6 +393,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 
         if (!rowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -459,7 +458,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return popup;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -557,14 +556,14 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return addItem;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
         return new LinkedList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -722,7 +721,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
@@ -730,14 +729,20 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.RESOURCE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickResource((List<Resource>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Resource>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
+    }
+
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
     }
 
     private class ClassAwareTableModelImpl extends ClassAwareTableModel

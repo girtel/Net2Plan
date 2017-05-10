@@ -10,7 +10,7 @@
  ******************************************************************************/
 
 
-package com.net2plan.gui.plugins.networkDesign.topologyPane;
+package com.net2plan.gui.plugins.networkDesign.topologyPane.plugins;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
@@ -89,7 +89,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
         if (checkModifiers(e)) {
             GUINode node = canvas.getVertex(e);
             if (node != null) {
-                callback.getVisualizationState().pickNode(node.getAssociatedNode());
+                callback.getVisualizationState().pickElement(node.getAssociatedNode());
                 callback.updateVisualizationAfterPick();
                 startVertex = node;
                 e.consume();

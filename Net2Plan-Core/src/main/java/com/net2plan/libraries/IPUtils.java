@@ -12,19 +12,35 @@
 
 package com.net2plan.libraries;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import com.net2plan.interfaces.networkDesign.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections15.Transformer;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.libraries.GraphUtils.JUNGUtils;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
-import org.apache.commons.collections15.Transformer;
+import com.net2plan.utils.Triple;
 
-import java.util.*;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import edu.uci.ics.jung.algorithms.shortestpath.DijkstraDistance;
+import edu.uci.ics.jung.graph.Graph;
 
 /**
  * Class for destination-based routing (IP-like).
@@ -38,8 +54,6 @@ public class IPUtils
 	 * 
 	 */
 	public final static String IP_WEIGHT_ATTRIBUTE_NAME = "ospf-linkWeight";
-	
-	private IPUtils() { }
 	
 	/**
 	 * <p>Returns the cost of a routing scheme according to the carried traffic per 
@@ -103,48 +117,6 @@ public class IPUtils
 		return cost;
 	}
 	
-	/**
-	 * <p>Returns the cost of a routing scheme according to the carried traffic per 
-	 * link and the link capacity vectors, assuming the IGP-WO cost model.</p>
-	 *
-	 * @param y_e Carried traffic per link vector
-	 * @param u_e Link capacity vector
-	 * @return IGP cost
-	 * @see #calculateIGPCost(DoubleMatrix1D, DoubleMatrix1D)
-	 */
-	public static double calculateIGPCost(double[] y_e, double[] u_e)
-	{
-		int E = u_e.length;
-		double cost = 0;
-
-		for (int linkId = 0; linkId < E; linkId++)
-		{
-			double phi = 0;
-
-			double aux = y_e[linkId];
-			if (aux >= phi) phi = aux;
-
-			aux = 3.0 * y_e[linkId] - (2.0 / 3.0) * u_e[linkId];
-			if (aux >= phi) phi = aux;
-
-			aux = 10.0 * y_e[linkId] - (16.0 / 3.0) * u_e[linkId];
-			if (aux >= phi) phi = aux;
-
-			aux = 70.0 * y_e[linkId] - (178.0 / 3.0) * u_e[linkId];
-			if (aux >= phi) phi = aux;
-
-			aux = 500.0 * y_e[linkId] - (1468.0 / 3.0) * u_e[linkId];
-			if (aux >= phi) phi = aux;
-
-			aux = 5000.0 * y_e[linkId] - (16318.0 / 3.0) * u_e[linkId];
-			if (aux >= phi) phi = aux;
-
-			cost += phi;
-		}
-
-		return cost;
-	}
-	
 	private static void checkIPWeight(double linkWeight)
 	{
 		if (linkWeight < 1) throw new Net2PlanException("Link weights must be greater or equal than 1");
@@ -161,7 +133,7 @@ public class IPUtils
 	 */
 	public static Quadruple<DoubleMatrix2D, DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D> computeCarriedTrafficFromIGPWeights(NetPlan netPlan, DoubleMatrix1D linkWeightVector , NetworkLayer ... optionalLayer)
 	{
-		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter (optionalLayer);
+		final NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter (optionalLayer);
 		if (linkWeightVector == null) linkWeightVector = IPUtils.getLinkWeightVector (netPlan, layer);
 		
 		final List<Node> nodes = netPlan.getNodes();
@@ -178,110 +150,111 @@ public class IPUtils
 		return Quadruple.of(f_de, x_de, r_d, y_e);
 	}
 
+//	/**
+//	 *
+//	 * @param nodes List of nodes
+//	 * @param links List of links
+//	 * @param demands List of demands
+//	 * @param linkWeightVector Cost per link vector
+//	 * @return Forwarding rule mapping, where key is the demand-outgoing link pair and the value is the splitting ratio
+//	 */
+//	public static DoubleMatrix2D computeECMPForwardingRules_fde (List<Node> nodes , List<Link> links , List<Demand> demands , DoubleMatrix1D linkWeightVector)
+//	{
+//		final int N = nodes.size();
+//		DoubleMatrix2D splittingRatioMap = DoubleFactory2D.sparse.make (demands.size() , links.size());
+//		
+//		double[][] costMatrix = new double[N][N];
+//		for(int n = 0; n < N; n++)
+//		{
+//			Arrays.fill(costMatrix[n], Double.MAX_VALUE);
+//			costMatrix[n][n] = 0;
+//		}
+//		Map<Link,Double> linkWeightMap = CollectionUtils.toMap (links , linkWeightVector);
+//		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
+//		
+//		Map<Pair<Node, Node>, Set<Link>> linksPerNodePair = new LinkedHashMap<Pair<Node, Node>, Set<Link>>();
+//		for(Link link : links)
+//		{
+//			Pair<Node, Node> nodePair_thisLink = Pair.of (link.getOriginNode() , link.getDestinationNode());
+//			final int a_e = link.getOriginNode().getIndex();
+//			final int b_e = link.getDestinationNode().getIndex();
+//			costMatrix[a_e][b_e] = Math.min(costMatrix[a_e][b_e], nev.transform(link));
+//			
+//			Set<Link> links_thisNodePair = linksPerNodePair.get(nodePair_thisLink);
+//			if (links_thisNodePair == null)
+//			{
+//				links_thisNodePair = new LinkedHashSet<Link>();
+//				linksPerNodePair.put(nodePair_thisLink, links_thisNodePair);
+//			}
+//			
+//			links_thisNodePair.add(link);
+//		}
+//
+//		for(int k = 0; k < N; k++)
+//		{
+//			for(int i = 0; i < N; i++)
+//			{
+//				if (i == k) continue;
+//				
+//				for(int j = 0; j < N; j++)
+//				{
+//					if (j == k || j == i) continue;
+//					
+//					double newValue = costMatrix[i][k] + costMatrix[k][j];
+//					if (newValue < costMatrix[i][j]) costMatrix[i][j] = newValue;
+//				}
+//			}
+//		}
+//		
+//		for(Demand demand : demands)
+//		{
+//			final int b_d = demand.getEgressNode().getIndex ();
+//			for (Node node : nodes)
+//			{
+//				final int n = node.getIndex ();
+//				if (n == b_d) continue;
+//
+//				double distNodeToEgress = costMatrix[n][b_d];
+//				if (distNodeToEgress == Double.MAX_VALUE) continue;
+//
+//				Set<Link> A_t = new LinkedHashSet<Link>();
+//				for (Node intermediateNode : nodes)
+//				{
+//					if (node.equals (intermediateNode)) continue;
+//
+//					final int m = intermediateNode.getIndex();
+//
+//					double distIntermediateToEgress = costMatrix[m][b_d];
+//					if (distIntermediateToEgress == Double.MAX_VALUE) continue;
+//
+//					Collection<Link> linksFromNodeToIntermediate = linksPerNodePair.get(Pair.of(node, intermediateNode));
+//					if (linksFromNodeToIntermediate == null) continue;
+//
+//					for (Link link : linksFromNodeToIntermediate)
+//					{
+//						double weight_thisLink = linkWeightMap.get(link);
+//						checkIPWeight(weight_thisLink);
+//
+//						if (Math.abs(weight_thisLink - (distNodeToEgress - distIntermediateToEgress)) < 1E-10)
+//							A_t.add(link);
+//					}
+//				}
+//
+//				int outdegree = A_t.size();
+//
+//				if (outdegree > 0)
+//					for (Link link : A_t)
+//						splittingRatioMap.set (demand.getIndex () , link.getIndex () , 1.0 / outdegree);
+//			}
+//		}
+//
+//		return splittingRatioMap;
+//	}
+
 	/**
-	 *
-	 * @param nodes List of nodes
-	 * @param links List of links
-	 * @param demands List of demands
-	 * @param linkWeightVector Cost per link vector
-	 * @return Forwarding rule mapping, where key is the demand-outgoing link pair and the value is the splitting ratio
-	 */
-	public static DoubleMatrix2D computeECMPForwardingRules_fde (List<Node> nodes , List<Link> links , List<Demand> demands , DoubleMatrix1D linkWeightVector)
-	{
-		final int N = nodes.size();
-		DoubleMatrix2D splittingRatioMap = DoubleFactory2D.sparse.make (demands.size() , links.size());
-		
-		double[][] costMatrix = new double[N][N];
-		for(int n = 0; n < N; n++)
-		{
-			Arrays.fill(costMatrix[n], Double.MAX_VALUE);
-			costMatrix[n][n] = 0;
-		}
-		Map<Link,Double> linkWeightMap = CollectionUtils.toMap (links , linkWeightVector);
-		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
-		
-		Map<Pair<Node, Node>, Set<Link>> linksPerNodePair = new LinkedHashMap<Pair<Node, Node>, Set<Link>>();
-		for(Link link : links)
-		{
-			Pair<Node, Node> nodePair_thisLink = Pair.of (link.getOriginNode() , link.getDestinationNode());
-			final int a_e = link.getOriginNode().getIndex();
-			final int b_e = link.getDestinationNode().getIndex();
-			costMatrix[a_e][b_e] = Math.min(costMatrix[a_e][b_e], nev.transform(link));
-			
-			Set<Link> links_thisNodePair = linksPerNodePair.get(nodePair_thisLink);
-			if (links_thisNodePair == null)
-			{
-				links_thisNodePair = new LinkedHashSet<Link>();
-				linksPerNodePair.put(nodePair_thisLink, links_thisNodePair);
-			}
-			
-			links_thisNodePair.add(link);
-		}
-
-		for(int k = 0; k < N; k++)
-		{
-			for(int i = 0; i < N; i++)
-			{
-				if (i == k) continue;
-				
-				for(int j = 0; j < N; j++)
-				{
-					if (j == k || j == i) continue;
-					
-					double newValue = costMatrix[i][k] + costMatrix[k][j];
-					if (newValue < costMatrix[i][j]) costMatrix[i][j] = newValue;
-				}
-			}
-		}
-		
-		for(Demand demand : demands)
-		{
-			final int b_d = demand.getEgressNode().getIndex ();
-			for (Node node : nodes)
-			{
-				final int n = node.getIndex ();
-				if (n == b_d) continue;
-
-				double distNodeToEgress = costMatrix[n][b_d];
-				if (distNodeToEgress == Double.MAX_VALUE) continue;
-
-				Set<Link> A_t = new LinkedHashSet<Link>();
-				for (Node intermediateNode : nodes)
-				{
-					if (node.equals (intermediateNode)) continue;
-
-					final int m = intermediateNode.getIndex();
-
-					double distIntermediateToEgress = costMatrix[m][b_d];
-					if (distIntermediateToEgress == Double.MAX_VALUE) continue;
-
-					Collection<Link> linksFromNodeToIntermediate = linksPerNodePair.get(Pair.of(node, intermediateNode));
-					if (linksFromNodeToIntermediate == null) continue;
-
-					for (Link link : linksFromNodeToIntermediate)
-					{
-						double weight_thisLink = linkWeightMap.get(link);
-						checkIPWeight(weight_thisLink);
-
-						if (Math.abs(weight_thisLink - (distNodeToEgress - distIntermediateToEgress)) < 1E-10)
-							A_t.add(link);
-					}
-				}
-
-				int outdegree = A_t.size();
-
-				if (outdegree > 0)
-					for (Link link : A_t)
-						splittingRatioMap.set (demand.getIndex () , link.getIndex () , 1.0 / outdegree);
-			}
-		}
-
-		return splittingRatioMap;
-	}
-
-	/**
-	 * Computes the routing table matrix according to an OSPF/ECMP scheme. For
-	 * each destination node <i>t</i>, and each link <i>e</i>, {@code f_te[t][e]}
+	 * Computes the routing table matrix according to an OSPF/ECMP scheme. 
+	 * Links with a weight of Double.MAX_VALUE are not considered
+	 * For each destination node <i>t</i>, and each link <i>e</i>, {@code f_te[t][e]}
 	 * sets the fraction of the traffic targeted to node <i>t</i> that arrives
 	 * (or is generated in) node <i>a(e)</i> (the initial node of link <i>e</i>),
 	 * that is forwarded through link <i>e</i>. It must hold that for every
@@ -298,98 +271,140 @@ public class IPUtils
 	{
 		final int N = nodes.size();
 		final int E = links.size();
-		DoubleMatrix2D f_te = DoubleFactory2D.sparse.make(N,E);
+
+		final Map<Link,Double> linkWeightMap = CollectionUtils.toMap(links, linkWeightVector);
+		final Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
+		final List<Link> linksToConsider = links.stream().filter(e->linkWeightMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		final Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, linksToConsider);
+		final DijkstraDistance<Node,Link> shortestDistanceMatrix = new DijkstraDistance<Node,Link> (graph, nev); 
 		
-		double[][] costMatrix = new double[N][N];
-		for(int n = 0; n < N; n++)
+		final DoubleMatrix2D f_te = DoubleFactory2D.sparse.make(N,E);
+		
+		final Map<Pair<Node, Node>, Pair<Set<Link>,Double>> linksPerNodeSameMinimumCost = new HashMap<>();
+		for(Link link : linksToConsider)
 		{
-			Arrays.fill(costMatrix[n], Double.MAX_VALUE);
-			costMatrix[n][n] = 0;
-		}
-		Map<Link,Double> linkWeightMap = CollectionUtils.toMap(links, linkWeightVector);
-		
-		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
-		
-		Map<Pair<Node, Node>, Set<Link>> linksPerNodePair = new LinkedHashMap<Pair<Node, Node>, Set<Link>>();
-		for(Link link : links)
-		{
-			final int a_e = link.getOriginNode().getIndex();
-			final int b_e = link.getDestinationNode().getIndex();
-			costMatrix[a_e][b_e] = Math.min(costMatrix[a_e][b_e], nev.transform(link));
-			
-			Pair<Node,Node> nodePair_thisLink = Pair.of(link.getOriginNode() , link.getDestinationNode());
-			
-			Set<Link> links_thisNodePair = linksPerNodePair.get(nodePair_thisLink);
+			final double newLinkCost = linkWeightMap.get(link);
+			final Pair<Node,Node> nodePair_thisLink = Pair.of(link.getOriginNode() , link.getDestinationNode());
+			final Pair<Set<Link>,Double> links_thisNodePair = linksPerNodeSameMinimumCost.get(nodePair_thisLink);
 			if (links_thisNodePair == null)
 			{
-				links_thisNodePair = new LinkedHashSet<Link>();
-				linksPerNodePair.put(nodePair_thisLink, links_thisNodePair);
+				final Set<Link> setForLinkThisNodePair = new HashSet<Link>();
+				setForLinkThisNodePair.add(link);
+				linksPerNodeSameMinimumCost.put(nodePair_thisLink, Pair.of(setForLinkThisNodePair , newLinkCost));
 			}
-			
-			links_thisNodePair.add(link);
+			else
+			{
+				final double previousLinksCost = links_thisNodePair.getSecond();
+				if (newLinkCost < previousLinksCost) { links_thisNodePair.getFirst().clear(); links_thisNodePair.getFirst().add(link); links_thisNodePair.setSecond(newLinkCost); }
+				else if (newLinkCost == previousLinksCost) { links_thisNodePair.getFirst().add(link); }
+				else if (newLinkCost > previousLinksCost) { continue; }
+			}
 		}
 
-		for(int k = 0; k < N; k++)
-		{
-			for(int i = 0; i < N; i++)
-			{
-				if (i == k) continue;
-				
-				for(int j = 0; j < N; j++)
-				{
-					if (j == k || j == i) continue;
-					
-					double newValue = costMatrix[i][k] + costMatrix[k][j];
-					if (newValue < costMatrix[i][j]) costMatrix[i][j] = newValue;
-				}
-			}
-		}
-		
 		for (Node egressNode : nodes)
 		{
 			final int t = egressNode.getIndex();
-			for (Node node : nodes)
+			for (Node sourceNode : nodes)
 			{
-				final int n = node.getIndex ();
+				final int n = sourceNode.getIndex ();
 				if (n == t) continue;
-
-				double distNodeToEgress = costMatrix[n][t];
-				if (distNodeToEgress == Double.MAX_VALUE) continue;
-
-				Set<Link> A_t = new LinkedHashSet<Link>();
-				for (Node intermediateNode : nodes)
+				final Number shortestPathDistance_ij = shortestDistanceMatrix.getDistance(sourceNode, egressNode);
+				if (shortestPathDistance_ij == null) continue; // egress not reachable
+				final Set<Link> minCostLinks = new HashSet<> (); 
+				for (Node intermediateNode : graph.getNeighbors(sourceNode))
 				{
 					if (nodes.equals (intermediateNode)) continue;
-
-					final int m = intermediateNode.getIndex ();
-
-					double distIntermediateToEgress = costMatrix[m][t];
-					if (distIntermediateToEgress == Double.MAX_VALUE) continue;
-
-					Collection<Link> linksFromNodeToIntermediate = linksPerNodePair.get(Pair.of(node, intermediateNode));
-					if (linksFromNodeToIntermediate == null) continue;
-
-					for (Link link : linksFromNodeToIntermediate)
-					{
-						double weight_thisLink = linkWeightMap.get(link);
-						checkIPWeight(weight_thisLink);
-
-						if (Math.abs(weight_thisLink - (distNodeToEgress - distIntermediateToEgress)) < 1E-10)
-							A_t.add(link);
-					}
+					final Pair<Set<Link>,Double> nodePairLinks = linksPerNodeSameMinimumCost.get(Pair.of(sourceNode, intermediateNode));
+					if (nodePairLinks == null) continue;
+					if (nodePairLinks.getFirst().isEmpty()) continue;
+					final Number costFromIntermediateToEnd = shortestDistanceMatrix.getDistance(intermediateNode, egressNode);
+					if (costFromIntermediateToEnd == null) continue;
+					final double costThroghThisIntermediate = nodePairLinks.getSecond() + costFromIntermediateToEnd.doubleValue();
+					if (Math.abs(shortestPathDistance_ij.doubleValue() - costThroghThisIntermediate) < 1E-10)
+						minCostLinks.addAll(nodePairLinks.getFirst());
 				}
-
-				int outdegree = A_t.size();
-
+				final int outdegree = minCostLinks.size();
 				if (outdegree > 0)
-					for (Link link : A_t)
+					for (Link link : minCostLinks)
 						f_te.set (t , link.getIndex () , 1.0 / outdegree);
 			}
 		}
-
 		return f_te;
 	}
 
+	/**
+	 * Computes the forwarding rules according to an OSPF/ECMP scheme, for the given demands. 
+	 * Links with a weight of Double.MAX_VALUE are not considered.
+	 * @param nodes List of nodes
+	 * @param links List of links
+	 * @param demands Demands for which the ECMP forwarding rules will be computed 
+	 * @param linkWeightVector Cost per link vector. Links with weight Double.MAX_VALUE are not considered
+	 * @return Destination-based routing in the form <i>f<sub>te</sub></i> (fractions of traffic in a node, that is forwarded through each of its output links to node {@code t})
+	 */
+	public static Triple<List<Demand>,List<Link>,List<Double>> computeECMPForwardinRules (List<Node> nodes, List<Link> links, List<Demand> demands , DoubleMatrix1D linkWeightVector)
+	{
+		final Map<Link,Double> linkWeightMap = CollectionUtils.toMap(links, linkWeightVector);
+		final Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(linkWeightMap);
+		final List<Link> linksToConsider = links.stream().filter(e->linkWeightMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
+		final Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, linksToConsider);
+		final DijkstraDistance<Node,Link> shortestDistanceMatrix = new DijkstraDistance<Node,Link> (graph, nev); 
+		final List<Demand> frDemands = new ArrayList<> ();
+		final List<Link> frLinks = new ArrayList<> ();
+		final List<Double> frSplits = new ArrayList<> ();
+		
+		final Map<Pair<Node, Node>, Pair<Set<Link>,Double>> linksPerNodeSameMinimumCost = new HashMap<>();
+		for(Link link : linksToConsider)
+		{
+			final double newLinkCost = linkWeightMap.get(link);
+			final Pair<Node,Node> nodePair_thisLink = Pair.of(link.getOriginNode() , link.getDestinationNode());
+			final Pair<Set<Link>,Double> links_thisNodePair = linksPerNodeSameMinimumCost.get(nodePair_thisLink);
+			if (links_thisNodePair == null)
+			{
+				final Set<Link> setForLinkThisNodePair = new HashSet<Link>();
+				setForLinkThisNodePair.add(link);
+				linksPerNodeSameMinimumCost.put(nodePair_thisLink, Pair.of(setForLinkThisNodePair , newLinkCost));
+			}
+			else
+			{
+				final double previousLinksCost = links_thisNodePair.getSecond();
+				if (newLinkCost < previousLinksCost) { links_thisNodePair.getFirst().clear(); links_thisNodePair.getFirst().add(link); links_thisNodePair.setSecond(newLinkCost); }
+				else if (newLinkCost == previousLinksCost) { links_thisNodePair.getFirst().add(link); }
+				else if (newLinkCost > previousLinksCost) { continue; }
+			}
+		}
+
+		for (Demand demand : demands)
+		{
+			final Node egressNode = demand.getEgressNode();
+			for (Node sourceNode : nodes)
+			{
+				if (egressNode == sourceNode) continue;
+				final Number shortestPathDistance_ij = shortestDistanceMatrix.getDistance(sourceNode, egressNode);
+				if (shortestPathDistance_ij == null) continue; // egress not reachable
+				final Set<Link> minCostLinks = new HashSet<> (); 
+				for (Node intermediateNode : graph.getNeighbors(sourceNode))
+				{
+					if (nodes.equals (intermediateNode)) continue;
+					final Pair<Set<Link>,Double> nodePairLinks = linksPerNodeSameMinimumCost.get(Pair.of(sourceNode, intermediateNode));
+					if (nodePairLinks == null) continue;
+					if (nodePairLinks.getFirst().isEmpty()) continue;
+					final double costThroghThisIntermediate = nodePairLinks.getSecond() + shortestDistanceMatrix.getDistance(intermediateNode, egressNode).doubleValue();
+					if (Math.abs(shortestPathDistance_ij.doubleValue() - costThroghThisIntermediate) < 1E-10)
+						minCostLinks.addAll(nodePairLinks.getFirst());
+				}
+				final int outdegree = minCostLinks.size();
+				for (Link link : minCostLinks)
+				{
+					frDemands.add(demand);
+					frLinks.add(link);
+					frSplits.add(1.0 / outdegree);
+				}
+			}
+		}
+		return Triple.of(frDemands, frLinks, frSplits);
+	}
+
+	
 	/**
 	 * Computes the routing table matrix according to an OSPF/ECMP scheme. For
 	 * each destination node <i>t</i>, and each link <i>e</i>, {@code f_te[t][e]}
@@ -639,9 +654,10 @@ public class IPUtils
 	 */
 	public static void setECMPForwardingRulesFromLinkWeights(NetPlan netPlan, DoubleMatrix1D linkWeightMap , NetworkLayer ... optionalLayer)
 	{
-		NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayer);
-		Quadruple<DoubleMatrix2D, DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D> q = computeCarriedTrafficFromIGPWeights(netPlan, linkWeightMap , layer);
-		DoubleMatrix2D f_de = q.getFirst ();
+		final NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayer);
+		final Quadruple<DoubleMatrix2D, DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D> q = 
+				computeCarriedTrafficFromIGPWeights(netPlan, linkWeightMap , layer);
+		final DoubleMatrix2D f_de = q.getFirst ();
 		netPlan.setForwardingRules(f_de , layer);
 	}
 	

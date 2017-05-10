@@ -357,15 +357,17 @@ public class NetPlan extends NetworkElement
      */
     public static NetPlan loadFromFile(File file)
     {
-        try
+        try (InputStream inputStream = new FileInputStream(file))
         {
-            InputStream inputStream = new FileInputStream(file);
             NetPlan np = new NetPlan(inputStream);
             if (ErrorHandling.isDebugEnabled()) np.checkCachesConsistency();
             return np;
         } catch (FileNotFoundException e)
         {
             throw new Net2PlanException(e.getMessage());
+        } catch (IOException e)
+        {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -814,6 +816,7 @@ public class NetPlan extends NetworkElement
         cache_id2MulticastTreeMap.put(treeId, tree);
         layer.multicastTrees.add(tree);
         boolean treeIsUp = true;
+        boolean treeTravZeroCapLinks = false;
         for (Node node : tree.cache_traversedNodes)
         {
             node.cache_nodeAssociatedulticastTrees.add(tree);
@@ -822,9 +825,11 @@ public class NetPlan extends NetworkElement
         for (Link link : linkSet)
         {
             if (!link.isUp) treeIsUp = false;
+            if (link.capacity < Configuration.precisionFactor) treeTravZeroCapLinks = true;
             link.cache_traversingTrees.add(tree);
         }
         if (!treeIsUp) layer.cache_multicastTreesDown.add(tree);
+        if (treeTravZeroCapLinks) layer.cache_multicastTreesTravLinkZeroCap.add(tree);
         demand.cache_multicastTrees.add(tree);
         tree.setCarriedTraffic(carriedTraffic, occupiedLinkCapacity);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -982,6 +987,7 @@ public class NetPlan extends NetworkElement
         layer.routes.add(route);
         cache_id2RouteMap.put(routeId, route);
         boolean isUpThisRoute = true;
+        boolean isTraversingZeroCapLinks = false;
         for (Node node : route.cache_seqNodesRealPath)
         {
             node.cache_nodeAssociatedRoutes.add(route);
@@ -994,9 +1000,11 @@ public class NetPlan extends NetworkElement
             else numPassingTimes++;
             link.cache_traversingRoutes.put(route, numPassingTimes);
             if (!link.isUp) isUpThisRoute = false;
+            if (link.capacity < Configuration.precisionFactor) isTraversingZeroCapLinks = true;
         }
         demand.cache_routes.add(route);
         if (!isUpThisRoute) layer.cache_routesDown.add(route);
+        if (isTraversingZeroCapLinks) layer.cache_routesTravLinkZeroCap.add(route);
         route.setCarriedTraffic(carriedTraffic, occupiedLinkAndResourceCapacities);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return route;
@@ -2074,7 +2082,7 @@ public class NetPlan extends NetworkElement
             			frLinks.add(thisLink);
             			frSplits.add(otherFr.getValue());
             		}
-                	this.setForwardingRules(frDemands , frLinks , frSplits, false);
+                	this.setForwardingRules(frDemands , frLinks , frSplits, true);
         		}
         	}
         	for (MulticastDemand otherDemand : otherDesign.getMulticastDemands(otherLayer))
@@ -2706,10 +2714,7 @@ public class NetPlan extends NetworkElement
     public Set<Link> getLinksWithZeroCapacity(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-        Set<Link> res = new HashSet<Link>();
-        for (Link e : layer.links) if (e.capacity < PRECISION_FACTOR) res.add(e);
-        return res;
+        return Collections.unmodifiableSet(layer.cache_linksZeroCap);
     }
 
     /**
@@ -3766,10 +3771,20 @@ public class NetPlan extends NetworkElement
      */
     public Set<MulticastTree> getMulticastTreesDown(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Set<MulticastTree> res = new HashSet<MulticastTree>();
-        for (MulticastTree r : layer.multicastTrees) if (r.isDown()) res.add(r);
-        return res;
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        return Collections.unmodifiableSet(layer.cache_multicastTreesDown);
+    }
+
+    /**
+     * <p>Returns the set of multicast trees that are down (i.e. that traverse a link or node that has failed).</p>
+     *
+     * @param optionalLayerParameter Network layer (optional)
+     * @return the {@code Set} of multicast trees that are down
+     */
+    public Set<MulticastTree> getMulticastTreesTraversingZeroCapLinks (NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        return Collections.unmodifiableSet(layer.cache_multicastTreesTravLinkZeroCap);
     }
 
     /**
@@ -4310,11 +4325,22 @@ public class NetPlan extends NetworkElement
      */
     public Set<Route> getRoutesDown(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-        Set<Route> res = new HashSet<Route>();
-        for (Route r : layer.routes) if (r.isDown()) res.add(r);
-        return res;
+        return Collections.unmodifiableSet(layer.cache_routesDown);
+    }
+
+    /**
+     * <p>Returns the set of routes that are traversing a link with zero capacity. If no layer is provided, default layer is assumed</p>
+     *
+     * @param optionalLayerParameter network layer (optional)
+     * @return see above
+     */
+    public Set<Route> getRoutesTraversingZeroCapacityLinks (NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+        return Collections.unmodifiableSet(layer.cache_routesTravLinkZeroCap);
     }
 
     /**
@@ -4326,7 +4352,7 @@ public class NetPlan extends NetworkElement
      */
     public RoutingType getRoutingType(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         return layer.routingType;
     }
 
@@ -5624,7 +5650,8 @@ public class NetPlan extends NetworkElement
         	d.cache_worstCasePropagationTimeMs = Double.MAX_VALUE;
             d.routingCycleType = RoutingCycleType.LOOPLESS;
             d.carriedTraffic = 0;
-            if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = d.carriedTraffic;
+            if (d.coupledUpperLayerLink != null)
+            	d.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(d.carriedTraffic);
         }
         for (Link e : layer.links)
         {
@@ -5755,6 +5782,7 @@ public class NetPlan extends NetworkElement
     		for (Node node : r.cache_seqNodesRealPath) node.cache_nodeAssociatedRoutes.remove(r);
     		netPlan.cache_id2RouteMap.remove(r.id);
     		layer.cache_routesDown.remove (r);
+    		layer.cache_routesTravLinkZeroCap.remove(r);
             for (String tag : r.tags) netPlan.cache_taggedElements.get(tag).remove(r);
             r.removeIdAndFromPlanningDomain();
         }
@@ -5762,7 +5790,8 @@ public class NetPlan extends NetworkElement
         {
         	d.carriedTraffic = 0;
         	d.routingCycleType = RoutingCycleType.LOOPLESS;
-        	if (d.coupledUpperLayerLink != null) d.coupledUpperLayerLink.capacity = 0;
+        	if (d.coupledUpperLayerLink != null)
+        		d.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(0);
     		d.cache_routes.clear ();
     		d.cache_worstCasePropagationTimeMs = 0;        
     		d.cache_worstCaseLengthInKm = 0;
@@ -6487,22 +6516,26 @@ public class NetPlan extends NetworkElement
      * @param links              Links
      * @param splittingFactors   Splitting ratios (fraction of traffic from demand 'd' entering to the origin node of link 'e', going through link 'e').
      *                           Each value must be equal or greater than 0 and equal or lesser than 1.
-     * @param includeUnusedRules Inclue {@code true} or not {@code false} unused rules
+     * @param removePreviousRulesAffectedDemands Inclue {@code true} or not {@code false} unused rules
      */
-    public void setForwardingRules(Collection<Demand> demands, Collection<Link> links, Collection<Double> splittingFactors, boolean includeUnusedRules)
+    public void setForwardingRules(Collection<Demand> demands, Collection<Link> links, Collection<Double> splittingFactors, boolean removePreviousRulesAffectedDemands)
     {
         checkIsModifiable();
         if ((demands.size() != links.size()) || (demands.size() != splittingFactors.size()))
             throw new Net2PlanException("The number of demands, links and aplitting factors must be the same");
         if (demands.isEmpty()) return;
-        
-        NetworkLayer layer = demands.iterator().next().layer;
+        final NetworkLayer layer = demands.iterator().next().layer;
         checkInThisNetPlanAndLayer(demands, layer);
         checkInThisNetPlanAndLayer(links, layer);
-        
+
+        /* If asked, remove previous forwarding rules of the affected demands */
+    	final Set<Demand> affectedDemands = new HashSet<> (demands);
+        if (removePreviousRulesAffectedDemands)
+        	for (Demand d : affectedDemands) d.removeAllForwardingRules();
+
         /* Initialize the map with existing demands */
         Map<Demand,Map<Link,Double>> newForwardingRules = new HashMap<> ();
-        for (Demand d : layer.demands) newForwardingRules.put(d, d.cacheHbH_frs);
+        for (Demand d : affectedDemands) newForwardingRules.put(d, d.cacheHbH_frs);
         
         /* Update with new demands */
         Iterator<Demand> it_d = demands.iterator();
@@ -6997,7 +7030,7 @@ public class NetPlan extends NetworkElement
             if ((e.coupledLowerLayerDemand != null) || (e.coupledLowerLayerMulticastDemand != null))
                 throw new Net2PlanException("Coupled links cannot change its capacity");
         for (Link e : layer.links)
-            e.capacity = linkCapacities.get(e.index);
+            e.updateCapacityAndZeroCapacityLinksAndRoutesCaches(linkCapacities.get(e.index));
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 

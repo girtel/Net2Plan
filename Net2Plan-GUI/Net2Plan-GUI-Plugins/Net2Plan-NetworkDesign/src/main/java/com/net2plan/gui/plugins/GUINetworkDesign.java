@@ -20,10 +20,10 @@ import com.net2plan.gui.plugins.networkDesign.GUIWindow;
 import com.net2plan.gui.plugins.networkDesign.NetworkDesignWindow;
 import com.net2plan.gui.plugins.networkDesign.focusPane.FocusPane;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.interfaces.IVisualizationCallback;
 import com.net2plan.gui.plugins.networkDesign.offlineExecPane.OfflineExecutionPanel;
 import com.net2plan.gui.plugins.networkDesign.onlineSimulationPane.OnlineSimulationPane;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.TopologyPanel;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.CanvasFunction;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.JUNGCanvas;
@@ -45,8 +45,6 @@ import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -64,7 +62,7 @@ import java.util.List;
  *
  * @author Pablo
  */
-public class GUINetworkDesign extends IGUIModule implements IVisualizationCallback
+public class GUINetworkDesign extends IGUIModule
 {
     private final static String TITLE = "Offline network design & Online network simulation";
     private final static int MAXSIZEUNDOLISTCHANGES = 0; // deactivate, not robust yet
@@ -294,7 +292,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         // Building tab controller
         this.windowController = new WindowController(executionPane, onlineSimulationPane, whatIfAnalysisPane, reportPane);
 
-        addAllKeyCombinationActions();
+        addKeyCombinationActions();
         updateVisualizationAfterNewTopology();
     }
 
@@ -423,16 +421,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         return Integer.MAX_VALUE;
     }
 
-    @Nonnull
-    @Override
+
     public NetPlan getDesign()
     {
         if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getCurrentNetPlan();
         else return currentNetPlan;
     }
 
-    @Nullable
-    @Override
     public NetPlan getInitialDesign()
     {
         if (inOnlineSimulationMode()) return onlineSimulationPane.getSimKernel().getInitialNetPlan();
@@ -471,13 +466,13 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         updateVisualizationAfterNewTopology();
     }
 
-    public void setDesign(@Nonnull NetPlan netPlan)
+    public void setDesign(NetPlan netPlan)
     {
-    	if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
+        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         this.currentNetPlan = netPlan;
     }
 
-    @Nonnull
+
     public VisualizationState getVisualizationState()
     {
         return vs;
@@ -576,7 +571,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
                 }
             }
         }
-        topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+        topologyPanel.updateMultilayerPanel();
         viewEditTopTables.selectItemTab(type, itemId);
     }
 
@@ -594,7 +589,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         return simState == SimState.PAUSED || simState == SimState.RUNNING || simState == SimState.STEP;
     }
 
-    private void addAllKeyCombinationActions()
+    private void addKeyCombinationActions()
     {
         addKeyCombinationAction("Resets the tool", new AbstractAction()
         {
@@ -625,73 +620,6 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK));
 
-        /* From the TOPOLOGY PANEL */
-        addKeyCombinationAction("Load design", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                topologyPanel.loadDesign();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Save design", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                topologyPanel.saveDesign();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom in", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
-                    topologyPanel.getCanvas().zoomIn();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom out", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
-                    topologyPanel.getCanvas().zoomOut();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Zoom all", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                if (topologyPanel.getSize().getWidth() != 0 && topologyPanel.getSize().getHeight() != 0)
-                    topologyPanel.getCanvas().zoomAll();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Take snapshot", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                topologyPanel.takeSnapshot();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
-
-        addKeyCombinationAction("Load traffic demands", new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                topologyPanel.loadTrafficDemands();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
-        
         /* FROM REPORT */
         addKeyCombinationAction("Close selected report", new AbstractAction()
         {
@@ -789,40 +717,41 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         resetPickedStateAndUpdateView();
     }
 
-    @Override
     public void updateVisualizationAfterPick()
     {
-        if (vs.getPickedElementType() != null) // can be null if picked a resource type
-            selectNetPlanViewItem(vs.getPickedElementType(), null);
-
-        for (NetworkElement networkElement : vs.getPickedNetworkElements())
-            viewEditTopTables.selectItem(NetworkElementType.getType(networkElement), networkElement);
-
-        for (Pair<Demand,Link> fr : vs.getPickedForwardingRules())
-            viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
-
+        final NetworkElementType type = vs.getPickedElementType();
+        if (type != null) // can be null if picked a resource type
+            selectNetPlanViewItem(type, null);
+        if (type != null)
+            viewEditTopTables.selectItems(type, vs.getPickedNetworkElements());
+        if (type == NetworkElementType.FORWARDING_RULE)
+        	for (Pair<Demand,Link> fr : vs.getPickedForwardingRules())
+        		viewEditTopTables.selectItem(NetworkElementType.FORWARDING_RULE, fr);
         topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
+        topologyPanel.updateTopToolbar();
         focusPanel.updateView();
     }
 
-    @Override
     public void updateVisualizationAfterNewTopology()
     {
         vs.updateTableRowFilter(null, null);
-        topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+        topologyPanel.updateMultilayerPanel();
         topologyPanel.getCanvas().rebuildGraph();
         topologyPanel.getCanvas().zoomAll();
         viewEditTopTables.updateView();
         focusPanel.updateView();
     }
 
-    @Override
+    public void updateVisualizationAfterCanvasState()
+    {
+        topologyPanel.updateTopToolbar();
+    }
+
     public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()
     {
         topologyPanel.getCanvas().refresh();
     }
 
-    @Override
     public void updateVisualizationAfterChanges(Set<NetworkElementType> modificationsMade)
     {
         if (modificationsMade == null)
@@ -832,7 +761,7 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
 
         if (modificationsMade.contains(NetworkElementType.LAYER))
         {
-            topologyPanel.updateMultilayerVisibilityAndOrderPanel();
+            topologyPanel.updateMultilayerPanel();
             topologyPanel.getCanvas().rebuildGraph();
             viewEditTopTables.updateView();
             focusPanel.updateView();
@@ -848,37 +777,22 @@ public class GUINetworkDesign extends IGUIModule implements IVisualizationCallba
         }
     }
 
-    public void runCanvasOperation(@Nonnull ITopologyCanvas.CanvasOperation... canvasOperation)
+    public void runCanvasOperation(CanvasFunction operation)
     {
-        // NOTE: The operations should executed in the same order as their are brought.
-        for (ITopologyCanvas.CanvasOperation operation : canvasOperation)
+        switch (operation)
         {
-            switch (operation)
-            {
-                case ZOOM_ALL:
-                    topologyPanel.getCanvas().zoomAll();
-                    break;
-                case ZOOM_IN:
-                    topologyPanel.getCanvas().zoomIn();
-                    break;
-                case ZOOM_OUT:
-                    topologyPanel.getCanvas().zoomOut();
-                    break;
-            }
+            case ZOOM_ALL:
+                topologyPanel.getCanvas().zoomAll();
+                break;
+            case ZOOM_IN:
+                topologyPanel.getCanvas().zoomIn();
+                break;
+            case ZOOM_OUT:
+                topologyPanel.getCanvas().zoomOut();
+                break;
         }
     }
 
-//    public void updateWarnings()
-//    {
-//        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-//        List<String> warnings = NetworkPerformanceMetrics.checkNetworkState(getDesign(), net2planParameters);
-//        String warningMsg = warnings.isEmpty() ? "Design is successfully completed!" : StringUtils.join(warnings, StringUtils.getLineSeparator());
-//        txt_netPlanLog.setText(null);
-//        txt_netPlanLog.setText(warningMsg);
-//        txt_netPlanLog.setCaretPosition(0);
-//    }
-
-    @Override
     public void updateVisualizationJustTables()
     {
         viewEditTopTables.updateView();

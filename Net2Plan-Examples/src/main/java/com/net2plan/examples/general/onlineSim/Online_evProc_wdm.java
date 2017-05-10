@@ -289,7 +289,7 @@ public class Online_evProc_wdm extends IEventProcessor
 				if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 
 				/* This automatically sets as up the routes affected by a repair in its current path, and sets as down the affected by a failure in its current path */
-				Set<Route> routesFromDownToUp = currentNetPlan.getRoutesDown(wdmLayer);
+				Set<Route> routesFromDownToUp = new HashSet<> (currentNetPlan.getRoutesDown(wdmLayer));
 				currentNetPlan.setLinksAndNodesFailureState(ev.linksToUp , ev.linksToDown , ev.nodesToUp , ev.nodesToDown);
 				routesFromDownToUp.removeAll(currentNetPlan.getRoutesDown(wdmLayer));
 
@@ -304,7 +304,7 @@ public class Online_evProc_wdm extends IEventProcessor
 				}
 
 				/* Now take down routes one by one, and see what to do with them (if something)  */ 
-				for (Route r : currentNetPlan.getRoutesDown(wdmLayer))
+				for (Route r : new ArrayList<> (currentNetPlan.getRoutesDown(wdmLayer)))
 				{
 					final Demand wdmDemand = r.getDemand();
 					final Demand.IntendedRecoveryType recovType = wdmDemand.getIntendedRecoveryType() == Demand.IntendedRecoveryType.NOTSPECIFIED? defaultRecoveryType : wdmDemand.getIntendedRecoveryType();

@@ -17,9 +17,22 @@
 
 package com.net2plan.examples.ocnbook.onlineSim;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import com.net2plan.interfaces.networkDesign.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.utils.Constants.RoutingType;
@@ -28,7 +41,8 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.RandomUtils;
 import com.net2plan.utils.Triple;
 
-import java.util.*;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 /** 
  * Implements the reactions of a technology-agnostic network to connection requests under various CAC options, and reactions to failures and repairs under different recovery schemes.
@@ -182,7 +196,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 			SimEvent.RouteRemove routeEvent = (SimEvent.RouteRemove) event.getEventObject ();
 			Route routeToRemove = routeEvent.route;
 			if (routeToRemove == null) throw new RuntimeException ("Bad");
-			for (Route backup : routeToRemove.getBackupRoutes()) backup.remove ();
+			for (Route backup : new ArrayList<> (routeToRemove.getBackupRoutes())) backup.remove ();
 			routeToRemove.remove();
 			this.routeOriginalLinks.remove(routeToRemove);
 		} else if (event.getEventObject () instanceof SimEvent.DemandModify)
@@ -198,7 +212,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 			SimEvent.NodesAndLinksChangeFailureState ev = (SimEvent.NodesAndLinksChangeFailureState) event.getEventObject ();
 
 			/* This automatically sets as up the routes affected by a repair in its current path, and sets as down the affected by a failure in its current path */
-			Set<Route> routesFromDownToUp = currentNetPlan.getRoutesDown();
+			Set<Route> routesFromDownToUp = new HashSet<> (currentNetPlan.getRoutesDown());
 			currentNetPlan.setLinksAndNodesFailureState(ev.linksToUp , ev.linksToDown , ev.nodesToUp , ev.nodesToDown);
 			routesFromDownToUp.removeAll(currentNetPlan.getRoutesDown());
 			

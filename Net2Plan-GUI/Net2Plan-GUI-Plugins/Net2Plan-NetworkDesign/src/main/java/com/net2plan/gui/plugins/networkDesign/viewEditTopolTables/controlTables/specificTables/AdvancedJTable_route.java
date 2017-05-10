@@ -11,6 +11,8 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.utils.*;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -21,7 +23,6 @@ import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
@@ -73,7 +74,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         super(createTableModel(callback), callback, NetworkElementType.ROUTE);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -94,6 +95,8 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     {
         List<Object[]> allRouteData = new LinkedList<Object[]>();
         final List<Route> rowVisibleRoutes = getVisibleElementsInTable();
+        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
+
         for (Route route : rowVisibleRoutes)
         {
             final Demand demand = route.getDemand();
@@ -132,28 +135,29 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                 }
             }
 
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_DEMANDOFFEREDTRAFFIC, routeData[COLUMN_DEMANDOFFEREDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, routeData[COLUMN_CARRIEDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OCCUPIEDCAPACITY, routeData[COLUMN_OCCUPIEDCAPACITY]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_NUMHOPS, routeData[COLUMN_NUMHOPS]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_LENGTH, routeData[COLUMN_LENGTH]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_PROPDELAY, routeData[COLUMN_PROPDELAY]);
+            if (route.isBackupRoute()) AggregationUtils.updateRowCount(dataAggregator, COLUMN_ISBACKUP, 1);
+            if (route.hasBackupRoutes()) AggregationUtils.updateRowCount(dataAggregator, COLUMN_HASBACKUPROUTES, 1);
+
             allRouteData.add(routeData);
         }
 
         /* Add the aggregation row with the aggregated statistics */
-        final double aggDemandOffered = rowVisibleRoutes.stream().mapToDouble(e -> e.getDemand().getOfferedTraffic()).sum();
-        final double aggCarried = rowVisibleRoutes.stream().mapToDouble(e -> e.getCarriedTraffic()).sum();
-        final double aggLinkOccupied = rowVisibleRoutes.stream().mapToDouble(e -> e.isDown() ? 0 : e.getSeqOccupiedCapacitiesIfNotFailing().stream().mapToDouble(ee -> ee).sum()).sum();
-        final int aggMaxNumHops = rowVisibleRoutes.stream().mapToInt(e -> e.getNumberOfHops()).sum();
-        final double aggMaxLength = rowVisibleRoutes.stream().mapToDouble(e -> e.getLengthInKm()).sum();
-        final double aggMaxPropDelay = rowVisibleRoutes.stream().mapToDouble(e -> e.getPropagationDelayInMiliseconds()).sum();
-        final int aggIsBackup = (int) rowVisibleRoutes.stream().filter(e -> e.isBackupRoute()).count();
-        final int aggHasBackup = (int) rowVisibleRoutes.stream().filter(e -> e.hasBackupRoutes()).count();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_DEMANDOFFEREDTRAFFIC] = new LastRowAggregatedValue(aggDemandOffered);
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
-        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(aggLinkOccupied);
-        aggregatedData[COLUMN_NUMHOPS] = new LastRowAggregatedValue(aggMaxNumHops);
-        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(aggMaxLength);
-        aggregatedData[COLUMN_PROPDELAY] = new LastRowAggregatedValue(aggMaxPropDelay);
-        aggregatedData[COLUMN_ISBACKUP] = new LastRowAggregatedValue(aggIsBackup);
-        aggregatedData[COLUMN_HASBACKUPROUTES] = new LastRowAggregatedValue(aggHasBackup);
+        aggregatedData[COLUMN_DEMANDOFFEREDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_DEMANDOFFEREDTRAFFIC]);
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]);
+        aggregatedData[COLUMN_OCCUPIEDCAPACITY] = new LastRowAggregatedValue(dataAggregator[COLUMN_OCCUPIEDCAPACITY]);
+        aggregatedData[COLUMN_NUMHOPS] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMHOPS]);
+        aggregatedData[COLUMN_LENGTH] = new LastRowAggregatedValue(dataAggregator[COLUMN_LENGTH]);
+        aggregatedData[COLUMN_PROPDELAY] = new LastRowAggregatedValue(dataAggregator[COLUMN_PROPDELAY]);
+        aggregatedData[COLUMN_ISBACKUP] = new LastRowAggregatedValue(dataAggregator[COLUMN_ISBACKUP]);
+        aggregatedData[COLUMN_HASBACKUPROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_HASBACKUPROUTES]);
         allRouteData.add(aggregatedData);
 
         return allRouteData;
@@ -200,26 +204,11 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         return rf == null ? callback.getDesign().hasRoutes(layer) : rf.hasRoutes(layer);
     }
     
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfRoutes(layer);
-    	
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfRoutes(layer);
-    }
-
-
     @Override
     public int getAttributesColumnIndex()
     {
         return COLUMN_ATTRIBUTES;
     }
-
-//    public int[] getColumnsOfSpecialComparatorForSorting() {
-//        return new int[]{};
-//    }
 
     private static TableModel createTableModel(final GUINetworkDesign callback)
     {
@@ -259,7 +248,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         case COLUMN_CARRIEDTRAFFIC:
                             route.setCarriedTraffic(Double.parseDouble(newValue.toString()), route.getOccupiedCapacity());
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.getVisualizationState().pickRoute(route);
+                            callback.getVisualizationState().pickElement(route);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -267,7 +256,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                         case COLUMN_OCCUPIEDCAPACITY:
                             route.setCarriedTraffic(route.getCarriedTraffic(), Double.parseDouble(newValue.toString()));
                             callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.ROUTE));
-                            callback.getVisualizationState().pickRoute(route);
+                            callback.getVisualizationState().pickElement(route);
                             callback.updateVisualizationAfterPick();
                             callback.addNetPlanChange();
                             break;
@@ -312,7 +301,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
@@ -352,7 +341,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
         /* Add the popup menu option of the filters */
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
         {
             if (selection.getElementType() != NetworkElementType.ROUTE)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
@@ -363,6 +352,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         final JMenu submenuFilters = new JMenu("Filters");
         if (!routeRowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -432,17 +422,23 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (getVisibleElementsInTable().isEmpty()) return;
         if (selection.getElementType() != NetworkElementType.ROUTE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        callback.getVisualizationState().pickRoute((List<Route>) selection.getNetworkElements());
+        callback.getVisualizationState().pickElement((List<Route>) selection.getNetworkElements());
         callback.updateVisualizationAfterPick();
     }
 
-    @Nonnull
+    @Override
+    protected boolean hasAttributes()
+    {
+        return true;
+    }
+
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -737,7 +733,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         c.setMaximumSize(max);
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -865,7 +861,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(final ElementSelection selection)
     {
@@ -1087,7 +1083,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
         callback.resetPickedStateAndUpdateView();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {

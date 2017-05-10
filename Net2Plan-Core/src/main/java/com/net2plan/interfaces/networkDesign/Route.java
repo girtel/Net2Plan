@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
-
 /**
  * <p>This class contains a representation of a unidirectional route, an structure used to carry traffic of unicast demands at a layer,
  *  when the layer routing type is source routing. Routes are characterized by the unicast demand they carry traffic of, the traversed links which should 
@@ -482,6 +481,14 @@ public class Route extends NetworkElement
 	{
 		return layer.cache_routesDown.contains(this);
 	}
+
+	/** Returns true if the route is traversing a link with zero capacity
+	 * @return see above
+	 */
+	public boolean isTraversingZeroCapLinks () 
+	{
+		return layer.cache_routesTravLinkZeroCap.contains(this);
+	}
 	
 	/**
 	 * <p>Removes this route.</p>
@@ -503,6 +510,7 @@ public class Route extends NetworkElement
 		
 		netPlan.cache_id2RouteMap.remove(id);
 		layer.cache_routesDown.remove (this);
+		layer.cache_linksZeroCap.remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(layer.routes , index);
 		
 		/* remove the resources info */
@@ -587,7 +595,8 @@ public class Route extends NetworkElement
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
 
 		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
-		if (demand.coupledUpperLayerLink != null) demand.coupledUpperLayerLink.capacity = demand.carriedTraffic;
+		if (demand.coupledUpperLayerLink != null)
+			demand.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(demand.carriedTraffic);
 
 		for (NetworkElement e : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet())
 			if (e instanceof Resource)
@@ -625,19 +634,22 @@ public class Route extends NetworkElement
 		for (Node node : cache_seqNodesRealPath)
 			node.cache_nodeAssociatedRoutes.remove (this);
 		layer.cache_routesDown.remove(this);
+		layer.cache_routesTravLinkZeroCap.remove(this);
 
 		/* Update this route info */
 		this.currentPath = new LinkedList<NetworkElement> (newPath);
 		this.cache_seqLinksRealPath = new LinkedList<Link> (newSeqLinks); 
 		boolean isRouteUp = demand.ingressNode.isUp;
+		boolean isRouteTravZeroCapLinks = false;
 		this.cache_seqNodesRealPath = new LinkedList<Node> (); cache_seqNodesRealPath.add (demand.getIngressNode()); 
 		for (Link e : cache_seqLinksRealPath) 
 		{
 			cache_seqNodesRealPath.add (e.getDestinationNode());
 			isRouteUp = (isRouteUp && e.isUp && e.destinationNode.isUp);
+			if (e.capacity < Configuration.precisionFactor) isRouteTravZeroCapLinks = true;
 		}
 		if (!isRouteUp) layer.cache_routesDown.add(this);
-		
+		if (isRouteTravZeroCapLinks) layer.cache_routesTravLinkZeroCap.add(this);
 		/* Update traversed links and nodes caches  */
 		for (Link link : newSeqLinks) 
 		{
@@ -735,6 +747,7 @@ public class Route extends NetworkElement
 		for (Link link : cache_seqLinksRealPath) assertTrue (link.cache_traversingRoutes.containsKey(this));
 		for (Node node : cache_seqNodesRealPath) assertTrue (node.cache_nodeAssociatedRoutes.contains(this));
 		boolean shouldBeUp = true; for (Link e : cache_seqLinksRealPath) if (!e.isUp) { shouldBeUp = false; break; }
+		boolean travZeroCapLinks = cache_seqLinksRealPath.stream().anyMatch(e->e.capacity<Configuration.precisionFactor);
 		if (shouldBeUp) for (Node n : cache_seqNodesRealPath) if (!n.isUp) { shouldBeUp = false; break; }
 		if (!shouldBeUp != this.isDown())
 		{
@@ -753,7 +766,10 @@ public class Route extends NetworkElement
 		{
 			assertEquals(getCarriedTraffic() , 0 , 0.001);
 		}
-		
+		if (travZeroCapLinks)
+			assertTrue(layer.cache_routesTravLinkZeroCap.contains(this));
+		else
+			assertTrue(!layer.cache_routesTravLinkZeroCap.contains(this));
 		for (Route r : backupRoutes) assertTrue (r.cache_routesIAmBackUp.contains(this));
 		for (Route r : cache_routesIAmBackUp) assertTrue (r.backupRoutes.contains(this));
 	}

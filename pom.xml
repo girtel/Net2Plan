@@ -155,18 +155,10 @@
             <artifactId>reflections</artifactId>
             <version>0.9.11</version>
         </dependency>
-        <!-- Annotations -->
         <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope>
+            <groupId>com.github.girtel</groupId>
+            <artifactId>JOM</artifactId>
+            <version>0.2.0.2-hotfix.2</version>
         </dependency>
         <!--Excel-->
         <dependency>
@@ -179,16 +171,26 @@
             <artifactId>poi-ooxml</artifactId>
             <version>3.15</version>
         </dependency>
+        <!--Testing-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
         </dependency>
         <dependency>
-            <groupId>com.github.girtel</groupId>
-            <artifactId>JOM</artifactId>
-            <version>0.2.0.2-hotfix.2</version>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.7.22</version>
+            <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>pl.pragmatists</groupId>
+            <artifactId>JUnitParams</artifactId>
+            <version>1.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <!--Local-->
+        <!--Javadoc-->
         <dependency>
             <groupId>com.sun</groupId>
             <artifactId>tools</artifactId>

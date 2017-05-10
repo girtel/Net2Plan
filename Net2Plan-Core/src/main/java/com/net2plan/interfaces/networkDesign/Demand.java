@@ -591,7 +591,7 @@ public class Demand extends NetworkElement
 		}
 
 		/* Link capacity at the upper layer is equal to the carried traffic at the lower layer */
-		link.capacity = carriedTraffic;
+		link.updateCapacityAndZeroCapacityLinksAndRoutesCaches(carriedTraffic);
 		link.coupledLowerLayerDemand = this;
 		this.coupledUpperLayerLink = link;
 		link.layer.cache_coupledLinks.add (link);
@@ -902,7 +902,8 @@ public class Demand extends NetworkElement
 //		System.out.println("s_egress: "  + s_egressNode);
 		this.cacheHbH_linksPerNodeWithNonZeroFr = tentativeCacheHbH_linksPerNodeWithNonZeroFr;
 		carriedTraffic = offeredTraffic * M.get(egressNode.index) * s_egressNode;
-		if (coupledUpperLayerLink != null) coupledUpperLayerLink.capacity = carriedTraffic;
+		if (coupledUpperLayerLink != null)
+			coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(carriedTraffic);
 
 		if (carriedTraffic > offeredTraffic + 1E-5) throw new RuntimeException ("Bad");
 		

@@ -19,6 +19,8 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.StringLabeller;
@@ -31,7 +33,6 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.ActionEvent;
@@ -59,7 +60,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         super(createTableModel(callback), callback, NetworkElementType.FORWARDING_RULE);
         setDefaultCellRenderers(callback);
         setSpecificCellRenderers();
-        setColumnRowSortingFixedAndNonFixedTable();
+        setColumnRowSorting();
         fixedTable.setDefaultRenderer(Boolean.class, this.getDefaultRenderer(Boolean.class));
         fixedTable.setDefaultRenderer(Double.class, this.getDefaultRenderer(Double.class));
         fixedTable.setDefaultRenderer(Object.class, this.getDefaultRenderer(Object.class));
@@ -74,7 +75,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     {
         final List<Pair<Demand, Link>> rowVisibleFRs = getVisibleElementsInTable();
         List<Object[]> allForwardingRuleData = new LinkedList<Object[]>();
-        double accum_carriedTraffic = 0;
+        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
+
         for (Pair<Demand, Link> demandLinkPair : rowVisibleFRs)
         {
             Demand demand = demandLinkPair.getFirst();
@@ -96,14 +98,15 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             forwardingRuleData[COLUMN_SPLITTINGRATIO] = currentState.getForwardingRuleSplittingFactor(demand, link);
             forwardingRuleData[COLUMN_CARRIEDTRAFFIC] = currentState.getForwardingRuleCarriedTraffic(demand, link);
 
-            accum_carriedTraffic += currentState.getForwardingRuleCarriedTraffic(demand, link);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, forwardingRuleData[COLUMN_CARRIEDTRAFFIC]);
+
             allForwardingRuleData.add(forwardingRuleData);
         }
 
         /* Add the aggregation row with the aggregated statistics */
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(accum_carriedTraffic);
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]); // sum
         allForwardingRuleData.add(aggregatedData);
 
         return allForwardingRuleData;
@@ -149,25 +152,12 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         return rf == null ? callback.getDesign().hasForwardingRules(layer) : rf.hasForwardingRules(layer);
     }
-    
-    public int getNumberOfElements (boolean consideringFilters)
-    {
-        final NetPlan np = callback.getDesign();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
-    	if (!consideringFilters) return np.getNumberOfForwardingRules(layer);
-        final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
-        return rf.getNumberOfForwardingRules(layer);
-    }
 
     @Override
     public int getAttributesColumnIndex()
     {
         return 0;
     }
-
-//    public int[] getColumnsOfSpecialComparatorForSorting() {
-//        return new int[]{0, 1, 2};
-//    }
 
     private static TableModel createTableModel(final GUINetworkDesign callback)
     {
@@ -253,7 +243,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     }
 
     @Override
-    public void setColumnRowSortingFixedAndNonFixedTable()
+    public void setColumnRowSorting()
     {
         setAutoCreateRowSorter(true);
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet(COLUMN_NODE, COLUMN_DEMAND, COLUMN_OUTGOINGLINK);
@@ -279,14 +269,19 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     }
 
 
-    public void showInCanvas(ElementSelection selection)
+    public void pickSelection(ElementSelection selection)
     {
         if (selection.getElementType() != NetworkElementType.FORWARDING_RULE)
             throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
-        final NetPlan np = callback.getDesign();
         callback.getVisualizationState().pickForwardingRule(selection.getForwardingRules());
         callback.updateVisualizationAfterPick();
+    }
+
+    @Override
+    protected boolean hasAttributes()
+    {
+        return false;
     }
 
     public JPopupMenu getPopup(final ElementSelection selection)
@@ -296,7 +291,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         final JScrollPopupMenu popup = new JScrollPopupMenu(20);
         final List<Pair<Demand, Link>> frRowsInTheTable = getVisibleElementsInTable();
 
-        if (selection.getSelectionType() != ElementSelection.SelectionType.EMPTY)
+        if (!selection.isEmpty())
             if (selection.getElementType() != NetworkElementType.FORWARDING_RULE)
                 throw new RuntimeException("Unmatched items with table, selected items are of type: " + selection.getElementType());
 
@@ -304,6 +299,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         final List<Pair<Demand, Link>> selectedFRs = selection.getForwardingRules();
         if (!frRowsInTheTable.isEmpty())
         {
+        	addPickOption(selection, popup);
             addFilterOptions(selection, popup);
             popup.addSeparator();
         }
@@ -353,7 +349,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         return popup;
     }
 
-    @Nonnull
+
     @Override
     protected JMenuItem getAddOption()
     {
@@ -507,7 +503,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         }
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraAddOptions()
     {
@@ -536,14 +532,14 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
         return options;
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getForcedOptions(ElementSelection selection)
     {
         return new LinkedList<>();
     }
 
-    @Nonnull
+
     @Override
     protected List<JComponent> getExtraOptions(ElementSelection selection)
     {

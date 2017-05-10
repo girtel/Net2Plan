@@ -40,6 +40,10 @@ public class FocusPane extends JPanel
 
 	public void updateView ()
 	{
+
+
+		this.removeAll();
+		this.repaint();
 		final VisualizationState vs = callback.getVisualizationState();
 		final NetworkElementType elementType = vs.getPickedElementType();
 
@@ -469,38 +473,38 @@ public class FocusPane extends JPanel
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "demand".length()));
 			final Demand e = np.getDemandFromId(id);
-			vs.pickDemand(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
 
 		} else if (internalLink.startsWith("route"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "route".length()));
 			final Route e = np.getRouteFromId(id);
-			vs.pickRoute(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("node"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "node".length()));
 			final Node e = np.getNodeFromId(id);
-			vs.pickNode(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("multicastDemand"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "multicastDemand".length()));
 			final MulticastDemand e = np.getMulticastDemandFromId(id);
-			vs.pickMulticastDemand(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("multicastTree"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "multicastTree".length()));
 			final MulticastDemand e = np.getMulticastDemandFromId(id);
-			vs.pickMulticastDemand(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("link"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "link".length()));
 			final Link e = np.getLinkFromId(id);
-			vs.pickLink(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("forwardingRule"))
 		{
@@ -513,13 +517,13 @@ public class FocusPane extends JPanel
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "resource".length()));
 			final Resource e = np.getResourceFromId(id);
-			vs.pickResource(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("srg"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "srg".length()));
 			final SharedRiskGroup e = np.getSRGFromId(id);
-			vs.pickSRG(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("layer"))
 		{
@@ -527,7 +531,7 @@ public class FocusPane extends JPanel
 			final NetworkLayer e = np.getNetworkLayerFromId(id);
 			np.setNetworkLayerDefault(e);
 			callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-			vs.pickLayer(e);
+			vs.pickElement(e);
 			callback.updateVisualizationAfterPick();
             callback.addNetPlanChange();
 		} else throw new RuntimeException ();

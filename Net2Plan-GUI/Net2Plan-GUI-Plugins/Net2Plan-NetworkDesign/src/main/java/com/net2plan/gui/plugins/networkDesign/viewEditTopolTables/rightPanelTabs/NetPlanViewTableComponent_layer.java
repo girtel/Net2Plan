@@ -490,6 +490,8 @@ public class NetPlanViewTableComponent_layer extends JPanel
         topologyData.put("Number of nodes", N);
         topologyData.put("Number of links", E);
         topologyData.put("Node out-degree (max, min, avg)", String.format("%d, %d, %.3f", maxMinOutDegree[0], maxMinOutDegree[1], avgOutDegree));
+        final int numConnectedComponents = GraphUtils.getConnectedComponents(nodes , links).size();
+        topologyData.put("Is connected? (# connected components)", numConnectedComponents == 1? "yes" : "no (" + numConnectedComponents + ")");
         topologyData.put("All links are bidirectional (yes/no)", applyHardComputations? (GraphUtils.isBidirectional(nodes, links) ? "Yes" : "No") : "-");
 
         if (applyHardComputations)
@@ -595,12 +597,13 @@ public class NetPlanViewTableComponent_layer extends JPanel
         layerSummaryTables[0].setToolTipText(0, 0, "Indicates the number of defined nodes in the network");
         layerSummaryTables[0].setToolTipText(1, 0, "Indicates the number of defined links in this layer");
         layerSummaryTables[0].setToolTipText(2, 0, "Indicates the maximum/minimum/average value for the out-degree, that is, the number of outgoing links per node");
-        layerSummaryTables[0].setToolTipText(3, 0, "Indicates whether all links are bidirectional, that is, if there are the same number of links between each node pair in both directions (irrespective of the respective capacities)");
-        layerSummaryTables[0].setToolTipText(4, 0, "Indicates the layer diameter, that is, the length of the largest shortest-path in this layer");
-        layerSummaryTables[0].setToolTipText(5, 0, "Indicates the total capacity installed in this layer");
-        layerSummaryTables[0].setToolTipText(6, 0, "Indicates the average capacity installed per link");
-        layerSummaryTables[0].setToolTipText(7, 0, "Indicates the total capacity installed in this layer for links whose capacity is not infinite");
-        layerSummaryTables[0].setToolTipText(8, 0, "Indicates the average capacity installed in this layer for links whose capacity is not infinite");
+        layerSummaryTables[0].setToolTipText(3, 0, "Indicates if the topology is connected. If not, shows the number of connected components");
+        layerSummaryTables[0].setToolTipText(4, 0, "Indicates whether all links are bidirectional, that is, if there are the same number of links between each node pair in both directions (irrespective of the respective capacities)");
+        layerSummaryTables[0].setToolTipText(5, 0, "Indicates the layer diameter, that is, the length of the largest shortest-path in this layer");
+        layerSummaryTables[0].setToolTipText(6, 0, "Indicates the total capacity installed in this layer");
+        layerSummaryTables[0].setToolTipText(7, 0, "Indicates the average capacity installed per link");
+        layerSummaryTables[0].setToolTipText(8, 0, "Indicates the total capacity installed in this layer for links whose capacity is not infinite");
+        layerSummaryTables[0].setToolTipText(9, 0, "Indicates the average capacity installed in this layer for links whose capacity is not infinite");
         layerSummaryTables[1].setToolTipText(0, 0, "Indicates the number of defined demands in this layer");
         layerSummaryTables[1].setToolTipText(1, 0, "Indicates the total offered unicast traffic to the network in this layer");
         layerSummaryTables[1].setToolTipText(2, 0, "Indicates the total offered unicast traffic to the network per each node pair in this layer");
