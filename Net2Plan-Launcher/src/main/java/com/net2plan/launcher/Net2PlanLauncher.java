@@ -15,6 +15,7 @@
 
 package com.net2plan.launcher;
 
+import com.net2plan.cli.plugins.CLINetworkDesign;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.ArrayUtils;
 
