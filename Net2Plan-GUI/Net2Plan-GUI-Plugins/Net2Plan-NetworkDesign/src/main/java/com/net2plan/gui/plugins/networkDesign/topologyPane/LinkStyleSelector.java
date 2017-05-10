@@ -618,7 +618,7 @@ class Rectangle extends JPanel
     @Override
     public Dimension getPreferredSize()
     {
-        return new Dimension(20, 20);
+        return new Dimension(30, 20);
     }
 
     @Override
@@ -626,10 +626,9 @@ class Rectangle extends JPanel
     {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g.create();
-        final Dimension size = this.getSize();
 
         g2d.setColor(this.color);
-        g2d.fillRect(0, 0, size.width, size.height);
+        g2d.fillRect(0, 0, 30, 20);
         g2d.dispose();
     }
 }
