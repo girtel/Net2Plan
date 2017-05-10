@@ -20,6 +20,8 @@ import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.CanvasFunction;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
@@ -30,7 +32,6 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
@@ -72,7 +73,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Show/Hide", "Name",
             "State", "xCoord / Longitude", "yCoord / Latitude", "# out links", "# in links",
             "Out-link cap", "In-link cap", "Out traffic", "In traffic", "Out multicast traffic)", "In multicast traffic",
-            "SRGs", "Population", "Site", "Tags", "Attributes");
+            "# SRGs", "Population", "Site", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
             "Index (consecutive integer starting in zero)",
             "Indicates whether or not the node is visible in the topology canvas",
@@ -82,7 +83,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             "Total capacity in outgoing links", "Total capacity in incoming links",
             "Total out UNICAST traffic (carried)", "Total in UNICAST traffic (carried)",
             "Total out MULTICAST traffic (carried)", "Total in MULTICAST traffic (carried)",
-            "SRGs including this node", "Total population in this node", "Site this node belongs to", "Node-specific tags", "Node-specific attributes");
+            "Number of SRGs including this node", "Total population in this node", "Site this node belongs to", "Node-specific tags", "Node-specific attributes");
 
     /**
      * Default constructor.
@@ -125,16 +126,16 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             nodeData[COLUMN_STATE] = node.isUp();
             nodeData[COLUMN_XCOORD] = node.getXYPositionMap().getX();
             nodeData[COLUMN_YCOORD] = node.getXYPositionMap().getY();
-            updateRowSum(nodeData, dataAggregator, COLUMN_NUMOUTLINKS, node.getOutgoingLinks(layer).size());
-            updateRowSum(nodeData, dataAggregator, COLUMN_NUMINLINKS, node.getIncomingLinks(layer).size());
-            updateRowSum(nodeData, dataAggregator, COLUMN_INCOMINGLINKTRAFFIC, node.getIncomingLinksTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_OUTGOINGLINKTRAFFIC, node.getOutgoingLinksTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_OUTTRAFFICUNICAST, node.getIngressCarriedTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_INTRAFFICUNICAST, node.getEgressCarriedTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_OUTTRAFFICMULTICAST, node.getIngressCarriedMulticastTraffic(layer));
-            updateRowSum(nodeData, dataAggregator, COLUMN_INTRAFFICMULTICAST, node.getEgressCarriedMulticastTraffic(layer));
-            nodeData[COLUMN_SRGS] = node.getSRGs().isEmpty() ? "none" : node.getSRGs().size() + " (" + CollectionUtils.join(NetPlan.getIndexes(node.getSRGs()), ", ") + ")";
-            updateRowSum(nodeData, dataAggregator, COLUMN_POPULATION, node.getPopulation());
+            nodeData[COLUMN_NUMOUTLINKS] = node.getOutgoingLinks(layer).size();
+            nodeData[COLUMN_NUMINLINKS] = node.getIncomingLinks(layer).size();
+            nodeData[COLUMN_INCOMINGLINKTRAFFIC] = node.getIncomingLinksTraffic(layer);
+            nodeData[COLUMN_OUTGOINGLINKTRAFFIC] = node.getOutgoingLinksTraffic(layer);
+            nodeData[COLUMN_OUTTRAFFICUNICAST] = node.getIngressCarriedTraffic(layer);
+            nodeData[COLUMN_INTRAFFICUNICAST] = node.getEgressCarriedTraffic(layer);
+            nodeData[COLUMN_OUTTRAFFICMULTICAST] = node.getIngressCarriedMulticastTraffic(layer);
+            nodeData[COLUMN_INTRAFFICMULTICAST] = node.getEgressCarriedMulticastTraffic(layer);
+            nodeData[COLUMN_SRGS] = node.getSRGs().size();
+            nodeData[COLUMN_POPULATION] = node.getPopulation();
             nodeData[COLUMN_SITE] = node.getSiteName() != null ? node.getSiteName() : "";
             nodeData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(node.getTags()));
             nodeData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(node.getAttributes());
@@ -142,6 +143,16 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement
             for (int i = netPlanViewTableHeader.length; i < netPlanViewTableHeader.length + attributesTitles.size(); i++)
                 if (node.getAttributes().containsKey(attributesTitles.get(i - netPlanViewTableHeader.length)))
                     nodeData[i] = node.getAttribute(attributesTitles.get(i - netPlanViewTableHeader.length));
+
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMOUTLINKS, nodeData[COLUMN_NUMOUTLINKS]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMINLINKS, nodeData[COLUMN_NUMINLINKS]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INCOMINGLINKTRAFFIC, nodeData[COLUMN_INCOMINGLINKTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTGOINGLINKTRAFFIC, nodeData[COLUMN_OUTGOINGLINKTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTTRAFFICUNICAST, nodeData[COLUMN_OUTTRAFFICUNICAST]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INTRAFFICUNICAST, nodeData[COLUMN_INTRAFFICUNICAST]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OUTTRAFFICMULTICAST, nodeData[COLUMN_OUTTRAFFICMULTICAST]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_INTRAFFICMULTICAST, nodeData[COLUMN_INTRAFFICMULTICAST]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_POPULATION, nodeData[COLUMN_POPULATION]);
 
             allNodeData.add(nodeData);
         }

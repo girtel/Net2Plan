@@ -19,6 +19,8 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.JScrollPopupMenu;
@@ -32,7 +34,6 @@ import com.net2plan.utils.Constants;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -53,7 +54,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "MTTF (days)", "MTTR (days)", "Availability",
             "Nodes", "Links", "Links (other layers)", "# Affected routes", "# Affected backup routes", "# Affected multicast trees", "Tags", "Attributes");
     private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)",
-            "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes (primary or backup)", "# Affected routes that are designated as backup routes", "# Affected multicast trees", "Tags", "Attributes");
+            "Index (consecutive integer starting in zero)", "Mean time to fail", "Mean time to repair", "Expected availability", "Nodes included into the shared-risk group", "Links (in this layer) included into the shared-risk group", "Links (in other layers) included into the shared-risk group", "# Affected routes in this layer (primary or backup)", "# Affected routes in this layer that are designated as backup routes", "# Affected multicast trees in this layer ", "Tags", "Attributes");
     private static final int COLUMN_ID = 0;
     private static final int COLUMN_INDEX = 1;
     private static final int COLUMN_MTTF = 2;
@@ -90,6 +91,8 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
         final NetworkLayer layer = currentState.getNetworkLayerDefault();
         final List<SharedRiskGroup> rowVisibleSRGs = getVisibleElementsInTable();
         List<Object[]> allSRGData = new LinkedList<Object[]>();
+        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
+
         for (SharedRiskGroup srg : rowVisibleSRGs)
         {
             final Set<Route> routeIds_thisSRG = currentState.getRoutingType() == Constants.RoutingType.SOURCE_ROUTING ? srg.getAffectedRoutes(layer) : new LinkedHashSet<Route>();
@@ -110,9 +113,9 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
             srgData[COLUMN_NODES] = nodeIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(nodeIds_thisSRG), ", ");
             srgData[COLUMN_LINKS] = linkIds_thisSRG.isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinksAllLayers()), ", ");
             srgData[COLUMN_LINKSOTHERLAYERS] = srg.getLinks(layer).isEmpty() ? "none" : CollectionUtils.join(NetPlan.getIndexes(srg.getLinks(layer)), ", ");
-            srgData[COLUMN_AFFECTEDROUTES] = numRoutes == 0 ? "none" : numRoutes + " (" + CollectionUtils.join(NetPlan.getIndexes(routeIds_thisSRG), ", ") + ")";
-            srgData[COLUMN_AFFECTEDBACKUPROUTES] = numSegments == 0 ? "none" : numSegments + " (" + CollectionUtils.join(NetPlan.getIndexes(segmentIds_thisSRG), ", ") + ")";
-            srgData[COLUMN_AFFECTEDTREES] = numMulticastTrees == 0 ? "none" : numMulticastTrees + " (" + CollectionUtils.join(NetPlan.getIndexes(treeIds_thisSRG), ", ") + ")";
+            srgData[COLUMN_AFFECTEDROUTES] = numRoutes;
+            srgData[COLUMN_AFFECTEDBACKUPROUTES] = numSegments;
+            srgData[COLUMN_AFFECTEDTREES] = numMulticastTrees;
             srgData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(srg.getTags()));
             srgData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(srg.getAttributes());
 
@@ -124,24 +127,25 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement
                 }
             }
 
-            allSRGData.add(srgData);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NODES, nodeIds_thisSRG.size());
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LINKS, linkIds_thisSRG.size());
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LINKSOTHERLAYERS, srg.getLinks(layer).size());
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_AFFECTEDROUTES, srgData[COLUMN_AFFECTEDROUTES]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_AFFECTEDBACKUPROUTES, srgData[COLUMN_AFFECTEDBACKUPROUTES]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_AFFECTEDTREES, srgData[COLUMN_AFFECTEDTREES]);
 
+            allSRGData.add(srgData);
         }
 
         /* Add the aggregation row with the aggregated statistics */
-        final int aggNumNodes = rowVisibleSRGs.stream().mapToInt(e -> e.getNodes().size()).sum();
-        final int aggNumLinks = rowVisibleSRGs.stream().mapToInt(e -> e.getLinks(layer).size()).sum();
-        final int aggNumLinksOtherLayers = rowVisibleSRGs.stream().mapToInt(e -> e.getLinksAllLayers().size()).sum();
-        final int aggNumAffectedRoutes = rowVisibleSRGs.stream().mapToInt(e -> (int) e.getAffectedRoutes(layer).stream().filter(ee -> ee.isBackupRoute()).count()).sum();
-        final int aggNumAffectedTrees = rowVisibleSRGs.stream().mapToInt(e -> (int) e.getAffectedMulticastTrees(layer).size()).sum();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_NODES] = new LastRowAggregatedValue(aggNumNodes);
-        aggregatedData[COLUMN_LINKS] = new LastRowAggregatedValue(aggNumLinks);
-        aggregatedData[COLUMN_LINKSOTHERLAYERS] = new LastRowAggregatedValue(aggNumLinksOtherLayers);
-        aggregatedData[COLUMN_AFFECTEDROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
-        aggregatedData[COLUMN_AFFECTEDBACKUPROUTES] = new LastRowAggregatedValue(aggNumAffectedRoutes);
-        aggregatedData[COLUMN_AFFECTEDTREES] = new LastRowAggregatedValue(aggNumAffectedTrees);
+        aggregatedData[COLUMN_NODES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NODES]);
+        aggregatedData[COLUMN_LINKS] = new LastRowAggregatedValue(dataAggregator[COLUMN_LINKS]);
+        aggregatedData[COLUMN_LINKSOTHERLAYERS] = new LastRowAggregatedValue(dataAggregator[COLUMN_LINKSOTHERLAYERS]);
+        aggregatedData[COLUMN_AFFECTEDROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_AFFECTEDROUTES]);
+        aggregatedData[COLUMN_AFFECTEDBACKUPROUTES] = new LastRowAggregatedValue(dataAggregator[COLUMN_AFFECTEDBACKUPROUTES]);
+        aggregatedData[COLUMN_AFFECTEDTREES] = new LastRowAggregatedValue(dataAggregator[COLUMN_AFFECTEDTREES]);
         allSRGData.add(aggregatedData);
 
         return allSRGData;
