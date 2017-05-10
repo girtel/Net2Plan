@@ -77,6 +77,7 @@ public class MultiLayerControlPanel extends JPanel
         public UpButton(NetworkLayer layer)
         {
             this.layer = layer;
+            this.setText("\u25B2");
             this.setFocusable(false);
             this.addActionListener(this);
         }
@@ -95,6 +96,7 @@ public class MultiLayerControlPanel extends JPanel
         public DownButton(NetworkLayer layer)
         {
             this.layer = layer;
+            this.setText("\u25BC");
             this.setFocusable(false);
             this.addActionListener(this);
         }
@@ -114,6 +116,7 @@ public class MultiLayerControlPanel extends JPanel
         {
             this.layer = layer;
             this.setFocusable(false);
+            this.setText(layer.getName());
             this.addActionListener(this);
         }
 
