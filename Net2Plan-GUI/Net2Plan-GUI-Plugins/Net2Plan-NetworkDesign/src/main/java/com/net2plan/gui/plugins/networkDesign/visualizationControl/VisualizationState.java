@@ -48,8 +48,8 @@ public class VisualizationState
     private boolean isActiveLinkRunoutTimeColorThresholdList;
     private boolean isActiveLinkCapacityThicknessThresholdList;
     
-    private float linkWidthFactor;
-    private float nodeSizeFactor;
+    private float linkWidthIncreaseFactorRespectToDefault;
+    private float nodeSizeFactorRespectToDefault;
 
     private boolean showInCanvasNonConnectedNodes;
     private int interLayerSpaceInPixels;
@@ -94,8 +94,8 @@ public class VisualizationState
         this.isActiveLinkRunoutTimeColorThresholdList = false;
         this.isActiveLinkCapacityThicknessThresholdList = true;
 
-        this.linkWidthFactor = 1;
-        this.nodeSizeFactor = 1;
+        this.linkWidthIncreaseFactorRespectToDefault = 1;
+        this.nodeSizeFactorRespectToDefault = 1;
 
         this.pickManager = new PickManager(this);
 
@@ -451,7 +451,7 @@ public class VisualizationState
             for (int trueVisualizationOrderIndex = 0; trueVisualizationOrderIndex < cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.size(); trueVisualizationOrderIndex++)
             {
                 final NetworkLayer newLayer = cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap().get(trueVisualizationOrderIndex);
-                final double iconHeightIfNotActive = nodeSizeFactor * (getNetPlan().getNumberOfNodes() > 100 ? VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE_MORETHAN100NODES : VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE);
+                final double iconHeightIfNotActive = nodeSizeFactorRespectToDefault * (getNetPlan().getNumberOfNodes() > 100 ? VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE_MORETHAN100NODES : VisualizationConstants.DEFAULT_GUINODE_SHAPESIZE);
                 final GUINode gn = new GUINode(n, newLayer, iconHeightIfNotActive);
                 guiNodesThisNode.add(gn);
                 if (trueVisualizationOrderIndex > 0)
@@ -460,11 +460,11 @@ public class VisualizationState
                     final GUINode upperLayerGNode = guiNodesThisNode.get(trueVisualizationOrderIndex);
                     if (upperLayerGNode != gn) throw new RuntimeException();
                     final GUILink glLowerToUpper = new GUILink(this , null, lowerLayerGNode, gn,
-                            resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault),
-                            resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
+                            VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault),
+                            VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
                     final GUILink glUpperToLower = new GUILink(this , null, gn, lowerLayerGNode,
-                            resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault),
-                            resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
+                            VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault),
+                            VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_INTRANODEGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
                     intraNodeGUILinksThisNode.add(glLowerToUpper);
                     intraNodeGUILinksThisNode.add(glUpperToLower);
                     thisNodeInterLayerLinksInfoMap.put(Pair.of(trueVisualizationOrderIndex - 1, trueVisualizationOrderIndex), glLowerToUpper);
@@ -480,8 +480,8 @@ public class VisualizationState
                 final GUINode gn1 = cache_mapNode2ListVerticallyStackedGUINodes.get(e.getOriginNode()).get(trueVisualizationOrderIndex);
                 final GUINode gn2 = cache_mapNode2ListVerticallyStackedGUINodes.get(e.getDestinationNode()).get(trueVisualizationOrderIndex);
                 final GUILink gl1 = new GUILink(this , e, gn1, gn2,
-                        resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, linkWidthIncreaseFactorRespectToDefault),
-                        resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
+                        VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, linkWidthIncreaseFactorRespectToDefault),
+                        VisualizationUtils.resizedBasicStroke(VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE, linkWidthIncreaseFactorRespectToDefault));
                 cache_canvasRegularLinkMap.put(e, gl1);
             }
         }
@@ -503,14 +503,14 @@ public class VisualizationState
 
     public void decreaseCanvasNodeSizeAll()
     {
-        nodeSizeFactor *= VisualizationConstants.SCALE_OUT;
+        nodeSizeFactorRespectToDefault *= VisualizationConstants.SCALE_OUT;
         for (GUINode gn : getCanvasAllGUINodes())
             gn.setIconHeightInNonActiveLayer(gn.getIconHeightInNotActiveLayer() * VisualizationConstants.SCALE_OUT);
     }
 
     public void increaseCanvasNodeSizeAll()
     {
-        nodeSizeFactor *= VisualizationConstants.SCALE_IN;
+        nodeSizeFactorRespectToDefault *= VisualizationConstants.SCALE_IN;
         for (GUINode gn : getCanvasAllGUINodes())
             gn.setIconHeightInNonActiveLayer(gn.getIconHeightInNotActiveLayer() * VisualizationConstants.SCALE_IN);
     }
@@ -518,7 +518,7 @@ public class VisualizationState
     public void decreaseCanvasLinkSizeAll()
     {
         final float multFactor = VisualizationConstants.SCALE_OUT;
-        linkWidthFactor *= multFactor;
+        linkWidthIncreaseFactorRespectToDefault *= multFactor;
         for (GUILink e : getCanvasAllGUILinks(true, true))
             e.setEdgeStroke(VisualizationUtils.resizedBasicStroke(e.getStrokeIfActiveLayer(), multFactor), VisualizationUtils.resizedBasicStroke(e.getStrokeIfNotActiveLayer(), multFactor));
     }
@@ -526,7 +526,7 @@ public class VisualizationState
     public void increaseCanvasLinkSizeAll()
     {
         final float multFactor = VisualizationConstants.SCALE_IN;
-        linkWidthFactor *= multFactor;
+        linkWidthIncreaseFactorRespectToDefault *= multFactor;
         for (GUILink e : getCanvasAllGUILinks(true, true))
             e.setEdgeStroke(VisualizationUtils.resizedBasicStroke(e.getStrokeIfActiveLayer(), multFactor), VisualizationUtils.resizedBasicStroke(e.getStrokeIfNotActiveLayer(), multFactor));
     }
@@ -1034,11 +1034,11 @@ public class VisualizationState
 
     float getLinkWidthFactor()
     {
-        return linkWidthFactor;
+        return linkWidthIncreaseFactorRespectToDefault;
     }
 
-    float getNodeSizeFactor()
+    float getNodeSizeFactorRespectToDefault()
     {
-        return nodeSizeFactor;
+        return nodeSizeFactorRespectToDefault;
     }
 }
