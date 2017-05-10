@@ -3,7 +3,6 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 import com.net2plan.gui.utils.AdvancedJTable;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -33,7 +32,5 @@ public class TableSearcherTest
         ((DefaultTableModel) table.getModel()).setDataVector(dataVector, dataVector[0]);
 
         TableSearcher searcher = new TableSearcher(table);
-
-        Assert.assertArrayEquals(new int[] {1}, );
     }
 }

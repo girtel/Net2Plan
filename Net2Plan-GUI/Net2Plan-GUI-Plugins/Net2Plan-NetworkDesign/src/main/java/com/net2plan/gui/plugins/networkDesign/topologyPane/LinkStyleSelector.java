@@ -16,14 +16,13 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.SwingUtils;
-import java.util.List;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -31,7 +30,6 @@ import java.util.LinkedList;
  */
 public final class LinkStyleSelector extends JDialog implements ActionListener
 {
-
     private final VisualizationState _visualizationState;
     private final Color _errorBackgroundColor = new Color(255, 50, 50);
 

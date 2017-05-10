@@ -119,6 +119,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
         btn_osmMap.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showOSM.png")));
         btn_tableControlWindow.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showControl.png")));
+        btn_linkStyle.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/linkStyle.png")));
 
         btn_load.addActionListener(this);
         btn_loadDemand.addActionListener(this);
@@ -140,6 +141,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_siteMode.addActionListener(this);
         btn_osmMap.addActionListener(this);
         btn_tableControlWindow.addActionListener(this);
+        btn_linkStyle.addActionListener(this);
 
         this.add(btn_load);
         this.add(btn_loadDemand);
@@ -161,6 +163,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         this.add(btn_increaseFontSize);
         this.add(btn_decreaseFontSize);
         this.add(new JToolBar.Separator());
+        this.add(btn_linkStyle);
         this.add(Box.createHorizontalGlue());
         this.add(btn_siteMode);
         this.add(btn_osmMap);
