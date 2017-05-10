@@ -84,7 +84,6 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
             fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
         }
 
-        //Create JButton array
         Rectangle[] rectangleArray = new Rectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
 
         for (int i = 0; i < rectangleArray.length; i++)
@@ -268,18 +267,10 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
             fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
         }
 
-        //Create JButton array
-        JButton[] buttonArray = new JButton[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
+        Rectangle[] rectangleArray = new Rectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
 
-        for (int i = 0; i < buttonArray.length; i++)
-        {
-            buttonArray[i] = new JButton("");
-            buttonArray[i].setPreferredSize(new Dimension(20, 20));
-            buttonArray[i].setBackground(VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i));
-            buttonArray[i].setEnabled(false);
-            buttonArray[i].setContentAreaFilled(false);
-            buttonArray[i].setOpaque(true);
-        }
+        for (int i = 0; i < rectangleArray.length; i++)
+            rectangleArray[i] = new Rectangle(VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i));
 
         JToggleButton btn_apply = new JToggleButton("Is applied", _visualizationState.getIsActiveLinkRunoutTimeColorThresholdList());
         btn_apply.setToolTipText("The link coloring per run-out capacity time is active or not");
@@ -403,14 +394,14 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         for (int i = fieldArray.length - 1; i >= 0; i--)
         {
             gbc.gridwidth = 1;
-            pane.add(buttonArray[i + 1], gbc);
+            pane.add(rectangleArray[i + 1], gbc);
             pane.add(new Label(">="), gbc);
             gbc.gridwidth = GridBagConstraints.REMAINDER;
             pane.add(fieldArray[i], gbc);
         }
 
         gbc.gridwidth = 1;
-        pane.add(buttonArray[0], gbc);
+        pane.add(rectangleArray[0], gbc);
         pane.add(new Label(">="), gbc);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(label_0, gbc);
