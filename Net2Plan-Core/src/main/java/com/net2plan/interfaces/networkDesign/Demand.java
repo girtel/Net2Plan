@@ -732,6 +732,8 @@ public class Demand extends NetworkElement
 				e.cache_occupiedCapacity -= x_deOccup; 
 			}
 		}
+		layer.cache_nodePairDemandsThisLayer.get(Pair.of(ingressNode, egressNode)).remove(this);
+
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		netPlan.cache_id2DemandMap.remove(id);
 		NetPlan.removeNetworkElementAndShiftIndexes (layer.demands , index);

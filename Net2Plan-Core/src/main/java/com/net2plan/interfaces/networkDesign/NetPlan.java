@@ -496,6 +496,9 @@ public class NetPlan extends NetworkElement
         layer.demands.add(demand);
         egressNode.cache_nodeIncomingDemands.add(demand);
         ingressNode.cache_nodeOutgoingDemands.add(demand);
+        Set<Demand> setDemandsNodePair = layer.cache_nodePairDemandsThisLayer.get(Pair.of(ingressNode, egressNode));
+        if (setDemandsNodePair == null) { setDemandsNodePair = new HashSet<> (); layer.cache_nodePairDemandsThisLayer.put(Pair.of(ingressNode, egressNode) , setDemandsNodePair); }  
+        setDemandsNodePair.add(demand);
 
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return demand;
@@ -679,7 +682,9 @@ public class NetPlan extends NetworkElement
         layer.links.add(link);
         originNode.cache_nodeOutgoingLinks.add(link);
         destinationNode.cache_nodeIncomingLinks.add(link);
-
+        Set<Link> setLinksNodePair = layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode));
+        if (setLinksNodePair == null) { setLinksNodePair = new HashSet<> (); layer.cache_nodePairLinksThisLayer.put(Pair.of(originNode, destinationNode) , setLinksNodePair); }  
+        setLinksNodePair.add(link);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return link;
     }
@@ -3999,14 +4004,17 @@ public class NetPlan extends NetworkElement
      */
     public Set<Demand> getNodePairDemands(Node originNode, Node destinationNode, boolean returnDemandsInBothDirections, NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         checkInThisNetPlan(originNode);
         checkInThisNetPlan(destinationNode);
-        Set<Demand> res = new HashSet<Demand>();
-        for (Demand e : originNode.cache_nodeOutgoingDemands)
-            if (e.layer.equals(layer) && e.egressNode.equals(destinationNode)) res.add(e);
-        if (returnDemandsInBothDirections) for (Demand e : originNode.cache_nodeIncomingDemands)
-            if (e.layer.equals(layer) && e.ingressNode.equals(destinationNode)) res.add(e);
+        final Set<Demand> res = new HashSet<> ();
+        final Set<Demand> res12 = layer.cache_nodePairDemandsThisLayer.get(Pair.of(originNode, destinationNode));
+        if (res12 != null) res.addAll(res12);
+        if (returnDemandsInBothDirections)
+        {
+            final Set<Demand> res21 = layer.cache_nodePairDemandsThisLayer.get(Pair.of(destinationNode , originNode));
+            if (res21 != null) res.addAll(res21);
+        }
         return res;
     }
 
@@ -4050,14 +4058,17 @@ public class NetPlan extends NetworkElement
      */
     public Set<Link> getNodePairLinks(Node originNode, Node destinationNode, boolean returnLinksInBothDirections, NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         checkInThisNetPlan(originNode);
         checkInThisNetPlan(destinationNode);
-        Set<Link> res = new HashSet<Link>();
-        for (Link e : originNode.cache_nodeOutgoingLinks)
-            if (e.layer.equals(layer) && e.destinationNode.equals(destinationNode)) res.add(e);
-        if (returnLinksInBothDirections) for (Link e : originNode.cache_nodeIncomingLinks)
-            if (e.layer.equals(layer) && e.originNode.equals(destinationNode)) res.add(e);
+        final Set<Link> res = new HashSet<> ();
+        final Set<Link> res12 = layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode));
+        if (res12 != null) res.addAll(res12);
+        if (returnLinksInBothDirections)
+        {
+            final Set<Link> res21 = layer.cache_nodePairLinksThisLayer.get(Pair.of(destinationNode , originNode));
+            if (res21 != null) res.addAll(res21);
+        }
         return res;
     }
 
@@ -4073,15 +4084,8 @@ public class NetPlan extends NetworkElement
      */
     public Set<Route> getNodePairRoutes(Node originNode, Node destinationNode, boolean returnRoutesInBothDirections, NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        checkInThisNetPlan(originNode);
-        checkInThisNetPlan(destinationNode);
-        Set<Route> res = new HashSet<Route>();
-        for (Demand e : originNode.cache_nodeOutgoingDemands)
-            if (e.layer.equals(layer) && e.egressNode.equals(destinationNode)) res.addAll(e.cache_routes);
-        if (returnRoutesInBothDirections) for (Demand e : originNode.cache_nodeIncomingDemands)
-            if (e.layer.equals(layer) && e.ingressNode.equals(destinationNode)) res.addAll(e.cache_routes);
-        return res;
+        final Set<Demand> demands = getNodePairDemands(originNode, destinationNode, returnRoutesInBothDirections, optionalLayerParameter);
+        return demands.stream().map(d->d.getRoutes()).flatMap(e->e.stream()).collect(Collectors.toSet());
     }
 
     /**
