@@ -7,6 +7,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.*;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafMatrix;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
@@ -33,6 +34,8 @@ public class ViewEditTopologyTablesPane extends JPanel
 {
     private final GUINetworkDesign callback;
     private final JTabbedPane netPlanView;
+    private final JTabbedPane demandTabbedPaneListAndMatrix;
+    private NetPlanViewTableComponent_trafMatrix trafficMatrixComponent;
     private final Map<Constants.NetworkElementType, AdvancedJTable_networkElement> netPlanViewTable;
     private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
     private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
@@ -73,7 +76,8 @@ public class ViewEditTopologyTablesPane extends JPanel
         netPlanViewTableNumEntriesLabel.put(NetworkElementType.LAYER, new JLabel("Number of entries: "));
 
         netPlanView = new JTabbedPane();
-
+        demandTabbedPaneListAndMatrix = new JTabbedPane ();
+        this.trafficMatrixComponent = new NetPlanViewTableComponent_trafMatrix(callback);
         for (NetworkElementType elementType : NetworkElementType.values())
         {
             if (elementType == NetworkElementType.NETWORK)
@@ -111,7 +115,12 @@ public class ViewEditTopologyTablesPane extends JPanel
                 labelsPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
                 panel.add(labelsPanel, BorderLayout.NORTH);
                 panel.add(scrollPane, BorderLayout.CENTER);
-                netPlanViewTableComponent.put(elementType, panel);
+            	netPlanViewTableComponent.put(elementType, panel);
+                if (elementType == NetworkElementType.DEMAND)
+                {
+                	this.demandTabbedPaneListAndMatrix.addTab("List view", panel);
+                	this.demandTabbedPaneListAndMatrix.addTab("Traffic matrix view", trafficMatrixComponent);
+                }
             }
         }
 
@@ -195,14 +204,24 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         final int selectedTabIndex = netPlanView.getSelectedIndex();
         netPlanView.removeAll();
+        final int selectedListOrMatrixDemands = demandTabbedPaneListAndMatrix.getSelectedIndex();
+        demandTabbedPaneListAndMatrix.removeAll();
         for (NetworkElementType elementType : NetworkElementType.values())
         {
             if (layer.isSourceRouting() && elementType == NetworkElementType.FORWARDING_RULE)
                 continue;
             if (!layer.isSourceRouting() && (elementType == NetworkElementType.ROUTE))
                 continue;
+            if (elementType == NetworkElementType.DEMAND)
+            {
+            	this.demandTabbedPaneListAndMatrix.addTab("List view", netPlanViewTableComponent.get(elementType));
+            	this.demandTabbedPaneListAndMatrix.addTab("Traffic matrix view", trafficMatrixComponent);
+                netPlanView.addTab(netPlanViewTable.get(elementType).getTabName(), this.demandTabbedPaneListAndMatrix);
+            	continue;
+            }
             netPlanView.addTab(elementType == NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
         }
+        demandTabbedPaneListAndMatrix.setSelectedIndex(selectedListOrMatrixDemands);
         if ((selectedTabIndex < netPlanView.getTabCount()) && (selectedTabIndex >= 0))
             netPlanView.setSelectedIndex(selectedTabIndex);
 
@@ -225,6 +244,8 @@ public class ViewEditTopologyTablesPane extends JPanel
                     label.setText("Number of entries: " + numEntries);
             }
         }
+        
+        trafficMatrixComponent.updateNetPlanView();
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);
     }
