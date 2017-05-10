@@ -19,8 +19,6 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.StringLabeller;
@@ -32,6 +30,7 @@ import com.net2plan.libraries.IPUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import net.miginfocom.swing.MigLayout;
+
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -75,8 +74,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     {
         final List<Pair<Demand, Link>> rowVisibleFRs = getVisibleElementsInTable();
         List<Object[]> allForwardingRuleData = new LinkedList<Object[]>();
-        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
-
+        double accum_carriedTraffic = 0;
         for (Pair<Demand, Link> demandLinkPair : rowVisibleFRs)
         {
             Demand demand = demandLinkPair.getFirst();
@@ -98,15 +96,14 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             forwardingRuleData[COLUMN_SPLITTINGRATIO] = currentState.getForwardingRuleSplittingFactor(demand, link);
             forwardingRuleData[COLUMN_CARRIEDTRAFFIC] = currentState.getForwardingRuleCarriedTraffic(demand, link);
 
-            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, forwardingRuleData[COLUMN_CARRIEDTRAFFIC]);
-
+            accum_carriedTraffic += currentState.getForwardingRuleCarriedTraffic(demand, link);
             allForwardingRuleData.add(forwardingRuleData);
         }
 
         /* Add the aggregation row with the aggregated statistics */
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]); // sum
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(accum_carriedTraffic);
         allForwardingRuleData.add(aggregatedData);
 
         return allForwardingRuleData;
