@@ -784,18 +784,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         ExcelWriter.writeToFile(file, this.getTabName(), buildData());
     }
 
-    protected static void updateRowSum(Object[] data, double[] aggreg, int index, double val)
-    {
-        data[index] = val;
-        aggreg[index] += val;
-    }
-
-    protected static void updateRowMax(Object[] data, double[] aggreg, int index, double val)
-    {
-        data[index] = val;
-        aggreg[index] = Math.max(val, aggreg[index]);
-    }
-
     private Object[][] buildData()
     {
         final int fixedColumnCount = fixedTable.getColumnCount();
@@ -881,41 +869,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
                 ex.printStackTrace();
             }
-        }
-    }
-
-    public static class LastRowAggregatedValue
-    {
-        private String value;
-
-        public LastRowAggregatedValue()
-        {
-            value = "---";
-        }
-
-        public LastRowAggregatedValue(int val)
-        {
-            value = "" + val;
-        }
-
-        public LastRowAggregatedValue(double val)
-        {
-            value = String.format("%.2f", val);
-        }
-
-        public LastRowAggregatedValue(String value)
-        {
-            this.value = value;
-        }
-
-        String getValue()
-        {
-            return value;
-        }
-
-        public String toString()
-        {
-            return value;
         }
     }
 
