@@ -48,7 +48,6 @@ public class TopologyPanel extends JPanel
     private final GUINetworkDesign callback;
     private final ITopologyCanvas canvas;
 
-    private final JButton btn_linkStyle;
     private final JPanel canvasPanel;
 
     private final TopologyTopBar topBar;
@@ -131,8 +130,6 @@ public class TopologyPanel extends JPanel
             this.canvasPanel.add(canvasComponent, BorderLayout.CENTER);
             this.canvasPanel.add(sideBar, BorderLayout.WEST);
 
-        btn_linkStyle = new JButton();
-        btn_linkStyle.setToolTipText("Change link style");
             this.add(canvasPanel, BorderLayout.CENTER);
 
             // Buttons cannot be focusable
@@ -208,11 +205,6 @@ public class TopologyPanel extends JPanel
         } catch (Exception e)
         {
             throw new RuntimeException(e);
-        }
-        else if (src == btn_linkStyle)
-        {
-            new LinkStyleSelector(getVisualizationState());
-            canvas.refresh();
         }
 
     }

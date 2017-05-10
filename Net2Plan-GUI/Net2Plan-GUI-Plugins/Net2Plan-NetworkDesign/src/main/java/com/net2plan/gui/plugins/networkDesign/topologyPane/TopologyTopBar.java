@@ -35,6 +35,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
     private final JButton btn_increaseLinkSize, btn_decreaseLinkSize, btn_tableControlWindow;
     private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes, btn_osmMap, btn_siteMode;
+    private final JButton btn_linkStyle;
 
     public TopologyTopBar(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
@@ -96,7 +97,8 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
-
+        btn_linkStyle = new JButton();
+        btn_linkStyle.setToolTipText("Change link style");
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
@@ -281,6 +283,10 @@ public class TopologyTopBar extends JToolBar implements ActionListener
                 canvas.returnToPreviousState();
                 btn_siteMode.setSelected(false);
             }
+        } else if (src == btn_linkStyle)
+        {
+            new LinkStyleSelector(callback.getVisualizationState());
+            canvas.refresh();
         }
     }
 
