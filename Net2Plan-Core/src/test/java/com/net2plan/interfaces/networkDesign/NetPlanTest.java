@@ -263,6 +263,33 @@ public class NetPlanTest
 	}
 
 	@Test
+	public void testGetNodePairDemands()
+	{
+		assertEquals(np.getNodePairDemands (n1,n3,false,lowerLayer) , Sets.newHashSet(d13,scd123));
+		assertEquals(np.getNodePairDemands (n1,n3,true,lowerLayer) , Sets.newHashSet(d13,scd123));
+		d13.remove();
+		assertEquals(np.getNodePairDemands (n1,n3,true,lowerLayer) , Sets.newHashSet(scd123));
+	}
+
+	@Test
+	public void testGetNodePairRoutes()
+	{
+		assertEquals(np.getNodePairRoutes (n1,n3,false,lowerLayer) , Sets.newHashSet(r123a, r123b , segm13 , sc123));
+		assertEquals(np.getNodePairRoutes (n1,n3,true,lowerLayer) , Sets.newHashSet(r123a, r123b , segm13 , sc123));
+		r123a.remove();
+		assertEquals(np.getNodePairRoutes (n1,n3,true,lowerLayer) , Sets.newHashSet(r123b , segm13 , sc123));
+	}
+
+	@Test
+	public void testGetNodePairLinks()
+	{
+		assertEquals(np.getNodePairLinks (n1,n2,false,lowerLayer) , Sets.newHashSet(link12));
+		assertEquals(np.getNodePairLinks (n1,n2,true,lowerLayer) , Sets.newHashSet(link12));
+		link12.remove();
+		assertEquals(np.getNodePairLinks (n1,n2,false,lowerLayer) , Sets.newHashSet());
+	}
+
+	@Test
 	public void testAddLink()
 	{
 		Link newLinkUpper = np.addLink(n2,n3,10,11,12,null,upperLayer);

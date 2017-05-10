@@ -599,6 +599,8 @@ public class Link extends NetworkElement
 		netPlan.cache_id2LinkMap.remove(id);
 		originNode.cache_nodeOutgoingLinks.remove (this);
 		destinationNode.cache_nodeIncomingLinks.remove (this);
+		layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode)).remove(this);
+		
 		for (SharedRiskGroup srg : this.cache_srgs) srg.links.remove(this);
 		for (MulticastTree tree : new LinkedList<MulticastTree> (cache_traversingTrees)) tree.remove ();
 
