@@ -28,9 +28,13 @@ import com.net2plan.internal.sim.SimCore;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
 import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 import javax.swing.*;
+
+import org.apache.commons.collections15.BidiMap;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -124,22 +128,57 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
         return lastWhatIfExecutionException;
     }
 
-    public void whatIfDemandOfferedTrafficModified(Demand demand, double newOfferedTraffic)
+    public void whatIfDemandOfferedTrafficModified(Demand demand, double newOfferedTraffic) throws Throwable
     {
-    	if (demand.isCoupled()) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
-        this.lastWhatIfExecutionException = null;
-        SimEvent.DemandModify modifyEvent = new SimEvent.DemandModify(demand, newOfferedTraffic, false);
-        SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
-        runSimulation(event);
+    	this.whatIfDemandOfferedTrafficModified(Arrays.asList(demand), Arrays.asList(newOfferedTraffic));
     }
 
-    public void whatIfDemandOfferedTrafficModified(MulticastDemand demand, double newOfferedTraffic)
+    public void whatIfDemandOfferedTrafficModified(List<Demand> demands, List<Double> newOfferedTraffics) throws Throwable
     {
-    	if (demand.isCoupled()) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
-        this.lastWhatIfExecutionException = null;
-        SimEvent.MulticastDemandModify modifyEvent = new SimEvent.MulticastDemandModify(demand, newOfferedTraffic, false);
-        SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
-        runSimulation(event);
+        synchronized (this)
+        {
+        	if (demands.stream().anyMatch(d->d.isCoupled())) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
+            this.lastWhatIfExecutionException = null;
+            final List<SimEvent> events = new ArrayList<> (demands.size());
+            for (int cont = 0; cont < demands.size() ; cont ++)
+            {
+                final SimEvent.DemandModify modifyEvent = new SimEvent.DemandModify(demands.get(cont), newOfferedTraffics.get(cont), false);
+                final SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
+                events.add(event);
+            }
+            runSimulation(events);
+            if (getLastWhatIfExecutionException() != null)
+                throw getLastWhatIfExecutionException();
+            this.wait(); // wait until the simulation ends
+            if (getLastWhatIfExecutionException() != null)
+                throw getLastWhatIfExecutionException();
+        }
+    }
+
+    public void whatIfMulticastDemandOfferedTrafficModified(MulticastDemand demand, double newOfferedTraffic) throws Throwable
+    {
+    	whatIfMulticastDemandOfferedTrafficModified(Arrays.asList(demand), Arrays.asList(newOfferedTraffic));
+    }
+    public void whatIfMulticastDemandOfferedTrafficModified(List<MulticastDemand> demands, List<Double> newOfferedTraffics) throws Throwable
+    {
+        synchronized (this)
+        {
+        	if (demands.stream().anyMatch(d->d.isCoupled())) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
+            this.lastWhatIfExecutionException = null;
+            final List<SimEvent> events = new ArrayList<> (demands.size());
+            for (int cont = 0; cont < demands.size() ; cont ++)
+            {
+                SimEvent.MulticastDemandModify modifyEvent = new SimEvent.MulticastDemandModify(demands.get(cont), newOfferedTraffics.get(cont), false);
+                SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
+                events.add(event);
+            }
+            runSimulation(events);
+            if (getLastWhatIfExecutionException() != null)
+                throw this.getLastWhatIfExecutionException();
+            this.wait(); // wait until the simulation ends
+            if (this.getLastWhatIfExecutionException() != null)
+                throw this.getLastWhatIfExecutionException();
+        }
     }
 
     public void whatIfLinkNodesFailureStateChanged(Collection<Node> nodesToSetAsUp, Collection<Node> nodesToSetAsDown, Collection<Link> linksToSetAsUp, Collection<Link> linksToSetAsDown)
@@ -147,7 +186,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
         this.lastWhatIfExecutionException = null;
         SimEvent.NodesAndLinksChangeFailureState eventInfo = new SimEvent.NodesAndLinksChangeFailureState(nodesToSetAsUp, nodesToSetAsDown, linksToSetAsUp, linksToSetAsDown);
         SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, eventInfo);
-        runSimulation(event);
+        runSimulation(Arrays.asList(event));
     }
 
 
@@ -200,7 +239,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
      *
      * @param eventToRun
      */
-    private void runSimulation(SimEvent eventToRun)
+    private void runSimulation(List<SimEvent> eventsToRun)
     {
         try
         {
@@ -232,7 +271,8 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
                 public void initialize(NetPlan initialNetPlan, Map<String, String> algorithmParameters,
                                        Map<String, String> simulationParameters, Map<String, String> net2planParameters)
                 {
-                    scheduleEvent(eventToRun);
+                	for (SimEvent eventToRun : eventsToRun)
+                		scheduleEvent(eventToRun);
                 }
 
                 @Override
@@ -251,8 +291,6 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
             Triple<File, String, Class> aux = eventProcessorPanel.getRunnable();
             IExternal eventProcessor = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventProcessorClass() , null);
             Map<String, String> eventProcessorParameters = eventProcessorPanel.getRunnableParameters();
-//			IExternal eventProcessor = new Online_evProc_ipOverWdm();
-//			Map<String, String> eventProcessorParameters = InputParameter.getDefaultParameters(eventProcessor.getParameters());
             simKernel.configureSimulation(simulationParameters, net2planParameters, eventGenerator, new HashMap<String, String>(), eventProcessor, eventProcessorParameters);
             simKernel.initialize();
             simKernel.getSimCore().setSimulationState(SimCore.SimState.RUNNING);

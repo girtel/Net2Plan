@@ -12,6 +12,41 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.swing.Box;
+import javax.swing.DefaultRowSorter;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
+import org.apache.commons.collections15.BidiMap;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -23,27 +58,26 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
-import com.net2plan.gui.utils.*;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JScrollPopupMenu;
+import com.net2plan.gui.utils.StringLabeller;
+import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
-import net.miginfocom.swing.MigLayout;
-import org.apache.commons.collections15.BidiMap;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
+import net.miginfocom.swing.MigLayout;
 
 /**
  */
@@ -273,21 +307,13 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                             if (callback.getVisualizationState().isWhatIfAnalysisActive())
                             {
                                 final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
-                                synchronized (whatIfPane)
-                                {
-                                    whatIfPane.whatIfDemandOfferedTrafficModified(demand, newOfferedTraffic);
-                                    if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                        throw whatIfPane.getLastWhatIfExecutionException();
-                                    whatIfPane.wait(); // wait until the simulation ends
-                                    if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                        throw whatIfPane.getLastWhatIfExecutionException();
-
-                                    final VisualizationState vs = callback.getVisualizationState();
-                                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
-                                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
-                                    callback.updateVisualizationAfterNewTopology();
-                                }
+                                whatIfPane.whatIfDemandOfferedTrafficModified(demand, newOfferedTraffic);
+                                final VisualizationState vs = callback.getVisualizationState();
+                                Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                                        vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                                callback.updateVisualizationAfterNewTopology();
+                                callback.addNetPlanChange();
                             } else
                             {
                                 demand.setOfferedTraffic(newOfferedTraffic);
@@ -663,10 +689,23 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
             try
             {
-                for (Demand d : selectedDemands) d.setOfferedTraffic(h_d);
-                callback.getVisualizationState().resetPickedState();
-                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                callback.addNetPlanChange();
+                if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                {
+                    final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
+                    whatIfPane.whatIfDemandOfferedTrafficModified(selectedDemands, Collections.nCopies(selectedDemands.size(), h_d));
+                    final VisualizationState vs = callback.getVisualizationState();
+                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                    callback.updateVisualizationAfterNewTopology();
+                    callback.addNetPlanChange();
+                } else
+                {
+                    for (Demand d : selectedDemands) d.setOfferedTraffic(h_d);
+                    callback.getVisualizationState().resetPickedState();
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
+                    callback.addNetPlanChange();
+                }
             } catch (Throwable ex)
             {
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to selected demands in the table");
@@ -698,10 +737,25 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 
             try
             {
-                for (Demand d : selectedDemands) d.setOfferedTraffic(d.getOfferedTraffic() * scalingFactor);
-                callback.getVisualizationState().resetPickedState();
-                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                callback.addNetPlanChange();
+                if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                {
+                	final double copyScalingFactorForStream = scalingFactor;
+                    final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
+                    final List<Double> newTraffics = selectedDemands.stream().mapToDouble(d->d.getOfferedTraffic()*copyScalingFactorForStream).boxed().collect(Collectors.toList());
+                    whatIfPane.whatIfDemandOfferedTrafficModified(selectedDemands, newTraffics);
+                    final VisualizationState vs = callback.getVisualizationState();
+                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                    callback.updateVisualizationAfterNewTopology();
+                    callback.addNetPlanChange();
+                } else
+                {
+                    for (Demand d : selectedDemands) d.setOfferedTraffic(d.getOfferedTraffic() * scalingFactor);
+                    callback.getVisualizationState().resetPickedState();
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
+                    callback.addNetPlanChange();
+                }
             } catch (Throwable ex)
             {
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to scale demand offered traffics");

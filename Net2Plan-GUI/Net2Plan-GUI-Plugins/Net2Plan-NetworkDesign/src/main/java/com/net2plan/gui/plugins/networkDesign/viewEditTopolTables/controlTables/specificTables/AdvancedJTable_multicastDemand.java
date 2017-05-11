@@ -240,21 +240,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                             if (callback.getVisualizationState().isWhatIfAnalysisActive())
                             {
                                 final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
-                                synchronized (whatIfPane)
-                                {
-                                    whatIfPane.whatIfDemandOfferedTrafficModified(demand, newOfferedTraffic);
-                                    if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                        throw whatIfPane.getLastWhatIfExecutionException();
-                                    whatIfPane.wait(); // wait until the simulation ends
-                                    if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                        throw whatIfPane.getLastWhatIfExecutionException();
-
-                                    final VisualizationState vs = callback.getVisualizationState();
-                                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
-                                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
-                                    callback.updateVisualizationAfterNewTopology();
-                                }
+                                whatIfPane.whatIfMulticastDemandOfferedTrafficModified(demand, newOfferedTraffic);
+                                final VisualizationState vs = callback.getVisualizationState();
+                                Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                                        vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                                callback.updateVisualizationAfterNewTopology();
                             } else
                             {
                                 demand.setOfferedTraffic(newOfferedTraffic);
@@ -552,12 +543,10 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             {
                 String str = JOptionPane.showInputDialog(null, "Offered traffic volume", "Set traffic value to all table multicast demands", JOptionPane.QUESTION_MESSAGE);
                 if (str == null) return;
-
                 try
                 {
                     h_d = Double.parseDouble(str);
                     if (h_d < 0) throw new RuntimeException();
-
                     break;
                 } catch (Throwable ex)
                 {
@@ -567,9 +556,23 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
             try
             {
-                for (MulticastDemand demand : selectedDemands) demand.setOfferedTraffic(h_d);
-                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
-                callback.addNetPlanChange();
+                if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                {
+                    final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
+                    whatIfPane.whatIfMulticastDemandOfferedTrafficModified(selectedDemands, Collections.nCopies(selectedDemands.size(), h_d));
+                    final VisualizationState vs = callback.getVisualizationState();
+                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                    callback.updateVisualizationAfterNewTopology();
+                    callback.addNetPlanChange();
+                } else
+                {
+                    for (MulticastDemand demand : selectedDemands) demand.setOfferedTraffic(h_d);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
+                    callback.addNetPlanChange();
+                }
+            	
             } catch (Throwable ex)
             {
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all multicast demands");

@@ -266,24 +266,15 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
                     final Set<Demand> applicableDemands = Sets.intersection(
                     		np.getNodePairDemands(n1, n2, false, layer) , filteredDemands);
                     final Demand demand = applicableDemands.iterator().next(); 
-                    
                     if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
                     {
                         final WhatIfAnalysisPane whatIfPane = networkViewer.getWhatIfAnalysisPane();
-                        synchronized (whatIfPane)
-                        {
-                            whatIfPane.whatIfDemandOfferedTrafficModified(demand, newOfferedTraffic);
-                            if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                throw whatIfPane.getLastWhatIfExecutionException();
-                            whatIfPane.wait(); // wait until the simulation ends
-                            if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                throw whatIfPane.getLastWhatIfExecutionException();
-                            final VisualizationState vs = networkViewer.getVisualizationState();
-                            Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                                    vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(networkViewer.getDesign().getNetworkLayers()));
-                            vs.setCanvasLayerVisibilityAndOrder(networkViewer.getDesign(), res.getFirst(), res.getSecond());
-                            networkViewer.updateVisualizationAfterNewTopology();
-                        }
+                        whatIfPane.whatIfDemandOfferedTrafficModified(demand, newOfferedTraffic);
+                        final VisualizationState vs = networkViewer.getVisualizationState();
+                        Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                                vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(networkViewer.getDesign().getNetworkLayers()));
+                        vs.setCanvasLayerVisibilityAndOrder(networkViewer.getDesign(), res.getFirst(), res.getSecond());
+                        networkViewer.updateVisualizationAfterNewTopology();
                     } else
                     {
                         demand.setOfferedTraffic(newOfferedTraffic);

@@ -436,7 +436,8 @@ class PickManager
                         pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
                 final Set<Link> linksPrimary = triple.getFirst().get(pickedDemand);
                 final Set<Link> linksBackup = triple.getSecond().get(pickedDemand);
-                DrawUtils.drawDownPropagationInterLayerLinks(vs, Sets.union(linksPrimary, linksBackup), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
+                DrawUtils.drawDownPropagationInterLayerLinks(vs, Sets.union(linksPrimary == null? new HashSet<> () : linksPrimary, linksBackup == null? new HashSet<> () : linksBackup
+                		), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
             if (vs.isShowInCanvasLowerLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1) && pickedLink.isCoupled())
             {
