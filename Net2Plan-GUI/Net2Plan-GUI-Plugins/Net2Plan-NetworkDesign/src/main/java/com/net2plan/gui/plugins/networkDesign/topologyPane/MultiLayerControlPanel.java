@@ -7,8 +7,6 @@ import com.net2plan.internal.Constants;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -57,14 +55,55 @@ public final class MultiLayerControlPanel extends JPanel
         final List<NetworkLayer> networkLayers = netPlan.getNetworkLayers();
         int row = 1;
 
-
-        for (NetworkLayer networkLayer : networkLayers)
+        // Each row
+        for (NetworkLayer layer : networkLayers)
         {
+            rowIndexToLayerMap.put(row, layer);
             // Up button
-            componentMatrix[row][0] = new UpButton(networkLayer);
-            componentMatrix[row][1] = new DownButton(networkLayer);
-            componentMatrix[row][2] = new ActiveButton(networkLayer);
-            componentMatrix[row][3] = new VisibleButton(networkLayer);
+            final JButton upButton = new JButton();
+            upButton.setText("\u25B2");
+            upButton.setName(UP_COLUMN);
+            upButton.setFocusable(false);
+            upButton.addActionListener(e ->
+            {
+            });
+            componentMatrix[row][0] = upButton;
+
+            // Down button
+            final JButton downButton = new JButton();
+            downButton.setText("\u25BC");
+            downButton.setName(DOWN_COLUMN);
+            downButton.setFocusable(false);
+            downButton.addActionListener(e ->
+            {
+            });
+            componentMatrix[row][1] = downButton;
+
+            // Active button
+            final JButton activeButton = new JButton();
+            activeButton.setText(layer.getName());
+            activeButton.setName(ACTIVE_COLUMN);
+            activeButton.setFocusable(false);
+            activeButton.addActionListener(e ->
+            {
+                netPlan.setNetworkLayerDefault(layer);
+                callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
+
+                refreshTable();
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+            });
+            componentMatrix[row][2] = activeButton;
+
+            // Visible button
+            final JToggleButton visibleButton = new JToggleButton();
+            // TODO: ICON
+            visibleButton.setName(VISIBLE_COLUMN);
+            visibleButton.setFocusable(false);
+            visibleButton.addActionListener(e ->
+            {
+            });
+            componentMatrix[row][3] = visibleButton;
+
             row++;
         }
 
@@ -79,92 +118,11 @@ public final class MultiLayerControlPanel extends JPanel
 
     NetworkLayer getLayer(int row)
     {
-        return null;
+        return rowIndexToLayerMap.get(row);
     }
 
     JComponent[][] getTable()
     {
         return componentMatrix;
-    }
-
-    private class UpButton extends JButton implements ActionListener
-    {
-        private final NetworkLayer layer;
-
-        public UpButton(NetworkLayer layer)
-        {
-            this.layer = layer;
-            this.setText("\u25B2");
-            this.setName("UpButton");
-            this.setFocusable(false);
-            this.addActionListener(this);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent actionEvent)
-        {
-        }
-    }
-
-    private class DownButton extends JButton implements ActionListener
-    {
-        private final NetworkLayer layer;
-
-        public DownButton(NetworkLayer layer)
-        {
-            this.layer = layer;
-            this.setText("\u25BC");
-            this.setName("DownButton");
-            this.setFocusable(false);
-            this.addActionListener(this);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent actionEvent)
-        {
-            //TODO
-        }
-    }
-
-    private class ActiveButton extends JButton implements ActionListener
-    {
-        private final NetworkLayer layer;
-
-        public ActiveButton(NetworkLayer layer)
-        {
-            this.layer = layer;
-            this.setFocusable(false);
-            this.setName("ActiveButton");
-            this.setText(layer.getName());
-            this.addActionListener(this);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent actionEvent)
-        {
-            callback.getDesign().setNetworkLayerDefault(layer);
-            callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
-
-            refreshTable();
-            callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-        }
-    }
-
-    private class VisibleButton extends JToggleButton implements ActionListener
-    {
-        private final NetworkLayer layer;
-
-        public VisibleButton(NetworkLayer layer)
-        {
-            this.layer = layer;
-            this.setFocusable(false);
-            this.addActionListener(this);
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent actionEvent)
-        {
-            //TODO
-        }
     }
 }

@@ -1,9 +1,11 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import org.assertj.swing.core.GenericTypeMatcher;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +26,10 @@ public class MultiLayerControlPanelTest
 {
     @Mock
     private static GUINetworkDesign callback = mock(GUINetworkDesign.class);
+
+    @Mock
+    private static VisualizationState vs = mock(VisualizationState.class);
+
     private static NetPlan netPlan;
 
     @BeforeClass
@@ -35,11 +41,15 @@ public class MultiLayerControlPanelTest
         netPlan.addLayer("Layer 3", "", "kbps", "kbps", null, null);
     }
 
+    @Before
+    public void prepareMock()
+    {
+        when(callback.getDesign()).thenReturn(netPlan);
+    }
+
     @Test
     public void buildTest()
     {
-        when(callback.getDesign()).thenReturn(netPlan);
-
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
         final JComponent[][] table = panel.getTable();
 
@@ -76,13 +86,12 @@ public class MultiLayerControlPanelTest
     {
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
         final JComponent[][] table = panel.getTable();
+        final JComponent[] labelRow = table[0];
 
-        final JLabel[] labelRow = (JLabel[]) table[0];
-
-        assertEquals(labelRow[0], MultiLayerControlPanel.UP_COLUMN);
-        assertEquals(labelRow[1], MultiLayerControlPanel.DOWN_COLUMN);
-        assertEquals(labelRow[2], MultiLayerControlPanel.ACTIVE_COLUMN);
-        assertEquals(labelRow[3], MultiLayerControlPanel.VISIBLE_COLUMN);
+        assertEquals(((JLabel) labelRow[0]).getText(), MultiLayerControlPanel.UP_COLUMN);
+        assertEquals(((JLabel) labelRow[1]).getText(), MultiLayerControlPanel.DOWN_COLUMN);
+        assertEquals(((JLabel) labelRow[2]).getText(), MultiLayerControlPanel.ACTIVE_COLUMN);
+        assertEquals(((JLabel) labelRow[3]).getText(), MultiLayerControlPanel.VISIBLE_COLUMN);
     }
 
     @Test
@@ -102,7 +111,9 @@ public class MultiLayerControlPanelTest
     @Test
     public void activeLayerTest()
     {
-        when(callback.getDesign()).thenReturn(netPlan);
+        // Mock visualization state
+        when(callback.getVisualizationState()).thenReturn(vs);
+        doNothing().when(vs).setCanvasLayerVisibility(any(NetworkLayer.class), anyBoolean());
 
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
 
@@ -126,8 +137,7 @@ public class MultiLayerControlPanelTest
                 final NetworkLayer layer = panel.getLayer(i);
                 assertNotNull(layer);
 
-                verify(netPlan).setNetworkLayerDefault(layer);
-                verify(callback).getVisualizationState().setCanvasLayerVisibility(layer, true);
+                verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, true);
 
                 assertTrue(layer.isDefaultLayer());
             } else
