@@ -325,21 +325,12 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                             if (vs.isWhatIfAnalysisActive())
                             {
                                 final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
-                                synchronized (whatIfPane)
-                                {
-                                    whatIfPane.whatIfLinkNodesFailureStateChanged(null, null, isLinkUp ? Sets.newHashSet(link) : null, isLinkUp ? null : Sets.newHashSet(link));
-                                    if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                        throw whatIfPane.getLastWhatIfExecutionException();
-                                    whatIfPane.wait(); // wait until the simulation ends
-                                    if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                        throw whatIfPane.getLastWhatIfExecutionException();
-
-                                    final VisualizationState vs = callback.getVisualizationState();
-                                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
-                                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
-                                    callback.updateVisualizationAfterNewTopology();
-                                }
+                                whatIfPane.whatIfLinkNodesFailureStateChanged(null, null, isLinkUp ? Sets.newHashSet(link) : null, isLinkUp ? null : Sets.newHashSet(link));
+                                final VisualizationState vs = callback.getVisualizationState();
+                                Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                                        vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                                callback.updateVisualizationAfterNewTopology();
                             } else
                             {
                                 link.setFailureState(isLinkUp);

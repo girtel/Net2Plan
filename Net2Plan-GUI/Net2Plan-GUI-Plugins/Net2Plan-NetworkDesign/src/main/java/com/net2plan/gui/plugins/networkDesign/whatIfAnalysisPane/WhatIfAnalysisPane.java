@@ -12,11 +12,37 @@
 
 package com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane;
 
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
+
+import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.IExternal;
@@ -28,19 +54,7 @@ import com.net2plan.internal.sim.SimCore;
 import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
 import com.net2plan.utils.ClassLoaderUtils;
-import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-
-import javax.swing.*;
-
-import org.apache.commons.collections15.BidiMap;
-
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.*;
-import java.util.List;
 
 /**
  * Targeted to evaluate network designs from the offline tool simulating the
@@ -123,11 +137,6 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
         this.add(aux_Panel, BorderLayout.CENTER);
     }
 
-    public Throwable getLastWhatIfExecutionException()
-    {
-        return lastWhatIfExecutionException;
-    }
-
     public void whatIfDemandOfferedTrafficModified(Demand demand, double newOfferedTraffic) throws Throwable
     {
     	this.whatIfDemandOfferedTrafficModified(Arrays.asList(demand), Arrays.asList(newOfferedTraffic));
@@ -147,11 +156,11 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
                 events.add(event);
             }
             runSimulation(events);
-            if (getLastWhatIfExecutionException() != null)
-                throw getLastWhatIfExecutionException();
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
             this.wait(); // wait until the simulation ends
-            if (getLastWhatIfExecutionException() != null)
-                throw getLastWhatIfExecutionException();
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
         }
     }
 
@@ -173,20 +182,28 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
                 events.add(event);
             }
             runSimulation(events);
-            if (getLastWhatIfExecutionException() != null)
-                throw this.getLastWhatIfExecutionException();
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
             this.wait(); // wait until the simulation ends
-            if (this.getLastWhatIfExecutionException() != null)
-                throw this.getLastWhatIfExecutionException();
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
         }
     }
 
-    public void whatIfLinkNodesFailureStateChanged(Collection<Node> nodesToSetAsUp, Collection<Node> nodesToSetAsDown, Collection<Link> linksToSetAsUp, Collection<Link> linksToSetAsDown)
+    public void whatIfLinkNodesFailureStateChanged(Collection<Node> nodesToSetAsUp, Collection<Node> nodesToSetAsDown, Collection<Link> linksToSetAsUp, Collection<Link> linksToSetAsDown) throws Throwable
     {
-        this.lastWhatIfExecutionException = null;
-        SimEvent.NodesAndLinksChangeFailureState eventInfo = new SimEvent.NodesAndLinksChangeFailureState(nodesToSetAsUp, nodesToSetAsDown, linksToSetAsUp, linksToSetAsDown);
-        SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, eventInfo);
-        runSimulation(Arrays.asList(event));
+        synchronized (this)
+        {
+	        this.lastWhatIfExecutionException = null;
+	        SimEvent.NodesAndLinksChangeFailureState eventInfo = new SimEvent.NodesAndLinksChangeFailureState(nodesToSetAsUp, nodesToSetAsDown, linksToSetAsUp, linksToSetAsDown);
+	        SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, eventInfo);
+	        runSimulation(Arrays.asList(event));
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
+            wait(); // wait until the simulation ends
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
+        }
     }
 
 
