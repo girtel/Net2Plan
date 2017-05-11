@@ -10,7 +10,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Jorge San Emeterio
@@ -22,10 +24,12 @@ public final class MultiLayerControlPanel extends JPanel
     private final NetPlan netPlan;
     private JComponent[][] componentMatrix;
 
-    private final int COLUMN_UP = 0;
-    private final int COLUMN_DOWN = 1;
-    private final int COLUMN_NAME = 2;
-    private final int COLUMN_VISIBLE = 3;
+    private final Map<Integer, NetworkLayer> rowIndexToLayerMap;
+
+    public static final String UP_COLUMN = "Up";
+    public static final String DOWN_COLUMN = "Down";
+    public static final String ACTIVE_COLUMN = "Name";
+    public static final String VISIBLE_COLUMN = "Visible";
 
     public MultiLayerControlPanel(GUINetworkDesign callback)
     {
@@ -33,6 +37,8 @@ public final class MultiLayerControlPanel extends JPanel
 
         this.callback = callback;
         this.netPlan = callback.getDesign();
+
+        this.rowIndexToLayerMap = new HashMap<>();
 
         this.componentMatrix = new JComponent[netPlan.getNumberOfLayers() + 1][4];
 
@@ -43,19 +49,22 @@ public final class MultiLayerControlPanel extends JPanel
 
     private void buildPanel()
     {
-        componentMatrix[0][COLUMN_UP] = new JLabel("Up");
-        componentMatrix[0][COLUMN_DOWN] = new JLabel("Down");
-        componentMatrix[0][COLUMN_NAME] = new JLabel("Name");
-        componentMatrix[0][COLUMN_VISIBLE] = new JLabel("Visible");
+        componentMatrix[0][0] = new JLabel(UP_COLUMN);
+        componentMatrix[0][1] = new JLabel(DOWN_COLUMN);
+        componentMatrix[0][2] = new JLabel(ACTIVE_COLUMN);
+        componentMatrix[0][3] = new JLabel(VISIBLE_COLUMN);
 
         final List<NetworkLayer> networkLayers = netPlan.getNetworkLayers();
         int row = 1;
+
+
         for (NetworkLayer networkLayer : networkLayers)
         {
-            componentMatrix[row][COLUMN_UP] = new UpButton(networkLayer);
-            componentMatrix[row][COLUMN_DOWN] = new DownButton(networkLayer);
-            componentMatrix[row][COLUMN_NAME] = new ActiveButton(networkLayer);
-            componentMatrix[row][COLUMN_VISIBLE] = new VisibleButton(networkLayer);
+            // Up button
+            componentMatrix[row][0] = new UpButton(networkLayer);
+            componentMatrix[row][1] = new DownButton(networkLayer);
+            componentMatrix[row][2] = new ActiveButton(networkLayer);
+            componentMatrix[row][3] = new VisibleButton(networkLayer);
             row++;
         }
 
@@ -66,6 +75,11 @@ public final class MultiLayerControlPanel extends JPanel
 
     public void refreshTable ()
     {
+    }
+
+    NetworkLayer getLayer(int row)
+    {
+        return null;
     }
 
     JComponent[][] getTable()
@@ -120,6 +134,7 @@ public final class MultiLayerControlPanel extends JPanel
         {
             this.layer = layer;
             this.setFocusable(false);
+            this.setName("ActiveButton");
             this.setText(layer.getName());
             this.addActionListener(this);
         }
