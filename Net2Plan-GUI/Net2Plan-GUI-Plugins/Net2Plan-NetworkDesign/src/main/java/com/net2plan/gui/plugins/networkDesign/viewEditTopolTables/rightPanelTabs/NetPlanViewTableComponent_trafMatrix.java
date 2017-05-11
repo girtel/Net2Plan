@@ -2,6 +2,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTab
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -19,9 +20,11 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 
@@ -41,10 +44,13 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.utils.Pair;
 
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import net.miginfocom.swing.MigLayout;
 
 public class NetPlanViewTableComponent_trafMatrix extends JPanel
@@ -53,10 +59,26 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
     private final static int DEFAULT_NUMBER_OF_NODES = 4;
     private final static TabIcon CLOSE_TAB_ICON = new TabIcon(TabIcon.IconType.TIMES_SIGN);
 
-    private JTable trafficMatrix;
+    private static final int OPTIONINDEX_TRAFFICMODEL_CONSTANT = 1;
+    private static final int OPTIONINDEX_TRAFFICMODEL_UNIFORM01 = 2;
+    private static final int OPTIONINDEX_TRAFFICMODEL_UNIFORM5050 = 3;
+    private static final int OPTIONINDEX_TRAFFICMODEL_UNIFORM2575 = 4;
+    private static final int OPTIONINDEX_TRAFFICMODEL_GRAVITYMODEL = 5;
+    private static final int OPTIONINDEX_TRAFFICMODEL_POPULATIONDISTANCE = 6;
+    private static final int OPTIONINDEX_TRAFFICMODEL_RESET = 7;
+    
+    private static final int OPTIONINDEX_NORMALIZATION_MAKESYMMETRIC = 1;
+    private static final int OPTIONINDEX_NORMALIZATION_SCALE = 2;
+    private static final int OPTIONINDEX_NORMALIZATION_RANDOMVARIATION = 3;
+    private static final int OPTIONINDEX_NORMALIZATION_TOTAL = 4;
+    private static final int OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT = 5;
+    private static final int OPTIONINDEX_NORMALIZATION_PERNODETRAFIN = 6;
+    private static final int OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION = 7;
 
+    private JTable trafficMatrixTable;
 //    private final ArrayList<Node> filteredNodes;
 //    private final Set<Demand> filteredDemands;
+
     private final JCheckBox filterOutNodesNotConnectedThisLayer;
     private final JComboBox<String> cmb_tagNodesSelector;
     private final JComboBox<String> cmb_tagDemandsSelector;
@@ -79,7 +101,6 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
 
 //        this.filteredNodes = new ArrayList<> (np.getNodes());
 //        this.filteredDemands = new HashSet<> (np.getDemands());
-//        
 
         this.add(new JLabel ("Filter information for the traffic matrix"));
         this.filterOutNodesNotConnectedThisLayer = new JCheckBox("Filter out nodes without links at this layer");
@@ -97,14 +118,13 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
 		});
         
         
-        this.trafficMatrix = new AdvancedJTable();//createTrafficMatrix(np, filteredNodes, filteredDemands));
-        //this.createDefaultColumnsFromModel();
-        trafficMatrix.setDefaultRenderer(Object.class, new TotalRowColumnRenderer());
-        trafficMatrix.setDefaultRenderer(Double.class, new TotalRowColumnRenderer());
-        trafficMatrix.setDefaultRenderer(Number.class, new TotalRowColumnRenderer());
-        trafficMatrix.setDefaultRenderer(Integer.class, new TotalRowColumnRenderer());
-        trafficMatrix.setDefaultRenderer(String.class, new TotalRowColumnRenderer());
-        JScrollPane pane = new JScrollPane(trafficMatrix);
+        this.trafficMatrixTable = new AdvancedJTable();
+        trafficMatrixTable.setDefaultRenderer(Object.class, new TotalRowColumnRenderer());
+        trafficMatrixTable.setDefaultRenderer(Double.class, new TotalRowColumnRenderer());
+        trafficMatrixTable.setDefaultRenderer(Number.class, new TotalRowColumnRenderer());
+        trafficMatrixTable.setDefaultRenderer(Integer.class, new TotalRowColumnRenderer());
+        trafficMatrixTable.setDefaultRenderer(String.class, new TotalRowColumnRenderer());
+        JScrollPane pane = new JScrollPane(trafficMatrixTable);
         this.add(pane , "wrap");
 
         JPanel pnl_trafficModel = new JPanel ();
@@ -120,8 +140,48 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         cmb_trafficModelPattern.addItem("7. Reset");
         pnl_trafficModel.add(cmb_trafficModelPattern);
         final JButton applyTrafficModelButton = new JButton("Apply");
-        applyTrafficModelButton.addActionListener(new ActionListener() { 
-			public void actionPerformed(ActionEvent e) { /* updateNetPlanView(); */ }
+        applyTrafficModelButton.addActionListener(new ActionListener() 
+        { 
+			public void actionPerformed(ActionEvent e) 
+			{ 
+				try
+				{
+			    	final Pair<List<Node>,Set<Demand>> filtInfo = computeFilteringNodesAndDemands ();
+			    	final List<Node> filteredNodes = filtInfo.getFirst();
+			    	final Set<Demand> filteredDemands = filtInfo.getSecond();
+					if (filteredNodes.size () <= 1) throw new Net2PlanException ("No demands are selected");
+					if (filteredDemands.isEmpty()) throw new Net2PlanException ("No demands are selected");
+					boolean allCellsEditable = true;
+					for (int row = 0; row < trafficMatrixTable.getRowCount()-1 ; row ++)
+						for (int col = 1; col < trafficMatrixTable.getColumnCount()-1 ; col ++)
+							if (row != col-1 && !trafficMatrixTable.isCellEditable(row, col)) { allCellsEditable = false; break; }
+					if (!allCellsEditable) throw new Net2PlanException ("Traffic matrix modification is only possible when all the cells are editable");
+					final DoubleMatrix2D newTraffic2D = new ApplyTrafficModels (filteredNodes , filteredDemands).applyOption(cmb_trafficModelPattern.getSelectedIndex());
+					if (newTraffic2D == null) return;
+					final Map<Node,Integer> node2IndexInFilteredListMap = new HashMap <> ();
+					for (int cont = 0; cont < filteredNodes.size() ; cont ++) node2IndexInFilteredListMap.put(filteredNodes.get(cont), cont);
+					final List<Demand> filteredDemandList = new ArrayList<> (filteredDemands);
+					final List<Double> demandOfferedTrafficsList = new ArrayList<> (filteredDemands.size());
+					for (Demand d : filteredDemandList)
+						demandOfferedTrafficsList.add(newTraffic2D.get(node2IndexInFilteredListMap.get(d.getIngressNode()) , node2IndexInFilteredListMap.get(d.getEgressNode())));
+	                if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
+	                {
+	                    final WhatIfAnalysisPane whatIfPane = networkViewer.getWhatIfAnalysisPane();
+	                    whatIfPane.whatIfDemandOfferedTrafficModified(filteredDemandList, demandOfferedTrafficsList);
+	                    final VisualizationState vs = networkViewer.getVisualizationState();
+	                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+	                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(networkViewer.getDesign().getNetworkLayers()));
+	                    vs.setCanvasLayerVisibilityAndOrder(networkViewer.getDesign(), res.getFirst(), res.getSecond());
+	                    networkViewer.updateVisualizationAfterNewTopology();
+	                } else
+	                {
+	                	for (int cont = 0; cont < filteredDemandList.size() ; cont ++) filteredDemandList.get(cont).setOfferedTraffic(demandOfferedTrafficsList.get(cont));
+	                    networkViewer.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
+	                    networkViewer.addNetPlanChange();
+	                }
+				} catch (Net2PlanException ee) { ErrorHandling.showErrorDialog(ee.getMessage() , "Error"); }
+				catch (Throwable eee) { throw new Net2PlanException ("Impossible to complete this action"); }
+			}
 		});
         pnl_trafficModel.setLayout(new MigLayout("insets 0 0 0 0", "[grow][][]", "[grow]"));
         pnl_trafficModel.add(cmb_trafficModelPattern, "grow, wmin 50");
@@ -152,7 +212,7 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         updateNetPlanView();
     }
 
-    public void updateNetPlanView()
+    private Pair<List<Node>,Set<Demand>> computeFilteringNodesAndDemands ()
     {
     	final NetPlan np = networkViewer.getDesign();
     	final List<Node> filteredNodes = new ArrayList<> (np.getNumberOfNodes()); 
@@ -176,7 +236,16 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         	for (Demand d : np.getDemands())
         		if (d.hasTag(filteringDemandTag)) filteredDemands.add(d);
     	}
-        this.trafficMatrix.setModel(createTrafficMatrix(filteredNodes, filteredDemands));
+    	return Pair.of(filteredNodes, filteredDemands);
+    }
+    
+    public void updateNetPlanView()
+    {
+    	final NetPlan np = networkViewer.getDesign();
+    	final Pair<List<Node>,Set<Demand>> filtInfo = computeFilteringNodesAndDemands ();
+    	final List<Node> filteredNodes = filtInfo.getFirst();
+    	final Set<Demand> filteredDemands = filtInfo.getSecond();
+        this.trafficMatrixTable.setModel(createTrafficMatrix(filteredNodes, filteredDemands));
         
         cmb_tagNodesSelector.removeAllItems();
         cmb_tagNodesSelector.addItem("[NO FILTER]");
@@ -270,6 +339,7 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
                     {
                         final WhatIfAnalysisPane whatIfPane = networkViewer.getWhatIfAnalysisPane();
                         whatIfPane.whatIfDemandOfferedTrafficModified(demand, newOfferedTraffic);
+                        super.setValueAt(newValue, row, column);
                         final VisualizationState vs = networkViewer.getVisualizationState();
                         Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                                 vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(networkViewer.getDesign().getNetworkLayers()));
@@ -278,12 +348,12 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
                     } else
                     {
                         demand.setOfferedTraffic(newOfferedTraffic);
+                        super.setValueAt(newValue, row, column);
                         networkViewer.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                         networkViewer.getVisualizationState().pickElement(demand);
                         networkViewer.updateVisualizationAfterPick();
                         networkViewer.addNetPlanChange();
                     }
-                    super.setValueAt(newValue, row, column);
                 } catch (Throwable e) { ErrorHandling.showErrorDialog("Wrong traffic value"); return; }
             }
         };
@@ -304,8 +374,175 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
             return c;
         }
     };
+
     
+    private class ApplyTrafficModels 
+    {
+    	private final List<Node> filteredNodes;
+    	private final Set<Demand> filteredDemands;
+    	ApplyTrafficModels (List<Node> filteredNodes , Set<Demand> filteredDemands)
+    	{
+    		this.filteredDemands = filteredDemands;
+    		this.filteredNodes = filteredNodes;
+    	}
+    	DoubleMatrix2D applyOption (int selectedOptionIndex)
+    	{
+            if (selectedOptionIndex == 0) { ErrorHandling.showWarningDialog("Please, select a traffic model", "Error applying traffic model");return null; }
+            final NetPlan np = networkViewer.getDesign();
+            final int N = filteredNodes.size();
+            switch (selectedOptionIndex) 
+            {
+                case OPTIONINDEX_TRAFFICMODEL_CONSTANT:
+                    final JTextField txt_constantValue = new JTextField(5);
+                    final JPanel pane = new JPanel(new GridLayout(0, 2));
+                    pane.add(new JLabel("Traffic per cell: "));
+                    pane.add(txt_constantValue);
+                    while (true) 
+                    {
+                        int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the traffic per cell", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return null;
+                        final double constantValue = Double.parseDouble(txt_constantValue.getText());
+                        if (constantValue < 0) throw new IllegalArgumentException("Constant value must be greater or equal than zero");
+                        return TrafficMatrixGenerationModels.constantTrafficMatrix(N, constantValue);
+                    }
+                case OPTIONINDEX_TRAFFICMODEL_RESET:
+                    return DoubleFactory2D.sparse.make(N,N);
+                case OPTIONINDEX_TRAFFICMODEL_UNIFORM01:
+                    return TrafficMatrixGenerationModels.uniformRandom(N, 0, 10);
+                case OPTIONINDEX_TRAFFICMODEL_UNIFORM5050:
+                    return TrafficMatrixGenerationModels.bimodalUniformRandom(N, 0.5, 0, 100, 0, 10);
+                case OPTIONINDEX_TRAFFICMODEL_UNIFORM2575:
+                    return TrafficMatrixGenerationModels.bimodalUniformRandom(N, 0.25, 0, 100, 0, 10);
+                case OPTIONINDEX_TRAFFICMODEL_GRAVITYMODEL:
+                    DefaultTableModel gravityModelTableModel = new ClassAwareTableModel() {
+                        private static final long serialVersionUID = 1L;
+
+                        @Override
+                        public boolean isCellEditable(int row, int col) { return true; }
+
+                        @Override
+                        public void setValueAt(Object newValue, int row, int column) 
+                        {
+                            Object oldValue = getValueAt(row, column);
+
+							/* If value doesn't change, exit from function */
+                            if (Math.abs((double) newValue - (double) oldValue) < 1e-10) return;
+                            double trafficAmount = (Double) newValue;
+                            if (trafficAmount < 0) { ErrorHandling.showErrorDialog("Traffic amount must be greater or equal than zero", "Error introducing traffic amount"); return; }
+                            super.setValueAt(newValue, row, column);
+                        }
+                    };
+
+                    Object[][] gravityModelData = new Object[N][2];
+                    for (int n = 0; n < N; n++) 
+                    {
+                        gravityModelData[n][0] = 0.0;
+                        gravityModelData[n][1] = 0.0;
+                    }
+
+                    String[] gravityModelHeader = new String[]{"Total ingress traffic per node", "Total egress traffic per node"};
+                    gravityModelTableModel.setDataVector(gravityModelData, gravityModelHeader);
+
+                    JTable gravityModelTable = new AdvancedJTable(gravityModelTableModel);
+
+                    JPanel gravityModelPanel = new JPanel();
+                    JScrollPane gPane = new JScrollPane(gravityModelTable);
+                    gravityModelPanel.add(gPane);
+
+                    double[] ingressTrafficPerNode = new double[N];
+                    double[] egressTrafficPerNode = new double[N];
+                    while (true) 
+                    {
+                        int gravityModelResult = JOptionPane.showConfirmDialog(null, gravityModelPanel, "Please enter total ingress/egress traffic per node (one value per row)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (gravityModelResult != JOptionPane.OK_OPTION) return null;
+
+                        for (int n = 0; n < N; n++) 
+                        {
+                            ingressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 0);
+                            egressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 1);
+                        }
+                        try 
+                        {
+                            return TrafficMatrixGenerationModels.gravityModel(ingressTrafficPerNode, egressTrafficPerNode);
+                        } catch (Throwable ex) 
+                        {
+                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error applying gravity model");
+                        }
+                    }
+                default:
+                    throw new RuntimeException("Bad");
+                }
+            }
+    	};
+
+        private class ApplyTrafficNormalizationsAndAdjustments
+        {
+        	private final List<Node> filteredNodes;
+        	private final Set<Demand> filteredDemands;
+        	ApplyTrafficNormalizationsAndAdjustments (List<Node> filteredNodes , Set<Demand> filteredDemands)
+        	{
+        		this.filteredDemands = filteredDemands;
+        		this.filteredNodes = filteredNodes;
+        	}
+        	DoubleMatrix2D applyOption (int selectedOptionIndex)
+        	{
+                if (selectedOptionIndex == 0) { ErrorHandling.showWarningDialog("Please, select a valid traffic normalization/adjustment method", "Error applying method");return null; }
+                final NetPlan np = networkViewer.getDesign();
+                final int N = filteredNodes.size();
+                switch (selectedOptionIndex) 
+                {
+                    case OPTIONINDEX_NORMALIZATION_SCALE:
+                    {
+                        final JTextField txt_scalingValue = new JTextField(10);
+                        final JPanel pane = new JPanel(new GridLayout(0, 2));
+                        pane.add(new JLabel("Multiply cells by factor: "));
+                        pane.add(txt_scalingValue);
+                        final int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the traffic saling factor", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return null;
+                        final double constantValue = Double.parseDouble(txt_scalingValue.getText());
+                        if (constantValue < 0) throw new IllegalArgumentException("Scaling value must be greater or equal than zero");
+                        final DoubleMatrix2D res = DoubleFactory2D.sparse.make (N,N);
+                        for (int n1 = 0 ; n1 < N ; n1 ++)
+                        	for (int n2 = 0 ; n2 < N ; n2 ++)
+                        		if (n1 != n2)
+                        			res.set(n1, n2, ((Double) trafficMatrixTable.getValueAt(n1, n2+1)) * constantValue);
+                        return res;
+                    }
+                    case OPTIONINDEX_NORMALIZATION_MAKESYMMETRIC:
+                    {
+                        final DoubleMatrix2D res = DoubleFactory2D.sparse.make (N,N);
+                        for (int n1 = 0 ; n1 < N ; n1 ++)
+                        	for (int n2 = 0 ; n2 < N ; n2 ++)
+                        		if (n1 != n2)
+                        			res.set(n1, n2, ((Double) trafficMatrixTable.getValueAt(n1, n2+1) + (Double) trafficMatrixTable.getValueAt(n2, n1+1)) / 2.0);
+                        return res;
+                    }
+                    case OPTIONINDEX_NORMALIZATION_TOTAL:
+                    {
+                        final JTextField txt_scalingValue = new JTextField(10);
+                        final JPanel pane = new JPanel(new GridLayout(0, 2));
+                        pane.add(new JLabel("Total sum of matrix cells should be: "));
+                        pane.add(txt_scalingValue);
+                        final int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the total traffic", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return null;
+                        final double constantValue = Double.parseDouble(txt_scalingValue.getText());
+                        if (constantValue < 0) throw new IllegalArgumentException("Traffic value must be greater or equal than zero");
+                        final DoubleMatrix2D res = DoubleFactory2D.sparse.make (N,N);
+                        final double currentTotalTraffic = filteredDemands.stream().mapToDouble(d->d.getOfferedTraffic()).sum(); 
+                        for (int n1 = 0 ; n1 < N ; n1 ++)
+                        	for (int n2 = 0 ; n2 < N ; n2 ++)
+                        		if (n1 != n2)
+                        			res.set(n1, n2, ((Double) trafficMatrixTable.getValueAt(n1, n2+1)) * constantValue / currentTotalTraffic);
+                        return res;
+                    }
+                    default:
+                        throw new RuntimeException("Bad");
+                    }
+                }
+        	};
+
 }
+
 
 
 /*
