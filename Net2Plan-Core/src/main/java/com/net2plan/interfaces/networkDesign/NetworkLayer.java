@@ -18,18 +18,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import com.net2plan.internal.AttributeMap;
-import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
-import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.Triple;
-
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.net2plan.utils.Pair;
 
 /** <p>This class contains a representation of a network layer. This is an structure which contains a set of demands, multicast demands and links. 
  * It also is characterized by a routing type, which can be {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, or
@@ -69,6 +63,9 @@ public class NetworkLayer extends NetworkElement
 	Set<Route> cache_routesTravLinkZeroCap;
 	Set<MulticastTree> cache_multicastTreesDown;
 	Set<MulticastTree> cache_multicastTreesTravLinkZeroCap;
+	Map<Pair<Node,Node>,Set<Link>> cache_nodePairLinksThisLayer;
+	Map<Pair<Node,Node>,Set<Demand>> cache_nodePairDemandsThisLayer;
+	
 	URL defaultNodeIconURL;
 
 	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, URL defaultNodeIconURL , AttributeMap attributes)
@@ -97,6 +94,9 @@ public class NetworkLayer extends NetworkElement
 		this.cache_routesTravLinkZeroCap = new HashSet<>();
 		this.cache_multicastTreesDown = new HashSet<MulticastTree> ();
 		this.cache_multicastTreesTravLinkZeroCap = new HashSet<> ();
+		this.cache_nodePairLinksThisLayer = new HashMap<> ();
+		this.cache_nodePairDemandsThisLayer = new HashMap<> ();
+
 //		this.forwardingRulesNoFailureState_f_de = null;
 //		this.forwardingRulesCurrentFailureState_x_de = null;
 //		this.forwardingRules_Aout_ne = null;
@@ -144,6 +144,8 @@ public class NetworkLayer extends NetworkElement
 		this.cache_routesTravLinkZeroCap.clear(); for (Route r : origin.cache_routesTravLinkZeroCap) this.cache_routesTravLinkZeroCap.add(this.netPlan.getRouteFromId (r.id));
 		this.cache_multicastTreesDown.clear (); for (MulticastTree t : origin.cache_multicastTreesDown) this.cache_multicastTreesDown.add(this.netPlan.getMulticastTreeFromId (t.id));
 		this.cache_multicastTreesTravLinkZeroCap.clear(); for (MulticastTree t : origin.cache_multicastTreesTravLinkZeroCap) this.cache_multicastTreesTravLinkZeroCap.add(this.netPlan.getMulticastTreeFromId (t.id));
+		this.cache_nodePairLinksThisLayer.clear(); for (Entry<Pair<Node,Node>,Set<Link>> entry : origin.cache_nodePairLinksThisLayer.entrySet()) this.cache_nodePairLinksThisLayer.put(Pair.of(this.netPlan.getNodeFromId(entry.getKey().getFirst().getId()) , this.netPlan.getNodeFromId(entry.getKey().getSecond().getId())) , (Set<Link>) (Set<?>) this.netPlan.translateCollectionToThisNetPlan(entry.getValue()));
+		this.cache_nodePairDemandsThisLayer.clear(); for (Entry<Pair<Node,Node>,Set<Demand>> entry : origin.cache_nodePairDemandsThisLayer.entrySet()) this.cache_nodePairDemandsThisLayer.put(Pair.of(this.netPlan.getNodeFromId(entry.getKey().getFirst().getId()) , this.netPlan.getNodeFromId(entry.getKey().getSecond().getId())) , (Set<Demand>) (Set<?>) this.netPlan.translateCollectionToThisNetPlan(entry.getValue()));
 		
 		for (Link e : origin.links) this.links.get(e.index).copyFrom(e);
 		for (Demand d : origin.demands) this.demands.get(d.index).copyFrom(d);
@@ -195,7 +197,13 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_routesTravLinkZeroCap , e2.cache_routesTravLinkZeroCap)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_multicastTreesDown , e2.cache_multicastTreesDown)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_multicastTreesTravLinkZeroCap , e2.cache_multicastTreesTravLinkZeroCap )) return false;
-			
+		final Set<Demand> auxDemandThis = this.cache_nodePairDemandsThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toSet());
+		final Set<Demand> auxDemandE2 = e2.cache_nodePairDemandsThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toSet());
+		if (!NetPlan.isDeepCopy(auxDemandThis , auxDemandE2)) return false;
+		final Set<Link> auxLinkThis = this.cache_nodePairLinksThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toSet());
+		final Set<Link> auxLinkE2 = e2.cache_nodePairLinksThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toSet());
+		if (!NetPlan.isDeepCopy(auxLinkThis , auxLinkE2)) return false;
+
 		return true;
 	}
 	
@@ -305,6 +313,26 @@ public class NetworkLayer extends NetworkElement
 			if (travZeroCapLinks && !cache_multicastTreesTravLinkZeroCap.contains(tree)) throw new RuntimeException ();
 			if (!travZeroCapLinks && cache_multicastTreesTravLinkZeroCap.contains(tree)) throw new RuntimeException ();
 		}
+		for (Set<Demand> dd : this.cache_nodePairDemandsThisLayer.values()) for (Demand d : dd) if (d.layer != this || d.netPlan != this.netPlan) throw new RuntimeException ();
+		for (Set<Link> ee : this.cache_nodePairLinksThisLayer.values()) for (Link e: ee) if (e.layer != this || e.netPlan != this.netPlan) throw new RuntimeException ();
+		for (Entry<Pair<Node,Node>,Set<Demand>> entry : this.cache_nodePairDemandsThisLayer.entrySet())
+		{
+			for (Demand d : entry.getValue())
+			{
+				if (d.getIngressNode() != entry.getKey().getFirst()) throw new RuntimeException ();
+				if (d.getEgressNode() != entry.getKey().getSecond()) throw new RuntimeException ();
+			}
+		}
+		for (Entry<Pair<Node,Node>,Set<Link>> entry : this.cache_nodePairLinksThisLayer.entrySet())
+		{
+			for (Link e : entry.getValue())
+			{
+				if (e.getOriginNode() != entry.getKey().getFirst()) throw new RuntimeException ();
+				if (e.getDestinationNode() != entry.getKey().getSecond()) throw new RuntimeException ();
+			}
+		}
+		for (Demand d : this.demands) if (!this.cache_nodePairDemandsThisLayer.get(Pair.of(d.getIngressNode(),d.getEgressNode())).contains(d)) throw new RuntimeException ();
+		for (Link e : this.links) if (!this.cache_nodePairLinksThisLayer.get(Pair.of(e.getOriginNode(),e.getDestinationNode())).contains(e)) throw new RuntimeException ();
 	}
 
 	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()

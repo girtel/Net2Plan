@@ -129,7 +129,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
             linkData[COLUMN_LENGTH] = link.getLengthInKm();
             linkData[COLUMN_PROPSPEED] = link.getPropagationSpeedInKmPerSecond();
             linkData[COLUMN_PROPDELAYMS] = link.getPropagationDelayInMs();
-            linkData[COLUMN_NUMROUTES] = link.getNumberOfTraversingRoutes();
+            linkData[COLUMN_NUMROUTES] = !link.getLayer().isSourceRouting() ? 0 : link.getNumberOfTraversingRoutes();
             linkData[COLUMN_NUMBACKUPROUTES] = link.getNumberOfTraversingBackupRoutes();
             linkData[COLUMN_NUMFORWRULES] = link.getLayer().isSourceRouting() ? 0 : link.getNumberOfForwardingRules();
             linkData[COLUMN_NUMTREES] = link.getNumberOfTraversingTrees();

@@ -55,16 +55,15 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     private static final int COLUMN_OFFEREDTRAFFIC = 5;
     private static final int COLUMN_CARRIEDTRAFFIC = 6;
     private static final int COLUMN_LOSTTRAFFIC = 7;
-    private static final int COLUMN_ROUTINGCYCLES = 8;
-    private static final int COLUMN_BIFURCATED = 9;
-    private static final int COLUMN_NUMTREES = 10;
-    private static final int COLUMN_MAXE2ELATENCY = 11;
-    private static final int COLUMN_TAGS = 12;
-    private static final int COLUMN_ATTRIBUTES = 13;
+    private static final int COLUMN_BIFURCATED = 8;
+    private static final int COLUMN_NUMTREES = 9;
+    private static final int COLUMN_MAXE2ELATENCY = 10;
+    private static final int COLUMN_TAGS = 11;
+    private static final int COLUMN_ATTRIBUTES = 12;
     private static final String netPlanViewTabName = "Multicast demands";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Ingress node", "Egress nodes", "Coupled to links",
-            "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Multicast trees", "Max e2e latency (ms)", "Tags", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress nodes", "Indicates the coupled upper layer links, if any, or empty", "Offered traffic by the multicast demand", "Carried traffic by multicast trees carrying demand traffic", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: always loopless since we always deal with multicast trees", "Indicates whether the demand has more than one associated multicast tree carrying traffic", "Number of associated multicast trees", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Multicast demand-specific tags", "Multicast demand-specific attributes");
+            "Offered traffic", "Carried traffic", "% Lost traffic", "Bifurcated", "# Multicast trees", "Max e2e latency (ms)", "Tags", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress nodes", "Indicates the coupled upper layer links, if any, or empty", "Offered traffic by the multicast demand", "Carried traffic by multicast trees carrying demand traffic", "Percentage of lost traffic from the offered", "Indicates whether the demand has more than one associated multicast tree carrying traffic", "Number of associated multicast trees", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Multicast demand-specific tags", "Multicast demand-specific attributes");
 
     public AdvancedJTable_multicastDemand(final GUINetworkDesign callback)
     {
@@ -109,7 +108,6 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             demandData[COLUMN_OFFEREDTRAFFIC] = h_d;
             demandData[COLUMN_CARRIEDTRAFFIC] = demand.getCarriedTraffic();
             demandData[COLUMN_LOSTTRAFFIC] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-            demandData[COLUMN_ROUTINGCYCLES] = "Loopless by definition";
             demandData[COLUMN_BIFURCATED] = demand.isBifurcated() ? String.format("Yes (%d)", demand.getMulticastTrees().size()) : "No";
             demandData[COLUMN_NUMTREES] = demand.getMulticastTrees().size();
             demandData[COLUMN_MAXE2ELATENCY] = demand.getWorseCasePropagationTimeInMs();

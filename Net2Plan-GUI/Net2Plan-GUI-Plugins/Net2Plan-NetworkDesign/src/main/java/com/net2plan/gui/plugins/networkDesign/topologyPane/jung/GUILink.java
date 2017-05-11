@@ -15,7 +15,9 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Paint;
+import java.util.Set;
 
+import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -41,7 +43,7 @@ public class GUILink
     private BasicStroke edgeStrokeIfNotActiveLayer;
     private Paint edgeDrawPaint;
     private boolean shownSeparated;
-    private boolean overrideLinkColoringByUtilizationOrRunOut;
+//    private boolean overrideLinkColoringByUtilizationOrRunOut;
     
     
     /**
@@ -58,7 +60,7 @@ public class GUILink
         this.npLink = npLink;
         this.originNode = originNode;
         this.destinationNode = destinationNode;
-        this.overrideLinkColoringByUtilizationOrRunOut = false;
+//        this.overrideLinkColoringByUtilizationOrRunOut = false;
         if (npLink != null)
         {
         	if (originNode.getAssociatedNode() != npLink.getOriginNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
@@ -93,7 +95,7 @@ public class GUILink
         this.hasArrow = hasArrow;
     }
 
-    public void setOverrideLinkColoringByUtilizationOrRunOut (boolean override) { this.overrideLinkColoringByUtilizationOrRunOut = override; }
+//    public void setOverrideLinkColoringByUtilizationOrRunOut (boolean override) { this.overrideLinkColoringByUtilizationOrRunOut = override; }
     
     public BasicStroke getStrokeIfActiveLayer() { return edgeStrokeIfActiveLayer; }
 
@@ -109,13 +111,19 @@ public class GUILink
     {
     	if (npLink == null) return edgeDrawPaint;
     	if (!npLink.isUp()) return Color.RED;
-    	if (overrideLinkColoringByUtilizationOrRunOut) return edgeDrawPaint;
+    	
+    	/* Consider worst case color if not separated links */
+    	final Set<Link> overlappingLinksToConsider = shownSeparated ? Sets.newHashSet(npLink) : 
+    		npLink.getNetPlan().getNodePairLinks(npLink.getOriginNode(), npLink.getDestinationNode(), true);
+
+    	/* In red if any overlapping link is down */
+    	if (overlappingLinksToConsider.stream().anyMatch(ee->ee.isDown())) return Color.RED; 
+    		
     	if (vs.getIsActiveLinkUtilizationColorThresholdList())
         {
-                if(npLink.getLayer().isDefaultLayer())
-                    return vs.getLinkColorAccordingToUtilization(npLink.getUtilization()); 
-                else
-                    return edgeDrawPaint;
+    		if(!npLink.getLayer().isDefaultLayer()) return edgeDrawPaint;
+    		final double worstUtilization = overlappingLinksToConsider.stream().mapToDouble(e->e.getUtilization()).max().orElse(0);
+    		return vs.getLinkColorAccordingToUtilization(worstUtilization);
         }
     	else if (vs.getIsActiveLinkRunoutTimeColorThresholdList())
     	{
