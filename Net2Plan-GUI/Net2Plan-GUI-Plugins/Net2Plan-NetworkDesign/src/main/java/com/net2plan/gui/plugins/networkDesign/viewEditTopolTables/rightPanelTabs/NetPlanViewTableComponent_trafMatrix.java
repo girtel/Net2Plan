@@ -1,3 +1,9 @@
+/* Pending
+ * 1) GUI
+ * 2) Make pending functionalities
+ * 3) Add functionality of exporting to Excel the traffic matrix
+ */
+
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
 import java.awt.Color;
@@ -84,13 +90,8 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
     private final JComboBox<String> cmb_tagDemandsSelector;
     private final JComboBox<String> cmb_trafficModelPattern;
     private final JComboBox<String> cmb_trafficNormalization;
-    
-    private Map<Pair<Node,Node>,Set<Demand>> filteredDemandView;
-    private String demandTagFilter;
-    private String nodeTagFilter;
-    
-    
-
+    private final JButton applyTrafficNormalizationButton;
+    private final JButton applyTrafficModelButton;
     private final GUINetworkDesign networkViewer;
 
     public NetPlanViewTableComponent_trafMatrix(final GUINetworkDesign networkViewer)
@@ -139,50 +140,8 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         cmb_trafficModelPattern.addItem("6. Population-distance model");
         cmb_trafficModelPattern.addItem("7. Reset");
         pnl_trafficModel.add(cmb_trafficModelPattern);
-        final JButton applyTrafficModelButton = new JButton("Apply");
-        applyTrafficModelButton.addActionListener(new ActionListener() 
-        { 
-			public void actionPerformed(ActionEvent e) 
-			{ 
-				try
-				{
-			    	final Pair<List<Node>,Set<Demand>> filtInfo = computeFilteringNodesAndDemands ();
-			    	final List<Node> filteredNodes = filtInfo.getFirst();
-			    	final Set<Demand> filteredDemands = filtInfo.getSecond();
-					if (filteredNodes.size () <= 1) throw new Net2PlanException ("No demands are selected");
-					if (filteredDemands.isEmpty()) throw new Net2PlanException ("No demands are selected");
-					boolean allCellsEditable = true;
-					for (int row = 0; row < trafficMatrixTable.getRowCount()-1 ; row ++)
-						for (int col = 1; col < trafficMatrixTable.getColumnCount()-1 ; col ++)
-							if (row != col-1 && !trafficMatrixTable.isCellEditable(row, col)) { allCellsEditable = false; break; }
-					if (!allCellsEditable) throw new Net2PlanException ("Traffic matrix modification is only possible when all the cells are editable");
-					final DoubleMatrix2D newTraffic2D = new ApplyTrafficModels (filteredNodes , filteredDemands).applyOption(cmb_trafficModelPattern.getSelectedIndex());
-					if (newTraffic2D == null) return;
-					final Map<Node,Integer> node2IndexInFilteredListMap = new HashMap <> ();
-					for (int cont = 0; cont < filteredNodes.size() ; cont ++) node2IndexInFilteredListMap.put(filteredNodes.get(cont), cont);
-					final List<Demand> filteredDemandList = new ArrayList<> (filteredDemands);
-					final List<Double> demandOfferedTrafficsList = new ArrayList<> (filteredDemands.size());
-					for (Demand d : filteredDemandList)
-						demandOfferedTrafficsList.add(newTraffic2D.get(node2IndexInFilteredListMap.get(d.getIngressNode()) , node2IndexInFilteredListMap.get(d.getEgressNode())));
-	                if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
-	                {
-	                    final WhatIfAnalysisPane whatIfPane = networkViewer.getWhatIfAnalysisPane();
-	                    whatIfPane.whatIfDemandOfferedTrafficModified(filteredDemandList, demandOfferedTrafficsList);
-	                    final VisualizationState vs = networkViewer.getVisualizationState();
-	                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-	                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(networkViewer.getDesign().getNetworkLayers()));
-	                    vs.setCanvasLayerVisibilityAndOrder(networkViewer.getDesign(), res.getFirst(), res.getSecond());
-	                    networkViewer.updateVisualizationAfterNewTopology();
-	                } else
-	                {
-	                	for (int cont = 0; cont < filteredDemandList.size() ; cont ++) filteredDemandList.get(cont).setOfferedTraffic(demandOfferedTrafficsList.get(cont));
-	                    networkViewer.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-	                    networkViewer.addNetPlanChange();
-	                }
-				} catch (Net2PlanException ee) { ErrorHandling.showErrorDialog(ee.getMessage() , "Error"); }
-				catch (Throwable eee) { throw new Net2PlanException ("Impossible to complete this action"); }
-			}
-		});
+        this.applyTrafficModelButton = new JButton("Apply");
+        applyTrafficModelButton.addActionListener(new CommonActionPerformListenerModelAndNormalization()); 
         pnl_trafficModel.setLayout(new MigLayout("insets 0 0 0 0", "[grow][][]", "[grow]"));
         pnl_trafficModel.add(cmb_trafficModelPattern, "grow, wmin 50");
         pnl_trafficModel.add(applyTrafficModelButton);
@@ -200,10 +159,8 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         cmb_trafficNormalization.addItem("6. Normalization: fit to given in traffic per node");
         cmb_trafficNormalization.addItem("7. Normalization: scale to theoretical maximum traffic");
         pnl_normalization.add(cmb_trafficNormalization);
-        final JButton applyTrafficNormalizationButton = new JButton("Apply");
-        applyTrafficModelButton.addActionListener(new ActionListener() { 
-			public void actionPerformed(ActionEvent e) { /* updateNetPlanView(); */ }
-		});
+        this.applyTrafficNormalizationButton = new JButton("Apply");
+        applyTrafficNormalizationButton.addActionListener(new CommonActionPerformListenerModelAndNormalization()); 
         pnl_normalization.setLayout(new MigLayout("insets 0 0 0 0", "[grow][][]", "[grow]"));
         pnl_normalization.add(cmb_trafficNormalization, "grow, wmin 50");
         pnl_normalization.add(applyTrafficNormalizationButton);
@@ -541,41 +498,58 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
                 }
         	};
 
+        private class CommonActionPerformListenerModelAndNormalization implements ActionListener
+        {
+			@Override
+			public void actionPerformed(ActionEvent e) 
+			{ 
+				try
+				{
+			    	final Pair<List<Node>,Set<Demand>> filtInfo = computeFilteringNodesAndDemands ();
+			    	final List<Node> filteredNodes = filtInfo.getFirst();
+			    	final Set<Demand> filteredDemands = filtInfo.getSecond();
+					if (filteredNodes.size () <= 1) throw new Net2PlanException ("No demands are selected");
+					if (filteredDemands.isEmpty()) throw new Net2PlanException ("No demands are selected");
+					boolean allCellsEditable = true;
+					for (int row = 0; row < trafficMatrixTable.getRowCount()-1 ; row ++)
+						for (int col = 1; col < trafficMatrixTable.getColumnCount()-1 ; col ++)
+							if (row != col-1 && !trafficMatrixTable.isCellEditable(row, col)) { allCellsEditable = false; break; }
+					if (!allCellsEditable) throw new Net2PlanException ("Traffic matrix modification is only possible when all the cells are editable");
+					
+					DoubleMatrix2D newTraffic2D = null;
+					if (e.getSource() == applyTrafficModelButton)
+						newTraffic2D = new ApplyTrafficModels (filteredNodes , filteredDemands).applyOption(cmb_trafficModelPattern.getSelectedIndex());
+					else if (e.getSource() == applyTrafficNormalizationButton)
+						newTraffic2D = new ApplyTrafficNormalizationsAndAdjustments(filteredNodes , filteredDemands).applyOption(cmb_trafficNormalization.getSelectedIndex());
+					else throw new RuntimeException ();
+					if (newTraffic2D == null) return;
+					final Map<Node,Integer> node2IndexInFilteredListMap = new HashMap <> ();
+					for (int cont = 0; cont < filteredNodes.size() ; cont ++) node2IndexInFilteredListMap.put(filteredNodes.get(cont), cont);
+					final List<Demand> filteredDemandList = new ArrayList<> (filteredDemands);
+					final List<Double> demandOfferedTrafficsList = new ArrayList<> (filteredDemands.size());
+					for (Demand d : filteredDemandList)
+						demandOfferedTrafficsList.add(newTraffic2D.get(node2IndexInFilteredListMap.get(d.getIngressNode()) , node2IndexInFilteredListMap.get(d.getEgressNode())));
+	                if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
+	                {
+	                    final WhatIfAnalysisPane whatIfPane = networkViewer.getWhatIfAnalysisPane();
+	                    whatIfPane.whatIfDemandOfferedTrafficModified(filteredDemandList, demandOfferedTrafficsList);
+	                    final VisualizationState vs = networkViewer.getVisualizationState();
+	                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+	                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(networkViewer.getDesign().getNetworkLayers()));
+	                    vs.setCanvasLayerVisibilityAndOrder(networkViewer.getDesign(), res.getFirst(), res.getSecond());
+	                    networkViewer.updateVisualizationAfterNewTopology();
+	                } else
+	                {
+	                	for (int cont = 0; cont < filteredDemandList.size() ; cont ++) filteredDemandList.get(cont).setOfferedTraffic(demandOfferedTrafficsList.get(cont));
+	                    networkViewer.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
+	                    networkViewer.addNetPlanChange();
+	                }
+				} catch (Net2PlanException ee) { ErrorHandling.showErrorDialog(ee.getMessage() , "Error"); }
+				catch (Throwable eee) { throw new Net2PlanException ("Impossible to complete this action"); }
+			}
+        }
+        	
 }
 
 
 
-/*
-Demands:
-•	Only of the active layer
-•	Filter nodes:
-o	Filter out nodes without links at this layer
-o	Nodes with tag: XXX
-•	Filter demands:
-o	Demands with tag XXX
-•	Print the traffic matrix, between the given nodes
-o	Cell with 0 demands => non editable and 0
-o	Cell with > 1 demands => non editable and amount sum
-o	Cell with 1 demand, but coupled => non editable
-o	Cell with 1 demand and non-coupled => editable
-•	Fill:
-o	Constant: only to editable
-o	Uniform random: only to editable
-o	Uniform skewed: only to editable
-o	Gravity model: only to editable
-o	Population distance: only to editable
-•	Same normalization options as in ALT-2
-o	Clear
-o	Scale
-o	Make symmetric
-o	Total: non-applicable if coupled demands in the traffic matrix
-o	Row: non-applicable if coupled demands in the traffic matrix
-o	Columns: non-applicable if coupled demands in the traffic matrix
-o	Max for this: non-applicable if coupled demands in the traffic matrix
-•	Variate current matrix:
-o	Apply CAGR: not applied to coupled demands
-o	Apply random variation: not applied to coupled demands
-o	Apply Gaussian variation: not applied to coupled demands
-•	set of matrices from a seminal one: each is a N2P 
-
-*/
