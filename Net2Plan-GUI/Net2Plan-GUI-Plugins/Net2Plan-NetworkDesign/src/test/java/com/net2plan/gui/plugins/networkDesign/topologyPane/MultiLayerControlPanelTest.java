@@ -129,9 +129,10 @@ public class MultiLayerControlPanelTest
         final JComponent[][] table = panel.getTable();
         for (int i = 1; i < table.length; i++)
         {
-            if (matcher.matches(table[i][2]))
+            final JComponent component = table[i][2];
+            if (matcher.matches(component))
             {
-                final JButton button = (JButton) table[i][2];
+                final JButton button = (JButton) component;
                 button.doClick();
 
                 final NetworkLayer layer = panel.getLayer(i);
@@ -140,6 +141,46 @@ public class MultiLayerControlPanelTest
                 verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, true);
 
                 assertTrue(layer.isDefaultLayer());
+            } else
+            {
+                fail();
+            }
+        }
+    }
+
+    @Test
+    public void visibilityButtonTest()
+    {
+        // Mock visualization state
+        when(callback.getVisualizationState()).thenReturn(vs);
+        doNothing().when(vs).setCanvasLayerVisibility(any(NetworkLayer.class), anyBoolean());
+
+        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
+        GenericTypeMatcher<JToggleButton> matcher = new GenericTypeMatcher<JToggleButton>(JToggleButton.class)
+        {
+            @Override
+            protected boolean isMatching(JToggleButton component)
+            {
+                return component.getName().equals(MultiLayerControlPanel.VISIBLE_COLUMN);
+            }
+        };
+
+        final JComponent[][] table = panel.getTable();
+        for (int i = 1; i < table.length; i++)
+        {
+            final JComponent component = table[i][3];
+
+            if (matcher.matches(component))
+            {
+                final JToggleButton button = (JToggleButton) component;
+                button.doClick();
+
+                final NetworkLayer layer = panel.getLayer(i);
+                assertNotNull(layer);
+
+                verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, true);
+
+                assertTrue(button.isSelected());
             } else
             {
                 fail();

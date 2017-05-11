@@ -1,7 +1,7 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 
@@ -19,7 +19,7 @@ import java.util.Map;
 public final class MultiLayerControlPanel extends JPanel
 {
     private final GUINetworkDesign callback;
-    private final NetPlan netPlan;
+
     private JComponent[][] componentMatrix;
 
     private final Map<Integer, NetworkLayer> rowIndexToLayerMap;
@@ -34,11 +34,10 @@ public final class MultiLayerControlPanel extends JPanel
         assert callback != null;
 
         this.callback = callback;
-        this.netPlan = callback.getDesign();
 
         this.rowIndexToLayerMap = new HashMap<>();
 
-        this.componentMatrix = new JComponent[netPlan.getNumberOfLayers() + 1][4];
+        this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers() + 1][4];
 
         this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
 
@@ -52,13 +51,15 @@ public final class MultiLayerControlPanel extends JPanel
         componentMatrix[0][2] = new JLabel(ACTIVE_COLUMN);
         componentMatrix[0][3] = new JLabel(VISIBLE_COLUMN);
 
-        final List<NetworkLayer> networkLayers = netPlan.getNetworkLayers();
-        int row = 1;
+        final List<NetworkLayer> networkLayers = callback.getDesign().getNetworkLayers();
 
+        int row = 1;
         // Each row
         for (NetworkLayer layer : networkLayers)
         {
-            rowIndexToLayerMap.put(row, layer);
+            final int thisRow = row;
+
+            rowIndexToLayerMap.put(thisRow, layer);
             // Up button
             final JButton upButton = new JButton();
             upButton.setText("\u25B2");
@@ -66,8 +67,21 @@ public final class MultiLayerControlPanel extends JPanel
             upButton.setFocusable(false);
             upButton.addActionListener(e ->
             {
+                if (thisRow == componentMatrix.length - 1) return;
+
+                final VisualizationState vs = callback.getVisualizationState();
+                final NetworkLayer neighbourLayer = rowIndexToLayerMap.get(thisRow - 1);
+
+                final Map<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
+
+                // Swap the selected layer with the one on top of it.
+                this.swap(layerOrderMapConsideringNonVisible, layer, neighbourLayer);
+
+                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible, null);
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
             });
-            componentMatrix[row][0] = upButton;
+            componentMatrix[thisRow][0] = upButton;
 
             // Down button
             final JButton downButton = new JButton();
@@ -76,8 +90,21 @@ public final class MultiLayerControlPanel extends JPanel
             downButton.setFocusable(false);
             downButton.addActionListener(e ->
             {
+                if (thisRow == componentMatrix.length - 1) return;
+
+                final VisualizationState vs = callback.getVisualizationState();
+                final NetworkLayer neighbourLayer = rowIndexToLayerMap.get(thisRow + 1);
+
+                final Map<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
+
+                // Swap the selected layer with the one on top of it.
+                this.swap(layerOrderMapConsideringNonVisible, layer, neighbourLayer);
+
+                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible, null);
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
             });
-            componentMatrix[row][1] = downButton;
+            componentMatrix[thisRow][1] = downButton;
 
             // Active button
             final JButton activeButton = new JButton();
@@ -86,23 +113,26 @@ public final class MultiLayerControlPanel extends JPanel
             activeButton.setFocusable(false);
             activeButton.addActionListener(e ->
             {
-                netPlan.setNetworkLayerDefault(layer);
+                callback.getDesign().setNetworkLayerDefault(layer);
                 callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
 
-                refreshTable();
                 callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
             });
-            componentMatrix[row][2] = activeButton;
+            componentMatrix[thisRow][2] = activeButton;
 
             // Visible button
             final JToggleButton visibleButton = new JToggleButton();
             // TODO: ICON
             visibleButton.setName(VISIBLE_COLUMN);
+            visibleButton.setSelected(callback.getVisualizationState().isLayerVisibleInCanvas(layer));
             visibleButton.setFocusable(false);
             visibleButton.addActionListener(e ->
             {
+                callback.getVisualizationState().setCanvasLayerVisibility(layer, visibleButton.isSelected());
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
             });
-            componentMatrix[row][3] = visibleButton;
+            componentMatrix[thisRow][3] = visibleButton;
 
             row++;
         }
@@ -114,6 +144,16 @@ public final class MultiLayerControlPanel extends JPanel
 
     public void refreshTable ()
     {
+        this.removeAll();
+
+        this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers() + 1][4];
+        this.rowIndexToLayerMap.clear();
+        this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
+
+        buildPanel();
+
+        this.validate();
+        this.repaint();
     }
 
     NetworkLayer getLayer(int row)
@@ -124,5 +164,16 @@ public final class MultiLayerControlPanel extends JPanel
     JComponent[][] getTable()
     {
         return componentMatrix;
+    }
+
+    private <K, V> void swap(Map<K, V> map, K k1, K k2)
+    {
+        final V value1 = map.get(k1);
+        final V value2 = map.get(k2);
+        if ((value1 == null) || (value2 == null)) throw new RuntimeException();
+        map.remove(k1);
+        map.remove(k2);
+        map.put(k1, value2);
+        map.put(k2, value1);
     }
 }
