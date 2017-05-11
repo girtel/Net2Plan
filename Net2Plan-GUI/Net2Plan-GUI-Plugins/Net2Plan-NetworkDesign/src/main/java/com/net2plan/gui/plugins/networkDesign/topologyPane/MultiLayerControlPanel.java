@@ -1,5 +1,6 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -38,15 +39,15 @@ public final class MultiLayerControlPanel extends JPanel
 
         this.rowIndexToLayerMap = new HashMap<>();
 
-        this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers() + 1][4];
-
-        this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
-
         buildPanel();
     }
 
     private void buildPanel()
     {
+        this.rowIndexToLayerMap.clear();
+        this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers() + 1][4];
+        this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
+
         componentMatrix[0][0] = new JLabel(UP_COLUMN);
         componentMatrix[0][1] = new JLabel(DOWN_COLUMN);
         componentMatrix[0][2] = new JLabel(ACTIVE_COLUMN);
@@ -125,7 +126,7 @@ public final class MultiLayerControlPanel extends JPanel
 
             // Visible button
             final JToggleButton visibleButton = new JToggleButton();
-            // TODO: ICON
+            visibleButton.setIcon(new ImageIcon(MultiLayerControlPanel.class.getResource("/resources/gui/eye.png")));
             visibleButton.setName(VISIBLE_COLUMN);
             visibleButton.setSelected(callback.getVisualizationState().isLayerVisibleInCanvas(layer));
             visibleButton.setFocusable(false);
@@ -169,17 +170,19 @@ public final class MultiLayerControlPanel extends JPanel
         this.rowIndexToLayerMap.clear();
         this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
 
-        buildPanel();
+        this.buildPanel();
 
         this.validate();
         this.repaint();
     }
 
+    @VisibleForTesting
     NetworkLayer getLayer(int row)
     {
         return rowIndexToLayerMap.get(row);
     }
 
+    @VisibleForTesting
     JComponent[][] getTable()
     {
         return componentMatrix;
