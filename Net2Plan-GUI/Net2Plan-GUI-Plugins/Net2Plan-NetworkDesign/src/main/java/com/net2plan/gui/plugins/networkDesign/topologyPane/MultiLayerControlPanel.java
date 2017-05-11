@@ -28,7 +28,7 @@ public final class MultiLayerControlPanel extends JPanel
 
     public static final String UP_COLUMN = "\u25B2";
     public static final String DOWN_COLUMN = "\u25BC";
-    public static final String ACTIVE_COLUMN = "Name";
+    public static final String ACTIVE_COLUMN = "Layer";
     public static final String VISIBLE_COLUMN = "Visible";
 
     public MultiLayerControlPanel(GUINetworkDesign callback)
@@ -48,10 +48,10 @@ public final class MultiLayerControlPanel extends JPanel
         this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers() + 1][4];
         this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
 
-        componentMatrix[0][0] = new JLabel(UP_COLUMN);
-        componentMatrix[0][1] = new JLabel(DOWN_COLUMN);
-        componentMatrix[0][2] = new JLabel(ACTIVE_COLUMN);
-        componentMatrix[0][3] = new JLabel(VISIBLE_COLUMN);
+        componentMatrix[0][0] = new JLabel(UP_COLUMN, SwingConstants.CENTER);
+        componentMatrix[0][1] = new JLabel(DOWN_COLUMN, SwingConstants.CENTER);
+        componentMatrix[0][2] = new JLabel(ACTIVE_COLUMN, SwingConstants.CENTER);
+        componentMatrix[0][3] = new JLabel(VISIBLE_COLUMN, SwingConstants.CENTER);
 
         final NetPlan netPlan = callback.getDesign();
 

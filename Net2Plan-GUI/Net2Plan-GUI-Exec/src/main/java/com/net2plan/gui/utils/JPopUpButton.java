@@ -16,7 +16,7 @@ public class JPopUpButton extends JToggleButton
         super(name);
         this.popup = menu;
 
-        addActionListener(ev ->
+        this.addActionListener(ev ->
         {
             JToggleButton b = JPopUpButton.this;
             if (b.isSelected())
