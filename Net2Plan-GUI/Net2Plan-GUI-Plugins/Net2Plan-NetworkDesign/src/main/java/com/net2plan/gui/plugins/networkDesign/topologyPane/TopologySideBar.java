@@ -37,7 +37,7 @@ public class TopologySideBar extends JToolBar implements ActionListener
         this.setFloatable(false);
         this.setOpaque(false);
 
-        this.multilayerControlPanel = new MultiLayerControlPanel(callback.getDesign());
+        this.multilayerControlPanel = new MultiLayerControlPanel(callback);
 
         // MultiLayer control window
         final JPopupMenu multiLayerPopUp = new JPopupMenu();

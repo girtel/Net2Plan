@@ -1,20 +1,28 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.swing.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Jorge San Emeterio
  * @date 10/05/17
  */
+@RunWith(MockitoJUnitRunner.class)
 public class MultiLayerControlPanelTest
 {
+    @Mock
+    private static GUINetworkDesign callback = mock(GUINetworkDesign.class);
     private static NetPlan netPlan;
 
     @BeforeClass
@@ -29,7 +37,7 @@ public class MultiLayerControlPanelTest
     @Test
     public void buildTest()
     {
-        MultiLayerControlPanel panel = new MultiLayerControlPanel(netPlan);
+        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
         final JComponent[][] table = panel.getTable();
 
         assertEquals(netPlan.getNumberOfLayers() + 1, table.length);

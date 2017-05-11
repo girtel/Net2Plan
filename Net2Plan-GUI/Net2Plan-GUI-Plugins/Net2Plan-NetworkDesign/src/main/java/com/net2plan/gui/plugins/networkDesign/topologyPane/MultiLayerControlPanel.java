@@ -1,33 +1,41 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.internal.Constants;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Jorge San Emeterio
  * @date 20-Jan-17
  */
-public class MultiLayerControlPanel extends JPanel
+public final class MultiLayerControlPanel extends JPanel
 {
+    private final GUINetworkDesign callback;
     private final NetPlan netPlan;
-    private final JComponent[][] componentMatrix;
+    private JComponent[][] componentMatrix;
 
     private final int COLUMN_UP = 0;
     private final int COLUMN_DOWN = 1;
     private final int COLUMN_NAME = 2;
     private final int COLUMN_VISIBLE = 3;
 
-    public MultiLayerControlPanel(NetPlan netPlan)
+    public MultiLayerControlPanel(GUINetworkDesign callback)
     {
-        this.netPlan = netPlan;
+        assert callback != null;
+
+        this.callback = callback;
+        this.netPlan = callback.getDesign();
 
         this.componentMatrix = new JComponent[netPlan.getNumberOfLayers() + 1][4];
+
         this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
 
         buildPanel();
@@ -35,7 +43,10 @@ public class MultiLayerControlPanel extends JPanel
 
     private void buildPanel()
     {
-        buildHeader();
+        componentMatrix[0][COLUMN_UP] = new JLabel("Up");
+        componentMatrix[0][COLUMN_DOWN] = new JLabel("Down");
+        componentMatrix[0][COLUMN_NAME] = new JLabel("Name");
+        componentMatrix[0][COLUMN_VISIBLE] = new JLabel("Visible");
 
         final List<NetworkLayer> networkLayers = netPlan.getNetworkLayers();
         int row = 1;
@@ -53,24 +64,16 @@ public class MultiLayerControlPanel extends JPanel
                 this.add(component);
     }
 
-    private void buildHeader()
-    {
-        componentMatrix[0][COLUMN_UP] = new JLabel("Up");
-        componentMatrix[0][COLUMN_DOWN] = new JLabel("Down");
-        componentMatrix[0][COLUMN_NAME] = new JLabel("Name");
-        componentMatrix[0][COLUMN_VISIBLE] = new JLabel("Visible");
-    }
-
-    protected JComponent[][] getTable()
-    {
-        return componentMatrix;
-    }
-
     public void refreshTable ()
     {
     }
 
-    private static class UpButton extends JButton implements ActionListener
+    JComponent[][] getTable()
+    {
+        return componentMatrix;
+    }
+
+    private class UpButton extends JButton implements ActionListener
     {
         private final NetworkLayer layer;
 
@@ -78,6 +81,7 @@ public class MultiLayerControlPanel extends JPanel
         {
             this.layer = layer;
             this.setText("\u25B2");
+            this.setName("UpButton");
             this.setFocusable(false);
             this.addActionListener(this);
         }
@@ -85,11 +89,10 @@ public class MultiLayerControlPanel extends JPanel
         @Override
         public void actionPerformed(ActionEvent actionEvent)
         {
-            //TODO
         }
     }
 
-    private static class DownButton extends JButton implements ActionListener
+    private class DownButton extends JButton implements ActionListener
     {
         private final NetworkLayer layer;
 
@@ -97,6 +100,7 @@ public class MultiLayerControlPanel extends JPanel
         {
             this.layer = layer;
             this.setText("\u25BC");
+            this.setName("DownButton");
             this.setFocusable(false);
             this.addActionListener(this);
         }
@@ -108,7 +112,7 @@ public class MultiLayerControlPanel extends JPanel
         }
     }
 
-    private static class ActiveButton extends JButton implements ActionListener
+    private class ActiveButton extends JButton implements ActionListener
     {
         private final NetworkLayer layer;
 
@@ -123,11 +127,15 @@ public class MultiLayerControlPanel extends JPanel
         @Override
         public void actionPerformed(ActionEvent actionEvent)
         {
-            //TODO
+            callback.getDesign().setNetworkLayerDefault(layer);
+            callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
+
+            refreshTable();
+            callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
         }
     }
 
-    private static class VisibleButton extends JToggleButton implements ActionListener
+    private class VisibleButton extends JToggleButton implements ActionListener
     {
         private final NetworkLayer layer;
 
