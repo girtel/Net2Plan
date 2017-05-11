@@ -45,6 +45,9 @@ public class MultiLayerControlPanelTest
     public void prepareMock()
     {
         when(callback.getDesign()).thenReturn(netPlan);
+        when(callback.getVisualizationState()).thenReturn(vs);
+        when(vs.isLayerVisibleInCanvas(any(NetworkLayer.class))).thenReturn(true);
+        when(vs.getCanvasLayersInVisualizationOrder(true)).thenReturn(netPlan.getNetworkLayers());
     }
 
     @Test
@@ -112,7 +115,6 @@ public class MultiLayerControlPanelTest
     public void activeLayerTest()
     {
         // Mock visualization state
-        when(callback.getVisualizationState()).thenReturn(vs);
         doNothing().when(vs).setCanvasLayerVisibility(any(NetworkLayer.class), anyBoolean());
 
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
@@ -133,6 +135,8 @@ public class MultiLayerControlPanelTest
             if (matcher.matches(component))
             {
                 final JButton button = (JButton) component;
+                if (!button.isEnabled()) continue;
+
                 button.doClick();
 
                 final NetworkLayer layer = panel.getLayer(i);
@@ -152,7 +156,6 @@ public class MultiLayerControlPanelTest
     public void visibilityButtonTest()
     {
         // Mock visualization state
-        when(callback.getVisualizationState()).thenReturn(vs);
         doNothing().when(vs).setCanvasLayerVisibility(any(NetworkLayer.class), anyBoolean());
 
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
@@ -173,17 +176,48 @@ public class MultiLayerControlPanelTest
             if (matcher.matches(component))
             {
                 final JToggleButton button = (JToggleButton) component;
+                if (!button.isEnabled()) continue;
+
                 button.doClick();
 
                 final NetworkLayer layer = panel.getLayer(i);
                 assertNotNull(layer);
+                verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, false);
 
-                verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, true);
+                assertFalse(button.isSelected());
+
+                button.doClick();
 
                 assertTrue(button.isSelected());
             } else
             {
                 fail();
+            }
+        }
+    }
+
+    @Test
+    public void moveButtonAvailabilityTest()
+    {
+        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
+        final JComponent[][] table = panel.getTable();
+
+        assertFalse(table[1][0].isEnabled());
+        assertFalse(table[table.length - 1][1].isEnabled());
+    }
+
+    @Test
+    public void visibilityButtonAvailabilityTest()
+    {
+        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
+        final JComponent[][] table = panel.getTable();
+
+        for (int i = 1; i < table.length; i++)
+        {
+            if (panel.getLayer(i) == netPlan.getNetworkLayerDefault())
+            {
+                assertFalse(table[i][2].isEnabled());
+                assertFalse(table[i][3].isEnabled());
             }
         }
     }
