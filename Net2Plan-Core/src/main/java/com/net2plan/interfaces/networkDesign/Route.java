@@ -539,7 +539,7 @@ public class Route extends NetworkElement
         }
 
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain();
+		removeId();
 	}
 
 	/** Sets the route carried traffic and the occupied capacity in the traversed links and resources (typically the same as the carried traffic),
@@ -861,19 +861,4 @@ public class Route extends NetworkElement
 	}
 
 
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.add(demand);
-		res.add(ingressNode);
-		res.add(egressNode);
-		initialStatePath.stream().filter(e->!e.wasRemoved()).forEach(e->res.add(e));
-		res.addAll(currentPath);
-		res.addAll(backupRoutes);
-		res.addAll(cache_seqLinksRealPath);
-		res.addAll(cache_seqNodesRealPath);
-		res.addAll(cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet());
-		res.addAll(cache_routesIAmBackUp);
-		return res;
-	}
 }

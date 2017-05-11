@@ -975,6 +975,59 @@ public class NetPlanTest
 	}
 
 	@Test
+	public void testSetAttributeAsXXX ()
+	{
+		n1.setAttribute("a", 1.5);
+		assertEquals(n1.getAttributeAsDouble("a", null) , 1.5 , 0);
+		assertEquals(n1.getAttributeAsDouble("b", null) , null);
+		assertEquals(n1.getAttributeAsDouble("b", 7.0) , 7 , 0);
+		n1.setAttribute("a", 2);
+		assertEquals(n1.getAttributeAsDouble("a", null) , 2 , 0);
+		
+		n1.setAttributeAsNumberList("a", Arrays.asList(1.2 , 1.3));
+		assertEquals(n1.getAttributeAsDoubleList("a", null) , Arrays.asList(1.2 , 1.3));
+		n1.setAttributeAsNumberList("a", Arrays.asList());
+		assertEquals(n1.getAttributeAsDoubleList("a", null) , Arrays.asList());
+		n1.setAttributeAsNumberList("a", Arrays.asList(1.2));
+		assertEquals(n1.getAttributeAsDoubleList("a", null) , Arrays.asList(1.2));
+		
+		double vals [][] = new double [] [] { {1 ,2 ,3.5 } , { 4 ,5 ,6.2} };
+		DoubleMatrix2D valsMatrix = DoubleFactory2D.dense.make(vals);
+		n1.setAttributeAsNumberMatrix("a", valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		valsMatrix = DoubleFactory2D.dense.make(0,0);
+		n1.setAttributeAsNumberMatrix("a", valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		valsMatrix = DoubleFactory2D.dense.make(1,2);
+		n1.setAttributeAsNumberMatrix("a", valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		valsMatrix = DoubleFactory2D.dense.make(2,1);
+		n1.setAttributeAsNumberMatrix("a", valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		
+		String original = "1";
+		n1.setAttributeAsStringList("a", Arrays.asList(original , original , original));
+		assertEquals(n1.getAttributeAsStringList("a", null) , Arrays.asList(original , original , original));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+
+		original = ">A>>B 3; >E>>aaA>Aas>>2: ; ; ; 223>s>; > ;";
+		n1.setAttributeAsStringList("a", Arrays.asList(original , original , original));
+		assertEquals(n1.getAttributeAsStringList("a", null) , Arrays.asList(original , original , original));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+	}
+
+	
+	@Test
 	public void testSetNetworkLayerDefault()
 	{
 		np.setNetworkLayerDefault(upperLayer);
@@ -1247,5 +1300,7 @@ public class NetPlanTest
 			assertEquals (numCoupledMDemands_1 , numCoupledMDemands_2);
 		}
 	}
+
+	
 	
 }

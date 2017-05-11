@@ -5194,37 +5194,11 @@ public class NetPlan extends NetworkElement
     	this.cache_planningDomain2nodes.put (newName , eToChangePd);
     }
     
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		throw new Net2PlanException ("NetPlan objects do not have associated planning domains");
-	}
+//	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+//	{
+//		throw new Net2PlanException ("NetPlan objects do not have associated planning domains");
+//	}
 
-    /** Returns all the elements in the design that must have a common planning domain with the rootElements (assuming they have a common planning domain)
-     * This function is used internally to check things are done correctly
-     * @param rootElements
-     * @return
-     */
-    Set<NetworkElement> getPlanningDomainMandatoryConnectivity (Set<NetworkElement> rootElements)
-    {
-    	final Set<NetworkElement> res =  new HashSet<> ();
-    	final Set<NetworkElement> newElementsAdded = new HashSet<>(rootElements);
-    	while (!newElementsAdded.isEmpty())
-    	{
-    		for (NetworkElement e : newElementsAdded)
-    		{
-    			final Set<NetworkElement> elementsCommonPdThisElement = e.getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ();
-    			for (NetworkElement toAdd : elementsCommonPdThisElement)
-    			{
-    				final boolean isNew = res.add(toAdd);
-    				if (isNew) newElementsAdded.add(toAdd);
-    			}
-    			newElementsAdded.remove(e);
-    		}
-    	} 
-    	return res;
-    }
-    
-    
     /** Returns the set of all site names defined in the network
      * @return see above
      */
@@ -5618,7 +5592,7 @@ public class NetPlan extends NetworkElement
         NetPlan.removeNetworkElementAndShiftIndexes(netPlan.layers, layer.index);
         if (netPlan.defaultLayer.equals(layer)) netPlan.defaultLayer = netPlan.layers.get(0);
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-        layer.removeIdAndFromPlanningDomain();
+        layer.removeId();
     }
 
     /**
@@ -5788,7 +5762,7 @@ public class NetPlan extends NetworkElement
     		layer.cache_routesDown.remove (r);
     		layer.cache_routesTravLinkZeroCap.remove(r);
             for (String tag : r.tags) netPlan.cache_taggedElements.get(tag).remove(r);
-            r.removeIdAndFromPlanningDomain();
+            r.removeId();
         }
         for (Demand d : netPlan.getDemands(layer))
         {

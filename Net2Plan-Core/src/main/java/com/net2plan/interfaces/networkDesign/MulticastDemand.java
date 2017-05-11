@@ -401,7 +401,7 @@ public class MulticastDemand extends NetworkElement
 		for (Node egressNode : egressNodes) egressNode.cache_nodeIncomingMulticastDemands.remove (this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain();
+		removeId();
 	}
 
 	
@@ -463,16 +463,6 @@ public class MulticastDemand extends NetworkElement
 			if (!netPlan.isUp(pathToTarget)) continue;
 			res.addAll(pathToTarget);
 		}
-		return res;
-	}
-
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.add(ingressNode);
-		res.addAll(egressNodes);
-		res.addAll(cache_multicastTrees);
-		if (coupledUpperLayerLinks != null) { res.addAll(coupledUpperLayerLinks.keySet()); res.addAll(coupledUpperLayerLinks.values()); }
 		return res;
 	}
 

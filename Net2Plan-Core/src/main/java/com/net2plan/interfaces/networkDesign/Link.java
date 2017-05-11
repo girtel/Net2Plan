@@ -614,7 +614,7 @@ public class Link extends NetworkElement
 
 		ErrorHandling.DEBUG = previousErrorHandling;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain();
+		removeId();
 	}
 	
 	/**
@@ -957,19 +957,5 @@ public class Link extends NetworkElement
 		}
 	}
 	
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.add(originNode);
-		res.add(destinationNode);
-		if (coupledLowerLayerDemand != null) res.add(coupledLowerLayerDemand);
-		if (coupledLowerLayerMulticastDemand != null) res.add(coupledLowerLayerMulticastDemand);
-		res.addAll(cache_srgs);
-		res.addAll(cache_traversingRoutes.keySet());
-		res.addAll(cache_traversingTrees);
-		res.addAll(cacheHbH_frs.keySet());
-		res.addAll(cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.keySet());
-		return res;
-	}
 
 }

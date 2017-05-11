@@ -335,10 +335,6 @@ public class NetworkLayer extends NetworkElement
 		for (Link e : this.links) if (!this.cache_nodePairLinksThisLayer.get(Pair.of(e.getOriginNode(),e.getDestinationNode())).contains(e)) throw new RuntimeException ();
 	}
 
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		throw new Net2PlanException ("Network layers do not have associated planning domains");
-	}
 
 	
 }
