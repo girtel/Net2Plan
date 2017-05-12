@@ -753,7 +753,6 @@ public class VisualizationState
 
     public List<NetworkLayer> getCanvasLayersInVisualizationOrder(boolean includeNonVisible)
     {
-        // TODO: Why reversed?
         Map<Integer, NetworkLayer> map = includeNonVisible ? MapUtils.invertMap(visualizationSnapshot.getMapCanvasLayerVisualizationOrder()) : cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap();
         List<NetworkLayer> res = new ArrayList<>();
         for (int vIndex = 0; vIndex < this.getNetPlan().getNumberOfLayers(); vIndex++)
