@@ -1024,7 +1024,17 @@ public class NetPlanTest
 		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original)));
 		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
 		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
-	}
+
+		original = "";
+		n1.setAttributeAsStringList("a", Arrays.asList(original , original , original));
+		assertEquals(n1.getAttributeAsStringList("a", null) , Arrays.asList(original , original , original));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+}
 
 	
 	@Test

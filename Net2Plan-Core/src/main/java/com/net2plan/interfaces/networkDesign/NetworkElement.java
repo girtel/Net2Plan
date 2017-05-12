@@ -147,7 +147,7 @@ public abstract class NetworkElement
 		if (val == null) return defaultValue;  
 		try 
 		{
-			final String [] rows = val.split(MATRIX_ROWSEPARATOR);
+			final String [] rows = val.split(MATRIX_ROWSEPARATOR,-1);
 			final List<List<Double>> res = new ArrayList<> (rows.length);
 			int numCols = 0;
 			for (String row : rows)
@@ -155,7 +155,7 @@ public abstract class NetworkElement
 				if (row.equals("")) continue;
 				final List<Double> rowVals = new LinkedList<> ();
 				res.add(rowVals);
-    			for (String cell : row.split(MATRIX_COLSEPARATOR))
+    			for (String cell : row.split(MATRIX_COLSEPARATOR,-1))
     			{
     				if (cell.equals("")) continue;
     				rowVals.add(Double.parseDouble(cell));
@@ -184,7 +184,7 @@ public abstract class NetworkElement
 		try 
 		{
 			System.out.println(val);
-			final String [] parts = val.split(MATRIX_COLSEPARATOR);
+			final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
 			final List<Double> res = new ArrayList<> (parts.length);
 			for (String part : parts)
 			{
@@ -209,11 +209,11 @@ public abstract class NetworkElement
 		System.out.println("To parse: **" + val + "**");
 		try 
 		{
-			final String [] parts = val.split(MATRIX_COLSEPARATOR);
+			final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
 			final List<String> res = new ArrayList<> (parts.length);
 			for (String part : parts)
 			{
-				if (part.equals("")) continue;
+				//if (part.equals("")) continue;
 				res.add(unescapedStringRead(part));
 			}
 			return res;
@@ -233,17 +233,17 @@ public abstract class NetworkElement
 		if (val == null) return defaultValue;  
 		try 
 		{
-			final String [] rows = val.split(MATRIX_ROWSEPARATOR);
+			final String [] rows = val.split(MATRIX_ROWSEPARATOR,-1);
 			final List<List<String>> res = new ArrayList<> (rows.length);
 			int numCols = 0;
 			for (String row : rows)
 			{
-				if (row.equals("")) continue;
+				//if (row.equals("")) continue;
 				final List<String> rowVals = new LinkedList<> ();
 				res.add(rowVals);
-    			for (String cell : row.split(MATRIX_COLSEPARATOR))
+    			for (String cell : row.split(MATRIX_COLSEPARATOR,-1))
     			{
-    				if (cell.equals("")) continue;
+    				//if (cell.equals("")) continue;
     				rowVals.add(unescapedStringRead(cell));
     			}
     			numCols = Math.max(numCols, rowVals.size());
@@ -400,6 +400,7 @@ public abstract class NetworkElement
 	 */
 	public void setAttributeAsStringList (String key, List<String> vals)
 	{
+		if (vals.isEmpty()) throw new Net2PlanException ("The list is empty");
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		final StringBuffer st = new StringBuffer ();
@@ -422,6 +423,8 @@ public abstract class NetworkElement
 	 */
 	public void setAttributeAsStringMatrix (String key, List<List<String>> vals)
 	{
+		if (vals.isEmpty()) throw new Net2PlanException ("The matrix is empty");
+		for (List<String> row : vals) if (row.isEmpty()) throw new Net2PlanException ("One of the rows of the matrix is empty");
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		final StringBuffer st = new StringBuffer ();
