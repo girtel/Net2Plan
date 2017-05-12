@@ -45,23 +45,18 @@ public final class MultiLayerControlPanel extends JPanel
     private void buildPanel()
     {
         this.rowIndexToLayerMap.clear();
-        this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers() + 1][4];
+        this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers()][4];
         this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
-
-        componentMatrix[0][0] = new JLabel(UP_COLUMN, SwingConstants.CENTER);
-        componentMatrix[0][1] = new JLabel(DOWN_COLUMN, SwingConstants.CENTER);
-        componentMatrix[0][2] = new JLabel(ACTIVE_COLUMN, SwingConstants.CENTER);
-        componentMatrix[0][3] = new JLabel(VISIBLE_COLUMN, SwingConstants.CENTER);
 
         final NetPlan netPlan = callback.getDesign();
 
         final List<NetworkLayer> networkLayers = callback.getVisualizationState().getCanvasLayersInVisualizationOrder(true);
 
-        int row = 1;
         // Each row
-        for (NetworkLayer layer : networkLayers)
+        for (int i = 0; i < networkLayers.size(); i++)
         {
-            final int thisRow = row;
+            final int thisRow = i;
+            final NetworkLayer layer = networkLayers.get(i);
 
             rowIndexToLayerMap.put(thisRow, layer);
             // Up button
@@ -71,7 +66,7 @@ public final class MultiLayerControlPanel extends JPanel
             upButton.setFocusable(false);
             upButton.addActionListener(e ->
             {
-                if (thisRow == 1) return;
+                if (thisRow == 0) return;
 
                 final VisualizationState vs = callback.getVisualizationState();
                 final NetworkLayer neighbourLayer = rowIndexToLayerMap.get(thisRow - 1);
@@ -111,10 +106,11 @@ public final class MultiLayerControlPanel extends JPanel
             componentMatrix[thisRow][1] = downButton;
 
             // Active button
-            final JButton activeButton = new JButton();
+            final JToggleButton activeButton = new JToggleButton();
             activeButton.setText(layer.getName());
             activeButton.setName(ACTIVE_COLUMN);
             activeButton.setFocusable(false);
+            activeButton.setSelected(false);
             activeButton.addActionListener(e ->
             {
                 netPlan.setNetworkLayerDefault(layer);
@@ -145,16 +141,14 @@ public final class MultiLayerControlPanel extends JPanel
                 downButton.setEnabled(false);
             }
 
-            if (thisRow == 1) upButton.setEnabled(false);
-            if (thisRow == networkLayers.size()) downButton.setEnabled(false);
+            if (thisRow == 0) upButton.setEnabled(false);
+            if (thisRow == networkLayers.size() - 1) downButton.setEnabled(false);
 
             if (layer == netPlan.getNetworkLayerDefault())
             {
-                activeButton.setEnabled(false);
+                activeButton.setSelected(true);
                 visibleButton.setEnabled(false);
             }
-
-            row++;
         }
 
         for (JComponent[] matrix : componentMatrix)
@@ -165,10 +159,6 @@ public final class MultiLayerControlPanel extends JPanel
     public void refreshTable ()
     {
         this.removeAll();
-
-        this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers() + 1][4];
-        this.rowIndexToLayerMap.clear();
-        this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
 
         this.buildPanel();
 

@@ -14,6 +14,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.swing.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -56,7 +57,7 @@ public class MultiLayerControlPanelTest
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
         final JComponent[][] table = panel.getTable();
 
-        assertEquals(netPlan.getNumberOfLayers() + 1, table.length);
+        assertEquals(netPlan.getNumberOfLayers(), table.length);
 
         // Is square
         int numCols = -1;
@@ -73,15 +74,14 @@ public class MultiLayerControlPanelTest
 
         assertEquals(4, numCols);
 
-        for (int i = 0; i < numCols; i++)
-            assertTrue(table[0][i] instanceof JLabel);
-
-        for (int i = 1; i < table.length; i++)
-            for (int j = 0; j < 3; j++)
+        for (int i = 0; i < table.length; i++)
+            for (int j = 0; j < 2; j++)
                 assertTrue(table[i][j] instanceof JButton);
 
-        for (int i = 1; i < table.length; i++)
-            assertTrue(table[i][3] instanceof JToggleButton);
+        for (int i = 0; i < table.length; i++)
+            for (int j = 2; j < 4; j++)
+                assertTrue(table[i][j] instanceof JToggleButton);
+
     }
 
     @Test
@@ -89,26 +89,26 @@ public class MultiLayerControlPanelTest
     {
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
         final JComponent[][] table = panel.getTable();
-        final JComponent[] labelRow = table[0];
 
-        assertEquals(((JLabel) labelRow[0]).getText(), MultiLayerControlPanel.UP_COLUMN);
-        assertEquals(((JLabel) labelRow[1]).getText(), MultiLayerControlPanel.DOWN_COLUMN);
-        assertEquals(((JLabel) labelRow[2]).getText(), MultiLayerControlPanel.ACTIVE_COLUMN);
-        assertEquals(((JLabel) labelRow[3]).getText(), MultiLayerControlPanel.VISIBLE_COLUMN);
+        for (int i = 0; i < table.length; i++)
+        {
+            final JComponent[] row = table[i];
+
+            assertEquals(((AbstractButton) row[0]).getText(), MultiLayerControlPanel.UP_COLUMN);
+            assertEquals(((AbstractButton) row[1]).getText(), MultiLayerControlPanel.DOWN_COLUMN);
+            assertEquals(((AbstractButton) row[2]).getText(), panel.getLayer(i).getName());
+            assertNotNull(((AbstractButton) row[3]).getIcon());
+        }
     }
 
     @Test
     public void rowAssociationTest()
     {
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
-
         final int numRows = panel.getTable().length;
 
         for (int i = 0; i < numRows; i++)
-        {
-            if (i == 0) assertNull(panel.getLayer(i));
-            else assertNotNull(panel.getLayer(i));
-        }
+            assertNotNull(panel.getLayer(i));
     }
 
     @Test
@@ -119,32 +119,31 @@ public class MultiLayerControlPanelTest
 
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
 
-        GenericTypeMatcher<JButton> matcher = new GenericTypeMatcher<JButton>(JButton.class)
+        GenericTypeMatcher<JToggleButton> matcher = new GenericTypeMatcher<JToggleButton>(JToggleButton.class)
         {
             @Override
-            protected boolean isMatching(JButton component)
+            protected boolean isMatching(JToggleButton component)
             {
                 return component.getName().equals(MultiLayerControlPanel.ACTIVE_COLUMN);
             }
         };
 
         final JComponent[][] table = panel.getTable();
-        for (int i = 1; i < table.length; i++)
+        for (int i = 0; i < table.length; i++)
         {
             final JComponent component = table[i][2];
             if (matcher.matches(component))
             {
-                final JButton button = (JButton) component;
-                if (!button.isEnabled()) continue;
-
-                button.doClick();
+                final JToggleButton button = (JToggleButton) component;
 
                 final NetworkLayer layer = panel.getLayer(i);
                 assertNotNull(layer);
 
+                button.doClick();
+
                 verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, true);
 
-                assertTrue(layer.isDefaultLayer());
+                assertThat(layer.isDefaultLayer()).isTrue();
             } else
             {
                 fail();
@@ -169,7 +168,7 @@ public class MultiLayerControlPanelTest
         };
 
         final JComponent[][] table = panel.getTable();
-        for (int i = 1; i < table.length; i++)
+        for (int i = 0; i < table.length; i++)
         {
             final JComponent component = table[i][3];
 
@@ -202,7 +201,7 @@ public class MultiLayerControlPanelTest
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
         final JComponent[][] table = panel.getTable();
 
-        assertFalse(table[1][0].isEnabled());
+        assertFalse(table[0][0].isEnabled());
         assertFalse(table[table.length - 1][1].isEnabled());
     }
 
@@ -212,11 +211,11 @@ public class MultiLayerControlPanelTest
         MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
         final JComponent[][] table = panel.getTable();
 
-        for (int i = 1; i < table.length; i++)
+        for (int i = 0; i < table.length; i++)
         {
             if (panel.getLayer(i) == netPlan.getNetworkLayerDefault())
             {
-                assertFalse(table[i][2].isEnabled());
+                assertTrue(((JToggleButton) table[i][2]).isSelected());
                 assertFalse(table[i][3].isEnabled());
             }
         }
