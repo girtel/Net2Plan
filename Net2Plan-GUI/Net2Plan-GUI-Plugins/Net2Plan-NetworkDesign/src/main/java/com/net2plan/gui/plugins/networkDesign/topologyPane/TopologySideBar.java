@@ -17,6 +17,7 @@ import java.awt.event.ActionListener;
 public class TopologySideBar extends JPanel implements ActionListener
 {
     private final GUINetworkDesign callback;
+    private final TopologyPanel topologyPanel;
     private final ITopologyCanvas canvas;
 
     private final JToggleButton btn_multilayer;
@@ -25,13 +26,16 @@ public class TopologySideBar extends JPanel implements ActionListener
     private final JButton btn_npChangeUndo, btn_npChangeRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
 
+    private final JScrollPane scrollPane;
+    private final JPanel controlPanelContainer;
     private final MultiLayerControlPanel multilayerControlPanel;
 
-    public TopologySideBar(GUINetworkDesign callback, ITopologyCanvas canvas)
+    public TopologySideBar(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
         super();
 
         this.callback = callback;
+        this.topologyPanel = topologyPanel;
         this.canvas = canvas;
 
         this.setLayout(new BorderLayout());
@@ -43,7 +47,13 @@ public class TopologySideBar extends JPanel implements ActionListener
         this.layerToolBar.setOpaque(false);
 
         this.multilayerControlPanel = new MultiLayerControlPanel(callback);
-        this.multilayerControlPanel.setVisible(false);
+
+        this.controlPanelContainer = new JPanel();
+        this.controlPanelContainer.setLayout(new BorderLayout());
+        this.controlPanelContainer.add(multilayerControlPanel, BorderLayout.NORTH);
+
+        this.scrollPane = new JScrollPane(controlPanelContainer);
+        this.scrollPane.setVisible(false);
 
         /* Multilayer buttons */
         this.btn_increaseInterLayerDistance = new JButton();
@@ -95,7 +105,7 @@ public class TopologySideBar extends JPanel implements ActionListener
         //multiLayerToolbar.add(btn_npChangeRedo);
 
         this.add(layerToolBar, BorderLayout.WEST);
-        this.add(multilayerControlPanel, BorderLayout.CENTER);
+        this.add(scrollPane, BorderLayout.CENTER);
     }
 
     @Override
@@ -149,12 +159,18 @@ public class TopologySideBar extends JPanel implements ActionListener
             callback.requestRedoAction();
         } else if (src == btn_multilayer)
         {
-            multilayerControlPanel.setVisible(btn_multilayer.isSelected());
+            scrollPane.setVisible(btn_multilayer.isSelected());
+
+            topologyPanel.validate();
+            topologyPanel.repaint();
         }
     }
 
-    public MultiLayerControlPanel getMultilayerControlPanel()
+    public void refresh()
     {
-        return multilayerControlPanel;
+        multilayerControlPanel.refreshTable();
+
+        topologyPanel.validate();
+        topologyPanel.repaint();
     }
 }

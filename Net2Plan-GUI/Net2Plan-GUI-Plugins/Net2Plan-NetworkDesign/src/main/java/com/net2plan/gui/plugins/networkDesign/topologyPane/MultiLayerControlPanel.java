@@ -161,9 +161,6 @@ public final class MultiLayerControlPanel extends JPanel
         this.removeAll();
 
         this.buildPanel();
-
-        this.validate();
-        this.repaint();
     }
 
     @VisibleForTesting
