@@ -92,7 +92,7 @@ public final class JUNGCanvas implements ITopologyCanvas
             final int vlIndex = this.callback.getVisualizationState().getCanvasVisualizationOrderRemovingNonVisible(vertex.getLayer());
             final double interLayerDistanceInNpCoord = currentInterLayerDistanceInNpCoordinates;
             final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNode().getXYPositionMap();
-            return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
+            return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (vlIndex * interLayerDistanceInNpCoord)));
         };
 
         g = new DirectedOrderedSparseMultigraph<>();
