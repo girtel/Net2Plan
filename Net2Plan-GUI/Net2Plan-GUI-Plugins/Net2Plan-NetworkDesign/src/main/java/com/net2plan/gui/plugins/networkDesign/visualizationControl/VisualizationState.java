@@ -753,7 +753,7 @@ public class VisualizationState
 
     public List<NetworkLayer> getCanvasLayersInVisualizationOrder(boolean includeNonVisible)
     {
-        BidiMap<Integer, NetworkLayer> map = includeNonVisible ? new DualHashBidiMap<>(MapUtils.invertMap(visualizationSnapshot.getMapCanvasLayerVisualizationOrder())) : cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap();
+        Map<Integer, NetworkLayer> map = includeNonVisible ? MapUtils.invertMap(visualizationSnapshot.getMapCanvasLayerVisualizationOrder()) : cache_mapCanvasVisibleLayer2VisualizationOrderRemovingNonVisible.inverseBidiMap();
         List<NetworkLayer> res = new ArrayList<>();
         for (int vIndex = 0; vIndex < this.getNetPlan().getNumberOfLayers(); vIndex++)
             res.add(map.get(vIndex));

@@ -20,14 +20,6 @@ public class GUILayer
         this.layerOrder = layer.getIndex();
     }
 
-    public GUILayer(final NetworkLayer layer, final int order, final boolean isVisible, final boolean linksVisible)
-    {
-        this.associatedNetworkLayer = layer;
-        this.layerOrder = order;
-        this.isLayerVisible = isVisible;
-        this.isLinksVisible = linksVisible;
-    }
-
     public boolean isLayerVisible()
     {
         return isLayerVisible;
