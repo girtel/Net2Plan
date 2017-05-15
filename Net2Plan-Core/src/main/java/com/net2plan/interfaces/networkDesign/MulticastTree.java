@@ -536,7 +536,7 @@ public class MulticastTree extends NetworkElement
 		layer.cache_multicastTreesTravLinkZeroCap.remove(this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain();
+		removeId();
 	}
 
 	
@@ -634,16 +634,6 @@ public class MulticastTree extends NetworkElement
 		{
 			if (getCarriedTraffic() != 0) throw new RuntimeException ("Bad");
 		}
-	}
-
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.add(demand);
-		initialSetLinksWhenWasCreated.stream().filter(e->!e.wasRemoved()).forEach(e->res.add(e));
-		res.addAll(linkSet);
-		res.addAll(cache_traversedNodes);
-		return res;
 	}
 
 

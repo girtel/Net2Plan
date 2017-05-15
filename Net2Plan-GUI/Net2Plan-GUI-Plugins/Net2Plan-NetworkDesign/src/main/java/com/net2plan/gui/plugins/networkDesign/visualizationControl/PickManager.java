@@ -71,7 +71,6 @@ class PickManager
             final GUINode gnOrigin = vs.getCanvasAssociatedGUINode(pickedDemand.getIngressNode(), pickedDemand.getLayer());
             final GUINode gnDestination = vs.getCanvasAssociatedGUINode(pickedDemand.getEgressNode(), pickedDemand.getLayer());
 
-
             if (vs.isShowInCanvasThisLayerPropagation() && isDemandLayerVisibleInTheCanvas)
             {
                 thisLayerPropagation = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic();

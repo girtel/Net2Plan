@@ -445,7 +445,7 @@ public class Resource extends NetworkElement
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.resources , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain ();
+		removeId ();
 	}
 
 	
@@ -496,14 +496,5 @@ public class Resource extends NetworkElement
 		}
 	}
 
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.add(hostNode);
-		res.addAll(capacityUpperResourcesOccupyInMe.keySet());
-		res.addAll(capacityIOccupyInBaseResource.keySet());
-		res.addAll(cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet());
-		return res;
-	}
 
 }

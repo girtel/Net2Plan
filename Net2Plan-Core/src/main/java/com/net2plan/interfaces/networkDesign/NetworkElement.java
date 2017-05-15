@@ -12,13 +12,18 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
+
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * <p>Class defining a generic network element.</p>
@@ -29,12 +34,18 @@ import com.net2plan.internal.AttributeMap;
  */
 public abstract class NetworkElement 
 {
+	private final static String MATRIX_COLSEPARATOR = " ";
+	private final static String MATRIX_ROWSEPARATOR = ";";
+	private final static String STRINGESCAPECHARACTER = ">";
+	private final static String AFTERSCAPE_COLSEP = "A";
+	private final static String AFTERSCAPE_ROWSEP = "B";
+	private final static String AFTERSCAPE_ESCAPE = "E";
+
 	protected NetPlan netPlan;
 	final protected long id;
 	protected int index;
 	protected final AttributeMap attributes;
 	protected final Set<String> tags;
-//	protected final Set<String> planningDomains;
 	
 	NetworkElement (NetPlan netPlan , long id , int index , AttributeMap attributes) 
 	{ 
@@ -43,18 +54,6 @@ public abstract class NetworkElement
 		this.index = index; 
 		this.attributes = new AttributeMap (attributes); 
 		this.tags = new HashSet<> (); 
-//		this.planningDomains = new HashSet<> (); 
-//		if (planningDomains == null)
-//		{
-//			if (!(this instanceof NetPlan || this instanceof NetworkLayer))
-//				throw new RuntimeException ();
-//		}
-//		else
-//		{
-//			if (this instanceof NetPlan || this instanceof NetworkLayer)
-//				throw new RuntimeException ();
-//			this.planningDomains.addAll(planningDomains);
-//		}
 	}
 
 	
@@ -95,19 +94,162 @@ public abstract class NetworkElement
 	}
 
 	/**
-	 * <p>Returns the value of a given attribute for this network element. If not defined, the attribute is searched in the netPlan object this element is attached to.
-	 * Then, it returns null if the attribute is not found also there</p>
-	 *
+	 * Returns the value of a given attribute for this network element, or null if not found. 
 	 * @param key Attribute name
 	 * @return Attribute value (or {@code null}, if not defined)
-	 * @since 0.3.0
 	 */
 	public String getAttribute(String key)
 	{
 		checkAttachedToNetPlanObject();
-		String value = attributes.get(key);
-		if (this instanceof NetPlan) return value;
-		return value == null ? netPlan.getAttribute (key) : value;
+		return attributes.get(key);
+	}
+
+	/**
+	 * Returns the value of a given attribute for this network element, or the default value provided if not found 
+	 * @param key Attribute name
+	 * @param defaultValue default value to return if not found
+	 * @return Attribute value (or {@code null}, if not defined)
+	 */
+	public String getAttribute(String key , String defaultValue)
+	{
+		checkAttachedToNetPlanObject();
+		final String val = attributes.get(key);
+		return val == null? defaultValue : val;
+	}
+	
+	/**
+	 * Returns the value of a given attribute for this network element 
+	 * @param key Attribute name
+	 * @param defaultValue default value to return if not found, or could not be parsed
+	 * @return see above
+	 */
+	public Double getAttributeAsDouble (String key , Double defaultValue)
+	{
+		checkAttachedToNetPlanObject();
+		final String val = attributes.get(key);
+		if (val == null) return defaultValue;
+		try 
+		{
+			return Double.parseDouble(val);
+		} catch (Exception ee) { return defaultValue; }
+	}
+	
+	/**
+	 * Returns the value of a given attribute for this network element, in form of a matrix, as stored using the setAttributeAsDoubleMatrix method
+	 * @param key Attribute name
+	 * @param defaultValue default value to return if not found, or could not be parsed
+	 * @return see above
+	 */
+	public DoubleMatrix2D getAttributeAsDoubleMatrix (String key , DoubleMatrix2D defaultValue)
+	{
+		checkAttachedToNetPlanObject();
+		final String val = attributes.get(key);
+		if (val == null) return defaultValue;  
+		try 
+		{
+			final String [] rows = val.split(MATRIX_ROWSEPARATOR,-1);
+			final List<List<Double>> res = new ArrayList<> (rows.length);
+			int numCols = 0;
+			for (String row : rows)
+			{
+				if (row.equals("")) continue;
+				final List<Double> rowVals = new LinkedList<> ();
+				res.add(rowVals);
+    			for (String cell : row.split(MATRIX_COLSEPARATOR,-1))
+    			{
+    				if (cell.equals("")) continue;
+    				rowVals.add(Double.parseDouble(cell));
+    			}
+    			numCols = Math.max(numCols, rowVals.size());
+			}
+			final DoubleMatrix2D resMatrix = DoubleFactory2D.dense.make(res.size() , numCols);
+			for (int row = 0; row < res.size() ; row ++)
+				for (int col = 0 ; col < res.get(row).size() ; col ++)
+					resMatrix.set(row, col, res.get(row).get(col));
+			return resMatrix;
+		} catch (Exception ee) { return defaultValue; }
+	}
+
+	/**
+	 * Returns the value of a given attribute for this network element, in form of a list of doubles, as stored using the setAttributeAsDoubleList method
+	 * @param key Attribute name
+	 * @param defaultValue default value to return if not found, or could not be parsed
+	 * @return see above
+	 */
+	public List<Double> getAttributeAsDoubleList (String key , List<Double> defaultValue)
+	{
+		checkAttachedToNetPlanObject();
+		final String val = attributes.get(key);
+		if (val == null) return defaultValue;  
+		try 
+		{
+			System.out.println(val);
+			final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
+			final List<Double> res = new ArrayList<> (parts.length);
+			for (String part : parts)
+			{
+				if (part.equals("")) continue;
+				res.add(Double.parseDouble(part));
+			}
+			return res;
+		} catch (Exception ee) { ee.printStackTrace();return defaultValue; }
+	}
+
+	/**
+	 * Returns the value of a given attribute for this network element, in form of a list of strings, as stored using the setAttributeAsStringList method
+	 * @param key Attribute name
+	 * @param defaultValue default value to return if not found, or could not be parsed
+	 * @return see above
+	 */
+	public List<String> getAttributeAsStringList (String key , List<String> defaultValue)
+	{
+		checkAttachedToNetPlanObject();
+		final String val = attributes.get(key);
+		if (val == null) return defaultValue;  
+		System.out.println("To parse: **" + val + "**");
+		try 
+		{
+			final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
+			final List<String> res = new ArrayList<> (parts.length);
+			for (String part : parts)
+			{
+				//if (part.equals("")) continue;
+				res.add(unescapedStringRead(part));
+			}
+			return res;
+		} catch (Exception ee) { return defaultValue; }
+	}
+	
+	/**
+	 * Returns the value of a given attribute for this network element, in form of a list of list of strings, as stored using the setAttributeAsStringMatrix method
+	 * @param key Attribute name
+	 * @param defaultValue default value to return if not found, or could not be parsed
+	 * @return see above
+	 */
+	public List<List<String>> getAttributeAsStringMatrix (String key , List<List<String>> defaultValue)
+	{
+		checkAttachedToNetPlanObject();
+		final String val = attributes.get(key);
+		if (val == null) return defaultValue;  
+		try 
+		{
+			final String [] rows = val.split(MATRIX_ROWSEPARATOR,-1);
+			final List<List<String>> res = new ArrayList<> (rows.length);
+			int numCols = 0;
+			for (String row : rows)
+			{
+				//if (row.equals("")) continue;
+				final List<String> rowVals = new LinkedList<> ();
+				res.add(rowVals);
+    			for (String cell : row.split(MATRIX_COLSEPARATOR,-1))
+    			{
+    				//if (cell.equals("")) continue;
+    				rowVals.add(unescapedStringRead(cell));
+    			}
+    			numCols = Math.max(numCols, rowVals.size());
+			}
+			return res;
+		} catch (Exception ee) { return defaultValue; }
 	}
 
 	/** Adds a tag to this network element. If the element already has this tag, nothing happens
@@ -218,6 +360,112 @@ public abstract class NetworkElement
 	}
 
 	/**
+	 * <p>Sets an attribute for this element, so it can be read with getAttributeAsNumber method. If it already exists, previous value is lost.</p>
+	 *
+	 * @param key Attribute name
+	 * @param value Attribute value
+	 */
+	public void setAttribute (String key, Number value)
+	{
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		attributes.put (key,value.toString());
+	}
+
+	/**
+	 * Sets an attribute for this element, storing the values of the given value list, so it can be read with getAttributeAsNumberList method.
+	 * If it already exists, previous value is lost.  
+	 * @param key Attribute name
+	 * @param valueList Attribute value
+	 */
+	public void setAttributeAsNumberList (String key, List<Number> valueList)
+	{
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		final StringBuffer st = new StringBuffer ();
+		boolean firstTime = true;
+		for (Number val : valueList)
+		{
+			if (firstTime) { firstTime = false; } else { st.append(MATRIX_COLSEPARATOR); }
+			st.append(val.toString()); 
+		}
+		attributes.put (key,st.toString());
+	}
+
+	/**
+	 * Sets an attribute for this element, storing the values of the given value list, so it can be read with getAttributeAsStringList method. 
+	 * If it already exists, previous value is lost.  
+	 * @param key Attribute name
+	 * @param value Attribute vals
+	 */
+	public void setAttributeAsStringList (String key, List<String> vals)
+	{
+		if (vals.isEmpty()) throw new Net2PlanException ("The list is empty");
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		final StringBuffer st = new StringBuffer ();
+		boolean firstTime = true;
+		for (String val : vals)
+		{
+			if (firstTime) { firstTime = false; } else { st.append(MATRIX_COLSEPARATOR); }
+			st.append(escapedStringToWrite(val)); 
+		}
+		System.out.println("From :" + vals + " to **" + st.toString() + "**");
+		attributes.put (key,st.toString());
+	}
+
+	/**
+	 * Sets an attribute for this element, storing the values of the given value list, 
+	 * so it can be read with getAttributeAsStringMatrix method. 
+	 * If it already exists, previous value is lost.  
+	 * @param key Attribute name
+	 * @param value Attribute vals
+	 */
+	public void setAttributeAsStringMatrix (String key, List<List<String>> vals)
+	{
+		if (vals.isEmpty()) throw new Net2PlanException ("The matrix is empty");
+		for (List<String> row : vals) if (row.isEmpty()) throw new Net2PlanException ("One of the rows of the matrix is empty");
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		final StringBuffer st = new StringBuffer ();
+		boolean firstRow = true;
+		for (List<String> row : vals)
+		{
+			if (firstRow) { firstRow = false; } else { st.append(MATRIX_ROWSEPARATOR); }
+			boolean firstColumn = true;
+			for (String cell : row)
+			{
+				if (firstColumn) { firstColumn = false; } else { st.append(MATRIX_COLSEPARATOR); }
+				st.append(escapedStringToWrite(cell));
+			}
+		}
+		attributes.put (key,st.toString());
+	}
+
+	/**
+	 * Sets an attribute for this element, storing the values of the given matrix, so it can be read with setAttributeAsNumberMatrix method.
+	 * If it already exists, previous value is lost. 
+	 * @param key Attribute name
+	 * @param value Attribute vals
+	 */
+	public void setAttributeAsNumberMatrix (String key, DoubleMatrix2D vals)
+	{
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		final StringBuffer st = new StringBuffer ();
+		for (int row = 0; row < vals.rows() ; row ++)
+		{
+    		for (int col = 0; col < vals.columns() ; col ++)
+    		{
+    			st.append(vals.get(row, col));
+    			if (col != vals.columns()-1) st.append(MATRIX_COLSEPARATOR);
+    		}
+			if (row != vals.rows()-1) st.append(MATRIX_ROWSEPARATOR);
+		}
+		attributes.put (key,st.toString());
+	}
+	
+	/**
 	 * <p>Sets the attributes for this network element. Any previous attributes will be removed.</p>
 	 * @param map Attribute where the keys are the attribute names and the values the attribute values
 	 */
@@ -256,10 +504,8 @@ public abstract class NetworkElement
 	 */
 	final public boolean wasRemoved () { return (netPlan == null); }
 
-	final protected void removeIdAndFromPlanningDomain () 
+	final protected void removeId () 
 	{ 
-//		for (String pd : this.planningDomains)
-//			if (!netPlan.cache_planningDomain2networkElements.get(pd).remove(this)) throw new RuntimeException ();
 		this.netPlan = null;
 	} // called when the element is removed from the net2plan object
 
@@ -270,64 +516,21 @@ public abstract class NetworkElement
 		for (String tag : tags) if (!netPlan.cache_taggedElements.get(tag).contains (this)) throw new RuntimeException ("tag: " + tag);
 	}
 
-	
-//	/** Returns the planning domain this element belongs to, empty string if none, and an exception if the element belongs to more than one
-//	 * @return see above
-//	 */
-//	public String getPlanningDomain () 
-//	{
-//		if (this instanceof NetPlan) throw new Net2PlanException ("The planning domains of NetPlan object are the ones defined this addGlobalPlanningDomain function");
-//		if (this instanceof NetworkLayer) throw new Net2PlanException ("The planning domains of NetworkLayer objects are the ones of its constituent elements. Use layer.getPlanningDomainsInUse method");
-//		if (this instanceof Node) throw new Net2PlanException ("Node objects can have more than one planning domain, which should be retrieved with method node.getPlanningDomains");
-//		if (this.planningDomains.size () != 1) throw new Net2PlanException ("Element " + this + " has more than one planning domain");  
-//		return this.planningDomains.iterator().next();
-//	}
-	
-	
-	
-//	/** Sets the planning domain of this network element. 
-//	 * @param pd
-//	 */
-//	public void setPlanningDomain (String pd)
-//	{
-//		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
-//		if (this instanceof NetPlan) throw new Net2PlanException ("The planning domains of NetPlan object are the ones defined this addGlobalPlanningDomain function");
-//		if (this instanceof NetworkLayer) throw new Net2PlanException ("The planning domains of NetworkLayer objects are the ones of its constituent elements. Cannot be set directly");
-//		if (this instanceof Node) throw new Net2PlanException ("Node objects can have more than one planning domain, which should be modified with methods node.addPlanningDomain and node.removePlanningDomain");
-//		if (this.planningDomains.size () != 1) throw new Net2PlanException ("Element " + this + " has more than one planning domain");  
-//
-//		/* */
-//		if (this instanceof Link)
-//		{
-//			final Node originNode;
-//			final Node destinationNode;
-//
-//		}
-//		
-//		
-//		this.planningDomains.clear();
-//		this.planningDomains.add(pd);
-//	}
-
-
-//	/** Returns the planning domains this element is associated to. 
-//	 * @return see above
-//	 */
-//	public Set<String> getPlanningDomains () { return Collections.unmodifiableSet(this.planningDomains); }
-//
-//	/** Adds a planning domain to this element, if the element is already assigned to it, nothing happens
-//	 * @param pd the planning domain to add
-//	 */
-//	public void addPlanningDomain (String pd)
-//	{
-//		if (!netPlan.cache_planningDomain2networkElements.containsKey(pd)) throw new Net2PlanException ("Planning domain " + pd + " was not defined");
-//		netPlan.cache_planningDomain2networkElements.get(pd).add(this);
-//		this.planningDomains.add(pd);
-//	}
-
-	/** The set of network elements that must have a common planning domain, with the planning domain/s of this network element.
-	 * @return see above
-	 */
-	abstract Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ();
+	private static String escapedStringToWrite (String s)
+	{
+		String res = s.replaceAll(STRINGESCAPECHARACTER , STRINGESCAPECHARACTER + AFTERSCAPE_ESCAPE);
+		res = res.replaceAll(MATRIX_COLSEPARATOR , STRINGESCAPECHARACTER + AFTERSCAPE_COLSEP);
+		res = res.replaceAll(MATRIX_ROWSEPARATOR , STRINGESCAPECHARACTER + AFTERSCAPE_ROWSEP);
+		System.out.println("Escape: **" + s + "** --> **" + res + "**");
+		return res;
+	}
+	private static String unescapedStringRead (String s)
+	{
+		String res = s.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_COLSEP, MATRIX_COLSEPARATOR);
+		res = res.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_ROWSEP, MATRIX_ROWSEPARATOR);
+		res = res.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_ESCAPE, STRINGESCAPECHARACTER);
+		System.out.println("Unescape: **" + s + "** --> **" + res + "**");
+		return res;
+	}
 	
 }

@@ -861,8 +861,14 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
 
                 if (SwingUtilities.isLeftMouseButton(e))
                 {
-                    if (selection.isEmpty())
-                        callback.resetPickedStateAndUpdateView();
+                    if (e.getClickCount() == 1)
+                    {
+                        if (selection.isEmpty())
+                            callback.resetPickedStateAndUpdateView();
+                    } else if (e.getClickCount() >= 2)
+                    {
+                        SwingUtilities.invokeLater(() -> pickSelection(selection));
+                    }
                 }
             } catch (Exception ex)
             {

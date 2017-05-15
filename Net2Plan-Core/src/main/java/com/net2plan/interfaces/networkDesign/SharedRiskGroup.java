@@ -329,7 +329,7 @@ public class SharedRiskGroup extends NetworkElement
 		netPlan.cache_id2srgMap.remove (id);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.srgs , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain ();
+		removeId ();
 	}
 
 	/**
@@ -374,14 +374,6 @@ public class SharedRiskGroup extends NetworkElement
 
 		for (Link link : links) if (!link.cache_srgs.contains(this)) throw new RuntimeException ("Bad");
 		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
-	}
-
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.addAll(nodes);
-		res.addAll(links);
-		return res;
 	}
 
 }
