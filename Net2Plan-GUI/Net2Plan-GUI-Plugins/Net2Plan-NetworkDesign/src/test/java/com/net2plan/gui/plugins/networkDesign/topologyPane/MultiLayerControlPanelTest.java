@@ -4,11 +4,16 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import junitparams.JUnitParamsRunner;
+import junitparams.NamedParameters;
+import junitparams.Parameters;
 import org.assertj.swing.core.GenericTypeMatcher;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -18,6 +23,7 @@ import static org.mockito.Mockito.*;
  * @author Jorge San Emeterio
  * @date 10/05/17
  */
+@RunWith(JUnitParamsRunner.class)
 public class MultiLayerControlPanelTest
 {
     private static GUINetworkDesign callback = mock(GUINetworkDesign.class);
@@ -28,27 +34,21 @@ public class MultiLayerControlPanelTest
     private static MultiLayerControlPanel panel;
     private static JComponent[][] table;
 
-    @BeforeClass
-    public static void setUp()
+    static
     {
+        // NetPlan
         netPlan = new NetPlan();
 
         netPlan.addLayer("Layer 2", "", "kbps", "kbps", null, null);
         netPlan.addLayer("Layer 3", "", "kbps", "kbps", null, null);
-    }
 
-    @BeforeClass
-    public static void prepareMock()
-    {
+        // Mocks
         when(callback.getDesign()).thenReturn(netPlan);
         when(callback.getVisualizationState()).thenReturn(vs);
         when(vs.isLayerVisibleInCanvas(any(NetworkLayer.class))).thenReturn(true);
         when(vs.getCanvasLayersInVisualizationOrder(true)).thenReturn(netPlan.getNetworkLayers());
-    }
 
-    @BeforeClass
-    public static void preparePanel()
-    {
+        // Panel
         panel = new MultiLayerControlPanel(callback);
         table = panel.getTable();
     }
@@ -105,11 +105,26 @@ public class MultiLayerControlPanelTest
     }
 
     @Test
-    public void activeLayerTest()
+    @Parameters(named = "activeLayerButtons")
+    public void activeLayerTest(int componentIndex, JComponent component)
     {
         // Mock visualization state
         doNothing().when(vs).setCanvasLayerVisibility(any(NetworkLayer.class), anyBoolean());
 
+        final JToggleButton button = (JToggleButton) component;
+        button.doClick();
+
+        final NetworkLayer layer = panel.getLayer(componentIndex);
+        assertNotNull(layer);
+
+        verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, true);
+
+        assertThat(layer.isDefaultLayer()).isTrue();
+    }
+
+    @NamedParameters("activeLayerButtons")
+    private final Object[] getDefaultLayerButtons()
+    {
         GenericTypeMatcher<JToggleButton> matcher = new GenericTypeMatcher<JToggleButton>(JToggleButton.class)
         {
             @Override
@@ -119,34 +134,42 @@ public class MultiLayerControlPanelTest
             }
         };
 
+        List<Object[]> componentList = new ArrayList<>();
+
         for (int i = 0; i < table.length; i++)
         {
             final JComponent component = table[i][2];
-            if (matcher.matches(component))
-            {
-                final JToggleButton button = (JToggleButton) component;
-
-                final NetworkLayer layer = panel.getLayer(i);
-                assertNotNull(layer);
-
-                button.doClick();
-
-                verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, true);
-
-                assertThat(layer.isDefaultLayer()).isTrue();
-            } else
-            {
-                fail();
-            }
+            if (matcher.matches(component)) componentList.add(new Object[]{i, component});
         }
+
+        return componentList.toArray();
     }
 
     @Test
-    public void visibilityButtonTest()
+    @Parameters(named = "visibilityButtons")
+    public void visibilityButtonTest(int componentIndex, JComponent component)
     {
         // Mock visualization state
         doNothing().when(vs).setCanvasLayerVisibility(any(NetworkLayer.class), anyBoolean());
 
+        final JToggleButton button = (JToggleButton) component;
+        button.doClick();
+
+        final NetworkLayer layer = panel.getLayer(componentIndex);
+        assertNotNull(layer);
+
+        verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, button.isSelected());
+
+        assertFalse(button.isSelected());
+
+        button.doClick();
+
+        assertTrue(button.isSelected());
+    }
+
+    @NamedParameters("visibilityButtons")
+    private final Object[] getVisibilityButtons()
+    {
         GenericTypeMatcher<JToggleButton> matcher = new GenericTypeMatcher<JToggleButton>(JToggleButton.class)
         {
             @Override
@@ -156,31 +179,17 @@ public class MultiLayerControlPanelTest
             }
         };
 
+        List<Object[]> componentList = new ArrayList<>();
         for (int i = 0; i < table.length; i++)
         {
             final JComponent component = table[i][3];
-
             if (matcher.matches(component))
-            {
-                final JToggleButton button = (JToggleButton) component;
-                if (!button.isEnabled()) continue;
+                if (component.isEnabled())
+                    componentList.add(new Object[]{i, component});
 
-                button.doClick();
-
-                final NetworkLayer layer = panel.getLayer(i);
-                assertNotNull(layer);
-                verify(callback.getVisualizationState()).setCanvasLayerVisibility(layer, false);
-
-                assertFalse(button.isSelected());
-
-                button.doClick();
-
-                assertTrue(button.isSelected());
-            } else
-            {
-                fail();
-            }
         }
+
+        return componentList.toArray();
     }
 
     @Test
