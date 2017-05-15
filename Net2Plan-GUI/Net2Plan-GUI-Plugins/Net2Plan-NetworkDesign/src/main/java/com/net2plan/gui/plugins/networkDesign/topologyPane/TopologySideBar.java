@@ -7,8 +7,7 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 
 /**
  * @author Jorge San Emeterio
@@ -26,9 +25,9 @@ public class TopologySideBar extends JPanel implements ActionListener
     private final JButton btn_npChangeUndo, btn_npChangeRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
 
-    private final JScrollPane scrollPane;
-    private final JPanel controlPanelContainer;
     private final MultiLayerControlPanel multilayerControlPanel;
+
+    private final JDialog dialog;
 
     public TopologySideBar(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
@@ -47,13 +46,44 @@ public class TopologySideBar extends JPanel implements ActionListener
         this.layerToolBar.setOpaque(false);
 
         this.multilayerControlPanel = new MultiLayerControlPanel(callback);
+        this.multilayerControlPanel.setBorder(BorderFactory.createTitledBorder("Layers"));
 
-        this.controlPanelContainer = new JPanel();
-        this.controlPanelContainer.setLayout(new BorderLayout());
-        this.controlPanelContainer.add(multilayerControlPanel, BorderLayout.NORTH);
+        this.dialog = new JDialog();
+        this.dialog.setModal(false);
+        this.dialog.setType(JFrame.Type.UTILITY);
+        this.dialog.setLayout(new BorderLayout());
+        this.dialog.add(multilayerControlPanel);
+        this.dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        this.dialog.setResizable(false);
+        this.dialog.setUndecorated(true);
+        this.dialog.setAlwaysOnTop(true);
+        this.dialog.addComponentListener(new ComponentAdapter()
+        {
+            @Override
+            public void componentHidden(ComponentEvent componentEvent)
+            {
+                btn_multilayer.setSelected(false);
+            }
+        });
+        this.dialog.addMouseMotionListener(new MouseMotionListener() {
+            private int mx, my;
 
-        this.scrollPane = new JScrollPane(controlPanelContainer);
-        this.scrollPane.setVisible(false);
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                mx = e.getXOnScreen();
+                my = e.getYOnScreen();
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                Point p = dialog.getLocation();
+                p.x += e.getXOnScreen() - mx;
+                p.y += e.getYOnScreen() - my;
+                mx = e.getXOnScreen();
+                my = e.getYOnScreen();
+                dialog.setLocation(p);
+            }
+        });
 
         /* Multilayer buttons */
         this.btn_increaseInterLayerDistance = new JButton();
@@ -105,7 +135,6 @@ public class TopologySideBar extends JPanel implements ActionListener
         //multiLayerToolbar.add(btn_npChangeRedo);
 
         this.add(layerToolBar, BorderLayout.WEST);
-        this.add(scrollPane, BorderLayout.CENTER);
     }
 
     @Override
@@ -159,10 +188,11 @@ public class TopologySideBar extends JPanel implements ActionListener
             callback.requestRedoAction();
         } else if (src == btn_multilayer)
         {
-            scrollPane.setVisible(btn_multilayer.isSelected());
+            dialog.pack();
+            dialog.setVisible(btn_multilayer.isSelected());
 
-            topologyPanel.validate();
-            topologyPanel.repaint();
+            dialog.validate();
+            dialog.repaint();
         }
     }
 
@@ -170,7 +200,8 @@ public class TopologySideBar extends JPanel implements ActionListener
     {
         multilayerControlPanel.refreshTable();
 
-        topologyPanel.validate();
-        topologyPanel.repaint();
+        dialog.pack();
+        dialog.validate();
+        dialog.repaint();
     }
 }
