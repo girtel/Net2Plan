@@ -5,12 +5,8 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import org.assertj.swing.core.GenericTypeMatcher;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.swing.*;
 
@@ -22,16 +18,15 @@ import static org.mockito.Mockito.*;
  * @author Jorge San Emeterio
  * @date 10/05/17
  */
-@RunWith(MockitoJUnitRunner.class)
 public class MultiLayerControlPanelTest
 {
-    @Mock
     private static GUINetworkDesign callback = mock(GUINetworkDesign.class);
-
-    @Mock
     private static VisualizationState vs = mock(VisualizationState.class);
 
     private static NetPlan netPlan;
+
+    private static MultiLayerControlPanel panel;
+    private static JComponent[][] table;
 
     @BeforeClass
     public static void setUp()
@@ -42,8 +37,8 @@ public class MultiLayerControlPanelTest
         netPlan.addLayer("Layer 3", "", "kbps", "kbps", null, null);
     }
 
-    @Before
-    public void prepareMock()
+    @BeforeClass
+    public static void prepareMock()
     {
         when(callback.getDesign()).thenReturn(netPlan);
         when(callback.getVisualizationState()).thenReturn(vs);
@@ -51,12 +46,16 @@ public class MultiLayerControlPanelTest
         when(vs.getCanvasLayersInVisualizationOrder(true)).thenReturn(netPlan.getNetworkLayers());
     }
 
+    @BeforeClass
+    public static void preparePanel()
+    {
+        panel = new MultiLayerControlPanel(callback);
+        table = panel.getTable();
+    }
+
     @Test
     public void buildTest()
     {
-        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
-        final JComponent[][] table = panel.getTable();
-
         assertEquals(netPlan.getNumberOfLayers(), table.length);
 
         // Is square
@@ -87,9 +86,6 @@ public class MultiLayerControlPanelTest
     @Test
     public void columnOrderTest()
     {
-        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
-        final JComponent[][] table = panel.getTable();
-
         for (int i = 0; i < table.length; i++)
         {
             final JComponent[] row = table[i];
@@ -104,10 +100,7 @@ public class MultiLayerControlPanelTest
     @Test
     public void rowAssociationTest()
     {
-        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
-        final int numRows = panel.getTable().length;
-
-        for (int i = 0; i < numRows; i++)
+        for (int i = 0; i < table.length; i++)
             assertNotNull(panel.getLayer(i));
     }
 
@@ -116,8 +109,6 @@ public class MultiLayerControlPanelTest
     {
         // Mock visualization state
         doNothing().when(vs).setCanvasLayerVisibility(any(NetworkLayer.class), anyBoolean());
-
-        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
 
         GenericTypeMatcher<JToggleButton> matcher = new GenericTypeMatcher<JToggleButton>(JToggleButton.class)
         {
@@ -128,7 +119,6 @@ public class MultiLayerControlPanelTest
             }
         };
 
-        final JComponent[][] table = panel.getTable();
         for (int i = 0; i < table.length; i++)
         {
             final JComponent component = table[i][2];
@@ -157,7 +147,6 @@ public class MultiLayerControlPanelTest
         // Mock visualization state
         doNothing().when(vs).setCanvasLayerVisibility(any(NetworkLayer.class), anyBoolean());
 
-        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
         GenericTypeMatcher<JToggleButton> matcher = new GenericTypeMatcher<JToggleButton>(JToggleButton.class)
         {
             @Override
@@ -167,7 +156,6 @@ public class MultiLayerControlPanelTest
             }
         };
 
-        final JComponent[][] table = panel.getTable();
         for (int i = 0; i < table.length; i++)
         {
             final JComponent component = table[i][3];
@@ -198,9 +186,6 @@ public class MultiLayerControlPanelTest
     @Test
     public void moveButtonAvailabilityTest()
     {
-        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
-        final JComponent[][] table = panel.getTable();
-
         assertFalse(table[0][0].isEnabled());
         assertFalse(table[table.length - 1][1].isEnabled());
     }
@@ -208,16 +193,8 @@ public class MultiLayerControlPanelTest
     @Test
     public void visibilityButtonAvailabilityTest()
     {
-        MultiLayerControlPanel panel = new MultiLayerControlPanel(callback);
-        final JComponent[][] table = panel.getTable();
-
-        for (int i = 0; i < table.length; i++)
-        {
-            if (panel.getLayer(i) == netPlan.getNetworkLayerDefault())
-            {
-                assertTrue(((JToggleButton) table[i][2]).isSelected());
-                assertFalse(table[i][3].isEnabled());
-            }
-        }
+        final int i = panel.getLayerIndex(netPlan.getNetworkLayerDefault());
+        assertTrue(((JToggleButton) table[i][2]).isSelected());
+        assertFalse(table[i][3].isEnabled());
     }
 }

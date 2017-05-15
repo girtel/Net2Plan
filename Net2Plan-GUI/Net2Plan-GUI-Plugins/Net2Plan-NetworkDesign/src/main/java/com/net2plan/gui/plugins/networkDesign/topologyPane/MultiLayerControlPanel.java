@@ -7,6 +7,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.collections4.MapUtils;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -171,6 +172,12 @@ public final class MultiLayerControlPanel extends JPanel
     NetworkLayer getLayer(int row)
     {
         return rowIndexToLayerMap.get(row);
+    }
+
+    @VisibleForTesting
+    int getLayerIndex(NetworkLayer layer)
+    {
+        return MapUtils.invertMap(rowIndexToLayerMap).get(layer);
     }
 
     @VisibleForTesting
