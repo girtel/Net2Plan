@@ -125,7 +125,7 @@ public class TopologyPanel extends JPanel
 
             this.canvasPanel = new JPanel(new BorderLayout());
 
-            this.sideBar = new TopologySideBar(callback, canvas);
+            this.sideBar = new TopologySideBar(callback, this, canvas);
 
             this.canvasPanel.add(canvasComponent, BorderLayout.CENTER);
             this.canvasPanel.add(sideBar, BorderLayout.WEST);
@@ -298,7 +298,7 @@ public class TopologyPanel extends JPanel
 
     public final void updateMultilayerPanel()
     {
-        sideBar.getMultilayerControlPanel().refreshTable();
+        sideBar.refresh();
     }
 
     public JPanel getCanvasPanel()
