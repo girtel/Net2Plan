@@ -6,9 +6,9 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +46,11 @@ public final class MultiLayerControlPanel extends JPanel
     {
         this.rowIndexToLayerMap.clear();
         this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers()][4];
-        this.setLayout(new GridLayout(componentMatrix.length, componentMatrix[0].length));
+
+        final MigLayout layout = new MigLayout(
+                "insets 0, gap 0, wrap 4");
+
+        this.setLayout(layout);
 
         final NetPlan netPlan = callback.getDesign();
 
@@ -153,7 +157,7 @@ public final class MultiLayerControlPanel extends JPanel
 
         for (JComponent[] matrix : componentMatrix)
             for (JComponent component : matrix)
-                this.add(component);
+                this.add(component, "grow");
     }
 
     public void refreshTable ()
