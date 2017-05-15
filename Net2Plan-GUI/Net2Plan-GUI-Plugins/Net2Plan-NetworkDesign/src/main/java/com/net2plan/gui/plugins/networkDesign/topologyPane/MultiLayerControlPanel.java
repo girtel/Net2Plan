@@ -80,7 +80,7 @@ public final class MultiLayerControlPanel extends JPanel
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMapConsideringNonVisible, layer, neighbourLayer);
 
-                vs.setCanvasLayerVisibilityAndOrder(netPlan, layerOrderMapConsideringNonVisible, null);
+                vs.setCanvasLayerVisibilityAndOrder(netPlan, layerOrderMapConsideringNonVisible, vs.getCanvasLayerVisibilityMap());
 
                 callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
             });
@@ -103,7 +103,7 @@ public final class MultiLayerControlPanel extends JPanel
                 // Swap the selected layer with the one on top of it.
                 this.swap(layerOrderMapConsideringNonVisible, layer, neighbourLayer);
 
-                vs.setCanvasLayerVisibilityAndOrder(netPlan, layerOrderMapConsideringNonVisible, null);
+                vs.setCanvasLayerVisibilityAndOrder(netPlan, layerOrderMapConsideringNonVisible, vs.getCanvasLayerVisibilityMap());
 
                 callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
             });
