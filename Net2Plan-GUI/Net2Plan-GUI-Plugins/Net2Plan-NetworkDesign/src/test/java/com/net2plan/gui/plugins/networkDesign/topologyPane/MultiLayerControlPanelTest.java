@@ -8,6 +8,7 @@ import junitparams.JUnitParamsRunner;
 import junitparams.NamedParameters;
 import junitparams.Parameters;
 import org.assertj.swing.core.GenericTypeMatcher;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,7 +49,14 @@ public class MultiLayerControlPanelTest
         when(vs.isLayerVisibleInCanvas(any(NetworkLayer.class))).thenReturn(true);
         when(vs.getCanvasLayersInVisualizationOrder(true)).thenReturn(netPlan.getNetworkLayers());
 
-        // Panel
+        // Panel: for parameters instance
+        panel = new MultiLayerControlPanel(callback);
+        table = panel.getTable();
+    }
+
+    @Before
+    public void refreshPanel()
+    {
         panel = new MultiLayerControlPanel(callback);
         table = panel.getTable();
     }
