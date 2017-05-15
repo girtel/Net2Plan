@@ -113,6 +113,7 @@ public final class MultiLayerControlPanel extends JPanel
             // Active button
             final JToggleButton activeButton = new JToggleButton();
             activeButton.setText(layer.getName());
+            activeButton.setToolTipText(layer.getName());
             activeButton.setName(ACTIVE_COLUMN);
             activeButton.setFocusable(false);
             activeButton.setSelected(false);
@@ -158,7 +159,7 @@ public final class MultiLayerControlPanel extends JPanel
 
         for (JComponent[] matrix : componentMatrix)
             for (JComponent component : matrix)
-                this.add(component, "grow");
+                this.add(component, "grow, wmax 75");
     }
 
     public void refreshTable ()
