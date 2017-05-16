@@ -6,36 +6,8 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
-
-import org.apache.commons.collections15.BidiMap;
-
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
@@ -43,28 +15,26 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.TabIcon;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.utils.Pair;
-
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.collections15.BidiMap;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class NetPlanViewTableComponent_trafMatrix extends JPanel
 {
-    private final static String TITLE = "Traffic matrix design";
-    private final static int DEFAULT_NUMBER_OF_NODES = 4;
-    private final static TabIcon CLOSE_TAB_ICON = new TabIcon(TabIcon.IconType.TIMES_SIGN);
-
     private static final int OPTIONINDEX_TRAFFICMODEL_CONSTANT = 1;
     private static final int OPTIONINDEX_TRAFFICMODEL_UNIFORM01 = 2;
     private static final int OPTIONINDEX_TRAFFICMODEL_UNIFORM5050 = 3;
@@ -81,9 +51,7 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
     private static final int OPTIONINDEX_NORMALIZATION_PERNODETRAFIN = 6;
     private static final int OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION = 7;
 
-    private JTable trafficMatrixTable;
-//    private final ArrayList<Node> filteredNodes;
-//    private final Set<Demand> filteredDemands;
+    private final JTable trafficMatrixTable;
 
     private final JCheckBox filterOutNodesNotConnectedThisLayer;
     private final JComboBox<String> cmb_tagNodesSelector;
@@ -94,31 +62,11 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
     private final JButton applyTrafficModelButton;
     private final GUINetworkDesign networkViewer;
 
-    public NetPlanViewTableComponent_trafMatrix(final GUINetworkDesign networkViewer)
+    public NetPlanViewTableComponent_trafMatrix(GUINetworkDesign networkViewer)
     {
-        super(new MigLayout("", "[grow]", "[][][][][][grow]"));
+        super(new BorderLayout());
         this.networkViewer = networkViewer;
-        final NetPlan np = networkViewer.getDesign();
 
-//        this.filteredNodes = new ArrayList<> (np.getNodes());
-//        this.filteredDemands = new HashSet<> (np.getDemands());
-
-        this.add(new JLabel ("Filter information for the traffic matrix"));
-        this.filterOutNodesNotConnectedThisLayer = new JCheckBox("Filter out nodes without links at this layer");
-        this.add(filterOutNodesNotConnectedThisLayer ,"wrap");
-        this.cmb_tagNodesSelector = new WiderJComboBox();
-        this.cmb_tagDemandsSelector = new WiderJComboBox();
-        this.add(new JLabel ("Consider only demands between nodes tagged by...") ,"wrap");
-        this.add(cmb_tagNodesSelector ,"wrap");
-        this.add(new JLabel ("Consider only demands tagged by...") ,"wrap");
-        this.add(cmb_tagDemandsSelector ,"wrap");
-        final JButton applyFilterButton = new JButton("Apply filters");
-        this.add(applyFilterButton ,"wrap");
-        applyFilterButton.addActionListener(new ActionListener() { 
-			public void actionPerformed(ActionEvent e) { updateNetPlanView(); }
-		});
-        
-        
         this.trafficMatrixTable = new AdvancedJTable();
         trafficMatrixTable.setDefaultRenderer(Object.class, new TotalRowColumnRenderer());
         trafficMatrixTable.setDefaultRenderer(Double.class, new TotalRowColumnRenderer());
@@ -126,10 +74,10 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         trafficMatrixTable.setDefaultRenderer(Integer.class, new TotalRowColumnRenderer());
         trafficMatrixTable.setDefaultRenderer(String.class, new TotalRowColumnRenderer());
         JScrollPane pane = new JScrollPane(trafficMatrixTable);
-        this.add(pane , "wrap");
+        this.add(pane , BorderLayout.CENTER);
 
         JPanel pnl_trafficModel = new JPanel ();
-        pnl_trafficModel.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Traffic matrix synthesis"));
+        pnl_trafficModel.setBorder(BorderFactory.createTitledBorder("Traffic matrix synthesis"));
         cmb_trafficModelPattern = new WiderJComboBox();
         cmb_trafficModelPattern.addItem("Select a method for synthesizing a matrix");
         cmb_trafficModelPattern.addItem("1. Constant");
@@ -145,10 +93,9 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         pnl_trafficModel.setLayout(new MigLayout("insets 0 0 0 0", "[grow][][]", "[grow]"));
         pnl_trafficModel.add(cmb_trafficModelPattern, "grow, wmin 50");
         pnl_trafficModel.add(applyTrafficModelButton);
-        this.add(pnl_trafficModel , "wrap");
 
         JPanel pnl_normalization = new JPanel ();
-        pnl_normalization.setBorder(BorderFactory.createTitledBorder(new LineBorder(Color.BLACK), "Traffic normalization and adjustments"));
+        pnl_normalization.setBorder(BorderFactory.createTitledBorder("Traffic normalization and adjustments"));
         cmb_trafficNormalization = new WiderJComboBox();
         cmb_trafficNormalization.addItem("Select a method");
         cmb_trafficNormalization.addItem("1. Make symmetric");
@@ -164,7 +111,29 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         pnl_normalization.setLayout(new MigLayout("insets 0 0 0 0", "[grow][][]", "[grow]"));
         pnl_normalization.add(cmb_trafficNormalization, "grow, wmin 50");
         pnl_normalization.add(applyTrafficNormalizationButton);
-        this.add(pnl_normalization , "wrap");
+
+        final JPanel filterPanel = new JPanel(new MigLayout("wrap 2", "[][grow]"));
+        filterPanel.setBorder(BorderFactory.createTitledBorder("Filters"));
+
+        this.filterOutNodesNotConnectedThisLayer = new JCheckBox();
+        filterPanel.add(new JLabel("Filter out linkless nodes at this layer"), "align label");
+        filterPanel.add(filterOutNodesNotConnectedThisLayer);
+
+        this.cmb_tagNodesSelector = new WiderJComboBox();
+        this.cmb_tagDemandsSelector = new WiderJComboBox();
+
+        filterPanel.add(new JLabel ("Consider only demands between nodes tagged by...") ,"align label");
+        filterPanel.add(cmb_tagNodesSelector, "grow");
+
+        filterPanel.add(new JLabel ("Consider only demands tagged by...") ,"align label");
+        filterPanel.add(cmb_tagDemandsSelector, "grow");
+
+        final JPanel bottomPanel = new JPanel(new MigLayout("fill, wrap 1"));
+        bottomPanel.add(filterPanel, "grow");
+        bottomPanel.add(pnl_trafficModel, "grow");
+        bottomPanel.add(pnl_normalization, "grow");
+
+        this.add(bottomPanel, BorderLayout.SOUTH);
 
         updateNetPlanView();
     }
