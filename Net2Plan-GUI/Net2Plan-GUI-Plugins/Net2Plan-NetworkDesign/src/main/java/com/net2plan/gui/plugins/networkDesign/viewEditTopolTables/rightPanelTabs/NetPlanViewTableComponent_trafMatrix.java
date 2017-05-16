@@ -188,10 +188,7 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
     public void updateNetPlanView()
     {
         final NetPlan np = networkViewer.getDesign();
-        final Pair<List<Node>, Set<Demand>> filtInfo = computeFilteringNodesAndDemands();
-        final List<Node> filteredNodes = filtInfo.getFirst();
-        final Set<Demand> filteredDemands = filtInfo.getSecond();
-        this.trafficMatrixTable.setModel(createTrafficMatrix(filteredNodes, filteredDemands));
+        this.trafficMatrixTable.setModel(createTrafficMatrix());
 
         cmb_tagNodesSelector.removeAllItems();
         cmb_tagNodesSelector.addItem("[NO FILTER]");
@@ -206,9 +203,14 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         for (String tag : allTagsDemandsOrdered) this.cmb_tagDemandsSelector.addItem(tag);
     }
 
-    private DefaultTableModel createTrafficMatrix(List<Node> filteredNodes, Set<Demand> filteredDemands)
+    private DefaultTableModel createTrafficMatrix()
     {
         final NetPlan np = this.networkViewer.getDesign();
+
+        final Pair<List<Node>, Set<Demand>> filterInfo = computeFilteringNodesAndDemands();
+        final List<Node> filteredNodes = filterInfo.getFirst();
+        final Set<Demand> filteredDemands = filterInfo.getSecond();
+
         final int N = filteredNodes.size();
         final NetworkLayer layer = np.getNetworkLayerDefault();
         String[] columnHeaders = new String[N + 2];
