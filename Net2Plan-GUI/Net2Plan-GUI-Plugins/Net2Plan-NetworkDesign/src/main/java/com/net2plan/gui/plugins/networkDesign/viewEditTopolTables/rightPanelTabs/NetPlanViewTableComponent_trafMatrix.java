@@ -8,6 +8,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTab
 
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
@@ -29,8 +30,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -124,19 +123,19 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         this.cmb_tagNodesSelector = new WiderJComboBox();
         this.cmb_tagDemandsSelector = new WiderJComboBox();
 
-        cmb_tagDemandsSelector.addItemListener(new ItemListener()
+        cmb_tagNodesSelector.addActionListener(new ActionListener()
         {
             @Override
-            public void itemStateChanged(ItemEvent itemEvent)
+            public void actionPerformed(ActionEvent actionEvent)
             {
                 updateNetPlanView();
             }
         });
 
-        cmb_tagDemandsSelector.addItemListener(new ItemListener()
+        cmb_tagDemandsSelector.addActionListener(new ActionListener()
         {
             @Override
-            public void itemStateChanged(ItemEvent itemEvent)
+            public void actionPerformed(ActionEvent actionEvent)
             {
                 updateNetPlanView();
             }
@@ -156,6 +155,12 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         this.add(bottomPanel, BorderLayout.SOUTH);
 
         updateNetPlanView();
+    }
+
+    @VisibleForTesting
+    JTable getTable()
+    {
+        return trafficMatrixTable;
     }
 
     private Pair<List<Node>, Set<Demand>> computeFilteringNodesAndDemands()
