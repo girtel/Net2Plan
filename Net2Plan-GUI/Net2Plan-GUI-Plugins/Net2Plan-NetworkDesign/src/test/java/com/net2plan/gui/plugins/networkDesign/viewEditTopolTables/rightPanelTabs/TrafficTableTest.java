@@ -1,6 +1,7 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -19,6 +20,8 @@ import static org.mockito.Mockito.*;
 public class TrafficTableTest
 {
     private static GUINetworkDesign callback = mock(GUINetworkDesign.class);
+    private static VisualizationState vs = mock(VisualizationState.class);
+
     private static NetPlan netPlan;
 
     private static NetPlanViewTableComponent_trafMatrix component;
@@ -45,6 +48,8 @@ public class TrafficTableTest
 
         // Mock
         when(callback.getDesign()).thenReturn(netPlan);
+        when(callback.getVisualizationState()).thenReturn(vs);
+        when(vs.isWhatIfAnalysisActive()).thenReturn(false);
 
         component = new NetPlanViewTableComponent_trafMatrix(callback);
         trafficTable = component.getTable();
@@ -94,9 +99,8 @@ public class TrafficTableTest
     public void demandEditTest()
     {
         double offeredTraffic = 100d;
-        trafficTable.setValueAt(offeredTraffic, 1, 4);
+        trafficTable.setValueAt(offeredTraffic, 1, 3);
 
-        verify(exampleDemand).setOfferedTraffic(offeredTraffic);
         assertThat(exampleDemand.getOfferedTraffic()).isEqualTo(offeredTraffic);
     }
 }

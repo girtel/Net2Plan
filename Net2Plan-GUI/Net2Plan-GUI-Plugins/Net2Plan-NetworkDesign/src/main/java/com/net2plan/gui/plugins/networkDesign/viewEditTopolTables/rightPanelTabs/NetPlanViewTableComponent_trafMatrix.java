@@ -284,8 +284,10 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
                     if (Math.abs((double) newValue - (double) oldValue) < 1e-10) return;
                     final double newOfferedTraffic = (Double) newValue;
                     if (newOfferedTraffic < 0) throw new Net2PlanException("Wrong traffic value");
+
                     final Node n1 = filteredNodes.get(row);
                     final Node n2 = filteredNodes.get(column - 1);
+
                     final Set<Demand> applicableDemands = Sets.intersection(
                             np.getNodePairDemands(n1, n2, false, layer), filteredDemands);
                     final Demand demand = applicableDemands.iterator().next();
