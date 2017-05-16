@@ -183,7 +183,6 @@ public abstract class NetworkElement
 		if (val == null) return defaultValue;  
 		try 
 		{
-			System.out.println(val);
 			final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
 			final List<Double> res = new ArrayList<> (parts.length);
 			for (String part : parts)
@@ -206,7 +205,6 @@ public abstract class NetworkElement
 		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
 		if (val == null) return defaultValue;  
-		System.out.println("To parse: **" + val + "**");
 		try 
 		{
 			final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
@@ -410,7 +408,6 @@ public abstract class NetworkElement
 			if (firstTime) { firstTime = false; } else { st.append(MATRIX_COLSEPARATOR); }
 			st.append(escapedStringToWrite(val)); 
 		}
-		System.out.println("From :" + vals + " to **" + st.toString() + "**");
 		attributes.put (key,st.toString());
 	}
 
@@ -521,7 +518,6 @@ public abstract class NetworkElement
 		String res = s.replaceAll(STRINGESCAPECHARACTER , STRINGESCAPECHARACTER + AFTERSCAPE_ESCAPE);
 		res = res.replaceAll(MATRIX_COLSEPARATOR , STRINGESCAPECHARACTER + AFTERSCAPE_COLSEP);
 		res = res.replaceAll(MATRIX_ROWSEPARATOR , STRINGESCAPECHARACTER + AFTERSCAPE_ROWSEP);
-		System.out.println("Escape: **" + s + "** --> **" + res + "**");
 		return res;
 	}
 	private static String unescapedStringRead (String s)
@@ -529,7 +525,6 @@ public abstract class NetworkElement
 		String res = s.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_COLSEP, MATRIX_COLSEPARATOR);
 		res = res.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_ROWSEP, MATRIX_ROWSEPARATOR);
 		res = res.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_ESCAPE, STRINGESCAPECHARACTER);
-		System.out.println("Unescape: **" + s + "** --> **" + res + "**");
 		return res;
 	}
 	
