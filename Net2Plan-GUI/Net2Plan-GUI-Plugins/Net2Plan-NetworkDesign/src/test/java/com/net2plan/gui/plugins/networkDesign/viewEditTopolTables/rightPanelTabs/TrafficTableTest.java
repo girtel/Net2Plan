@@ -24,7 +24,7 @@ public class TrafficTableTest
 
     private static NetPlan netPlan;
 
-    private static NetPlanViewTableComponent_trafMatrix component;
+    private static NetPlanViewTableComponent_trafficMatrix component;
     private static JTable trafficTable;
 
     private static Demand exampleDemand;
@@ -51,7 +51,7 @@ public class TrafficTableTest
         when(callback.getVisualizationState()).thenReturn(vs);
         when(vs.isWhatIfAnalysisActive()).thenReturn(false);
 
-        component = new NetPlanViewTableComponent_trafMatrix(callback);
+        component = new NetPlanViewTableComponent_trafficMatrix(callback);
         trafficTable = component.getTable();
     }
 

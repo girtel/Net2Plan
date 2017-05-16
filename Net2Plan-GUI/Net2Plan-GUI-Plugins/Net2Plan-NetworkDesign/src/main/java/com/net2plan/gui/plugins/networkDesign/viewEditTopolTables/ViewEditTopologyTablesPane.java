@@ -7,7 +7,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.*;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafMatrix;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafficMatrix;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
@@ -35,7 +35,7 @@ public class ViewEditTopologyTablesPane extends JPanel
     private final GUINetworkDesign callback;
     private final JTabbedPane netPlanView;
     private final JTabbedPane demandTabbedPaneListAndMatrix;
-    private NetPlanViewTableComponent_trafMatrix trafficMatrixComponent;
+    private NetPlanViewTableComponent_trafficMatrix trafficMatrixComponent;
     private final Map<Constants.NetworkElementType, AdvancedJTable_networkElement> netPlanViewTable;
     private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
     private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
@@ -77,7 +77,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
         netPlanView = new JTabbedPane();
         demandTabbedPaneListAndMatrix = new JTabbedPane ();
-        this.trafficMatrixComponent = new NetPlanViewTableComponent_trafMatrix(callback);
+        this.trafficMatrixComponent = new NetPlanViewTableComponent_trafficMatrix(callback);
         for (NetworkElementType elementType : NetworkElementType.values())
         {
             if (elementType == NetworkElementType.NETWORK)

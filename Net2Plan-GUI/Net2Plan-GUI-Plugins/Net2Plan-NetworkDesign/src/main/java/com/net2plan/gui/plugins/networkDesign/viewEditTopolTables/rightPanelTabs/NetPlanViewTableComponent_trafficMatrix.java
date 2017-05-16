@@ -30,12 +30,16 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class NetPlanViewTableComponent_trafMatrix extends JPanel
+public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 {
+    private static final String DEFAULT_TAG_FILTER = "[NO FILTER]";
+
     private static final int OPTIONINDEX_TRAFFICMODEL_CONSTANT = 1;
     private static final int OPTIONINDEX_TRAFFICMODEL_UNIFORM01 = 2;
     private static final int OPTIONINDEX_TRAFFICMODEL_UNIFORM5050 = 3;
@@ -63,7 +67,16 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
     private final JButton applyTrafficModelButton;
     private final GUINetworkDesign networkViewer;
 
-    public NetPlanViewTableComponent_trafMatrix(GUINetworkDesign networkViewer)
+    private final SwitchableItemListener itemListener = new SwitchableItemListener()
+    {
+        @Override
+        protected void doAction()
+        {
+            NetPlanViewTableComponent_trafficMatrix.this.updateTable();
+        }
+    };
+
+    public NetPlanViewTableComponent_trafficMatrix(GUINetworkDesign networkViewer)
     {
         super(new BorderLayout());
         this.networkViewer = networkViewer;
@@ -123,23 +136,8 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         this.cmb_tagNodesSelector = new WiderJComboBox();
         this.cmb_tagDemandsSelector = new WiderJComboBox();
 
-        cmb_tagNodesSelector.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                updateNetPlanView();
-            }
-        });
-
-        cmb_tagDemandsSelector.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent)
-            {
-                updateNetPlanView();
-            }
-        });
+        this.cmb_tagNodesSelector.addItemListener(itemListener);
+        this.cmb_tagDemandsSelector.addItemListener(itemListener);
 
         filterPanel.add(new JLabel("Consider only demands between nodes tagged by..."), "align label");
         filterPanel.add(cmb_tagNodesSelector, "grow");
@@ -190,22 +188,31 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         return Pair.of(filteredNodes, filteredDemands);
     }
 
+    private void updateTable()
+    {
+        this.trafficMatrixTable.setModel(createTrafficMatrix());
+    }
+
     public void updateNetPlanView()
     {
         final NetPlan np = networkViewer.getDesign();
-        this.trafficMatrixTable.setModel(createTrafficMatrix());
+        updateTable();
+
+        itemListener.setEnabled(false);
 
         cmb_tagNodesSelector.removeAllItems();
-        cmb_tagNodesSelector.addItem("[NO FILTER]");
+        cmb_tagNodesSelector.addItem(DEFAULT_TAG_FILTER);
         final Set<String> allTagsNodes = np.getNodes().stream().map(n -> n.getTags()).flatMap(e -> e.stream()).collect(Collectors.toSet());
         final List<String> allTagsNodesOrdered = allTagsNodes.stream().sorted().collect(Collectors.toList());
         for (String tag : allTagsNodesOrdered) this.cmb_tagNodesSelector.addItem(tag);
 
         cmb_tagDemandsSelector.removeAllItems();
-        cmb_tagDemandsSelector.addItem("[NO FILTER]");
+        cmb_tagDemandsSelector.addItem(DEFAULT_TAG_FILTER);
         final Set<String> allTagsDemands = np.getDemands().stream().map(n -> n.getTags()).flatMap(e -> e.stream()).collect(Collectors.toSet());
         final List<String> allTagsDemandsOrdered = allTagsDemands.stream().sorted().collect(Collectors.toList());
         for (String tag : allTagsDemandsOrdered) this.cmb_tagDemandsSelector.addItem(tag);
+
+        itemListener.setEnabled(true);
     }
 
     private DefaultTableModel createTrafficMatrix()
@@ -355,7 +362,6 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
                 ErrorHandling.showWarningDialog("Please, select a traffic model", "Error applying traffic model");
                 return null;
             }
-            final NetPlan np = networkViewer.getDesign();
             final int N = filteredNodes.size();
             switch (selectedOptionIndex)
             {
@@ -471,7 +477,6 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
                 ErrorHandling.showWarningDialog("Please, select a valid traffic normalization/adjustment method", "Error applying method");
                 return null;
             }
-            final NetPlan np = networkViewer.getDesign();
             final int N = filteredNodes.size();
             switch (selectedOptionIndex)
             {
@@ -592,6 +597,30 @@ public class NetPlanViewTableComponent_trafMatrix extends JPanel
         }
     }
 
+    private abstract static class SwitchableItemListener implements ItemListener
+    {
+        private boolean isEnabled;
+
+        SwitchableItemListener()
+        {
+            isEnabled = true;
+        }
+
+
+        @Override
+        public void itemStateChanged(ItemEvent itemEvent)
+        {
+            if (isEnabled)
+                doAction();
+        }
+
+        public void setEnabled(boolean enable)
+        {
+            isEnabled = enable;
+        }
+
+        protected abstract void doAction();
+    }
 }
 
 
