@@ -835,6 +835,17 @@ public class Demand extends NetworkElement
 		}
 	}
 
+
+	/** Returns the set of links in this layer, with non zero forwarding rules defined for them. The link may or may not 
+	 * carry traffic, and may be or not be failed.
+	 * @return see above
+	 */
+	public Set<Link> getLinksWithNonZeroForwardingRules ()
+	{
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		return this.cacheHbH_frs.keySet().stream().filter(e->cacheHbH_frs.get(e) != 0).collect(Collectors.toSet());
+	}
+	
 	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined, 
 	 * if the routes had carried traffic / (hop-by-hop) the demand had offered traffic different to zero.
 	 * The method returns  a pair of sets (disjoint or not), first set with the set of links potentially carrying primary traffic and 
