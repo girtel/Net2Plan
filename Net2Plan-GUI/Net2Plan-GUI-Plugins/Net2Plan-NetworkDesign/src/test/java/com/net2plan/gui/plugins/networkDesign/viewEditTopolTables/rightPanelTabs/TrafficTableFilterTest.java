@@ -2,7 +2,6 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTab
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -36,10 +35,8 @@ public class TrafficTableFilterTest
     {
         netPlan = new NetPlan();
 
-        Node node0 = netPlan.addNode(0, 0, "Node 0", null);
-        Node node1 = netPlan.addNode(0, 0, "Node 1", null);
-
-        netPlan.addDemand(node0, node1, 100, null);
+        netPlan.addNode(0, 0, "Node 0", null);
+        netPlan.addNode(0, 0, "Node 1", null);
     }
 
     @Before
@@ -66,5 +63,32 @@ public class TrafficTableFilterTest
 
         // Content
         assertThat(table.getValueAt(0, 0)).isEqualTo("Node 0");
+        assertThat(table.getValueAt(1, 0)).isNotEqualTo("Node 1");
+
+        assertThat(table.getColumnName(1)).isEqualToIgnoringCase("Node 0");
+        assertThat(table.getColumnName(1)).isNotEqualToIgnoringCase("Node 1");
+    }
+
+    @Test
+    public void filterDemandTagTest()
+    {
+        netPlan.addNode(0, 0, "Node 2", null);
+        netPlan.addDemand(netPlan.getNodeByName("Node 2"), netPlan.getNodeByName("Node 1"), 100, null).addTag(tag);
+
+        component.filterByDemandTag(tag);
+
+        final JTable table = component.getTable();
+
+        // Size
+        assertThat(table.getRowCount()).isEqualTo(4);
+        assertThat(table.getColumnCount()).isEqualTo(5);
+
+        // Content
+        assertThat(table.getValueAt(2, 2)).isEqualTo(100d);
+
+        for (int i = 0; i < table.getRowCount() - 1; i++)
+            for (int j = 1; j < table.getColumnCount() - 1; j++)
+                if (i == 2 && j == 2) continue;
+                else assertThat(table.getValueAt(i, j)).isEqualTo(0d);
     }
 }

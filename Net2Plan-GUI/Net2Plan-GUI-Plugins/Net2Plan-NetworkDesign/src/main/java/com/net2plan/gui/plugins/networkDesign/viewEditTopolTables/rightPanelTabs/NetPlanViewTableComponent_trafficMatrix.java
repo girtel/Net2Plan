@@ -277,6 +277,9 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         double totalTraffic = 0;
         for (Demand d : filteredDemands)
         {
+            if (!(nodeToIndexInFilteredListMap.containsKey(d.getIngressNode()))) continue;
+            if (!(nodeToIndexInFilteredListMap.containsKey(d.getEgressNode()))) continue;
+
             final int row = nodeToIndexInFilteredListMap.get(d.getIngressNode());
             final int column = nodeToIndexInFilteredListMap.get(d.getEgressNode()) + 1;
             totalTraffic += d.getOfferedTraffic();
