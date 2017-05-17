@@ -8,7 +8,6 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTab
 
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
@@ -93,14 +92,14 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         JPanel pnl_trafficModel = new JPanel();
         pnl_trafficModel.setBorder(BorderFactory.createTitledBorder("Traffic matrix synthesis"));
         cmb_trafficModelPattern = new WiderJComboBox();
-        cmb_trafficModelPattern.addItem("Select a method for synthesizing a matrix");
-        cmb_trafficModelPattern.addItem("1. Constant");
-        cmb_trafficModelPattern.addItem("2. Uniform (0, 10)");
-        cmb_trafficModelPattern.addItem("3. 50% Uniform (0, 100) & 50% Uniform(0, 10)");
-        cmb_trafficModelPattern.addItem("4. 25% Uniform (0, 100) & 75% Uniform(0, 10)");
-        cmb_trafficModelPattern.addItem("5. Gravity model");
-        cmb_trafficModelPattern.addItem("6. Population-distance model");
-        cmb_trafficModelPattern.addItem("7. Reset");
+        cmb_trafficModelPattern.insertItemAt("Select a method for synthesizing a matrix", 0);
+        cmb_trafficModelPattern.insertItemAt("1. Constant", OPTIONINDEX_TRAFFICMODEL_CONSTANT);
+        cmb_trafficModelPattern.insertItemAt("2. Uniform (0, 10)", OPTIONINDEX_TRAFFICMODEL_UNIFORM01);
+        cmb_trafficModelPattern.insertItemAt("3. 50% Uniform (0, 100) & 50% Uniform(0, 10)", OPTIONINDEX_TRAFFICMODEL_UNIFORM5050);
+        cmb_trafficModelPattern.insertItemAt("4. 25% Uniform (0, 100) & 75% Uniform(0, 10)", OPTIONINDEX_TRAFFICMODEL_UNIFORM2575);
+        cmb_trafficModelPattern.insertItemAt("5. Gravity model", OPTIONINDEX_TRAFFICMODEL_GRAVITYMODEL);
+        cmb_trafficModelPattern.insertItemAt("6. Population-distance model", OPTIONINDEX_TRAFFICMODEL_POPULATIONDISTANCE);
+        cmb_trafficModelPattern.insertItemAt("7. Reset", OPTIONINDEX_TRAFFICMODEL_RESET);
         pnl_trafficModel.add(cmb_trafficModelPattern);
         this.applyTrafficModelButton = new JButton("Apply");
         applyTrafficModelButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
@@ -111,14 +110,14 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         JPanel pnl_normalization = new JPanel();
         pnl_normalization.setBorder(BorderFactory.createTitledBorder("Traffic normalization and adjustments"));
         cmb_trafficNormalization = new WiderJComboBox();
-        cmb_trafficNormalization.addItem("Select a method");
-        cmb_trafficNormalization.addItem("1. Make symmetric");
-        cmb_trafficNormalization.addItem("2. Scale by a factor");
-        cmb_trafficNormalization.addItem("3. Apply random variation (truncated gaussian)");
-        cmb_trafficNormalization.addItem("4. Normalization: fit to given total traffic");
-        cmb_trafficNormalization.addItem("5. Normalization: fit to given out traffic per node");
-        cmb_trafficNormalization.addItem("6. Normalization: fit to given in traffic per node");
-        cmb_trafficNormalization.addItem("7. Normalization: scale to theoretical maximum traffic");
+        cmb_trafficNormalization.insertItemAt("Select a method", 0);
+        cmb_trafficNormalization.insertItemAt("1. Make symmetric", OPTIONINDEX_NORMALIZATION_MAKESYMMETRIC);
+        cmb_trafficNormalization.insertItemAt("2. Scale by a factor", OPTIONINDEX_NORMALIZATION_SCALE);
+        cmb_trafficNormalization.insertItemAt("3. Apply random variation (truncated gaussian)", OPTIONINDEX_NORMALIZATION_RANDOMVARIATION);
+        cmb_trafficNormalization.insertItemAt("4. Normalization: fit to given total traffic", OPTIONINDEX_NORMALIZATION_TOTAL);
+        cmb_trafficNormalization.insertItemAt("5. Normalization: fit to given out traffic per node", OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT);
+        cmb_trafficNormalization.insertItemAt("6. Normalization: fit to given in traffic per node", OPTIONINDEX_NORMALIZATION_PERNODETRAFIN);
+        cmb_trafficNormalization.insertItemAt("7. Normalization: scale to theoretical maximum traffic", OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION);
         pnl_normalization.add(cmb_trafficNormalization);
         this.applyTrafficNormalizationButton = new JButton("Apply");
         applyTrafficNormalizationButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
@@ -156,13 +155,11 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         updateNetPlanView();
     }
 
-    @VisibleForTesting
     public JTable getTable()
     {
         return trafficMatrixTable;
     }
 
-    @VisibleForTesting
     public void filterLinklessNodes(boolean doFilter)
     {
         cb_filterLinklessNodes.setSelected(doFilter);
@@ -170,7 +167,6 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         updateTable();
     }
 
-    @VisibleForTesting
     public void filterByNodeTag(String tag)
     {
         if (tag == null) return;
@@ -183,7 +179,6 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         updateTable();
     }
 
-    @VisibleForTesting
     public void filterByDemandTag(String tag)
     {
         if (tag == null) return;
@@ -412,6 +407,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 ErrorHandling.showWarningDialog("Please, select a traffic model", "Error applying traffic model");
                 return null;
             }
+
             final int N = filteredNodes.size();
             switch (selectedOptionIndex)
             {
@@ -598,22 +594,30 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 if (filteredDemands.isEmpty()) throw new Net2PlanException("No demands are selected");
                 boolean allCellsEditable = true;
                 for (int row = 0; row < trafficMatrixTable.getRowCount() - 1; row++)
+                {
                     for (int col = 1; col < trafficMatrixTable.getColumnCount() - 1; col++)
+                    {
                         if (row != col - 1 && !trafficMatrixTable.isCellEditable(row, col))
                         {
                             allCellsEditable = false;
                             break;
                         }
+                    }
+                }
+
                 if (!allCellsEditable)
                     throw new Net2PlanException("Traffic matrix modification is only possible when all the cells are editable");
 
                 DoubleMatrix2D newTraffic2D = null;
+
                 if (e.getSource() == applyTrafficModelButton)
                     newTraffic2D = new ApplyTrafficModels(filteredNodes, filteredDemands).applyOption(cmb_trafficModelPattern.getSelectedIndex());
                 else if (e.getSource() == applyTrafficNormalizationButton)
                     newTraffic2D = new ApplyTrafficNormalizationsAndAdjustments(filteredNodes, filteredDemands).applyOption(cmb_trafficNormalization.getSelectedIndex());
                 else throw new RuntimeException();
+
                 if (newTraffic2D == null) return;
+
                 final Map<Node, Integer> node2IndexInFilteredListMap = new HashMap<>();
                 for (int cont = 0; cont < filteredNodes.size(); cont++)
                     node2IndexInFilteredListMap.put(filteredNodes.get(cont), cont);
