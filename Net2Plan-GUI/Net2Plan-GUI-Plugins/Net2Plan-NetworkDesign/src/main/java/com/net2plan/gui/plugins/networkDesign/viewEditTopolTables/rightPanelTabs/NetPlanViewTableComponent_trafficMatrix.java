@@ -92,6 +92,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         JPanel pnl_trafficModel = new JPanel();
         pnl_trafficModel.setBorder(BorderFactory.createTitledBorder("Traffic matrix synthesis"));
         cmb_trafficModelPattern = new WiderJComboBox();
+
+        // Will fail if not continuous.
         cmb_trafficModelPattern.insertItemAt("Select a method for synthesizing a matrix", 0);
         cmb_trafficModelPattern.insertItemAt("1. Constant", OPTIONINDEX_TRAFFICMODEL_CONSTANT);
         cmb_trafficModelPattern.insertItemAt("2. Uniform (0, 10)", OPTIONINDEX_TRAFFICMODEL_UNIFORM01);
@@ -100,6 +102,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         cmb_trafficModelPattern.insertItemAt("5. Gravity model", OPTIONINDEX_TRAFFICMODEL_GRAVITYMODEL);
         cmb_trafficModelPattern.insertItemAt("6. Population-distance model", OPTIONINDEX_TRAFFICMODEL_POPULATIONDISTANCE);
         cmb_trafficModelPattern.insertItemAt("7. Reset", OPTIONINDEX_TRAFFICMODEL_RESET);
+        cmb_trafficModelPattern.setSelectedIndex(0);
         pnl_trafficModel.add(cmb_trafficModelPattern);
         this.applyTrafficModelButton = new JButton("Apply");
         applyTrafficModelButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
@@ -118,6 +121,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         cmb_trafficNormalization.insertItemAt("5. Normalization: fit to given out traffic per node", OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT);
         cmb_trafficNormalization.insertItemAt("6. Normalization: fit to given in traffic per node", OPTIONINDEX_NORMALIZATION_PERNODETRAFIN);
         cmb_trafficNormalization.insertItemAt("7. Normalization: scale to theoretical maximum traffic", OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION);
+        cmb_trafficNormalization.setSelectedIndex(0);
         pnl_normalization.add(cmb_trafficNormalization);
         this.applyTrafficNormalizationButton = new JButton("Apply");
         applyTrafficNormalizationButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
@@ -427,12 +431,16 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     }
                 case OPTIONINDEX_TRAFFICMODEL_RESET:
                     return DoubleFactory2D.sparse.make(N, N);
+
                 case OPTIONINDEX_TRAFFICMODEL_UNIFORM01:
                     return TrafficMatrixGenerationModels.uniformRandom(N, 0, 10);
+
                 case OPTIONINDEX_TRAFFICMODEL_UNIFORM5050:
                     return TrafficMatrixGenerationModels.bimodalUniformRandom(N, 0.5, 0, 100, 0, 10);
+
                 case OPTIONINDEX_TRAFFICMODEL_UNIFORM2575:
                     return TrafficMatrixGenerationModels.bimodalUniformRandom(N, 0.25, 0, 100, 0, 10);
+
                 case OPTIONINDEX_TRAFFICMODEL_GRAVITYMODEL:
                     DefaultTableModel gravityModelTableModel = new ClassAwareTableModel()
                     {
@@ -497,13 +505,67 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error applying gravity model");
                         }
                     }
+
+                case OPTIONINDEX_TRAFFICMODEL_POPULATIONDISTANCE:
+                {
+                    final JPanel popUpPanel = new JPanel(new MigLayout("insets 0 0 0 0", "[][]", "[][][][][][][][][][grow]"));
+
+                    final JRadioButton euclideanDistance = new JRadioButton("Euclidean distance (X, Y)");
+                    final JRadioButton haversineDistance = new JRadioButton("Haversine distance (lon, lat)");
+
+                    ButtonGroup bg = new ButtonGroup();
+                    bg.add(euclideanDistance);
+                    bg.add(haversineDistance);
+                    popUpPanel.add(euclideanDistance, "growx, spanx 2, wrap");
+                    popUpPanel.add(haversineDistance, "growx, spanx 2, wrap");
+                    euclideanDistance.setSelected(true);
+
+                    final JTextField txt_randomFactor = new JTextField("0", 5);
+                    txt_randomFactor.setHorizontalAlignment(JTextField.CENTER);
+
+                    final JTextField txt_distanceOffset = new JTextField("0", 5);
+                    txt_distanceOffset.setHorizontalAlignment(JTextField.CENTER);
+
+                    final JTextField txt_distancePower = new JTextField("1", 5);
+                    txt_distancePower.setHorizontalAlignment(JTextField.CENTER);
+
+                    final JTextField txt_populationOffset = new JTextField("0", 5);
+                    txt_populationOffset.setHorizontalAlignment(JTextField.CENTER);
+
+                    final JTextField txt_populationPower = new JTextField("1", 5);
+                    txt_populationPower.setHorizontalAlignment(JTextField.CENTER);
+
+                    final JCheckBox chk_populationDistanceModelNormalizePopulation = new JCheckBox();
+                    chk_populationDistanceModelNormalizePopulation.setSelected(true);
+
+                    final JCheckBox chk_populationDistanceModelNormalizeDistance = new JCheckBox();
+                    chk_populationDistanceModelNormalizeDistance.setSelected(true);
+
+                    popUpPanel.add(new JLabel("Random factor"));
+                    popUpPanel.add(txt_randomFactor, "align right, wrap");
+                    popUpPanel.add(new JLabel("Population offset"));
+                    popUpPanel.add(txt_populationOffset, "align right, wrap");
+                    popUpPanel.add(new JLabel("Population power"));
+                    popUpPanel.add(txt_populationPower, "align right, wrap");
+                    popUpPanel.add(new JLabel("Distance offset"));
+                    popUpPanel.add(txt_distanceOffset, "align right, wrap");
+                    popUpPanel.add(new JLabel("Distance power"));
+                    popUpPanel.add(txt_distancePower, "align right, wrap");
+                    popUpPanel.add(new JLabel("Normalize by max. population?"));
+                    popUpPanel.add(chk_populationDistanceModelNormalizePopulation, "align center, wrap");
+                    popUpPanel.add(new JLabel("Normalize by max. distance?"));
+                    popUpPanel.add(chk_populationDistanceModelNormalizeDistance, "align center, wrap");
+
+                    final int result = JOptionPane.showConfirmDialog(NetPlanViewTableComponent_trafficMatrix.this, popUpPanel, "Model parameters", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                    if (result != JOptionPane.OK_OPTION)
+                        return null;
+                }
+
                 default:
                     throw new RuntimeException("Bad");
             }
         }
     }
-
-    ;
 
     private class ApplyTrafficNormalizationsAndAdjustments
     {
@@ -623,8 +685,10 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     node2IndexInFilteredListMap.put(filteredNodes.get(cont), cont);
                 final List<Demand> filteredDemandList = new ArrayList<>(filteredDemands);
                 final List<Double> demandOfferedTrafficsList = new ArrayList<>(filteredDemands.size());
+
                 for (Demand d : filteredDemandList)
                     demandOfferedTrafficsList.add(newTraffic2D.get(node2IndexInFilteredListMap.get(d.getIngressNode()), node2IndexInFilteredListMap.get(d.getEgressNode())));
+
                 if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
                 {
                     final WhatIfAnalysisPane whatIfPane = networkViewer.getWhatIfAnalysisPane();
@@ -641,6 +705,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     networkViewer.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
                     networkViewer.addNetPlanChange();
                 }
+
             } catch (Net2PlanException ee)
             {
                 ErrorHandling.showErrorDialog(ee.getMessage(), "Error");
