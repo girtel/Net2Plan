@@ -60,8 +60,8 @@ public class TrafficTableFilterTest
         assertThat(table.getValueAt(0, 0)).isEqualTo("Node 0");
         assertThat(table.getValueAt(1, 0)).isNotEqualTo("Node 1");
 
-        assertThat(table.getColumnName(1)).isEqualToIgnoringCase("Node 0");
-        assertThat(table.getColumnName(1)).isNotEqualToIgnoringCase("Node 1");
+        assertThat(table.getColumnName(1)).isEqualTo("Node 0");
+        assertThat(table.getColumnName(1)).isNotEqualTo("Node 1");
     }
 
     @Test
@@ -105,9 +105,11 @@ public class TrafficTableFilterTest
         // Content
         assertThat(table.getValueAt(0, 0)).isEqualTo("Node 0");
         assertThat(table.getValueAt(1, 0)).isEqualTo("Node 1");
+        assertThat(table.getValueAt(2, 0)).isNotEqualTo("Node 2");
 
         assertThat(table.getColumnName(1)).isEqualTo("Node 0");
         assertThat(table.getColumnName(2)).isEqualTo("Node 1");
+        assertThat(table.getColumnName(3)).isNotEqualTo("Node 2");
     }
 
     @Test
