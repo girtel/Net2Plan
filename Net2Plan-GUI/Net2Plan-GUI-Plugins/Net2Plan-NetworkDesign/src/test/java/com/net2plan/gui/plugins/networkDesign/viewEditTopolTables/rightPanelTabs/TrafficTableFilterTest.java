@@ -3,7 +3,6 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTab
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -30,18 +29,14 @@ public class TrafficTableFilterTest
 
     private static final String tag = "Test1";
 
-    @BeforeClass
-    public static void prepareTopology()
+    @Before
+    public void setUp()
     {
         netPlan = new NetPlan();
 
         netPlan.addNode(0, 0, "Node 0", null);
         netPlan.addNode(0, 0, "Node 1", null);
-    }
 
-    @Before
-    public void setUp()
-    {
         // Mock
         when(callback.getDesign()).thenReturn(netPlan);
 
@@ -90,5 +85,55 @@ public class TrafficTableFilterTest
             for (int j = 1; j < table.getColumnCount() - 1; j++)
                 if (i == 2 && j == 2) continue;
                 else assertThat(table.getValueAt(i, j)).isEqualTo(0d);
+    }
+
+    @Test
+    public void filterLinklessNodesTest()
+    {
+        netPlan.addNode(0, 0, "Node 2", null);
+
+        netPlan.addLink(netPlan.getNodeByName("Node 0"), netPlan.getNodeByName("Node 1"), 10, 10, 10, null);
+
+        component.filterLinklessNodes(true);
+
+        final JTable table = component.getTable();
+
+        // Size
+        assertThat(table.getRowCount()).isEqualTo(3);
+        assertThat(table.getColumnCount()).isEqualTo(4);
+
+        // Content
+        assertThat(table.getValueAt(0, 0)).isEqualTo("Node 0");
+        assertThat(table.getValueAt(1, 0)).isEqualTo("Node 1");
+
+        assertThat(table.getColumnName(1)).isEqualTo("Node 0");
+        assertThat(table.getColumnName(2)).isEqualTo("Node 1");
+    }
+
+    @Test
+    public void showLinklessNodeTest()
+    {
+        netPlan.addNode(0, 0, "Node 2", null);
+
+        netPlan.addLink(netPlan.getNodeByName("Node 0"), netPlan.getNodeByName("Node 1"), 10, 10, 10, null);
+
+        component.filterLinklessNodes(true);
+
+        final JTable table = component.getTable();
+
+        component.filterLinklessNodes(false);
+
+        // Size
+        assertThat(table.getRowCount()).isEqualTo(4);
+        assertThat(table.getColumnCount()).isEqualTo(5);
+
+        // Content
+        assertThat(table.getValueAt(0, 0)).isEqualTo("Node 0");
+        assertThat(table.getValueAt(1, 0)).isEqualTo("Node 1");
+        assertThat(table.getValueAt(2, 0)).isEqualTo("Node 2");
+
+        assertThat(table.getColumnName(1)).isEqualTo("Node 0");
+        assertThat(table.getColumnName(2)).isEqualTo("Node 1");
+        assertThat(table.getColumnName(3)).isEqualTo("Node 2");
     }
 }

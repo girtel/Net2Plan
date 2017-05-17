@@ -58,7 +58,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
     private final JTable trafficMatrixTable;
 
-    private final JCheckBox filterOutNodesNotConnectedThisLayer;
+    private final JCheckBox cb_filterLinklessNodes;
     private final JComboBox<String> cmb_tagNodesSelector;
     private final JComboBox<String> cmb_tagDemandsSelector;
     private final JComboBox<String> cmb_trafficModelPattern;
@@ -129,15 +129,16 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         final JPanel filterPanel = new JPanel(new MigLayout("wrap 2", "[][grow]"));
         filterPanel.setBorder(BorderFactory.createTitledBorder("Filters"));
 
-        this.filterOutNodesNotConnectedThisLayer = new JCheckBox();
+        this.cb_filterLinklessNodes = new JCheckBox();
         filterPanel.add(new JLabel("Filter out linkless nodes at this layer"), "align label");
-        filterPanel.add(filterOutNodesNotConnectedThisLayer);
+        filterPanel.add(cb_filterLinklessNodes);
 
         this.cmb_tagNodesSelector = new WiderJComboBox();
         this.cmb_tagDemandsSelector = new WiderJComboBox();
 
         this.cmb_tagNodesSelector.addItemListener(itemListener);
         this.cmb_tagDemandsSelector.addItemListener(itemListener);
+        this.cb_filterLinklessNodes.addItemListener(itemListener);
 
         filterPanel.add(new JLabel("Consider only demands between nodes tagged by..."), "align label");
         filterPanel.add(cmb_tagNodesSelector, "grow");
@@ -159,6 +160,14 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
     public JTable getTable()
     {
         return trafficMatrixTable;
+    }
+
+    @VisibleForTesting
+    public void filterLinklessNodes(boolean doFilter)
+    {
+        cb_filterLinklessNodes.setSelected(doFilter);
+
+        updateTable();
     }
 
     @VisibleForTesting
@@ -191,26 +200,33 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
     {
         final NetPlan np = networkViewer.getDesign();
         final List<Node> filteredNodes = new ArrayList<>(np.getNumberOfNodes());
-        final String filteringNodeTag = this.cmb_tagNodesSelector.getSelectedIndex() == 0 ? null : (String) this.cmb_tagNodesSelector.getSelectedItem();
-        final String filteringDemandTag = this.cmb_tagDemandsSelector.getSelectedIndex() == 0 ? null : (String) this.cmb_tagDemandsSelector.getSelectedItem();
+
+        final String filteringNodeTag = this.cmb_tagNodesSelector.getSelectedItem() == DEFAULT_TAG_FILTER ? null : (String) this.cmb_tagNodesSelector.getSelectedItem();
+        final String filteringDemandTag = this.cmb_tagDemandsSelector.getSelectedItem() == DEFAULT_TAG_FILTER ? null : (String) this.cmb_tagDemandsSelector.getSelectedItem();
+
         for (Node n : np.getNodes())
         {
             if (filteringNodeTag != null)
                 if (!n.hasTag(filteringNodeTag)) continue;
-            if (this.filterOutNodesNotConnectedThisLayer.isSelected())
+            if (this.cb_filterLinklessNodes.isSelected())
                 if (!n.getOutgoingLinksAllLayers().stream().anyMatch(e -> e.getLayer().isDefaultLayer())
                         && (!n.getIncomingLinksAllLayers().stream().anyMatch(e -> e.getLayer().isDefaultLayer())))
                     continue;
             filteredNodes.add(n);
         }
+
         Set<Demand> filteredDemands;
-        if (filteringDemandTag == null) filteredDemands = new HashSet<>(np.getDemands());
-        else
+
+        if (filteringDemandTag == null)
+        {
+            filteredDemands = new HashSet<>(np.getDemands());
+        } else
         {
             filteredDemands = new HashSet<>();
             for (Demand d : np.getDemands())
                 if (d.hasTag(filteringDemandTag)) filteredDemands.add(d);
         }
+
         return Pair.of(filteredNodes, filteredDemands);
     }
 
