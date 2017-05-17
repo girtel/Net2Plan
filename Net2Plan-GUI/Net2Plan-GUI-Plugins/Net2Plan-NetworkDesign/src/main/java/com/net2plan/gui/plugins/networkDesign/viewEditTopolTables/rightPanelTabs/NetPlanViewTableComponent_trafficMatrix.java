@@ -156,9 +156,35 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
     }
 
     @VisibleForTesting
-    JTable getTable()
+    public JTable getTable()
     {
         return trafficMatrixTable;
+    }
+
+    @VisibleForTesting
+    public void filterByNodeTag(String tag)
+    {
+        if (tag == null) return;
+
+        updateComboBox();
+
+        this.cmb_tagNodesSelector.setSelectedItem(tag);
+        if (cmb_tagNodesSelector.getSelectedItem() != tag) return;
+
+        updateTable();
+    }
+
+    @VisibleForTesting
+    public void filterByDemandTag(String tag)
+    {
+        if (tag == null) return;
+
+        updateComboBox();
+
+        this.cmb_tagDemandsSelector.setSelectedItem(tag);
+        if (cmb_tagDemandsSelector.getSelectedItem() != tag) return;
+
+        updateTable();
     }
 
     private Pair<List<Node>, Set<Demand>> computeFilteringNodesAndDemands()
@@ -188,16 +214,15 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         return Pair.of(filteredNodes, filteredDemands);
     }
 
-    private void updateTable()
-    {
-        this.trafficMatrixTable.setModel(createTrafficMatrix());
-    }
-
     public void updateNetPlanView()
     {
-        final NetPlan np = networkViewer.getDesign();
         updateTable();
+        updateComboBox();
+    }
 
+    private void updateComboBox()
+    {
+        final NetPlan np = networkViewer.getDesign();
         itemListener.setEnabled(false);
 
         cmb_tagNodesSelector.removeAllItems();
@@ -213,6 +238,12 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         for (String tag : allTagsDemandsOrdered) this.cmb_tagDemandsSelector.addItem(tag);
 
         itemListener.setEnabled(true);
+    }
+
+
+    private void updateTable()
+    {
+        this.trafficMatrixTable.setModel(createTrafficMatrix());
     }
 
     private DefaultTableModel createTrafficMatrix()
