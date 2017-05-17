@@ -634,13 +634,23 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                                 res.set(n1, n2, ((Double) trafficMatrixTable.getValueAt(n1, n2 + 1)) * constantValue / currentTotalTraffic);
                     return res;
                 }
+
+                case OPTIONINDEX_NORMALIZATION_RANDOMVARIATION:
+                    return null;
+
+                case OPTIONINDEX_NORMALIZATION_PERNODETRAFIN:
+                    return null;
+
+                case OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT:
+                    return null;
+
+                case OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION:
+                    return null;
                 default:
                     throw new RuntimeException("Bad");
             }
         }
     }
-
-    ;
 
     private class CommonActionPerformListenerModelAndNormalization implements ActionListener
     {
