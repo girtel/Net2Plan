@@ -774,6 +774,9 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                 if (newTraffic2D == null) return;
 
+                final int result = JOptionPane.showConfirmDialog(NetPlanViewTableComponent_trafficMatrix.this, "Overwrite current matrix?", "", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (result != JOptionPane.OK_OPTION) return;
+
                 final Map<Node, Integer> node2IndexInFilteredListMap = new HashMap<>();
                 for (int cont = 0; cont < filteredNodes.size(); cont++)
                     node2IndexInFilteredListMap.put(filteredNodes.get(cont), cont);
