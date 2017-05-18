@@ -728,7 +728,7 @@ public class Link extends NetworkElement
 		{
 			if (check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != 0)
 			{
-				if ((cache_occupiedCapacity / check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) throw new RuntimeException();
+				if ((cache_occupiedCapacity / check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > (1 + 1E-3)) throw new RuntimeException();
 			} else
 			{
 				if (cache_occupiedCapacity > 1E-3 || cache_occupiedCapacity < -1E-3) throw new RuntimeException();
