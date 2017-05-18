@@ -11,7 +11,8 @@ import org.junit.Test;
 import javax.swing.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jorge San Emeterio
@@ -39,12 +40,12 @@ public class TrafficTableTest
         final Node node1 = netPlan.addNode(0, 0, "Node 1", null);
         final Node node2 = netPlan.addNode(0, 0, "Node 2", null);
 
-        netPlan.addDemand(node0, node1, 10, null);
-        netPlan.addDemand(node0, node1, 10, null);
-        netPlan.addDemand(node1, node0, 10, null);
-        netPlan.addDemand(node0, node2, 10, null);
+        netPlan.addDemand(node0, node1, 1, null);
+        netPlan.addDemand(node0, node1, 2, null);
+        netPlan.addDemand(node1, node0, 3, null);
+        netPlan.addDemand(node0, node2, 4, null);
 
-        exampleDemand = netPlan.addDemand(node1, node2, 10, null);
+        exampleDemand = netPlan.addDemand(node1, node2, 5, null);
 
         // Mock
         when(callback.getDesign()).thenReturn(netPlan);
@@ -102,5 +103,34 @@ public class TrafficTableTest
         trafficTable.setValueAt(offeredTraffic, 1, 3);
 
         assertThat(exampleDemand.getOfferedTraffic()).isEqualTo(offeredTraffic);
+    }
+
+    @Test
+    public void getTrafficMatrixTest()
+    {
+        final double[][] trafficMatrix = component.getTrafficMatrix();
+
+        // Is square
+        for (int i = 0; i < trafficMatrix.length; i++)
+            assertThat(trafficMatrix[i].length).isEqualTo(trafficMatrix.length);
+
+        // Size
+        assertThat(trafficMatrix.length).isEqualTo(netPlan.getNumberOfNodes());
+
+        // Content
+        for (int i = 0; i < trafficMatrix.length; i++)
+        {
+            for (int j = 0; j < trafficMatrix[i].length; j++)
+            {
+                assertThat(trafficMatrix[i][j]).isInstanceOf(Double.class);
+
+                final double offTraffic = netPlan.getNodePairDemands(netPlan.getNode(i), netPlan.getNode(j), false)
+                        .stream()
+                        .mapToDouble(e -> e.getOfferedTraffic())
+                        .sum();
+
+                assertThat(trafficMatrix[i][j]).isEqualTo(offTraffic);
+            }
+        }
     }
 }

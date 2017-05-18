@@ -165,6 +165,20 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         return trafficMatrixTable;
     }
 
+    public double[][] getTrafficMatrix()
+    {
+        TableModel dtm = trafficMatrixTable.getModel();
+        int nRow = dtm.getRowCount();
+        int nCol = dtm.getColumnCount();
+
+        double[][] tableData = new double[nRow - 1][nCol - 2];
+        for (int i = 0; i < nRow - 1; i++)
+            for (int j = 1; j < nCol - 1; j++)
+                tableData[i][j - 1] = (double) dtm.getValueAt(i, j);
+
+        return tableData;
+    }
+
     public void filterLinklessNodes(boolean doFilter)
     {
         cb_filterLinklessNodes.setSelected(doFilter);
@@ -734,6 +748,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                         @Override
                         public boolean isCellEditable(int row, int col)
                         {
+                            if (col == 0) return false;
                             return true;
                         }
 
@@ -757,13 +772,14 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                         }
                     };
 
-                    Object[][] data = new Object[N][1];
+                    String[] header = new String[]{"Node name", isOutTraffic ? "Total ingress traffic per node" : "Total egress traffic per node"};
+
+                    Object[][] data = new Object[N][header.length];
                     for (int n = 0; n < N; n++)
                     {
-                        data[n][0] = 0.0;
+                        data[n][0] = filteredNodes.get(n);
+                        data[n][1] = 0.0;
                     }
-
-                    String[] header = new String[]{isOutTraffic ? "Total ingress traffic per node" : "Total egress traffic per node"};
                     model.setDataVector(data, header);
 
                     JTable table = new AdvancedJTable(model);
@@ -775,27 +791,15 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     if (result != JOptionPane.OK_OPTION) return null;
 
                     double[] newValue = new double[N];
-                    for (int n = 0; n < N; n++) newValue[n] = (Double) model.getValueAt(n, 0);
+                    for (int n = 0; n < N; n++) newValue[n] = (Double) model.getValueAt(n, 1);
+
+                    // Get traffic data
+                    final double[][] trafficMatrix = getTrafficMatrix();
 
                     if (isOutTraffic)
-                    {
-                        // Get traffic data
-                        TableModel dtm = table.getModel();
-                        int nRow = dtm.getRowCount() - 1;
-                        int nCol = dtm.getColumnCount() - 1;
-
-                        double[][] tableData = new double[nRow][nCol];
-                        for (int i = 0; i < nRow; i++)
-                            for (int j = 1; j < nCol; j++)
-                                tableData[i][j] = (double) dtm.getValueAt(i, j);
-
-                        return TrafficMatrixGenerationModels.normalizationPattern_outgoingTraffic(DoubleFactory2D.dense.make(tableData), newValue);
-                    } else
-                    {
-
-                    }
-
-                    return null;
+                        return TrafficMatrixGenerationModels.normalizationPattern_outgoingTraffic(DoubleFactory2D.dense.make(trafficMatrix), newValue);
+                    else
+                        return TrafficMatrixGenerationModels.normalizationPattern_incomingTraffic(DoubleFactory2D.dense.make(trafficMatrix), newValue);
 
                 case OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION: // Maximum traffic that can be carried
                     return null;
@@ -877,7 +881,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 ErrorHandling.showErrorDialog(ee.getMessage(), "Error");
             } catch (Throwable eee)
             {
-                throw new Net2PlanException("Impossible to complete this action");
+                throw new Net2PlanException("Impossible to complete this action: " + eee.getMessage());
             }
         }
     }
