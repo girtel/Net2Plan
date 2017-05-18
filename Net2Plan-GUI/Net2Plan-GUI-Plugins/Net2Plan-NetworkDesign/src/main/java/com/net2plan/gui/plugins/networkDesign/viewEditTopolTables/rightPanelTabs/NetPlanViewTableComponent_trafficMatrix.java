@@ -7,6 +7,7 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
 import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -863,8 +864,47 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 }
 
                 case OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION: // Maximum traffic that can be carried
+                {
+                    final NetPlan netPlan = networkViewer.getDesign();
 
-                    return null;
+                    String[] options = new String[]
+                            {
+                                    "Upper bound", "Exact (using JOM)"
+                            };
+
+                    String instructions = "<html><body>These methods multiply the reference matrix by a factor <i>alpha</i>, "
+                            + "so that the resulting matrix represents the maximum traffic matrix that can be carried "
+                            + "by the network. Two methods are available:<ul>"
+                            + "<li>Estimated: A method is used that produces a traffic matrix that is equal or larger than the maximum possible matrix.</li>"
+                            + "<li>Exact (JOM is used, may take a while): Finds the normalized matrix solving a formulation.</li>"
+                            + "</ul></body></html>";
+
+                    int out = JOptionPane.showOptionDialog(null, instructions, "Select a computation method",
+                            JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+
+                    if (out < 0 && out > options.length)
+                        return null;
+
+                    DoubleMatrix1D h_d;
+                    switch (out)
+                    {
+                        case 0:
+                            h_d = TrafficMatrixGenerationModels.normalizeTraffic_networkCapacity(netPlan); // hops and km are the same
+                            break;
+
+                        case 1:
+                            String solverName = Configuration.getOption("defaultILPSolver");
+                            String solverLibraryName = Configuration.getDefaultSolverLibraryName(solverName);
+                            h_d = TrafficMatrixGenerationModels.normalizeTraffic_linkCapacity_xde(netPlan, solverName, solverLibraryName);
+                            break;
+
+                        default:
+                            throw new RuntimeException("Bad");
+                    }
+
+                    netPlan.setVectorDemandOfferedTraffic(h_d);
+                    return netPlan.getMatrixNode2NodeOfferedTraffic();
+                }
                 default:
                     throw new RuntimeException("Bad");
             }
