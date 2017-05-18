@@ -154,6 +154,17 @@ public class Link extends NetworkElement
 		return true;
 	}
 	
+	
+	/** Returns the set of demands in this layer, with non zero forwarding rules defined for them in this link. 
+	 * The link may or may not carry traffic, and may be or not be failed.
+	 * @return see above
+	 */
+	public Set<Demand> getDemandsWithNonZeroForwardingRules ()
+	{
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		return this.cacheHbH_frs.keySet().stream().filter(d->cacheHbH_frs.get(d) != 0).collect(Collectors.toSet());
+	}
+
 	/**
 	 * <p>Returns the link origin node.</p>
 	 * @return The origin node
@@ -717,7 +728,7 @@ public class Link extends NetworkElement
 		{
 			if (check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != 0)
 			{
-				if ((cache_occupiedCapacity / check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) throw new RuntimeException();
+				if ((cache_occupiedCapacity / check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > (1 + 1E-3)) throw new RuntimeException();
 			} else
 			{
 				if (cache_occupiedCapacity > 1E-3 || cache_occupiedCapacity < -1E-3) throw new RuntimeException();
@@ -757,6 +768,24 @@ public class Link extends NetworkElement
 		}
 	}
 
+	/** Returns the set of demands that could potentially put traffic in this link, 
+	 *  according to the routes/forwarding rules defined. 
+	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
+	 *  are considered even if the carry zero traffic, 
+	 * (ii) in hop-by-hop routing the demands with zero offered traffic are also included. 
+	 * All the links are considered primary.
+	 * The method returns  three set: (i) demands putting traffic in primary routes (or hop-by-hop routing), 
+	 * (ii) in source routing, demands with backup routes traversing this link, (iii) multicast demands 
+	 * with trees traversing this link
+	 * @return see above
+	 */
+	public Triple<Set<Demand>,Set<Demand>,Set<MulticastDemand>> getDemandsPotentiallyTraversingThisLink ()
+	{
+		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res = 
+				getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
+		return Triple.of(new HashSet<> (res.getFirst().keySet()), new HashSet<> (res.getSecond().keySet()), res.getThird().keySet().stream().map(p->p.getFirst()).collect(Collectors.toSet()));
+	}
+	
 	/** Returns the set of links in this layer (including this) that carry the traffic that traverses this link, before and after traversing it,
 	 *  according to the routes/forwarding rules defined. 
 	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
