@@ -133,7 +133,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         filterPanel.setBorder(BorderFactory.createTitledBorder("Filters"));
 
         this.cb_filterLinklessNodes = new JCheckBox();
-        filterPanel.add(new JLabel("Filter out linkless nodes at this layer"), "align label");
+        filterPanel.add(new JLabel("Filter out nodes without links at this layer"), "align label");
         filterPanel.add(cb_filterLinklessNodes);
 
         this.cmb_tagNodesSelector = new WiderJComboBox();
@@ -559,6 +559,12 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     final int result = JOptionPane.showConfirmDialog(NetPlanViewTableComponent_trafficMatrix.this, popUpPanel, "Model parameters", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
                     if (result != JOptionPane.OK_OPTION)
                         return null;
+
+                    // Level matrix: levelMatrix 1x1 : 1
+                    // Level vector: as many 1 as nodes.
+                    // Distance matrix: same as traffic but with distance.
+                    // Population vector: each node population.
+                    TrafficMatrixGenerationModels.populationDistanceModel()
                 }
 
                 default:
@@ -635,16 +641,16 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     return res;
                 }
 
-                case OPTIONINDEX_NORMALIZATION_RANDOMVARIATION:
+                case OPTIONINDEX_NORMALIZATION_RANDOMVARIATION: // Uniform/Gaussian random normalization
                     return null;
 
-                case OPTIONINDEX_NORMALIZATION_PERNODETRAFIN:
+                case OPTIONINDEX_NORMALIZATION_PERNODETRAFIN: // Column normalization
                     return null;
 
-                case OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT:
+                case OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT: // Row normalization
                     return null;
 
-                case OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION:
+                case OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION: // Maximum traffic that can be carried
                     return null;
                 default:
                     throw new RuntimeException("Bad");
