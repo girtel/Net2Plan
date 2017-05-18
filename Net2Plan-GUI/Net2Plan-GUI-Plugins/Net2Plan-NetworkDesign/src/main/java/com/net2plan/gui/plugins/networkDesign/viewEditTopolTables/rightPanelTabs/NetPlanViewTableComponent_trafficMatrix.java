@@ -735,10 +735,70 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 }
 
                 case OPTIONINDEX_NORMALIZATION_RANDOMVARIATION: // Uniform/Gaussian random normalization
-                    return null;
+                {
+                    double cv;
+                    double maxRelativeVariation;
+
+                    JTextField txt_cv = new JTextField("0.1", 5);
+                    JTextField txt_maxRelativeVariation = new JTextField("0.2", 5);
+
+                    JRadioButton rb_uniform = new JRadioButton("Uniform normalization");
+                    JRadioButton rb_gaussian = new JRadioButton("Gaussian normalization");
+
+                    ButtonGroup radioGroup = new ButtonGroup();
+                    radioGroup.add(rb_uniform);
+                    radioGroup.add(rb_gaussian);
+
+                    rb_uniform.setSelected(true);
+
+                    JPanel pane = new JPanel(new MigLayout("fill, wrap 1"));
+
+                    pane.add(new JLabel("Coefficient of variation (quotient between standard deviation and mean value):"), "align label");
+                    pane.add(txt_cv, "grow");
+                    pane.add(new JLabel("Maximum relative variation (i.e. 0.5 means a maximum relative deviation from seminal value equal 50%):"), "align label");
+                    pane.add(txt_maxRelativeVariation, "grow");
+
+                    pane.add(new JLabel("Random type: "));
+                    pane.add(rb_uniform);
+                    pane.add(rb_gaussian);
+
+                    while (true)
+                    {
+                        int result = JOptionPane.showConfirmDialog(NetPlanViewTableComponent_trafficMatrix.this, pane, "Please define the following data", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return null;
+
+                        try
+                        {
+                            cv = Double.parseDouble(txt_cv.getText());
+                            maxRelativeVariation = Double.parseDouble(txt_maxRelativeVariation.getText());
+
+                            if (cv <= 0)
+                                throw new Net2PlanException("Coefficient of variation must be greater than zero");
+                            if (maxRelativeVariation <= 0)
+                                throw new Net2PlanException("Maximum relative variation must be greater than zero");
+
+                            break;
+                        } catch (NumberFormatException | Net2PlanException ex)
+                        {
+                            if (ErrorHandling.isDebugEnabled())
+                                ErrorHandling.addErrorOrException(ex);
+                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error generating new matrices");
+                        }
+                    }
+
+                    final DoubleMatrix2D trafficMatrix = DoubleFactory2D.dense.make(getTrafficMatrix());
+
+                    if (rb_uniform.isSelected())
+                        return TrafficMatrixGenerationModels.computeMatricesRandomUniformVariation(trafficMatrix, maxRelativeVariation, 1).get(0);
+                    else if (rb_gaussian.isSelected())
+                        return TrafficMatrixGenerationModels.computeMatricesRandomGaussianVariation(trafficMatrix, cv, maxRelativeVariation, 1).get(0);
+                    else
+                        return null;
+                }
 
                 case OPTIONINDEX_NORMALIZATION_PERNODETRAFIN: // Column normalization
                 case OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT: // Row normalization
+                {
                     boolean isOutTraffic = selectedOptionIndex == OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT;
 
                     DefaultTableModel model = new ClassAwareTableModel()
@@ -800,8 +860,10 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                         return TrafficMatrixGenerationModels.normalizationPattern_outgoingTraffic(DoubleFactory2D.dense.make(trafficMatrix), newValue);
                     else
                         return TrafficMatrixGenerationModels.normalizationPattern_incomingTraffic(DoubleFactory2D.dense.make(trafficMatrix), newValue);
+                }
 
                 case OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION: // Maximum traffic that can be carried
+
                     return null;
                 default:
                     throw new RuntimeException("Bad");
