@@ -396,11 +396,9 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
     private class ApplyTrafficModels
     {
         private final List<Node> filteredNodes;
-        private final Set<Demand> filteredDemands;
 
-        ApplyTrafficModels(List<Node> filteredNodes, Set<Demand> filteredDemands)
+        ApplyTrafficModels(List<Node> filteredNodes)
         {
-            this.filteredDemands = filteredDemands;
             this.filteredNodes = filteredNodes;
         }
 
@@ -411,6 +409,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 ErrorHandling.showWarningDialog("Please, select a traffic model", "Error applying traffic model");
                 return null;
             }
+
+            final NetPlan netPlan = networkViewer.getDesign();
 
             final int N = filteredNodes.size();
             switch (selectedOptionIndex)
@@ -564,7 +564,85 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     // Level vector: as many 1 as nodes.
                     // Distance matrix: same as traffic but with distance.
                     // Population vector: each node population.
-                    TrafficMatrixGenerationModels.populationDistanceModel()
+
+                    try
+                    {
+                        double randomFactor;
+                        try
+                        {
+                            randomFactor = Double.parseDouble(txt_randomFactor.getText());
+                            if ((randomFactor > 1) || (randomFactor < 0)) throw new Exception();
+                        } catch (Throwable e1)
+                        {
+                            throw new IllegalArgumentException("Random factor should be a number between 0 and 1 (both included)");
+                        }
+
+                        double distanceOffset;
+                        try
+                        {
+                            distanceOffset = Double.parseDouble(txt_distanceOffset.getText());
+                            if (distanceOffset < 0) throw new Exception();
+                        } catch (Throwable e1)
+                        {
+                            throw new IllegalArgumentException("Distance offset should be a non-negative number");
+                        }
+
+                        double distancePower;
+                        try
+                        {
+                            distancePower = Double.parseDouble(txt_distancePower.getText());
+                        } catch (Throwable e1)
+                        {
+                            throw new IllegalArgumentException("Distance power is not a valid number");
+                        }
+
+                        double populationOffset;
+                        try
+                        {
+                            populationOffset = Double.parseDouble(txt_populationOffset.getText());
+                            if (populationOffset < 0) throw new Exception();
+                        } catch (Throwable e1)
+                        {
+                            throw new IllegalArgumentException("Population offset should be a non-negative number");
+                        }
+
+                        double populationPower;
+                        try
+                        {
+                            populationPower = Double.parseDouble(txt_populationPower.getText());
+                        } catch (Throwable e1)
+                        {
+                            throw new IllegalArgumentException("Population power is not a valid number");
+                        }
+
+                        DoubleMatrix2D levelMatrix = DoubleFactory2D.dense.make(1, 1);
+                        levelMatrix.set(0, 0, 1);
+
+                        int[] levelVector = new int[N];
+                        Arrays.fill(levelVector, 1);
+
+                        double[] populationVector = new double[N];
+                        for (int i = 0; i < populationVector.length; i++)
+                            populationVector[i] = filteredNodes.get(i).getPopulation();
+
+
+                        DoubleMatrix2D distanceMatrix = DoubleFactory2D.dense.make(N, N);
+                        for (int i = 0; i < filteredNodes.size(); i++)
+                        {
+                            for (int j = 0; j < filteredNodes.size(); j++)
+                            {
+                                final double distance = euclideanDistance.isSelected() ? netPlan.getNodePairEuclideanDistance(filteredNodes.get(i), filteredNodes.get(j)) : netPlan.getNodePairHaversineDistanceInKm(filteredNodes.get(i), filteredNodes.get(j));
+                                distanceMatrix.set(i, j, distance);
+                            }
+                        }
+
+                        return TrafficMatrixGenerationModels.populationDistanceModel(distanceMatrix, populationVector, levelVector, levelMatrix
+                                , randomFactor, populationOffset, populationPower, distanceOffset, distancePower
+                                , chk_populationDistanceModelNormalizePopulation.isSelected(), chk_populationDistanceModelNormalizeDistance.isSelected());
+                    } catch (Throwable ex)
+                    {
+                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error applying population-distance model");
+                    }
                 }
 
                 default:
@@ -689,7 +767,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 DoubleMatrix2D newTraffic2D = null;
 
                 if (e.getSource() == applyTrafficModelButton)
-                    newTraffic2D = new ApplyTrafficModels(filteredNodes, filteredDemands).applyOption(cmb_trafficModelPattern.getSelectedIndex());
+                    newTraffic2D = new ApplyTrafficModels(filteredNodes).applyOption(cmb_trafficModelPattern.getSelectedIndex());
                 else if (e.getSource() == applyTrafficNormalizationButton)
                     newTraffic2D = new ApplyTrafficNormalizationsAndAdjustments(filteredNodes, filteredDemands).applyOption(cmb_trafficNormalization.getSelectedIndex());
                 else throw new RuntimeException();
