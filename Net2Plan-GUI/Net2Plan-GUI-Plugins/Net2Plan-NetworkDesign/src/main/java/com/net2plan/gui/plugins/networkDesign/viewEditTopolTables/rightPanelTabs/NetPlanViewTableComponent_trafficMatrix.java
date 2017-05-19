@@ -542,11 +542,17 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             if (row == gravityModelTable.getRowCount() - 1)
                             {
                                 c.setBackground(new Color(200, 200, 200));
-                                c.setForeground(gravityModelTable.getForeground());
+                                c.setForeground(Color.BLACK);
                             } else
                             {
                                 c.setBackground(gravityModelTable.getBackground());
                                 c.setForeground(gravityModelTable.getForeground());
+                            }
+
+                            if (column == 0)
+                            {
+                                c.setBackground(new Color(200, 200, 200));
+                                c.setForeground(Color.BLACK);
                             }
 
                             return c;
