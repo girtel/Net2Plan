@@ -443,9 +443,9 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
             {
                 case OPTIONINDEX_TRAFFICMODEL_CONSTANT:
                     final JTextField txt_constantValue = new JTextField(5);
-                    final JPanel pane = new JPanel(new GridLayout(0, 2));
-                    pane.add(new JLabel("Traffic per cell: "));
-                    pane.add(txt_constantValue);
+                    final JPanel pane = new JPanel(new MigLayout("fill"));
+                    pane.add(new JLabel("Traffic per cell: "), "align label");
+                    pane.add(txt_constantValue, "grow, wrap");
                     while (true)
                     {
                         int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the traffic per cell", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
