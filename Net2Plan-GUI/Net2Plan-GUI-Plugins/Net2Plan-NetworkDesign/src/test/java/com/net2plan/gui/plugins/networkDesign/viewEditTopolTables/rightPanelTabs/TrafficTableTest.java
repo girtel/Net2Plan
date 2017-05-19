@@ -5,7 +5,7 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -30,8 +30,8 @@ public class TrafficTableTest
 
     private static Demand exampleDemand;
 
-    @BeforeClass
-    public static void setUp()
+    @Before
+    public void setUp()
     {
         // NetPlan
         netPlan = new NetPlan();
@@ -103,34 +103,5 @@ public class TrafficTableTest
         trafficTable.setValueAt(offeredTraffic, 1, 3);
 
         assertThat(exampleDemand.getOfferedTraffic()).isEqualTo(offeredTraffic);
-    }
-
-    @Test
-    public void getTrafficMatrixTest()
-    {
-        final double[][] trafficMatrix = component.getTrafficMatrix();
-
-        // Is square
-        for (int i = 0; i < trafficMatrix.length; i++)
-            assertThat(trafficMatrix[i].length).isEqualTo(trafficMatrix.length);
-
-        // Size
-        assertThat(trafficMatrix.length).isEqualTo(netPlan.getNumberOfNodes());
-
-        // Content
-        for (int i = 0; i < trafficMatrix.length; i++)
-        {
-            for (int j = 0; j < trafficMatrix[i].length; j++)
-            {
-                assertThat(trafficMatrix[i][j]).isInstanceOf(Double.class);
-
-                final double offTraffic = netPlan.getNodePairDemands(netPlan.getNode(i), netPlan.getNode(j), false)
-                        .stream()
-                        .mapToDouble(e -> e.getOfferedTraffic())
-                        .sum();
-
-                assertThat(trafficMatrix[i][j]).isEqualTo(offTraffic);
-            }
-        }
     }
 }

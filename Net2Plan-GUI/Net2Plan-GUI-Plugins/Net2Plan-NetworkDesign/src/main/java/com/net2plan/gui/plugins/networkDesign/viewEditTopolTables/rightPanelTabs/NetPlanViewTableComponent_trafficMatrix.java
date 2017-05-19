@@ -93,12 +93,14 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
         JPanel pnl_trafficModel = new JPanel();
         pnl_trafficModel.setBorder(BorderFactory.createTitledBorder("Traffic matrix synthesis"));
-        cmb_trafficModelPattern = new WiderJComboBox();
 
         // Will fail if not continuous.
         this.applyTrafficModelButton = new JButton("Apply");
+        this.applyTrafficModelButton.setName("trafficModelApply");
         applyTrafficModelButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
 
+        cmb_trafficModelPattern = new WiderJComboBox();
+        cmb_trafficModelPattern.setName("trafficModelWheel");
         cmb_trafficModelPattern.insertItemAt("Select a method for synthesizing a matrix", 0);
         cmb_trafficModelPattern.insertItemAt("1. Constant", OPTIONINDEX_TRAFFICMODEL_CONSTANT);
         cmb_trafficModelPattern.insertItemAt("2. Uniform (0, 10)", OPTIONINDEX_TRAFFICMODEL_UNIFORM01);
@@ -119,9 +121,11 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         pnl_normalization.setBorder(BorderFactory.createTitledBorder("Traffic normalization and adjustments"));
 
         this.applyTrafficNormalizationButton = new JButton("Apply");
-        applyTrafficNormalizationButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
+        this.applyTrafficNormalizationButton.setName("normalizationApply");
+        this.applyTrafficNormalizationButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
 
         cmb_trafficNormalization = new WiderJComboBox();
+        cmb_trafficNormalization.setName("normalizationWheel");
         cmb_trafficNormalization.insertItemAt("Select a method", 0);
         cmb_trafficNormalization.insertItemAt("1. Make symmetric", OPTIONINDEX_NORMALIZATION_MAKESYMMETRIC);
         cmb_trafficNormalization.insertItemAt("2. Scale by a factor", OPTIONINDEX_NORMALIZATION_SCALE);

@@ -11,7 +11,8 @@ import org.junit.runners.Suite;
 
 @Suite.SuiteClasses({
         TrafficTableTest.class,
-        TrafficTableFilterTest.class
+        TrafficTableFilterTest.class,
+        TrafficTablePanelTest.class
 })
 public class TrafficTableTestSuite
 {
