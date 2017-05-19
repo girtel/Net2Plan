@@ -26,6 +26,7 @@ import net.miginfocom.swing.MigLayout;
 import org.apache.commons.collections15.BidiMap;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -449,10 +450,19 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     {
                         int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the traffic per cell", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                         if (result != JOptionPane.OK_OPTION) return null;
-                        final double constantValue = Double.parseDouble(txt_constantValue.getText());
-                        if (constantValue < 0)
-                            throw new IllegalArgumentException("Constant value must be greater or equal than zero");
-                        return TrafficMatrixGenerationModels.constantTrafficMatrix(N, constantValue);
+                        try
+                        {
+                            final double constantValue = Double.parseDouble(txt_constantValue.getText());
+
+                            if (constantValue < 0)
+                                throw new IllegalArgumentException("Constant value must be greater or equal than zero");
+
+                            return TrafficMatrixGenerationModels.constantTrafficMatrix(N, constantValue);
+                        } catch (NumberFormatException e)
+                        {
+                            ErrorHandling.showWarningDialog("Traffic per cell must be a number.", "Invalid value");
+                            continue;
+                        }
                     }
                 case OPTIONINDEX_TRAFFICMODEL_RESET:
                     return DoubleFactory2D.sparse.make(N, N);
@@ -474,6 +484,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                         @Override
                         public boolean isCellEditable(int row, int col)
                         {
+                            if (col == 0) return false;
+                            if (row == N) return false;
                             return true;
                         }
 
@@ -490,21 +502,56 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                                 ErrorHandling.showErrorDialog("Traffic amount must be greater or equal than zero", "Error introducing traffic amount");
                                 return;
                             }
+
+                            if (row != N)
+                            {
+                                double sum = trafficAmount;
+                                for (int i = 0; i < N; i++)
+                                    if (i != row)
+                                        sum += (Double) this.getValueAt(i, column);
+
+                                this.setValueAt(sum, N, column);
+                            }
+
                             super.setValueAt(newValue, row, column);
                         }
                     };
 
-                    Object[][] gravityModelData = new Object[N][2];
+                    Object[][] gravityModelData = new Object[N + 1][3];
                     for (int n = 0; n < N; n++)
                     {
-                        gravityModelData[n][0] = 0.0;
+                        gravityModelData[n][0] = filteredNodes.get(n);
                         gravityModelData[n][1] = 0.0;
+                        gravityModelData[n][2] = 0.0;
                     }
 
-                    String[] gravityModelHeader = new String[]{"Total ingress traffic per node", "Total egress traffic per node"};
+                    gravityModelData[N][0] = "Total";
+                    gravityModelData[N][1] = 0d;
+                    gravityModelData[N][2] = 0d;
+
+                    String[] gravityModelHeader = new String[]{"Node name", "Total ingress traffic per node", "Total egress traffic per node"};
                     gravityModelTableModel.setDataVector(gravityModelData, gravityModelHeader);
 
                     JTable gravityModelTable = new AdvancedJTable(gravityModelTableModel);
+                    gravityModelTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer()
+                    {
+                        @Override
+                        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+                        {
+                            final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                            if (row == gravityModelTable.getRowCount() - 1)
+                            {
+                                c.setBackground(new Color(200, 200, 200));
+                                c.setForeground(gravityModelTable.getForeground());
+                            } else
+                            {
+                                c.setBackground(gravityModelTable.getBackground());
+                                c.setForeground(gravityModelTable.getForeground());
+                            }
+
+                            return c;
+                        }
+                    });
 
                     JPanel gravityModelPanel = new JPanel();
                     JScrollPane gPane = new JScrollPane(gravityModelTable);
@@ -519,8 +566,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                         for (int n = 0; n < N; n++)
                         {
-                            ingressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 0);
-                            egressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 1);
+                            ingressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 1);
+                            egressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 2);
                         }
                         try
                         {
@@ -992,6 +1039,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 ErrorHandling.showErrorDialog(ee.getMessage(), "Error");
             } catch (Throwable eee)
             {
+                eee.printStackTrace();
                 throw new Net2PlanException("Impossible to complete this action: " + eee.getMessage());
             }
         }
