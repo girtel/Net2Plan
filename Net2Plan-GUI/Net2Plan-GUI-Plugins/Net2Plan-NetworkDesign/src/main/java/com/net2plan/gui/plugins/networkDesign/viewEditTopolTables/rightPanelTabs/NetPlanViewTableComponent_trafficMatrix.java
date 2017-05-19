@@ -96,6 +96,9 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         cmb_trafficModelPattern = new WiderJComboBox();
 
         // Will fail if not continuous.
+        this.applyTrafficModelButton = new JButton("Apply");
+        applyTrafficModelButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
+
         cmb_trafficModelPattern.insertItemAt("Select a method for synthesizing a matrix", 0);
         cmb_trafficModelPattern.insertItemAt("1. Constant", OPTIONINDEX_TRAFFICMODEL_CONSTANT);
         cmb_trafficModelPattern.insertItemAt("2. Uniform (0, 10)", OPTIONINDEX_TRAFFICMODEL_UNIFORM01);
@@ -104,16 +107,20 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         cmb_trafficModelPattern.insertItemAt("5. Gravity model", OPTIONINDEX_TRAFFICMODEL_GRAVITYMODEL);
         cmb_trafficModelPattern.insertItemAt("6. Population-distance model", OPTIONINDEX_TRAFFICMODEL_POPULATIONDISTANCE);
         cmb_trafficModelPattern.insertItemAt("7. Reset", OPTIONINDEX_TRAFFICMODEL_RESET);
+        this.cmb_trafficModelPattern.addItemListener(e -> applyTrafficModelButton.setEnabled(!(cmb_trafficModelPattern.getSelectedIndex() == 0)));
         cmb_trafficModelPattern.setSelectedIndex(0);
+
         pnl_trafficModel.add(cmb_trafficModelPattern);
-        this.applyTrafficModelButton = new JButton("Apply");
-        applyTrafficModelButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
         pnl_trafficModel.setLayout(new MigLayout("insets 0 0 0 0", "[grow][][]", "[grow]"));
         pnl_trafficModel.add(cmb_trafficModelPattern, "grow, wmin 50");
         pnl_trafficModel.add(applyTrafficModelButton);
 
         JPanel pnl_normalization = new JPanel();
         pnl_normalization.setBorder(BorderFactory.createTitledBorder("Traffic normalization and adjustments"));
+
+        this.applyTrafficNormalizationButton = new JButton("Apply");
+        applyTrafficNormalizationButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
+
         cmb_trafficNormalization = new WiderJComboBox();
         cmb_trafficNormalization.insertItemAt("Select a method", 0);
         cmb_trafficNormalization.insertItemAt("1. Make symmetric", OPTIONINDEX_NORMALIZATION_MAKESYMMETRIC);
@@ -123,10 +130,10 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         cmb_trafficNormalization.insertItemAt("5. Normalization: fit to given out traffic per node", OPTIONINDEX_NORMALIZATION_PERNODETRAFOUT);
         cmb_trafficNormalization.insertItemAt("6. Normalization: fit to given in traffic per node", OPTIONINDEX_NORMALIZATION_PERNODETRAFIN);
         cmb_trafficNormalization.insertItemAt("7. Normalization: scale to theoretical maximum traffic", OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION);
+        this.cmb_trafficNormalization.addItemListener(e -> applyTrafficNormalizationButton.setEnabled(!(cmb_trafficNormalization.getSelectedIndex() == 0)));
         cmb_trafficNormalization.setSelectedIndex(0);
+
         pnl_normalization.add(cmb_trafficNormalization);
-        this.applyTrafficNormalizationButton = new JButton("Apply");
-        applyTrafficNormalizationButton.addActionListener(new CommonActionPerformListenerModelAndNormalization());
         pnl_normalization.setLayout(new MigLayout("insets 0 0 0 0", "[grow][][]", "[grow]"));
         pnl_normalization.add(cmb_trafficNormalization, "grow, wmin 50");
         pnl_normalization.add(applyTrafficNormalizationButton);
@@ -144,6 +151,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         this.cmb_tagNodesSelector.addItemListener(itemListener);
         this.cmb_tagDemandsSelector.addItemListener(itemListener);
         this.cb_filterLinklessNodes.addItemListener(itemListener);
+
 
         filterPanel.add(new JLabel("Consider only demands between nodes tagged by..."), "align label");
         filterPanel.add(cmb_tagNodesSelector, "grow");
@@ -421,10 +429,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         DoubleMatrix2D applyOption(int selectedOptionIndex)
         {
             if (selectedOptionIndex == 0)
-            {
-                ErrorHandling.showWarningDialog("Please, select a traffic model", "Error applying traffic model");
                 return null;
-            }
 
             final NetPlan netPlan = networkViewer.getDesign();
 
