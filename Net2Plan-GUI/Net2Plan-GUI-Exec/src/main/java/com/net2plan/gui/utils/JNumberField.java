@@ -43,7 +43,8 @@ public class JNumberField extends JSpinner
             final SpinnerNumberModel model = (SpinnerNumberModel) this.getModel();
 
             double number = Double.parseDouble(value.toString());
-            if (!(model.getMaximum().compareTo(number) <= 0 && model.getMinimum().compareTo(number) >= 0))
+
+            if (!(model.getMaximum().compareTo(number) >= 0 && model.getMinimum().compareTo(number) <= 0))
                 throw new IllegalArgumentException();
         }
 

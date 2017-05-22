@@ -67,6 +67,9 @@ public class JNumberFieldTest
         final JNumberField numberField = new JNumberField();
 
         assertThat(numberField.getModel().getPreviousValue()).isNull();
+
+        numberField.setValue(0d);
+        assertThat(numberField.getValue()).isEqualTo(0d);
     }
 
     @Test
@@ -75,6 +78,9 @@ public class JNumberFieldTest
         final JNumberField numberField = new JNumberField(1d, 0, 1, 0.1);
 
         assertThat(numberField.getModel().getNextValue()).isNull();
+
+        numberField.setValue(1d);
+        assertThat(numberField.getValue()).isEqualTo(1d);
     }
 
     @Test
