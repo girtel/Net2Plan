@@ -443,6 +443,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
             {
                 case OPTIONINDEX_TRAFFICMODEL_CONSTANT:
                     final JTextField txt_constantValue = new JTextField(5);
+                    txt_constantValue.setToolTipText("Number >= 0");
+
                     final JPanel pane = new JPanel(new MigLayout("fill, wrap 2"));
                     pane.add(new JLabel("Traffic per cell: "), "align label");
                     pane.add(txt_constantValue, "growx");
@@ -461,7 +463,6 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                         } catch (NumberFormatException e)
                         {
                             ErrorHandling.showWarningDialog("Traffic per cell must be a number.", "Invalid value");
-                            continue;
                         }
                     }
                 case OPTIONINDEX_TRAFFICMODEL_RESET:
@@ -641,87 +642,91 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                     popUpPanel.add(radioButtonPanel, "growx, spanx 2");
 
-                    final int result = JOptionPane.showConfirmDialog(NetPlanViewTableComponent_trafficMatrix.this, popUpPanel, "Model parameters", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-                    if (result != JOptionPane.OK_OPTION)
-                        return null;
-
-                    try
+                    while (true)
                     {
-                        double randomFactor;
+
+                        final int result = JOptionPane.showConfirmDialog(NetPlanViewTableComponent_trafficMatrix.this, popUpPanel, "Model parameters", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION)
+                            return null;
+
                         try
                         {
-                            randomFactor = Double.parseDouble(txt_randomFactor.getText());
-                            if ((randomFactor > 1) || (randomFactor < 0)) throw new Exception();
-                        } catch (Throwable e1)
-                        {
-                            throw new IllegalArgumentException("Random factor should be a number between 0 and 1 (both included)");
-                        }
-
-                        double distanceOffset;
-                        try
-                        {
-                            distanceOffset = Double.parseDouble(txt_distanceOffset.getText());
-                            if (distanceOffset < 0) throw new Exception();
-                        } catch (Throwable e1)
-                        {
-                            throw new IllegalArgumentException("Distance offset should be a non-negative number");
-                        }
-
-                        double distancePower;
-                        try
-                        {
-                            distancePower = Double.parseDouble(txt_distancePower.getText());
-                        } catch (Throwable e1)
-                        {
-                            throw new IllegalArgumentException("Distance power is not a valid number");
-                        }
-
-                        double populationOffset;
-                        try
-                        {
-                            populationOffset = Double.parseDouble(txt_populationOffset.getText());
-                            if (populationOffset < 0) throw new Exception();
-                        } catch (Throwable e1)
-                        {
-                            throw new IllegalArgumentException("Population offset should be a non-negative number");
-                        }
-
-                        double populationPower;
-                        try
-                        {
-                            populationPower = Double.parseDouble(txt_populationPower.getText());
-                        } catch (Throwable e1)
-                        {
-                            throw new IllegalArgumentException("Population power is not a valid number");
-                        }
-
-                        DoubleMatrix2D levelMatrix = DoubleFactory2D.dense.make(1, 1);
-                        levelMatrix.set(0, 0, 1);
-
-                        int[] levelVector = new int[N];
-                        Arrays.fill(levelVector, 1);
-
-                        double[] populationVector = new double[N];
-                        for (int i = 0; i < populationVector.length; i++)
-                            populationVector[i] = filteredNodes.get(i).getPopulation();
-
-
-                        DoubleMatrix2D distanceMatrix = DoubleFactory2D.dense.make(N, N);
-                        for (int i = 0; i < filteredNodes.size(); i++)
-                        {
-                            for (int j = 0; j < filteredNodes.size(); j++)
+                            double randomFactor;
+                            try
                             {
-                                final double distance = euclideanDistance.isSelected() ? netPlan.getNodePairEuclideanDistance(filteredNodes.get(i), filteredNodes.get(j)) : netPlan.getNodePairHaversineDistanceInKm(filteredNodes.get(i), filteredNodes.get(j));
-                                distanceMatrix.set(i, j, distance);
+                                randomFactor = Double.parseDouble(txt_randomFactor.getText());
+                                if ((randomFactor > 1) || (randomFactor < 0)) throw new Exception();
+                            } catch (Throwable e1)
+                            {
+                                throw new IllegalArgumentException("Random factor should be a number between 0 and 1 (both included)");
                             }
-                        }
 
-                        return TrafficMatrixGenerationModels.populationDistanceModel(distanceMatrix, populationVector, levelVector, levelMatrix
-                                , randomFactor, populationOffset, populationPower, distanceOffset, distancePower
-                                , chk_populationDistanceModelNormalizePopulation.isSelected(), chk_populationDistanceModelNormalizeDistance.isSelected());
-                    } catch (Throwable ex)
-                    {
-                        ErrorHandling.showErrorDialog(ex.getMessage(), "Error applying population-distance model");
+                            double distanceOffset;
+                            try
+                            {
+                                distanceOffset = Double.parseDouble(txt_distanceOffset.getText());
+                                if (distanceOffset < 0) throw new Exception();
+                            } catch (Throwable e1)
+                            {
+                                throw new IllegalArgumentException("Distance offset should be a non-negative number");
+                            }
+
+                            double distancePower;
+                            try
+                            {
+                                distancePower = Double.parseDouble(txt_distancePower.getText());
+                            } catch (Throwable e1)
+                            {
+                                throw new IllegalArgumentException("Distance power is not a valid number");
+                            }
+
+                            double populationOffset;
+                            try
+                            {
+                                populationOffset = Double.parseDouble(txt_populationOffset.getText());
+                                if (populationOffset < 0) throw new Exception();
+                            } catch (Throwable e1)
+                            {
+                                throw new IllegalArgumentException("Population offset should be a non-negative number");
+                            }
+
+                            double populationPower;
+                            try
+                            {
+                                populationPower = Double.parseDouble(txt_populationPower.getText());
+                            } catch (Throwable e1)
+                            {
+                                throw new IllegalArgumentException("Population power is not a valid number");
+                            }
+
+                            DoubleMatrix2D levelMatrix = DoubleFactory2D.dense.make(1, 1);
+                            levelMatrix.set(0, 0, 1);
+
+                            int[] levelVector = new int[N];
+                            Arrays.fill(levelVector, 1);
+
+                            double[] populationVector = new double[N];
+                            for (int i = 0; i < populationVector.length; i++)
+                                populationVector[i] = filteredNodes.get(i).getPopulation();
+
+
+                            DoubleMatrix2D distanceMatrix = DoubleFactory2D.dense.make(N, N);
+                            for (int i = 0; i < filteredNodes.size(); i++)
+                            {
+                                for (int j = 0; j < filteredNodes.size(); j++)
+                                {
+                                    final double distance = euclideanDistance.isSelected() ? netPlan.getNodePairEuclideanDistance(filteredNodes.get(i), filteredNodes.get(j)) : netPlan.getNodePairHaversineDistanceInKm(filteredNodes.get(i), filteredNodes.get(j));
+                                    distanceMatrix.set(i, j, distance);
+                                }
+                            }
+
+                            return TrafficMatrixGenerationModels.populationDistanceModel(distanceMatrix, populationVector, levelVector, levelMatrix
+                                    , randomFactor, populationOffset, populationPower, distanceOffset, distancePower
+                                    , chk_populationDistanceModelNormalizePopulation.isSelected(), chk_populationDistanceModelNormalizeDistance.isSelected());
+                        } catch (Throwable ex)
+                        {
+                            ErrorHandling.showErrorDialog(ex.getMessage(), "Error applying population-distance model");
+                        }
                     }
                 }
 
@@ -754,21 +759,36 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
             {
                 case OPTIONINDEX_NORMALIZATION_SCALE:
                 {
-                    final JTextField txt_scalingValue = new JTextField(10);
-                    final JPanel pane = new JPanel(new GridLayout(0, 2));
-                    pane.add(new JLabel("Multiply cells by factor: "));
-                    pane.add(txt_scalingValue);
-                    final int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the traffic saling factor", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                    if (result != JOptionPane.OK_OPTION) return null;
-                    final double constantValue = Double.parseDouble(txt_scalingValue.getText());
-                    if (constantValue < 0)
-                        throw new IllegalArgumentException("Scaling value must be greater or equal than zero");
-                    final DoubleMatrix2D res = DoubleFactory2D.sparse.make(N, N);
-                    for (int n1 = 0; n1 < N; n1++)
-                        for (int n2 = 0; n2 < N; n2++)
-                            if (n1 != n2)
-                                res.set(n1, n2, ((Double) trafficMatrixTable.getValueAt(n1, n2 + 1)) * constantValue);
-                    return res;
+                    while (true)
+                    {
+                        final JTextField txt_scalingValue = new JTextField(10);
+                        txt_scalingValue.setToolTipText("Number >= 0");
+
+                        final JPanel pane = new JPanel(new MigLayout("fill"));
+                        pane.add(new JLabel("Multiply cells by factor: "), "align label");
+                        pane.add(txt_scalingValue, "growx");
+
+                        final int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the traffic scaling factor", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (result != JOptionPane.OK_OPTION) return null;
+
+                        try
+                        {
+                            final double constantValue = Double.parseDouble(txt_scalingValue.getText());
+                            if (constantValue < 0)
+                                throw new IllegalArgumentException("Scaling value must be greater or equal than zero");
+
+                            final DoubleMatrix2D res = DoubleFactory2D.sparse.make(N, N);
+                            for (int n1 = 0; n1 < N; n1++)
+                                for (int n2 = 0; n2 < N; n2++)
+                                    if (n1 != n2)
+                                        res.set(n1, n2, ((Double) trafficMatrixTable.getValueAt(n1, n2 + 1)) * constantValue);
+
+                            return res;
+                        } catch (NumberFormatException e)
+                        {
+                            ErrorHandling.showWarningDialog("Traffic per cell must be a number.", "Invalid value");
+                        }
+                    }
                 }
                 case OPTIONINDEX_NORMALIZATION_MAKESYMMETRIC:
                 {
