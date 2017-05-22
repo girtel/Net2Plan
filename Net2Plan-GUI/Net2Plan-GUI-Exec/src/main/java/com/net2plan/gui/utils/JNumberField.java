@@ -34,4 +34,25 @@ public class JNumberField extends JSpinner
 
         spinnerTextEditor.setFormatterFactory(new JFormattedTextField(numberFormatter).getFormatterFactory());
     }
+
+    @Override
+    public void setValue(Object value)
+    {
+        if (value instanceof Number)
+        {
+            final SpinnerNumberModel model = (SpinnerNumberModel) this.getModel();
+
+            double number = Double.parseDouble(value.toString());
+            if (!(model.getMaximum().compareTo(number) <= 0 && model.getMinimum().compareTo(number) >= 0))
+                throw new IllegalArgumentException();
+        }
+
+        super.setValue(value);
+    }
+
+    @Override
+    public Double getValue()
+    {
+        return Double.parseDouble(super.getValue().toString());
+    }
 }
