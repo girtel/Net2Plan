@@ -788,7 +788,7 @@ public class Route extends NetworkElement
 		if (travZeroCapLinks)
 		    if (!(layer.cache_routesTravLinkZeroCap.contains(this))) throw new RuntimeException();
 		else
-		    if (layer.cache_routesTravLinkZeroCap.contains(this)) throw new RuntimeException();
+		    if (!layer.cache_routesTravLinkZeroCap.contains(this)) throw new RuntimeException();
 
 		for (Route r : backupRoutes) if(!(r.cache_routesIAmBackUp.contains(this))) throw new RuntimeException();
 		for (Route r : cache_routesIAmBackUp) if(!(r.backupRoutes.contains(this))) throw new RuntimeException();
