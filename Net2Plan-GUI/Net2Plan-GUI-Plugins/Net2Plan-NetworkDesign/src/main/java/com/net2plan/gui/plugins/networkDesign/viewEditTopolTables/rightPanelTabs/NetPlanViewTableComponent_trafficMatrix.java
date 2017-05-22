@@ -16,6 +16,7 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JNumberField;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants.NetworkElementType;
@@ -442,7 +443,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
             switch (selectedOptionIndex)
             {
                 case OPTIONINDEX_TRAFFICMODEL_CONSTANT:
-                    final JTextField txt_constantValue = new JTextField(5);
+                    final JNumberField txt_constantValue = new JNumberField(0, Double.MAX_VALUE);
                     txt_constantValue.setToolTipText("Number >= 0");
 
                     final JPanel pane = new JPanel(new MigLayout("fill, wrap 2"));
@@ -454,7 +455,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                         if (result != JOptionPane.OK_OPTION) return null;
                         try
                         {
-                            final double constantValue = Double.parseDouble(txt_constantValue.getText());
+                            final double constantValue = Double.parseDouble(txt_constantValue.getValue().toString());
 
                             if (constantValue < 0)
                                 throw new IllegalArgumentException("Constant value must be greater or equal than zero");
