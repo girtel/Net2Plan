@@ -1,6 +1,9 @@
 package com.net2plan.gui.utils;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jorge San Emeterio
  * @date 22/05/17
  */
+@RunWith(JUnitParamsRunner.class)
 public class JNumberFieldTest
 {
     @Test
@@ -28,72 +32,79 @@ public class JNumberFieldTest
     }
 
     @Test
-    public void customDefaultValueTest()
+    @Parameters({"0.5d"})
+    public void customDefaultValueTest(double testValue)
     {
-        final double testValue = 0.5d;
         final JNumberField numberField = new JNumberField(testValue, 0, Double.MAX_VALUE, 0.1);
 
         assertThat(numberField.getValue()).isEqualTo(testValue);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void textValueTest()
+    @Parameters({"Test"})
+    public void textValueTest(String text)
     {
         final JNumberField numberField = new JNumberField();
-        numberField.setValue("Test");
+        numberField.setValue(text);
     }
 
     @Test
-    public void doubleValueTest()
+    @Parameters({"1d"})
+    public void doubleValueTest(double doubleValue)
     {
         final JNumberField numberField = new JNumberField();
-        numberField.setValue(1d);
+        numberField.setValue(doubleValue);
 
-        assertThat(numberField.getValue()).isEqualTo(1d);
+        assertThat(numberField.getValue()).isEqualTo(doubleValue);
     }
 
     @Test
-    public void intValueTest()
+    @Parameters({"1"})
+    public void intValueTest(int intValue)
     {
         final JNumberField numberField = new JNumberField();
-        numberField.setValue(1);
+        numberField.setValue(intValue);
 
-        assertThat(numberField.getValue()).isEqualTo(1);
+        assertThat(numberField.getValue()).isEqualTo(intValue);
     }
 
     @Test
-    public void checkLowerLimit()
+    @Parameters({"0"})
+    public void checkLowerLimit(int lowerLimit)
     {
-        final JNumberField numberField = new JNumberField();
+        final JNumberField numberField = new JNumberField(lowerLimit, lowerLimit, Double.MAX_VALUE, 0.1d);
 
         assertThat(numberField.getModel().getPreviousValue()).isNull();
 
-        numberField.setValue(0d);
-        assertThat(numberField.getValue()).isEqualTo(0d);
+        numberField.setValue(lowerLimit);
+        assertThat(numberField.getValue()).isEqualTo(lowerLimit);
     }
 
     @Test
-    public void checkUpperLimit()
+    @Parameters({"1d"})
+    public void checkUpperLimit(double upperLimit)
     {
-        final JNumberField numberField = new JNumberField(1d, 0, 1, 0.1);
+        final JNumberField numberField = new JNumberField(upperLimit, 0, upperLimit, 0.1);
 
         assertThat(numberField.getModel().getNextValue()).isNull();
 
-        numberField.setValue(1d);
-        assertThat(numberField.getValue()).isEqualTo(1d);
+        numberField.setValue(upperLimit);
+        assertThat(numberField.getValue()).isEqualTo(upperLimit);
     }
 
     @Test
-    public void checkBetweenLimits()
+    @Parameters({"0.5d|0.1d"})
+    public void checkBetweenLimits(double middleValue, double increment)
     {
-        final JNumberField numberField = new JNumberField(0.5d, 0, 1, 0.1);
+        final JNumberField numberField = new JNumberField(middleValue, 0, 1, increment);
 
-        assertThat(numberField.getModel().getNextValue()).isEqualTo(0.6d);
-        assertThat(numberField.getModel().getPreviousValue()).isEqualTo(0.4d);
+        assertThat(numberField.getModel().getNextValue()).isEqualTo(middleValue + increment);
+        assertThat(numberField.getModel().getPreviousValue()).isEqualTo(middleValue - increment);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void outOfBoundValueTest()
+    @Parameters({"-1"})
+    public void outOfBoundValueTest(double invalidValue)
     {
         final JNumberField numberField = new JNumberField();
         numberField.setValue(-1);
