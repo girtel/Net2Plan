@@ -584,6 +584,7 @@ public class Link extends NetworkElement
 		if (this.isBidirectional()) return null;
 		final Link e = netPlan.addLink(this.destinationNode, this.originNode, this.getCapacity(), this.getLengthInKm(), this.getPropagationDelayInMs(), this.attributes, this.layer);
         e.setAttribute(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
+        this.setAttribute(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + e.id);
 		return e;
 	}
 	
