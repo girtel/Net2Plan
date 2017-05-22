@@ -443,9 +443,9 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
             {
                 case OPTIONINDEX_TRAFFICMODEL_CONSTANT:
                     final JTextField txt_constantValue = new JTextField(5);
-                    final JPanel pane = new JPanel(new MigLayout("fill"));
+                    final JPanel pane = new JPanel(new MigLayout("fill, wrap 2"));
                     pane.add(new JLabel("Traffic per cell: "), "align label");
-                    pane.add(txt_constantValue, "grow, wrap");
+                    pane.add(txt_constantValue, "growx");
                     while (true)
                     {
                         int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the traffic per cell", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -529,7 +529,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     gravityModelData[N][1] = 0d;
                     gravityModelData[N][2] = 0d;
 
-                    String[] gravityModelHeader = new String[]{"Node name", "Total ingress traffic per node", "Total egress traffic per node"};
+                    String[] gravityModelHeader = new String[]{"Node", "Total ingress traffic per node", "Total egress traffic per node"};
                     gravityModelTableModel.setDataVector(gravityModelData, gravityModelHeader);
 
                     JTable gravityModelTable = new AdvancedJTable(gravityModelTableModel);
@@ -567,16 +567,17 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     double[] egressTrafficPerNode = new double[N];
                     while (true)
                     {
-                        int gravityModelResult = JOptionPane.showConfirmDialog(null, gravityModelPanel, "Please enter total ingress/egress traffic per node (one value per row)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                        if (gravityModelResult != JOptionPane.OK_OPTION) return null;
-
-                        for (int n = 0; n < N; n++)
-                        {
-                            ingressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 1);
-                            egressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 2);
-                        }
                         try
                         {
+                            int gravityModelResult = JOptionPane.showConfirmDialog(null, gravityModelPanel, "Please enter total ingress/egress traffic per node (one value per row)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                            if (gravityModelResult != JOptionPane.OK_OPTION) return null;
+
+                            for (int n = 0; n < N; n++)
+                            {
+                                ingressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 1);
+                                egressTrafficPerNode[n] = (Double) gravityModelTableModel.getValueAt(n, 2);
+                            }
+
                             return TrafficMatrixGenerationModels.gravityModel(ingressTrafficPerNode, egressTrafficPerNode);
                         } catch (Throwable ex)
                         {
@@ -586,17 +587,10 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                 case OPTIONINDEX_TRAFFICMODEL_POPULATIONDISTANCE:
                 {
-                    final JPanel popUpPanel = new JPanel(new MigLayout("insets 0 0 0 0", "[][]", "[][][][][][][][][][grow]"));
+                    final JPanel popUpPanel = new JPanel(new MigLayout("fill"));
 
                     final JRadioButton euclideanDistance = new JRadioButton("Euclidean distance (X, Y)");
                     final JRadioButton haversineDistance = new JRadioButton("Haversine distance (lon, lat)");
-
-                    ButtonGroup bg = new ButtonGroup();
-                    bg.add(euclideanDistance);
-                    bg.add(haversineDistance);
-                    popUpPanel.add(euclideanDistance, "growx, spanx 2, wrap");
-                    popUpPanel.add(haversineDistance, "growx, spanx 2, wrap");
-                    euclideanDistance.setSelected(true);
 
                     final JTextField txt_randomFactor = new JTextField("0", 5);
                     txt_randomFactor.setHorizontalAlignment(JTextField.CENTER);
@@ -634,14 +628,22 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     popUpPanel.add(new JLabel("Normalize by max. distance?"));
                     popUpPanel.add(chk_populationDistanceModelNormalizeDistance, "align center, wrap");
 
+                    ButtonGroup bg = new ButtonGroup();
+                    bg.add(euclideanDistance);
+                    bg.add(haversineDistance);
+
+                    final JPanel radioButtonPanel = new JPanel(new GridLayout(2, 1));
+                    radioButtonPanel.add(euclideanDistance);
+                    radioButtonPanel.add(haversineDistance);
+                    euclideanDistance.setSelected(true);
+
+                    radioButtonPanel.setBorder(BorderFactory.createTitledBorder("Distance type"));
+
+                    popUpPanel.add(radioButtonPanel, "growx, spanx 2");
+
                     final int result = JOptionPane.showConfirmDialog(NetPlanViewTableComponent_trafficMatrix.this, popUpPanel, "Model parameters", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
                     if (result != JOptionPane.OK_OPTION)
                         return null;
-
-                    // Level matrix: levelMatrix 1x1 : 1
-                    // Level vector: as many 1 as nodes.
-                    // Distance matrix: same as traffic but with distance.
-                    // Population vector: each node population.
 
                     try
                     {
@@ -895,7 +897,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                         }
                     };
 
-                    String[] header = new String[]{"Node name", isOutTraffic ? "Total ingress traffic per node" : "Total egress traffic per node"};
+                    String[] header = new String[]{"Node", isOutTraffic ? "Total ingress traffic per node" : "Total egress traffic per node"};
 
                     Object[][] data = new Object[N][header.length];
                     for (int n = 0; n < N; n++)

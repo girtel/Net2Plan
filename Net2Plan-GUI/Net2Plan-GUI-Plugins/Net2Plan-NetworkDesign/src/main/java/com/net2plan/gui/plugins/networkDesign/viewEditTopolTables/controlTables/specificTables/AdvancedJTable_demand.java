@@ -615,6 +615,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 for (Node n2 : nodes)
                     if (n1.getIndex() < n2.getIndex()) 
                     	netPlan.addDemandBidirectional(n1, n2, 0, null, layer);
+
             callback.getVisualizationState().resetPickedState();
             callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
             callback.addNetPlanChange();
