@@ -734,7 +734,8 @@ public class Route extends NetworkElement
 			if (entry.getKey() instanceof Resource)
 			{
                 if (((Resource) entry.getKey()).cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute == null) throw new RuntimeException();
-                if (((Resource) entry.getKey()).cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) != entry.getValue())
+
+                if (Double.compare(((Resource) entry.getKey()).cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this), entry.getValue()) != 0)
                     throw new RuntimeException();
 			}
 			else if (entry.getKey() instanceof Link)
@@ -753,7 +754,8 @@ public class Route extends NetworkElement
 			if (res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) == null) throw new RuntimeException();
 			if (cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(res) == null) throw new RuntimeException();
 
-			if (res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this) != cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(res)) throw new RuntimeException();
+			if (Double.compare(res.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.get(this), cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.get(res)) != 0)
+			    throw new RuntimeException();
 		}
 
 		for (Link link : cache_seqLinksRealPath)
@@ -786,7 +788,7 @@ public class Route extends NetworkElement
 		if (travZeroCapLinks)
 		    if (!(layer.cache_routesTravLinkZeroCap.contains(this))) throw new RuntimeException();
 		else
-		    if (layer.cache_routesTravLinkZeroCap.contains(this)) throw new RuntimeException();
+		    if (!layer.cache_routesTravLinkZeroCap.contains(this)) throw new RuntimeException();
 
 		for (Route r : backupRoutes) if(!(r.cache_routesIAmBackUp.contains(this))) throw new RuntimeException();
 		for (Route r : cache_routesIAmBackUp) if(!(r.backupRoutes.contains(this))) throw new RuntimeException();
