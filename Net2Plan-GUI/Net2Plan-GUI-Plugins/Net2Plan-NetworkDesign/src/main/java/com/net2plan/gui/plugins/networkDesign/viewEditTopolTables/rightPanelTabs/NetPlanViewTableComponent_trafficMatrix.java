@@ -443,8 +443,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
             switch (selectedOptionIndex)
             {
                 case OPTIONINDEX_TRAFFICMODEL_CONSTANT:
-                    final JNumberField txt_constantValue = new JNumberField(0, Double.MAX_VALUE);
-                    txt_constantValue.setToolTipText("Number >= 0");
+                    final JNumberField txt_constantValue = new JNumberField();
+                    txt_constantValue.setToolTipText("x >= 0");
 
                     final JPanel pane = new JPanel(new MigLayout("fill, wrap 2"));
                     pane.add(new JLabel("Traffic per cell: "), "align label");
@@ -594,20 +594,16 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     final JRadioButton euclideanDistance = new JRadioButton("Euclidean distance (X, Y)");
                     final JRadioButton haversineDistance = new JRadioButton("Haversine distance (lon, lat)");
 
-                    final JTextField txt_randomFactor = new JTextField("0", 5);
-                    txt_randomFactor.setHorizontalAlignment(JTextField.CENTER);
-
-                    final JTextField txt_distanceOffset = new JTextField("0", 5);
-                    txt_distanceOffset.setHorizontalAlignment(JTextField.CENTER);
-
-                    final JTextField txt_distancePower = new JTextField("1", 5);
-                    txt_distancePower.setHorizontalAlignment(JTextField.CENTER);
-
-                    final JTextField txt_populationOffset = new JTextField("0", 5);
-                    txt_populationOffset.setHorizontalAlignment(JTextField.CENTER);
-
-                    final JTextField txt_populationPower = new JTextField("1", 5);
-                    txt_populationPower.setHorizontalAlignment(JTextField.CENTER);
+                    final JNumberField txt_randomFactor = new JNumberField(0d, 0, 1, 0.1);
+                    txt_randomFactor.setToolTipText("0 <= x <= 1");
+                    final JNumberField txt_distanceOffset = new JNumberField();
+                    txt_distanceOffset.setToolTipText("x >= 0");
+                    final JNumberField txt_distancePower = new JNumberField();
+                    txt_distancePower.setToolTipText("x >= 0");
+                    final JNumberField txt_populationOffset = new JNumberField();
+                    txt_populationOffset.setToolTipText("x >= 0");
+                    final JNumberField txt_populationPower = new JNumberField();
+                    txt_populationPower.setToolTipText("x >= 0");
 
                     final JCheckBox chk_populationDistanceModelNormalizePopulation = new JCheckBox();
                     chk_populationDistanceModelNormalizePopulation.setSelected(true);
@@ -655,7 +651,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double randomFactor;
                             try
                             {
-                                randomFactor = Double.parseDouble(txt_randomFactor.getText());
+                                randomFactor = Double.parseDouble(txt_randomFactor.getValue().toString());
                                 if ((randomFactor > 1) || (randomFactor < 0)) throw new Exception();
                             } catch (Throwable e1)
                             {
@@ -665,7 +661,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double distanceOffset;
                             try
                             {
-                                distanceOffset = Double.parseDouble(txt_distanceOffset.getText());
+                                distanceOffset = Double.parseDouble(txt_distanceOffset.getValue().toString());
                                 if (distanceOffset < 0) throw new Exception();
                             } catch (Throwable e1)
                             {
@@ -675,7 +671,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double distancePower;
                             try
                             {
-                                distancePower = Double.parseDouble(txt_distancePower.getText());
+                                distancePower = Double.parseDouble(txt_distancePower.getValue().toString());
                             } catch (Throwable e1)
                             {
                                 throw new IllegalArgumentException("Distance power is not a valid number");
@@ -684,7 +680,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double populationOffset;
                             try
                             {
-                                populationOffset = Double.parseDouble(txt_populationOffset.getText());
+                                populationOffset = Double.parseDouble(txt_populationOffset.getValue().toString());
                                 if (populationOffset < 0) throw new Exception();
                             } catch (Throwable e1)
                             {
@@ -694,7 +690,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double populationPower;
                             try
                             {
-                                populationPower = Double.parseDouble(txt_populationPower.getText());
+                                populationPower = Double.parseDouble(txt_populationPower.getValue().toString());
                             } catch (Throwable e1)
                             {
                                 throw new IllegalArgumentException("Population power is not a valid number");
@@ -762,8 +758,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 {
                     while (true)
                     {
-                        final JTextField txt_scalingValue = new JTextField(10);
-                        txt_scalingValue.setToolTipText("Number >= 0");
+                        final JNumberField txt_scalingValue = new JNumberField();
+                        txt_scalingValue.setToolTipText("x >= 0");
 
                         final JPanel pane = new JPanel(new MigLayout("fill"));
                         pane.add(new JLabel("Multiply cells by factor: "), "align label");
@@ -774,7 +770,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                         try
                         {
-                            final double constantValue = Double.parseDouble(txt_scalingValue.getText());
+                            final double constantValue = Double.parseDouble(txt_scalingValue.getValue().toString());
                             if (constantValue < 0)
                                 throw new IllegalArgumentException("Scaling value must be greater or equal than zero");
 
@@ -787,7 +783,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             return res;
                         } catch (NumberFormatException e)
                         {
-                            ErrorHandling.showWarningDialog("Traffic per cell must be a number.", "Invalid value");
+                            ErrorHandling.showWarningDialog("The factor must be a number.", "Invalid value");
                         }
                     }
                 }
@@ -802,22 +798,35 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 }
                 case OPTIONINDEX_NORMALIZATION_TOTAL:
                 {
-                    final JTextField txt_scalingValue = new JTextField(10);
-                    final JPanel pane = new JPanel(new GridLayout(0, 2));
-                    pane.add(new JLabel("Total sum of matrix cells should be: "));
-                    pane.add(txt_scalingValue);
-                    final int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the total traffic", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                    if (result != JOptionPane.OK_OPTION) return null;
-                    final double constantValue = Double.parseDouble(txt_scalingValue.getText());
-                    if (constantValue < 0)
-                        throw new IllegalArgumentException("Traffic value must be greater or equal than zero");
-                    final DoubleMatrix2D res = DoubleFactory2D.sparse.make(N, N);
-                    final double currentTotalTraffic = filteredDemands.stream().mapToDouble(d -> d.getOfferedTraffic()).sum();
-                    for (int n1 = 0; n1 < N; n1++)
-                        for (int n2 = 0; n2 < N; n2++)
-                            if (n1 != n2)
-                                res.set(n1, n2, ((Double) trafficMatrixTable.getValueAt(n1, n2 + 1)) * constantValue / currentTotalTraffic);
-                    return res;
+                    final JNumberField txt_scalingValue = new JNumberField();
+                    txt_scalingValue.setToolTipText("x >= 0");
+                    final JPanel pane = new JPanel(new MigLayout("fill"));
+                    pane.add(new JLabel("Total sum of matrix cells should be: "), "align label");
+                    pane.add(txt_scalingValue, "growx, wrap");
+                    while (true)
+                    {
+                        try
+                        {
+                            final int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the total traffic", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                            if (result != JOptionPane.OK_OPTION) return null;
+
+                            final double constantValue = Double.parseDouble(txt_scalingValue.getValue().toString());
+                            if (constantValue < 0)
+                                throw new IllegalArgumentException("Traffic value must be greater or equal than zero");
+
+                            final DoubleMatrix2D res = DoubleFactory2D.sparse.make(N, N);
+                            final double currentTotalTraffic = filteredDemands.stream().mapToDouble(d -> d.getOfferedTraffic()).sum();
+                            for (int n1 = 0; n1 < N; n1++)
+                                for (int n2 = 0; n2 < N; n2++)
+                                    if (n1 != n2)
+                                        res.set(n1, n2, ((Double) trafficMatrixTable.getValueAt(n1, n2 + 1)) * constantValue / currentTotalTraffic);
+
+                            return res;
+                        } catch (NumberFormatException e)
+                        {
+                            ErrorHandling.showWarningDialog("Total sum must be a number.", "Invalid value");
+                        }
+                    }
                 }
 
                 case OPTIONINDEX_NORMALIZATION_RANDOMVARIATION: // Uniform/Gaussian random normalization
@@ -825,8 +834,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     double cv;
                     double maxRelativeVariation;
 
-                    JTextField txt_cv = new JTextField("0.1", 5);
-                    JTextField txt_maxRelativeVariation = new JTextField("0.2", 5);
+                    JNumberField txt_cv = new JNumberField(0.1d, 0, Double.MAX_VALUE, 0.1);
+                    JNumberField txt_maxRelativeVariation = new JNumberField(0.2d, 0, Double.MAX_VALUE, 0.1);
 
                     JRadioButton rb_uniform = new JRadioButton("Uniform normalization");
                     JRadioButton rb_gaussian = new JRadioButton("Gaussian normalization");
@@ -837,16 +846,19 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                     rb_uniform.setSelected(true);
 
-                    JPanel pane = new JPanel(new MigLayout("fill, wrap 1"));
+                    JPanel pane = new JPanel(new MigLayout("fill"));
 
                     pane.add(new JLabel("Coefficient of variation (quotient between standard deviation and mean value):"), "align label");
-                    pane.add(txt_cv, "grow");
+                    pane.add(txt_cv, "growx, wrap");
                     pane.add(new JLabel("Maximum relative variation (i.e. 0.5 means a maximum relative deviation from seminal value equal 50%):"), "align label");
-                    pane.add(txt_maxRelativeVariation, "grow");
+                    pane.add(txt_maxRelativeVariation, "growx, wrap");
 
-                    pane.add(new JLabel("Random type: "));
-                    pane.add(rb_uniform);
-                    pane.add(rb_gaussian);
+                    final JPanel radioPanel = new JPanel(new GridLayout(2, 1));
+                    radioPanel.setBorder(BorderFactory.createTitledBorder("Random Type"));
+                    radioPanel.add(rb_uniform);
+                    radioPanel.add(rb_gaussian);
+
+                    pane.add(radioPanel, "growx, spanx 2");
 
                     while (true)
                     {
@@ -855,8 +867,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                         try
                         {
-                            cv = Double.parseDouble(txt_cv.getText());
-                            maxRelativeVariation = Double.parseDouble(txt_maxRelativeVariation.getText());
+                            cv = Double.parseDouble(txt_cv.getValue().toString());
+                            maxRelativeVariation = Double.parseDouble(txt_maxRelativeVariation.getValue().toString());
 
                             if (cv <= 0)
                                 throw new Net2PlanException("Coefficient of variation must be greater than zero");
@@ -866,8 +878,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             break;
                         } catch (NumberFormatException | Net2PlanException ex)
                         {
-                            if (ErrorHandling.isDebugEnabled())
-                                ErrorHandling.addErrorOrException(ex);
+                            if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex);
                             ErrorHandling.showErrorDialog(ex.getMessage(), "Error generating new matrices");
                         }
                     }
@@ -929,7 +940,29 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     model.setDataVector(data, header);
 
                     JTable table = new AdvancedJTable(model);
+                    table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer()
+                    {
+                        @Override
+                        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
+                        {
+                            final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                            if (column == 0)
+                            {
+                                c.setBackground(new Color(200, 200, 200));
+                                c.setForeground(Color.BLACK);
+                            }  else
+                            {
+                                c.setBackground(table.getBackground());
+                                c.setForeground(table.getForeground());
+                            }
+
+                            return c;
+                        }
+                    });
+
                     JScrollPane sPane = new JScrollPane(table);
+
                     JPanel pane = new JPanel();
                     pane.add(sPane);
 
@@ -959,12 +992,18 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                     String instructions = "<html><body>These methods multiply the reference matrix by a factor <i>alpha</i>, "
                             + "so that the resulting matrix represents the maximum traffic matrix that can be carried "
-                            + "by the network. Two methods are available:<ul>"
+                            + "by the network.<br>"
+                            + "<br>Two methods are available:<ul>"
                             + "<li>Estimated: A method is used that produces a traffic matrix that is equal or larger than the maximum possible matrix.</li>"
                             + "<li>Exact (JOM is used, may take a while): Finds the normalized matrix solving a formulation.</li>"
                             + "</ul></body></html>";
 
-                    int out = JOptionPane.showOptionDialog(null, instructions, "Select a computation method",
+                    final JPanel container = new JPanel(new BorderLayout());
+                    final JLabel lb_instructions = new JLabel(instructions);
+
+                    container.add(lb_instructions, BorderLayout.CENTER);
+
+                    int out = JOptionPane.showOptionDialog(NetPlanViewTableComponent_trafficMatrix.this, container, "Select a computation method",
                             JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 
                     if (out < 0 && out > options.length)

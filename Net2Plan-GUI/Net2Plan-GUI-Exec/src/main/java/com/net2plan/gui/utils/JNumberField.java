@@ -9,16 +9,22 @@ import javax.swing.text.NumberFormatter;
  */
 public class JNumberField extends JSpinner
 {
-    public JNumberField(double minValue, double maxValue)
+    public JNumberField()
     {
-        super(new SpinnerNumberModel(0d, minValue, maxValue, 1));
+        this(0d, 0, Double.MAX_VALUE, 1);
+    }
+
+    public JNumberField(double defaultNumber, double minValue, double maxValue, double increment)
+    {
+        super(new SpinnerNumberModel(defaultNumber, minValue, maxValue, increment));
 
         final NumberEditor editor = (NumberEditor) this.getEditor();
-        editor.getFormat().setMinimumFractionDigits(0);
-        editor.getFormat().setMaximumFractionDigits(4);
+        editor.getFormat().setMinimumFractionDigits(2);
+        editor.getFormat().setMaximumFractionDigits(6);
 
         final JFormattedTextField spinnerTextEditor = editor.getTextField();
         spinnerTextEditor.setColumns(6);
+        spinnerTextEditor.setHorizontalAlignment(JTextField.CENTER);
 
         final NumberFormatter numberFormatter = new NumberFormatter(editor.getFormat());
         numberFormatter.setValueClass(Double.class);
