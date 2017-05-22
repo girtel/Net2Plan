@@ -455,7 +455,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                         if (result != JOptionPane.OK_OPTION) return null;
                         try
                         {
-                            final double constantValue = Double.parseDouble(txt_constantValue.getValue().toString());
+                            final double constantValue = txt_constantValue.getValue();
 
                             if (constantValue < 0)
                                 throw new IllegalArgumentException("Constant value must be greater or equal than zero");
@@ -651,7 +651,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double randomFactor;
                             try
                             {
-                                randomFactor = Double.parseDouble(txt_randomFactor.getValue().toString());
+                                randomFactor = txt_randomFactor.getValue();
                                 if ((randomFactor > 1) || (randomFactor < 0)) throw new Exception();
                             } catch (Throwable e1)
                             {
@@ -661,7 +661,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double distanceOffset;
                             try
                             {
-                                distanceOffset = Double.parseDouble(txt_distanceOffset.getValue().toString());
+                                distanceOffset = txt_distanceOffset.getValue();
                                 if (distanceOffset < 0) throw new Exception();
                             } catch (Throwable e1)
                             {
@@ -671,7 +671,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double distancePower;
                             try
                             {
-                                distancePower = Double.parseDouble(txt_distancePower.getValue().toString());
+                                distancePower = txt_distancePower.getValue();
                             } catch (Throwable e1)
                             {
                                 throw new IllegalArgumentException("Distance power is not a valid number");
@@ -680,7 +680,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double populationOffset;
                             try
                             {
-                                populationOffset = Double.parseDouble(txt_populationOffset.getValue().toString());
+                                populationOffset = txt_populationOffset.getValue();
                                 if (populationOffset < 0) throw new Exception();
                             } catch (Throwable e1)
                             {
@@ -690,7 +690,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             double populationPower;
                             try
                             {
-                                populationPower = Double.parseDouble(txt_populationPower.getValue().toString());
+                                populationPower = txt_populationPower.getValue();
                             } catch (Throwable e1)
                             {
                                 throw new IllegalArgumentException("Population power is not a valid number");
@@ -770,7 +770,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                         try
                         {
-                            final double constantValue = Double.parseDouble(txt_scalingValue.getValue().toString());
+                            final double constantValue = txt_scalingValue.getValue();
                             if (constantValue < 0)
                                 throw new IllegalArgumentException("Scaling value must be greater or equal than zero");
 
@@ -810,7 +810,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             final int result = JOptionPane.showConfirmDialog(null, pane, "Please enter the total traffic", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                             if (result != JOptionPane.OK_OPTION) return null;
 
-                            final double constantValue = Double.parseDouble(txt_scalingValue.getValue().toString());
+                            final double constantValue = txt_scalingValue.getValue();
                             if (constantValue < 0)
                                 throw new IllegalArgumentException("Traffic value must be greater or equal than zero");
 
@@ -867,8 +867,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
                         try
                         {
-                            cv = Double.parseDouble(txt_cv.getValue().toString());
-                            maxRelativeVariation = Double.parseDouble(txt_maxRelativeVariation.getValue().toString());
+                            cv = txt_cv.getValue();
+                            maxRelativeVariation = txt_maxRelativeVariation.getValue();
 
                             if (cv <= 0)
                                 throw new Net2PlanException("Coefficient of variation must be greater than zero");
