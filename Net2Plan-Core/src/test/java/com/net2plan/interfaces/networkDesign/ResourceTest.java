@@ -353,7 +353,7 @@ public class ResourceTest
 		try
 		{
 			BufferedReader reader = new BufferedReader(new FileReader(fileIn));
-			do { String s = reader.readLine(); if (s == null) break; System.out.println(s); } while (true); 
+			do { String s = reader.readLine(); if (s == null) break; } while (true);
 			reader.close();
 		} catch (Exception e) {}
 		NetPlan np2 = new NetPlan (fileOut);
