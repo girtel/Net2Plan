@@ -1,14 +1,13 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.utils.TestUtils;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import junitparams.JUnitParamsRunner;
 import junitparams.NamedParameters;
 import junitparams.Parameters;
-import org.assertj.swing.core.BasicRobot;
-import org.assertj.swing.core.ComponentLookupScope;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.fixture.JPanelFixture;
 import org.junit.Test;
@@ -34,7 +33,7 @@ public class TrafficTablePanelTest
 
     private static NetPlanViewTableComponent_trafficMatrix component;
 
-    private static final Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
+    private static final Robot robot = TestUtils.getRobot();
 
     static
     {
@@ -77,8 +76,6 @@ public class TrafficTablePanelTest
     private final Object getOptionsComponents()
     {
         // Looking for all components
-        robot.settings().componentLookupScope(ComponentLookupScope.ALL);
-
         JPanelFixture panelFixture = new JPanelFixture(robot, component);
 
         final JButton normalizationApply = panelFixture.button("normalizationApply").target();
