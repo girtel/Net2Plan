@@ -3,13 +3,13 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.fixture.JPopupMenuFixture;
-import org.assertj.swing.fixture.JTableFixture;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +20,7 @@ import java.util.Collections;
 
 import static com.net2plan.internal.Constants.NetworkElementType;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.when;
  * @date 17/04/17
  */
 @RunWith(MockitoJUnitRunner.class)
-public class AdvancedJTable_networkElement_actions_Test
+public class AdvancedJTable_networkElement_actionsTest
 {
     @Mock
     private static GUINetworkDesign networkDesign;
@@ -36,6 +37,8 @@ public class AdvancedJTable_networkElement_actions_Test
     private static VisualizationState vs;
 
     private static NetPlan netPlan;
+
+    private static final Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
 
     @Before
     public void setUp()
@@ -52,24 +55,20 @@ public class AdvancedJTable_networkElement_actions_Test
     @Test
     public void hideFilteredTest()
     {
+        final AdvancedJTable_networkElement table = new AdvancedJTable_node(networkDesign);
+
         final Node node1 = netPlan.getNodeByName("Node 1");
         final Node node2 = netPlan.getNodeByName("Node 2");
 
-        final Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
-
-        final AdvancedJTable_networkElement table = new AdvancedJTable_node(networkDesign);
         final ElementSelection selection = new ElementSelection(NetworkElementType.NODE, Collections.singletonList(node2));
-
         final JPopupMenuFixture popUpFixture = new JPopupMenuFixture(robot, table.getPopup(selection));
+        final TBFSelectionBased filter = new TBFSelectionBased(netPlan, selection);
 
-        // Before
-        assertFalse(networkDesign.getVisualizationState().isHiddenOnCanvas(node1));
-        assertFalse(networkDesign.getVisualizationState().isHiddenOnCanvas(node2));
+        when(vs.getTableRowFilter()).thenReturn(filter);
 
-        popUpFixture.menuItem("Hide all filtered out nodes").click();
+        popUpFixture.menuItem("hideFilteredItem").target().doClick();
 
-        // After
-        assertTrue(networkDesign.getVisualizationState().isHiddenOnCanvas(node2));
+        verify(vs).hideOnCanvas(node1);
     }
 
     @Test
@@ -77,21 +76,19 @@ public class AdvancedJTable_networkElement_actions_Test
     {
         final AdvancedJTable_networkElement table = new AdvancedJTable_node(networkDesign);
 
-        final Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
-        final JTableFixture tableFixture = new JTableFixture(robot, table);
-
         final Node node1 = netPlan.getNodeByName("Node 1");
         final Node node2 = netPlan.getNodeByName("Node 2");
+
+        final ElementSelection selection = new ElementSelection(NetworkElementType.NODE, Collections.singletonList(node1));
+        final JPopupMenuFixture popupMenuFixture = new JPopupMenuFixture(robot, table.getPopup(selection));
+        final TBFSelectionBased filter = new TBFSelectionBased(netPlan, selection);
+
+        when(vs.getTableRowFilter()).thenReturn(filter);
 
         assertNotNull(netPlan.getNodeByName(node1.getName()));
         assertNotNull(netPlan.getNodeByName(node2.getName()));
 
-        for (String s : tableFixture.showPopupMenu().menuLabels())
-        {
-            System.out.println(s);
-        }
-
-        tableFixture.showPopupMenu().menuItem("Remove all filtered out nodes").click();
+        popupMenuFixture.menuItem("removeFilteredItem").target().doClick();
 
         assertNotNull(netPlan.getNodeByName(node1.getName()));
         assertNull(netPlan.getNodeByName(node2.getName()));
