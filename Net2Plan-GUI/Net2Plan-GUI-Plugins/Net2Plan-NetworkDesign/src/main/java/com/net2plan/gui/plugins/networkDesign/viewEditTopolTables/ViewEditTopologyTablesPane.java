@@ -171,6 +171,8 @@ public class ViewEditTopologyTablesPane extends JPanel
                         table.writeTableToFile(file);
                     }
 
+                    trafficMatrixComponent.writeTableToFile(file);
+
                     ErrorHandling.showInformationDialog("Excel file successfully written", "Finished writing into file");
                 } catch (Exception e)
                 {

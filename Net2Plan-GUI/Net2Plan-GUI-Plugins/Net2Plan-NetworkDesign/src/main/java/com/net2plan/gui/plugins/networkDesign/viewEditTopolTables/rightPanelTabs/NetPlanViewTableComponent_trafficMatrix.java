@@ -12,6 +12,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.CellRenderers;
+import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.AdvancedJTable;
@@ -35,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -180,18 +182,44 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         return trafficMatrixTable;
     }
 
-    public double[][] getTrafficMatrix()
+    private Object[][] getMatrix(boolean includeHeaders)
     {
         TableModel dtm = trafficMatrixTable.getModel();
         int nRow = dtm.getRowCount();
         int nCol = dtm.getColumnCount();
 
-        double[][] tableData = new double[nRow - 1][nCol - 2];
-        for (int i = 0; i < nRow - 1; i++)
-            for (int j = 1; j < nCol - 1; j++)
-                tableData[i][j - 1] = (double) dtm.getValueAt(i, j);
+        Object[][] tableData;
+        if (includeHeaders)
+        {
+            tableData = new Object[nRow + 1][nCol];
+
+            for (int i = 0; i < trafficMatrixTable.getColumnCount(); i++)
+                tableData[0][i] = trafficMatrixTable.getColumnName(i);
+
+            for (int i = 1; i < nRow + 1; i++)
+                for (int j = 0; j < nCol; j++)
+                    tableData[i][j] = dtm.getValueAt(i - 1, j);
+        } else
+        {
+            tableData = new Object[nRow - 1][nCol - 2];
+            for (int i = 0; i < nRow - 1; i++)
+                for (int j = 1; j < nCol - 1; j++)
+                    tableData[i][j - 1] = dtm.getValueAt(i, j);
+        }
 
         return tableData;
+    }
+
+    public double[][] getTrafficMatrix()
+    {
+        final Object[][] matrix = getMatrix(false);
+        final double[][] doubleMatrix = new double[matrix.length][matrix[0].length];
+
+        for (int i = 0; i < matrix.length; i++)
+            for (int j = 0; j < matrix[i].length; j++)
+                doubleMatrix[i][j] = (double) matrix[i][j];
+
+        return doubleMatrix;
     }
 
     public void filterLinklessNodes(boolean doFilter)
@@ -421,6 +449,11 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
             }
             return c;
         }
+    }
+
+    public void writeTableToFile(File file)
+    {
+        ExcelWriter.writeToFile(file, "Traffic matrix", getMatrix(true));
     }
 
     private class ApplyTrafficModels
@@ -951,7 +984,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                             {
                                 c.setBackground(new Color(200, 200, 200));
                                 c.setForeground(Color.BLACK);
-                            }  else
+                            } else
                             {
                                 c.setBackground(table.getBackground());
                                 c.setForeground(table.getForeground());
