@@ -878,7 +878,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    protected static class MenuItem_RemovedFiltered extends JMenuItem
+    private static class MenuItem_RemovedFiltered extends JMenuItem
     {
         MenuItem_RemovedFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
         {
@@ -952,7 +952,7 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         }
     }
 
-    protected static class MenuItem_HideFiltered extends JMenuItem
+    private static class MenuItem_HideFiltered extends JMenuItem
     {
         MenuItem_HideFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
         {

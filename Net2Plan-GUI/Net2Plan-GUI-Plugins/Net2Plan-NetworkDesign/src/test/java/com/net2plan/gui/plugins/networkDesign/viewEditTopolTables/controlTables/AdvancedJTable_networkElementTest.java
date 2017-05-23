@@ -8,8 +8,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.mockito.Mockito.mock;
-
 /**
  * @author Jorge San Emeterio
  * @date 24/04/17
@@ -20,7 +18,7 @@ public class AdvancedJTable_networkElementTest
     private static AdvancedJTable_networkElement table;
 
     @Mock
-    private static GUINetworkDesign networkDesign = mock(GUINetworkDesign.class);
+    private static GUINetworkDesign networkDesign;
 
     @Test
     public void forwardingRuleNoAttributesTest()
