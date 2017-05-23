@@ -182,44 +182,18 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         return trafficMatrixTable;
     }
 
-    private Object[][] getMatrix(boolean includeHeaders)
+    public double[][] getTrafficMatrix()
     {
         TableModel dtm = trafficMatrixTable.getModel();
         int nRow = dtm.getRowCount();
         int nCol = dtm.getColumnCount();
 
-        Object[][] tableData;
-        if (includeHeaders)
-        {
-            tableData = new Object[nRow + 1][nCol];
-
-            for (int i = 0; i < trafficMatrixTable.getColumnCount(); i++)
-                tableData[0][i] = trafficMatrixTable.getColumnName(i);
-
-            for (int i = 1; i < nRow + 1; i++)
-                for (int j = 0; j < nCol; j++)
-                    tableData[i][j] = dtm.getValueAt(i - 1, j);
-        } else
-        {
-            tableData = new Object[nRow - 1][nCol - 2];
-            for (int i = 0; i < nRow - 1; i++)
-                for (int j = 1; j < nCol - 1; j++)
-                    tableData[i][j - 1] = dtm.getValueAt(i, j);
-        }
+        double[][] tableData = new double[nRow - 1][nCol - 2];
+        for (int i = 0; i < nRow - 1; i++)
+            for (int j = 1; j < nCol - 1; j++)
+                tableData[i][j - 1] = (double) dtm.getValueAt(i, j);
 
         return tableData;
-    }
-
-    public double[][] getTrafficMatrix()
-    {
-        final Object[][] matrix = getMatrix(false);
-        final double[][] doubleMatrix = new double[matrix.length][matrix[0].length];
-
-        for (int i = 0; i < matrix.length; i++)
-            for (int j = 0; j < matrix[i].length; j++)
-                doubleMatrix[i][j] = (double) matrix[i][j];
-
-        return doubleMatrix;
     }
 
     public void filterLinklessNodes(boolean doFilter)
@@ -453,7 +427,21 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
     public void writeTableToFile(File file)
     {
-        ExcelWriter.writeToFile(file, "Traffic matrix", getMatrix(true));
+        TableModel dtm = trafficMatrixTable.getModel();
+        int nRow = dtm.getRowCount();
+        int nCol = dtm.getColumnCount();
+
+        Object[][] tableData;
+        tableData = new Object[nRow + 1][nCol];
+
+        for (int i = 0; i < trafficMatrixTable.getColumnCount(); i++)
+            tableData[0][i] = trafficMatrixTable.getColumnName(i);
+
+        for (int i = 1; i < nRow + 1; i++)
+            for (int j = 0; j < nCol; j++)
+                tableData[i][j] = dtm.getValueAt(i - 1, j);
+
+        ExcelWriter.writeToFile(file, "Traffic matrix", tableData);
     }
 
     private class ApplyTrafficModels
