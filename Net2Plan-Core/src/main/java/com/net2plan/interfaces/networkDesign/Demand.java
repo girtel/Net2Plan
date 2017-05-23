@@ -68,7 +68,8 @@ public class Demand extends NetworkElement
 	double offeredTraffic;
 	double carriedTraffic;
 	RoutingCycleType routingCycleType;
-	
+	Demand bidirectionalPair;
+
 	
 	Set<Route> cache_routes;
 	Link coupledUpperLayerLink;
@@ -130,6 +131,7 @@ public class Demand extends NetworkElement
 		this.cacheHbH_linksPerNodeWithNonZeroFr = new HashMap<> ();
 		this.cache_worstCasePropagationTimeMs = 0;
 		this.cache_worstCaseLengthInKm = 0;
+		this.bidirectionalPair = null;
 	}
 
 	/**
@@ -159,6 +161,7 @@ public class Demand extends NetworkElement
 		this.cacheHbH_linksPerNodeWithNonZeroFr.clear();
 		for (Entry<Node,Set<Link>> entry : origin.cacheHbH_linksPerNodeWithNonZeroFr.entrySet())
 			this.cacheHbH_linksPerNodeWithNonZeroFr.put(netPlan.getNodeFromId(entry.getKey().id), (Set<Link>) (Set<?>) netPlan.translateCollectionToThisNetPlan(entry.getValue()));
+		this.bidirectionalPair = origin.bidirectionalPair == null? null : netPlan.getDemandFromId(origin.bidirectionalPair.getId());
 	}
 
 
@@ -168,6 +171,8 @@ public class Demand extends NetworkElement
 		if (layer.id != e2.layer.id) return false;
 		if (ingressNode.id != e2.ingressNode.id) return false;
 		if (egressNode.id != e2.egressNode.id) return false;
+		if ((this.bidirectionalPair == null) != (e2.bidirectionalPair == null)) return false;
+		if (this.bidirectionalPair != null) if (this.bidirectionalPair.id != e2.bidirectionalPair.id) return false;
 		if (this.offeredTraffic != e2.offeredTraffic) return false;
 		if (this.carriedTraffic != e2.carriedTraffic) return false;
 		if (this.cache_worstCasePropagationTimeMs != e2.cache_worstCasePropagationTimeMs) return false;
@@ -545,7 +550,49 @@ public class Demand extends NetworkElement
 	public Demand getBidirectionalPair()
 	{
 		checkAttachedToNetPlanObject();
-		return (Demand) netPlan.getNetworkElementByAttribute(layer.demands , netPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
+		return bidirectionalPair;
+	}
+
+	/**
+	 * <p>Sets the given demand as the bidirectional pair of this demand. If any of the demands was previously set as bidirectional 
+	 * link of other demand, such relation is removed. The demands must be in the same layer, and have opposite end nodes
+	 * @param e the other demand
+	 */
+	public void setBidirectionalPair(Demand d)
+	{
+		checkAttachedToNetPlanObject();
+		d.checkAttachedToNetPlanObject(this.netPlan);
+		if (d.layer != this.layer) throw new Net2PlanException ("Wrong layer");
+		if (d.ingressNode != this.egressNode || this.ingressNode != d.egressNode) throw new Net2PlanException ("Wrong end nodes");
+		if (this.bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
+		if (d.bidirectionalPair != null) d.bidirectionalPair.bidirectionalPair = null;
+		this.bidirectionalPair = d;
+		d.bidirectionalPair = this;
+	}
+
+	/**
+	 * Returns true if the demand is bidirectional. That is, it has an associated demand in the other direction
+	 * @return see above
+	 */
+	public boolean isBidirectional()
+	{
+		checkAttachedToNetPlanObject();
+		return bidirectionalPair != null;
+	}
+
+	/**
+	 * Creates a demand in the opposite direction as this, and with the same attributes, and associate both as bidirectional pairs.
+	 * If this demand is already bidirectional, makes nothing and returns null
+	 * @return the newly created demand
+	 */
+	public Demand createBidirectionalPair ()
+	{
+		checkAttachedToNetPlanObject();
+		if (this.isBidirectional()) return null;
+		final Demand d = netPlan.addDemand(this.ingressNode, this.egressNode, this.getOfferedTraffic() , this.attributes, this.layer);
+		this.bidirectionalPair = d;
+		d.bidirectionalPair = this;
+		return d;
 	}
 
 	/**
@@ -719,6 +766,8 @@ public class Demand extends NetworkElement
 		netPlan.checkIsModifiable();
 		if (this.coupledUpperLayerLink != null) this.decouple();
 		
+		if (bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
+
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 			for (Route route : new HashSet<Route> (cache_routes)) route.remove();
 		else
@@ -774,6 +823,14 @@ public class Demand extends NetworkElement
 	void checkCachesConsistency ()
 	{
 		super.checkCachesConsistency ();
+		if (this.bidirectionalPair != null)
+		{
+			if (this.bidirectionalPair.bidirectionalPair != this) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.netPlan != this.netPlan) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.ingressNode != this.egressNode) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.egressNode != this.ingressNode) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.layer != this.layer) throw new RuntimeException ("Bad");
+		}
 		if (!layer.isSourceRouting())
 		{
 			if (!cacheHbH_frs.keySet().containsAll(cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet())) throw new RuntimeException();

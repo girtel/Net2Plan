@@ -54,6 +54,7 @@ public class Link extends NetworkElement
 	double lengthInKm;
 	double propagationSpeedInKmPerSecond;
 	boolean isUp;
+	Link bidirectionalPair;
 
 	Set<SharedRiskGroup> cache_srgs;
 	Map<Route,Integer> cache_traversingRoutes; // for each traversing route, the number of times it traverses this link (in seqLinksRealPath). If the route has segments, their internal route counts also
@@ -100,7 +101,8 @@ public class Link extends NetworkElement
 		this.cache_traversingTrees = new HashSet<MulticastTree> ();
 		this.cacheHbH_frs = new HashMap<> ();
 		this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState = new HashMap<> ();
-		this.capacity = capacity; 
+		this.capacity = capacity;
+		this.bidirectionalPair = null;
 		if (capacity < Configuration.precisionFactor) layer.cache_linksZeroCap.add(this); // do not call here the regular updae function on purpose, there is no previous capacity info
 	}
 
@@ -128,6 +130,7 @@ public class Link extends NetworkElement
 		this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.clear();
 		for (Entry<Demand,Pair<Double,Double>> fr : origin.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.entrySet()) 
 			this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.put(netPlan.getDemandFromId(fr.getKey().id), Pair.of(fr.getValue().getFirst(), fr.getValue().getSecond()));
+		this.bidirectionalPair = origin.bidirectionalPair == null? null : netPlan.getLinkFromId(origin.bidirectionalPair.getId());
 	}
 
 	boolean isDeepCopy (Link e2)
@@ -136,6 +139,8 @@ public class Link extends NetworkElement
 		if (layer.id != e2.layer.id) return false;
 		if (originNode.id != e2.originNode.id) return false;
 		if (destinationNode.id != e2.destinationNode.id) return false;
+		if ((this.bidirectionalPair == null) != (e2.bidirectionalPair == null)) return false;
+		if (this.bidirectionalPair != null) if (this.bidirectionalPair.id != e2.bidirectionalPair.id) return false;
 		if (this.capacity != e2.capacity) return false;
 		if (this.cache_carriedTraffic != e2.cache_carriedTraffic) return false;
 		if (this.cache_occupiedCapacity != e2.cache_occupiedCapacity) return false;
@@ -560,7 +565,24 @@ public class Link extends NetworkElement
 	public Link getBidirectionalPair()
 	{
 		checkAttachedToNetPlanObject();
-		return (Link) NetPlan.getNetworkElementByAttribute(layer.links , NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
+		return bidirectionalPair;
+	}
+
+	/**
+	 * <p>Sets the given link as the bidirectional pair of this link. If any of the links was previously set as bidirectional 
+	 * link of other link, such relation is removed. The links must bein the same layer, and have opposite end nodes
+	 * @param e the other link
+	 */
+	public void setBidirectionalPair(Link e)
+	{
+		checkAttachedToNetPlanObject();
+		e.checkAttachedToNetPlanObject(this.netPlan);
+		if (e.layer != this.layer) throw new Net2PlanException ("Wrong layer");
+		if (e.originNode != this.destinationNode || this.originNode != e.destinationNode) throw new Net2PlanException ("Wrong end nodes");
+		if (this.bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
+		if (e.bidirectionalPair != null) e.bidirectionalPair.bidirectionalPair = null;
+		this.bidirectionalPair = e;
+		e.bidirectionalPair = this;
 	}
 
 	/**
@@ -570,7 +592,7 @@ public class Link extends NetworkElement
 	public boolean isBidirectional()
 	{
 		checkAttachedToNetPlanObject();
-		return NetPlan.getNetworkElementByAttribute(layer.links , NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id) != null;
+		return bidirectionalPair != null;
 	}
 
 	/**
@@ -583,8 +605,8 @@ public class Link extends NetworkElement
 		checkAttachedToNetPlanObject();
 		if (this.isBidirectional()) return null;
 		final Link e = netPlan.addLink(this.destinationNode, this.originNode, this.getCapacity(), this.getLengthInKm(), this.getPropagationDelayInMs(), this.attributes, this.layer);
-        e.setAttribute(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
-        this.setAttribute(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + e.id);
+		this.bidirectionalPair = e;
+		e.bidirectionalPair = this;
 		return e;
 	}
 	
@@ -605,6 +627,8 @@ public class Link extends NetworkElement
 			this.coupledLowerLayerDemand.decouple();
 		else if (this.coupledLowerLayerMulticastDemand != null)
 			this.coupledLowerLayerMulticastDemand.decouple();
+		
+		if (bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
 		
 		layer.cache_linksDown.remove (this);
 		layer.cache_linksZeroCap.remove(this);
@@ -656,7 +680,14 @@ public class Link extends NetworkElement
 		super.checkCachesConsistency ();
 		if (layer.netPlan != this.netPlan) throw new RuntimeException ("Bad");
 		if (!layer.links.contains(this)) throw new RuntimeException ("Bad");
-
+		if (this.bidirectionalPair != null)
+		{
+			if (this.bidirectionalPair.bidirectionalPair != this) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.netPlan != this.netPlan) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.originNode != this.destinationNode) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.destinationNode != this.originNode) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.layer != this.layer) throw new RuntimeException ("Bad");
+		}
 		if (isUp && layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp && !layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (capacity < Configuration.precisionFactor && !layer.cache_linksZeroCap.contains(this)) throw new RuntimeException ("Bad");

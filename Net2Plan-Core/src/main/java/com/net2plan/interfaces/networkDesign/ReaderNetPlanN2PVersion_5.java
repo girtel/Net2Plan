@@ -45,7 +45,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 	private Map<Route,List<Long>> backupRouteIdsMap;
 	private Map<Long , List<Pair<Node,URL>>> nodeAndLayerToIconURLMap;
 	
-	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
 		ProfileUtils.printTime("" , -1);
@@ -182,9 +181,16 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		try { recoveryType = Demand.IntendedRecoveryType.valueOf(getString("intendedRecoveryType")); } 
 		catch (XMLStreamException e) { recoveryType = Demand.IntendedRecoveryType.NOTSPECIFIED; }
 		catch (Exception e) { recoveryType = Demand.IntendedRecoveryType.UNKNOWNTYPE; }
+		long bidirectionalPairId = -1; try { bidirectionalPairId = getLong ("bidirectionalPairId"); } catch (Exception e) {}
 		
 		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
 		newDemand.setIntendedRecoveryType(recoveryType);
+		final Demand bidirPairDemand = bidirectionalPairId == -1? null : netPlan.getDemandFromId(bidirectionalPairId); 
+		if (bidirPairDemand != null)
+		{
+			if (bidirPairDemand.isBidirectional()) throw new RuntimeException ();
+			bidirPairDemand.setBidirectionalPair(newDemand);
+		}
 		
 		List<String> mandatorySequenceOfTraversedResourceTypes = new LinkedList<String> ();
 		boolean finalElementRead = false;
@@ -317,10 +323,17 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double capacity = getDouble ("capacity");
 		final double lengthInKm = getDouble ("lengthInKm");
 		final double propagationSpeedInKmPerSecond = getDouble ("propagationSpeedInKmPerSecond");
+		long bidirectionalPairId = -1; try { bidirectionalPairId = getLong ("bidirectionalPairId"); } catch (Exception e) {}
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 
 		Link newLink = netPlan.addLink(linkId , netPlan.getNodeFromId(originNodeId), netPlan.getNodeFromId(destinationNodeId), capacity, lengthInKm, propagationSpeedInKmPerSecond, null , netPlan.getNetworkLayerFromId(layerId));
 		newLink.setFailureState(isUp);
+		final Link bidirPairLink = bidirectionalPairId == -1? null : netPlan.getLinkFromId(bidirectionalPairId); 
+		if (bidirPairLink != null)
+		{
+			if (bidirPairLink.isBidirectional()) throw new RuntimeException ();
+			bidirPairLink.setBidirectionalPair(newLink);
+		}
 		readAndAddAttributesToEndAndPdForNodes(newLink, "link");
 	}
 

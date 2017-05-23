@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.net2plan.interfaces.TestConstants;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 import com.net2plan.utils.Constants.RoutingType;
@@ -97,6 +99,34 @@ public class LinkTest
 	public void testCheckCaches() 
 	{
 		np.checkCachesConsistency();
+	}
+
+	@Test
+	public void testBidirectional ()
+	{
+		Pair<Link,Link> pair = np.addLinkBidirectional(n1, n2, 1, 1, 1, null);
+		assertTrue (pair.getFirst().isBidirectional());
+		assertTrue (pair.getSecond().isBidirectional());
+		assertEquals (pair.getFirst().getBidirectionalPair() , pair.getSecond());
+		assertEquals (pair.getSecond().getBidirectionalPair() , pair.getFirst());
+		pair.getFirst().remove();
+		assertTrue (!pair.getSecond().isBidirectional());
+		assertEquals (pair.getSecond().getBidirectionalPair() , null);
+		
+		Link other = np.addLink(n1, n3, 1, 1 , 1 , null);
+		try { other.setBidirectionalPair(pair.getFirst()); fail (); } catch (Exception e) {}
+		
+		Link other2 = np.addLink(n1, n2, 1, 1,1,null);
+		pair.getSecond().setBidirectionalPair(other2);
+		assertTrue (pair.getSecond().isBidirectional());
+		assertEquals (other2.getBidirectionalPair() , pair.getSecond());
+		assertEquals (pair.getSecond().getBidirectionalPair() , other2);
+		
+		File f = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME);
+		this.np.saveToFile(f);
+		NetPlan readNp = new NetPlan (f);
+		assertTrue(readNp.isDeepCopy(np));
+		assertTrue(np.isDeepCopy(readNp));
 	}
 
 	@Test
