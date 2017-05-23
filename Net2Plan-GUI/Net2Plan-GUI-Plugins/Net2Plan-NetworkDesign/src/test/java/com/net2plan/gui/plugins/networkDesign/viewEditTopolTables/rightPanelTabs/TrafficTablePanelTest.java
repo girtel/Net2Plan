@@ -34,6 +34,8 @@ public class TrafficTablePanelTest
 
     private static NetPlanViewTableComponent_trafficMatrix component;
 
+    private static final Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
+
     static
     {
         // NetPlan
@@ -75,7 +77,6 @@ public class TrafficTablePanelTest
     private final Object getOptionsComponents()
     {
         // Looking for all components
-        Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
         robot.settings().componentLookupScope(ComponentLookupScope.ALL);
 
         JPanelFixture panelFixture = new JPanelFixture(robot, component);
