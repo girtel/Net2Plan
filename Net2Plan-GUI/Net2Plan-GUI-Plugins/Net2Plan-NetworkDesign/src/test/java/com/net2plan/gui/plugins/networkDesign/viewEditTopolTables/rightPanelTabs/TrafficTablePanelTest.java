@@ -11,13 +11,14 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.utils.TestUtils;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import junitparams.JUnitParamsRunner;
 import junitparams.NamedParameters;
 import junitparams.Parameters;
+import org.assertj.swing.core.BasicRobot;
+import org.assertj.swing.core.ComponentLookupScope;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.fixture.JPanelFixture;
 import org.junit.Test;
@@ -42,8 +43,6 @@ public class TrafficTablePanelTest
     private static NetPlan netPlan;
 
     private static NetPlanViewTableComponent_trafficMatrix component;
-
-    private static final Robot robot = TestUtils.getRobot();
 
     static
     {
@@ -70,7 +69,6 @@ public class TrafficTablePanelTest
         component = new NetPlanViewTableComponent_trafficMatrix(callback);
     }
 
-
     @Test
     @Parameters(named = "optionComponents")
     public void applyButtonStateTest(JComboBox comboBox, JButton applyButton)
@@ -85,6 +83,9 @@ public class TrafficTablePanelTest
     @NamedParameters("optionComponents")
     private final Object getOptionsComponents()
     {
+        Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
+        robot.settings().componentLookupScope(ComponentLookupScope.ALL);
+
         // Looking for all components
         JPanelFixture panelFixture = new JPanelFixture(robot, component);
 
@@ -93,6 +94,8 @@ public class TrafficTablePanelTest
 
         final JButton trafficModelApply = panelFixture.button("trafficModelApply").target();
         final JComboBox trafficModelWheel = panelFixture.comboBox("trafficModelWheel").target();
+
+        robot.cleanUp();
 
         return new Object[]{
                 new Object[]{normalizationWheel, normalizationApply},

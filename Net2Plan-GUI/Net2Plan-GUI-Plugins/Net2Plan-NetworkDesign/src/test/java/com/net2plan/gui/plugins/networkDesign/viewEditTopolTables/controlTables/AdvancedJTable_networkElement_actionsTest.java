@@ -12,15 +12,17 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
-import com.net2plan.gui.plugins.networkDesign.utils.TestUtils;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_node;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.fixture.JPopupMenuFixture;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -49,7 +51,19 @@ public class AdvancedJTable_networkElement_actionsTest
 
     private static NetPlan netPlan;
 
-    private static final Robot robot = TestUtils.getRobot();
+    private static Robot robot;
+
+    @BeforeClass
+    public static void createRobot()
+    {
+        robot = BasicRobot.robotWithCurrentAwtHierarchy();
+    }
+
+    @AfterClass
+    public static void killRobot()
+    {
+        robot.cleanUp();
+    }
 
     @Before
     public void setUp()
