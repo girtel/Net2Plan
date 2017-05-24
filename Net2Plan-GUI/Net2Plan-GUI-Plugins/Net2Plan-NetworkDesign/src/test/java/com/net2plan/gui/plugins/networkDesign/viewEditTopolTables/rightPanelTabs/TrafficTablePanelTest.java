@@ -39,7 +39,7 @@ public class TrafficTablePanelTest
     @Mock
     private static GUINetworkDesign callback;
 
-    private static Robot robot;
+    private Robot robot;
 
     private static NetPlan netPlan;
     private static NetPlanViewTableComponent_trafficMatrix component;
@@ -63,11 +63,7 @@ public class TrafficTablePanelTest
         when(callback.getDesign()).thenReturn(netPlan);
 
         component = new NetPlanViewTableComponent_trafficMatrix(callback);
-    }
 
-    @Before
-    public void buildRobot()
-    {
         robot = BasicRobot.robotWithCurrentAwtHierarchy();
         robot.settings().componentLookupScope(ComponentLookupScope.ALL);
     }
