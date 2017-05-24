@@ -2,6 +2,22 @@
 
 All notable changes to Net2Plan will be documented in this file.
 
+## [0.5.2] - 2017-05-24
+### Added
+    - Added a new tab under the "Demands" table for traffic matrix visualization and control.
+    - Added a new visualization option for giving color to links based on their current utilization.
+    
+### Changed
+    - Reworked multi-layer contol panel to work as a non-intrusive pop-up.
+    - Separated canvas display from table display: Pick option.
+    
+### Fixed
+    - Focus panel refreshes correctly again.
+    - Returned non-n2p loading modules: SNDLib...
+    - Can now load designs with no population attribute.
+    - Giving order to a table now works as intended.
+    - Canvas no longer draws layers in the inverse order.
+
 ## [0.5.1-Beta.1] - 2017-04-20
 ### Added
     - Added capacity for multiple line selection on tables.
