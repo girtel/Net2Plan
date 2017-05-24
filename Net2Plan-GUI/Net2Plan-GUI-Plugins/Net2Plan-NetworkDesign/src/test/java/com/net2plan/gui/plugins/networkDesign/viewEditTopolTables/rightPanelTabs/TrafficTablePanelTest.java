@@ -21,13 +21,15 @@ import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.ComponentLookupScope;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.fixture.JPanelFixture;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import javax.swing.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -37,14 +39,18 @@ import static org.mockito.Mockito.when;
 @RunWith(JUnitParamsRunner.class)
 public class TrafficTablePanelTest
 {
+    @Mock
     private static GUINetworkDesign callback;
+
+    @Mock
     private static VisualizationState vs;
 
     private static NetPlan netPlan;
 
     private static NetPlanViewTableComponent_trafficMatrix component;
 
-    static
+    @Before
+    public void setUp()
     {
         // NetPlan
         netPlan = new NetPlan();
@@ -59,8 +65,7 @@ public class TrafficTablePanelTest
         netPlan.addDemand(node0, node2, 4, null);
 
         // Mock
-        callback = mock(GUINetworkDesign.class);
-        vs = mock(VisualizationState.class);
+        MockitoAnnotations.initMocks(this);
 
         when(callback.getDesign()).thenReturn(netPlan);
         when(callback.getVisualizationState()).thenReturn(vs);
@@ -83,11 +88,13 @@ public class TrafficTablePanelTest
     @NamedParameters("optionComponents")
     private final Object getOptionsComponents()
     {
-        Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
+        final NetPlanViewTableComponent_trafficMatrix component = new NetPlanViewTableComponent_trafficMatrix(callback);
+
+        final Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
         robot.settings().componentLookupScope(ComponentLookupScope.ALL);
 
         // Looking for all components
-        JPanelFixture panelFixture = new JPanelFixture(robot, component);
+        final JPanelFixture panelFixture = new JPanelFixture(robot, component);
 
         final JButton normalizationApply = panelFixture.button("normalizationApply").target();
         final JComboBox normalizationWheel = panelFixture.comboBox("normalizationWheel").target();
