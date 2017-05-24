@@ -6,10 +6,10 @@ before_install:
   chmod +x maven_script.sh && chmod +x solvers.sh
 
 install:
-  ./solvers.sh
+  bash solvers.sh
 
 script:
-  ./maven_script.sh
+  bash maven_script.sh
 
 after_success:
   echo $SUCCESSMESSAGE
@@ -18,4 +18,4 @@ after_failure:
   echo $ERRORMESSAGE
 
 notifications:
-  email: true
+  email: false
