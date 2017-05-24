@@ -6,7 +6,6 @@ addons:
   apt:
     packages:
     - glpk
-    - ipopt
 
 install:
   true
