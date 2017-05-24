@@ -6,6 +6,7 @@ addons:
   apt:
     packages:
     - glpk
+    - ipopt
 
 install:
   true
@@ -20,4 +21,4 @@ after_failure:
   echo $ERRORMESSAGE
 
 notifications:
-  email: false
+  email: true

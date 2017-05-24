@@ -11,43 +11,37 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import junitparams.JUnitParamsRunner;
-import junitparams.NamedParameters;
-import junitparams.Parameters;
 import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.ComponentLookupScope;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.fixture.JPanelFixture;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.swing.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Jorge San Emeterio
  * @date 19/05/17
  */
-@RunWith(JUnitParamsRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class TrafficTablePanelTest
 {
     @Mock
     private static GUINetworkDesign callback;
 
-    @Mock
-    private static VisualizationState vs;
+    private static Robot robot;
 
     private static NetPlan netPlan;
-
     private static NetPlanViewTableComponent_trafficMatrix component;
 
     @Before
@@ -66,38 +60,27 @@ public class TrafficTablePanelTest
         netPlan.addDemand(node0, node2, 4, null);
 
         // Mock
-        MockitoAnnotations.initMocks(this);
-
         when(callback.getDesign()).thenReturn(netPlan);
-        when(callback.getVisualizationState()).thenReturn(vs);
-        when(vs.isWhatIfAnalysisActive()).thenReturn(false);
 
         component = new NetPlanViewTableComponent_trafficMatrix(callback);
     }
 
-    @Test
-    @Parameters(named = "optionComponents")
-    public void applyButtonStateTest(JComboBox comboBox, JButton applyButton)
+    @Before
+    public void buildRobot()
     {
-        for (int i = 0; i < comboBox.getItemCount(); i++)
-        {
-            comboBox.setSelectedIndex(i);
-            assertThat(!applyButton.isEnabled()).isEqualTo(comboBox.getSelectedIndex() == 0);
-        }
+        robot = BasicRobot.robotWithCurrentAwtHierarchy();
+        robot.settings().componentLookupScope(ComponentLookupScope.ALL);
     }
 
-    @NamedParameters("optionComponents")
-    private final Object getOptionsComponents()
+    @After
+    public void killRobot()
     {
-        final GUINetworkDesign callback = mock(GUINetworkDesign.class);
-        when(callback.getDesign()).thenReturn(new NetPlan());
+        robot.cleanUp();
+    }
 
-        final NetPlanViewTableComponent_trafficMatrix component = new NetPlanViewTableComponent_trafficMatrix(callback);
-
-        final Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
-        robot.settings().componentLookupScope(ComponentLookupScope.ALL);
-
-        // Looking for all components
+    @Test
+    public void applyButtonStateTest()
+    {
         final JPanelFixture panelFixture = new JPanelFixture(robot, component);
 
         final JButton normalizationApply = panelFixture.button("normalizationApply").target();
@@ -106,12 +89,17 @@ public class TrafficTablePanelTest
         final JButton trafficModelApply = panelFixture.button("trafficModelApply").target();
         final JComboBox trafficModelWheel = panelFixture.comboBox("trafficModelWheel").target();
 
-        robot.cleanUp();
+        for (int i = 0; i < normalizationWheel.getItemCount(); i++)
+        {
+            normalizationWheel.setSelectedIndex(i);
+            assertThat(!normalizationApply.isEnabled()).isEqualTo(normalizationWheel.getSelectedIndex() == 0);
+        }
 
-        return new Object[]{
-                new Object[]{normalizationWheel, normalizationApply},
-                new Object[]{trafficModelWheel, trafficModelApply}
-        };
+        for (int i = 0; i < trafficModelWheel.getItemCount(); i++)
+        {
+            trafficModelWheel.setSelectedIndex(i);
+            assertThat(!trafficModelApply.isEnabled()).isEqualTo(trafficModelWheel.getSelectedIndex() == 0);
+        }
     }
 
     @Test
