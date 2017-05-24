@@ -17,8 +17,9 @@ import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.ComponentLookupScope;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.fixture.JPanelFixture;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -39,7 +40,7 @@ public class TrafficTablePanelTest
     @Mock
     private static GUINetworkDesign callback;
 
-    private Robot robot;
+    private static Robot robot;
 
     private static NetPlan netPlan;
     private static NetPlanViewTableComponent_trafficMatrix component;
@@ -63,13 +64,17 @@ public class TrafficTablePanelTest
         when(callback.getDesign()).thenReturn(netPlan);
 
         component = new NetPlanViewTableComponent_trafficMatrix(callback);
+    }
 
+    @BeforeClass
+    public static void buildRobot()
+    {
         robot = BasicRobot.robotWithCurrentAwtHierarchy();
         robot.settings().componentLookupScope(ComponentLookupScope.ALL);
     }
 
-    @After
-    public void killRobot()
+    @AfterClass
+    public static void killRobot()
     {
         robot.cleanUp();
     }
