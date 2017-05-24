@@ -30,6 +30,7 @@ import org.mockito.MockitoAnnotations;
 import javax.swing.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -88,6 +89,9 @@ public class TrafficTablePanelTest
     @NamedParameters("optionComponents")
     private final Object getOptionsComponents()
     {
+        final GUINetworkDesign callback = mock(GUINetworkDesign.class);
+        when(callback.getDesign()).thenReturn(new NetPlan());
+
         final NetPlanViewTableComponent_trafficMatrix component = new NetPlanViewTableComponent_trafficMatrix(callback);
 
         final Robot robot = BasicRobot.robotWithCurrentAwtHierarchy();
