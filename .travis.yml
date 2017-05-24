@@ -8,9 +8,10 @@ addons:
     - glpk
 
 before_install:
-chmod +x maven_script.sh
+  chmod +x maven_script.sh
 
-install: true
+install:
+  true
 
 script:
   ./maven_script.sh
