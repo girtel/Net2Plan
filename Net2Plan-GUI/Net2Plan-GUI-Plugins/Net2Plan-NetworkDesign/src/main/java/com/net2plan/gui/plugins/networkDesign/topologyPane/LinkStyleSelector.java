@@ -14,14 +14,18 @@ package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.JNumberField;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.SwingUtils;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -75,12 +79,42 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
             throw new RuntimeException();
 
         //Create JTextField array
-        JTextField[] fieldArray = new JTextField[linkUtilizationColor.size()];
+        JNumberField[] fieldArray = new JNumberField[linkUtilizationColor.size()];
+        Arrays.fill(fieldArray, new JNumberField());
 
         for (int i = 0; i < fieldArray.length; i++)
         {
-            fieldArray[i] = new JTextField("" + linkUtilizationColor.get(i));
-            fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
+            final double maxIncrement = 1e-2;
+
+            final JNumberField numberField = fieldArray[i];
+
+            final JSpinner.NumberEditor editor = (JSpinner.NumberEditor) numberField.getEditor();
+            editor.getFormat().setMaximumFractionDigits(2);
+
+            final SpinnerNumberModel model = (SpinnerNumberModel) numberField.getModel();
+            model.setStepSize(maxIncrement);
+            model.setValue(linkUtilizationColor.get(i));
+
+            numberField.addChangeListener(new ChangeListener()
+            {
+                @Override
+                public void stateChanged(ChangeEvent changeEvent)
+                {
+                    for (int j = 0; j < fieldArray.length; j++)
+                    {
+                        final double lowerValue = j == 0 ? 0 : fieldArray[j - 1].getValue() + maxIncrement;
+                        final double upperValue = j == fieldArray.length - 1 ? 100 : fieldArray[j + 1].getValue() - maxIncrement;
+                        final JNumberField numberField = fieldArray[j];
+
+                        final SpinnerNumberModel model = (SpinnerNumberModel) numberField.getModel();
+
+                        model.setMinimum(lowerValue);
+                        model.setMaximum(upperValue);
+                    }
+                }
+            });
+
+            fieldArray[i] = numberField;
         }
 
         Rectangle[] rectangleArray = new Rectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
@@ -106,62 +140,12 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                boolean isValid = true;
-
                 for (int i = 0; i < linkUtilizationColor.size(); i++)
-                {
-                    double value = -1;
+                    linkUtilizationColor.set(i, fieldArray[i].getValue());
 
-                    if (fieldArray[i].getText().matches("[0-9]+\\.*[0-9]*"))
-                    {
-                        try
-                        {
-                            value = Double.parseDouble(fieldArray[i].getText());
-                        } catch (NumberFormatException nfe)
-                        {
-                        }
-                    }
+                _visualizationState.setLinkUtilizationColor(linkUtilizationColor);
 
-                    double previousValue = -1;
-
-                    if (i == linkUtilizationColor.size() - 1)
-                        previousValue = 100;
-                    else if (fieldArray[i + 1].getText().matches("[0-9]+\\.*[0-9]*"))
-                    {
-                        try
-                        {
-                            previousValue = Double.parseDouble(fieldArray[i + 1].getText());
-                        } catch (NumberFormatException nfe)
-                        {
-                        }
-                    }
-
-                    if (value != -1)
-                    {
-                        if (previousValue != -1 && value >= previousValue)
-                        {
-                            fieldArray[i].setBackground(_errorBackgroundColor);
-                            isValid = false;
-                        } else
-                            fieldArray[i].setBackground(Color.WHITE);
-                    } else
-                    {
-                        fieldArray[i].setBackground(_errorBackgroundColor);
-                        isValid = false;
-                    }
-                }
-
-                if (isValid)
-                {
-                    for (int i = 0; i < linkUtilizationColor.size(); i++)
-                        linkUtilizationColor.set(i, Double.parseDouble(fieldArray[i].getText()));
-
-                    _visualizationState.setLinkUtilizationColor(linkUtilizationColor);
-
-                    dispose();
-                } else
-                    ErrorHandling.showErrorDialog("Some fields are incorrect!", "Error");
-
+                dispose();
             }
         });
 
@@ -187,7 +171,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
                 linkUtilizationColor.addAll(VisualizationConstants.DEFAULT_LINKCOLORINGUTILIZATIONTHRESHOLDS);
                 for (int i = 0; i < linkUtilizationColor.size(); i++)
                 {
-                    fieldArray[i].setText("" + linkUtilizationColor.get(i));
+                    fieldArray[i].setValue(linkUtilizationColor.get(i));
                     fieldArray[i].setBackground(Color.WHITE);
                 }
             }
