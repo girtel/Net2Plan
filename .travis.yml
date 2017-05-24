@@ -2,14 +2,13 @@ language: java
 jdk: oraclejdk8
 sudo: required
 
-before_install:
-  chmod +x maven_script.sh && chmod +x solvers.sh
-
-install:
-  ./solvers.sh
+addons:
+  apt:
+    packages:
+    - glpk
 
 script:
-  ./maven_script.sh
+  mvn clean package
 
 after_success:
   echo $SUCCESSMESSAGE
@@ -18,4 +17,4 @@ after_failure:
   echo $ERRORMESSAGE
 
 notifications:
-  email: true
+  email: false
