@@ -7,7 +7,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.*;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafMatrix;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafficMatrix;
 import com.net2plan.gui.utils.FullScrollPaneLayout;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
@@ -22,6 +22,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.EnumMap;
 import java.util.List;
@@ -35,7 +36,7 @@ public class ViewEditTopologyTablesPane extends JPanel
     private final GUINetworkDesign callback;
     private final JTabbedPane netPlanView;
     private final JTabbedPane demandTabbedPaneListAndMatrix;
-    private NetPlanViewTableComponent_trafMatrix trafficMatrixComponent;
+    private NetPlanViewTableComponent_trafficMatrix trafficMatrixComponent;
     private final Map<Constants.NetworkElementType, AdvancedJTable_networkElement> netPlanViewTable;
     private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
     private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
@@ -76,8 +77,8 @@ public class ViewEditTopologyTablesPane extends JPanel
         netPlanViewTableNumEntriesLabel.put(NetworkElementType.LAYER, new JLabel("Number of entries: "));
 
         netPlanView = new JTabbedPane();
-        demandTabbedPaneListAndMatrix = new JTabbedPane ();
-        this.trafficMatrixComponent = new NetPlanViewTableComponent_trafMatrix(callback);
+        demandTabbedPaneListAndMatrix = new JTabbedPane();
+        this.trafficMatrixComponent = new NetPlanViewTableComponent_trafficMatrix(callback);
         for (NetworkElementType elementType : NetworkElementType.values())
         {
             if (elementType == NetworkElementType.NETWORK)
@@ -115,11 +116,11 @@ public class ViewEditTopologyTablesPane extends JPanel
                 labelsPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
                 panel.add(labelsPanel, BorderLayout.NORTH);
                 panel.add(scrollPane, BorderLayout.CENTER);
-            	netPlanViewTableComponent.put(elementType, panel);
+                netPlanViewTableComponent.put(elementType, panel);
                 if (elementType == NetworkElementType.DEMAND)
                 {
-                	this.demandTabbedPaneListAndMatrix.addTab("List view", panel);
-                	this.demandTabbedPaneListAndMatrix.addTab("Traffic matrix view", trafficMatrixComponent);
+                    this.demandTabbedPaneListAndMatrix.addTab("List view", panel);
+                    this.demandTabbedPaneListAndMatrix.addTab("Traffic matrix view", trafficMatrixComponent);
                 }
             }
         }
@@ -127,7 +128,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         this.add(netPlanView, BorderLayout.CENTER);
 
         final JMenuItem writeToExcel = new JMenuItem("To excel");
-        writeToExcel.addActionListener(ev ->
+        writeToExcel.addActionListener((ActionEvent ev) ->
         {
             final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setAcceptAllFileFilterUsed(false);
@@ -169,6 +170,9 @@ public class ViewEditTopologyTablesPane extends JPanel
                                 continue;
 
                         table.writeTableToFile(file);
+
+                        if (table instanceof AdvancedJTable_demand)
+                            trafficMatrixComponent.writeTableToFile(file);
                     }
 
                     ErrorHandling.showInformationDialog("Excel file successfully written", "Finished writing into file");
@@ -214,10 +218,10 @@ public class ViewEditTopologyTablesPane extends JPanel
                 continue;
             if (elementType == NetworkElementType.DEMAND)
             {
-            	this.demandTabbedPaneListAndMatrix.addTab("List view", netPlanViewTableComponent.get(elementType));
-            	this.demandTabbedPaneListAndMatrix.addTab("Traffic matrix view", trafficMatrixComponent);
+                this.demandTabbedPaneListAndMatrix.addTab("List view", netPlanViewTableComponent.get(elementType));
+                this.demandTabbedPaneListAndMatrix.addTab("Traffic matrix view", trafficMatrixComponent);
                 netPlanView.addTab(netPlanViewTable.get(elementType).getTabName(), this.demandTabbedPaneListAndMatrix);
-            	continue;
+                continue;
             }
             netPlanView.addTab(elementType == NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
         }
@@ -244,7 +248,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                     label.setText("Number of entries: " + numEntries);
             }
         }
-        
+
         trafficMatrixComponent.updateNetPlanView();
         ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
         ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);
@@ -327,7 +331,7 @@ public class ViewEditTopologyTablesPane extends JPanel
     public void selectItems(NetworkElementType type, List<NetworkElement> elements)
     {
         final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-        final Set<Long> idstoSelect = elements.stream().map(e->e.getId()).collect(Collectors.toSet());
+        final Set<Long> idstoSelect = elements.stream().map(e -> e.getId()).collect(Collectors.toSet());
 
         final int numRows = table.getRowCount();
         int numSelected = 0;
@@ -340,7 +344,8 @@ public class ViewEditTopologyTablesPane extends JPanel
                 {
                     final int viewRow = table.convertRowIndexToView(row);
                     table.addRowSelectionInterval(viewRow, viewRow);
-                    numSelected ++; if (numSelected == elements.size()) return;
+                    numSelected++;
+                    if (numSelected == elements.size()) return;
                 }
             } catch (ClassCastException e)
             {

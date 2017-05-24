@@ -739,10 +739,112 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
         if (networkElementType != NetworkElementType.FORWARDING_RULE && networkElementType != NetworkElementType.NETWORK && networkElementType != NetworkElementType.LAYER)
         {
             popup.addSeparator();
-            popup.add(new MenuItem_RemovedFiltered(callback, networkElementType));
+
+            final JMenuItem removeFiltered = new JMenuItem("Remove all filtered out " + networkElementType + "s");
+            removeFiltered.setName("removeFilteredItem");
+
+            removeFiltered.addActionListener(e1 ->
+            {
+                try
+                {
+                    final ITableRowFilter tableRowFilter = callback.getVisualizationState().getTableRowFilter();
+                    if (tableRowFilter != null)
+                    {
+                        switch (networkElementType)
+                        {
+                            case NODE:
+                                final List<Node> visibleNodes = tableRowFilter.getVisibleNodes(netPlan.getNetworkLayerDefault());
+                                for (Node node : new ArrayList<>(netPlan.getNodes()))
+                                    if (!visibleNodes.contains(node)) node.remove();
+                                break;
+                            case LINK:
+                                final List<Link> visibleLinks = tableRowFilter.getVisibleLinks(netPlan.getNetworkLayerDefault());
+                                for (Link link : new ArrayList<>(netPlan.getLinks()))
+                                    if (!visibleLinks.contains(link)) link.remove();
+                                break;
+                            case DEMAND:
+                                final List<Demand> visibleDemands = tableRowFilter.getVisibleDemands(netPlan.getNetworkLayerDefault());
+                                for (Demand demand : new ArrayList<>(netPlan.getDemands()))
+                                    if (!visibleDemands.contains(demand)) demand.remove();
+                                break;
+                            case MULTICAST_DEMAND:
+                                final List<MulticastDemand> visibleMulticastDemands = tableRowFilter.getVisibleMulticastDemands(netPlan.getNetworkLayerDefault());
+                                for (MulticastDemand multicastDemand : new ArrayList<>(netPlan.getMulticastDemands()))
+                                    if (!visibleMulticastDemands.contains(multicastDemand))
+                                        multicastDemand.remove();
+                                break;
+                            case ROUTE:
+                                final List<Route> visibleRoutes = tableRowFilter.getVisibleRoutes(netPlan.getNetworkLayerDefault());
+                                for (Route route : new ArrayList<>(netPlan.getRoutes()))
+                                    if (!visibleRoutes.contains(route)) route.remove();
+                                break;
+                            case MULTICAST_TREE:
+                                final List<MulticastTree> visibleMulticastTrees = tableRowFilter.getVisibleMulticastTrees(netPlan.getNetworkLayerDefault());
+                                for (MulticastTree tree : new ArrayList<>(netPlan.getMulticastTrees()))
+                                    if (!visibleMulticastTrees.contains(tree)) tree.remove();
+                                break;
+                            case RESOURCE:
+                                final List<Resource> visibleResources = tableRowFilter.getVisibleResources(netPlan.getNetworkLayerDefault());
+                                for (Resource resource : new ArrayList<>(netPlan.getResources()))
+                                    if (!visibleResources.contains(resource)) resource.remove();
+                                break;
+                            case SRG:
+                                final List<SharedRiskGroup> visibleSRGs = tableRowFilter.getVisibleSRGs(netPlan.getNetworkLayerDefault());
+                                for (SharedRiskGroup sharedRiskGroup : new ArrayList<>(netPlan.getSRGs()))
+                                    if (!visibleSRGs.contains(sharedRiskGroup)) sharedRiskGroup.remove();
+                                break;
+                            default:
+                                // TODO: Error message?
+                                return;
+                        }
+                    }
+                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(networkElementType));
+                    callback.addNetPlanChange();
+                } catch (Throwable ex)
+                {
+                    ex.printStackTrace();
+                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
+                }
+            });
+
+            popup.add(removeFiltered);
 
             if (networkElementType == NetworkElementType.NODE || networkElementType == NetworkElementType.LINK)
-                popup.add(new MenuItem_HideFiltered(callback, networkElementType));
+            {
+                final JMenuItem hideFiltered = new JMenuItem("Hide all filtered out " + networkElementType + "s");
+                hideFiltered.setName("hideFilteredItem");
+
+                hideFiltered.addActionListener(e1 ->
+                {
+                    final ITableRowFilter tableRowFilter = callback.getVisualizationState().getTableRowFilter();
+                    if (tableRowFilter != null)
+                    {
+                        switch (networkElementType)
+                        {
+                            case NODE:
+                                final List<Node> visibleNodes = tableRowFilter.getVisibleNodes(netPlan.getNetworkLayerDefault());
+                                for (Node node : netPlan.getNodes())
+                                    if (!visibleNodes.contains(node))
+                                        callback.getVisualizationState().hideOnCanvas(node);
+                                break;
+                            case LINK:
+                                final List<Link> visibleLinks = tableRowFilter.getVisibleLinks(netPlan.getNetworkLayerDefault());
+                                for (Link link : netPlan.getLinks())
+                                    if (!visibleLinks.contains(link))
+                                        callback.getVisualizationState().hideOnCanvas(link);
+                                break;
+                            default:
+                                return;
+                        }
+                    }
+
+                    callback.updateVisualizationAfterChanges(Sets.newHashSet(networkElementType));
+                    callback.addNetPlanChange();
+                });
+
+                popup.add(hideFiltered);
+            }
         }
     }
 
@@ -875,116 +977,6 @@ public abstract class AdvancedJTable_networkElement extends AdvancedJTable
                 ErrorHandling.showErrorDialog("The GUI has suffered a problem.\nPlease see the console for more information.", "Error");
                 ex.printStackTrace();
             }
-        }
-    }
-
-    protected static class MenuItem_RemovedFiltered extends JMenuItem
-    {
-        MenuItem_RemovedFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
-        {
-            final NetPlan netPlan = callback.getDesign();
-
-            this.setText("Remove all filtered out " + networkElementType + "s");
-            this.addActionListener(e1 ->
-            {
-                try
-                {
-                    final ITableRowFilter tableRowFilter = callback.getVisualizationState().getTableRowFilter();
-                    if (tableRowFilter != null)
-                    {
-                        switch (networkElementType)
-                        {
-                            case NODE:
-                                final List<Node> visibleNodes = tableRowFilter.getVisibleNodes(netPlan.getNetworkLayerDefault());
-                                for (Node node : new ArrayList<>(netPlan.getNodes()))
-                                    if (!visibleNodes.contains(node)) node.remove();
-                                break;
-                            case LINK:
-                                final List<Link> visibleLinks = tableRowFilter.getVisibleLinks(netPlan.getNetworkLayerDefault());
-                                for (Link link : new ArrayList<>(netPlan.getLinks()))
-                                    if (!visibleLinks.contains(link)) link.remove();
-                                break;
-                            case DEMAND:
-                                final List<Demand> visibleDemands = tableRowFilter.getVisibleDemands(netPlan.getNetworkLayerDefault());
-                                for (Demand demand : new ArrayList<>(netPlan.getDemands()))
-                                    if (!visibleDemands.contains(demand)) demand.remove();
-                                break;
-                            case MULTICAST_DEMAND:
-                                final List<MulticastDemand> visibleMulticastDemands = tableRowFilter.getVisibleMulticastDemands(netPlan.getNetworkLayerDefault());
-                                for (MulticastDemand multicastDemand : new ArrayList<>(netPlan.getMulticastDemands()))
-                                    if (!visibleMulticastDemands.contains(multicastDemand))
-                                        multicastDemand.remove();
-                                break;
-                            case ROUTE:
-                                final List<Route> visibleRoutes = tableRowFilter.getVisibleRoutes(netPlan.getNetworkLayerDefault());
-                                for (Route route : new ArrayList<>(netPlan.getRoutes()))
-                                    if (!visibleRoutes.contains(route)) route.remove();
-                                break;
-                            case MULTICAST_TREE:
-                                final List<MulticastTree> visibleMulticastTrees = tableRowFilter.getVisibleMulticastTrees(netPlan.getNetworkLayerDefault());
-                                for (MulticastTree tree : new ArrayList<>(netPlan.getMulticastTrees()))
-                                    if (!visibleMulticastTrees.contains(tree)) tree.remove();
-                                break;
-                            case RESOURCE:
-                                final List<Resource> visibleResources = tableRowFilter.getVisibleResources(netPlan.getNetworkLayerDefault());
-                                for (Resource resource : new ArrayList<>(netPlan.getResources()))
-                                    if (!visibleResources.contains(resource)) resource.remove();
-                                break;
-                            case SRG:
-                                final List<SharedRiskGroup> visibleSRGs = tableRowFilter.getVisibleSRGs(netPlan.getNetworkLayerDefault());
-                                for (SharedRiskGroup sharedRiskGroup : new ArrayList<>(netPlan.getSRGs()))
-                                    if (!visibleSRGs.contains(sharedRiskGroup)) sharedRiskGroup.remove();
-                                break;
-                            default:
-                                // TODO: Error message?
-                                return;
-                        }
-                    }
-                    callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(networkElementType));
-                    callback.addNetPlanChange();
-                } catch (Throwable ex)
-                {
-                    ex.printStackTrace();
-                    ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to complete this action");
-                }
-            });
-        }
-    }
-
-    protected static class MenuItem_HideFiltered extends JMenuItem
-    {
-        MenuItem_HideFiltered(GUINetworkDesign callback, NetworkElementType networkElementType)
-        {
-            final NetPlan netPlan = callback.getDesign();
-            this.setText("Hide all filtered out " + networkElementType + "s");
-            this.addActionListener(e1 ->
-            {
-                final ITableRowFilter tableRowFilter = callback.getVisualizationState().getTableRowFilter();
-                if (tableRowFilter != null)
-                {
-                    switch (networkElementType)
-                    {
-                        case NODE:
-                            final List<Node> visibleNodes = tableRowFilter.getVisibleNodes(netPlan.getNetworkLayerDefault());
-                            for (Node node : netPlan.getNodes())
-                                if (!visibleNodes.contains(node))
-                                    callback.getVisualizationState().hideOnCanvas(node);
-                            break;
-                        case LINK:
-                            final List<Link> visibleLinks = tableRowFilter.getVisibleLinks(netPlan.getNetworkLayerDefault());
-                            for (Link link : netPlan.getLinks())
-                                if (!visibleLinks.contains(link))
-                                    callback.getVisualizationState().hideOnCanvas(link);
-                            break;
-                        default:
-                            return;
-                    }
-                }
-
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(networkElementType));
-                callback.addNetPlanChange();
-            });
         }
     }
 }

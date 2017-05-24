@@ -21,7 +21,6 @@
 package com.net2plan.internal;
 
 import com.net2plan.internal.Constants.UserInterface;
-import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.StringUtils;
 
 import javax.swing.*;
@@ -360,28 +359,6 @@ public class ErrorHandling
 		if (wasVisible) consoleDialog.setVisible(false);
 		
 		Object data = message;
-
-		if (DEBUG)
-		{
-			try
-			{
-				ImageIcon ii = new ImageIcon(ImageUtils.readImageFromURL(ErrorHandling.class.getResource("/resources/common/errorAnimation.gif")));
-				JPanel containerPanel = new JPanel();
-				containerPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-				containerPanel.setLayout(new BorderLayout());
-				containerPanel.add(new JLabel(ii), BorderLayout.CENTER);
-
-				JPanel pane = new JPanel(new BorderLayout());
-				pane.add(new JLabel(message), BorderLayout.NORTH);
-				pane.add(containerPanel, BorderLayout.CENTER);
-
-				data = pane;
-			}
-			catch(Throwable e)
-			{
-				data = message;
-			}
-		}
 
 		JOptionPane.showMessageDialog(null, data, title, type);
 		

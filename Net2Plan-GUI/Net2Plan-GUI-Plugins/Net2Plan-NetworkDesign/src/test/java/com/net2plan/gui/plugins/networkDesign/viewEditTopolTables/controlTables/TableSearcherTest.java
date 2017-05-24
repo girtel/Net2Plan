@@ -3,6 +3,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 import com.net2plan.gui.utils.AdvancedJTable;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -18,6 +19,7 @@ public class TableSearcherTest
     
     @Test
     @Parameters({"A", "Z", "O"})
+    @Ignore
     public void searchForItemTest(String searchItem)
     {
         AdvancedJTable table = new AdvancedJTable();
