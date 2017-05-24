@@ -1,4 +1,4 @@
-#Changelog
+# Changelog
 
 All notable changes to Net2Plan will be documented in this file.
 
@@ -17,6 +17,8 @@ All notable changes to Net2Plan will be documented in this file.
     - Can now load designs with no population attribute.
     - Giving order to a table now works as intended.
     - Canvas no longer draws layers in the inverse order.
+
+####
 
 ## [0.5.1-Beta.1] - 2017-04-20
 ### Added
