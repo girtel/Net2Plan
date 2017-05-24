@@ -57,8 +57,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
 
         SwingUtils.configureCloseDialogOnEscape(this);
         this.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
-        this.setSize(475, 525);
-        this.setLocationRelativeTo(null);
+        this.pack();
         this.setResizable(true);
         this.setVisible(true);
     }
@@ -206,7 +205,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.insets = new Insets(0, 5, 5, 5);
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         pane.add(new JLabel("Color"), gbc);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         pane.add(new JLabel("Utilization (%)"), gbc);
