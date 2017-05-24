@@ -73,7 +73,7 @@ public class Offline_tcfa_generalMultilayer implements IAlgorithm
 		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING, lowerLayer);
 
 		/* Initialize some variables */
-		final double PRECISION_FACTOR = Double.parseDouble(net2planParameters.get("precisionFactor"));
+		final double PRECISION_FACTOR = 0.05; //Double.parseDouble(net2planParameters.get("precisionFactor"));
 		final int N = netPlan.getNumberOfNodes();
 		final int D_up = netPlan.getNumberOfDemands (upperLayer);
 		final int E_lo = netPlan.getNumberOfLinks (lowerLayer);
