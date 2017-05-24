@@ -7,6 +7,12 @@ addons:
     packages:
     - glpk
 
+env:
+  - DISPLAY=:99.0
+
+before_install:
+  - sh -e /etc/init.d/xvfb start
+
 install:
   true
 
