@@ -2,6 +2,8 @@
 
 All notable changes to Net2Plan will be documented in this file.
 
+The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
+
 ## [0.5.2] - 2017-05-24
 ### Added
     - Added a new tab under the "Demands" table for traffic matrix visualization and control.
