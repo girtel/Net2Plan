@@ -7,14 +7,11 @@ addons:
     packages:
     - glpk
 
-before_install:
-  chmod +x maven_script.sh
-
 install:
   true
 
 script:
-  ./maven_script.sh
+  mvn clean package
 
 after_success:
   echo $SUCCESSMESSAGE
