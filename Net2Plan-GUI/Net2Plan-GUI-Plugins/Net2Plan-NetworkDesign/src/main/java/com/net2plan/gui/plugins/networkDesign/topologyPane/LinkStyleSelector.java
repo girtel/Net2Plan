@@ -54,13 +54,11 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
 //        tabbedPane.addTab("Link relative thickness", getLinkThicknessPanel());
 
         this.add(tabbedPane, BorderLayout.CENTER);
-        this.pack();
 
         SwingUtils.configureCloseDialogOnEscape(this);
         this.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
         this.pack();
-        this.setResizable(true);
-        this.setVisible(true);
+        this.setResizable(false);
     }
 
     @Override
@@ -71,7 +69,6 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
     public JPanel getLinkUtilizationColoringPanel()
     {
         List<Double> linkUtilizationColor = _visualizationState.getLinkUtilizationColor();
-        double increment = (100.0 / linkUtilizationColor.size());
 
         if (linkUtilizationColor.size() != VisualizationConstants.DEFAULT_LINKCOLORINGUTILIZATIONTHRESHOLDS.size())
             throw new RuntimeException();
@@ -82,24 +79,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         double maxValue = 0;
         for (int i = 0; i < fieldArray.length; i++)
         {
-            if(i == 0)
-            {
-                minValue = 1;
-                maxValue = linkUtilizationColor.get(1) - 1;
-            }
-            else if (i == fieldArray.length - 1)
-            {
-                minValue = linkUtilizationColor.get(i - 1) + 1;
-                maxValue = 99;
-            }
-            else{
-                minValue = linkUtilizationColor.get(i - 1) + 1;
-                maxValue = linkUtilizationColor.get(i + 1) - 1;
-            }
-
-            fieldArray[i] = new JNumberField(linkUtilizationColor.get(i), minValue, maxValue, 1);
-
-            //fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
+            fieldArray[i] = new JNumberField(linkUtilizationColor.get(i), 0, 100, 1);
         }
 
         Rectangle[] rectangleArray = new Rectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];

@@ -298,7 +298,9 @@ public class TopologyTopBar extends JToolBar implements ActionListener
             }
         } else if (src == btn_linkStyle)
         {
-            new LinkStyleSelector(callback.getVisualizationState());
+            final LinkStyleSelector lss = new LinkStyleSelector(callback.getVisualizationState());
+            lss.setLocationRelativeTo(this);
+            lss.setVisible(true);
             canvas.refresh();
         }
     }
