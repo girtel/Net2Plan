@@ -1,6 +1,6 @@
-`Simplified BSD License`
+**Simplified BSD License**
 
-`https://opensource.org/licenses/BSD-2-Clause`
+https://opensource.org/licenses/BSD-2-Clause
 
 Copyright (c) 2017-2018, Pablo Pavón Mariño
 
