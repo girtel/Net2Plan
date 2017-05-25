@@ -94,6 +94,27 @@
     <build>
         <finalName>Net2Plan-${project.version}</finalName>
         <plugins>
+            <!-- Download licenses -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>1.12</version>
+                <executions>
+                    <execution>
+                        <id>download-licenses</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>download-licenses</goal>
+                        </goals>
+                        <configuration>
+                            <excludedGroups>com.net2plan</excludedGroups>
+                            <excludedScopes>test</excludedScopes>
+                            <includeTransitiveDependencies>true</includeTransitiveDependencies>
+                            <quiet>true</quiet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Plugin required to assemble the project for distribution  -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
