@@ -18,6 +18,9 @@ import com.net2plan.utils.Triple;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Jorge San Emeterio
+ */
 public class Offline_Example_Algorithm implements IAlgorithm
 {
 	private InputParameter simpleParameter               = new InputParameter("simpleParameter", "Default value", "The user may enter the desired value in a string format.");
