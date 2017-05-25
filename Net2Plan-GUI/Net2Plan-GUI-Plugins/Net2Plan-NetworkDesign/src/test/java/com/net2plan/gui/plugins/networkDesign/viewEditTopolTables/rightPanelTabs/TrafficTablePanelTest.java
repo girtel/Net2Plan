@@ -13,40 +13,38 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTab
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import junitparams.JUnitParamsRunner;
+import junitparams.NamedParameters;
+import junitparams.Parameters;
 import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.ComponentLookupScope;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.fixture.JPanelFixture;
 import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.swing.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Jorge San Emeterio
  * @date 19/05/17
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(JUnitParamsRunner.class)
 public class TrafficTablePanelTest
 {
-    @Mock
     private static GUINetworkDesign callback;
-
-    private static Robot robot;
 
     private static NetPlan netPlan;
     private static NetPlanViewTableComponent_trafficMatrix component;
 
-    @Before
-    public void setUp()
+    private static Robot robot;
+
+    static
     {
         // NetPlan
         netPlan = new NetPlan();
@@ -61,14 +59,11 @@ public class TrafficTablePanelTest
         netPlan.addDemand(node0, node2, 4, null);
 
         // Mock
+        callback = mock(GUINetworkDesign.class);
         when(callback.getDesign()).thenReturn(netPlan);
 
         component = new NetPlanViewTableComponent_trafficMatrix(callback);
-    }
 
-    @BeforeClass
-    public static void buildRobot()
-    {
         robot = BasicRobot.robotWithCurrentAwtHierarchy();
         robot.settings().componentLookupScope(ComponentLookupScope.ALL);
     }
@@ -80,9 +75,21 @@ public class TrafficTablePanelTest
     }
 
     @Test
-    public void applyButtonStateTest()
+    @Parameters(named = "optionComponents")
+    public void applyButtonStateTest(JComboBox comboBox, JButton applyButton)
     {
-        final JPanelFixture panelFixture = new JPanelFixture(robot, component);
+        for (int i = 0; i < comboBox.getItemCount(); i++)
+        {
+            comboBox.setSelectedIndex(i);
+            assertThat(!applyButton.isEnabled()).isEqualTo(comboBox.getSelectedIndex() == 0);
+        }
+    }
+
+    @NamedParameters("optionComponents")
+    private final Object getOptionsComponents()
+    {
+        // Looking for all components
+        JPanelFixture panelFixture = new JPanelFixture(robot, component);
 
         final JButton normalizationApply = panelFixture.button("normalizationApply").target();
         final JComboBox normalizationWheel = panelFixture.comboBox("normalizationWheel").target();
@@ -90,17 +97,10 @@ public class TrafficTablePanelTest
         final JButton trafficModelApply = panelFixture.button("trafficModelApply").target();
         final JComboBox trafficModelWheel = panelFixture.comboBox("trafficModelWheel").target();
 
-        for (int i = 0; i < normalizationWheel.getItemCount(); i++)
-        {
-            normalizationWheel.setSelectedIndex(i);
-            assertThat(!normalizationApply.isEnabled()).isEqualTo(normalizationWheel.getSelectedIndex() == 0);
-        }
-
-        for (int i = 0; i < trafficModelWheel.getItemCount(); i++)
-        {
-            trafficModelWheel.setSelectedIndex(i);
-            assertThat(!trafficModelApply.isEnabled()).isEqualTo(trafficModelWheel.getSelectedIndex() == 0);
-        }
+        return new Object[]{
+                new Object[]{normalizationWheel, normalizationApply},
+                new Object[]{trafficModelWheel, trafficModelApply}
+        };
     }
 
     @Test
