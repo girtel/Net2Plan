@@ -20,10 +20,10 @@ script:
   mvn clean package
 
 after_success:
-  echo $SUCCESSMESSAGE
+  echo "Build successful. Awesome!"
 
 after_failure:
-  echo $ERRORMESSAGE
+  echo "Build finished with errors. Bollocks!"
 
 notifications:
   email: true
