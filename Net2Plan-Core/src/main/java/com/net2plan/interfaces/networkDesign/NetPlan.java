@@ -1932,7 +1932,8 @@ public class NetPlan extends NetworkElement
      * design, and all the elements in the other design are added to this.  
      * This operation is idempotent: merging x with x is x, merging x with y and again with y, is 
      * the same as merging x with y just once
-     * @param other
+     *
+     * @param otherDesign
      * @return this (for convenience only)
      */
     public NetPlan mergeIntoThisDesign (NetPlan otherDesign)
@@ -2183,9 +2184,8 @@ public class NetPlan extends NetworkElement
      * in the given layer, and those that would carry its traffic, are kept. Then, the resulting design has the 
      * same connected components than the original graph.
      * @param selectedNodes the selected nodes
-     * @param trafficLayer see above
-     * @param keepConnectivitySets see above
-     * @return this 
+     *
+     * @return this
      */
     public NetPlan restrictDesign (Set<Node> selectedNodes)
     {

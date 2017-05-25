@@ -240,7 +240,7 @@ public class ErrorHandling
 	 * of {@code Throwable} objects will be shown. Otherwise, developer can customize 
 	 * what classes can be omitted from the output.
 	 * 
-	 * @param debug Indicates whether the debug mode is enabled ({@code true}) or disabled ({@false})
+	 * @param debug Indicates whether the debug mode is enabled ({@code true}) or disabled ({@code false})
 	 * @since 0.2.3
 	 */
 	public static void setDebug(boolean debug)
