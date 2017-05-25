@@ -8,23 +8,6 @@
  * Contributors:
  *     Pablo Pavon Marino and others - initial API and implementation
  *******************************************************************************/
-//- AÑADIR TESTS PARA PD [faltan de restrict PD]
-//- AÑADIR A CHECKCONSISTENCY Y REPETIR TESTS
-//- CAMBIO DE PLANNING DOMAIN DE ELEMENTOS YA HAYA SE PUEDA HACER (TODOS A LA VEZ)
-//- SE PUEDA RESTRICT TO PLANNING DOMAIN DESPUES (SE COGE LO QUE HAY EN LOS MAPAS Y YA ESTÁ)
-//- HACER MÁS RAPIDO LO DE LAS TABLAS
-
-/*******************************************************************************
- * 
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *
- * Contributors:
- *     Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1
- *     Pablo Pavon-Marino - from version 0.4.0 onwards
- ******************************************************************************/
 
 package com.net2plan.interfaces.networkDesign;
 
