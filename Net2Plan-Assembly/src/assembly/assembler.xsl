@@ -1,4 +1,6 @@
-<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3">
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
 
     <id>distribution</id>
 
@@ -7,6 +9,7 @@
     </formats>
 
     <fileSets>
+        <!-- Add info files -->
         <fileSet>
             <directory>${project.parent.basedir}</directory>
             <outputDirectory/>
@@ -15,6 +18,14 @@
                 <include>LICENSE*</include>
                 <include>NOTICE*</include>
                 <include>CHANGELOG*</include>
+            </includes>
+        </fileSet>
+        <!-- Add licenses -->
+        <fileSet>
+            <directory>${project.build.directory}/generated-resources</directory>
+            <outputDirectory>lib/</outputDirectory>
+            <includes>
+                <include>**</include>
             </includes>
         </fileSet>
     </fileSets>
