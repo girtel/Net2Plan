@@ -17,19 +17,7 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
@@ -40,8 +28,11 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quintuple;
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried
@@ -552,7 +543,7 @@ public class Demand extends NetworkElement
 	/**
 	 * <p>Sets the given demand as the bidirectional pair of this demand. If any of the demands was previously set as bidirectional 
 	 * link of other demand, such relation is removed. The demands must be in the same layer, and have opposite end nodes
-	 * @param e the other demand
+	 * @param d the other demand
 	 */
 	public void setBidirectionalPair(Demand d)
 	{

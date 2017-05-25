@@ -84,7 +84,6 @@ public class SimStats
 	/**
 	 * Default constructor.
 	 * 
-	 * @param netPlan  Reference to the planned network design
 	 * @param netState Reference to the current network state
 	 * @param simulationParameters A key-value map with simulation options
 	 * @param net2planParameters A key-value map with {@code Net2Plan}-wide configuration options
