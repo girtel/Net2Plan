@@ -71,7 +71,6 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
     public JPanel getLinkUtilizationColoringPanel()
     {
         List<Double> linkUtilizationColor = _visualizationState.getLinkUtilizationColor();
-        double increment = (100.0 / linkUtilizationColor.size());
 
         if (linkUtilizationColor.size() != VisualizationConstants.DEFAULT_LINKCOLORINGUTILIZATIONTHRESHOLDS.size())
             throw new RuntimeException();
