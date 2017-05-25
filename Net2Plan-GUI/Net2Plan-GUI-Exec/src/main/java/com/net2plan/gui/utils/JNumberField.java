@@ -12,6 +12,7 @@ package com.net2plan.gui.utils;
 
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
+import java.awt.*;
 
 /**
  * @author Jorge San Emeterio
@@ -65,5 +66,15 @@ public class JNumberField extends JSpinner
     public Double getValue()
     {
         return Double.parseDouble(super.getValue().toString());
+    }
+
+    public void setColor(Color color)
+    {
+        JComponent editor = this.getEditor();
+        int numberOfComps = editor.getComponentCount();
+        for(int i = 0; i < numberOfComps; i++)
+        {
+            editor.getComponent(i).setBackground(color);
+        }
     }
 }
