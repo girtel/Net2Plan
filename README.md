@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://raw.githubusercontent.com/girtel/Net2Plan/develop/Net2Plan-GUI/Net2Plan-GUI-Plugins/Net2Plan-NetworkDesign/src/main/resources/resources/common/net2plan-logo.jpg">
+    <img src="https://raw.githubusercontent.com/girtel/Net2Plan/develop/Net2Plan-GUI/Net2Plan-GUI-Plugins/Net2Plan-NetworkDesign/src/main/resources/resources/common/net2plan-logo.jpg" height="300">
 </p>
 <p align="center">
     <img src="https://travis-ci.org/girtel/Net2Plan.svg?branch=master">
