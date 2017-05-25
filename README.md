@@ -1,5 +1,10 @@
-[<img src="https://s-a.github.io/license/img/bsd-2-clause.svg" />](https://s-a.github.io/license/?license=bsd-2-clause&fullname=Stephan%20Ahlf&year=2015&profile=https://github.com/s-a&projectUrl=https://github.com/s-a/license&projectName=license "")
-[![Build Status](https://travis-ci.org/girtel/Net2Plan.svg?branch=master)](https://travis-ci.org/girtel/Net2Plan)
+<p align="center">
+    <img src="https://raw.githubusercontent.com/girtel/Net2Plan/develop/Net2Plan-GUI/Net2Plan-GUI-Plugins/Net2Plan-NetworkDesign/src/main/resources/resources/common/net2plan-logo.jpg">
+</p>
+<p align="center">
+    <img src="https://travis-ci.org/girtel/Net2Plan.svg?branch=master">
+    <img src="https://s-a.github.io/license/img/bsd-2-clause.svg">
+</p>
 
 # Introduction
 Net2Plan is a Java developed tool for the planning, optimization and evaluation of communication networks.
