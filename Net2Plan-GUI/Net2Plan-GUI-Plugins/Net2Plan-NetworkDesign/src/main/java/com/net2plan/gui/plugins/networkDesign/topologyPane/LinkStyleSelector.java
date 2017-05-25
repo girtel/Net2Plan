@@ -59,8 +59,8 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
         SwingUtils.configureCloseDialogOnEscape(this);
         this.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
         this.pack();
-        this.setResizable(true);
-        this.setVisible(true);
+        this.setResizable(false);
+        this.setSize(400,500);
     }
 
     @Override
@@ -99,7 +99,6 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
 
             fieldArray[i] = new JNumberField(linkUtilizationColor.get(i), minValue, maxValue, 1);
 
-            //fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
         }
 
         Rectangle[] rectangleArray = new Rectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
