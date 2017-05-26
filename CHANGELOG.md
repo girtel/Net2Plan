@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Changed
     - Reworked multi-layer contol panel to work as a non-intrusive pop-up.
     - Separated canvas display from table display: Pick option.
+    - Changed project license to BSD 2-clause.
     
 ### Fixed
     - Focus panel refreshes correctly again.
