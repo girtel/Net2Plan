@@ -16,7 +16,7 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan-gui</artifactId>
-        <version>0.5.2</version>
+        <version>0.5.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
