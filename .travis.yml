@@ -26,4 +26,6 @@ after_failure:
   echo "Build finished with errors. Bollocks!"
 
 notifications:
-  email: true
+  email:
+    on_success: never
+    on_failure: always
