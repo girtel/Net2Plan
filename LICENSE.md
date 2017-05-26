@@ -1,9 +1,6 @@
-**Simplified BSD License**
+BSD 2-Clause License
 
-https://opensource.org/licenses/BSD-2-Clause
-
-Copyright (c) 2017-2018, Pablo Pavón Mariño
-
+Copyright (c) 2017, Pablo Pavon Marino
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
