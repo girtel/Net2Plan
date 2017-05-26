@@ -94,6 +94,14 @@ public class TopologySideBar extends JPanel implements ActionListener
                 dialog.setLocation(p);
             }
         });
+        this.dialog.addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosed(WindowEvent windowEvent)
+            {
+                btn_multilayer.setSelected(false);
+            }
+        });
 
         /* Multilayer buttons */
         this.btn_increaseInterLayerDistance = new JButton();
