@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the 2-clause BSD License 
+ * which accompanies this distribution, and is available at
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 package com.net2plan.interfaces.networkDesign;
 
 import static org.junit.Assert.assertEquals;
@@ -260,6 +270,33 @@ public class NetPlanTest
 	{
 		np.addLayerFrom(upperLayer);
 		assertEquals(np.getNumberOfLayers() , 3);
+	}
+
+	@Test
+	public void testGetNodePairDemands()
+	{
+		assertEquals(np.getNodePairDemands (n1,n3,false,lowerLayer) , Sets.newHashSet(d13,scd123));
+		assertEquals(np.getNodePairDemands (n1,n3,true,lowerLayer) , Sets.newHashSet(d13,scd123));
+		d13.remove();
+		assertEquals(np.getNodePairDemands (n1,n3,true,lowerLayer) , Sets.newHashSet(scd123));
+	}
+
+	@Test
+	public void testGetNodePairRoutes()
+	{
+		assertEquals(np.getNodePairRoutes (n1,n3,false,lowerLayer) , Sets.newHashSet(r123a, r123b , segm13 , sc123));
+		assertEquals(np.getNodePairRoutes (n1,n3,true,lowerLayer) , Sets.newHashSet(r123a, r123b , segm13 , sc123));
+		r123a.remove();
+		assertEquals(np.getNodePairRoutes (n1,n3,true,lowerLayer) , Sets.newHashSet(r123b , segm13 , sc123));
+	}
+
+	@Test
+	public void testGetNodePairLinks()
+	{
+		assertEquals(np.getNodePairLinks (n1,n2,false,lowerLayer) , Sets.newHashSet(link12));
+		assertEquals(np.getNodePairLinks (n1,n2,true,lowerLayer) , Sets.newHashSet(link12));
+		link12.remove();
+		assertEquals(np.getNodePairLinks (n1,n2,false,lowerLayer) , Sets.newHashSet());
 	}
 
 	@Test
@@ -948,6 +985,69 @@ public class NetPlanTest
 	}
 
 	@Test
+	public void testSetAttributeAsXXX ()
+	{
+		n1.setAttribute("a", 1.5);
+		assertEquals(n1.getAttributeAsDouble("a", null) , 1.5 , 0);
+		assertEquals(n1.getAttributeAsDouble("b", null) , null);
+		assertEquals(n1.getAttributeAsDouble("b", 7.0) , 7 , 0);
+		n1.setAttribute("a", 2);
+		assertEquals(n1.getAttributeAsDouble("a", null) , 2 , 0);
+		
+		n1.setAttributeAsNumberList("a", Arrays.asList(1.2 , 1.3));
+		assertEquals(n1.getAttributeAsDoubleList("a", null) , Arrays.asList(1.2 , 1.3));
+		n1.setAttributeAsNumberList("a", Arrays.asList());
+		assertEquals(n1.getAttributeAsDoubleList("a", null) , Arrays.asList());
+		n1.setAttributeAsNumberList("a", Arrays.asList(1.2));
+		assertEquals(n1.getAttributeAsDoubleList("a", null) , Arrays.asList(1.2));
+		
+		double vals [][] = new double [] [] { {1 ,2 ,3.5 } , { 4 ,5 ,6.2} };
+		DoubleMatrix2D valsMatrix = DoubleFactory2D.dense.make(vals);
+		n1.setAttributeAsNumberMatrix("a", valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		valsMatrix = DoubleFactory2D.dense.make(0,0);
+		n1.setAttributeAsNumberMatrix("a", valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		valsMatrix = DoubleFactory2D.dense.make(1,2);
+		n1.setAttributeAsNumberMatrix("a", valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		valsMatrix = DoubleFactory2D.dense.make(2,1);
+		n1.setAttributeAsNumberMatrix("a", valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		
+		String original = "1";
+		n1.setAttributeAsStringList("a", Arrays.asList(original , original , original));
+		assertEquals(n1.getAttributeAsStringList("a", null) , Arrays.asList(original , original , original));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+
+		original = ">A>>B 3; >E>>aaA>Aas>>2: ; ; ; 223>s>; > ;";
+		n1.setAttributeAsStringList("a", Arrays.asList(original , original , original));
+		assertEquals(n1.getAttributeAsStringList("a", null) , Arrays.asList(original , original , original));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+
+		original = "";
+		n1.setAttributeAsStringList("a", Arrays.asList(original , original , original));
+		assertEquals(n1.getAttributeAsStringList("a", null) , Arrays.asList(original , original , original));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original) , Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original , original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original , original)));
+		n1.setAttributeAsStringMatrix("a", Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+		assertEquals(n1.getAttributeAsStringMatrix("a", null) , Arrays.asList(Arrays.asList(original) , Arrays.asList(original)));
+}
+
+	
+	@Test
 	public void testSetNetworkLayerDefault()
 	{
 		np.setNetworkLayerDefault(upperLayer);
@@ -1220,5 +1320,7 @@ public class NetPlanTest
 			assertEquals (numCoupledMDemands_1 , numCoupledMDemands_2);
 		}
 	}
+
+	
 	
 }

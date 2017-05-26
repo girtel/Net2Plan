@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * <p>
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- * Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
@@ -19,6 +19,8 @@ import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AggregationUtils;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.LastRowAggregatedValue;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ClassAwareTableModel;
@@ -32,7 +34,6 @@ import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import org.apache.commons.collections15.BidiMap;
-
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -54,16 +55,15 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     private static final int COLUMN_OFFEREDTRAFFIC = 5;
     private static final int COLUMN_CARRIEDTRAFFIC = 6;
     private static final int COLUMN_LOSTTRAFFIC = 7;
-    private static final int COLUMN_ROUTINGCYCLES = 8;
-    private static final int COLUMN_BIFURCATED = 9;
-    private static final int COLUMN_NUMTREES = 10;
-    private static final int COLUMN_MAXE2ELATENCY = 11;
-    private static final int COLUMN_TAGS = 12;
-    private static final int COLUMN_ATTRIBUTES = 13;
+    private static final int COLUMN_BIFURCATED = 8;
+    private static final int COLUMN_NUMTREES = 9;
+    private static final int COLUMN_MAXE2ELATENCY = 10;
+    private static final int COLUMN_TAGS = 11;
+    private static final int COLUMN_ATTRIBUTES = 12;
     private static final String netPlanViewTabName = "Multicast demands";
     private static final String[] netPlanViewTableHeader = StringUtils.arrayOf("Unique identifier", "Index", "Ingress node", "Egress nodes", "Coupled to links",
-            "Offered traffic", "Carried traffic", "% Lost traffic", "Routing cycles", "Bifurcated", "# Multicast trees", "Max e2e latency (ms)", "Tags", "Attributes");
-    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress nodes", "Indicates the coupled upper layer links, if any, or empty", "Offered traffic by the multicast demand", "Carried traffic by multicast trees carrying demand traffic", "Percentage of lost traffic from the offered", "Indicates whether there are routing cycles: always loopless since we always deal with multicast trees", "Indicates whether the demand has more than one associated multicast tree carrying traffic", "Number of associated multicast trees", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Multicast demand-specific tags", "Multicast demand-specific attributes");
+            "Offered traffic", "Carried traffic", "% Lost traffic", "Bifurcated", "# Multicast trees", "Max e2e latency (ms)", "Tags", "Attributes");
+    private static final String[] netPlanViewTableTips = StringUtils.arrayOf("Unique identifier (never repeated in the same netPlan object, never changes, long)", "Index (consecutive integer starting in zero)", "Ingress node", "Egress nodes", "Indicates the coupled upper layer links, if any, or empty", "Offered traffic by the multicast demand", "Carried traffic by multicast trees carrying demand traffic", "Percentage of lost traffic from the offered", "Indicates whether the demand has more than one associated multicast tree carrying traffic", "Number of associated multicast trees", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", "Multicast demand-specific tags", "Multicast demand-specific attributes");
 
     public AdvancedJTable_multicastDemand(final GUINetworkDesign callback)
     {
@@ -86,18 +86,19 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     {
         List<Object[]> allDemandData = new LinkedList<Object[]>();
         final List<MulticastDemand> rowVisibleDemands = getVisibleElementsInTable();
+        final double[] dataAggregator = new double[netPlanViewTableHeader.length];
+
         for (MulticastDemand demand : rowVisibleDemands)
         {
-            Set<MulticastTree> multicastTreeIds_thisDemand = demand.getMulticastTrees();
-            Set<Link> coupledLinks = demand.getCoupledLinks();
-            Node ingressNode = demand.getIngressNode();
-            Set<Node> egressNodes = demand.getEgressNodes();
-            String ingressNodeName = ingressNode.getName();
+            final Set<Link> coupledLinks = demand.getCoupledLinks();
+            final Node ingressNode = demand.getIngressNode();
+            final Set<Node> egressNodes = demand.getEgressNodes();
+            final String ingressNodeName = ingressNode.getName();
             String egressNodesString = "";
             for (Node n : egressNodes) egressNodesString += n.getIndex() + "(" + n.getName() + ") ";
 
-            double h_d = demand.getOfferedTraffic();
-            double lostTraffic_d = demand.getBlockedTraffic();
+            final double h_d = demand.getOfferedTraffic();
+            final double lostTraffic_d = demand.getBlockedTraffic();
             Object[] demandData = new Object[netPlanViewTableHeader.length + attributesColumns.size()];
             demandData[COLUMN_ID] = demand.getId();
             demandData[COLUMN_INDEX] = demand.getIndex();
@@ -107,9 +108,8 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             demandData[COLUMN_OFFEREDTRAFFIC] = h_d;
             demandData[COLUMN_CARRIEDTRAFFIC] = demand.getCarriedTraffic();
             demandData[COLUMN_LOSTTRAFFIC] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
-            demandData[COLUMN_ROUTINGCYCLES] = "Loopless by definition";
             demandData[COLUMN_BIFURCATED] = demand.isBifurcated() ? String.format("Yes (%d)", demand.getMulticastTrees().size()) : "No";
-            demandData[COLUMN_NUMTREES] = multicastTreeIds_thisDemand.isEmpty() ? "none" : multicastTreeIds_thisDemand.size() + " (" + CollectionUtils.join(NetPlan.getIndexes(multicastTreeIds_thisDemand), ",") + ")";
+            demandData[COLUMN_NUMTREES] = demand.getMulticastTrees().size();
             demandData[COLUMN_MAXE2ELATENCY] = demand.getWorseCasePropagationTimeInMs();
             demandData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(demand.getTags()));
             demandData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(demand.getAttributes());
@@ -121,24 +121,25 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 }
             }
 
+            if (demand.isCoupled()) AggregationUtils.updateRowCount(dataAggregator, COLUMN_COUPLEDTOLINKS, 1);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_OFFEREDTRAFFIC, demandData[COLUMN_OFFEREDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_CARRIEDTRAFFIC, demandData[COLUMN_CARRIEDTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_LOSTTRAFFIC, demandData[COLUMN_LOSTTRAFFIC]);
+            AggregationUtils.updateRowSum(dataAggregator, COLUMN_NUMTREES, demandData[COLUMN_NUMTREES]);
+            AggregationUtils.updateRowMax(dataAggregator, COLUMN_MAXE2ELATENCY, demandData[COLUMN_MAXE2ELATENCY]);
+
             allDemandData.add(demandData);
         }
         
         /* Add the aggregation row with the aggregated statistics */
-        final int aggNumCouplings = (int) rowVisibleDemands.stream().filter(e -> e.isCoupled()).count();
-        final double aggOffered = rowVisibleDemands.stream().mapToDouble(e -> e.getOfferedTraffic()).sum();
-        final double aggCarried = rowVisibleDemands.stream().mapToDouble(e -> e.getCarriedTraffic()).sum();
-        final double aggLost = rowVisibleDemands.stream().mapToDouble(e -> e.getBlockedTraffic()).sum();
-        final int aggNumTrees = rowVisibleDemands.stream().mapToInt(e -> e.getMulticastTrees().size()).sum();
-        final double aggMaxLatency = rowVisibleDemands.stream().mapToDouble(e -> e.getWorseCasePropagationTimeInMs()).sum();
         final LastRowAggregatedValue[] aggregatedData = new LastRowAggregatedValue[netPlanViewTableHeader.length + attributesColumns.size()];
         Arrays.fill(aggregatedData, new LastRowAggregatedValue());
-        aggregatedData[COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(aggNumCouplings);
-        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(aggOffered);
-        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(aggCarried);
-        aggregatedData[COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(aggOffered == 0 ? 0 : 100 * aggLost / aggOffered);
-        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(aggNumTrees);
-        aggregatedData[COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(aggMaxLatency);
+        aggregatedData[COLUMN_COUPLEDTOLINKS] = new LastRowAggregatedValue(dataAggregator[COLUMN_COUPLEDTOLINKS]);
+        aggregatedData[COLUMN_OFFEREDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_OFFEREDTRAFFIC]);
+        aggregatedData[COLUMN_CARRIEDTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_CARRIEDTRAFFIC]);
+        aggregatedData[COLUMN_LOSTTRAFFIC] = new LastRowAggregatedValue(dataAggregator[COLUMN_LOSTTRAFFIC]);
+        aggregatedData[COLUMN_NUMTREES] = new LastRowAggregatedValue(dataAggregator[COLUMN_NUMTREES]);
+        aggregatedData[COLUMN_MAXE2ELATENCY] = new LastRowAggregatedValue(dataAggregator[COLUMN_MAXE2ELATENCY]);
         allDemandData.add(aggregatedData);
 
 
@@ -239,21 +240,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                             if (callback.getVisualizationState().isWhatIfAnalysisActive())
                             {
                                 final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
-                                synchronized (whatIfPane)
-                                {
-                                    whatIfPane.whatIfDemandOfferedTrafficModified(demand, newOfferedTraffic);
-                                    if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                        throw whatIfPane.getLastWhatIfExecutionException();
-                                    whatIfPane.wait(); // wait until the simulation ends
-                                    if (whatIfPane.getLastWhatIfExecutionException() != null)
-                                        throw whatIfPane.getLastWhatIfExecutionException();
-
-                                    final VisualizationState vs = callback.getVisualizationState();
-                                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
-                                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
-                                    callback.updateVisualizationAfterNewTopology();
-                                }
+                                whatIfPane.whatIfMulticastDemandOfferedTrafficModified(demand, newOfferedTraffic);
+                                final VisualizationState vs = callback.getVisualizationState();
+                                Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                                        vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                                callback.updateVisualizationAfterNewTopology();
                             } else
                             {
                                 demand.setOfferedTraffic(newOfferedTraffic);
@@ -551,12 +543,10 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             {
                 String str = JOptionPane.showInputDialog(null, "Offered traffic volume", "Set traffic value to all table multicast demands", JOptionPane.QUESTION_MESSAGE);
                 if (str == null) return;
-
                 try
                 {
                     h_d = Double.parseDouble(str);
                     if (h_d < 0) throw new RuntimeException();
-
                     break;
                 } catch (Throwable ex)
                 {
@@ -566,9 +556,23 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
             try
             {
-                for (MulticastDemand demand : selectedDemands) demand.setOfferedTraffic(h_d);
-                callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
-                callback.addNetPlanChange();
+                if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                {
+                    final WhatIfAnalysisPane whatIfPane = callback.getWhatIfAnalysisPane();
+                    whatIfPane.whatIfMulticastDemandOfferedTrafficModified(selectedDemands, Collections.nCopies(selectedDemands.size(), h_d));
+                    final VisualizationState vs = callback.getVisualizationState();
+                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                    vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                    callback.updateVisualizationAfterNewTopology();
+                    callback.addNetPlanChange();
+                } else
+                {
+                    for (MulticastDemand demand : selectedDemands) demand.setOfferedTraffic(h_d);
+                    callback.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.MULTICAST_DEMAND));
+                    callback.addNetPlanChange();
+                }
+            	
             } catch (Throwable ex)
             {
                 ErrorHandling.showErrorDialog(ex.getMessage(), "Unable to set offered traffic to all multicast demands");

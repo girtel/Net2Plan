@@ -1,22 +1,48 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * <p>
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- * Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 package com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane;
 
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
+
+import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.utils.RunnableSelector;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.IExternal;
@@ -29,14 +55,6 @@ import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.internal.sim.SimKernel;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Triple;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.*;
-import java.util.List;
 
 /**
  * Targeted to evaluate network designs from the offline tool simulating the
@@ -119,35 +137,73 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
         this.add(aux_Panel, BorderLayout.CENTER);
     }
 
-    public Throwable getLastWhatIfExecutionException()
+    public void whatIfDemandOfferedTrafficModified(Demand demand, double newOfferedTraffic) throws Throwable
     {
-        return lastWhatIfExecutionException;
+    	this.whatIfDemandOfferedTrafficModified(Arrays.asList(demand), Arrays.asList(newOfferedTraffic));
     }
 
-    public void whatIfDemandOfferedTrafficModified(Demand demand, double newOfferedTraffic)
+    public void whatIfDemandOfferedTrafficModified(List<Demand> demands, List<Double> newOfferedTraffics) throws Throwable
     {
-    	if (demand.isCoupled()) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
-        this.lastWhatIfExecutionException = null;
-        SimEvent.DemandModify modifyEvent = new SimEvent.DemandModify(demand, newOfferedTraffic, false);
-        SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
-        runSimulation(event);
+        synchronized (this)
+        {
+        	if (demands.stream().anyMatch(d->d.isCoupled())) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
+            this.lastWhatIfExecutionException = null;
+            final List<SimEvent> events = new ArrayList<> (demands.size());
+            for (int cont = 0; cont < demands.size() ; cont ++)
+            {
+                final SimEvent.DemandModify modifyEvent = new SimEvent.DemandModify(demands.get(cont), newOfferedTraffics.get(cont), false);
+                final SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
+                events.add(event);
+            }
+            runSimulation(events);
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
+            this.wait(); // wait until the simulation ends
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
+        }
     }
 
-    public void whatIfDemandOfferedTrafficModified(MulticastDemand demand, double newOfferedTraffic)
+    public void whatIfMulticastDemandOfferedTrafficModified(MulticastDemand demand, double newOfferedTraffic) throws Throwable
     {
-    	if (demand.isCoupled()) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
-        this.lastWhatIfExecutionException = null;
-        SimEvent.MulticastDemandModify modifyEvent = new SimEvent.MulticastDemandModify(demand, newOfferedTraffic, false);
-        SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
-        runSimulation(event);
+    	whatIfMulticastDemandOfferedTrafficModified(Arrays.asList(demand), Arrays.asList(newOfferedTraffic));
+    }
+    public void whatIfMulticastDemandOfferedTrafficModified(List<MulticastDemand> demands, List<Double> newOfferedTraffics) throws Throwable
+    {
+        synchronized (this)
+        {
+        	if (demands.stream().anyMatch(d->d.isCoupled())) throw new Net2PlanException ("What-if analysis changing the offered traffic in coupled demands is not accepted");
+            this.lastWhatIfExecutionException = null;
+            final List<SimEvent> events = new ArrayList<> (demands.size());
+            for (int cont = 0; cont < demands.size() ; cont ++)
+            {
+                SimEvent.MulticastDemandModify modifyEvent = new SimEvent.MulticastDemandModify(demands.get(cont), newOfferedTraffics.get(cont), false);
+                SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, modifyEvent);
+                events.add(event);
+            }
+            runSimulation(events);
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
+            this.wait(); // wait until the simulation ends
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
+        }
     }
 
-    public void whatIfLinkNodesFailureStateChanged(Collection<Node> nodesToSetAsUp, Collection<Node> nodesToSetAsDown, Collection<Link> linksToSetAsUp, Collection<Link> linksToSetAsDown)
+    public void whatIfLinkNodesFailureStateChanged(Collection<Node> nodesToSetAsUp, Collection<Node> nodesToSetAsDown, Collection<Link> linksToSetAsUp, Collection<Link> linksToSetAsDown) throws Throwable
     {
-        this.lastWhatIfExecutionException = null;
-        SimEvent.NodesAndLinksChangeFailureState eventInfo = new SimEvent.NodesAndLinksChangeFailureState(nodesToSetAsUp, nodesToSetAsDown, linksToSetAsUp, linksToSetAsDown);
-        SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, eventInfo);
-        runSimulation(event);
+        synchronized (this)
+        {
+	        this.lastWhatIfExecutionException = null;
+	        SimEvent.NodesAndLinksChangeFailureState eventInfo = new SimEvent.NodesAndLinksChangeFailureState(nodesToSetAsUp, nodesToSetAsDown, linksToSetAsUp, linksToSetAsDown);
+	        SimEvent event = new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR, -1, eventInfo);
+	        runSimulation(Arrays.asList(event));
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
+            wait(); // wait until the simulation ends
+            if (lastWhatIfExecutionException != null)
+                throw lastWhatIfExecutionException;
+        }
     }
 
 
@@ -200,7 +256,7 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
      *
      * @param eventToRun
      */
-    private void runSimulation(SimEvent eventToRun)
+    private void runSimulation(List<SimEvent> eventsToRun)
     {
         try
         {
@@ -232,7 +288,8 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
                 public void initialize(NetPlan initialNetPlan, Map<String, String> algorithmParameters,
                                        Map<String, String> simulationParameters, Map<String, String> net2planParameters)
                 {
-                    scheduleEvent(eventToRun);
+                	for (SimEvent eventToRun : eventsToRun)
+                		scheduleEvent(eventToRun);
                 }
 
                 @Override
@@ -251,8 +308,6 @@ public class WhatIfAnalysisPane extends JPanel implements IGUISimulationListener
             Triple<File, String, Class> aux = eventProcessorPanel.getRunnable();
             IExternal eventProcessor = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), simKernel.getEventProcessorClass() , null);
             Map<String, String> eventProcessorParameters = eventProcessorPanel.getRunnableParameters();
-//			IExternal eventProcessor = new Online_evProc_ipOverWdm();
-//			Map<String, String> eventProcessorParameters = InputParameter.getDefaultParameters(eventProcessor.getParameters());
             simKernel.configureSimulation(simulationParameters, net2planParameters, eventGenerator, new HashMap<String, String>(), eventProcessor, eventProcessorParameters);
             simKernel.initialize();
             simKernel.getSimCore().setSimulationState(SimCore.SimState.RUNNING);

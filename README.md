@@ -1,3 +1,11 @@
+<p align="center">
+    <img src="https://raw.githubusercontent.com/girtel/Net2Plan/develop/Net2Plan-GUI/Net2Plan-GUI-Plugins/Net2Plan-NetworkDesign/src/main/resources/resources/common/net2plan-logo.jpg" height="300">
+</p>
+<p align="center">
+    <img src="https://travis-ci.org/girtel/Net2Plan.svg?branch=master">
+    <img src="https://s-a.github.io/license/img/bsd-2-clause.svg">
+</p>
+
 # Introduction
 Net2Plan is a Java developed tool for the planning, optimization and evaluation of communication networks.
 
@@ -37,4 +45,4 @@ Note that this is meant for running the graphical interface of the project.
 New users may want to checkout the Net2Plan's [Youtube channel](https://www.youtube.com/channel/UCCgkr1wlMlO221yhFGmWZUg), alongside the [user's guide](http://net2plan.com/documentation/current/help/usersGuide.pdf), for an introduction into the basics of the provided tools. 
 
 # License
-Net2Plan is licensed under the [GNU Lesser General Public License Version 3](http://www.gnu.org/licenses/lgpl.html) and onwards (called the _LGPL_). Meaning that it is completely free and open-source. As a consequence of this, you may use parts of Net2Plan or the complete package inside your own programs for free, can make money from them and do not have to disclose your code. Although, you are obliged to mention that you are using Net2Plan in your program.
+Net2Plan is licensed under the [Simplified BSD License](https://opensource.org/licenses/BSD-2-Clause). Meaning that it is completely free and open-source. As a consequence of this, you may use parts of Net2Plan or the complete package inside your own programs for free, can make money from them and do not have to disclose your code. Although, you are obliged to mention that you are using Net2Plan in your program.

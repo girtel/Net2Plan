@@ -5,35 +5,19 @@
 
 
 /*******************************************************************************
-
-
- * 
- * Copyright (c) 2016 Pablo Pavon-Marino.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
+ * https://opensource.org/licenses/BSD-2-Clause
  *
  * Contributors:
- *     Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1
- *     Pablo Pavon-Marino - from version 0.4.0 onwards
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
@@ -44,8 +28,11 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quintuple;
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried
@@ -68,7 +55,8 @@ public class Demand extends NetworkElement
 	double offeredTraffic;
 	double carriedTraffic;
 	RoutingCycleType routingCycleType;
-	
+	Demand bidirectionalPair;
+
 	
 	Set<Route> cache_routes;
 	Link coupledUpperLayerLink;
@@ -130,6 +118,7 @@ public class Demand extends NetworkElement
 		this.cacheHbH_linksPerNodeWithNonZeroFr = new HashMap<> ();
 		this.cache_worstCasePropagationTimeMs = 0;
 		this.cache_worstCaseLengthInKm = 0;
+		this.bidirectionalPair = null;
 	}
 
 	/**
@@ -159,6 +148,7 @@ public class Demand extends NetworkElement
 		this.cacheHbH_linksPerNodeWithNonZeroFr.clear();
 		for (Entry<Node,Set<Link>> entry : origin.cacheHbH_linksPerNodeWithNonZeroFr.entrySet())
 			this.cacheHbH_linksPerNodeWithNonZeroFr.put(netPlan.getNodeFromId(entry.getKey().id), (Set<Link>) (Set<?>) netPlan.translateCollectionToThisNetPlan(entry.getValue()));
+		this.bidirectionalPair = origin.bidirectionalPair == null? null : netPlan.getDemandFromId(origin.bidirectionalPair.getId());
 	}
 
 
@@ -168,6 +158,8 @@ public class Demand extends NetworkElement
 		if (layer.id != e2.layer.id) return false;
 		if (ingressNode.id != e2.ingressNode.id) return false;
 		if (egressNode.id != e2.egressNode.id) return false;
+		if ((this.bidirectionalPair == null) != (e2.bidirectionalPair == null)) return false;
+		if (this.bidirectionalPair != null) if (this.bidirectionalPair.id != e2.bidirectionalPair.id) return false;
 		if (this.offeredTraffic != e2.offeredTraffic) return false;
 		if (this.carriedTraffic != e2.carriedTraffic) return false;
 		if (this.cache_worstCasePropagationTimeMs != e2.cache_worstCasePropagationTimeMs) return false;
@@ -545,7 +537,49 @@ public class Demand extends NetworkElement
 	public Demand getBidirectionalPair()
 	{
 		checkAttachedToNetPlanObject();
-		return (Demand) netPlan.getNetworkElementByAttribute(layer.demands , netPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
+		return bidirectionalPair;
+	}
+
+	/**
+	 * <p>Sets the given demand as the bidirectional pair of this demand. If any of the demands was previously set as bidirectional 
+	 * link of other demand, such relation is removed. The demands must be in the same layer, and have opposite end nodes
+	 * @param d the other demand
+	 */
+	public void setBidirectionalPair(Demand d)
+	{
+		checkAttachedToNetPlanObject();
+		d.checkAttachedToNetPlanObject(this.netPlan);
+		if (d.layer != this.layer) throw new Net2PlanException ("Wrong layer");
+		if (d.ingressNode != this.egressNode || this.ingressNode != d.egressNode) throw new Net2PlanException ("Wrong end nodes");
+		if (this.bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
+		if (d.bidirectionalPair != null) d.bidirectionalPair.bidirectionalPair = null;
+		this.bidirectionalPair = d;
+		d.bidirectionalPair = this;
+	}
+
+	/**
+	 * Returns true if the demand is bidirectional. That is, it has an associated demand in the other direction
+	 * @return see above
+	 */
+	public boolean isBidirectional()
+	{
+		checkAttachedToNetPlanObject();
+		return bidirectionalPair != null;
+	}
+
+	/**
+	 * Creates a demand in the opposite direction as this, and with the same attributes, and associate both as bidirectional pairs.
+	 * If this demand is already bidirectional, makes nothing and returns null
+	 * @return the newly created demand
+	 */
+	public Demand createBidirectionalPair ()
+	{
+		checkAttachedToNetPlanObject();
+		if (this.isBidirectional()) return null;
+		final Demand d = netPlan.addDemand(this.ingressNode, this.egressNode, this.getOfferedTraffic() , this.attributes, this.layer);
+		this.bidirectionalPair = d;
+		d.bidirectionalPair = this;
+		return d;
 	}
 
 	/**
@@ -719,6 +753,8 @@ public class Demand extends NetworkElement
 		netPlan.checkIsModifiable();
 		if (this.coupledUpperLayerLink != null) this.decouple();
 		
+		if (bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
+
 		if (layer.routingType == RoutingType.SOURCE_ROUTING)
 			for (Route route : new HashSet<Route> (cache_routes)) route.remove();
 		else
@@ -732,13 +768,15 @@ public class Demand extends NetworkElement
 				e.cache_occupiedCapacity -= x_deOccup; 
 			}
 		}
+		layer.cache_nodePairDemandsThisLayer.get(Pair.of(ingressNode, egressNode)).remove(this);
+
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		netPlan.cache_id2DemandMap.remove(id);
 		NetPlan.removeNetworkElementAndShiftIndexes (layer.demands , index);
 		ingressNode.cache_nodeOutgoingDemands.remove (this);
 		egressNode.cache_nodeIncomingDemands.remove (this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain();
+		removeId();
 	}
 	
 	/**
@@ -772,6 +810,14 @@ public class Demand extends NetworkElement
 	void checkCachesConsistency ()
 	{
 		super.checkCachesConsistency ();
+		if (this.bidirectionalPair != null)
+		{
+			if (this.bidirectionalPair.bidirectionalPair != this) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.netPlan != this.netPlan) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.ingressNode != this.egressNode) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.egressNode != this.ingressNode) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.layer != this.layer) throw new RuntimeException ("Bad");
+		}
 		if (!layer.isSourceRouting())
 		{
 			if (!cacheHbH_frs.keySet().containsAll(cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet())) throw new RuntimeException();
@@ -833,6 +879,17 @@ public class Demand extends NetworkElement
 		}
 	}
 
+
+	/** Returns the set of links in this layer, with non zero forwarding rules defined for them. The link may or may not 
+	 * carry traffic, and may be or not be failed.
+	 * @return see above
+	 */
+	public Set<Link> getLinksWithNonZeroForwardingRules ()
+	{
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		return this.cacheHbH_frs.keySet().stream().filter(e->cacheHbH_frs.get(e) != 0).collect(Collectors.toSet());
+	}
+	
 	/** Returns the set of links in this layer that could potentially carry traffic of this demand, according to the routes/forwarding rules defined, 
 	 * if the routes had carried traffic / (hop-by-hop) the demand had offered traffic different to zero.
 	 * The method returns  a pair of sets (disjoint or not), first set with the set of links potentially carrying primary traffic and 
@@ -944,19 +1001,5 @@ public class Demand extends NetworkElement
 	}
 
 
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.add(ingressNode);
-		res.add(egressNode);
-		res.addAll(cache_routes);
-		if (coupledUpperLayerLink != null) res.add(coupledUpperLayerLink);
-		res.addAll(cacheHbH_frs.keySet());
-		res.addAll(cacheHbH_normCarriedOccupiedPerLinkCurrentState.keySet());
-		res.addAll(cacheHbH_linksPerNodeWithNonZeroFr.keySet());
-		cacheHbH_linksPerNodeWithNonZeroFr.values().stream().flatMap(e->e.stream()).forEach(e->res.add(e));
-		return res;
-	}
-	
 
 }

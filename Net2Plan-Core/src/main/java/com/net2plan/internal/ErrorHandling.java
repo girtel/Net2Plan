@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * 
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- *     Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 
@@ -21,7 +21,6 @@
 package com.net2plan.internal;
 
 import com.net2plan.internal.Constants.UserInterface;
-import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.StringUtils;
 
 import javax.swing.*;
@@ -241,7 +240,7 @@ public class ErrorHandling
 	 * of {@code Throwable} objects will be shown. Otherwise, developer can customize 
 	 * what classes can be omitted from the output.
 	 * 
-	 * @param debug Indicates whether the debug mode is enabled ({@code true}) or disabled ({@false})
+	 * @param debug Indicates whether the debug mode is enabled ({@code true}) or disabled ({@code false})
 	 * @since 0.2.3
 	 */
 	public static void setDebug(boolean debug)
@@ -360,28 +359,6 @@ public class ErrorHandling
 		if (wasVisible) consoleDialog.setVisible(false);
 		
 		Object data = message;
-
-		if (DEBUG)
-		{
-			try
-			{
-				ImageIcon ii = new ImageIcon(ImageUtils.readImageFromURL(ErrorHandling.class.getResource("/resources/common/errorAnimation.gif")));
-				JPanel containerPanel = new JPanel();
-				containerPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-				containerPanel.setLayout(new BorderLayout());
-				containerPanel.add(new JLabel(ii), BorderLayout.CENTER);
-
-				JPanel pane = new JPanel(new BorderLayout());
-				pane.add(new JLabel(message), BorderLayout.NORTH);
-				pane.add(containerPanel, BorderLayout.CENTER);
-
-				data = pane;
-			}
-			catch(Throwable e)
-			{
-				data = message;
-			}
-		}
 
 		JOptionPane.showMessageDialog(null, data, title, type);
 		

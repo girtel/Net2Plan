@@ -1,14 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * 
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- *     Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
-
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 
@@ -55,7 +54,6 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 	private XMLStreamReader2 xmlStreamReader;
 	private Map<Route,List<Long>> backupRouteIdsMap;
 	private Map<Long , List<Pair<Node,URL>>> nodeAndLayerToIconURLMap;
-	
 	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
@@ -193,9 +191,16 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		try { recoveryType = Demand.IntendedRecoveryType.valueOf(getString("intendedRecoveryType")); } 
 		catch (XMLStreamException e) { recoveryType = Demand.IntendedRecoveryType.NOTSPECIFIED; }
 		catch (Exception e) { recoveryType = Demand.IntendedRecoveryType.UNKNOWNTYPE; }
+		long bidirectionalPairId = -1; try { bidirectionalPairId = getLong ("bidirectionalPairId"); } catch (Exception e) {}
 		
 		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
 		newDemand.setIntendedRecoveryType(recoveryType);
+		final Demand bidirPairDemand = bidirectionalPairId == -1? null : netPlan.getDemandFromId(bidirectionalPairId); 
+		if (bidirPairDemand != null)
+		{
+			if (bidirPairDemand.isBidirectional()) throw new RuntimeException ();
+			bidirPairDemand.setBidirectionalPair(newDemand);
+		}
 		
 		List<String> mandatorySequenceOfTraversedResourceTypes = new LinkedList<String> ();
 		boolean finalElementRead = false;
@@ -328,10 +333,17 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final double capacity = getDouble ("capacity");
 		final double lengthInKm = getDouble ("lengthInKm");
 		final double propagationSpeedInKmPerSecond = getDouble ("propagationSpeedInKmPerSecond");
+		long bidirectionalPairId = -1; try { bidirectionalPairId = getLong ("bidirectionalPairId"); } catch (Exception e) {}
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
 
 		Link newLink = netPlan.addLink(linkId , netPlan.getNodeFromId(originNodeId), netPlan.getNodeFromId(destinationNodeId), capacity, lengthInKm, propagationSpeedInKmPerSecond, null , netPlan.getNetworkLayerFromId(layerId));
 		newLink.setFailureState(isUp);
+		final Link bidirPairLink = bidirectionalPairId == -1? null : netPlan.getLinkFromId(bidirectionalPairId); 
+		if (bidirPairLink != null)
+		{
+			if (bidirPairLink.isBidirectional()) throw new RuntimeException ();
+			bidirPairLink.setBidirectionalPair(newLink);
+		}
 		readAndAddAttributesToEndAndPdForNodes(newLink, "link");
 	}
 

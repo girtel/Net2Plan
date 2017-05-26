@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2013-2015 Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v3
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * <p>
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- * Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 package es.upct.girtel.networks2014_IPoverWDMRestoration;
 
 

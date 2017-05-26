@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * 
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- *     Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 
@@ -35,6 +35,7 @@ import java.util.*;
 
 class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanFormat_v3
 {
+	final static String KEY_STRING_BIDIRECTIONALCOUPLE = "bidirectionalCouple";
 	protected Map<Long,Node> mapOldId2Node;
 	protected Map<Long,SharedRiskGroup> mapOldId2Srg;
 	protected Map<Long,NetworkLayer> mapOldId2Layer;
@@ -241,7 +242,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							if (key.equals(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE)) name = "" + mapOldId2Demand.get(Long.parseLong(name)).getId();
+							if (key.equals(KEY_STRING_BIDIRECTIONALCOUPLE)) name = "" + mapOldId2Demand.get(Long.parseLong(name)).getId();
 							newDemand.setAttribute(key, name);
 							break;
 
@@ -426,7 +427,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 						case "attribute":
 							String key = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "key"));
 							String name = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "value"));
-							if (key.equals(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE)) name = "" + mapOldId2Link.get(Long.parseLong(name)).getId();
+							if (key.equals(KEY_STRING_BIDIRECTIONALCOUPLE)) name = "" + mapOldId2Link.get(Long.parseLong(name)).getId();
 							newLink.setAttribute(key, name);
 							break;
 

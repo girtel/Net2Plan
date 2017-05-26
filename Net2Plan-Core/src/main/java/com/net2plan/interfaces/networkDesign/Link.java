@@ -1,14 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2016 Pablo Pavon-Marino.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
+ * https://opensource.org/licenses/BSD-2-Clause
  *
  * Contributors:
- *     Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1
- *     Pablo Pavon-Marino - from version 0.4.0 onwards
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 package com.net2plan.interfaces.networkDesign;
 
@@ -54,6 +53,7 @@ public class Link extends NetworkElement
 	double lengthInKm;
 	double propagationSpeedInKmPerSecond;
 	boolean isUp;
+	Link bidirectionalPair;
 
 	Set<SharedRiskGroup> cache_srgs;
 	Map<Route,Integer> cache_traversingRoutes; // for each traversing route, the number of times it traverses this link (in seqLinksRealPath). If the route has segments, their internal route counts also
@@ -100,7 +100,8 @@ public class Link extends NetworkElement
 		this.cache_traversingTrees = new HashSet<MulticastTree> ();
 		this.cacheHbH_frs = new HashMap<> ();
 		this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState = new HashMap<> ();
-		this.capacity = capacity; 
+		this.capacity = capacity;
+		this.bidirectionalPair = null;
 		if (capacity < Configuration.precisionFactor) layer.cache_linksZeroCap.add(this); // do not call here the regular updae function on purpose, there is no previous capacity info
 	}
 
@@ -128,6 +129,7 @@ public class Link extends NetworkElement
 		this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.clear();
 		for (Entry<Demand,Pair<Double,Double>> fr : origin.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.entrySet()) 
 			this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.put(netPlan.getDemandFromId(fr.getKey().id), Pair.of(fr.getValue().getFirst(), fr.getValue().getSecond()));
+		this.bidirectionalPair = origin.bidirectionalPair == null? null : netPlan.getLinkFromId(origin.bidirectionalPair.getId());
 	}
 
 	boolean isDeepCopy (Link e2)
@@ -136,6 +138,8 @@ public class Link extends NetworkElement
 		if (layer.id != e2.layer.id) return false;
 		if (originNode.id != e2.originNode.id) return false;
 		if (destinationNode.id != e2.destinationNode.id) return false;
+		if ((this.bidirectionalPair == null) != (e2.bidirectionalPair == null)) return false;
+		if (this.bidirectionalPair != null) if (this.bidirectionalPair.id != e2.bidirectionalPair.id) return false;
 		if (this.capacity != e2.capacity) return false;
 		if (this.cache_carriedTraffic != e2.cache_carriedTraffic) return false;
 		if (this.cache_occupiedCapacity != e2.cache_occupiedCapacity) return false;
@@ -154,6 +158,17 @@ public class Link extends NetworkElement
 		return true;
 	}
 	
+	
+	/** Returns the set of demands in this layer, with non zero forwarding rules defined for them in this link. 
+	 * The link may or may not carry traffic, and may be or not be failed.
+	 * @return see above
+	 */
+	public Set<Demand> getDemandsWithNonZeroForwardingRules ()
+	{
+		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+		return this.cacheHbH_frs.keySet().stream().filter(d->cacheHbH_frs.get(d) != 0).collect(Collectors.toSet());
+	}
+
 	/**
 	 * <p>Returns the link origin node.</p>
 	 * @return The origin node
@@ -549,7 +564,24 @@ public class Link extends NetworkElement
 	public Link getBidirectionalPair()
 	{
 		checkAttachedToNetPlanObject();
-		return (Link) NetPlan.getNetworkElementByAttribute(layer.links , NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
+		return bidirectionalPair;
+	}
+
+	/**
+	 * <p>Sets the given link as the bidirectional pair of this link. If any of the links was previously set as bidirectional 
+	 * link of other link, such relation is removed. The links must bein the same layer, and have opposite end nodes
+	 * @param e the other link
+	 */
+	public void setBidirectionalPair(Link e)
+	{
+		checkAttachedToNetPlanObject();
+		e.checkAttachedToNetPlanObject(this.netPlan);
+		if (e.layer != this.layer) throw new Net2PlanException ("Wrong layer");
+		if (e.originNode != this.destinationNode || this.originNode != e.destinationNode) throw new Net2PlanException ("Wrong end nodes");
+		if (this.bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
+		if (e.bidirectionalPair != null) e.bidirectionalPair.bidirectionalPair = null;
+		this.bidirectionalPair = e;
+		e.bidirectionalPair = this;
 	}
 
 	/**
@@ -559,7 +591,7 @@ public class Link extends NetworkElement
 	public boolean isBidirectional()
 	{
 		checkAttachedToNetPlanObject();
-		return NetPlan.getNetworkElementByAttribute(layer.links , NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id) != null;
+		return bidirectionalPair != null;
 	}
 
 	/**
@@ -572,7 +604,8 @@ public class Link extends NetworkElement
 		checkAttachedToNetPlanObject();
 		if (this.isBidirectional()) return null;
 		final Link e = netPlan.addLink(this.destinationNode, this.originNode, this.getCapacity(), this.getLengthInKm(), this.getPropagationDelayInMs(), this.attributes, this.layer);
-        e.setAttribute(NetPlan.KEY_STRING_BIDIRECTIONALCOUPLE, "" + this.id);
+		this.bidirectionalPair = e;
+		e.bidirectionalPair = this;
 		return e;
 	}
 	
@@ -594,11 +627,15 @@ public class Link extends NetworkElement
 		else if (this.coupledLowerLayerMulticastDemand != null)
 			this.coupledLowerLayerMulticastDemand.decouple();
 		
+		if (bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
+		
 		layer.cache_linksDown.remove (this);
 		layer.cache_linksZeroCap.remove(this);
 		netPlan.cache_id2LinkMap.remove(id);
 		originNode.cache_nodeOutgoingLinks.remove (this);
 		destinationNode.cache_nodeIncomingLinks.remove (this);
+		layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode)).remove(this);
+		
 		for (SharedRiskGroup srg : this.cache_srgs) srg.links.remove(this);
 		for (MulticastTree tree : new LinkedList<MulticastTree> (cache_traversingTrees)) tree.remove ();
 
@@ -612,7 +649,7 @@ public class Link extends NetworkElement
 
 		ErrorHandling.DEBUG = previousErrorHandling;
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain();
+		removeId();
 	}
 	
 	/**
@@ -642,7 +679,14 @@ public class Link extends NetworkElement
 		super.checkCachesConsistency ();
 		if (layer.netPlan != this.netPlan) throw new RuntimeException ("Bad");
 		if (!layer.links.contains(this)) throw new RuntimeException ("Bad");
-
+		if (this.bidirectionalPair != null)
+		{
+			if (this.bidirectionalPair.bidirectionalPair != this) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.netPlan != this.netPlan) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.originNode != this.destinationNode) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.destinationNode != this.originNode) throw new RuntimeException ("Bad");
+			if (this.bidirectionalPair.layer != this.layer) throw new RuntimeException ("Bad");
+		}
 		if (isUp && layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (!isUp && !layer.cache_linksDown.contains(this)) throw new RuntimeException ("Bad");
 		if (capacity < Configuration.precisionFactor && !layer.cache_linksZeroCap.contains(this)) throw new RuntimeException ("Bad");
@@ -715,7 +759,7 @@ public class Link extends NetworkElement
 		{
 			if (check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments != 0)
 			{
-				if ((cache_occupiedCapacity / check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > 1E-3) throw new RuntimeException();
+				if ((cache_occupiedCapacity / check_occupiedCapacitySummingRoutesAndCarriedTrafficByProtectionSegments) > (1 + 1E-3)) throw new RuntimeException();
 			} else
 			{
 				if (cache_occupiedCapacity > 1E-3 || cache_occupiedCapacity < -1E-3) throw new RuntimeException();
@@ -755,6 +799,24 @@ public class Link extends NetworkElement
 		}
 	}
 
+	/** Returns the set of demands that could potentially put traffic in this link, 
+	 *  according to the routes/forwarding rules defined. 
+	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
+	 *  are considered even if the carry zero traffic, 
+	 * (ii) in hop-by-hop routing the demands with zero offered traffic are also included. 
+	 * All the links are considered primary.
+	 * The method returns  three set: (i) demands putting traffic in primary routes (or hop-by-hop routing), 
+	 * (ii) in source routing, demands with backup routes traversing this link, (iii) multicast demands 
+	 * with trees traversing this link
+	 * @return see above
+	 */
+	public Triple<Set<Demand>,Set<Demand>,Set<MulticastDemand>> getDemandsPotentiallyTraversingThisLink ()
+	{
+		final Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> res = 
+				getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
+		return Triple.of(new HashSet<> (res.getFirst().keySet()), new HashSet<> (res.getSecond().keySet()), res.getThird().keySet().stream().map(p->p.getFirst()).collect(Collectors.toSet()));
+	}
+	
 	/** Returns the set of links in this layer (including this) that carry the traffic that traverses this link, before and after traversing it,
 	 *  according to the routes/forwarding rules defined. 
 	 *  Potentially carrying traffic means that (i) in source routing, down routes are not included, but all up routes 
@@ -955,19 +1017,5 @@ public class Link extends NetworkElement
 		}
 	}
 	
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.add(originNode);
-		res.add(destinationNode);
-		if (coupledLowerLayerDemand != null) res.add(coupledLowerLayerDemand);
-		if (coupledLowerLayerMulticastDemand != null) res.add(coupledLowerLayerMulticastDemand);
-		res.addAll(cache_srgs);
-		res.addAll(cache_traversingRoutes.keySet());
-		res.addAll(cache_traversingTrees);
-		res.addAll(cacheHbH_frs.keySet());
-		res.addAll(cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.keySet());
-		return res;
-	}
 
 }

@@ -1,21 +1,30 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * <p>
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- * Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
 
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
-import com.net2plan.interfaces.networkDesign.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Paint;
+import java.util.Set;
 
-import java.awt.*;
+import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
 
 
 /**
@@ -26,6 +35,7 @@ public class GUILink
     private final GUINode originNode;
     private final GUINode destinationNode;
     private final Link npLink;
+    private final VisualizationState vs;
 
     /* New variables */
     private boolean hasArrow;
@@ -33,6 +43,8 @@ public class GUILink
     private BasicStroke edgeStrokeIfNotActiveLayer;
     private Paint edgeDrawPaint;
     private boolean shownSeparated;
+//    private boolean overrideLinkColoringByUtilizationOrRunOut;
+    
     
     /**
      * Default constructor.
@@ -42,11 +54,13 @@ public class GUILink
      * @param destinationNode Destination node identifier
      * @since 0.3.0
      */
-    public GUILink(Link npLink, GUINode originNode, GUINode destinationNode , BasicStroke edgeStrokeIfActiveLayer , BasicStroke edgeStrokeIfNotActiveLayer) 
+    public GUILink(VisualizationState vs , Link npLink, GUINode originNode, GUINode destinationNode , BasicStroke edgeStrokeIfActiveLayer , BasicStroke edgeStrokeIfNotActiveLayer) 
     {
+    	this.vs = vs;
         this.npLink = npLink;
         this.originNode = originNode;
         this.destinationNode = destinationNode;
+//        this.overrideLinkColoringByUtilizationOrRunOut = false;
         if (npLink != null)
         {
         	if (originNode.getAssociatedNode() != npLink.getOriginNode()) throw new RuntimeException("The topology canvas must reflect the NetPlan object topology");
@@ -81,6 +95,8 @@ public class GUILink
         this.hasArrow = hasArrow;
     }
 
+//    public void setOverrideLinkColoringByUtilizationOrRunOut (boolean override) { this.overrideLinkColoringByUtilizationOrRunOut = override; }
+    
     public BasicStroke getStrokeIfActiveLayer() { return edgeStrokeIfActiveLayer; }
 
     public BasicStroke getStrokeIfNotActiveLayer() { return edgeStrokeIfNotActiveLayer; }
@@ -93,7 +109,27 @@ public class GUILink
 
     public Paint getEdgeDrawPaint()
     {
-        return npLink == null? edgeDrawPaint : npLink.isUp() ? edgeDrawPaint : Color.RED;
+    	if (npLink == null) return edgeDrawPaint;
+    	if (!npLink.isUp()) return Color.RED;
+    	
+    	/* Consider worst case color if not separated links */
+    	final Set<Link> overlappingLinksToConsider = shownSeparated ? Sets.newHashSet(npLink) : 
+    		npLink.getNetPlan().getNodePairLinks(npLink.getOriginNode(), npLink.getDestinationNode(), true);
+
+    	/* In red if any overlapping link is down */
+    	if (overlappingLinksToConsider.stream().anyMatch(ee->ee.isDown())) return Color.RED; 
+    		
+    	if (vs.getIsActiveLinkUtilizationColorThresholdList())
+        {
+    		if(!npLink.getLayer().isDefaultLayer()) return edgeDrawPaint;
+    		final double worstUtilization = overlappingLinksToConsider.stream().mapToDouble(e->e.getUtilization()).max().orElse(0);
+    		return vs.getLinkColorAccordingToUtilization(worstUtilization);
+        }
+    	else if (vs.getIsActiveLinkRunoutTimeColorThresholdList())
+    	{
+                 return edgeDrawPaint;   
+    	} else
+    		return edgeDrawPaint;
     }
 
     public void setEdgeDrawPaint(Paint drawPaint) {

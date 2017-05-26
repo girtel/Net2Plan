@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the 2-clause BSD License 
+ * which accompanies this distribution, and is available at
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -18,14 +28,6 @@ public class GUILayer
         this.isLayerVisible = true;
         this.isLinksVisible = true;
         this.layerOrder = layer.getIndex();
-    }
-
-    public GUILayer(final NetworkLayer layer, final int order, final boolean isVisible, final boolean linksVisible)
-    {
-        this.associatedNetworkLayer = layer;
-        this.layerOrder = order;
-        this.isLayerVisible = isVisible;
-        this.isLinksVisible = linksVisible;
     }
 
     public boolean isLayerVisible()

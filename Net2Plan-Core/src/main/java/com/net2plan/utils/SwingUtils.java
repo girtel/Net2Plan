@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * <p>
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- * Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 package com.net2plan.utils;
@@ -90,20 +90,24 @@ public class SwingUtils {
     /**
      * Thanks to user Boann at StackOverflow for his <a href="http://stackoverflow.com/questions/16846078/jfilechoosershowsavedialog-cant-get-the-value-of-the-extension-file-chosen">getSelectedFileWithExtension</a>
      *
-     * Returns the selected file from a JFileChooser, including the extension from
-     * the file filter.
+     * @param c JFileChooser where the file is selected.
+     * @return File including the extension from the file filter.
      */
     public static File getSelectedFileWithExtension(JFileChooser c) {
         File file = c.getSelectedFile();
-        if (c.getFileFilter() instanceof FileNameExtensionFilter) {
+        if (c.getFileFilter() instanceof FileNameExtensionFilter)
+        {
             String[] exts = ((FileNameExtensionFilter)c.getFileFilter()).getExtensions();
+
             String nameLower = file.getName().toLowerCase();
-            for (String ext : exts) { // check if it already has a valid extension
-                if (nameLower.endsWith('.' + ext.toLowerCase())) {
-                    return file; // if yes, return as-is
+            for (String ext : exts)
+            {
+                if (nameLower.endsWith('.' + ext.toLowerCase()))
+                {
+                    return file;
                 }
             }
-            // if not, append the first extension from the selected filter
+
             file = new File(file.toString() + '.' + exts[0]);
         }
         return file;

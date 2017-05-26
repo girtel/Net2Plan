@@ -1,12 +1,26 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the 2-clause BSD License 
+ * which accompanies this distribution, and is available at
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -14,16 +28,22 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jorge San Emeterio Villalain
  * @date 17/04/17
  */
-public class AdvancedJTable_link_actions_Test
+@RunWith(MockitoJUnitRunner.class)
+public class AdvancedJTable_link_actionsTest
 {
     private static final double DELTA = 1e-15;
 
+    @Mock
     private static GUINetworkDesign networkDesign;
+
+    private static VisualizationState vs;
+
     private static List<Link> selection;
 
     private static NetPlan netPlan;
@@ -31,9 +51,6 @@ public class AdvancedJTable_link_actions_Test
     @Before
     public void setUp()
     {
-        networkDesign = new GUINetworkDesign();
-        networkDesign.configure(new JPanel());
-
         netPlan = new NetPlan();
 
         final Node node1 = netPlan.addNode(0, 0, "Node 1", null);
@@ -44,8 +61,10 @@ public class AdvancedJTable_link_actions_Test
         selection = new ArrayList<>();
         selection.add(link);
 
-        networkDesign.setDesign(netPlan);
-        networkDesign.updateVisualizationAfterNewTopology();
+        vs = new VisualizationState(netPlan, null, null, 0);
+
+        when(networkDesign.getDesign()).thenReturn(netPlan);
+        when(networkDesign.getVisualizationState()).thenReturn(vs);
     }
 
     @Test

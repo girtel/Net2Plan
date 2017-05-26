@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2015 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
+ * https://opensource.org/licenses/BSD-2-Clause
  *
  * Contributors:
- *     Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 package com.net2plan.internal;
@@ -49,17 +49,16 @@ public class Constants
         DEMANDS
     }
 
-    ;
 
     /**
-     * Capabilities of {@link com.net2plan.internal.io.IOFilter IOFilter} implementations.
+     * Capabilities of {@link com.net2plan.internal.plugins.IOFilter IOFilter} implementations.
      *
      * @since 0.3.0
      */
     public enum IOFeature
     {
         /**
-         * {@link com.net2plan.internal.io.IOFilter IOFilter} implementation able to
+         * {@link com.net2plan.internal.plugins.IOFilter IOFilter} implementation able to
          * load designs.
          *
          * @since 0.3.1
@@ -67,7 +66,7 @@ public class Constants
         LOAD_DESIGN,
 
         /**
-         * {@link com.net2plan.internal.io.IOFilter IOFilter} implementation able to
+         * {@link com.net2plan.internal.plugins.IOFilter IOFilter} implementation able to
          * save designs.
          *
          * @since 0.3.1
@@ -75,7 +74,7 @@ public class Constants
         SAVE_DESIGN,
 
         /**
-         * {@link com.net2plan.internal.io.IOFilter IOFilter} implementation able to
+         * {@link com.net2plan.internal.plugins.IOFilter IOFilter} implementation able to
          * load only traffic demands.
          *
          * @since 0.3.0
@@ -83,15 +82,13 @@ public class Constants
         LOAD_DEMANDS,
 
         /**
-         * {@link com.net2plan.internal.io.IOFilter IOFilter} implementation able to
+         * {@link com.net2plan.internal.plugins.IOFilter IOFilter} implementation able to
          * save only traffic demands.
          *
          * @since 0.3.0
          */
         SAVE_DEMANDS
     }
-
-    ;
 
     /**
      * Constants for each network element type.
@@ -221,8 +218,6 @@ public class Constants
         }
     }
 
-    ;
-
     /**
      * Constants for each runnable code type (algorithms, reports...). If used
      * as default value for a parameter, the kernel identifies the parameter as
@@ -346,8 +341,4 @@ public class Constants
          */
         GUI
     }
-
-    ;
-
-
 }

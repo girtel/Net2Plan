@@ -1,10 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2016 Pablo Pavon Mariño.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- ******************************************************************************/
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 
@@ -73,7 +76,7 @@ public class Offline_tcfa_generalMultilayer implements IAlgorithm
 		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING, lowerLayer);
 
 		/* Initialize some variables */
-		final double PRECISION_FACTOR = Double.parseDouble(net2planParameters.get("precisionFactor"));
+		final double PRECISION_FACTOR = 0.05; //Double.parseDouble(net2planParameters.get("precisionFactor"));
 		final int N = netPlan.getNumberOfNodes();
 		final int D_up = netPlan.getNumberOfDemands (upperLayer);
 		final int E_lo = netPlan.getNumberOfLinks (lowerLayer);

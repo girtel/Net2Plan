@@ -1,9 +1,21 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the 2-clause BSD License 
+ * which accompanies this distribution, and is available at
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
+
 package com.net2plan.interfaces.networkDesign;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.Sets;
+import com.net2plan.interfaces.TestConstants;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
@@ -40,7 +53,8 @@ public class DemandTest
 	private Link upperLink12;
 	
 	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
+	public static void setUpBeforeClass() throws Exception 
+	{
 	}
 
 	@AfterClass
@@ -88,6 +102,35 @@ public class DemandTest
 		np.checkCachesConsistency();
 	}
 
+	@Test
+	public void testBidirectional ()
+	{
+		Pair<Demand,Demand> pair = np.addDemandBidirectional(n1, n2, 1, null);
+		assertTrue (pair.getFirst().isBidirectional());
+		assertTrue (pair.getSecond().isBidirectional());
+		assertEquals (pair.getFirst().getBidirectionalPair() , pair.getSecond());
+		assertEquals (pair.getSecond().getBidirectionalPair() , pair.getFirst());
+		pair.getFirst().remove();
+		assertTrue (!pair.getSecond().isBidirectional());
+		assertEquals (pair.getSecond().getBidirectionalPair() , null);
+		
+		Demand otherDemand = np.addDemand(n1, n3, 1, null);
+		try { otherDemand.setBidirectionalPair(pair.getFirst()); fail (); } catch (Exception e) {}
+		
+		Demand otherDemand2 = np.addDemand(n1, n2, 1, null);
+		pair.getSecond().setBidirectionalPair(otherDemand2);
+		assertTrue (pair.getSecond().isBidirectional());
+		assertEquals (otherDemand2.getBidirectionalPair() , pair.getSecond());
+		assertEquals (pair.getSecond().getBidirectionalPair() , otherDemand2);
+		
+		File f = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME);
+		this.np.saveToFile(f);
+		NetPlan readNp = new NetPlan (f);
+		assertTrue(readNp.isDeepCopy(np));
+		assertTrue(np.isDeepCopy(readNp));
+	}
+	
+	
 	@Test
 	public void testGetRoutes() 
 	{

@@ -1,14 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2016 Pablo Pavon-Marino.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
+ * https://opensource.org/licenses/BSD-2-Clause
  *
  * Contributors:
- *     Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1
- *     Pablo Pavon-Marino - from version 0.4.0 onwards
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 package com.net2plan.interfaces.networkDesign;
 
@@ -329,7 +328,7 @@ public class SharedRiskGroup extends NetworkElement
 		netPlan.cache_id2srgMap.remove (id);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.srgs , index);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain ();
+		removeId ();
 	}
 
 	/**
@@ -374,14 +373,6 @@ public class SharedRiskGroup extends NetworkElement
 
 		for (Link link : links) if (!link.cache_srgs.contains(this)) throw new RuntimeException ("Bad");
 		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
-	}
-
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.addAll(nodes);
-		res.addAll(links);
-		return res;
 	}
 
 }

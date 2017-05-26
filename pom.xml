@@ -1,25 +1,35 @@
+<!--
+    Copyright (c) 2017 Pablo Pavon Marino and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the 2-clause BSD License 
+    which accompanies this distribution, and is available at
+    https://opensource.org/licenses/BSD-2-Clause
+   
+    Contributors:
+        Pablo Pavon Marino and others - initial API and implementation
+ -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
-    <version>0.5.1-Beta.2-SNAPSHOT</version>
+    <version>0.5.2</version>
     <packaging>pom</packaging>
     <url>http://www.net2plan.com</url>
 
     <licenses>
         <license>
-            <name>GNU Lesser General Public License v3</name>
-            <url>http://www.gnu.org/licenses/lgpl.html</url>
+            <name>Simplified BSD License</name>
+            <url>https://opensource.org/licenses/BSD-2-Clause</url>
         </license>
     </licenses>
 
     <modules>
         <module>Net2Plan-Core</module>
-        <module>Net2Plan-Examples</module>
         <module>Net2Plan-CLI</module>
         <module>Net2Plan-GUI</module>
+        <module>Net2Plan-Examples</module>
         <module>Net2Plan-Javadoc</module>
         <module>Net2Plan-Launcher</module>
         <module>Net2Plan-Assembly</module>
@@ -176,11 +186,31 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>2.7.22</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>pl.pragmatists</groupId>
+            <artifactId>JUnitParams</artifactId>
+            <version>1.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-swing-junit</artifactId>
+            <version>3.5.0</version>
+            <scope>test</scope>
         </dependency>
         <!--Local-->
         <!--Javadoc-->

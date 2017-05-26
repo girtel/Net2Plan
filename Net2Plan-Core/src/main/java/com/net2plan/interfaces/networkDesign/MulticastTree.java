@@ -1,14 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2016 Pablo Pavon-Marino.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
+ * https://opensource.org/licenses/BSD-2-Clause
  *
  * Contributors:
- *     Pablo Pavon-Marino - Jose-Luis Izquierdo-Zaragoza, up to version 0.3.1
- *     Pablo Pavon-Marino - from version 0.4.0 onwards
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 package com.net2plan.interfaces.networkDesign;
 
@@ -536,7 +535,7 @@ public class MulticastTree extends NetworkElement
 		layer.cache_multicastTreesTravLinkZeroCap.remove(this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeIdAndFromPlanningDomain();
+		removeId();
 	}
 
 	
@@ -634,16 +633,6 @@ public class MulticastTree extends NetworkElement
 		{
 			if (getCarriedTraffic() != 0) throw new RuntimeException ("Bad");
 		}
-	}
-
-	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
-	{
-		final Set<NetworkElement> res = new HashSet<> ();
-		res.add(demand);
-		initialSetLinksWhenWasCreated.stream().filter(e->!e.wasRemoved()).forEach(e->res.add(e));
-		res.addAll(linkSet);
-		res.addAll(cache_traversedNodes);
-		return res;
 	}
 
 

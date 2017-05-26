@@ -1,12 +1,13 @@
 /*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- * <p>
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
  * Contributors:
- * Pablo Pavon Mariño - initial API and implementation
- ******************************************************************************/
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung;
@@ -92,7 +93,7 @@ public final class JUNGCanvas implements ITopologyCanvas
             final int vlIndex = this.callback.getVisualizationState().getCanvasVisualizationOrderRemovingNonVisible(vertex.getLayer());
             final double interLayerDistanceInNpCoord = currentInterLayerDistanceInNpCoordinates;
             final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNode().getXYPositionMap();
-            return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
+            return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (vlIndex * interLayerDistanceInNpCoord)));
         };
 
         g = new DirectedOrderedSparseMultigraph<>();

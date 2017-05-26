@@ -1,11 +1,26 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the 2-clause BSD License 
+ * which accompanies this distribution, and is available at
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Paint;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 import com.net2plan.gui.plugins.GUINetworkDesign;
-
-import java.awt.*;
-import java.net.URL;
-import java.util.Map;
 
 /**
  * @author Jorge San Emeterio
@@ -17,6 +32,17 @@ public final class VisualizationConstants
     {
     }
 
+    public final static List<Double> DEFAULT_LINKCOLORINGUTILIZATIONTHRESHOLDS = Arrays.asList (10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0 , 80.0, 90.0);
+    public final static List<Double> DEFAULT_LINKCOLORINGRUNOUTTHRESHOLDS = Arrays.asList (2.0, 3.0, 6.0, 9.0, 12.0, 18.0, 24.0, 32.0, 38.0, 48.0);
+    public final static List<Double> DEFAULT_LINKTHICKNESSTHRESHPOLDS = Arrays.asList (0.2, 0.5, 1.0, 2.5, 5.0, 10.0, 40.0, 100.0);
+    public final static List<Color> DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT = Arrays.asList (
+            new Color(25, 25, 25) , 
+            new Color(0, 50, 0) , new Color(0, 75, 0) , 
+            new Color(0, 100, 0) , new Color(50, 100, 0) , 
+            new Color(100, 150, 0) , new Color(150, 150, 0) , 
+            new Color(200, 150, 0) , new Color(200, 100, 0) , new Color(200, 50, 0) , new Color(200, 0, 0));
+    public final static List<Double> DEFAULT_LINKRELATIVETHICKNESSVALUES = Arrays.asList (0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9);
+    
     public static Color TRANSPARENTCOLOR = new Color(0, 0, 0, 0);
     public final static int DEFAULT_ICONBORDERSIZEINPIXELS = 4;
     public final static Map<String, URL> DEFAULT_LAYERNAME2ICONURLMAP =

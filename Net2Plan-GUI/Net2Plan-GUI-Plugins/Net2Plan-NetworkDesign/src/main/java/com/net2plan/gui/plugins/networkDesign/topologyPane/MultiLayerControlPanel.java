@@ -1,156 +1,210 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the 2-clause BSD License 
+ * which accompanies this distribution, and is available at
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.multilayerTabs.AdvancedJTable_multiLayerControlTable;
+import com.google.common.annotations.VisibleForTesting;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants;
-import org.apache.commons.collections15.BidiMap;
-import org.apache.commons.collections15.bidimap.DualHashBidiMap;
+import net.miginfocom.swing.MigLayout;
+import org.apache.commons.collections4.MapUtils;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Jorge San Emeterio
  * @date 20-Jan-17
  */
-public class MultiLayerControlPanel extends JPanel
+public final class MultiLayerControlPanel extends JPanel
 {
     private final GUINetworkDesign callback;
-    private final AdvancedJTable_multiLayerControlTable multiLayerTable;
-    private final MultiLayerButtonPanel buttonPanel;
 
-    public MultiLayerControlPanel(final GUINetworkDesign callback)
+    private JComponent[][] componentMatrix;
+
+    private final Map<Integer, NetworkLayer> rowIndexToLayerMap;
+
+    public static final String UP_COLUMN = "\u25B2";
+    public static final String DOWN_COLUMN = "\u25BC";
+    public static final String ACTIVE_COLUMN = "Layer";
+    public static final String VISIBLE_COLUMN = "Visible";
+
+    public MultiLayerControlPanel(GUINetworkDesign callback)
     {
+        assert callback != null;
+
         this.callback = callback;
-        this.multiLayerTable = new AdvancedJTable_multiLayerControlTable(callback);
-        this.buttonPanel = new MultiLayerButtonPanel();
 
-        this.setLayout(new BorderLayout());
+        this.rowIndexToLayerMap = new HashMap<>();
 
-        fillPanel();
+        buildPanel();
     }
 
-    private void fillPanel()
+    private void buildPanel()
     {
-        final JPanel auxPanel = new JPanel(new BorderLayout());
-        auxPanel.add(multiLayerTable);
-        auxPanel.add(multiLayerTable.getTableHeader(), BorderLayout.NORTH);
+        this.rowIndexToLayerMap.clear();
+        this.componentMatrix = new JComponent[callback.getDesign().getNumberOfLayers()][4];
 
-        this.add(auxPanel, BorderLayout.CENTER);
-        this.add(buttonPanel, BorderLayout.WEST);
-    }
+        final MigLayout layout = new MigLayout(
+                "insets 0, gap 0, wrap 4");
 
-    private class MultiLayerButtonPanel extends JToolBar implements ActionListener
-    {
-        private final JButton btn_showAllLayers, btn_hideAllLayers;
-        private final JButton btn_sortLayerByIndex, btn_sortLayersByTopology;
-        private final JButton btn_showAllLayerLinks, btn_hideAllLayerLinks;
+        this.setLayout(layout);
 
-        private MultiLayerButtonPanel()
+        final NetPlan netPlan = callback.getDesign();
+
+        final List<NetworkLayer> networkLayers = callback.getVisualizationState().getCanvasLayersInVisualizationOrder(true);
+
+        // Each row
+        for (int i = 0; i < networkLayers.size(); i++)
         {
-            super();
-            this.setOrientation(JToolBar.VERTICAL);
-            this.setRollover(true);
-            this.setFloatable(false);
-            this.setOpaque(false);
-            this.setBorderPainted(false);
+            final int thisRow = i;
+            final NetworkLayer layer = networkLayers.get(i);
 
-            btn_showAllLayers = new JButton("Show all layers");
-            btn_hideAllLayers = new JButton("Hide all layers");
-            btn_sortLayerByIndex = new JButton("Sort layers by index");
-            btn_sortLayersByTopology = new JButton("Sort layers by topology");
-            btn_showAllLayerLinks = new JButton("Show all layer links");
-            btn_hideAllLayerLinks = new JButton("Hide all layer links");
+            rowIndexToLayerMap.put(thisRow, layer);
+            // Up button
+            final JButton upButton = new JButton();
+            upButton.setText(UP_COLUMN);
+            upButton.setName(UP_COLUMN);
+            upButton.setFocusable(false);
+            upButton.addActionListener(e ->
+            {
+                if (thisRow == 0) return;
 
-            btn_showAllLayers.addActionListener(this);
-            btn_hideAllLayers.addActionListener(this);
-            btn_sortLayerByIndex.addActionListener(this);
-            btn_sortLayersByTopology.addActionListener(this);
-            btn_showAllLayerLinks.addActionListener(this);
-            btn_hideAllLayerLinks.addActionListener(this);
+                final VisualizationState vs = callback.getVisualizationState();
+                final NetworkLayer neighbourLayer = rowIndexToLayerMap.get(thisRow - 1);
 
-            this.add(btn_showAllLayers);
-            this.add(btn_hideAllLayers);
-            this.add(btn_sortLayerByIndex);
-            this.add(btn_sortLayersByTopology);
-            this.add(btn_showAllLayerLinks);
-            this.add(btn_hideAllLayerLinks);
-        }
+                final Map<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
 
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            final Object src = e.getSource();
+                // Swap the selected layer with the one on top of it.
+                this.swap(layerOrderMapConsideringNonVisible, layer, neighbourLayer);
 
-            final NetPlan netPlan = callback.getDesign();
-            final VisualizationState vs = callback.getVisualizationState();
+                vs.setCanvasLayerVisibilityAndOrder(netPlan, layerOrderMapConsideringNonVisible, vs.getCanvasLayerVisibilityMap());
 
-            if (src == btn_showAllLayers)
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+            });
+            componentMatrix[thisRow][0] = upButton;
+
+            // Down button
+            final JButton downButton = new JButton();
+            downButton.setText(DOWN_COLUMN);
+            downButton.setName(DOWN_COLUMN);
+            downButton.setFocusable(false);
+            downButton.addActionListener(e ->
             {
-            	Map<NetworkLayer,Boolean> visibilityInfo = new HashMap <>();
-                for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                	visibilityInfo.put(networkLayer , true);
-                if (!visibilityInfo.equals(vs.getCanvasLayerVisibilityMap()))
-                {
-                	vs.setCanvasLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
-                	callback.getVisualizationState().resetPickedState();
-                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                }
-            } else if (src == btn_hideAllLayers)
+                if (thisRow == componentMatrix.length - 1) return;
+
+                final VisualizationState vs = callback.getVisualizationState();
+                final NetworkLayer neighbourLayer = rowIndexToLayerMap.get(thisRow + 1);
+
+                final Map<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
+
+                // Swap the selected layer with the one on top of it.
+                this.swap(layerOrderMapConsideringNonVisible, layer, neighbourLayer);
+
+                vs.setCanvasLayerVisibilityAndOrder(netPlan, layerOrderMapConsideringNonVisible, vs.getCanvasLayerVisibilityMap());
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+            });
+            componentMatrix[thisRow][1] = downButton;
+
+            // Active button
+            final JToggleButton activeButton = new JToggleButton();
+            activeButton.setText(layer.getName());
+            activeButton.setToolTipText(layer.getName());
+            activeButton.setName(ACTIVE_COLUMN);
+            activeButton.setFocusable(false);
+            activeButton.setSelected(false);
+            activeButton.addActionListener(e ->
             {
-            	Map<NetworkLayer,Boolean> visibilityInfo = new HashMap <>();
-                for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                	visibilityInfo.put(networkLayer , networkLayer.equals(netPlan.getNetworkLayerDefault()));
-                if (!visibilityInfo.equals(vs.getCanvasLayerVisibilityMap()))
-                {
-                	vs.setCanvasLayerVisibilityAndOrder(netPlan , null , visibilityInfo);
-                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                }
-            } else if (src == btn_sortLayerByIndex)
+                netPlan.setNetworkLayerDefault(layer);
+                callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+            });
+            componentMatrix[thisRow][2] = activeButton;
+
+            // Visible button
+            final JToggleButton visibleButton = new JToggleButton();
+            visibleButton.setIcon(new ImageIcon(MultiLayerControlPanel.class.getResource("/resources/gui/eye.png")));
+            visibleButton.setName(VISIBLE_COLUMN);
+            visibleButton.setSelected(callback.getVisualizationState().isLayerVisibleInCanvas(layer));
+            visibleButton.setFocusable(false);
+            visibleButton.addActionListener(e ->
             {
-                final BidiMap<NetworkLayer, Integer> layerIndexOrderMap = new DualHashBidiMap<>();
-                for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                    layerIndexOrderMap.put(networkLayer, networkLayer.getIndex());
-                if (!layerIndexOrderMap.equals(vs.getCanvasLayerOrderIndexMap(true)))
-                {
-                    vs.setCanvasLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
-                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                }
-            } else if (src == btn_sortLayersByTopology)
+                callback.getVisualizationState().setCanvasLayerVisibility(layer, visibleButton.isSelected());
+
+                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+            });
+            componentMatrix[thisRow][3] = visibleButton;
+
+            // Limiting buttons
+            if (netPlan.getNumberOfLayers() == 1)
             {
-                final BidiMap<NetworkLayer, Integer> layerIndexOrderMap = new DualHashBidiMap<>();
-                for (NetworkLayer networkLayer : netPlan.getNetworkLayerInTopologicalOrder())
-                    layerIndexOrderMap.put(networkLayer, networkLayer.getIndex());
-                if (!layerIndexOrderMap.equals(vs.getCanvasLayerOrderIndexMap(true)))
-                {
-                    vs.setCanvasLayerVisibilityAndOrder(netPlan, layerIndexOrderMap , null);
-                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
-                }
-            } else if (src == btn_showAllLayerLinks)
-            {
-                for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                    vs.setLayerLinksVisibilityInCanvas(networkLayer, true);
-                callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
-            } else if (src == btn_hideAllLayerLinks)
-            {
-                for (NetworkLayer networkLayer : netPlan.getNetworkLayers())
-                    vs.setLayerLinksVisibilityInCanvas(networkLayer, false);
-                callback.updateVisualizationJustCanvasLinkNodeVisibilityOrColor ();
+                upButton.setEnabled(false);
+                downButton.setEnabled(false);
             }
 
-            refreshTable();
+            if (thisRow == 0) upButton.setEnabled(false);
+            if (thisRow == networkLayers.size() - 1) downButton.setEnabled(false);
+
+            if (layer == netPlan.getNetworkLayerDefault())
+            {
+                activeButton.setSelected(true);
+                visibleButton.setEnabled(false);
+            }
         }
+
+        for (JComponent[] matrix : componentMatrix)
+            for (JComponent component : matrix)
+                this.add(component, "grow, wmax 75");
     }
+
     public void refreshTable ()
     {
-    	multiLayerTable.updateTable();
+        this.removeAll();
+
+        this.buildPanel();
+    }
+
+    @VisibleForTesting
+    NetworkLayer getLayer(int row)
+    {
+        return rowIndexToLayerMap.get(row);
+    }
+
+    @VisibleForTesting
+    int getLayerIndex(NetworkLayer layer)
+    {
+        return MapUtils.invertMap(rowIndexToLayerMap).get(layer);
+    }
+
+    @VisibleForTesting
+    JComponent[][] getTable()
+    {
+        return componentMatrix;
+    }
+
+    private <K, V> void swap(Map<K, V> map, K k1, K k2)
+    {
+        final V value1 = map.get(k1);
+        final V value2 = map.get(k2);
+        if ((value1 == null) || (value2 == null)) throw new RuntimeException();
+        map.remove(k1);
+        map.remove(k2);
+        map.put(k1, value2);
+        map.put(k2, value1);
     }
 }
