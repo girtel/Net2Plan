@@ -22,13 +22,13 @@ script:
 
 after_success:
   - echo "Build successful. Awesome!"
-  - VERSION=$(./Net2Plan-CI/src/scripts/create_tag.sh)
-  - BODY=$(./Net2Plan-CI/src/scripts/changelog_script.sh)
-  - echo $VERSION
-  - echo $BODY
 
 after_failure:
   echo "Build finished with errors. Bollocks!"
+
+before_deploy:
+  - VERSION=$(./Net2Plan-CI/src/scripts/create_tag.sh)
+  - BODY=$(./Net2Plan-CI/src/scripts/changelog_script.sh)
 
 deploy:
   provider: releases
