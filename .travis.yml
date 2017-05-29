@@ -11,7 +11,7 @@ env:
   - DISPLAY=:99.0
 
 before_install:
-  - chmod +x CHANGELOG.md && chmod +x Scripts
+  - chmod +x CHANGELOG.md && chmod +x Net2Plan-CI/src/scripts/**
   - sh -e /etc/init.d/xvfb start
 
 install:
@@ -22,8 +22,8 @@ script:
 
 after_success:
   - echo "Build successful. Awesome!"
-  - VERSION=$(./Scripts/create_tag.sh)
-  - BODY=$(./Scripts/changelog_script.sh)
+  - VERSION=$(./Net2Plan-CI/src/scripts/create_tag.sh)
+  - BODY=$(./Net2Plan-CI/src/scripts/changelog_script.sh)
   - echo $VERSION
   - echo $BODY
 
