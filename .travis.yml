@@ -11,7 +11,7 @@ env:
   - DISPLAY=:99.0
 
 before_install:
-  - chmod +x CHANGELOG.md && chmod +x create_tag.sh && chmod +x changelog_script.sh
+  - chmod +x CHANGELOG.md && chmod +x Scripts
   - sh -e /etc/init.d/xvfb start
 
 install:
@@ -27,8 +27,8 @@ after_failure:
   echo "Build finished with errors. Bollocks!"
 
 before_deploy:
-  - VERSION=$(./create_tag.sh)
-  - BODY=$(./changelog_script.sh)
+  - VERSION=$(./Scripts/create_tag.sh)
+  - BODY=$(./Scripts/changelog_script.sh)
 
 deploy:
   provider: releases
