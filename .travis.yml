@@ -24,7 +24,7 @@ after_success:
   - echo "Build successful. Awesome!"
 
 after_failure:
-  echo "Build finished with errors. Bollocks!"
+  - echo "Build finished with errors. Bollocks!"
 
 before_deploy:
   - VERSION=$(./Net2Plan-CI/src/scripts/create_tag.sh)
