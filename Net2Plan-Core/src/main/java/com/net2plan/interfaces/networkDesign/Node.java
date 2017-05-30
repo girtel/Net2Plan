@@ -490,7 +490,8 @@ public class Node extends NetworkElement
 		return res;
 	}
 
-	/** Returns true has at least one link, or demand, or multicast demand at the given layer associated to it. 
+	/** Returns true has at least one link, or demand, or multicast demand at the given layer associated to it.
+	 * @param layer
 	 * @return see above
 	 */
 	public boolean isWorkingAtLayer(NetworkLayer layer)
@@ -885,7 +886,8 @@ public class Node extends NetworkElement
 	{
 		return Collections.unmodifiableSet(this.planningDomains);
 	}
-	
+
+
 	/** Remove this node from the given planning domain, if it belongs to it
 	 * @param planningDomain
 	 */
