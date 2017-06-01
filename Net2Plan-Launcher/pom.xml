@@ -22,6 +22,8 @@
 
     <artifactId>net2plan-launcher</artifactId>
 
+    <packaging>pom</packaging>
+
     <!--Net2Plan launcher will not be deployed as a jar-->
     <!--It is a tool to launch Net2Plan from the IDE-->
     <!--Net2Plan launcher needs its dependencies to be within compile as it will use them from the IDE-->
