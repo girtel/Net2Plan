@@ -27,7 +27,7 @@ after_failure:
   - echo "Build finished with errors. Bollocks!"
 
 before_deploy:
-  - VERSION=$(./Net2Plan-CI/src/scripts/create_tag.sh)
+  - VERSION=$(./Net2Plan-CI/src/scripts/get_version.sh)
   - BODY=$(./Net2Plan-CI/src/scripts/changelog_script.sh)
 
 deploy:
@@ -42,7 +42,7 @@ deploy:
   on:
     branch: master
     repo: girtel/Net2Plan
-    tags: false
+    tags: true
 
 notifications:
   email:
