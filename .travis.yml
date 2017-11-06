@@ -11,6 +11,7 @@ env:
   - DISPLAY=:99.0
 
 before_install:
+  - chmod +x CHANGELOG.md && chmod +x Net2Plan-CI/src/scripts/**
   - sh -e /etc/init.d/xvfb start
 
 install:
@@ -20,12 +21,32 @@ script:
   mvn clean package
 
 after_success:
-  echo "Build successful. Awesome!"
+  - echo "Build successful. Awesome!"
 
 after_failure:
-  echo "Build finished with errors. Bollocks!"
+  - echo "Build finished with errors. Bollocks!"
+
+before_deploy:
+  - VERSION=$(./Net2Plan-CI/src/scripts/get_version.sh)
+  - BODY=$(./Net2Plan-CI/src/scripts/changelog_script.sh)
+
+deploy:
+  provider: releases
+  api-key: $TOKEN
+  body: "$BODY"
+  tag-name: $VERSION
+  name: "Net2Plan $VERSION"
+  file_glob: true
+  file: Net2Plan-Assembly/target/*.zip
+  skip_cleanup: true
+  on:
+    branch: master
+    repo: girtel/Net2Plan
+    tags: true
 
 notifications:
   email:
     on_success: never
     on_failure: always
+
+

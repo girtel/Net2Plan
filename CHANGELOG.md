@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
     - Added a new visualization option for giving color to links based on their current utilization.
     
 ### Changed
-    - Reworked multi-layer contol panel to work as a non-intrusive pop-up.
+    - Reworked multi-layer control panel to work as a non-intrusive pop-up.
     - Separated canvas display from table display: Pick option.
     - Changed project license to BSD 2-clause.
     
