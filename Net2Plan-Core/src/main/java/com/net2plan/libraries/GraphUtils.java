@@ -1537,11 +1537,13 @@ public class GraphUtils
 			delta_bd.set(n.getIndex(), 1);
 		double firstTreeCost = -1;
 		Set<Link> firstTree = null;
+		if (linkCost == null)
+                    linkCost = DoubleFactory1D.dense.make(E, 1);
 		for (int k = 0; k < K; k++)
 		{
 			OptimizationProblem op = new OptimizationProblem();
 			op.setInputParameter("E", E);
-			op.setInputParameter("c_e", linkCost == null ? DoubleFactory1D.dense.make(E, 1) : linkCost, "row");
+			op.setInputParameter("c_e", linkCost, "row");
 			op.setInputParameter("K", maxCopyCapability <= 0 ? E : maxCopyCapability);
 			op.setInputParameter("Aout_ne", Aout_ne);
 			op.setInputParameter("Ain_ne", Ain_ne);

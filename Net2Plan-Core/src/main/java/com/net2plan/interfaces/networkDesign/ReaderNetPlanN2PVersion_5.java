@@ -443,7 +443,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 							break;
 
 						case "attribute":
-							newLayer.setAttribute(getString ("key"), getString ("name"));
+							newLayer.setAttribute(getString ("key"), getString ("value"));
 							break;
 
 						case "demand":
