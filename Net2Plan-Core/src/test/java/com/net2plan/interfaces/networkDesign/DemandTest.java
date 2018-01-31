@@ -93,6 +93,8 @@ public class DemandTest
 		this.d12.coupleToUpperLayerLink(upperLink12);
 
 		np.checkCachesConsistency();
+
+		temporaryFolder.create();
 	}
 
 
@@ -100,6 +102,8 @@ public class DemandTest
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
+
+		temporaryFolder.delete();
 	}
 
 	@Test

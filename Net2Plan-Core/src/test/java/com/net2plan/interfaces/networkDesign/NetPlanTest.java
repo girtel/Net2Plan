@@ -166,6 +166,8 @@ public class NetPlanTest
 		this.netTriangle_r2 = netTriangle.addResource("type2" , "name" , netTriangle_n2 , 100.0 , "units" , null , 1.0 , null);
 		this.netTriangle_r3 = netTriangle.addResource("type3" , "name" , netTriangle_n3 , 100.0 , "units" , null , 1.0 , null);
 
+		temporaryFolder.create();
+
 		File resourcesDir = temporaryFolder.getRoot();
 		if (!resourcesDir.exists()) resourcesDir.mkdirs();
 	}
@@ -174,6 +176,8 @@ public class NetPlanTest
 	public void tearDown() throws Exception
 	{
 		np.checkCachesConsistency();
+
+		temporaryFolder.delete();
 	}
 
 	@Test
