@@ -5,7 +5,7 @@ sudo: required
 addons:
   apt:
     packages:
-    - libglpk0
+    - libglpk36
 
 env:
   - DISPLAY=:99.0
