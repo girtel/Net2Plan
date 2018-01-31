@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network>
+    <physicalTopology>
+        <node name="Node 0" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 1" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 2" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 3" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 4" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 5" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 6" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 7" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 8" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 9" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 10" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 11" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 12" xCoord="0.0" yCoord="0.0"/>
+        <node name="Node 13" xCoord="0.0" yCoord="0.0"/>
+    </physicalTopology>
+    <demandSet>
+        <demandEntry egressNodeId="1" ingressNodeId="0" offeredTrafficInErlangs="30.008"/>
+        <demandEntry egressNodeId="2" ingressNodeId="0" offeredTrafficInErlangs="11.93"/>
+        <demandEntry egressNodeId="3" ingressNodeId="0" offeredTrafficInErlangs="31.22"/>
+        <demandEntry egressNodeId="4" ingressNodeId="0" offeredTrafficInErlangs="32.504"/>
+        <demandEntry egressNodeId="5" ingressNodeId="0" offeredTrafficInErlangs="18.35"/>
+        <demandEntry egressNodeId="6" ingressNodeId="0" offeredTrafficInErlangs="23.9"/>
+        <demandEntry egressNodeId="7" ingressNodeId="0" offeredTrafficInErlangs="25.766"/>
+        <demandEntry egressNodeId="8" ingressNodeId="0" offeredTrafficInErlangs="19.034"/>
+        <demandEntry egressNodeId="9" ingressNodeId="0" offeredTrafficInErlangs="21.746"/>
+        <demandEntry egressNodeId="10" ingressNodeId="0" offeredTrafficInErlangs="16.57"/>
+        <demandEntry egressNodeId="11" ingressNodeId="0" offeredTrafficInErlangs="21.93"/>
+        <demandEntry egressNodeId="12" ingressNodeId="0" offeredTrafficInErlangs="16.722"/>
+        <demandEntry egressNodeId="13" ingressNodeId="0" offeredTrafficInErlangs="23.23"/>
+        <demandEntry egressNodeId="0" ingressNodeId="1" offeredTrafficInErlangs="32.576"/>
+        <demandEntry egressNodeId="2" ingressNodeId="1" offeredTrafficInErlangs="12.902"/>
+        <demandEntry egressNodeId="3" ingressNodeId="1" offeredTrafficInErlangs="29.784"/>
+        <demandEntry egressNodeId="4" ingressNodeId="1" offeredTrafficInErlangs="15.814"/>
+        <demandEntry egressNodeId="5" ingressNodeId="1" offeredTrafficInErlangs="18.62"/>
+        <demandEntry egressNodeId="6" ingressNodeId="1" offeredTrafficInErlangs="26.252"/>
+        <demandEntry egressNodeId="7" ingressNodeId="1" offeredTrafficInErlangs="17.488"/>
+        <demandEntry egressNodeId="8" ingressNodeId="1" offeredTrafficInErlangs="15.096"/>
+        <demandEntry egressNodeId="9" ingressNodeId="1" offeredTrafficInErlangs="11.738"/>
+        <demandEntry egressNodeId="10" ingressNodeId="1" offeredTrafficInErlangs="19.274"/>
+        <demandEntry egressNodeId="11" ingressNodeId="1" offeredTrafficInErlangs="18.708"/>
+        <demandEntry egressNodeId="12" ingressNodeId="1" offeredTrafficInErlangs="11.364"/>
+        <demandEntry egressNodeId="13" ingressNodeId="1" offeredTrafficInErlangs="17.13"/>
+        <demandEntry egressNodeId="0" ingressNodeId="2" offeredTrafficInErlangs="21.092"/>
+        <demandEntry egressNodeId="1" ingressNodeId="2" offeredTrafficInErlangs="26.866"/>
+        <demandEntry egressNodeId="3" ingressNodeId="2" offeredTrafficInErlangs="30.678"/>
+        <demandEntry egressNodeId="4" ingressNodeId="2" offeredTrafficInErlangs="17.066"/>
+        <demandEntry egressNodeId="5" ingressNodeId="2" offeredTrafficInErlangs="26.14"/>
+        <demandEntry egressNodeId="6" ingressNodeId="2" offeredTrafficInErlangs="10.462"/>
+        <demandEntry egressNodeId="7" ingressNodeId="2" offeredTrafficInErlangs="24.626"/>
+        <demandEntry egressNodeId="8" ingressNodeId="2" offeredTrafficInErlangs="12.312"/>
+        <demandEntry egressNodeId="9" ingressNodeId="2" offeredTrafficInErlangs="26.188"/>
+        <demandEntry egressNodeId="10" ingressNodeId="2" offeredTrafficInErlangs="23.086"/>
+        <demandEntry egressNodeId="11" ingressNodeId="2" offeredTrafficInErlangs="15.894"/>
+        <demandEntry egressNodeId="12" ingressNodeId="2" offeredTrafficInErlangs="17.2"/>
+        <demandEntry egressNodeId="13" ingressNodeId="2" offeredTrafficInErlangs="12.616"/>
+        <demandEntry egressNodeId="0" ingressNodeId="3" offeredTrafficInErlangs="33.054"/>
+        <demandEntry egressNodeId="1" ingressNodeId="3" offeredTrafficInErlangs="23.628"/>
+        <demandEntry egressNodeId="2" ingressNodeId="3" offeredTrafficInErlangs="27.16"/>
+        <demandEntry egressNodeId="4" ingressNodeId="3" offeredTrafficInErlangs="14.664"/>
+        <demandEntry egressNodeId="5" ingressNodeId="3" offeredTrafficInErlangs="15.168"/>
+        <demandEntry egressNodeId="6" ingressNodeId="3" offeredTrafficInErlangs="14.696"/>
+        <demandEntry egressNodeId="7" ingressNodeId="3" offeredTrafficInErlangs="20.144"/>
+        <demandEntry egressNodeId="8" ingressNodeId="3" offeredTrafficInErlangs="22.184"/>
+        <demandEntry egressNodeId="9" ingressNodeId="3" offeredTrafficInErlangs="21.1"/>
+        <demandEntry egressNodeId="10" ingressNodeId="3" offeredTrafficInErlangs="17.034"/>
+        <demandEntry egressNodeId="11" ingressNodeId="3" offeredTrafficInErlangs="11.068"/>
+        <demandEntry egressNodeId="12" ingressNodeId="3" offeredTrafficInErlangs="9.45"/>
+        <demandEntry egressNodeId="13" ingressNodeId="3" offeredTrafficInErlangs="24.728"/>
+        <demandEntry egressNodeId="0" ingressNodeId="4" offeredTrafficInErlangs="17.72"/>
+        <demandEntry egressNodeId="1" ingressNodeId="4" offeredTrafficInErlangs="11.754"/>
+        <demandEntry egressNodeId="2" ingressNodeId="4" offeredTrafficInErlangs="12.87"/>
+        <demandEntry egressNodeId="3" ingressNodeId="4" offeredTrafficInErlangs="28.15"/>
+        <demandEntry egressNodeId="5" ingressNodeId="4" offeredTrafficInErlangs="14.426"/>
+        <demandEntry egressNodeId="6" ingressNodeId="4" offeredTrafficInErlangs="35.358"/>
+        <demandEntry egressNodeId="7" ingressNodeId="4" offeredTrafficInErlangs="22.87"/>
+        <demandEntry egressNodeId="8" ingressNodeId="4" offeredTrafficInErlangs="27.376"/>
+        <demandEntry egressNodeId="9" ingressNodeId="4" offeredTrafficInErlangs="25.35"/>
+        <demandEntry egressNodeId="10" ingressNodeId="4" offeredTrafficInErlangs="20.12"/>
+        <demandEntry egressNodeId="11" ingressNodeId="4" offeredTrafficInErlangs="23.23"/>
+        <demandEntry egressNodeId="12" ingressNodeId="4" offeredTrafficInErlangs="20.454"/>
+        <demandEntry egressNodeId="13" ingressNodeId="4" offeredTrafficInErlangs="20.502"/>
+        <demandEntry egressNodeId="0" ingressNodeId="5" offeredTrafficInErlangs="19.936"/>
+        <demandEntry egressNodeId="1" ingressNodeId="5" offeredTrafficInErlangs="10.988"/>
+        <demandEntry egressNodeId="2" ingressNodeId="5" offeredTrafficInErlangs="20.782"/>
+        <demandEntry egressNodeId="3" ingressNodeId="5" offeredTrafficInErlangs="15.2"/>
+        <demandEntry egressNodeId="4" ingressNodeId="5" offeredTrafficInErlangs="30.59"/>
+        <demandEntry egressNodeId="6" ingressNodeId="5" offeredTrafficInErlangs="23.396"/>
+        <demandEntry egressNodeId="7" ingressNodeId="5" offeredTrafficInErlangs="21.538"/>
+        <demandEntry egressNodeId="8" ingressNodeId="5" offeredTrafficInErlangs="18.468"/>
+        <demandEntry egressNodeId="9" ingressNodeId="5" offeredTrafficInErlangs="16.986"/>
+        <demandEntry egressNodeId="10" ingressNodeId="5" offeredTrafficInErlangs="22.224"/>
+        <demandEntry egressNodeId="11" ingressNodeId="5" offeredTrafficInErlangs="16.396"/>
+        <demandEntry egressNodeId="12" ingressNodeId="5" offeredTrafficInErlangs="22.24"/>
+        <demandEntry egressNodeId="13" ingressNodeId="5" offeredTrafficInErlangs="24.936"/>
+        <demandEntry egressNodeId="0" ingressNodeId="6" offeredTrafficInErlangs="29.402"/>
+        <demandEntry egressNodeId="1" ingressNodeId="6" offeredTrafficInErlangs="15.566"/>
+        <demandEntry egressNodeId="2" ingressNodeId="6" offeredTrafficInErlangs="23.214"/>
+        <demandEntry egressNodeId="3" ingressNodeId="6" offeredTrafficInErlangs="21.938"/>
+        <demandEntry egressNodeId="4" ingressNodeId="6" offeredTrafficInErlangs="18.524"/>
+        <demandEntry egressNodeId="5" ingressNodeId="6" offeredTrafficInErlangs="34.458"/>
+        <demandEntry egressNodeId="7" ingressNodeId="6" offeredTrafficInErlangs="25.302"/>
+        <demandEntry egressNodeId="8" ingressNodeId="6" offeredTrafficInErlangs="12.958"/>
+        <demandEntry egressNodeId="9" ingressNodeId="6" offeredTrafficInErlangs="26.38"/>
+        <demandEntry egressNodeId="10" ingressNodeId="6" offeredTrafficInErlangs="26.076"/>
+        <demandEntry egressNodeId="11" ingressNodeId="6" offeredTrafficInErlangs="14.338"/>
+        <demandEntry egressNodeId="12" ingressNodeId="6" offeredTrafficInErlangs="31.444"/>
+        <demandEntry egressNodeId="13" ingressNodeId="6" offeredTrafficInErlangs="21.148"/>
+        <demandEntry egressNodeId="0" ingressNodeId="7" offeredTrafficInErlangs="22.488"/>
+        <demandEntry egressNodeId="1" ingressNodeId="7" offeredTrafficInErlangs="9.058"/>
+        <demandEntry egressNodeId="2" ingressNodeId="7" offeredTrafficInErlangs="22.782"/>
+        <demandEntry egressNodeId="3" ingressNodeId="7" offeredTrafficInErlangs="25.494"/>
+        <demandEntry egressNodeId="4" ingressNodeId="7" offeredTrafficInErlangs="32.106"/>
+        <demandEntry egressNodeId="5" ingressNodeId="7" offeredTrafficInErlangs="32.496"/>
+        <demandEntry egressNodeId="6" ingressNodeId="7" offeredTrafficInErlangs="34.258"/>
+        <demandEntry egressNodeId="8" ingressNodeId="7" offeredTrafficInErlangs="26.53"/>
+        <demandEntry egressNodeId="9" ingressNodeId="7" offeredTrafficInErlangs="36.778"/>
+        <demandEntry egressNodeId="10" ingressNodeId="7" offeredTrafficInErlangs="33.142"/>
+        <demandEntry egressNodeId="11" ingressNodeId="7" offeredTrafficInErlangs="26.658"/>
+        <demandEntry egressNodeId="12" ingressNodeId="7" offeredTrafficInErlangs="29.872"/>
+        <demandEntry egressNodeId="13" ingressNodeId="7" offeredTrafficInErlangs="36.522"/>
+        <demandEntry egressNodeId="0" ingressNodeId="8" offeredTrafficInErlangs="12.878"/>
+        <demandEntry egressNodeId="1" ingressNodeId="8" offeredTrafficInErlangs="14.824"/>
+        <demandEntry egressNodeId="2" ingressNodeId="8" offeredTrafficInErlangs="21.02"/>
+        <demandEntry egressNodeId="3" ingressNodeId="8" offeredTrafficInErlangs="27.456"/>
+        <demandEntry egressNodeId="4" ingressNodeId="8" offeredTrafficInErlangs="14.96"/>
+        <demandEntry egressNodeId="5" ingressNodeId="8" offeredTrafficInErlangs="16.116"/>
+        <demandEntry egressNodeId="6" ingressNodeId="8" offeredTrafficInErlangs="30.168"/>
+        <demandEntry egressNodeId="7" ingressNodeId="8" offeredTrafficInErlangs="14.586"/>
+        <demandEntry egressNodeId="9" ingressNodeId="8" offeredTrafficInErlangs="20.678"/>
+        <demandEntry egressNodeId="10" ingressNodeId="8" offeredTrafficInErlangs="29.466"/>
+        <demandEntry egressNodeId="11" ingressNodeId="8" offeredTrafficInErlangs="36.044"/>
+        <demandEntry egressNodeId="12" ingressNodeId="8" offeredTrafficInErlangs="31.978"/>
+        <demandEntry egressNodeId="13" ingressNodeId="8" offeredTrafficInErlangs="14.752"/>
+        <demandEntry egressNodeId="0" ingressNodeId="9" offeredTrafficInErlangs="23.652"/>
+        <demandEntry egressNodeId="1" ingressNodeId="9" offeredTrafficInErlangs="20.016"/>
+        <demandEntry egressNodeId="2" ingressNodeId="9" offeredTrafficInErlangs="10.886"/>
+        <demandEntry egressNodeId="3" ingressNodeId="9" offeredTrafficInErlangs="15.256"/>
+        <demandEntry egressNodeId="4" ingressNodeId="9" offeredTrafficInErlangs="15.024"/>
+        <demandEntry egressNodeId="5" ingressNodeId="9" offeredTrafficInErlangs="15.272"/>
+        <demandEntry egressNodeId="6" ingressNodeId="9" offeredTrafficInErlangs="21.284"/>
+        <demandEntry egressNodeId="7" ingressNodeId="9" offeredTrafficInErlangs="20.486"/>
+        <demandEntry egressNodeId="8" ingressNodeId="9" offeredTrafficInErlangs="32.034"/>
+        <demandEntry egressNodeId="10" ingressNodeId="9" offeredTrafficInErlangs="29.458"/>
+        <demandEntry egressNodeId="11" ingressNodeId="9" offeredTrafficInErlangs="26.3"/>
+        <demandEntry egressNodeId="12" ingressNodeId="9" offeredTrafficInErlangs="21.196"/>
+        <demandEntry egressNodeId="13" ingressNodeId="9" offeredTrafficInErlangs="27.728"/>
+        <demandEntry egressNodeId="0" ingressNodeId="10" offeredTrafficInErlangs="20.478"/>
+        <demandEntry egressNodeId="1" ingressNodeId="10" offeredTrafficInErlangs="9.888"/>
+        <demandEntry egressNodeId="2" ingressNodeId="10" offeredTrafficInErlangs="16.476"/>
+        <demandEntry egressNodeId="3" ingressNodeId="10" offeredTrafficInErlangs="14.744"/>
+        <demandEntry egressNodeId="4" ingressNodeId="10" offeredTrafficInErlangs="32.496"/>
+        <demandEntry egressNodeId="5" ingressNodeId="10" offeredTrafficInErlangs="27.878"/>
+        <demandEntry egressNodeId="6" ingressNodeId="10" offeredTrafficInErlangs="16.3"/>
+        <demandEntry egressNodeId="7" ingressNodeId="10" offeredTrafficInErlangs="14.96"/>
+        <demandEntry egressNodeId="8" ingressNodeId="10" offeredTrafficInErlangs="41.372"/>
+        <demandEntry egressNodeId="9" ingressNodeId="10" offeredTrafficInErlangs="20.582"/>
+        <demandEntry egressNodeId="11" ingressNodeId="10" offeredTrafficInErlangs="41.874"/>
+        <demandEntry egressNodeId="12" ingressNodeId="10" offeredTrafficInErlangs="28.82"/>
+        <demandEntry egressNodeId="13" ingressNodeId="10" offeredTrafficInErlangs="19.17"/>
+        <demandEntry egressNodeId="0" ingressNodeId="11" offeredTrafficInErlangs="10.638"/>
+        <demandEntry egressNodeId="1" ingressNodeId="11" offeredTrafficInErlangs="8.318"/>
+        <demandEntry egressNodeId="2" ingressNodeId="11" offeredTrafficInErlangs="15.192"/>
+        <demandEntry egressNodeId="3" ingressNodeId="11" offeredTrafficInErlangs="24.586"/>
+        <demandEntry egressNodeId="4" ingressNodeId="11" offeredTrafficInErlangs="18.74"/>
+        <demandEntry egressNodeId="5" ingressNodeId="11" offeredTrafficInErlangs="13.98"/>
+        <demandEntry egressNodeId="6" ingressNodeId="11" offeredTrafficInErlangs="14.688"/>
+        <demandEntry egressNodeId="7" ingressNodeId="11" offeredTrafficInErlangs="29.816"/>
+        <demandEntry egressNodeId="8" ingressNodeId="11" offeredTrafficInErlangs="36.634"/>
+        <demandEntry egressNodeId="9" ingressNodeId="11" offeredTrafficInErlangs="25.256"/>
+        <demandEntry egressNodeId="10" ingressNodeId="11" offeredTrafficInErlangs="19.154"/>
+        <demandEntry egressNodeId="12" ingressNodeId="11" offeredTrafficInErlangs="36.65"/>
+        <demandEntry egressNodeId="13" ingressNodeId="11" offeredTrafficInErlangs="33.724"/>
+        <demandEntry egressNodeId="0" ingressNodeId="12" offeredTrafficInErlangs="11.276"/>
+        <demandEntry egressNodeId="1" ingressNodeId="12" offeredTrafficInErlangs="16.594"/>
+        <demandEntry egressNodeId="2" ingressNodeId="12" offeredTrafficInErlangs="13.374"/>
+        <demandEntry egressNodeId="3" ingressNodeId="12" offeredTrafficInErlangs="12.6"/>
+        <demandEntry egressNodeId="4" ingressNodeId="12" offeredTrafficInErlangs="16.044"/>
+        <demandEntry egressNodeId="5" ingressNodeId="12" offeredTrafficInErlangs="21.228"/>
+        <demandEntry egressNodeId="6" ingressNodeId="12" offeredTrafficInErlangs="14.864"/>
+        <demandEntry egressNodeId="7" ingressNodeId="12" offeredTrafficInErlangs="27.472"/>
+        <demandEntry egressNodeId="8" ingressNodeId="12" offeredTrafficInErlangs="22.376"/>
+        <demandEntry egressNodeId="9" ingressNodeId="12" offeredTrafficInErlangs="27.272"/>
+        <demandEntry egressNodeId="10" ingressNodeId="12" offeredTrafficInErlangs="30.51"/>
+        <demandEntry egressNodeId="11" ingressNodeId="12" offeredTrafficInErlangs="15.718"/>
+        <demandEntry egressNodeId="13" ingressNodeId="12" offeredTrafficInErlangs="21.994"/>
+        <demandEntry egressNodeId="0" ingressNodeId="13" offeredTrafficInErlangs="18.166"/>
+        <demandEntry egressNodeId="1" ingressNodeId="13" offeredTrafficInErlangs="17.224"/>
+        <demandEntry egressNodeId="2" ingressNodeId="13" offeredTrafficInErlangs="10.94"/>
+        <demandEntry egressNodeId="3" ingressNodeId="13" offeredTrafficInErlangs="23.492"/>
+        <demandEntry egressNodeId="4" ingressNodeId="13" offeredTrafficInErlangs="16.476"/>
+        <demandEntry egressNodeId="5" ingressNodeId="13" offeredTrafficInErlangs="29.672"/>
+        <demandEntry egressNodeId="6" ingressNodeId="13" offeredTrafficInErlangs="21.156"/>
+        <demandEntry egressNodeId="7" ingressNodeId="13" offeredTrafficInErlangs="37.058"/>
+        <demandEntry egressNodeId="8" ingressNodeId="13" offeredTrafficInErlangs="28.9"/>
+        <demandEntry egressNodeId="9" ingressNodeId="13" offeredTrafficInErlangs="23.612"/>
+        <demandEntry egressNodeId="10" ingressNodeId="13" offeredTrafficInErlangs="35.884"/>
+        <demandEntry egressNodeId="11" ingressNodeId="13" offeredTrafficInErlangs="21.364"/>
+        <demandEntry egressNodeId="12" ingressNodeId="13" offeredTrafficInErlangs="38.046"/>
+    </demandSet>
+</network>

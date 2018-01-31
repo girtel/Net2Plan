@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="Fictitious mesh network connecting the seven most populated cities in Spain. It is composed of 7 nodes and 16 unidirectional links. It does not contain any traffic demand" name="7-node network" version="5" nextElementId="25">
+	<node id="2" xCoord="-3.6919444" yCoord="40.4188889" name="Madrid" population="3265038" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="3" xCoord="2.1769444" yCoord="41.3825" name="Barcelona" population="1615448" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="4" xCoord="-0.375" yCoord="39.4666667" name="Valencia" population="798033" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="5" xCoord="-5.9833333" yCoord="37.3833333" name="Sevilla" population="703021" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="6" xCoord="-0.8833333" yCoord="41.65" name="Zaragoza" population="674725" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="7" xCoord="-4.4166667" yCoord="36.7166667" name="Málaga" population="568030" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="8" xCoord="-1.1302778" yCoord="37.9861111" name="Murcia" population="442203" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<layer id="1" name="" description="" isDefaultLayer="true" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<link id="9" originNodeId="2" destinationNodeId="4" capacity="50.0" lengthInKm="301.92338042167285" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="10" originNodeId="2" destinationNodeId="5" capacity="50.0" lengthInKm="391.4336555843759" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="11" originNodeId="2" destinationNodeId="6" capacity="50.0" lengthInKm="272.4401199817485" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="12" originNodeId="3" destinationNodeId="4" capacity="50.0" lengthInKm="303.3624240744135" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="13" originNodeId="3" destinationNodeId="6" capacity="50.0" lengthInKm="256.5125155963248" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="14" originNodeId="4" destinationNodeId="2" capacity="50.0" lengthInKm="301.92338042167285" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="15" originNodeId="4" destinationNodeId="3" capacity="50.0" lengthInKm="303.3624240744135" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="16" originNodeId="4" destinationNodeId="8" capacity="50.0" lengthInKm="177.18664660772214" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="17" originNodeId="5" destinationNodeId="2" capacity="50.0" lengthInKm="391.4336555843759" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="18" originNodeId="5" destinationNodeId="7" capacity="50.0" lengthInKm="157.5594100391479" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="19" originNodeId="6" destinationNodeId="2" capacity="50.0" lengthInKm="272.4401199817485" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="20" originNodeId="6" destinationNodeId="3" capacity="50.0" lengthInKm="256.5125155963248" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="21" originNodeId="7" destinationNodeId="5" capacity="50.0" lengthInKm="157.55941003914793" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="22" originNodeId="7" destinationNodeId="8" capacity="50.0" lengthInKm="322.94264083756497" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="23" originNodeId="8" destinationNodeId="4" capacity="50.0" lengthInKm="177.18664660772214" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="24" originNodeId="8" destinationNodeId="7" capacity="50.0" lengthInKm="322.94264083756497" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<sourceRouting>
+		</sourceRouting>
+	</layer>
+</network>

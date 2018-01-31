@@ -15,6 +15,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,14 +27,15 @@ import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.net2plan.interfaces.TestConstants;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 import com.net2plan.utils.Constants.RoutingType;
+import org.junit.rules.TemporaryFolder;
 
 public class LinkTest 
 {
@@ -55,6 +57,9 @@ public class LinkTest
 	private Link upperMdLink12 , upperMdLink13;
 	private MulticastDemand upperMd123;
 	private MulticastTree upperMt123;
+
+	@Rule
+	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 	
 
 	@Before
@@ -97,12 +102,16 @@ public class LinkTest
 		this.upperMd123 = np.addMulticastDemand (n1 , endNodes , 100 , null , upperLayer);
 		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
 		d123.couple(new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
+
+		temporaryFolder.create();
 	}
 
 	@After
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
+
+		temporaryFolder.delete();
 	}
 
 	@Test
@@ -112,7 +121,7 @@ public class LinkTest
 	}
 
 	@Test
-	public void testBidirectional ()
+	public void testBidirectional () throws IOException
 	{
 		Pair<Link,Link> pair = np.addLinkBidirectional(n1, n2, 1, 1, 1, null);
 		assertTrue (pair.getFirst().isBidirectional());
@@ -132,7 +141,7 @@ public class LinkTest
 		assertEquals (other2.getBidirectionalPair() , pair.getSecond());
 		assertEquals (pair.getSecond().getBidirectionalPair() , other2);
 		
-		File f = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME);
+		File f = temporaryFolder.newFile("temp.n2p");
 		this.np.saveToFile(f);
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));
