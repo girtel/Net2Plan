@@ -1,0 +1,144 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="Fictitious mesh network connecting the seven most populated cities in Spain. It is composed of 7 nodes and 16 unidirectional links, including a demand set" name="7-node network" version="5" nextElementId="67">
+	<node id="2" xCoord="-3.6919444" yCoord="40.4188889" name="Madrid" population="3265038" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="3" xCoord="2.1769444" yCoord="41.3825" name="Barcelona" population="1615448" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="4" xCoord="-0.375" yCoord="39.4666667" name="Valencia" population="798033" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="5" xCoord="-5.9833333" yCoord="37.3833333" name="Sevilla" population="703021" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="6" xCoord="-0.8833333" yCoord="41.65" name="Zaragoza" population="674725" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="7" xCoord="-4.4166667" yCoord="36.7166667" name="Málaga" population="568030" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<node id="8" xCoord="-1.1302778" yCoord="37.9861111" name="Murcia" population="442203" isUp="true" layersWithIconsDefined="">
+		<attribute key="level" value="1"/>
+	</node>
+	<layer id="1" name="" description="" isDefaultLayer="true" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<link id="9" originNodeId="2" destinationNodeId="4" capacity="50.0" lengthInKm="301.92338042167285" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="10" originNodeId="2" destinationNodeId="5" capacity="50.0" lengthInKm="391.4336555843759" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="11" originNodeId="2" destinationNodeId="6" capacity="50.0" lengthInKm="272.4401199817485" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="12" originNodeId="3" destinationNodeId="4" capacity="50.0" lengthInKm="303.3624240744135" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="13" originNodeId="3" destinationNodeId="6" capacity="50.0" lengthInKm="256.5125155963248" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="14" originNodeId="4" destinationNodeId="2" capacity="50.0" lengthInKm="301.92338042167285" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="15" originNodeId="4" destinationNodeId="3" capacity="50.0" lengthInKm="303.3624240744135" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="16" originNodeId="4" destinationNodeId="8" capacity="50.0" lengthInKm="177.18664660772214" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="17" originNodeId="5" destinationNodeId="2" capacity="50.0" lengthInKm="391.4336555843759" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="18" originNodeId="5" destinationNodeId="7" capacity="50.0" lengthInKm="157.5594100391479" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="19" originNodeId="6" destinationNodeId="2" capacity="50.0" lengthInKm="272.4401199817485" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="20" originNodeId="6" destinationNodeId="3" capacity="50.0" lengthInKm="256.5125155963248" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="21" originNodeId="7" destinationNodeId="5" capacity="50.0" lengthInKm="157.55941003914793" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="22" originNodeId="7" destinationNodeId="8" capacity="50.0" lengthInKm="322.94264083756497" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="23" originNodeId="8" destinationNodeId="4" capacity="50.0" lengthInKm="177.18664660772214" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<link id="24" originNodeId="8" destinationNodeId="7" capacity="50.0" lengthInKm="322.94264083756497" propagationSpeedInKmPerSecond="200000.0" isUp="true">
+		</link>
+		<demand id="25" ingressNodeId="3" egressNodeId="2" offeredTraffic="18.1486659930405">
+		</demand>
+		<demand id="26" ingressNodeId="4" egressNodeId="2" offeredTraffic="7.63862551422449">
+		</demand>
+		<demand id="27" ingressNodeId="5" egressNodeId="2" offeredTraffic="5.36343897552199">
+		</demand>
+		<demand id="28" ingressNodeId="6" egressNodeId="2" offeredTraffic="6.14030395179595">
+		</demand>
+		<demand id="29" ingressNodeId="7" egressNodeId="2" offeredTraffic="3.5395286176351">
+		</demand>
+		<demand id="30" ingressNodeId="8" egressNodeId="2" offeredTraffic="2.28937858057834">
+		</demand>
+		<demand id="31" ingressNodeId="2" egressNodeId="3" offeredTraffic="18.1486659930405">
+		</demand>
+		<demand id="32" ingressNodeId="4" egressNodeId="3" offeredTraffic="2.02114947868869">
+		</demand>
+		<demand id="33" ingressNodeId="5" egressNodeId="3" offeredTraffic="0.549951883397864">
+		</demand>
+		<demand id="34" ingressNodeId="6" egressNodeId="3" offeredTraffic="1.5005155026453">
+		</demand>
+		<demand id="35" ingressNodeId="7" egressNodeId="3" offeredTraffic="0.404396084467282">
+		</demand>
+		<demand id="36" ingressNodeId="8" egressNodeId="3" offeredTraffic="0.417649140999912">
+		</demand>
+		<demand id="37" ingressNodeId="2" egressNodeId="4" offeredTraffic="7.63862551422449">
+		</demand>
+		<demand id="38" ingressNodeId="3" egressNodeId="4" offeredTraffic="2.02114947868869">
+		</demand>
+		<demand id="39" ingressNodeId="5" egressNodeId="4" offeredTraffic="0.203715568579754">
+		</demand>
+		<demand id="40" ingressNodeId="6" egressNodeId="4" offeredTraffic="0.502608097745759">
+		</demand>
+		<demand id="41" ingressNodeId="7" egressNodeId="4" offeredTraffic="0.163031568363215">
+		</demand>
+		<demand id="42" ingressNodeId="8" egressNodeId="4" offeredTraffic="0.290315984252904">
+		</demand>
+		<demand id="43" ingressNodeId="2" egressNodeId="5" offeredTraffic="5.36343897552199">
+		</demand>
+		<demand id="44" ingressNodeId="3" egressNodeId="5" offeredTraffic="0.549951883397864">
+		</demand>
+		<demand id="45" ingressNodeId="4" egressNodeId="5" offeredTraffic="0.203715568579754">
+		</demand>
+		<demand id="46" ingressNodeId="6" egressNodeId="5" offeredTraffic="0.13108624412657">
+		</demand>
+		<demand id="47" ingressNodeId="7" egressNodeId="5" offeredTraffic="0.361744756838588">
+		</demand>
+		<demand id="48" ingressNodeId="8" egressNodeId="5" offeredTraffic="0.0764720481123229">
+		</demand>
+		<demand id="49" ingressNodeId="2" egressNodeId="6" offeredTraffic="6.14030395179595">
+		</demand>
+		<demand id="50" ingressNodeId="3" egressNodeId="6" offeredTraffic="1.5005155026453">
+		</demand>
+		<demand id="51" ingressNodeId="4" egressNodeId="6" offeredTraffic="0.502608097745759">
+		</demand>
+		<demand id="52" ingressNodeId="5" egressNodeId="6" offeredTraffic="0.13108624412657">
+		</demand>
+		<demand id="53" ingressNodeId="7" egressNodeId="6" offeredTraffic="0.0939243500917494">
+		</demand>
+		<demand id="54" ingressNodeId="8" egressNodeId="6" offeredTraffic="0.0940556611692733">
+		</demand>
+		<demand id="55" ingressNodeId="2" egressNodeId="7" offeredTraffic="3.5395286176351">
+		</demand>
+		<demand id="56" ingressNodeId="3" egressNodeId="7" offeredTraffic="0.404396084467282">
+		</demand>
+		<demand id="57" ingressNodeId="4" egressNodeId="7" offeredTraffic="0.163031568363215">
+		</demand>
+		<demand id="58" ingressNodeId="5" egressNodeId="7" offeredTraffic="0.361744756838588">
+		</demand>
+		<demand id="59" ingressNodeId="6" egressNodeId="7" offeredTraffic="0.0939243500917494">
+		</demand>
+		<demand id="60" ingressNodeId="8" egressNodeId="7" offeredTraffic="0.069441997724469">
+		</demand>
+		<demand id="61" ingressNodeId="2" egressNodeId="8" offeredTraffic="2.28937858057834">
+		</demand>
+		<demand id="62" ingressNodeId="3" egressNodeId="8" offeredTraffic="0.417649140999912">
+		</demand>
+		<demand id="63" ingressNodeId="4" egressNodeId="8" offeredTraffic="0.290315984252904">
+		</demand>
+		<demand id="64" ingressNodeId="5" egressNodeId="8" offeredTraffic="0.0764720481123229">
+		</demand>
+		<demand id="65" ingressNodeId="6" egressNodeId="8" offeredTraffic="0.0940556611692733">
+		</demand>
+		<demand id="66" ingressNodeId="7" egressNodeId="8" offeredTraffic="0.069441997724469">
+		</demand>
+		<sourceRouting>
+		</sourceRouting>
+	</layer>
+</network>

@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="9-node Internet2 network. Topology, link distance and traffic informations were retrieved from: P. Pavon-Marino et al. &quot;Offline Impairment Aware RWA Algorithms for Cross-Layer Planning of Optical Networks,&quot; IEEE/OSA JLT, vol. 27, no. 12, pp. 1763-1775, June 2009" name="Internet2" version="3">
+	<node id="0" xCoord="-122.33" yCoord="47.61" name="Seattle WA">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="3309347"/>
+		<attribute key="timezone" value="-8"/>
+	</node>
+	<node id="1" xCoord="-118.25" yCoord="34.05" name="Los Angeles CA">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="12875587"/>
+		<attribute key="timezone" value="-8"/>
+	</node>
+	<node id="2" xCoord="-111.88" yCoord="40.75" name="Salt Lake City UT">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="1099973"/>
+		<attribute key="timezone" value="-7"/>
+	</node>
+	<node id="3" xCoord="-94.59" yCoord="39.11" name="Kansas City MO">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="1985429"/>
+		<attribute key="timezone" value="-6"/>
+	</node>
+	<node id="4" xCoord="-95.38" yCoord="29.76" name="Houston TX">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="5628101"/>
+		<attribute key="timezone" value="-6"/>
+	</node>
+	<node id="5" xCoord="-87.63" yCoord="41.88" name="Chicago IL">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="9524673"/>
+		<attribute key="timezone" value="-6"/>
+	</node>
+	<node id="6" xCoord="-74.0" yCoord="40.72" name="New York NY">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="18815988"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<node id="7" xCoord="-77.04" yCoord="38.9" name="Washington DC">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="5306565"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<node id="8" xCoord="-84.39" yCoord="33.76" name="Atlanta GA">
+		<attribute key="level" value="1"/>
+		<attribute key="population" value="5278904"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<layer id="0" name="" description="" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<link id="0" originNodeId="5" destinationNodeId="6" capacity="320.0" lengthInKm="1400.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="1" originNodeId="6" destinationNodeId="5" capacity="320.0" lengthInKm="1400.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="2" originNodeId="6" destinationNodeId="7" capacity="320.0" lengthInKm="278.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="3" originNodeId="7" destinationNodeId="6" capacity="320.0" lengthInKm="278.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="4" originNodeId="5" destinationNodeId="7" capacity="320.0" lengthInKm="905.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="5" originNodeId="7" destinationNodeId="5" capacity="320.0" lengthInKm="905.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="6" originNodeId="7" destinationNodeId="8" capacity="320.0" lengthInKm="700.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="7" originNodeId="8" destinationNodeId="7" capacity="320.0" lengthInKm="700.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="8" originNodeId="5" destinationNodeId="8" capacity="320.0" lengthInKm="1045.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="9" originNodeId="8" destinationNodeId="5" capacity="320.0" lengthInKm="1045.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="10" originNodeId="3" destinationNodeId="5" capacity="320.0" lengthInKm="690.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="11" originNodeId="5" destinationNodeId="3" capacity="320.0" lengthInKm="690.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="12" originNodeId="2" destinationNodeId="3" capacity="320.0" lengthInKm="1330.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="13" originNodeId="3" destinationNodeId="2" capacity="320.0" lengthInKm="1330.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="14" originNodeId="3" destinationNodeId="4" capacity="320.0" lengthInKm="818.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="15" originNodeId="4" destinationNodeId="3" capacity="320.0" lengthInKm="818.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="16" originNodeId="4" destinationNodeId="8" capacity="320.0" lengthInKm="1385.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="17" originNodeId="8" destinationNodeId="4" capacity="320.0" lengthInKm="1385.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="18" originNodeId="1" destinationNodeId="4" capacity="320.0" lengthInKm="1705.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="19" originNodeId="4" destinationNodeId="1" capacity="320.0" lengthInKm="1705.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="20" originNodeId="0" destinationNodeId="1" capacity="320.0" lengthInKm="1342.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="21" originNodeId="1" destinationNodeId="0" capacity="320.0" lengthInKm="1342.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="22" originNodeId="1" destinationNodeId="2" capacity="320.0" lengthInKm="1303.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="23" originNodeId="2" destinationNodeId="1" capacity="320.0" lengthInKm="1303.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="24" originNodeId="0" destinationNodeId="2" capacity="320.0" lengthInKm="913.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<link id="25" originNodeId="2" destinationNodeId="0" capacity="320.0" lengthInKm="913.0" propagationSpeedInKmPerSecond="200000.0"/>
+		<demand id="0" ingressNodeId="0" egressNodeId="1" offeredTraffic="16.122"/>
+		<demand id="1" ingressNodeId="0" egressNodeId="2" offeredTraffic="13.834"/>
+		<demand id="2" ingressNodeId="0" egressNodeId="3" offeredTraffic="8.724"/>
+		<demand id="3" ingressNodeId="0" egressNodeId="4" offeredTraffic="8.574"/>
+		<demand id="4" ingressNodeId="0" egressNodeId="5" offeredTraffic="8.574"/>
+		<demand id="5" ingressNodeId="0" egressNodeId="6" offeredTraffic="7.398"/>
+		<demand id="6" ingressNodeId="0" egressNodeId="7" offeredTraffic="6.222"/>
+		<demand id="7" ingressNodeId="0" egressNodeId="8" offeredTraffic="7.056"/>
+		<demand id="8" ingressNodeId="1" egressNodeId="0" offeredTraffic="16.122"/>
+		<demand id="9" ingressNodeId="1" egressNodeId="2" offeredTraffic="16.357"/>
+		<demand id="10" ingressNodeId="1" egressNodeId="3" offeredTraffic="10.99"/>
+		<demand id="11" ingressNodeId="1" egressNodeId="4" offeredTraffic="14.241"/>
+		<demand id="12" ingressNodeId="1" egressNodeId="5" offeredTraffic="14.283"/>
+		<demand id="13" ingressNodeId="1" egressNodeId="6" offeredTraffic="16.507"/>
+		<demand id="14" ingressNodeId="1" egressNodeId="7" offeredTraffic="8.895"/>
+		<demand id="15" ingressNodeId="1" egressNodeId="8" offeredTraffic="10.584"/>
+		<demand id="16" ingressNodeId="2" egressNodeId="0" offeredTraffic="13.834"/>
+		<demand id="17" ingressNodeId="2" egressNodeId="1" offeredTraffic="16.357"/>
+		<demand id="18" ingressNodeId="2" egressNodeId="3" offeredTraffic="11.782"/>
+		<demand id="19" ingressNodeId="2" egressNodeId="4" offeredTraffic="11.204"/>
+		<demand id="20" ingressNodeId="2" egressNodeId="5" offeredTraffic="10.114"/>
+		<demand id="21" ingressNodeId="2" egressNodeId="6" offeredTraffic="7.591"/>
+		<demand id="22" ingressNodeId="2" egressNodeId="7" offeredTraffic="7.505"/>
+		<demand id="23" ingressNodeId="2" egressNodeId="8" offeredTraffic="8.831"/>
+		<demand id="24" ingressNodeId="3" egressNodeId="0" offeredTraffic="8.724"/>
+		<demand id="25" ingressNodeId="3" egressNodeId="1" offeredTraffic="10.99"/>
+		<demand id="26" ingressNodeId="3" egressNodeId="2" offeredTraffic="11.782"/>
+		<demand id="27" ingressNodeId="3" egressNodeId="4" offeredTraffic="16.015"/>
+		<demand id="28" ingressNodeId="3" egressNodeId="5" offeredTraffic="17.833"/>
+		<demand id="29" ingressNodeId="3" egressNodeId="6" offeredTraffic="12.915"/>
+		<demand id="30" ingressNodeId="3" egressNodeId="7" offeredTraffic="12.273"/>
+		<demand id="31" ingressNodeId="3" egressNodeId="8" offeredTraffic="14.839"/>
+		<demand id="32" ingressNodeId="4" egressNodeId="0" offeredTraffic="8.574"/>
+		<demand id="33" ingressNodeId="4" egressNodeId="1" offeredTraffic="14.241"/>
+		<demand id="34" ingressNodeId="4" egressNodeId="2" offeredTraffic="11.204"/>
+		<demand id="35" ingressNodeId="4" egressNodeId="3" offeredTraffic="16.015"/>
+		<demand id="36" ingressNodeId="4" egressNodeId="5" offeredTraffic="16.913"/>
+		<demand id="37" ingressNodeId="4" egressNodeId="6" offeredTraffic="16.208"/>
+		<demand id="38" ingressNodeId="4" egressNodeId="7" offeredTraffic="12.466"/>
+		<demand id="39" ingressNodeId="4" egressNodeId="8" offeredTraffic="16.357"/>
+		<demand id="40" ingressNodeId="5" egressNodeId="0" offeredTraffic="8.574"/>
+		<demand id="41" ingressNodeId="5" egressNodeId="1" offeredTraffic="14.283"/>
+		<demand id="42" ingressNodeId="5" egressNodeId="2" offeredTraffic="10.114"/>
+		<demand id="43" ingressNodeId="5" egressNodeId="3" offeredTraffic="17.833"/>
+		<demand id="44" ingressNodeId="5" egressNodeId="4" offeredTraffic="16.913"/>
+		<demand id="45" ingressNodeId="5" egressNodeId="6" offeredTraffic="29.593"/>
+		<demand id="46" ingressNodeId="5" egressNodeId="7" offeredTraffic="18.602"/>
+		<demand id="47" ingressNodeId="5" egressNodeId="8" offeredTraffic="20.056"/>
+		<demand id="48" ingressNodeId="6" egressNodeId="0" offeredTraffic="7.398"/>
+		<demand id="49" ingressNodeId="6" egressNodeId="1" offeredTraffic="16.507"/>
+		<demand id="50" ingressNodeId="6" egressNodeId="2" offeredTraffic="7.591"/>
+		<demand id="51" ingressNodeId="6" egressNodeId="3" offeredTraffic="12.915"/>
+		<demand id="52" ingressNodeId="6" egressNodeId="4" offeredTraffic="16.208"/>
+		<demand id="53" ingressNodeId="6" egressNodeId="5" offeredTraffic="29.593"/>
+		<demand id="54" ingressNodeId="6" egressNodeId="7" offeredTraffic="30.555"/>
+		<demand id="55" ingressNodeId="6" egressNodeId="8" offeredTraffic="22.216"/>
+		<demand id="56" ingressNodeId="7" egressNodeId="0" offeredTraffic="6.222"/>
+		<demand id="57" ingressNodeId="7" egressNodeId="1" offeredTraffic="8.895"/>
+		<demand id="58" ingressNodeId="7" egressNodeId="2" offeredTraffic="7.505"/>
+		<demand id="59" ingressNodeId="7" egressNodeId="3" offeredTraffic="12.273"/>
+		<demand id="60" ingressNodeId="7" egressNodeId="4" offeredTraffic="12.466"/>
+		<demand id="61" ingressNodeId="7" egressNodeId="5" offeredTraffic="18.602"/>
+		<demand id="62" ingressNodeId="7" egressNodeId="6" offeredTraffic="30.555"/>
+		<demand id="63" ingressNodeId="7" egressNodeId="8" offeredTraffic="17.769"/>
+		<demand id="64" ingressNodeId="8" egressNodeId="0" offeredTraffic="7.056"/>
+		<demand id="65" ingressNodeId="8" egressNodeId="1" offeredTraffic="10.584"/>
+		<demand id="66" ingressNodeId="8" egressNodeId="2" offeredTraffic="8.831"/>
+		<demand id="67" ingressNodeId="8" egressNodeId="3" offeredTraffic="14.839"/>
+		<demand id="68" ingressNodeId="8" egressNodeId="4" offeredTraffic="16.357"/>
+		<demand id="69" ingressNodeId="8" egressNodeId="5" offeredTraffic="20.056"/>
+		<demand id="70" ingressNodeId="8" egressNodeId="6" offeredTraffic="22.216"/>
+		<demand id="71" ingressNodeId="8" egressNodeId="7" offeredTraffic="17.769"/>
+		<sourceRouting/>
+	</layer>
+</network>
