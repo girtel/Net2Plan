@@ -22,7 +22,6 @@
 
     <artifactId>net2plan-launcher</artifactId>
 
-    <packaging>pom</packaging>
     <build>
         <plugins>
             <plugin>
