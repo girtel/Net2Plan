@@ -305,7 +305,7 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 	 * Checks if the number of elements in the fiber input parameters is always the same. If it is,
 	 * returns a Map for each type of fiber with its parameters
 	 * 
-	 * @return Map<"FiberTypeName", Map<"param", value>>
+	 * @return Map("FiberTypeName", Map("param", value))
 	 */
 	private Map<String, Map<String, Double>> getFiberSpecsMap()
 	{
@@ -416,8 +416,8 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 	/**
 	 * Gets the network warnings for the elements and impairments given
 	 * 
-	 * @param elementPositions
-	 * @param impairmentsAtInputAndOutputs
+	 * @param elementPositions List of Quadruple of(position [km], type, 3rd: data; 4th: auxData)
+	 * @param impairmentsAtInputAndOutputs List of Quadruple of (before element Map(paramName, value), before element PMD, after element Map(paramName, value), after element PMD)
 	 * @return warnings
 	 */
 	private List<String> computeWarningMessages(List<Quadruple<Double, String, Double, String>> elementPositions,
@@ -558,7 +558,7 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 	/**
 	 * Gets all the elements in the given link or lightpath
 	 * 
-	 * @param seqLinks
+	 * @param seqLinks list of links
 	 * @return List of elements as a Quadruple object where: first is the position of the element
 	 *         (km), second the type of element, third the main parameter (i.e. OA=gain, PC=loss,
 	 *         SPAN=length, OADM=nodeID), fourth other information (i.e. OA=noiseFigure,
