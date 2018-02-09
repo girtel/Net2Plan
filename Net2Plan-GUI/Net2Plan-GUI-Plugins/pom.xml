@@ -22,6 +22,7 @@
 
     <groupId>com.net2plan.net2plan-gui</groupId>
     <artifactId>net2plan-gui-plugins</artifactId>
+    
     <packaging>pom</packaging>
 
     <modules>
@@ -35,7 +36,7 @@
                 <groupId>com.net2plan.net2plan-gui</groupId>
                 <artifactId>net2plan-gui-exec</artifactId>
                 <version>0.5.3-SNAPSHOT</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

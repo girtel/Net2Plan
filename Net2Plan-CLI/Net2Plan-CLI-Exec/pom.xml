@@ -24,6 +24,8 @@
     <groupId>com.net2plan.net2plan-cli</groupId>
     <artifactId>net2plan-cli-exec</artifactId>
 
+    <packaging>jar</packaging>
+
     <dependencies>
         <dependency>
             <groupId>com.net2plan</groupId>

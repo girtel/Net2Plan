@@ -23,6 +23,8 @@
         <version>0.5.3-SNAPSHOT</version>
     </parent>
 
+    <packaging>jar</packaging>
+
     <build>
         <!--Filters out external resources-->
         <resources>

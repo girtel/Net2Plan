@@ -22,6 +22,8 @@
 
     <artifactId>net2plan-javadoc</artifactId>
 
+    <packaging>jar</packaging>
+
     <dependencies>
         <dependency>
             <groupId>com.net2plan</groupId>

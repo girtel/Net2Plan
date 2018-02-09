@@ -23,6 +23,8 @@
     <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
     <artifactId>net2plan-gui-plugins-networkDesign</artifactId>
 
+    <packaging>jar</packaging>
+
     <dependencies>
         <dependency>
             <groupId>com.net2plan</groupId>

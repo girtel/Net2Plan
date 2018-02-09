@@ -23,6 +23,8 @@
     <groupId>com.net2plan.net2plan-gui</groupId>
     <artifactId>net2plan-gui-exec</artifactId>
 
+    <packaging>jar</packaging>
+
     <dependencies>
         <dependency>
             <groupId>com.net2plan</groupId>
