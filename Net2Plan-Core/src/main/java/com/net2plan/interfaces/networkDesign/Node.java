@@ -491,7 +491,7 @@ public class Node extends NetworkElement
 	}
 
 	/** Returns true has at least one link, or demand, or multicast demand at the given layer associated to it.
-	 * @param layer
+	 * @param layer layer to check
 	 * @return see above
 	 */
 	public boolean isWorkingAtLayer(NetworkLayer layer)
@@ -889,7 +889,7 @@ public class Node extends NetworkElement
 
 
 	/** Remove this node from the given planning domain, if it belongs to it
-	 * @param planningDomain
+	 * @param planningDomain planning domain to remove from
 	 */
 	public void removeFromPlanningDomain (String planningDomain)
 	{
@@ -899,7 +899,7 @@ public class Node extends NetworkElement
 	}
 
 	/** Remove this node from the given planning domain, if it belongs to it
-	 * @param planningDomain
+	 * @param planningDomain planning domain to add to
 	 */
 	public void addToPlanningDomain (String planningDomain)
 	{

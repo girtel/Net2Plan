@@ -11,7 +11,6 @@ import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.Triple;
 
 /**
- * @net2plan.keywords WDM, fiber, Optical Impairments, NLI
  * @author Elena Martin-Seoane
  * @version 1.0, November 2017
  */
@@ -74,6 +73,7 @@ public class OpticalImpairmentUtils
 	 * @param fiberEffectiveArea_um2 the effective area of the fiber [um^2]
 	 * @param spanLength_km the fiber span length [km]
 	 * @param bandwidthPerChannel_THz the bandwidth per channel [THz]
+	 * @param centralFrequency_THz the central channel frequency [THz]
 	 * @param frequenciesPerChannel_THz the frequency per channel [THz]
 	 * @param powerPerChannel_W the power per channel [W]
 	 * @return power spectral density of NLI in this span [W/THz]
@@ -146,7 +146,7 @@ public class OpticalImpairmentUtils
 	 *
 	 * @param linkElements List of Quadruples where 1st: position (km); 2nd: Type; 3rd: data; 4th: auxData
 	 * @param spectrumParameters Map with keys stSpectrum_XX
-	 * @param fibersParameters Map with key fiberType, and value a Map of <stFiber_XXX, paramValue>
+	 * @param fibersParameters Map with key fiberType, and value a Map of (stFiber_XXX, paramValue)
 	 * @param oadm_perChannelOutputPower_W output power for all OADMs (per channel)
 	 * @param fiber_PMD_ps_per_sqroot_km PMD fiber coefficient
 	 * @param edfa_PMD edfa PMD coefficient
@@ -156,9 +156,6 @@ public class OpticalImpairmentUtils
 	 * @param oadm_boosterPMD_ps booster OAMD PMD coefficient
 	 * @param frequenciesPerChannel_THz array with the frequencies of each channel
 	 * @param centralFrequency_THz the central frequency of the used spectrum
-	 * @param oadm_addChannelNoiseFactor_dB OADM-ADD noise factor
-	 * @param oadm_dropChannelNoiseFactor_dB OADM-DROP noise factor
-	 * @param oadm_expressChannelNoiseFactor_dB OADM-EXPRESS noise factor
 	 * @param tp_inputPowerSensitivityMin_dBm minimum input power of the final transponder
 	 * @param tp_inputPowerSensitivityMax_dBm maximum input power of the final transponder
 	 * @return a list of elements with a Quadruple:
@@ -343,7 +340,7 @@ public class OpticalImpairmentUtils
 	 * @param centralFrequency_THz the central frequency of the used spectrum in THz
 	 * @param frequenciesPerChannel_THz the frequency of each channel in THz
 	 * @param eqBandwidthPerChannel_THz equivalent bandwidth per channel in THz
-	 * @return
+	 * @return spectrum after OADM (power [W], NLI noise power [W], ASE noise power[W])
 	 */
 	private static Triple<double[], double[], double[]> getSpectrumAfterOADM(double oadm_outputPowerPerChannel_W, double[] inputPowerPerChannel_W, double[] nliNoisePower_W, double[] aseNoisePower_W,
 			double noiseFigure_dB, double centralFrequency_THz, double[] frequenciesPerChannel_THz, double eqBandwidthPerChannel_THz[])
@@ -357,8 +354,6 @@ public class OpticalImpairmentUtils
 
 		if (gain_linear[0] != 1)
 		{
-			//final double[] arrayAux = new double[numChannels]; Arrays.fill(arrayAux, -1);
-			//final double[] aux = DoubleUtils.mult(DoubleUtils.sum(gain_linear, arrayAux), dB2linear(noiseFigure_dB) * constant_h * 1e24);
 			final double[] aux = DoubleUtils.mult(gain_linear, dB2linear(noiseFigure_dB) * constant_h * 1e24);
 			final double[] centralFrequency_array_THz = new double[numChannels]; Arrays.fill(centralFrequency_array_THz, centralFrequency_THz);
 			final double[] aseNoisePowerAdded_W = DoubleUtils.mult(DoubleUtils.mult(DoubleUtils.sum(frequenciesPerChannel_THz, centralFrequency_array_THz), aux), eqBandwidthPerChannel_THz);
