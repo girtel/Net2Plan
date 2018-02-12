@@ -36,7 +36,7 @@
                 <groupId>com.net2plan.net2plan-gui</groupId>
                 <artifactId>net2plan-gui-exec</artifactId>
                 <version>0.5.3-SNAPSHOT</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
