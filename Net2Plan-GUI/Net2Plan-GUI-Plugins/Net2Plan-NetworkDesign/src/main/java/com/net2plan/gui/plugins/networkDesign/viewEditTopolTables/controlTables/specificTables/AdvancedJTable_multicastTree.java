@@ -40,7 +40,7 @@ import java.util.*;
 
 /**
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement
 {
     private static final int COLUMN_ID = 0;

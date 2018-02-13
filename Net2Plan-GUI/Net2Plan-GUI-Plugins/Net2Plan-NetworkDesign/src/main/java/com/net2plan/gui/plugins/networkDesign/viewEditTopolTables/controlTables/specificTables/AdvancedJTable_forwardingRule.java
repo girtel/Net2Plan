@@ -43,7 +43,7 @@ import java.util.*;
 
 /**
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 {
     private static final String netPlanViewTabName = "Forwarding rules";
@@ -377,9 +377,9 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
     private static void createForwardingRuleGUI(final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
-        final JComboBox nodeSelector = new WiderJComboBox();
-        final JComboBox linkSelector = new WiderJComboBox();
-        final JComboBox demandSelector = new WiderJComboBox();
+        final JComboBox<StringLabeller> nodeSelector = new WiderJComboBox();
+        final JComboBox<StringLabeller> linkSelector = new WiderJComboBox();
+        final JComboBox<StringLabeller> demandSelector = new WiderJComboBox();
         final JTextField txt_splittingRatio = new JTextField(5);
 
         ItemListener nodeListener = new ItemListener()
@@ -387,7 +387,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             @Override
             public void itemStateChanged(ItemEvent e)
             {
-                JComboBox me = (JComboBox) e.getSource();
+                JComboBox<StringLabeller> me = (JComboBox<StringLabeller>) e.getSource();
                 linkSelector.removeAllItems();
                 long nodeId = (long) ((StringLabeller) me.getSelectedItem()).getObject();
                 Set<Link> links = netPlan.getNodeFromId(nodeId).getOutgoingLinksAllLayers();

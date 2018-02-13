@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * Created by César on 13/12/2016.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_resource extends AdvancedJTable_networkElement
 {
 
@@ -93,7 +93,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             resData[COLUMN_INDEX] = res.getIndex();
             resData[COLUMN_NAME] = res.getName();
             resData[COLUMN_TYPE] = res.getType();
-            resData[COLUMN_HOSTNODE] = res.getHostNode();
+            resData[COLUMN_HOSTNODE] = res.getHostNode().getName();
             resData[COLUMN_CAPACITY] = res.getCapacity();
             resData[COLUMN_CAPACITYMUNITS] = res.getCapacityMeasurementUnits();
             resData[COLUMN_OCCUPIEDCAPACITY] = res.getOccupiedCapacity();
@@ -480,7 +480,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement
             try
             {
 
-                JComboBox hostNodeSelector = new WiderJComboBox();
+                JComboBox<StringLabeller> hostNodeSelector = new WiderJComboBox();
                 JTextField capUnitsField = new JTextField(20);
                 JTextField typeSelector = new JTextField(20);
 

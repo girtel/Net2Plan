@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 /**
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_srg extends AdvancedJTable_networkElement
 {
     private static final String netPlanViewTabName = "Shared-risk groups";
