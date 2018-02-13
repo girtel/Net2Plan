@@ -27,77 +27,47 @@ import org.apache.commons.lang.ArrayUtils;
 
 /**
  * <p>
- * This report shows line engineering information for WDM links in a multilayer optical network. The
- * impairment calculations are based on the Gaussian Noise Model developed by Politecnico di Torino
- * and inspired in the procedures described in the 2009 ITU-T WDM manual "Optical fibres, cabbles
- * and systems".
+ * This report shows line engineering information for WDM links in a multilayer optical network. The impairment calculations are based on the Gaussian Noise Model developed by Politecnico di Torino and inspired in the procedures described in the 2009
+ * ITU-T WDM manual "Optical fibres, cabbles and systems".
  * </p>
  * <p>
  * The report assumes that the WDM network follows the scheme:
  * </p>
  * <ul>
- * <li>In the net2plan object, nodes are OADMs, links are fiber links, and routes are lightpaths:
- * WDM channels optically switched at intermediate nodes.</li>
- * <li>Nodes are connected by unidirectional fiber links. Fiber link distance is given by the link
- * length. Other specifications are given by fibers_XXX input parameters, each one describing the
- * parameter for the fiber types specified in fibers_types, in the same order and separated by
- * spaces. The fiber can be split into spans if optical amplifers (EDFAs) and/or passive components
- * (PCs) are placed along the fiber. These spans can be of different fiber types as long as they are
- * described in a link attribute called "fiberTypes". Must be separated by spaces and, in case that
- * there were more spans than elements of the attribute, the default type given in
- * "fiber_default_type" would be used.</li>
- * <li>Optical line amplifiers (EDFAs) can be located in none, one or more positions in the fiber
- * link, separating them in different spans. EDFAs are supposed to operate in the automatic gain
- * control mode. Thus, the gain is the same, whatever the number of input WDM channels. EDFA
- * positions (as distance" in km from the link start to the EDFA location), EDFA gains (assumed in
- * dB) and EDFA noise figures (in dB) are read from the "edfaPositions_km", "edfaGains_dB" and
- * "edfaNoiseFigures_dB" attributes of the links. The format of all attributes are the same: a
- * string of numbers separated by spaces. The <i>i</i>-th number corresponding to the position/gain
- * of the <i>i</i>-th EDFA. If the attributes do not exist, it is assumed that no EDFAs are placed
- * in this link. EDFA specifications are given by "edfa_XXX" parameters</li>
- * <li>There are not Dispersion compensating modules (DCMs) in the topoology, since the Gaussian
- * Noise Model is used.</li>
- * <li>Passive components are described by the link attributes "pcPositions_km" and "pcLosses_dB".
- * The <i>i</i>-th number corresponding to the position/loss of the <i>i</i>-th PC. If the
- * attributes do not exist, it is assumed that no PCs are placed in this link. Other specifications
- * for PC will be described in teh pc_XXX input parameters.</li>
- * <li>Fiber links start and end in OADM modules, that permit adding, dropping and optically switch
- * individual WDM channels. OADMs have a pre-amplifier (traversed by drop and express channels) and
- * a boost amplifier (traversed by add and express channels). They are supposed to equalize the
- * channel power at their outputs, to a fixed value (added and express channels will thus have the
- * same power in the fibers). Also, OADMs attenuate appropriately the optical signal coming from the
- * pre-amplifier, in the drop channels, so that they fall within the receiver sensitivity range.
- * OADM noise figures for add, drop and express channels are given as input parameters. PMD values
- * for add, drop and express channels are computed assumming that: (i) add channel traverse a
- * multiplexer and the booster, (ii) drop channels travese the pre-amplifier and a demultiplexer,
- * (iii) express channels traverse the two amplifiers. The required parameters are provided in
- * oadm_XXX parameters.</li>
+ * <li>In the net2plan object, nodes are OADMs, links are fiber links, and routes are lightpaths: WDM channels optically switched at intermediate nodes.</li>
+ * <li>Nodes are connected by unidirectional fiber links. Fiber link distance is given by the link length. Other specifications are given by fibers_XXX input parameters, each one describing the parameter for the fiber types specified in fibers_types,
+ * in the same order and separated by spaces. The fiber can be split into spans if optical amplifers (EDFAs) and/or passive components (PCs) are placed along the fiber. These spans can be of different fiber types as long as they are described in a
+ * link attribute called "fiberTypes". Must be separated by spaces and, in case that there were more spans than elements of the attribute, the default type given in "fiber_default_type" would be used.</li>
+ * <li>Optical line amplifiers (EDFAs) can be located in none, one or more positions in the fiber link, separating them in different spans. EDFAs are supposed to operate in the automatic gain control mode. Thus, the gain is the same, whatever the
+ * number of input WDM channels. EDFA positions (as distance" in km from the link start to the EDFA location), EDFA gains (assumed in dB) and EDFA noise figures (in dB) are read from the "edfaPositions_km", "edfaGains_dB" and "edfaNoiseFigures_dB"
+ * attributes of the links. The format of all attributes are the same: a string of numbers separated by spaces. The <i>i</i>-th number corresponding to the position/gain of the <i>i</i>-th EDFA. If the attributes do not exist, it is assumed that no
+ * EDFAs are placed in this link. EDFA specifications are given by "edfa_XXX" parameters</li>
+ * <li>There are not Dispersion compensating modules (DCMs) in the topoology, since the Gaussian Noise Model is used.</li>
+ * <li>Passive components are described by the link attributes "pcPositions_km" and "pcLosses_dB". The <i>i</i>-th number corresponding to the position/loss of the <i>i</i>-th PC. If the attributes do not exist, it is assumed that no PCs are placed
+ * in this link. Other specifications for PC will be described in teh pc_XXX input parameters.</li>
+ * <li>Fiber links start and end in OADM modules, that permit adding, dropping and optically switch individual WDM channels. OADMs have a pre-amplifier (traversed by drop and express channels) and a boost amplifier (traversed by add and express
+ * channels). They are supposed to equalize the channel power at their outputs, to a fixed value (added and express channels will thus have the same power in the fibers). Also, OADMs attenuate appropriately the optical signal coming from the
+ * pre-amplifier, in the drop channels, so that they fall within the receiver sensitivity range. OADM noise figures for add, drop and express channels are given as input parameters. PMD values for add, drop and express channels are computed assumming
+ * that: (i) add channel traverse a multiplexer and the booster, (ii) drop channels travese the pre-amplifier and a demultiplexer, (iii) express channels traverse the two amplifiers. The required parameters are provided in oadm_XXX parameters.</li>
  * <li>Each channel ends in a receiver, with specifications given by "tp_XXX" parameters.</li>
  * </ul>
  * <p>
  * The basic checks performed are:
  * </p>
  * <ul>
- * <li>For each link, signal power levels are within operating ranges at the oadm/edfas, both when
- * the link has one single active channel, or when all the "gn_spec_nCh" are active</li>
- * <li>For each route (lightpath), OSNR (Optical Signal to Noise Ration) is within the operating
- * range at the receiver. A set of margins are considered to account to several not directly
- * considered impairments.</li>
- * <li>For each route (lightpath), PMD (Polarization mode dispersion) is within the operating range
- * at the receiver</li>
+ * <li>For each link, signal power levels are within operating ranges at the oadm/edfas, both when the link has one single active channel, or when all the "gn_spec_nCh" are active</li>
+ * <li>For each route (lightpath), OSNR (Optical Signal to Noise Ration) is within the operating range at the receiver. A set of margins are considered to account to several not directly considered impairments.</li>
+ * <li>For each route (lightpath), PMD (Polarization mode dispersion) is within the operating range at the receiver</li>
  * </ul>
  * 
  * @net2plan.keywords WDM, Multilayer
  * @author Pablo Pavon-Marino, Elena Martin-Seoane
- * @version 1.3, November 2017
- */
+ * @version 1.3, November 2017 */
 public class Report_WDM_lineEngineering_GNModel implements IReport
 {
 	/* Constants */
-	private final static double	delta_f					= 6.25E-3;	/* GHz of the slots in the
-																	 * grid */
-	private final static double	infinityThreshold_dB	= 300;		/* starting value to consider
-																	 * the OSNR perfect */
+	private final static double	delta_f					= 6.25E-3;	/* GHz of the slots in the grid */
+	private final static double	infinityThreshold_dB	= 300;		/* starting value to consider the OSNR perfect */
 
 	/* Input parameters */
 	private NetPlan				netPlan;
@@ -113,14 +83,11 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 
 	/* GN spectrum description */
 	private final InputParameter	gn_spec_nCh				= new InputParameter("gn_spec_nCh", (int) 16, "Number of used channels defined in the spectrum.");
-	private final InputParameter	gn_spec_laserPosition	= new InputParameter("gn_spec_laserPosition", "false false true false false false",
-			"A list of booleans indicating whether a laser is turned on or not (per each channel)");
-	private final InputParameter	gn_spec_bandwidthCh_THz	= new InputParameter("gn_spec_bandwidthCh_THz", (double) 0.032,
-			"The -3 dB WDM channel bandwidth (for a root raised cosine, it is equal to the symbol rate)");
+	private final InputParameter	gn_spec_laserPosition	= new InputParameter("gn_spec_laserPosition", "false false true false false false", "A list of booleans indicating whether a laser is turned on or not (per each channel)");
+	private final InputParameter	gn_spec_bandwidthCh_THz	= new InputParameter("gn_spec_bandwidthCh_THz", (double) 0.032, "The -3 dB WDM channel bandwidth (for a root raised cosine, it is equal to the symbol rate)");
 
 	/* Fiber specifications */
-	private final InputParameter	fiber_PMD_ps_per_sqroot_km			= new InputParameter("fiber_PMD_ps_per_sqroot_km", (double) 0.4,
-			"Polarization mode dispersion per km^0.5 of fiber (PMD_Q link factor)");
+	private final InputParameter	fiber_PMD_ps_per_sqroot_km			= new InputParameter("fiber_PMD_ps_per_sqroot_km", (double) 0.4, "Polarization mode dispersion per km^0.5 of fiber (PMD_Q link factor)");
 	private final InputParameter	fiber_default_type					= new InputParameter("fiber_default_type", "SMF",
 			"A string calling the type of fiber described (can be override by the 'fiberTypes' Net2Plan attribute). Must be a value from 'fibers_types'.");
 	/* GN Fiber parameters */
@@ -128,20 +95,16 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 	private final InputParameter	fibers_alpha1st_dB_per_km_per_THz	= new InputParameter("fibers_alpha1st_dB_per_km_per_THz", "0 0",
 			"The first derivative of alpha indicating the alpha slope for each fiber type [dB/km/THz]. Should be zero if you assume a flat attenuation with respect to the frequency");
 	private final InputParameter	fibers_beta2_ps2_per_km				= new InputParameter("fibers_beta2_ps2_per_km", "21.27 21", "The dispersion coefficient for each fiber type [ps^2/km]");
-	private final InputParameter	fibers_n2_m2_per_W					= new InputParameter("fibers_n2_m2_per_W", "2.5E-20 2.5E-20",
-			"Second-order nonlinear refractive index for each fiber type [m^2/W]. A typical value is 2.5E-20 m^2/W");
+	private final InputParameter	fibers_n2_m2_per_W					= new InputParameter("fibers_n2_m2_per_W", "2.5E-20 2.5E-20", "Second-order nonlinear refractive index for each fiber type [m^2/W]. A typical value is 2.5E-20 m^2/W");
 	private final InputParameter	fibers_Aeff_um2						= new InputParameter("fibers_Aeff_um2", "77.77 70", "The effective area for each fiber type [um^2]");
-	private final InputParameter	fibers_types						= new InputParameter("fibers_types", "SMF NZDF",
-			"The names of the fiber types described in the other fibers_XXX parameters. They MUST BE ordered.");
-	private final InputParameter	fibers_numberOfFiberTypes			= new InputParameter("fibers_numberOfFiberTypes", (int) 2,
-			"The number of different fiber types described. Must be equal to the length of the others fibers_XXX parameters.");
+	private final InputParameter	fibers_types						= new InputParameter("fibers_types", "SMF NZDF", "The names of the fiber types described in the other fibers_XXX parameters. They MUST BE ordered.");
+	private final InputParameter	fibers_numberOfFiberTypes			= new InputParameter("fibers_numberOfFiberTypes", (int) 2, "The number of different fiber types described. Must be equal to the length of the others fibers_XXX parameters.");
 
 	/* Transponder specifications */
 	private final InputParameter	tp_minOSNR_dB					= new InputParameter("tp_minOSNR_dB", (double) 7, "Minimum OSNR needed at the receiver");
 	private final InputParameter	tp_minWavelength_nm				= new InputParameter("tp_minWavelength_nm", (double) 1529.55, "Minimum wavelength usable by the transponder");
 	private final InputParameter	tp_maxWavelength_nm				= new InputParameter("tp_maxWavelength_nm", (double) 1561.84, "Maximum wavelength usable by the transponder");
-	private final InputParameter	tp_pmdTolerance_ps				= new InputParameter("tp_pmdTolerance_ps", (double) 10,
-			"Maximum tolarance of polarizarion mode dispersion (mean of differential group delay) in ps at the receiver");
+	private final InputParameter	tp_pmdTolerance_ps				= new InputParameter("tp_pmdTolerance_ps", (double) 10, "Maximum tolarance of polarizarion mode dispersion (mean of differential group delay) in ps at the receiver");
 	private final InputParameter	tp_inputPowerSensitivityMin_dBm	= new InputParameter("tp_inputPowerSensitivityMin_dBm", (double) -20, "Minimum input power at the receiver in dBm");
 	private final InputParameter	tp_inputPowerSensitivityMax_dBm	= new InputParameter("tp_inputPowerSensitivityMax_dBm", (double) -8, "Maximum input power at the receiver in dBm");
 
@@ -149,8 +112,7 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 	private final InputParameter	oadm_outputPowerPerChannel_W		= new InputParameter("oadm_outputPowerPerChannel_W", (double) 1E-3, "The WDM channel power at the output of the OADM [W]");
 	private final InputParameter	oadm_perChannelMinInputPower_dBm	= new InputParameter("oadm_perChannelMinInputPower_dBm", (double) -19, "Minimum power needed at the OADM input");
 	private final InputParameter	oadm_perChannelMaxInputPower_dBm	= new InputParameter("oadm_perChannelMaxInputPower_dBm", (double) 1000, "Maximum power admitted at the OADM input");
-	private final InputParameter	oadm_muxDemuxPMD_ps					= new InputParameter("oadm_muxDemuxPMD_ps", (double) 0.5,
-			"PMD of the mux/demux inside the OADMs. Does not affect express lightpaths");
+	private final InputParameter	oadm_muxDemuxPMD_ps					= new InputParameter("oadm_muxDemuxPMD_ps", (double) 0.5, "PMD of the mux/demux inside the OADMs. Does not affect express lightpaths");
 	private final InputParameter	oadm_preAmplifierPMD_ps				= new InputParameter("oadm_preAmplifierPMD_ps", (double) 0.5, "PMD off OADM preamplifier");
 	private final InputParameter	oadm_boosterPMD_ps					= new InputParameter("oadm_boosterPMD_ps", (double) 0.5, "PMD off OADM booster amplifier");
 	private final InputParameter	oadm_addChannelNoiseFactor_dB		= new InputParameter("oadm_addChannelNoiseFactor_dB", (double) 6, "Noise factor observed by add channels");
@@ -167,6 +129,7 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 	private final InputParameter	edfa_minGain_dB					= new InputParameter("edfa_minGain_dB", (double) 17, "Minimum gain at the EDFA");
 	private final InputParameter	edfa_maxGain_dB					= new InputParameter("edfa_maxGain_dB", (double) 23, "Maximum gain at the EDFA");
 	private final InputParameter	edfa_PMD_ps						= new InputParameter("edfa_PMD_ps", (double) 0.5, "Polarization mode dispersion in ps added by the EDFA");
+	private final InputParameter	edfa_default_noiseFactor_dB		= new InputParameter("edfa_default_noiseFactor_dB", (double) 3, "Default noise factor used when the link does not have the attribute");
 	private final InputParameter	edfa_noiseFactorMaximumGain_dB	= new InputParameter("edfa_noiseFactorMaximumGain_dB", (double) 5,
 			"Noise factor at the EDFA when the gain is in its upper limit (linear interpolation is used to estimate the noise figure at other gains)");
 	private final InputParameter	edfa_noiseFactorMinimumGain_dB	= new InputParameter("edfa_noiseFactorMinimumGain_dB", (double) 5,
@@ -176,15 +139,12 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 	private final InputParameter pc_PMD_ps = new InputParameter("pc_PMD_ps", (double) 0.5, "Polarization mode dispersion in ps added by the PC");
 
 	/* OSNR penalties */
-	private final InputParameter	osnrPenalty_nonLinear_dB		= new InputParameter("osnrPenalty_nonLinear_dB", (double) 2,
-			"OSNR penalty caused by the non-linear effects SPM, XPM, FWM and Brillouin / Raman scattering");
-	private final InputParameter	osnrPenalty_PMD_dB				= new InputParameter("osnrPenalty_PMD_dB", (double) 0.5,
-			"OSNR penalty caused by the polarization mode dispersion (assumed within limits)");
+	private final InputParameter	osnrPenalty_nonLinear_dB		= new InputParameter("osnrPenalty_nonLinear_dB", (double) 2, "OSNR penalty caused by the non-linear effects SPM, XPM, FWM and Brillouin / Raman scattering");
+	private final InputParameter	osnrPenalty_PMD_dB				= new InputParameter("osnrPenalty_PMD_dB", (double) 0.5, "OSNR penalty caused by the polarization mode dispersion (assumed within limits)");
 	private final InputParameter	osnrPenalty_PDL_dB				= new InputParameter("osnrPenalty_PDL_dB", (double) 0.3, "OSNR penalty caused by polarization dispersion losses");
 	private final InputParameter	osnrPenalty_transmitterChirp_dB	= new InputParameter("osnrPenalty_transmitterChirp_dB", (double) 0.5, "OSNR penalty caused by transmitter chirp ");
 	private final InputParameter	osnrPenalty_OADMCrosstalk_dB	= new InputParameter("osnrPenalty_OADMCrosstalk_dB", (double) 0.8, "OSNR penalty caused by the crosstalk at the OADMs");
-	private final InputParameter	osnrPenalty_unassignedMargin_dB	= new InputParameter("osnrPenalty_unassignedMargin_dB", (double) 3,
-			"OSNR penalty caused by not assigned margins (e.g. random effects, aging, ...)");
+	private final InputParameter	osnrPenalty_unassignedMargin_dB	= new InputParameter("osnrPenalty_unassignedMargin_dB", (double) 3, "OSNR penalty caused by not assigned margins (e.g. random effects, aging, ...)");
 	private double					osnrPenalty_SUM_dB;
 
 	/* Global parameters */
@@ -200,8 +160,7 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		this.netPlan = netPlan;
 		this.reportParameters = reportParameters;
 
-		/* Initialize all InputParameter objects defined in this object (this uses Java
-		 * reflection) */
+		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, reportParameters);
 		fiberParameters = getFiberSpecsMap();
 
@@ -215,8 +174,8 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		channels_maxChannelLambda_nm = (OpticalImpairmentUtils.constant_c / (gn_gen_f0_THz.getDouble() * 1e12)) * 1e9;
 
 		/* OSNR penalties */
-		osnrPenalty_SUM_dB = osnrPenalty_nonLinear_dB.getDouble() + osnrPenalty_PMD_dB.getDouble() + osnrPenalty_PDL_dB.getDouble() + osnrPenalty_transmitterChirp_dB.getDouble()
-				+ osnrPenalty_OADMCrosstalk_dB.getDouble() + osnrPenalty_unassignedMargin_dB.getDouble();
+		osnrPenalty_SUM_dB = osnrPenalty_nonLinear_dB.getDouble() + osnrPenalty_PMD_dB.getDouble() + osnrPenalty_PDL_dB.getDouble() + osnrPenalty_transmitterChirp_dB.getDouble() + osnrPenalty_OADMCrosstalk_dB.getDouble()
+				+ osnrPenalty_unassignedMargin_dB.getDouble();
 
 		final Map<Link, List<Quadruple<Double, String, Double, String>>> elements_e = new LinkedHashMap<Link, List<Quadruple<Double, String, Double, String>>>();
 		final Map<Link, List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>>> impairments_e = new LinkedHashMap<Link, List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>>>();
@@ -230,10 +189,9 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 
 			spectrumParameters = initializeSpectrum();
 
-			final List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>> impairmentsAtInputAndOutputs = OpticalImpairmentUtils.computeImpairments(elementPositions,
-					spectrumParameters, fiberParameters, oadm_outputPowerPerChannel_W.getDouble(), fiber_PMD_ps_per_sqroot_km.getDouble(), edfa_PMD_ps.getDouble(), pc_PMD_ps.getDouble(),
-					oadm_muxDemuxPMD_ps.getDouble(), oadm_preAmplifierPMD_ps.getDouble(), oadm_boosterPMD_ps.getDouble(), frequenciesPerChannel_THz, centralFreq_THz,
-					tp_inputPowerSensitivityMin_dBm.getDouble(), tp_inputPowerSensitivityMax_dBm.getDouble());
+			final List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>> impairmentsAtInputAndOutputs = OpticalImpairmentUtils.computeImpairments(elementPositions, spectrumParameters, fiberParameters,
+					oadm_outputPowerPerChannel_W.getDouble(), fiber_PMD_ps_per_sqroot_km.getDouble(), edfa_PMD_ps.getDouble(), pc_PMD_ps.getDouble(), oadm_muxDemuxPMD_ps.getDouble(), oadm_preAmplifierPMD_ps.getDouble(),
+					oadm_boosterPMD_ps.getDouble(), frequenciesPerChannel_THz, centralFreq_THz, tp_inputPowerSensitivityMin_dBm.getDouble(), tp_inputPowerSensitivityMax_dBm.getDouble());
 			final List<String> warningMessages = computeWarningMessages(elementPositions, impairmentsAtInputAndOutputs);
 
 			elements_e.put(link, elementPositions);
@@ -251,10 +209,9 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 
 			spectrumParameters = initializeSpectrum();
 
-			final List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>> impairmentsAtInputAndOutputs = OpticalImpairmentUtils.computeImpairments(elementPositions,
-					spectrumParameters, fiberParameters, oadm_outputPowerPerChannel_W.getDouble(), fiber_PMD_ps_per_sqroot_km.getDouble(), edfa_PMD_ps.getDouble(), pc_PMD_ps.getDouble(),
-					oadm_muxDemuxPMD_ps.getDouble(), oadm_preAmplifierPMD_ps.getDouble(), oadm_boosterPMD_ps.getDouble(), frequenciesPerChannel_THz, centralFreq_THz,
-					tp_inputPowerSensitivityMin_dBm.getDouble(), tp_inputPowerSensitivityMax_dBm.getDouble());
+			final List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>> impairmentsAtInputAndOutputs = OpticalImpairmentUtils.computeImpairments(elementPositions, spectrumParameters, fiberParameters,
+					oadm_outputPowerPerChannel_W.getDouble(), fiber_PMD_ps_per_sqroot_km.getDouble(), edfa_PMD_ps.getDouble(), pc_PMD_ps.getDouble(), oadm_muxDemuxPMD_ps.getDouble(), oadm_preAmplifierPMD_ps.getDouble(),
+					oadm_boosterPMD_ps.getDouble(), frequenciesPerChannel_THz, centralFreq_THz, tp_inputPowerSensitivityMin_dBm.getDouble(), tp_inputPowerSensitivityMax_dBm.getDouble());
 			final List<String> warningMessages = computeWarningMessages(elementPositions, impairmentsAtInputAndOutputs);
 
 			elements_r.put(r, elementPositions);
@@ -270,28 +227,22 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 	{
 		return "This report shows line engineering information for WDM links in the network. " + " The report assumes that the WDM network follows the scheme:\n"
 				+ " * In the net2plan object, nodes are OADMs, links are fiber links  and routes are lightpaths:\n" + "WDM channels optically switched at intermediate nodes.\n"
-				+ " * Nodes are connected by unidirectional fiber links. Fiber link distance is"
-				+ " given by the link length. Other specifications are given by fibers_XXX input parameters, each one describing the"
-				+ "parameter for the fiber types specified in fibers_types, in the same order and separated by"
-				+ "spaces. The fiber can be split into spans if optical amplifers (EDFAs) and/or passive components"
-				+ "(PCs) are placed along the fiber. These spans can be of different fiber types as long as they are"
-				+ "described in a link attribute called \"fiberTypes\". Must be separated by spaces and, in case that"
-				+ "there were more spans than elements of the attribute, the default type given in" + "\"fiber_default_type\" would be used."
-				+ " * Optical line amplifiers (EDFAs) can be located in none, one or more" + " positions in the fiber link, separating them into different spans. EDFAs are"
-				+ " supposed to operate in the automatic gain control mode. Thus, the gain is the" + " same, whatever the number of input WDM channels. EDFA positions (as distance"
-				+ " in km from the link start to the EDFA location), EDFA gains (assumed in"
-				+ " dB) and EDFA noise figures (in dB) are read from the \"edfaPositions_km\", \"edfaGains_dB\" and \"edfaNoiseFigures_dB\""
-				+ " attributes of the links. The format of all attributes will be the same: a string of numbers" + " separated by spaces. The i-th number corresponding to the position/gain of the"
-				+ " i-th EDFA. If the attributes do not exist, it is assumed that no EDFAs" + " are placed in this link. EDFA specifications are given by \"edfa_XXX\" parameters.\n"
-				+ " * Passive components are described by the link attributes \"pcPositions_km\" and \"pcLosses_dB\".\n" + " The i-th number corresponding to the position/loss of the i-th PC.\n"
-				+ " If the attributes do not exist, it is assumed that no PCs are placed in this link. \n" + " Further description in the HTML generated.";
+				+ " * Nodes are connected by unidirectional fiber links. Fiber link distance is" + " given by the link length. Other specifications are given by fibers_XXX input parameters, each one describing the"
+				+ "parameter for the fiber types specified in fibers_types, in the same order and separated by" + "spaces. The fiber can be split into spans if optical amplifers (EDFAs) and/or passive components"
+				+ "(PCs) are placed along the fiber. These spans can be of different fiber types as long as they are" + "described in a link attribute called \"fiberTypes\". Must be separated by spaces and, in case that"
+				+ "there were more spans than elements of the attribute, the default type given in" + "\"fiber_default_type\" would be used." + " * Optical line amplifiers (EDFAs) can be located in none, one or more"
+				+ " positions in the fiber link, separating them into different spans. EDFAs are" + " supposed to operate in the automatic gain control mode. Thus, the gain is the"
+				+ " same, whatever the number of input WDM channels. EDFA positions (as distance" + " in km from the link start to the EDFA location), EDFA gains (assumed in"
+				+ " dB) and EDFA noise figures (in dB) are read from the \"edfaPositions_km\", \"edfaGains_dB\" and \"edfaNoiseFigures_dB\"" + " attributes of the links. The format of all attributes will be the same: a string of numbers"
+				+ " separated by spaces. The i-th number corresponding to the position/gain of the" + " i-th EDFA. If the attributes do not exist, it is assumed that no EDFAs"
+				+ " are placed in this link. EDFA specifications are given by \"edfa_XXX\" parameters.\n" + " * Passive components are described by the link attributes \"pcPositions_km\" and \"pcLosses_dB\".\n"
+				+ " The i-th number corresponding to the position/loss of the i-th PC.\n" + " If the attributes do not exist, it is assumed that no PCs are placed in this link. \n" + " Further description in the HTML generated.";
 	}
 
 	@Override
 	public List<Triple<String, String, String>> getParameters()
 	{
-		/* Returns the parameter information for all the InputParameter objects defined in this
-		 * object (uses Java reflection) */
+		/* Returns the parameter information for all the InputParameter objects defined in this object (uses Java reflection) */
 		return InputParameter.getInformationAllInputParameterFieldsOfObject(this);
 	}
 
@@ -301,12 +252,9 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		return "WDM line engineering with GN calculations";
 	}
 
-	/**
-	 * Checks if the number of elements in the fiber input parameters is always the same. If it is,
-	 * returns a Map for each type of fiber with its parameters
+	/** Checks if the number of elements in the fiber input parameters is always the same. If it is, returns a Map for each type of fiber with its parameters
 	 * 
-	 * @return Map("FiberTypeName", Map("param", value))
-	 */
+	 * @return Map("FiberTypeName", Map("param", value)) */
 	private Map<String, Map<String, Double>> getFiberSpecsMap()
 	{
 		final Map<String, Map<String, Double>> fiberSpecs = new HashMap<String, Map<String, Double>>();
@@ -319,8 +267,7 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		final double[] fiberN2s = StringUtils.toDoubleArray(StringUtils.split(fibers_n2_m2_per_W.getString()));
 		final int numFiberTypes = fibers_numberOfFiberTypes.getInt();
 
-		if (numFiberTypes != fiberTypes.length || numFiberTypes != fiberAlphas.length || numFiberTypes != fiberAlpha1sts.length || numFiberTypes != fiberBeta2s.length
-				|| numFiberTypes != fiberAeffs.length || numFiberTypes != fiberN2s.length)
+		if (numFiberTypes != fiberTypes.length || numFiberTypes != fiberAlphas.length || numFiberTypes != fiberAlpha1sts.length || numFiberTypes != fiberBeta2s.length || numFiberTypes != fiberAeffs.length || numFiberTypes != fiberN2s.length)
 			throw new Net2PlanException("Incorrect number of fiber parameters.");
 
 		boolean containsDefaultType = false;
@@ -348,11 +295,9 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		return fiberSpecs;
 	}
 
-	/**
-	 * Initializes all spectrum parameters with the given input parameters
+	/** Initializes all spectrum parameters with the given input parameters
 	 * 
-	 * @return initial spectrum
-	 */
+	 * @return initial spectrum */
 	private Map<String, double[]> initializeSpectrum()
 	{
 		final Map<String, double[]> spectrumParameters = new HashMap<>();
@@ -376,12 +321,10 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		return spectrumParameters;
 	}
 
-	/**
-	 * Gets an array of booleans with the status of the lasers for all channels
+	/** Gets an array of booleans with the status of the lasers for all channels
 	 * 
 	 * @param lp laser positions per channel
-	 * @return extended array with the lp of every channel
-	 */
+	 * @return extended array with the lp of every channel */
 	private Boolean[] getLaserPositions(boolean[] lp)
 	{
 
@@ -395,12 +338,10 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 
 	}
 
-	/**
-	 * Initializes frequencies for each channel
+	/** Initializes frequencies for each channel
 	 * 
 	 * @param laser_position boolean whether a laser is turn on or not
-	 * @return frequencies per channel
-	 */
+	 * @return frequencies per channel */
 	private double[] getBasebandFrequency(Boolean[] laser_position)
 	{
 		double[] frequenciesPerChannel_THz = DoubleUtils.zeros(gn_spec_nCh.getInt());
@@ -413,15 +354,12 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		return frequenciesPerChannel_THz;
 	}
 
-	/**
-	 * Gets the network warnings for the elements and impairments given
+	/** Gets the network warnings for the elements and impairments given
 	 * 
 	 * @param elementPositions List of Quadruple of(position [km], type, 3rd: data; 4th: auxData)
 	 * @param impairmentsAtInputAndOutputs List of Quadruple of (before element Map(paramName, value), before element PMD, after element Map(paramName, value), after element PMD)
-	 * @return warnings
-	 */
-	private List<String> computeWarningMessages(List<Quadruple<Double, String, Double, String>> elementPositions,
-			List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>> impairmentsAtInputAndOutputs)
+	 * @return warnings */
+	private List<String> computeWarningMessages(List<Quadruple<Double, String, Double, String>> elementPositions, List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>> impairmentsAtInputAndOutputs)
 	{
 		final double numChannels_dB = OpticalImpairmentUtils.linear2dB(gn_spec_nCh.getInt());
 		final int centralChannel = Math.floorDiv(gn_spec_nCh.getInt(), 2);
@@ -451,31 +389,27 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 			{
 				/* Wavelengths in use within transponder range */
 				if (channels_minChannelLambda_nm < tp_minWavelength_nm.getDouble())
-					st += "Wavelength " + channels_minChannelLambda_nm + " nm is outside the transponder range [" + tp_minWavelength_nm.getDouble() + " nm, " + tp_maxWavelength_nm.getDouble()
-							+ " nm]";
+					st += "Wavelength " + channels_minChannelLambda_nm + " nm is outside the transponder range [" + tp_minWavelength_nm.getDouble() + " nm, " + tp_maxWavelength_nm.getDouble() + " nm]";
 				if (channels_maxChannelLambda_nm > tp_maxWavelength_nm.getDouble())
-					st += "Wavelength " + channels_maxChannelLambda_nm + " nm is outside the transponder range [" + tp_minWavelength_nm.getDouble() + " nm, " + tp_maxWavelength_nm.getDouble()
-							+ " nm]";
+					st += "Wavelength " + channels_maxChannelLambda_nm + " nm is outside the transponder range [" + tp_minWavelength_nm.getDouble() + " nm, " + tp_maxWavelength_nm.getDouble() + " nm]";
 
 				/* Output power within limits */
 				if (Math.abs(post_powerPerChannel_dBm - OpticalImpairmentUtils.linear2dB(oadm_outputPowerPerChannel_W.getDouble() * 1e3)) > 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the OADM-ADD output is " + post_powerPerChannel_dBm + " dBm. It should be: "
-							+ OpticalImpairmentUtils.linear2dB(oadm_outputPowerPerChannel_W.getDouble() * 1e3);
+					st += "At " + initialPosition_km + "km: Power at the OADM-ADD output is " + post_powerPerChannel_dBm + " dBm. It should be: " + OpticalImpairmentUtils.linear2dB(oadm_outputPowerPerChannel_W.getDouble() * 1e3);
 
 			} else if (name.equalsIgnoreCase("OADM-EXPRESS"))
 			{
 				/* Input power within limits */
 				if (pre_powerPerChannel_dBm < oadm_perChannelMinInputPower_dBm.getDouble() - 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the OADM-EXPRESS input is " + pre_powerPerChannel_dBm + " dBm. It should be between ["
-							+ oadm_perChannelMinInputPower_dBm.getDouble() + ", " + oadm_perChannelMaxInputPower_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the OADM-EXPRESS input is " + pre_powerPerChannel_dBm + " dBm. It should be between [" + oadm_perChannelMinInputPower_dBm.getDouble() + ", "
+							+ oadm_perChannelMaxInputPower_dBm.getDouble() + "] dBm";
 				if (pre_powerPerChannel_dBm > oadm_perChannelMaxInputPower_dBm.getDouble() + 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the OADM-EXPRESS input is " + pre_powerPerChannel_dBm + " dBm. It should be between ["
-							+ oadm_perChannelMinInputPower_dBm.getDouble() + ", " + oadm_perChannelMaxInputPower_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the OADM-EXPRESS input is " + pre_powerPerChannel_dBm + " dBm. It should be between [" + oadm_perChannelMinInputPower_dBm.getDouble() + ", "
+							+ oadm_perChannelMaxInputPower_dBm.getDouble() + "] dBm";
 
 				/* Output power within limits */
 				if (Math.abs(post_powerPerChannel_dBm - OpticalImpairmentUtils.linear2dB(oadm_outputPowerPerChannel_W.getDouble() * 1e3)) > 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the OADM-EXPRESS output is " + post_powerPerChannel_dBm + " dBm. It should be: "
-							+ OpticalImpairmentUtils.linear2dB(oadm_outputPowerPerChannel_W.getDouble() * 1e3);
+					st += "At " + initialPosition_km + "km: Power at the OADM-EXPRESS output is " + post_powerPerChannel_dBm + " dBm. It should be: " + OpticalImpairmentUtils.linear2dB(oadm_outputPowerPerChannel_W.getDouble() * 1e3);
 
 			} else if (name.equalsIgnoreCase("OADM-DROP"))
 			{
@@ -484,25 +418,24 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 
 				/* Input power within limits */
 				if (pre_powerPerChannel_dBm < oadm_perChannelMinInputPower_dBm.getDouble() - 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the OADM-DROP input is " + pre_powerPerChannel_dBm + " dBm. It should be between [" + oadm_perChannelMinInputPower_dBm.getDouble()
-							+ "," + oadm_perChannelMaxInputPower_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the OADM-DROP input is " + pre_powerPerChannel_dBm + " dBm. It should be between [" + oadm_perChannelMinInputPower_dBm.getDouble() + ","
+							+ oadm_perChannelMaxInputPower_dBm.getDouble() + "] dBm";
 				if (pre_powerPerChannel_dBm > oadm_perChannelMaxInputPower_dBm.getDouble() + 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the OADM-DROP input is " + pre_powerPerChannel_dBm + " dBm. It should be between [" + oadm_perChannelMinInputPower_dBm.getDouble()
-							+ "," + oadm_perChannelMaxInputPower_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the OADM-DROP input is " + pre_powerPerChannel_dBm + " dBm. It should be between [" + oadm_perChannelMinInputPower_dBm.getDouble() + ","
+							+ oadm_perChannelMaxInputPower_dBm.getDouble() + "] dBm";
 
 				/* Output power within limits */
 				if (post_powerPerChannel_dBm < tp_inputPowerSensitivityMin_dBm.getDouble() - 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the OADM-DROP output is " + post_powerPerChannel_dBm + ". It should be between [" + tp_inputPowerSensitivityMin_dBm.getDouble()
-							+ "," + tp_inputPowerSensitivityMax_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the OADM-DROP output is " + post_powerPerChannel_dBm + ". It should be between [" + tp_inputPowerSensitivityMin_dBm.getDouble() + "," + tp_inputPowerSensitivityMax_dBm.getDouble()
+							+ "] dBm";
 				if (post_powerPerChannel_dBm > tp_inputPowerSensitivityMax_dBm.getDouble() + 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the OADM-DROP output is " + post_powerPerChannel_dBm + ". It should be between [" + tp_inputPowerSensitivityMin_dBm.getDouble()
-							+ "," + tp_inputPowerSensitivityMax_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the OADM-DROP output is " + post_powerPerChannel_dBm + ". It should be between [" + tp_inputPowerSensitivityMin_dBm.getDouble() + "," + tp_inputPowerSensitivityMax_dBm.getDouble()
+							+ "] dBm";
 
 				/* OSNR within limits */
 				if (OpticalImpairmentUtils.linear2dB(post_OSNR_linear.getThird()[centralChannel]) < tp_minOSNR_dB.getDouble() + osnrPenalty_SUM_dB)
-					st += "At " + initialPosition_km + "km: OSNR at the RECEIVER is " + OpticalImpairmentUtils.linear2dB(post_OSNR_linear.getThird()[centralChannel])
-							+ " dB. It is below the tolerance plus margin " + tp_minOSNR_dB.getDouble() + " dB + penalties " + osnrPenalty_SUM_dB + " dB = "
-							+ (tp_minOSNR_dB.getDouble() + osnrPenalty_SUM_dB) + " dB)";
+					st += "At " + initialPosition_km + "km: OSNR at the RECEIVER is " + OpticalImpairmentUtils.linear2dB(post_OSNR_linear.getThird()[centralChannel]) + " dB. It is below the tolerance plus margin " + tp_minOSNR_dB.getDouble()
+							+ " dB + penalties " + osnrPenalty_SUM_dB + " dB = " + (tp_minOSNR_dB.getDouble() + osnrPenalty_SUM_dB) + " dB)";
 
 				/* PMD tolerance at the receiver */
 				final double pmdAtReceiver = Math.sqrt(post_PMDSquared_ps2);
@@ -516,11 +449,9 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 
 				/* Wavelengths within limits */
 				if (channels_minChannelLambda_nm < edfa_minWavelength_nm.getDouble())
-					st += "Wavelength " + channels_minChannelLambda_nm + " nm is outside the transponder range [" + edfa_minWavelength_nm.getDouble() + " nm, " + edfa_maxWavelength_nm.getDouble()
-							+ " nm]";
+					st += "Wavelength " + channels_minChannelLambda_nm + " nm is outside the transponder range [" + edfa_minWavelength_nm.getDouble() + " nm, " + edfa_maxWavelength_nm.getDouble() + " nm]";
 				if (channels_maxChannelLambda_nm > edfa_maxWavelength_nm.getDouble())
-					st += "Wavelength " + channels_maxChannelLambda_nm + " nm is outside the transponder range [" + edfa_minWavelength_nm.getDouble() + " nm, " + edfa_maxWavelength_nm.getDouble()
-							+ " nm]";
+					st += "Wavelength " + channels_maxChannelLambda_nm + " nm is outside the transponder range [" + edfa_minWavelength_nm.getDouble() + " nm, " + edfa_maxWavelength_nm.getDouble() + " nm]";
 
 				/* Gain within limits */
 				if (edfaGain_dB < edfa_minGain_dB.getDouble() - 1E-3)
@@ -530,19 +461,19 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 
 				/* Input power within limits */
 				if (pre_powerPerChannel_dBm < edfa_minInputPower_dBm.getDouble() - 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the EDFA input is (is one WDM channel) " + pre_powerPerChannel_dBm + " dBm. It should be between ["
-							+ edfa_minInputPower_dBm.getDouble() + ", " + edfa_maxInputPower_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the EDFA input is (is one WDM channel) " + pre_powerPerChannel_dBm + " dBm. It should be between [" + edfa_minInputPower_dBm.getDouble() + ", " + edfa_maxInputPower_dBm.getDouble()
+							+ "] dBm";
 				if (pre_powerPerChannel_dBm + numChannels_dB > edfa_maxInputPower_dBm.getDouble() + 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the EDFA input is (if all WDM channels were active) " + (pre_powerPerChannel_dBm + numChannels_dB) + " dBm. It should be between ["
-							+ edfa_minInputPower_dBm.getDouble() + "," + edfa_maxInputPower_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the EDFA input is (if all WDM channels were active) " + (pre_powerPerChannel_dBm + numChannels_dB) + " dBm. It should be between [" + edfa_minInputPower_dBm.getDouble() + ","
+							+ edfa_maxInputPower_dBm.getDouble() + "] dBm";
 
 				/* Output power within limits */
 				if (post_powerPerChannel_dBm < edfa_minOutputPower_dBm.getDouble() - 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the EDFA output is (is one WDM channel) " + post_powerPerChannel_dBm + " dBm. It should be between ["
-							+ edfa_minOutputPower_dBm.getDouble() + ", " + edfa_maxOutputPower_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the EDFA output is (is one WDM channel) " + post_powerPerChannel_dBm + " dBm. It should be between [" + edfa_minOutputPower_dBm.getDouble() + ", "
+							+ edfa_maxOutputPower_dBm.getDouble() + "] dBm";
 				if (post_powerPerChannel_dBm + numChannels_dB > edfa_maxOutputPower_dBm.getDouble() + 1E-3)
-					st += "At " + initialPosition_km + "km: Power at the EDFA output is (if all WDM channels were active) " + (post_powerPerChannel_dBm + numChannels_dB)
-							+ " dBm. It should be between [" + edfa_minOutputPower_dBm.getDouble() + ", " + edfa_maxOutputPower_dBm.getDouble() + "] dBm";
+					st += "At " + initialPosition_km + "km: Power at the EDFA output is (if all WDM channels were active) " + (post_powerPerChannel_dBm + numChannels_dB) + " dBm. It should be between [" + edfa_minOutputPower_dBm.getDouble() + ", "
+							+ edfa_maxOutputPower_dBm.getDouble() + "] dBm";
 			} else if (name.equalsIgnoreCase("PC"))
 			{} else
 			{
@@ -555,15 +486,11 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		return res;
 	}
 
-	/**
-	 * Gets all the elements in the given link or lightpath
+	/** Gets all the elements in the given link or lightpath
 	 * 
 	 * @param seqLinks list of links
-	 * @return List of elements as a Quadruple object where: first is the position of the element
-	 *         (km), second the type of element, third the main parameter (i.e. OA=gain, PC=loss,
-	 *         SPAN=length, OADM=nodeID), fourth other information (i.e. OA=noiseFigure,
-	 *         SPAN=fiberType, OADM=noiseFigure).
-	 */
+	 * @return List of elements as a Quadruple object where: first is the position of the element (km), second the type of element, third the main parameter (i.e. OA=gain, PC=loss, SPAN=length, OADM=nodeID), fourth other information (i.e.
+	 *         OA=noiseFigure, SPAN=fiberType, OADM=noiseFigure). */
 	private List<Quadruple<Double, String, Double, String>> getElementPositionsListPerLightpath(List<Link> seqLinks)
 	{
 		final List<Quadruple<Double, String, Double, String>> res = new LinkedList<Quadruple<Double, String, Double, String>>();
@@ -592,8 +519,8 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 			final String[] fiberTypes = StringUtils.split(st_fiberTypes);
 
 			/* Basic checks */
-			if (edfaPositions_km.length != edfaGains_dB.length || edfaPositions_km.length != edfaNoiseFigures_dB.length)
-				throw new Net2PlanException("Link: " + e + ". Number of elements in edfaPositions_km is not equal to the number of elements in edfaGains_dB and edfaNoiseFigures_dB");
+			if (edfaPositions_km.length != edfaGains_dB.length)
+				throw new Net2PlanException("Link: " + e + ". Number of elements in edfaPositions_km is not equal to the number of elements in edfaGains_dB");
 
 			if (pcPositions_km.length != pcLosses_dB.length)
 				throw new Net2PlanException("Link: " + e + ". Number of elements in pcPositions_km is not equal to the number of elements in pcLosses_dB");
@@ -618,8 +545,7 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 				else
 					res.add(Quadruple.of(currentDistanceFromRouteInit_km, "OADM-ADD", (double) e.getOriginNode().getId(), oadm_addChannelNoiseFactor_dB.getDouble() + ""));
 
-			/* Place in a sorted form the spans, dcms and EDFAS. If DCM and EDFA colocated, DCM goes
-			 * first */
+			/* Place in a sorted form the spans, PCs and EDFAS. If PC and EDFA placed, PC goes first */
 			final double[] pcAndEDFAPositions_km = DoubleUtils.concatenate(pcPositions_km, edfaPositions_km);
 			final int[] sortedPCAndEDFAPositionsIndexes = pcAndEDFAPositions_km.length == 0 ? new int[0] : DoubleUtils.sortIndexes(pcAndEDFAPositions_km, OrderingType.ASCENDING);
 			double posKmLastElementThisLink_km = 0;
@@ -646,9 +572,10 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 
 				if (isPC)
 					res.add(Quadruple.of(currentDistanceFromRouteInit_km, "PC", pcLosses_dB[indexInCommonArray], null));
+				else if (edfaNoiseFigures_dB.length > 0 && edfaNoiseFigures_dB.length < (indexInCommonArray - pcPositions_km.length))
+					res.add(Quadruple.of(currentDistanceFromRouteInit_km, "EDFA", edfaGains_dB[indexInCommonArray - pcPositions_km.length], edfaNoiseFigures_dB[indexInCommonArray - pcPositions_km.length] + ""));
 				else
-					res.add(Quadruple.of(currentDistanceFromRouteInit_km, "EDFA", edfaGains_dB[indexInCommonArray - pcPositions_km.length],
-							edfaNoiseFigures_dB[indexInCommonArray - pcPositions_km.length] + ""));
+					res.add(Quadruple.of(currentDistanceFromRouteInit_km, "EDFA", edfaGains_dB[indexInCommonArray - pcPositions_km.length], edfa_default_noiseFactor_dB.getDouble()+""));
 			}
 
 			/* Last span of the link before the OADM */
@@ -692,10 +619,8 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		return res;
 	}
 
-	private String printReport(Map<Link, List<Quadruple<Double, String, Double, String>>> elements_e,
-			Map<Link, List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>>> impairments_e, Map<Link, List<String>> warnings_e,
-			Map<Route, List<Quadruple<Double, String, Double, String>>> elements_r, Map<Route, List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>>> impairments_r,
-			Map<Route, List<String>> warnings_r)
+	private String printReport(Map<Link, List<Quadruple<Double, String, Double, String>>> elements_e, Map<Link, List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>>> impairments_e, Map<Link, List<String>> warnings_e,
+			Map<Route, List<Quadruple<Double, String, Double, String>>> elements_r, Map<Route, List<Quadruple<Map<String, double[]>, Double, Map<String, double[]>, Double>>> impairments_r, Map<Route, List<String>> warnings_r)
 	{
 		final StringBuilder out = new StringBuilder();
 		final DecimalFormat df_2 = new DecimalFormat("###.##");
@@ -705,47 +630,31 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 		out.append("<head><title>WDM line engineering in multilayer (lightpath based) networks with GN calculations</title></head>");
 		out.append("<h1>WDM line engineering report for lighptath-based networks with GN calculations</h1>");
 
-		out.append("<h3>This report shows line engineering information for WDM links in a multilayer optical network. "
-				+ "The impairment calculations are based on the Gaussian Noise Model developed by Politecnico di Torino and their analytic formula."
-				+ " Other calculations are inspired in the procedures described in the 2009 ITU-T WDM manual  \"Optical fibres, cabbles and systems\".</h3>");
+		out.append(
+				"<h3>This report shows line engineering information for WDM links in a multilayer optical network. " + "The impairment calculations are based on the Gaussian Noise Model developed by Politecnico di Torino and their analytic formula."
+						+ " Other calculations are inspired in the procedures described in the 2009 ITU-T WDM manual  \"Optical fibres, cabbles and systems\".</h3>");
 
 		out.append("<p>The report assumes that the WDM network follows the scheme:</p>");
 
 		out.append("<ul>");
-		out.append("<li>In the net2plan object, nodes are OADMs, links are fiber links, and routes are lightpaths: " 
-				+ "WDM channels optically switched at intermediate nodes. </li>");
-		out.append("<li>Nodes are connected by unidirectional fiber links. Fiber link distance is given by the link "
-				+ "length. Other specifications are given by fibers_XXX input parameters, each one describing the "
-				+ "parameter for the fiber types specified in fibers_types, in the same order and separated by "
-				+ "spaces. The fiber can be split into spans if optical amplifers (EDFAs) and/or passive components "
-				+ "(PCs) are placed along the fiber. These spans can be of different fiber types as long as they are "
-				+ "described in a link attribute called \"fiberTypes\". Must be separated by spaces and, in case that "
-				+ "there were more spans than elements of the attribute, the default type given in \"fiber_default_type\" " 
-				+ "would be used.</li>");
-		out.append("<li>Optical line amplifiers (EDFAs) can be located in none, one or more positions in the fiber"
-				+ " link, separating them in different spans. EDFAs are supposed to operate in the automatic gain"
-				+ " control mode. Thus, the gain is the same, whatever the number of input WDM channels. EDFA"
-				+ " positions (as distance\" in km from the link start to the EDFA location), EDFA gains (assumed in"
-				+ " dB) and EDFA noise figures (in dB) are read from the \"edfaPositions_km\", \"edfaGains_dB\" and"
-				+ " \"edfaNoiseFigures_dB\" attributes of the links. The format of all attributes are the same: a"
-				+ " string of numbers separated by spaces. The <i>i</i>-th number corresponding to the position/gain"
-				+ " of the <i>i</i>-th EDFA. If the attributes do not exist, it is assumed that no EDFAs are placed in this link. " 
+		out.append("<li>In the net2plan object, nodes are OADMs, links are fiber links, and routes are lightpaths: " + "WDM channels optically switched at intermediate nodes. </li>");
+		out.append("<li>Nodes are connected by unidirectional fiber links. Fiber link distance is given by the link " + "length. Other specifications are given by fibers_XXX input parameters, each one describing the "
+				+ "parameter for the fiber types specified in fibers_types, in the same order and separated by " + "spaces. The fiber can be split into spans if optical amplifers (EDFAs) and/or passive components "
+				+ "(PCs) are placed along the fiber. These spans can be of different fiber types as long as they are " + "described in a link attribute called \"fiberTypes\". Must be separated by spaces and, in case that "
+				+ "there were more spans than elements of the attribute, the default type given in \"fiber_default_type\" " + "would be used.</li>");
+		out.append("<li>Optical line amplifiers (EDFAs) can be located in none, one or more positions in the fiber" + " link, separating them in different spans. EDFAs are supposed to operate in the automatic gain"
+				+ " control mode. Thus, the gain is the same, whatever the number of input WDM channels. EDFA" + " positions (as distance\" in km from the link start to the EDFA location), EDFA gains (assumed in"
+				+ " dB) and EDFA noise figures (in dB) are read from the \"edfaPositions_km\", \"edfaGains_dB\" and" + " \"edfaNoiseFigures_dB\" attributes of the links. The format of all attributes are the same: a"
+				+ " string of numbers separated by spaces. The <i>i</i>-th number corresponding to the position/gain" + " of the <i>i</i>-th EDFA. If the attributes do not exist, it is assumed that no EDFAs are placed in this link. "
 				+ "EDFA specifications are given by \"edfa_XXX\" parameters</li>");
 		out.append("<li>There are not Dispersion compensating modules (DCMs) in the topoology, since the Gaussian Noise Model is used.</li>");
-		out.append("<li>Passive components are described by the link attributes \"pcPositions_km\" and \"pcLosses_dB\"."
-				+ " The <i>i</i>-th number corresponding to the position/loss of the <i>i</i>-th PC. If the"
-				+ " attributes do not exist, it is assumed that no PCs are placed in this link. Other specifications for Passive Components"
-				+ " will be described in teh pc_XXX input parameters.</li>");
-		out.append("<li>Fiber links start and end in OADM modules, that permit adding, dropping and optically switch"
-				+ " individual WDM channels. OADMs have a pre-amplifier (traversed by drop and express channels) and"
-				+ " a boost amplifier (traversed by add and express channels). They are supposed to equalize the"
-				+ " channel power at their outputs, to a fixed value (added and express channels will thus have the"
-				+ " same power in the fibers). Also, OADMs attenuate appropriately the optical signal coming from the"
-				+ " pre-amplifier, in the drop channels, so that they fall within the receiver sensitivity range."
-				+ " OADM noise figures for add, drop and express channels are given as input parameters. PMD values"
-				+ " for add, drop and express channels are computed assumming that: (i) add channel traverse a"
-				+ " multiplexer and the booster, (ii) drop channels travese the pre-amplifier and a demultiplexer,"
-				+ " (iii) express channels traverse the two amplifiers. The required parameters are provided in oadm_XXX parameters.</li>");
+		out.append("<li>Passive components are described by the link attributes \"pcPositions_km\" and \"pcLosses_dB\"." + " The <i>i</i>-th number corresponding to the position/loss of the <i>i</i>-th PC. If the"
+				+ " attributes do not exist, it is assumed that no PCs are placed in this link. Other specifications for Passive Components" + " will be described in teh pc_XXX input parameters.</li>");
+		out.append("<li>Fiber links start and end in OADM modules, that permit adding, dropping and optically switch" + " individual WDM channels. OADMs have a pre-amplifier (traversed by drop and express channels) and"
+				+ " a boost amplifier (traversed by add and express channels). They are supposed to equalize the" + " channel power at their outputs, to a fixed value (added and express channels will thus have the"
+				+ " same power in the fibers). Also, OADMs attenuate appropriately the optical signal coming from the" + " pre-amplifier, in the drop channels, so that they fall within the receiver sensitivity range."
+				+ " OADM noise figures for add, drop and express channels are given as input parameters. PMD values" + " for add, drop and express channels are computed assumming that: (i) add channel traverse a"
+				+ " multiplexer and the booster, (ii) drop channels travese the pre-amplifier and a demultiplexer," + " (iii) express channels traverse the two amplifiers. The required parameters are provided in oadm_XXX parameters.</li>");
 		out.append("<li>Each channel ends in a receiver, with specifications given by \"tp_XXX\" parameters.</li>");
 		out.append("</ul></p>");
 		out.append("<p>The basic checks performed are:</p>");
@@ -802,10 +711,10 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 			for (String s : w)
 				warnings.append(s);
 
-			out.append("<tr><td>").append(e).append(" (").append(st_a_e).append(" --> ").append(st_b_e).append(") </td><td>").append(df_2.format(d_e)).append("</td><td>").append(numEDFAs)
-					.append("</td><td>").append(numPCs).append("</td><td>").append((totalOSNR_dB > infinityThreshold_dB) ? "&infin;" : df_2.format(totalOSNR_dB)).append("</td><td>")
-					.append(df_2.format(OpticalImpairmentUtils.linear2dB(prevSpectrum.get(OpticalImpairmentUtils.stSpectrum_powerPerChannel_W)[centralChannel] * 1e3))).append("</td><td>")
-					.append(df_2.format(Math.sqrt(impInfoInputOADM.getSecond()))).append("</td><td>").append(warnings).append("</td></tr>");
+			out.append("<tr><td>").append(e).append(" (").append(st_a_e).append(" --> ").append(st_b_e).append(") </td><td>").append(df_2.format(d_e)).append("</td><td>").append(numEDFAs).append("</td><td>").append(numPCs).append("</td><td>")
+					.append((totalOSNR_dB > infinityThreshold_dB) ? "&infin;" : df_2.format(totalOSNR_dB)).append("</td><td>")
+					.append(df_2.format(OpticalImpairmentUtils.linear2dB(prevSpectrum.get(OpticalImpairmentUtils.stSpectrum_powerPerChannel_W)[centralChannel] * 1e3))).append("</td><td>").append(df_2.format(Math.sqrt(impInfoInputOADM.getSecond())))
+					.append("</td><td>").append(warnings).append("</td></tr>");
 		}
 		out.append("</table>");
 
@@ -840,10 +749,10 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 			for (String s : w)
 				warnings.append(s);
 
-			out.append("<tr><td>").append(r).append(" (").append(st_a_r).append(" --> ").append(st_b_r).append(") </td><td>").append(df_2.format(d_r)).append("</td><td>").append(numEDFAs)
-					.append("</td><td>").append(numPCs).append("</td><td>").append((totalOSNR_dB > infinityThreshold_dB) ? "&infin;" : df_2.format(totalOSNR_dB)).append("</td><td>")
-					.append(df_2.format(OpticalImpairmentUtils.linear2dB(preSpectrum.get(OpticalImpairmentUtils.stSpectrum_powerPerChannel_W)[centralChannel] * 1e3))).append("</td><td>")
-					.append(df_2.format(Math.sqrt(impInfoInputOADM.getSecond()))).append("</td><td>").append(warnings.toString()).append("</td>" + "</tr>");
+			out.append("<tr><td>").append(r).append(" (").append(st_a_r).append(" --> ").append(st_b_r).append(") </td><td>").append(df_2.format(d_r)).append("</td><td>").append(numEDFAs).append("</td><td>").append(numPCs).append("</td><td>")
+					.append((totalOSNR_dB > infinityThreshold_dB) ? "&infin;" : df_2.format(totalOSNR_dB)).append("</td><td>")
+					.append(df_2.format(OpticalImpairmentUtils.linear2dB(preSpectrum.get(OpticalImpairmentUtils.stSpectrum_powerPerChannel_W)[centralChannel] * 1e3))).append("</td><td>").append(df_2.format(Math.sqrt(impInfoInputOADM.getSecond())))
+					.append("</td><td>").append(warnings.toString()).append("</td>" + "</tr>");
 
 		}
 		out.append("</table>");
@@ -896,7 +805,6 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 				final String elementAuxData = this_el.getFourth();
 
 				final Map<String, double[]> postSpectrum = this_imp.getThird();
-				System.out.println(postSpectrum.get(OpticalImpairmentUtils.stSpectrum_aseNoisePower_W)[centralChannel]);
 				final double totalOSNR_dB = OpticalImpairmentUtils.getOSNR(postSpectrum).getThird()[centralChannel];
 
 				if (elementType.equalsIgnoreCase("EDFA"))
@@ -906,10 +814,9 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 				else if (elementType.equalsIgnoreCase("PC"))
 					elementType += " (L: " + elementData + " dB)";
 
-				out.append("<tr><td>").append(df_2.format(pos_km)).append("</td><td>" + "Output of ").append(elementType).append("</td><td>")
-						.append((totalOSNR_dB > infinityThreshold_dB) ? "&infin;" : df_2.format(totalOSNR_dB)).append("</td><td>")
-						.append(df_2.format(OpticalImpairmentUtils.linear2dB(postSpectrum.get(OpticalImpairmentUtils.stSpectrum_powerPerChannel_W)[centralChannel] * 1e3))).append("</td><td>")
-						.append(df_2.format(Math.sqrt(this_imp.getSecond()))).append("</td><td>").append(this_warnings).append("</td>" + "</tr>");
+				out.append("<tr><td>").append(df_2.format(pos_km)).append("</td><td>" + "Output of ").append(elementType).append("</td><td>").append((totalOSNR_dB > infinityThreshold_dB) ? "&infin;" : df_2.format(totalOSNR_dB)).append("</td><td>")
+						.append(df_2.format(OpticalImpairmentUtils.linear2dB(postSpectrum.get(OpticalImpairmentUtils.stSpectrum_powerPerChannel_W)[centralChannel] * 1e3))).append("</td><td>").append(df_2.format(Math.sqrt(this_imp.getSecond())))
+						.append("</td><td>").append(this_warnings).append("</td>" + "</tr>");
 
 			}
 			out.append("</table>");
@@ -957,10 +864,9 @@ public class Report_WDM_lineEngineering_GNModel implements IReport
 				else if (elementType.equalsIgnoreCase("PC"))
 					elementType += " (L: " + elementData + " dB)";
 
-				out.append("<tr><td>").append(df_2.format(pos_km)).append("</td><td>" + "Output of ").append(elementType).append("</td><td>")
-						.append((totalOSNR_dB > infinityThreshold_dB) ? "&infin;" : df_2.format(totalOSNR_dB)).append("</td><td>")
-						.append(df_2.format(OpticalImpairmentUtils.linear2dB(postSpectrum.get(OpticalImpairmentUtils.stSpectrum_powerPerChannel_W)[centralChannel] * 1e3))).append("</td><td>")
-						.append(df_2.format(Math.sqrt(this_imp.getSecond()))).append("</td><td>").append(this_warnings).append("</td>" + "</tr>");
+				out.append("<tr><td>").append(df_2.format(pos_km)).append("</td><td>" + "Output of ").append(elementType).append("</td><td>").append((totalOSNR_dB > infinityThreshold_dB) ? "&infin;" : df_2.format(totalOSNR_dB)).append("</td><td>")
+						.append(df_2.format(OpticalImpairmentUtils.linear2dB(postSpectrum.get(OpticalImpairmentUtils.stSpectrum_powerPerChannel_W)[centralChannel] * 1e3))).append("</td><td>").append(df_2.format(Math.sqrt(this_imp.getSecond())))
+						.append("</td><td>").append(this_warnings).append("</td>" + "</tr>");
 
 			}
 

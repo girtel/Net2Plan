@@ -350,7 +350,6 @@ public class OpticalImpairmentUtils
 		final double[] targetOutputPower_W = new double[numChannels]; Arrays.fill(targetOutputPower_W, oadm_outputPowerPerChannel_W);
 
 		final double[] gain_linear = DoubleUtils.divide(targetOutputPower_W, inputPowerPerChannel_W);
-		System.out.println("Gain lin: " + gain_linear[0]);
 
 		if (gain_linear[0] != 1)
 		{
