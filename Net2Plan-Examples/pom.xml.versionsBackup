@@ -16,26 +16,20 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan</artifactId>
-        <version>0.5.3</version>
+        <version>0.5.3-SNAPSHOT</version>
     </parent>
+
     <modelVersion>4.0.0</modelVersion>
+    <packaging>jar</packaging>
 
-    <artifactId>net2plan-gui</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>net2plan-examples</artifactId>
 
-    <modules>
-        <module>Net2Plan-GUI-Exec</module>
-        <module>Net2Plan-GUI-Plugins</module>
-    </modules>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.net2plan</groupId>
-                <artifactId>net2plan-core</artifactId>
-                <version>0.5.3</version>
-                <scope>compile</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

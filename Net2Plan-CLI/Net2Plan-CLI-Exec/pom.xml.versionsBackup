@@ -15,13 +15,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>com.net2plan</groupId>
-        <artifactId>net2plan-gui</artifactId>
-        <version>0.5.3</version>
+        <artifactId>net2plan-cli</artifactId>
+        <version>0.5.3-SNAPSHOT</version>
     </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.net2plan.net2plan-gui</groupId>
-    <artifactId>net2plan-gui-exec</artifactId>
+    <groupId>com.net2plan.net2plan-cli</groupId>
+    <artifactId>net2plan-cli-exec</artifactId>
 
     <packaging>jar</packaging>
 
@@ -43,7 +44,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.net2plan.gui.GUINet2Plan</mainClass>
+                            <mainClass>com.net2plan.cli.CLINet2Plan</mainClass>
                         </manifest>
                         <manifestEntries>
                             <Class-Path>lib/net2plan-core.jar</Class-Path>
@@ -53,4 +54,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
