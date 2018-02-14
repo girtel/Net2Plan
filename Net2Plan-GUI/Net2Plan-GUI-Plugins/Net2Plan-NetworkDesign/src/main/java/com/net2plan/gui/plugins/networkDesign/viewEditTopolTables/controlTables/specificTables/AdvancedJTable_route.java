@@ -45,7 +45,7 @@ import java.util.List;
 
 /**
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_route extends AdvancedJTable_networkElement
 {
     private static final int COLUMN_ID = 0;
@@ -480,7 +480,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
     {
         final NetPlan netPlan = callback.getDesign();
         final Collection<Long> demandIds = NetPlan.getIds(netPlan.getDemands());
-        final JComboBox demandSelector = new WiderJComboBox();
+        final JComboBox<StringLabeller> demandSelector = new WiderJComboBox();
         if (netPlan.getNumberOfLinks() == 0)
             throw new Net2PlanException("The network has no links at this network layer");
 
@@ -509,7 +509,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
             String ingressNodeName = ingressNode.getName();
 
             Collection<Link> outgoingLinks = ingressNode.getOutgoingLinks();
-            final JComboBox firstLink = new WiderJComboBox();
+            final JComboBox<StringLabeller> firstLink = new WiderJComboBox();
             for (Link link : outgoingLinks)
             {
                 long destinationNodeId = link.getDestinationNode().getId();
@@ -559,7 +559,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
                     return;
                 }
 
-                final JComboBox newLink = new WiderJComboBox();
+                final JComboBox<StringLabeller> newLink = new WiderJComboBox();
                 for (Link nextLink : outgoingLinks1)
                 {
                     long nextDestinationNodeId = nextLink.getDestinationNode().getId();
@@ -920,7 +920,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement
 
         candidateBackupRoutes.removeAll(currentBackupRoutes);
 
-        final JComboBox backupRouteSelector = new WiderJComboBox();
+        final JComboBox<StringLabeller> backupRouteSelector = new WiderJComboBox();
 
         final DefaultTableModel model = new ClassAwareTableModel(new Object[1][6], new String[]{"Id", "Seq. links/resources", "Seq. nodes", "Seq. occupied capacities", "", ""})
         {

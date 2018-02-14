@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2017 Pablo Pavon Marino and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the 2-clause BSD License 
+    which accompanies this distribution, and is available at
+    https://opensource.org/licenses/BSD-2-Clause
+   
+    Contributors:
+        Pablo Pavon Marino and others - initial API and implementation
+ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.net2plan</groupId>
+        <artifactId>net2plan-gui</artifactId>
+        <version>0.5.3-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.net2plan.net2plan-gui</groupId>
+    <artifactId>net2plan-gui-exec</artifactId>
+
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>com.net2plan.gui.GUINet2Plan</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>lib/net2plan-core.jar</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

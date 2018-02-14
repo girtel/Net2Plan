@@ -12,6 +12,7 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
@@ -37,7 +38,7 @@ import java.util.*;
 
 /**
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_layer extends AdvancedJTable_networkElement
 {
     public static final String netPlanViewTabName = "Layers";
@@ -85,7 +86,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
             layerData[COLUMN_ID] = auxLayer.getId();
             layerData[COLUMN_INDEX] = auxLayer.getIndex();
             layerData[COLUMN_NAME] = auxLayer.getName();
-            layerData[COLUMN_ROUTINGTYPE] = currentState.getRoutingType(auxLayer);
+            layerData[COLUMN_ROUTINGTYPE] = currentState.getRoutingType(auxLayer).name();
             layerData[COLUMN_NUMLINKS] = currentState.getNumberOfLinks(auxLayer);
             layerData[COLUMN_NUMDEMANDS] = currentState.getNumberOfDemands(auxLayer);
             layerData[COLUMN_NUMMULTICASTDEMANDS] = currentState.getNumberOfMulticastDemands(auxLayer);
@@ -96,7 +97,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
             layerData[COLUMN_DESCRIPTION] = auxLayer.getDescription();
             layerData[COLUMN_LINKCAPUNITS] = currentState.getLinkCapacityUnitsName(auxLayer);
             layerData[COLUMN_DEMANDTRAFUNITS] = currentState.getDemandTrafficUnitsName(auxLayer);
-            layerData[COLUMN_TAGS] = currentState.getTags();
+            layerData[COLUMN_TAGS] = StringUtils.listToString(Lists.newArrayList(auxLayer.getTags()));
             layerData[COLUMN_ATTRIBUTES] = StringUtils.mapToString(auxLayer.getAttributes());
             allLayerData.add(layerData);
         }
@@ -189,7 +190,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement
     public void setColumnRowSorting()
     {
         final Set<Integer> columnsWithDoubleAndThenParenthesis = Sets.newHashSet();
-        final DefaultRowSorter rowSorter = ((DefaultRowSorter) getRowSorter());
+        final DefaultRowSorter<?, ?> rowSorter = ((DefaultRowSorter<?, ?>) getRowSorter());
         for (int col = 0; col <= COLUMN_ATTRIBUTES; col++)
             rowSorter.setComparator(col, new AdvancedJTable_networkElement.ColumnComparator(rowSorter, columnsWithDoubleAndThenParenthesis.contains(col)));
     }

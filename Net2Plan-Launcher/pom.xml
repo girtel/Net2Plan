@@ -16,7 +16,7 @@
     <parent>
         <artifactId>net2plan</artifactId>
         <groupId>com.net2plan</groupId>
-        <version>0.5.3-SNAPSHOT</version>
+        <version>0.5.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -29,8 +29,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -43,31 +43,31 @@
         <dependency>
             <groupId>com.net2plan.net2plan-cli</groupId>
             <artifactId>net2plan-cli-plugins</artifactId>
-            <version>0.5.3-SNAPSHOT</version>
+            <version>0.5.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-gui</groupId>
             <artifactId>net2plan-gui-exec</artifactId>
-            <version>0.5.3-SNAPSHOT</version>
+            <version>0.5.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
             <artifactId>net2plan-gui-plugins-networkDesign</artifactId>
-            <version>0.5.3-SNAPSHOT</version>
+            <version>0.5.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
             <artifactId>net2plan-gui-plugins-trafficDesign</artifactId>
-            <version>0.5.3-SNAPSHOT</version>
+            <version>0.5.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-examples</artifactId>
-            <version>0.5.3-SNAPSHOT</version>
+            <version>0.5.3</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

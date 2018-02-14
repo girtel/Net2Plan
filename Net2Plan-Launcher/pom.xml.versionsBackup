@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2017 Pablo Pavon Marino and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the 2-clause BSD License 
+    which accompanies this distribution, and is available at
+    https://opensource.org/licenses/BSD-2-Clause
+   
+    Contributors:
+        Pablo Pavon Marino and others - initial API and implementation
+ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>net2plan</artifactId>
+        <groupId>com.net2plan</groupId>
+        <version>0.5.3-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>net2plan-launcher</artifactId>
+
+    <packaging>pom</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!--Net2Plan launcher will not be deployed as a jar-->
+    <!--It is a tool to launch Net2Plan from the IDE-->
+    <!--Net2Plan launcher needs its dependencies to be within compile as it will use them from the IDE-->
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan.net2plan-cli</groupId>
+            <artifactId>net2plan-cli-plugins</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-gui</groupId>
+            <artifactId>net2plan-gui-exec</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
+            <artifactId>net2plan-gui-plugins-networkDesign</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
+            <artifactId>net2plan-gui-plugins-trafficDesign</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-examples</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+</project>

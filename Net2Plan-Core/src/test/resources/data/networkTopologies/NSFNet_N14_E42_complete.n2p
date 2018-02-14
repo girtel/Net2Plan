@@ -1,0 +1,2206 @@
+<?xml version="1.0" encoding="utf-8"?><network description="National Science Foundation (NSF) Network with 14 nodes and 42 unidirectional links, including a demand set. Shortest-path routing (measured in hops) is used. Then, with 1+1 link-disjoint dedicated protection is computed&#10;&#10;Source: R. Ramaswami, K.N. Sivarajan, &quot;Design of Logical Topologies for Wavelength-routed Optical Networks,&quot; IEEE Journal on Selected Areas in Communications, vol. 14, no. 5, pp. 840-851, June 1996" name="NSFNet">
+    <physicalTopology>
+        <node name="Seattle (WA)" population="620778" timezone="-8" xCoord="-122.2916667" yCoord="47.6583333"/>
+        <node name="Palo Alto (CA)" population="65412" timezone="-8" xCoord="-122.1633333" yCoord="37.4416667"/>
+        <node name="San Diego (CA)" population="1326000" timezone="-8" xCoord="-117.2388889" yCoord="32.8852778"/>
+        <node name="Salt Lake City (UT)" population="189899" timezone="-7" xCoord="-111.8427778" yCoord="40.7683333"/>
+        <node name="Boulder (CO)" population="98889" timezone="-7" xCoord="-105.2747222" yCoord="39.9775000"/>
+        <node name="Houston (TX)" population="2145000" timezone="-6" xCoord="-95.3602778" yCoord="29.7572222"/>
+        <node name="Lincoln (NE)" population="262341" timezone="-6" xCoord="-96.6969444" yCoord="40.8230556"/>
+        <node name="Urbana-Champaign (IL)" population="81291" timezone="-6" xCoord="-88.2266667" yCoord="40.1130556"/>
+        <node name="Pittsburgh (PA)" population="307484" timezone="-5" xCoord="-80" yCoord="40.4386111"/>
+        <node name="Atlanta (GA)" population="432427" timezone="-5" xCoord="-84.383300" yCoord="33.750000"/>
+        <node name="Ann Arbor (MI)" population="114925" timezone="-5" xCoord="-83.7144444" yCoord="42.2888889"/>
+        <node name="Ithaca (NY)" population="30054" timezone="-5" xCoord="-76.4766667" yCoord="42.4436111"/>
+        <node name="Princeton (NJ)" population="28572" timezone="-5" xCoord="-74.6516667" yCoord="40.3500000"/>
+        <node name="College Park (MD)" population="30587" timezone="-5" xCoord="-76.9416667" yCoord="38.9902778"/>
+        <link destinationNodeId="1" linkCapacityInErlangs="2000.0" linkLengthInKm="1100.0" originNodeId="0"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="2000.0" linkLengthInKm="1600.0" originNodeId="0"/>
+        <link destinationNodeId="7" linkCapacityInErlangs="2000.0" linkLengthInKm="2800.0" originNodeId="0"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="2000.0" linkLengthInKm="1100.0" originNodeId="1"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="2000.0" linkLengthInKm="600.0" originNodeId="1"/>
+        <link destinationNodeId="3" linkCapacityInErlangs="2000.0" linkLengthInKm="1000.0" originNodeId="1"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="2000.0" linkLengthInKm="1600.0" originNodeId="2"/>
+        <link destinationNodeId="1" linkCapacityInErlangs="2000.0" linkLengthInKm="600.0" originNodeId="2"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="2000.0" linkLengthInKm="2000.0" originNodeId="2"/>
+        <link destinationNodeId="1" linkCapacityInErlangs="2000.0" linkLengthInKm="1000.0" originNodeId="3"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="2000.0" linkLengthInKm="600.0" originNodeId="3"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="2000.0" linkLengthInKm="2400.0" originNodeId="3"/>
+        <link destinationNodeId="3" linkCapacityInErlangs="2000.0" linkLengthInKm="600.0" originNodeId="4"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="2000.0" linkLengthInKm="1100.0" originNodeId="4"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="2000.0" linkLengthInKm="800.0" originNodeId="4"/>
+        <link destinationNodeId="2" linkCapacityInErlangs="2000.0" linkLengthInKm="2000.0" originNodeId="5"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="2000.0" linkLengthInKm="1100.0" originNodeId="5"/>
+        <link destinationNodeId="9" linkCapacityInErlangs="2000.0" linkLengthInKm="1200.0" originNodeId="5"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2000.0" linkLengthInKm="2000.0" originNodeId="5"/>
+        <link destinationNodeId="4" linkCapacityInErlangs="2000.0" linkLengthInKm="800.0" originNodeId="6"/>
+        <link destinationNodeId="7" linkCapacityInErlangs="2000.0" linkLengthInKm="700.0" originNodeId="6"/>
+        <link destinationNodeId="0" linkCapacityInErlangs="2000.0" linkLengthInKm="2800.0" originNodeId="7"/>
+        <link destinationNodeId="6" linkCapacityInErlangs="2000.0" linkLengthInKm="700.0" originNodeId="7"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2000.0" linkLengthInKm="700.0" originNodeId="7"/>
+        <link destinationNodeId="7" linkCapacityInErlangs="2000.0" linkLengthInKm="700.0" originNodeId="8"/>
+        <link destinationNodeId="9" linkCapacityInErlangs="2000.0" linkLengthInKm="900.0" originNodeId="8"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="2000.0" linkLengthInKm="500.0" originNodeId="8"/>
+        <link destinationNodeId="12" linkCapacityInErlangs="2000.0" linkLengthInKm="500.0" originNodeId="8"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="2000.0" linkLengthInKm="1200.0" originNodeId="9"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2000.0" linkLengthInKm="900.0" originNodeId="9"/>
+        <link destinationNodeId="3" linkCapacityInErlangs="2000.0" linkLengthInKm="2400.0" originNodeId="10"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="2000.0" linkLengthInKm="800.0" originNodeId="10"/>
+        <link destinationNodeId="12" linkCapacityInErlangs="2000.0" linkLengthInKm="800.0" originNodeId="10"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2000.0" linkLengthInKm="500.0" originNodeId="11"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="2000.0" linkLengthInKm="800.0" originNodeId="11"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2000.0" linkLengthInKm="300.0" originNodeId="11"/>
+        <link destinationNodeId="8" linkCapacityInErlangs="2000.0" linkLengthInKm="500.0" originNodeId="12"/>
+        <link destinationNodeId="10" linkCapacityInErlangs="2000.0" linkLengthInKm="800.0" originNodeId="12"/>
+        <link destinationNodeId="13" linkCapacityInErlangs="2000.0" linkLengthInKm="300.0" originNodeId="12"/>
+        <link destinationNodeId="5" linkCapacityInErlangs="2000.0" linkLengthInKm="2000.0" originNodeId="13"/>
+        <link destinationNodeId="11" linkCapacityInErlangs="2000.0" linkLengthInKm="300.0" originNodeId="13"/>
+        <link destinationNodeId="12" linkCapacityInErlangs="2000.0" linkLengthInKm="300.0" originNodeId="13"/>
+    </physicalTopology>
+    <demandSet>
+        <demandEntry egressNodeId="1" ingressNodeId="0" offeredTrafficInErlangs="30.008"/>
+        <demandEntry egressNodeId="2" ingressNodeId="0" offeredTrafficInErlangs="11.93"/>
+        <demandEntry egressNodeId="3" ingressNodeId="0" offeredTrafficInErlangs="31.22"/>
+        <demandEntry egressNodeId="4" ingressNodeId="0" offeredTrafficInErlangs="32.504"/>
+        <demandEntry egressNodeId="5" ingressNodeId="0" offeredTrafficInErlangs="18.35"/>
+        <demandEntry egressNodeId="6" ingressNodeId="0" offeredTrafficInErlangs="23.9"/>
+        <demandEntry egressNodeId="7" ingressNodeId="0" offeredTrafficInErlangs="25.766"/>
+        <demandEntry egressNodeId="8" ingressNodeId="0" offeredTrafficInErlangs="19.034"/>
+        <demandEntry egressNodeId="9" ingressNodeId="0" offeredTrafficInErlangs="21.746"/>
+        <demandEntry egressNodeId="10" ingressNodeId="0" offeredTrafficInErlangs="16.57"/>
+        <demandEntry egressNodeId="11" ingressNodeId="0" offeredTrafficInErlangs="21.93"/>
+        <demandEntry egressNodeId="12" ingressNodeId="0" offeredTrafficInErlangs="16.722"/>
+        <demandEntry egressNodeId="13" ingressNodeId="0" offeredTrafficInErlangs="23.23"/>
+        <demandEntry egressNodeId="0" ingressNodeId="1" offeredTrafficInErlangs="32.576"/>
+        <demandEntry egressNodeId="2" ingressNodeId="1" offeredTrafficInErlangs="12.902"/>
+        <demandEntry egressNodeId="3" ingressNodeId="1" offeredTrafficInErlangs="29.784"/>
+        <demandEntry egressNodeId="4" ingressNodeId="1" offeredTrafficInErlangs="15.814"/>
+        <demandEntry egressNodeId="5" ingressNodeId="1" offeredTrafficInErlangs="18.62"/>
+        <demandEntry egressNodeId="6" ingressNodeId="1" offeredTrafficInErlangs="26.252"/>
+        <demandEntry egressNodeId="7" ingressNodeId="1" offeredTrafficInErlangs="17.488"/>
+        <demandEntry egressNodeId="8" ingressNodeId="1" offeredTrafficInErlangs="15.096"/>
+        <demandEntry egressNodeId="9" ingressNodeId="1" offeredTrafficInErlangs="11.738"/>
+        <demandEntry egressNodeId="10" ingressNodeId="1" offeredTrafficInErlangs="19.274"/>
+        <demandEntry egressNodeId="11" ingressNodeId="1" offeredTrafficInErlangs="18.708"/>
+        <demandEntry egressNodeId="12" ingressNodeId="1" offeredTrafficInErlangs="11.364"/>
+        <demandEntry egressNodeId="13" ingressNodeId="1" offeredTrafficInErlangs="17.13"/>
+        <demandEntry egressNodeId="0" ingressNodeId="2" offeredTrafficInErlangs="21.092"/>
+        <demandEntry egressNodeId="1" ingressNodeId="2" offeredTrafficInErlangs="26.866"/>
+        <demandEntry egressNodeId="3" ingressNodeId="2" offeredTrafficInErlangs="30.678"/>
+        <demandEntry egressNodeId="4" ingressNodeId="2" offeredTrafficInErlangs="17.066"/>
+        <demandEntry egressNodeId="5" ingressNodeId="2" offeredTrafficInErlangs="26.14"/>
+        <demandEntry egressNodeId="6" ingressNodeId="2" offeredTrafficInErlangs="10.462"/>
+        <demandEntry egressNodeId="7" ingressNodeId="2" offeredTrafficInErlangs="24.626"/>
+        <demandEntry egressNodeId="8" ingressNodeId="2" offeredTrafficInErlangs="12.312"/>
+        <demandEntry egressNodeId="9" ingressNodeId="2" offeredTrafficInErlangs="26.188"/>
+        <demandEntry egressNodeId="10" ingressNodeId="2" offeredTrafficInErlangs="23.086"/>
+        <demandEntry egressNodeId="11" ingressNodeId="2" offeredTrafficInErlangs="15.894"/>
+        <demandEntry egressNodeId="12" ingressNodeId="2" offeredTrafficInErlangs="17.2"/>
+        <demandEntry egressNodeId="13" ingressNodeId="2" offeredTrafficInErlangs="12.616"/>
+        <demandEntry egressNodeId="0" ingressNodeId="3" offeredTrafficInErlangs="33.054"/>
+        <demandEntry egressNodeId="1" ingressNodeId="3" offeredTrafficInErlangs="23.628"/>
+        <demandEntry egressNodeId="2" ingressNodeId="3" offeredTrafficInErlangs="27.16"/>
+        <demandEntry egressNodeId="4" ingressNodeId="3" offeredTrafficInErlangs="14.664"/>
+        <demandEntry egressNodeId="5" ingressNodeId="3" offeredTrafficInErlangs="15.168"/>
+        <demandEntry egressNodeId="6" ingressNodeId="3" offeredTrafficInErlangs="14.696"/>
+        <demandEntry egressNodeId="7" ingressNodeId="3" offeredTrafficInErlangs="20.144"/>
+        <demandEntry egressNodeId="8" ingressNodeId="3" offeredTrafficInErlangs="22.184"/>
+        <demandEntry egressNodeId="9" ingressNodeId="3" offeredTrafficInErlangs="21.1"/>
+        <demandEntry egressNodeId="10" ingressNodeId="3" offeredTrafficInErlangs="17.034"/>
+        <demandEntry egressNodeId="11" ingressNodeId="3" offeredTrafficInErlangs="11.068"/>
+        <demandEntry egressNodeId="12" ingressNodeId="3" offeredTrafficInErlangs="9.45"/>
+        <demandEntry egressNodeId="13" ingressNodeId="3" offeredTrafficInErlangs="24.728"/>
+        <demandEntry egressNodeId="0" ingressNodeId="4" offeredTrafficInErlangs="17.72"/>
+        <demandEntry egressNodeId="1" ingressNodeId="4" offeredTrafficInErlangs="11.754"/>
+        <demandEntry egressNodeId="2" ingressNodeId="4" offeredTrafficInErlangs="12.87"/>
+        <demandEntry egressNodeId="3" ingressNodeId="4" offeredTrafficInErlangs="28.15"/>
+        <demandEntry egressNodeId="5" ingressNodeId="4" offeredTrafficInErlangs="14.426"/>
+        <demandEntry egressNodeId="6" ingressNodeId="4" offeredTrafficInErlangs="35.358"/>
+        <demandEntry egressNodeId="7" ingressNodeId="4" offeredTrafficInErlangs="22.87"/>
+        <demandEntry egressNodeId="8" ingressNodeId="4" offeredTrafficInErlangs="27.376"/>
+        <demandEntry egressNodeId="9" ingressNodeId="4" offeredTrafficInErlangs="25.35"/>
+        <demandEntry egressNodeId="10" ingressNodeId="4" offeredTrafficInErlangs="20.12"/>
+        <demandEntry egressNodeId="11" ingressNodeId="4" offeredTrafficInErlangs="23.23"/>
+        <demandEntry egressNodeId="12" ingressNodeId="4" offeredTrafficInErlangs="20.454"/>
+        <demandEntry egressNodeId="13" ingressNodeId="4" offeredTrafficInErlangs="20.502"/>
+        <demandEntry egressNodeId="0" ingressNodeId="5" offeredTrafficInErlangs="19.936"/>
+        <demandEntry egressNodeId="1" ingressNodeId="5" offeredTrafficInErlangs="10.988"/>
+        <demandEntry egressNodeId="2" ingressNodeId="5" offeredTrafficInErlangs="20.782"/>
+        <demandEntry egressNodeId="3" ingressNodeId="5" offeredTrafficInErlangs="15.2"/>
+        <demandEntry egressNodeId="4" ingressNodeId="5" offeredTrafficInErlangs="30.59"/>
+        <demandEntry egressNodeId="6" ingressNodeId="5" offeredTrafficInErlangs="23.396"/>
+        <demandEntry egressNodeId="7" ingressNodeId="5" offeredTrafficInErlangs="21.538"/>
+        <demandEntry egressNodeId="8" ingressNodeId="5" offeredTrafficInErlangs="18.468"/>
+        <demandEntry egressNodeId="9" ingressNodeId="5" offeredTrafficInErlangs="16.986"/>
+        <demandEntry egressNodeId="10" ingressNodeId="5" offeredTrafficInErlangs="22.224"/>
+        <demandEntry egressNodeId="11" ingressNodeId="5" offeredTrafficInErlangs="16.396"/>
+        <demandEntry egressNodeId="12" ingressNodeId="5" offeredTrafficInErlangs="22.24"/>
+        <demandEntry egressNodeId="13" ingressNodeId="5" offeredTrafficInErlangs="24.936"/>
+        <demandEntry egressNodeId="0" ingressNodeId="6" offeredTrafficInErlangs="29.402"/>
+        <demandEntry egressNodeId="1" ingressNodeId="6" offeredTrafficInErlangs="15.566"/>
+        <demandEntry egressNodeId="2" ingressNodeId="6" offeredTrafficInErlangs="23.214"/>
+        <demandEntry egressNodeId="3" ingressNodeId="6" offeredTrafficInErlangs="21.938"/>
+        <demandEntry egressNodeId="4" ingressNodeId="6" offeredTrafficInErlangs="18.524"/>
+        <demandEntry egressNodeId="5" ingressNodeId="6" offeredTrafficInErlangs="34.458"/>
+        <demandEntry egressNodeId="7" ingressNodeId="6" offeredTrafficInErlangs="25.302"/>
+        <demandEntry egressNodeId="8" ingressNodeId="6" offeredTrafficInErlangs="12.958"/>
+        <demandEntry egressNodeId="9" ingressNodeId="6" offeredTrafficInErlangs="26.38"/>
+        <demandEntry egressNodeId="10" ingressNodeId="6" offeredTrafficInErlangs="26.076"/>
+        <demandEntry egressNodeId="11" ingressNodeId="6" offeredTrafficInErlangs="14.338"/>
+        <demandEntry egressNodeId="12" ingressNodeId="6" offeredTrafficInErlangs="31.444"/>
+        <demandEntry egressNodeId="13" ingressNodeId="6" offeredTrafficInErlangs="21.148"/>
+        <demandEntry egressNodeId="0" ingressNodeId="7" offeredTrafficInErlangs="22.488"/>
+        <demandEntry egressNodeId="1" ingressNodeId="7" offeredTrafficInErlangs="9.058"/>
+        <demandEntry egressNodeId="2" ingressNodeId="7" offeredTrafficInErlangs="22.782"/>
+        <demandEntry egressNodeId="3" ingressNodeId="7" offeredTrafficInErlangs="25.494"/>
+        <demandEntry egressNodeId="4" ingressNodeId="7" offeredTrafficInErlangs="32.106"/>
+        <demandEntry egressNodeId="5" ingressNodeId="7" offeredTrafficInErlangs="32.496"/>
+        <demandEntry egressNodeId="6" ingressNodeId="7" offeredTrafficInErlangs="34.258"/>
+        <demandEntry egressNodeId="8" ingressNodeId="7" offeredTrafficInErlangs="26.53"/>
+        <demandEntry egressNodeId="9" ingressNodeId="7" offeredTrafficInErlangs="36.778"/>
+        <demandEntry egressNodeId="10" ingressNodeId="7" offeredTrafficInErlangs="33.142"/>
+        <demandEntry egressNodeId="11" ingressNodeId="7" offeredTrafficInErlangs="26.658"/>
+        <demandEntry egressNodeId="12" ingressNodeId="7" offeredTrafficInErlangs="29.872"/>
+        <demandEntry egressNodeId="13" ingressNodeId="7" offeredTrafficInErlangs="36.522"/>
+        <demandEntry egressNodeId="0" ingressNodeId="8" offeredTrafficInErlangs="12.878"/>
+        <demandEntry egressNodeId="1" ingressNodeId="8" offeredTrafficInErlangs="14.824"/>
+        <demandEntry egressNodeId="2" ingressNodeId="8" offeredTrafficInErlangs="21.02"/>
+        <demandEntry egressNodeId="3" ingressNodeId="8" offeredTrafficInErlangs="27.456"/>
+        <demandEntry egressNodeId="4" ingressNodeId="8" offeredTrafficInErlangs="14.96"/>
+        <demandEntry egressNodeId="5" ingressNodeId="8" offeredTrafficInErlangs="16.116"/>
+        <demandEntry egressNodeId="6" ingressNodeId="8" offeredTrafficInErlangs="30.168"/>
+        <demandEntry egressNodeId="7" ingressNodeId="8" offeredTrafficInErlangs="14.586"/>
+        <demandEntry egressNodeId="9" ingressNodeId="8" offeredTrafficInErlangs="20.678"/>
+        <demandEntry egressNodeId="10" ingressNodeId="8" offeredTrafficInErlangs="29.466"/>
+        <demandEntry egressNodeId="11" ingressNodeId="8" offeredTrafficInErlangs="36.044"/>
+        <demandEntry egressNodeId="12" ingressNodeId="8" offeredTrafficInErlangs="31.978"/>
+        <demandEntry egressNodeId="13" ingressNodeId="8" offeredTrafficInErlangs="14.752"/>
+        <demandEntry egressNodeId="0" ingressNodeId="9" offeredTrafficInErlangs="23.652"/>
+        <demandEntry egressNodeId="1" ingressNodeId="9" offeredTrafficInErlangs="20.016"/>
+        <demandEntry egressNodeId="2" ingressNodeId="9" offeredTrafficInErlangs="10.886"/>
+        <demandEntry egressNodeId="3" ingressNodeId="9" offeredTrafficInErlangs="15.256"/>
+        <demandEntry egressNodeId="4" ingressNodeId="9" offeredTrafficInErlangs="15.024"/>
+        <demandEntry egressNodeId="5" ingressNodeId="9" offeredTrafficInErlangs="15.272"/>
+        <demandEntry egressNodeId="6" ingressNodeId="9" offeredTrafficInErlangs="21.284"/>
+        <demandEntry egressNodeId="7" ingressNodeId="9" offeredTrafficInErlangs="20.486"/>
+        <demandEntry egressNodeId="8" ingressNodeId="9" offeredTrafficInErlangs="32.034"/>
+        <demandEntry egressNodeId="10" ingressNodeId="9" offeredTrafficInErlangs="29.458"/>
+        <demandEntry egressNodeId="11" ingressNodeId="9" offeredTrafficInErlangs="26.3"/>
+        <demandEntry egressNodeId="12" ingressNodeId="9" offeredTrafficInErlangs="21.196"/>
+        <demandEntry egressNodeId="13" ingressNodeId="9" offeredTrafficInErlangs="27.728"/>
+        <demandEntry egressNodeId="0" ingressNodeId="10" offeredTrafficInErlangs="20.478"/>
+        <demandEntry egressNodeId="1" ingressNodeId="10" offeredTrafficInErlangs="9.888"/>
+        <demandEntry egressNodeId="2" ingressNodeId="10" offeredTrafficInErlangs="16.476"/>
+        <demandEntry egressNodeId="3" ingressNodeId="10" offeredTrafficInErlangs="14.744"/>
+        <demandEntry egressNodeId="4" ingressNodeId="10" offeredTrafficInErlangs="32.496"/>
+        <demandEntry egressNodeId="5" ingressNodeId="10" offeredTrafficInErlangs="27.878"/>
+        <demandEntry egressNodeId="6" ingressNodeId="10" offeredTrafficInErlangs="16.3"/>
+        <demandEntry egressNodeId="7" ingressNodeId="10" offeredTrafficInErlangs="14.96"/>
+        <demandEntry egressNodeId="8" ingressNodeId="10" offeredTrafficInErlangs="41.372"/>
+        <demandEntry egressNodeId="9" ingressNodeId="10" offeredTrafficInErlangs="20.582"/>
+        <demandEntry egressNodeId="11" ingressNodeId="10" offeredTrafficInErlangs="41.874"/>
+        <demandEntry egressNodeId="12" ingressNodeId="10" offeredTrafficInErlangs="28.82"/>
+        <demandEntry egressNodeId="13" ingressNodeId="10" offeredTrafficInErlangs="19.17"/>
+        <demandEntry egressNodeId="0" ingressNodeId="11" offeredTrafficInErlangs="10.638"/>
+        <demandEntry egressNodeId="1" ingressNodeId="11" offeredTrafficInErlangs="8.318"/>
+        <demandEntry egressNodeId="2" ingressNodeId="11" offeredTrafficInErlangs="15.192"/>
+        <demandEntry egressNodeId="3" ingressNodeId="11" offeredTrafficInErlangs="24.586"/>
+        <demandEntry egressNodeId="4" ingressNodeId="11" offeredTrafficInErlangs="18.74"/>
+        <demandEntry egressNodeId="5" ingressNodeId="11" offeredTrafficInErlangs="13.98"/>
+        <demandEntry egressNodeId="6" ingressNodeId="11" offeredTrafficInErlangs="14.688"/>
+        <demandEntry egressNodeId="7" ingressNodeId="11" offeredTrafficInErlangs="29.816"/>
+        <demandEntry egressNodeId="8" ingressNodeId="11" offeredTrafficInErlangs="36.634"/>
+        <demandEntry egressNodeId="9" ingressNodeId="11" offeredTrafficInErlangs="25.256"/>
+        <demandEntry egressNodeId="10" ingressNodeId="11" offeredTrafficInErlangs="19.154"/>
+        <demandEntry egressNodeId="12" ingressNodeId="11" offeredTrafficInErlangs="36.65"/>
+        <demandEntry egressNodeId="13" ingressNodeId="11" offeredTrafficInErlangs="33.724"/>
+        <demandEntry egressNodeId="0" ingressNodeId="12" offeredTrafficInErlangs="11.276"/>
+        <demandEntry egressNodeId="1" ingressNodeId="12" offeredTrafficInErlangs="16.594"/>
+        <demandEntry egressNodeId="2" ingressNodeId="12" offeredTrafficInErlangs="13.374"/>
+        <demandEntry egressNodeId="3" ingressNodeId="12" offeredTrafficInErlangs="12.6"/>
+        <demandEntry egressNodeId="4" ingressNodeId="12" offeredTrafficInErlangs="16.044"/>
+        <demandEntry egressNodeId="5" ingressNodeId="12" offeredTrafficInErlangs="21.228"/>
+        <demandEntry egressNodeId="6" ingressNodeId="12" offeredTrafficInErlangs="14.864"/>
+        <demandEntry egressNodeId="7" ingressNodeId="12" offeredTrafficInErlangs="27.472"/>
+        <demandEntry egressNodeId="8" ingressNodeId="12" offeredTrafficInErlangs="22.376"/>
+        <demandEntry egressNodeId="9" ingressNodeId="12" offeredTrafficInErlangs="27.272"/>
+        <demandEntry egressNodeId="10" ingressNodeId="12" offeredTrafficInErlangs="30.51"/>
+        <demandEntry egressNodeId="11" ingressNodeId="12" offeredTrafficInErlangs="15.718"/>
+        <demandEntry egressNodeId="13" ingressNodeId="12" offeredTrafficInErlangs="21.994"/>
+        <demandEntry egressNodeId="0" ingressNodeId="13" offeredTrafficInErlangs="18.166"/>
+        <demandEntry egressNodeId="1" ingressNodeId="13" offeredTrafficInErlangs="17.224"/>
+        <demandEntry egressNodeId="2" ingressNodeId="13" offeredTrafficInErlangs="10.94"/>
+        <demandEntry egressNodeId="3" ingressNodeId="13" offeredTrafficInErlangs="23.492"/>
+        <demandEntry egressNodeId="4" ingressNodeId="13" offeredTrafficInErlangs="16.476"/>
+        <demandEntry egressNodeId="5" ingressNodeId="13" offeredTrafficInErlangs="29.672"/>
+        <demandEntry egressNodeId="6" ingressNodeId="13" offeredTrafficInErlangs="21.156"/>
+        <demandEntry egressNodeId="7" ingressNodeId="13" offeredTrafficInErlangs="37.058"/>
+        <demandEntry egressNodeId="8" ingressNodeId="13" offeredTrafficInErlangs="28.9"/>
+        <demandEntry egressNodeId="9" ingressNodeId="13" offeredTrafficInErlangs="23.612"/>
+        <demandEntry egressNodeId="10" ingressNodeId="13" offeredTrafficInErlangs="35.884"/>
+        <demandEntry egressNodeId="11" ingressNodeId="13" offeredTrafficInErlangs="21.364"/>
+        <demandEntry egressNodeId="12" ingressNodeId="13" offeredTrafficInErlangs="38.046"/>
+    </demandSet>
+    <protectionInfo>
+        <protectionSegment reservedBandwidthInErlangs="30.008">
+            <linkEntry id="1"/>
+            <linkEntry id="7"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="11.93">
+            <linkEntry id="0"/>
+            <linkEntry id="4"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="31.22">
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="32.504">
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="18.35">
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.9">
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+            <linkEntry id="14"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="25.766">
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="19.034">
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.746">
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="17"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.57">
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="26"/>
+            <linkEntry id="34"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.93">
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <linkEntry id="31"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.722">
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.23">
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="26"/>
+            <linkEntry id="35"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="32.576">
+            <linkEntry id="4"/>
+            <linkEntry id="6"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="12.902">
+            <linkEntry id="3"/>
+            <linkEntry id="1"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="29.784">
+            <linkEntry id="4"/>
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.814">
+            <linkEntry id="4"/>
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="18.62">
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.252">
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+            <linkEntry id="14"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="17.488">
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.096">
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <linkEntry id="31"/>
+            <linkEntry id="33"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="11.738">
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="25"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="19.274">
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="18.708">
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="26"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="11.364">
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="17.13">
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <linkEntry id="31"/>
+            <linkEntry id="35"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.092">
+            <linkEntry id="7"/>
+            <linkEntry id="3"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.866">
+            <linkEntry id="6"/>
+            <linkEntry id="0"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="30.678">
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="17.066">
+            <linkEntry id="7"/>
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.14">
+            <linkEntry id="7"/>
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="10.462">
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="24.626">
+            <linkEntry id="8"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="12.312">
+            <linkEntry id="8"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.188">
+            <linkEntry id="6"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="25"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.086">
+            <linkEntry id="8"/>
+            <linkEntry id="18"/>
+            <linkEntry id="40"/>
+            <linkEntry id="34"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.894">
+            <linkEntry id="6"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="26"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="17.2">
+            <linkEntry id="6"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="12.616">
+            <linkEntry id="6"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="26"/>
+            <linkEntry id="35"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="33.054">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="15"/>
+            <linkEntry id="6"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.628">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="27.16">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="15"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.664">
+            <linkEntry id="9"/>
+            <linkEntry id="4"/>
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.168">
+            <linkEntry id="9"/>
+            <linkEntry id="4"/>
+            <linkEntry id="8"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.696">
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+            <linkEntry id="22"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.144">
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="22.184">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.1">
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+            <linkEntry id="36"/>
+            <linkEntry id="25"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="17.034">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+            <linkEntry id="40"/>
+            <linkEntry id="34"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="11.068">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+            <linkEntry id="40"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="9.45">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="24.728">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="17.72">
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="11.754">
+            <linkEntry id="13"/>
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="12.87">
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <linkEntry id="4"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="28.15">
+            <linkEntry id="13"/>
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+            <linkEntry id="5"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.426">
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <linkEntry id="4"/>
+            <linkEntry id="8"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="35.358">
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="22.87">
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="27.376">
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="25.35">
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+            <linkEntry id="23"/>
+            <linkEntry id="25"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.12">
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+            <linkEntry id="37"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.23">
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <linkEntry id="31"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.454">
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.502">
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+            <linkEntry id="38"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="19.936">
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="10.988">
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.782">
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <linkEntry id="4"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.2">
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+            <linkEntry id="5"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="30.59">
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.396">
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.538">
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="18.468">
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+            <linkEntry id="36"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.986">
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+            <linkEntry id="36"/>
+            <linkEntry id="25"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="22.224">
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+            <linkEntry id="37"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.396">
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="26"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="22.24">
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="27"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="24.936">
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="29.402">
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.566">
+            <linkEntry id="20"/>
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.214">
+            <linkEntry id="20"/>
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.938">
+            <linkEntry id="20"/>
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="18.524">
+            <linkEntry id="20"/>
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="34.458">
+            <linkEntry id="20"/>
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="25.302">
+            <linkEntry id="19"/>
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="12.958">
+            <linkEntry id="19"/>
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.38">
+            <linkEntry id="20"/>
+            <linkEntry id="23"/>
+            <linkEntry id="25"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.076">
+            <linkEntry id="20"/>
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.338">
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <linkEntry id="31"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="31.444">
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.148">
+            <linkEntry id="20"/>
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="22.488">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="9.058">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="22.782">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <linkEntry id="13"/>
+            <linkEntry id="15"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="25.494">
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="32.106">
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="32.496">
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="34.258">
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.53">
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="36.778">
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="17"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="33.142">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.658">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <linkEntry id="31"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="29.872">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="36.522">
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="18"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="12.878">
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+            <linkEntry id="15"/>
+            <linkEntry id="6"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.824">
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.02">
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="27.456">
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.96">
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.116">
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="30.168">
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.586">
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.678">
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <linkEntry id="17"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="29.466">
+            <linkEntry id="26"/>
+            <linkEntry id="34"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="36.044">
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+            <linkEntry id="40"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="31.978">
+            <linkEntry id="26"/>
+            <linkEntry id="35"/>
+            <linkEntry id="41"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.752">
+            <linkEntry id="26"/>
+            <linkEntry id="35"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.652">
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.016">
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="10.886">
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.256">
+            <linkEntry id="29"/>
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+            <linkEntry id="30"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.024">
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.272">
+            <linkEntry id="29"/>
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.284">
+            <linkEntry id="28"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.486">
+            <linkEntry id="28"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="32.034">
+            <linkEntry id="28"/>
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+            <linkEntry id="36"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="29.458">
+            <linkEntry id="28"/>
+            <linkEntry id="18"/>
+            <linkEntry id="40"/>
+            <linkEntry id="34"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="26.3">
+            <linkEntry id="28"/>
+            <linkEntry id="18"/>
+            <linkEntry id="40"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.196">
+            <linkEntry id="28"/>
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="27.728">
+            <linkEntry id="29"/>
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.478">
+            <linkEntry id="31"/>
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="9.888">
+            <linkEntry id="31"/>
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.476">
+            <linkEntry id="31"/>
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="15"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.744">
+            <linkEntry id="31"/>
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="32.496">
+            <linkEntry id="31"/>
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="27.878">
+            <linkEntry id="30"/>
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.3">
+            <linkEntry id="31"/>
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.96">
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="41.372">
+            <linkEntry id="31"/>
+            <linkEntry id="33"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="20.582">
+            <linkEntry id="30"/>
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="41.874">
+            <linkEntry id="32"/>
+            <linkEntry id="38"/>
+            <linkEntry id="40"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="28.82">
+            <linkEntry id="31"/>
+            <linkEntry id="35"/>
+            <linkEntry id="41"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="19.17">
+            <linkEntry id="31"/>
+            <linkEntry id="35"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="10.638">
+            <linkEntry id="34"/>
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="8.318">
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.192">
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="24.586">
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="18.74">
+            <linkEntry id="34"/>
+            <linkEntry id="30"/>
+            <linkEntry id="10"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="13.98">
+            <linkEntry id="33"/>
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.688">
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="29.816">
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="36.634">
+            <linkEntry id="34"/>
+            <linkEntry id="32"/>
+            <linkEntry id="36"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="25.256">
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="17"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="19.154">
+            <linkEntry id="33"/>
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="36.65">
+            <linkEntry id="34"/>
+            <linkEntry id="32"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="33.724">
+            <linkEntry id="33"/>
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="11.276">
+            <linkEntry id="37"/>
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.594">
+            <linkEntry id="36"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="13.374">
+            <linkEntry id="36"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="12.6">
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.044">
+            <linkEntry id="37"/>
+            <linkEntry id="30"/>
+            <linkEntry id="10"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.228">
+            <linkEntry id="36"/>
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="14.864">
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="27.472">
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="22.376">
+            <linkEntry id="37"/>
+            <linkEntry id="31"/>
+            <linkEntry id="33"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="27.272">
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <linkEntry id="17"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="30.51">
+            <linkEntry id="36"/>
+            <linkEntry id="26"/>
+            <linkEntry id="34"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="15.718">
+            <linkEntry id="37"/>
+            <linkEntry id="31"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.994">
+            <linkEntry id="36"/>
+            <linkEntry id="26"/>
+            <linkEntry id="35"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="18.166">
+            <linkEntry id="40"/>
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="17.224">
+            <linkEntry id="40"/>
+            <linkEntry id="34"/>
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="10.94">
+            <linkEntry id="40"/>
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.492">
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="16.476">
+            <linkEntry id="40"/>
+            <linkEntry id="34"/>
+            <linkEntry id="30"/>
+            <linkEntry id="10"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="29.672">
+            <linkEntry id="40"/>
+            <linkEntry id="33"/>
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.156">
+            <linkEntry id="40"/>
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="37.058">
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="28.9">
+            <linkEntry id="40"/>
+            <linkEntry id="33"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="23.612">
+            <linkEntry id="40"/>
+            <linkEntry id="33"/>
+            <linkEntry id="25"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="35.884">
+            <linkEntry id="40"/>
+            <linkEntry id="34"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="21.364">
+            <linkEntry id="41"/>
+            <linkEntry id="37"/>
+            <linkEntry id="31"/>
+        </protectionSegment>
+        <protectionSegment reservedBandwidthInErlangs="38.046">
+            <linkEntry id="40"/>
+            <linkEntry id="34"/>
+            <linkEntry id="32"/>
+        </protectionSegment>
+    </protectionInfo>
+    <routingInfo>
+        <route carriedTrafficInErlangs="30.008" demandId="0">
+            <linkEntry id="0"/>
+            <protectionSegmentEntry id="0"/>
+        </route>
+        <route carriedTrafficInErlangs="11.93" demandId="1">
+            <linkEntry id="1"/>
+            <protectionSegmentEntry id="1"/>
+        </route>
+        <route carriedTrafficInErlangs="31.22" demandId="2">
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+            <protectionSegmentEntry id="2"/>
+        </route>
+        <route carriedTrafficInErlangs="32.504" demandId="3">
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+            <protectionSegmentEntry id="3"/>
+        </route>
+        <route carriedTrafficInErlangs="18.35" demandId="4">
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <protectionSegmentEntry id="4"/>
+        </route>
+        <route carriedTrafficInErlangs="23.9" demandId="5">
+            <linkEntry id="2"/>
+            <linkEntry id="22"/>
+            <protectionSegmentEntry id="5"/>
+        </route>
+        <route carriedTrafficInErlangs="25.766" demandId="6">
+            <linkEntry id="2"/>
+            <protectionSegmentEntry id="6"/>
+        </route>
+        <route carriedTrafficInErlangs="19.034" demandId="7">
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <protectionSegmentEntry id="7"/>
+        </route>
+        <route carriedTrafficInErlangs="21.746" demandId="8">
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="25"/>
+            <protectionSegmentEntry id="8"/>
+        </route>
+        <route carriedTrafficInErlangs="16.57" demandId="9">
+            <linkEntry id="0"/>
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <protectionSegmentEntry id="9"/>
+        </route>
+        <route carriedTrafficInErlangs="21.93" demandId="10">
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="26"/>
+            <protectionSegmentEntry id="10"/>
+        </route>
+        <route carriedTrafficInErlangs="16.722" demandId="11">
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+            <protectionSegmentEntry id="11"/>
+        </route>
+        <route carriedTrafficInErlangs="23.23" demandId="12">
+            <linkEntry id="1"/>
+            <linkEntry id="8"/>
+            <linkEntry id="18"/>
+            <protectionSegmentEntry id="12"/>
+        </route>
+        <route carriedTrafficInErlangs="32.576" demandId="13">
+            <linkEntry id="3"/>
+            <protectionSegmentEntry id="13"/>
+        </route>
+        <route carriedTrafficInErlangs="12.902" demandId="14">
+            <linkEntry id="4"/>
+            <protectionSegmentEntry id="14"/>
+        </route>
+        <route carriedTrafficInErlangs="29.784" demandId="15">
+            <linkEntry id="5"/>
+            <protectionSegmentEntry id="15"/>
+        </route>
+        <route carriedTrafficInErlangs="15.814" demandId="16">
+            <linkEntry id="5"/>
+            <linkEntry id="10"/>
+            <protectionSegmentEntry id="16"/>
+        </route>
+        <route carriedTrafficInErlangs="18.62" demandId="17">
+            <linkEntry id="4"/>
+            <linkEntry id="8"/>
+            <protectionSegmentEntry id="17"/>
+        </route>
+        <route carriedTrafficInErlangs="26.252" demandId="18">
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+            <linkEntry id="22"/>
+            <protectionSegmentEntry id="18"/>
+        </route>
+        <route carriedTrafficInErlangs="17.488" demandId="19">
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+            <protectionSegmentEntry id="19"/>
+        </route>
+        <route carriedTrafficInErlangs="15.096" demandId="20">
+            <linkEntry id="3"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <protectionSegmentEntry id="20"/>
+        </route>
+        <route carriedTrafficInErlangs="11.738" demandId="21">
+            <linkEntry id="4"/>
+            <linkEntry id="8"/>
+            <linkEntry id="17"/>
+            <protectionSegmentEntry id="21"/>
+        </route>
+        <route carriedTrafficInErlangs="19.274" demandId="22">
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <protectionSegmentEntry id="22"/>
+        </route>
+        <route carriedTrafficInErlangs="18.708" demandId="23">
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <linkEntry id="31"/>
+            <protectionSegmentEntry id="23"/>
+        </route>
+        <route carriedTrafficInErlangs="11.364" demandId="24">
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+            <protectionSegmentEntry id="24"/>
+        </route>
+        <route carriedTrafficInErlangs="17.13" demandId="25">
+            <linkEntry id="4"/>
+            <linkEntry id="8"/>
+            <linkEntry id="18"/>
+            <protectionSegmentEntry id="25"/>
+        </route>
+        <route carriedTrafficInErlangs="21.092" demandId="26">
+            <linkEntry id="6"/>
+            <protectionSegmentEntry id="26"/>
+        </route>
+        <route carriedTrafficInErlangs="26.866" demandId="27">
+            <linkEntry id="7"/>
+            <protectionSegmentEntry id="27"/>
+        </route>
+        <route carriedTrafficInErlangs="30.678" demandId="28">
+            <linkEntry id="7"/>
+            <linkEntry id="5"/>
+            <protectionSegmentEntry id="28"/>
+        </route>
+        <route carriedTrafficInErlangs="17.066" demandId="29">
+            <linkEntry id="8"/>
+            <linkEntry id="16"/>
+            <protectionSegmentEntry id="29"/>
+        </route>
+        <route carriedTrafficInErlangs="26.14" demandId="30">
+            <linkEntry id="8"/>
+            <protectionSegmentEntry id="30"/>
+        </route>
+        <route carriedTrafficInErlangs="10.462" demandId="31">
+            <linkEntry id="6"/>
+            <linkEntry id="2"/>
+            <linkEntry id="22"/>
+            <protectionSegmentEntry id="31"/>
+        </route>
+        <route carriedTrafficInErlangs="24.626" demandId="32">
+            <linkEntry id="6"/>
+            <linkEntry id="2"/>
+            <protectionSegmentEntry id="32"/>
+        </route>
+        <route carriedTrafficInErlangs="12.312" demandId="33">
+            <linkEntry id="6"/>
+            <linkEntry id="2"/>
+            <linkEntry id="23"/>
+            <protectionSegmentEntry id="33"/>
+        </route>
+        <route carriedTrafficInErlangs="26.188" demandId="34">
+            <linkEntry id="8"/>
+            <linkEntry id="17"/>
+            <protectionSegmentEntry id="34"/>
+        </route>
+        <route carriedTrafficInErlangs="23.086" demandId="35">
+            <linkEntry id="7"/>
+            <linkEntry id="5"/>
+            <linkEntry id="11"/>
+            <protectionSegmentEntry id="35"/>
+        </route>
+        <route carriedTrafficInErlangs="15.894" demandId="36">
+            <linkEntry id="8"/>
+            <linkEntry id="18"/>
+            <linkEntry id="40"/>
+            <protectionSegmentEntry id="36"/>
+        </route>
+        <route carriedTrafficInErlangs="17.2" demandId="37">
+            <linkEntry id="8"/>
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+            <protectionSegmentEntry id="37"/>
+        </route>
+        <route carriedTrafficInErlangs="12.616" demandId="38">
+            <linkEntry id="8"/>
+            <linkEntry id="18"/>
+            <protectionSegmentEntry id="38"/>
+        </route>
+        <route carriedTrafficInErlangs="33.054" demandId="39">
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+            <protectionSegmentEntry id="39"/>
+        </route>
+        <route carriedTrafficInErlangs="23.628" demandId="40">
+            <linkEntry id="9"/>
+            <protectionSegmentEntry id="40"/>
+        </route>
+        <route carriedTrafficInErlangs="27.16" demandId="41">
+            <linkEntry id="9"/>
+            <linkEntry id="4"/>
+            <protectionSegmentEntry id="41"/>
+        </route>
+        <route carriedTrafficInErlangs="14.664" demandId="42">
+            <linkEntry id="10"/>
+            <protectionSegmentEntry id="42"/>
+        </route>
+        <route carriedTrafficInErlangs="15.168" demandId="43">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <protectionSegmentEntry id="43"/>
+        </route>
+        <route carriedTrafficInErlangs="14.696" demandId="44">
+            <linkEntry id="10"/>
+            <linkEntry id="14"/>
+            <protectionSegmentEntry id="44"/>
+        </route>
+        <route carriedTrafficInErlangs="20.144" demandId="45">
+            <linkEntry id="10"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+            <protectionSegmentEntry id="45"/>
+        </route>
+        <route carriedTrafficInErlangs="22.184" demandId="46">
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+            <linkEntry id="36"/>
+            <protectionSegmentEntry id="46"/>
+        </route>
+        <route carriedTrafficInErlangs="21.1" demandId="47">
+            <linkEntry id="10"/>
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <protectionSegmentEntry id="47"/>
+        </route>
+        <route carriedTrafficInErlangs="17.034" demandId="48">
+            <linkEntry id="11"/>
+            <protectionSegmentEntry id="48"/>
+        </route>
+        <route carriedTrafficInErlangs="11.068" demandId="49">
+            <linkEntry id="11"/>
+            <linkEntry id="31"/>
+            <protectionSegmentEntry id="49"/>
+        </route>
+        <route carriedTrafficInErlangs="9.45" demandId="50">
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+            <protectionSegmentEntry id="50"/>
+        </route>
+        <route carriedTrafficInErlangs="24.728" demandId="51">
+            <linkEntry id="11"/>
+            <linkEntry id="32"/>
+            <linkEntry id="38"/>
+            <protectionSegmentEntry id="51"/>
+        </route>
+        <route carriedTrafficInErlangs="17.72" demandId="52">
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+            <linkEntry id="21"/>
+            <protectionSegmentEntry id="52"/>
+        </route>
+        <route carriedTrafficInErlangs="11.754" demandId="53">
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <protectionSegmentEntry id="53"/>
+        </route>
+        <route carriedTrafficInErlangs="12.87" demandId="54">
+            <linkEntry id="13"/>
+            <linkEntry id="15"/>
+            <protectionSegmentEntry id="54"/>
+        </route>
+        <route carriedTrafficInErlangs="28.15" demandId="55">
+            <linkEntry id="12"/>
+            <protectionSegmentEntry id="55"/>
+        </route>
+        <route carriedTrafficInErlangs="14.426" demandId="56">
+            <linkEntry id="13"/>
+            <protectionSegmentEntry id="56"/>
+        </route>
+        <route carriedTrafficInErlangs="35.358" demandId="57">
+            <linkEntry id="14"/>
+            <protectionSegmentEntry id="57"/>
+        </route>
+        <route carriedTrafficInErlangs="22.87" demandId="58">
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+            <protectionSegmentEntry id="58"/>
+        </route>
+        <route carriedTrafficInErlangs="27.376" demandId="59">
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+            <linkEntry id="23"/>
+            <protectionSegmentEntry id="59"/>
+        </route>
+        <route carriedTrafficInErlangs="25.35" demandId="60">
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <protectionSegmentEntry id="60"/>
+        </route>
+        <route carriedTrafficInErlangs="20.12" demandId="61">
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <protectionSegmentEntry id="61"/>
+        </route>
+        <route carriedTrafficInErlangs="23.23" demandId="62">
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+            <linkEntry id="40"/>
+            <protectionSegmentEntry id="62"/>
+        </route>
+        <route carriedTrafficInErlangs="20.454" demandId="63">
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+            <protectionSegmentEntry id="63"/>
+        </route>
+        <route carriedTrafficInErlangs="20.502" demandId="64">
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+            <protectionSegmentEntry id="64"/>
+        </route>
+        <route carriedTrafficInErlangs="19.936" demandId="65">
+            <linkEntry id="15"/>
+            <linkEntry id="6"/>
+            <protectionSegmentEntry id="65"/>
+        </route>
+        <route carriedTrafficInErlangs="10.988" demandId="66">
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+            <protectionSegmentEntry id="66"/>
+        </route>
+        <route carriedTrafficInErlangs="20.782" demandId="67">
+            <linkEntry id="15"/>
+            <protectionSegmentEntry id="67"/>
+        </route>
+        <route carriedTrafficInErlangs="15.2" demandId="68">
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+            <protectionSegmentEntry id="68"/>
+        </route>
+        <route carriedTrafficInErlangs="30.59" demandId="69">
+            <linkEntry id="16"/>
+            <protectionSegmentEntry id="69"/>
+        </route>
+        <route carriedTrafficInErlangs="23.396" demandId="70">
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+            <protectionSegmentEntry id="70"/>
+        </route>
+        <route carriedTrafficInErlangs="21.538" demandId="71">
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+            <linkEntry id="20"/>
+            <protectionSegmentEntry id="71"/>
+        </route>
+        <route carriedTrafficInErlangs="18.468" demandId="72">
+            <linkEntry id="17"/>
+            <linkEntry id="29"/>
+            <protectionSegmentEntry id="72"/>
+        </route>
+        <route carriedTrafficInErlangs="16.986" demandId="73">
+            <linkEntry id="17"/>
+            <protectionSegmentEntry id="73"/>
+        </route>
+        <route carriedTrafficInErlangs="22.224" demandId="74">
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <protectionSegmentEntry id="74"/>
+        </route>
+        <route carriedTrafficInErlangs="16.396" demandId="75">
+            <linkEntry id="18"/>
+            <linkEntry id="40"/>
+            <protectionSegmentEntry id="75"/>
+        </route>
+        <route carriedTrafficInErlangs="22.24" demandId="76">
+            <linkEntry id="18"/>
+            <linkEntry id="41"/>
+            <protectionSegmentEntry id="76"/>
+        </route>
+        <route carriedTrafficInErlangs="24.936" demandId="77">
+            <linkEntry id="18"/>
+            <protectionSegmentEntry id="77"/>
+        </route>
+        <route carriedTrafficInErlangs="29.402" demandId="78">
+            <linkEntry id="20"/>
+            <linkEntry id="21"/>
+            <protectionSegmentEntry id="78"/>
+        </route>
+        <route carriedTrafficInErlangs="15.566" demandId="79">
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="9"/>
+            <protectionSegmentEntry id="79"/>
+        </route>
+        <route carriedTrafficInErlangs="23.214" demandId="80">
+            <linkEntry id="19"/>
+            <linkEntry id="13"/>
+            <linkEntry id="15"/>
+            <protectionSegmentEntry id="80"/>
+        </route>
+        <route carriedTrafficInErlangs="21.938" demandId="81">
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <protectionSegmentEntry id="81"/>
+        </route>
+        <route carriedTrafficInErlangs="18.524" demandId="82">
+            <linkEntry id="19"/>
+            <protectionSegmentEntry id="82"/>
+        </route>
+        <route carriedTrafficInErlangs="34.458" demandId="83">
+            <linkEntry id="19"/>
+            <linkEntry id="13"/>
+            <protectionSegmentEntry id="83"/>
+        </route>
+        <route carriedTrafficInErlangs="25.302" demandId="84">
+            <linkEntry id="20"/>
+            <protectionSegmentEntry id="84"/>
+        </route>
+        <route carriedTrafficInErlangs="12.958" demandId="85">
+            <linkEntry id="20"/>
+            <linkEntry id="23"/>
+            <protectionSegmentEntry id="85"/>
+        </route>
+        <route carriedTrafficInErlangs="26.38" demandId="86">
+            <linkEntry id="19"/>
+            <linkEntry id="13"/>
+            <linkEntry id="17"/>
+            <protectionSegmentEntry id="86"/>
+        </route>
+        <route carriedTrafficInErlangs="26.076" demandId="87">
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <linkEntry id="11"/>
+            <protectionSegmentEntry id="87"/>
+        </route>
+        <route carriedTrafficInErlangs="14.338" demandId="88">
+            <linkEntry id="20"/>
+            <linkEntry id="23"/>
+            <linkEntry id="26"/>
+            <protectionSegmentEntry id="88"/>
+        </route>
+        <route carriedTrafficInErlangs="31.444" demandId="89">
+            <linkEntry id="20"/>
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+            <protectionSegmentEntry id="89"/>
+        </route>
+        <route carriedTrafficInErlangs="21.148" demandId="90">
+            <linkEntry id="19"/>
+            <linkEntry id="13"/>
+            <linkEntry id="18"/>
+            <protectionSegmentEntry id="90"/>
+        </route>
+        <route carriedTrafficInErlangs="22.488" demandId="91">
+            <linkEntry id="21"/>
+            <protectionSegmentEntry id="91"/>
+        </route>
+        <route carriedTrafficInErlangs="9.058" demandId="92">
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+            <protectionSegmentEntry id="92"/>
+        </route>
+        <route carriedTrafficInErlangs="22.782" demandId="93">
+            <linkEntry id="21"/>
+            <linkEntry id="1"/>
+            <protectionSegmentEntry id="93"/>
+        </route>
+        <route carriedTrafficInErlangs="25.494" demandId="94">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <linkEntry id="12"/>
+            <protectionSegmentEntry id="94"/>
+        </route>
+        <route carriedTrafficInErlangs="32.106" demandId="95">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <protectionSegmentEntry id="95"/>
+        </route>
+        <route carriedTrafficInErlangs="32.496" demandId="96">
+            <linkEntry id="22"/>
+            <linkEntry id="19"/>
+            <linkEntry id="13"/>
+            <protectionSegmentEntry id="96"/>
+        </route>
+        <route carriedTrafficInErlangs="34.258" demandId="97">
+            <linkEntry id="22"/>
+            <protectionSegmentEntry id="97"/>
+        </route>
+        <route carriedTrafficInErlangs="26.53" demandId="98">
+            <linkEntry id="23"/>
+            <protectionSegmentEntry id="98"/>
+        </route>
+        <route carriedTrafficInErlangs="36.778" demandId="99">
+            <linkEntry id="23"/>
+            <linkEntry id="25"/>
+            <protectionSegmentEntry id="99"/>
+        </route>
+        <route carriedTrafficInErlangs="33.142" demandId="100">
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+            <protectionSegmentEntry id="100"/>
+        </route>
+        <route carriedTrafficInErlangs="26.658" demandId="101">
+            <linkEntry id="23"/>
+            <linkEntry id="26"/>
+            <protectionSegmentEntry id="101"/>
+        </route>
+        <route carriedTrafficInErlangs="29.872" demandId="102">
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+            <protectionSegmentEntry id="102"/>
+        </route>
+        <route carriedTrafficInErlangs="36.522" demandId="103">
+            <linkEntry id="23"/>
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+            <protectionSegmentEntry id="103"/>
+        </route>
+        <route carriedTrafficInErlangs="12.878" demandId="104">
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <protectionSegmentEntry id="104"/>
+        </route>
+        <route carriedTrafficInErlangs="14.824" demandId="105">
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <linkEntry id="0"/>
+            <protectionSegmentEntry id="105"/>
+        </route>
+        <route carriedTrafficInErlangs="21.02" demandId="106">
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+            <linkEntry id="15"/>
+            <protectionSegmentEntry id="106"/>
+        </route>
+        <route carriedTrafficInErlangs="27.456" demandId="107">
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+            <linkEntry id="30"/>
+            <protectionSegmentEntry id="107"/>
+        </route>
+        <route carriedTrafficInErlangs="14.96" demandId="108">
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+            <linkEntry id="16"/>
+            <protectionSegmentEntry id="108"/>
+        </route>
+        <route carriedTrafficInErlangs="16.116" demandId="109">
+            <linkEntry id="25"/>
+            <linkEntry id="28"/>
+            <protectionSegmentEntry id="109"/>
+        </route>
+        <route carriedTrafficInErlangs="30.168" demandId="110">
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+            <protectionSegmentEntry id="110"/>
+        </route>
+        <route carriedTrafficInErlangs="14.586" demandId="111">
+            <linkEntry id="24"/>
+            <protectionSegmentEntry id="111"/>
+        </route>
+        <route carriedTrafficInErlangs="20.678" demandId="112">
+            <linkEntry id="25"/>
+            <protectionSegmentEntry id="112"/>
+        </route>
+        <route carriedTrafficInErlangs="29.466" demandId="113">
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+            <protectionSegmentEntry id="113"/>
+        </route>
+        <route carriedTrafficInErlangs="36.044" demandId="114">
+            <linkEntry id="26"/>
+            <protectionSegmentEntry id="114"/>
+        </route>
+        <route carriedTrafficInErlangs="31.978" demandId="115">
+            <linkEntry id="27"/>
+            <protectionSegmentEntry id="115"/>
+        </route>
+        <route carriedTrafficInErlangs="14.752" demandId="116">
+            <linkEntry id="27"/>
+            <linkEntry id="38"/>
+            <protectionSegmentEntry id="116"/>
+        </route>
+        <route carriedTrafficInErlangs="23.652" demandId="117">
+            <linkEntry id="28"/>
+            <linkEntry id="15"/>
+            <linkEntry id="6"/>
+            <protectionSegmentEntry id="117"/>
+        </route>
+        <route carriedTrafficInErlangs="20.016" demandId="118">
+            <linkEntry id="28"/>
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+            <protectionSegmentEntry id="118"/>
+        </route>
+        <route carriedTrafficInErlangs="10.886" demandId="119">
+            <linkEntry id="28"/>
+            <linkEntry id="15"/>
+            <protectionSegmentEntry id="119"/>
+        </route>
+        <route carriedTrafficInErlangs="15.256" demandId="120">
+            <linkEntry id="28"/>
+            <linkEntry id="16"/>
+            <linkEntry id="12"/>
+            <protectionSegmentEntry id="120"/>
+        </route>
+        <route carriedTrafficInErlangs="15.024" demandId="121">
+            <linkEntry id="28"/>
+            <linkEntry id="16"/>
+            <protectionSegmentEntry id="121"/>
+        </route>
+        <route carriedTrafficInErlangs="15.272" demandId="122">
+            <linkEntry id="28"/>
+            <protectionSegmentEntry id="122"/>
+        </route>
+        <route carriedTrafficInErlangs="21.284" demandId="123">
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+            <protectionSegmentEntry id="123"/>
+        </route>
+        <route carriedTrafficInErlangs="20.486" demandId="124">
+            <linkEntry id="29"/>
+            <linkEntry id="24"/>
+            <protectionSegmentEntry id="124"/>
+        </route>
+        <route carriedTrafficInErlangs="32.034" demandId="125">
+            <linkEntry id="29"/>
+            <protectionSegmentEntry id="125"/>
+        </route>
+        <route carriedTrafficInErlangs="29.458" demandId="126">
+            <linkEntry id="29"/>
+            <linkEntry id="27"/>
+            <linkEntry id="37"/>
+            <protectionSegmentEntry id="126"/>
+        </route>
+        <route carriedTrafficInErlangs="26.3" demandId="127">
+            <linkEntry id="29"/>
+            <linkEntry id="26"/>
+            <protectionSegmentEntry id="127"/>
+        </route>
+        <route carriedTrafficInErlangs="21.196" demandId="128">
+            <linkEntry id="29"/>
+            <linkEntry id="27"/>
+            <protectionSegmentEntry id="128"/>
+        </route>
+        <route carriedTrafficInErlangs="27.728" demandId="129">
+            <linkEntry id="28"/>
+            <linkEntry id="18"/>
+            <protectionSegmentEntry id="129"/>
+        </route>
+        <route carriedTrafficInErlangs="20.478" demandId="130">
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+            <linkEntry id="3"/>
+            <protectionSegmentEntry id="130"/>
+        </route>
+        <route carriedTrafficInErlangs="9.888" demandId="131">
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+            <protectionSegmentEntry id="131"/>
+        </route>
+        <route carriedTrafficInErlangs="16.476" demandId="132">
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+            <linkEntry id="4"/>
+            <protectionSegmentEntry id="132"/>
+        </route>
+        <route carriedTrafficInErlangs="14.744" demandId="133">
+            <linkEntry id="30"/>
+            <protectionSegmentEntry id="133"/>
+        </route>
+        <route carriedTrafficInErlangs="32.496" demandId="134">
+            <linkEntry id="30"/>
+            <linkEntry id="10"/>
+            <protectionSegmentEntry id="134"/>
+        </route>
+        <route carriedTrafficInErlangs="27.878" demandId="135">
+            <linkEntry id="32"/>
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <protectionSegmentEntry id="135"/>
+        </route>
+        <route carriedTrafficInErlangs="16.3" demandId="136">
+            <linkEntry id="30"/>
+            <linkEntry id="10"/>
+            <linkEntry id="14"/>
+            <protectionSegmentEntry id="136"/>
+        </route>
+        <route carriedTrafficInErlangs="14.96" demandId="137">
+            <linkEntry id="32"/>
+            <linkEntry id="36"/>
+            <linkEntry id="24"/>
+            <protectionSegmentEntry id="137"/>
+        </route>
+        <route carriedTrafficInErlangs="41.372" demandId="138">
+            <linkEntry id="32"/>
+            <linkEntry id="36"/>
+            <protectionSegmentEntry id="138"/>
+        </route>
+        <route carriedTrafficInErlangs="20.582" demandId="139">
+            <linkEntry id="32"/>
+            <linkEntry id="36"/>
+            <linkEntry id="25"/>
+            <protectionSegmentEntry id="139"/>
+        </route>
+        <route carriedTrafficInErlangs="41.874" demandId="140">
+            <linkEntry id="31"/>
+            <protectionSegmentEntry id="140"/>
+        </route>
+        <route carriedTrafficInErlangs="28.82" demandId="141">
+            <linkEntry id="32"/>
+            <protectionSegmentEntry id="141"/>
+        </route>
+        <route carriedTrafficInErlangs="19.17" demandId="142">
+            <linkEntry id="32"/>
+            <linkEntry id="38"/>
+            <protectionSegmentEntry id="142"/>
+        </route>
+        <route carriedTrafficInErlangs="10.638" demandId="143">
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <protectionSegmentEntry id="143"/>
+        </route>
+        <route carriedTrafficInErlangs="8.318" demandId="144">
+            <linkEntry id="34"/>
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+            <protectionSegmentEntry id="144"/>
+        </route>
+        <route carriedTrafficInErlangs="15.192" demandId="145">
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="15"/>
+            <protectionSegmentEntry id="145"/>
+        </route>
+        <route carriedTrafficInErlangs="24.586" demandId="146">
+            <linkEntry id="34"/>
+            <linkEntry id="30"/>
+            <protectionSegmentEntry id="146"/>
+        </route>
+        <route carriedTrafficInErlangs="18.74" demandId="147">
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <protectionSegmentEntry id="147"/>
+        </route>
+        <route carriedTrafficInErlangs="13.98" demandId="148">
+            <linkEntry id="35"/>
+            <linkEntry id="39"/>
+            <protectionSegmentEntry id="148"/>
+        </route>
+        <route carriedTrafficInErlangs="14.688" demandId="149">
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+            <protectionSegmentEntry id="149"/>
+        </route>
+        <route carriedTrafficInErlangs="29.816" demandId="150">
+            <linkEntry id="33"/>
+            <linkEntry id="24"/>
+            <protectionSegmentEntry id="150"/>
+        </route>
+        <route carriedTrafficInErlangs="36.634" demandId="151">
+            <linkEntry id="33"/>
+            <protectionSegmentEntry id="151"/>
+        </route>
+        <route carriedTrafficInErlangs="25.256" demandId="152">
+            <linkEntry id="33"/>
+            <linkEntry id="25"/>
+            <protectionSegmentEntry id="152"/>
+        </route>
+        <route carriedTrafficInErlangs="19.154" demandId="153">
+            <linkEntry id="34"/>
+            <protectionSegmentEntry id="153"/>
+        </route>
+        <route carriedTrafficInErlangs="36.65" demandId="154">
+            <linkEntry id="33"/>
+            <linkEntry id="27"/>
+            <protectionSegmentEntry id="154"/>
+        </route>
+        <route carriedTrafficInErlangs="33.724" demandId="155">
+            <linkEntry id="35"/>
+            <protectionSegmentEntry id="155"/>
+        </route>
+        <route carriedTrafficInErlangs="11.276" demandId="156">
+            <linkEntry id="36"/>
+            <linkEntry id="24"/>
+            <linkEntry id="21"/>
+            <protectionSegmentEntry id="156"/>
+        </route>
+        <route carriedTrafficInErlangs="16.594" demandId="157">
+            <linkEntry id="37"/>
+            <linkEntry id="30"/>
+            <linkEntry id="9"/>
+            <protectionSegmentEntry id="157"/>
+        </route>
+        <route carriedTrafficInErlangs="13.374" demandId="158">
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <linkEntry id="15"/>
+            <protectionSegmentEntry id="158"/>
+        </route>
+        <route carriedTrafficInErlangs="12.6" demandId="159">
+            <linkEntry id="37"/>
+            <linkEntry id="30"/>
+            <protectionSegmentEntry id="159"/>
+        </route>
+        <route carriedTrafficInErlangs="16.044" demandId="160">
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <protectionSegmentEntry id="160"/>
+        </route>
+        <route carriedTrafficInErlangs="21.228" demandId="161">
+            <linkEntry id="38"/>
+            <linkEntry id="39"/>
+            <protectionSegmentEntry id="161"/>
+        </route>
+        <route carriedTrafficInErlangs="14.864" demandId="162">
+            <linkEntry id="36"/>
+            <linkEntry id="24"/>
+            <linkEntry id="22"/>
+            <protectionSegmentEntry id="162"/>
+        </route>
+        <route carriedTrafficInErlangs="27.472" demandId="163">
+            <linkEntry id="36"/>
+            <linkEntry id="24"/>
+            <protectionSegmentEntry id="163"/>
+        </route>
+        <route carriedTrafficInErlangs="22.376" demandId="164">
+            <linkEntry id="36"/>
+            <protectionSegmentEntry id="164"/>
+        </route>
+        <route carriedTrafficInErlangs="27.272" demandId="165">
+            <linkEntry id="36"/>
+            <linkEntry id="25"/>
+            <protectionSegmentEntry id="165"/>
+        </route>
+        <route carriedTrafficInErlangs="30.51" demandId="166">
+            <linkEntry id="37"/>
+            <protectionSegmentEntry id="166"/>
+        </route>
+        <route carriedTrafficInErlangs="15.718" demandId="167">
+            <linkEntry id="36"/>
+            <linkEntry id="26"/>
+            <protectionSegmentEntry id="167"/>
+        </route>
+        <route carriedTrafficInErlangs="21.994" demandId="168">
+            <linkEntry id="38"/>
+            <protectionSegmentEntry id="168"/>
+        </route>
+        <route carriedTrafficInErlangs="18.166" demandId="169">
+            <linkEntry id="39"/>
+            <linkEntry id="15"/>
+            <linkEntry id="6"/>
+            <protectionSegmentEntry id="169"/>
+        </route>
+        <route carriedTrafficInErlangs="17.224" demandId="170">
+            <linkEntry id="39"/>
+            <linkEntry id="15"/>
+            <linkEntry id="7"/>
+            <protectionSegmentEntry id="170"/>
+        </route>
+        <route carriedTrafficInErlangs="10.94" demandId="171">
+            <linkEntry id="39"/>
+            <linkEntry id="15"/>
+            <protectionSegmentEntry id="171"/>
+        </route>
+        <route carriedTrafficInErlangs="23.492" demandId="172">
+            <linkEntry id="41"/>
+            <linkEntry id="37"/>
+            <linkEntry id="30"/>
+            <protectionSegmentEntry id="172"/>
+        </route>
+        <route carriedTrafficInErlangs="16.476" demandId="173">
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <protectionSegmentEntry id="173"/>
+        </route>
+        <route carriedTrafficInErlangs="29.672" demandId="174">
+            <linkEntry id="39"/>
+            <protectionSegmentEntry id="174"/>
+        </route>
+        <route carriedTrafficInErlangs="21.156" demandId="175">
+            <linkEntry id="39"/>
+            <linkEntry id="16"/>
+            <linkEntry id="14"/>
+            <protectionSegmentEntry id="175"/>
+        </route>
+        <route carriedTrafficInErlangs="37.058" demandId="176">
+            <linkEntry id="41"/>
+            <linkEntry id="36"/>
+            <linkEntry id="24"/>
+            <protectionSegmentEntry id="176"/>
+        </route>
+        <route carriedTrafficInErlangs="28.9" demandId="177">
+            <linkEntry id="41"/>
+            <linkEntry id="36"/>
+            <protectionSegmentEntry id="177"/>
+        </route>
+        <route carriedTrafficInErlangs="23.612" demandId="178">
+            <linkEntry id="39"/>
+            <linkEntry id="17"/>
+            <protectionSegmentEntry id="178"/>
+        </route>
+        <route carriedTrafficInErlangs="35.884" demandId="179">
+            <linkEntry id="41"/>
+            <linkEntry id="37"/>
+            <protectionSegmentEntry id="179"/>
+        </route>
+        <route carriedTrafficInErlangs="21.364" demandId="180">
+            <linkEntry id="40"/>
+            <protectionSegmentEntry id="180"/>
+        </route>
+        <route carriedTrafficInErlangs="38.046" demandId="181">
+            <linkEntry id="41"/>
+            <protectionSegmentEntry id="181"/>
+        </route>
+    </routingInfo>
+</network>

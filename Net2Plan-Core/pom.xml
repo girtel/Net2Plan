@@ -20,8 +20,10 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan</artifactId>
-        <version>0.5.3-SNAPSHOT</version>
+        <version>0.5.3</version>
     </parent>
+
+    <packaging>jar</packaging>
 
     <build>
         <!--Filters out external resources-->

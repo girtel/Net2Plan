@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 
 /**
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_link extends AdvancedJTable_networkElement
 {
     public static final int COLUMN_ID = 0;
@@ -620,7 +620,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                 createLowerLayerDemandFromLinkItem.addActionListener(e ->
                 {
                     Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                    final JComboBox layerSelector = new WiderJComboBox();
+                    final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
                     for (long layerId : layerIds)
                     {
                         if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
@@ -670,7 +670,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                         JMenuItem createLowerLayerDemandsFromLinksItem = new JMenuItem("Create lower layer unicast demands from uncoupled links in selection");
                         createLowerLayerDemandsFromLinksItem.addActionListener(e ->
                         {
-                            final JComboBox layerSelector = new WiderJComboBox();
+                            final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
                             for (NetworkLayer layer : netPlan.getNetworkLayers())
                             {
                                 if (layer.getId() == netPlan.getNetworkLayerDefault().getId()) continue;
@@ -721,8 +721,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement
                     coupleLinkToDemand.addActionListener(e ->
                     {
                         Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                        final JComboBox layerSelector = new WiderJComboBox();
-                        final JComboBox demandSelector = new WiderJComboBox();
+                        final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
+                        final JComboBox<StringLabeller> demandSelector = new WiderJComboBox();
                         for (long layerId : layerIds)
                         {
                             if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;

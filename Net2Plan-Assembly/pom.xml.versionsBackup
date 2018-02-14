@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2017 Pablo Pavon Marino and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the 2-clause BSD License 
+    which accompanies this distribution, and is available at
+    https://opensource.org/licenses/BSD-2-Clause
+   
+    Contributors:
+        Pablo Pavon Marino and others - initial API and implementation
+ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.net2plan</groupId>
+        <artifactId>net2plan</artifactId>
+        <version>0.5.3-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <packaging>pom</packaging>
+
+    <artifactId>net2plan-assembly</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
+        <!--Core resources bundle(data, help...)-->
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <type>zip</type>
+            <classifier>bundle</classifier>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-cli</groupId>
+            <artifactId>net2plan-cli-exec</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>runtime</scope>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-cli</groupId>
+            <artifactId>net2plan-cli-plugins</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>runtime</scope>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-gui</groupId>
+            <artifactId>net2plan-gui-exec</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>runtime</scope>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
+            <artifactId>net2plan-gui-plugins-networkDesign</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>runtime</scope>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan.net2plan-gui.net2plan-gui-plugins</groupId>
+            <artifactId>net2plan-gui-plugins-trafficDesign</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>runtime</scope>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-examples</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>runtime</scope>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-javadoc</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>runtime</scope>
+            <type>jar</type>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>Net2Plan-${project.version}</finalName>
+        <plugins>
+            <!-- Download licenses -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>1.12</version>
+                <executions>
+                    <execution>
+                        <id>download-licenses</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>download-licenses</goal>
+                        </goals>
+                        <configuration>
+                            <excludedGroups>com.net2plan</excludedGroups>
+                            <excludedScopes>test</excludedScopes>
+                            <includeTransitiveDependencies>true</includeTransitiveDependencies>
+                            <quiet>true</quiet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Plugin required to assemble the project for distribution  -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>src/assembly/assembler.xsl</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -16,6 +16,7 @@ import static org.junit.Assert.fail;
 
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,20 +28,16 @@ import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.net2plan.interfaces.TestConstants;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import org.junit.rules.TemporaryFolder;
 
 public class NetPlanTest
 {
@@ -68,6 +65,9 @@ public class NetPlanTest
 	private Link upperMdLink12 , upperMdLink13;
 	private MulticastDemand upperMd123;
 	private MulticastTree upperMt123;
+
+	@Rule
+	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 
 	@BeforeClass
@@ -166,7 +166,9 @@ public class NetPlanTest
 		this.netTriangle_r2 = netTriangle.addResource("type2" , "name" , netTriangle_n2 , 100.0 , "units" , null , 1.0 , null);
 		this.netTriangle_r3 = netTriangle.addResource("type3" , "name" , netTriangle_n3 , 100.0 , "units" , null , 1.0 , null);
 
-		File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
+		temporaryFolder.create();
+
+		File resourcesDir = temporaryFolder.getRoot();
 		if (!resourcesDir.exists()) resourcesDir.mkdirs();
 	}
 
@@ -174,6 +176,8 @@ public class NetPlanTest
 	public void tearDown() throws Exception
 	{
 		np.checkCachesConsistency();
+
+		temporaryFolder.delete();
 	}
 
 	@Test
@@ -211,9 +215,9 @@ public class NetPlanTest
 	}
 
 	@Test
-	public void testNetPlanFile()
+	public void testNetPlanFile() throws IOException
 	{
-		File f = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME);
+		File f = temporaryFolder.newFile("temp.n2p");
 		this.np.saveToFile(f);
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));
@@ -222,7 +226,7 @@ public class NetPlanTest
 		NetPlan np1 = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		np1.checkCachesConsistency();
 		np1.saveToFile(f);
-		NetPlan np2 = new NetPlan (new File(TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME));
+		NetPlan np2 = new NetPlan (f);
 		np2.checkCachesConsistency();
 		assertTrue (np1.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np1));

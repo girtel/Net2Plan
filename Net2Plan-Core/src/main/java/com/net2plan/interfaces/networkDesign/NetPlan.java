@@ -1916,7 +1916,7 @@ public class NetPlan extends NetworkElement
      * This operation is idempotent: merging x with x is x, merging x with y and again with y, is 
      * the same as merging x with y just once
      *
-     * @param otherDesign
+     * @param otherDesign design to merge to
      * @return this (for convenience only)
      */
     public NetPlan mergeIntoThisDesign (NetPlan otherDesign)
@@ -5152,7 +5152,7 @@ public class NetPlan extends NetworkElement
     }
     
     /** Removes a global planning domain, if no elements have it assigned, and there is left at least one planning domain
-     * @param planningDomain
+     * @param planningDomain planning domain to remove 
      */
     public void removeGlobalPlanningDomain (String planningDomain)
     {

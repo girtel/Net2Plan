@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 /**
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_demand extends AdvancedJTable_networkElement
 {
     private static final int COLUMN_ID = 0;
@@ -146,7 +146,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
             demandData[COLUMN_LOSTTRAFFIC] = h_d == 0 ? 0 : 100 * lostTraffic_d / h_d;
             demandData[COLUMN_ISSERVICECHAIN] = demand.isServiceChainRequest();
             demandData[COLUMN_TRAVERSEDRESOURCESTYPES] = isSourceRouting ? joinTraversedResourcesTypes(demand) : "";
-            demandData[COLUMN_ROUTINGCYCLES] = demand.getRoutingCycleType();
+            demandData[COLUMN_ROUTINGCYCLES] = demand.getRoutingCycleType().name();
             demandData[COLUMN_BIFURCATED] = !isSourceRouting ? "-" : (demand.isBifurcated()) ? String.format("Yes (%d)", demand.getRoutes().size()) : "No";
             demandData[COLUMN_NUMROUTES] = routes_thisDemand.isEmpty() ? "none" : routes_thisDemand.size() + " (" + routes_thisDemand.stream().filter(e -> e.isBackupRoute()).count() + ")";
             demandData[COLUMN_MAXE2ELATENCY] = demand.getWorstCasePropagationTimeInMs();
@@ -513,8 +513,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
     static void createLinkDemandGUI(final NetworkElementType networkElementType, final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
-        final JComboBox originNodeSelector = new WiderJComboBox();
-        final JComboBox destinationNodeSelector = new WiderJComboBox();
+        final JComboBox<StringLabeller> originNodeSelector = new WiderJComboBox();
+        final JComboBox<StringLabeller> destinationNodeSelector = new WiderJComboBox();
 
         for (Node node : netPlan.getNodes())
         {
@@ -813,7 +813,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
             createUpperLayerLinkFromDemandItem.addActionListener(e ->
             {
                 Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                final JComboBox layerSelector = new WiderJComboBox();
+                final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
                 for (long layerId : layerIds)
                 {
                     if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
@@ -861,8 +861,8 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                 coupleDemandToLink.addActionListener(e ->
                 {
                     Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                    final JComboBox layerSelector = new WiderJComboBox();
-                    final JComboBox linkSelector = new WiderJComboBox();
+                    final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
+                    final JComboBox<StringLabeller> linkSelector = new WiderJComboBox();
                     for (long layerId : layerIds)
                     {
                         if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;
@@ -975,7 +975,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement
                     createUpperLayerLinksFromDemandsItem.addActionListener(e ->
                     {
                         Collection<Long> layerIds = netPlan.getNetworkLayerIds();
-                        final JComboBox layerSelector = new WiderJComboBox();
+                        final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
                         for (long layerId : layerIds)
                         {
                             if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2017 Pablo Pavon Marino and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the 2-clause BSD License 
+    which accompanies this distribution, and is available at
+    https://opensource.org/licenses/BSD-2-Clause
+   
+    Contributors:
+        Pablo Pavon Marino and others - initial API and implementation
+ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>net2plan-core</artifactId>
+
+    <parent>
+        <groupId>com.net2plan</groupId>
+        <artifactId>net2plan</artifactId>
+        <version>0.5.3-SNAPSHOT</version>
+    </parent>
+
+    <packaging>jar</packaging>
+
+    <build>
+        <!--Filters out external resources-->
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <excludes>
+                    <exclude>data/**</exclude>
+                    <exclude>help/**</exclude>
+                </excludes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <!-- Zips up resources not contained within the jars -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/assembly/bundle-descriptor.xsl</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

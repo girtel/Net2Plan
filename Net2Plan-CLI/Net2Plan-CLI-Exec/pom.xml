@@ -16,13 +16,15 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan-cli</artifactId>
-        <version>0.5.3-SNAPSHOT</version>
+        <version>0.5.3</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.net2plan.net2plan-cli</groupId>
     <artifactId>net2plan-cli-exec</artifactId>
+
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>

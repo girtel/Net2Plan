@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,20 +26,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.common.collect.Sets;
-import com.net2plan.interfaces.TestConstants;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
+import org.junit.rules.TemporaryFolder;
 
-public class DemandTest 
+public class DemandTest
 {
 	private NetPlan np = null;
 	private Node n1, n2 , n3;
@@ -51,6 +48,9 @@ public class DemandTest
 	private Route segm13;
 	private NetworkLayer lowerLayer , upperLayer;
 	private Link upperLink12;
+
+	@Rule
+	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception 
@@ -93,6 +93,8 @@ public class DemandTest
 		this.d12.coupleToUpperLayerLink(upperLink12);
 
 		np.checkCachesConsistency();
+
+		temporaryFolder.create();
 	}
 
 
@@ -100,10 +102,12 @@ public class DemandTest
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
+
+		temporaryFolder.delete();
 	}
 
 	@Test
-	public void testBidirectional ()
+	public void testBidirectional () throws IOException
 	{
 		Pair<Demand,Demand> pair = np.addDemandBidirectional(n1, n2, 1, null);
 		assertTrue (pair.getFirst().isBidirectional());
@@ -122,8 +126,8 @@ public class DemandTest
 		assertTrue (pair.getSecond().isBidirectional());
 		assertEquals (otherDemand2.getBidirectionalPair() , pair.getSecond());
 		assertEquals (pair.getSecond().getBidirectionalPair() , otherDemand2);
-		
-		File f = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME);
+
+		File f = temporaryFolder.newFile("temp.n2p");
 		this.np.saveToFile(f);
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2017 Pablo Pavon Marino and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the 2-clause BSD License 
+    which accompanies this distribution, and is available at
+    https://opensource.org/licenses/BSD-2-Clause
+   
+    Contributors:
+        Pablo Pavon Marino and others - initial API and implementation
+ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>net2plan</artifactId>
+        <groupId>com.net2plan</groupId>
+        <version>0.5.3-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>net2plan-javadoc</artifactId>
+
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-core</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.net2plan</groupId>
+            <artifactId>net2plan-examples</artifactId>
+            <version>0.5.3-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Generate Jar before anything else -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.2</version>
+            </plugin>
+
+            <plugin>
+                <!-- ParallelColt Javadoc -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>unpack-parallelcolt</id>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>net.sourceforge.parallelcolt</groupId>
+                                    <artifactId>parallelcolt</artifactId>
+                                    <version>0.10.1</version>
+                                    <type>jar</type>
+                                    <classifier>javadoc</classifier>
+                                    <outputDirectory>${project.build.directory}/apidocs/parallelcolt</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--Generate Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <executions>
+                    <execution>
+                        <id>net2plan-javadoc</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <show>public</show>
+                            <author>true</author>
+                            <nodeprecated>true</nodeprecated>
+                            <nodeprecatedlist>false</nodeprecatedlist>
+                            <noindex>false</noindex>
+                            <nonavbar>false</nonavbar>
+                            <notree>false</notree>
+                            <source>1.8</source>
+                            <splitindex>true</splitindex>
+                            <use>true</use>
+                            <version>true</version>
+                            <overview>${project.basedir}/src/main/resources/resources/javadoc/overview-main.html
+                            </overview>
+                            <links>
+                                <link>../parallelcolt</link>
+                            </links>
+                            <detectOfflineLinks>false</detectOfflineLinks>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <!-- Net2Plan Core-->
+                                <dependencySourceInclude>com.net2plan:net2plan-core</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                            <sourceFileIncludes>
+                                <include>com/net2plan/interfaces/networkDesign/**</include>
+                                <include>com/net2plan/interfaces/simulation/**</include>
+                                <include>com/net2plan/libraries/**</include>
+                                <include>com/net2plan/utils/**</include>
+                            </sourceFileIncludes>
+                            <!-- Output directory -->
+                            <additionalparam>-d ${project.build.directory}/apidocs/api</additionalparam>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>net2planExamples-javadoc</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <show>public</show>
+                            <author>false</author>
+                            <nodeprecated>true</nodeprecated>
+                            <nodeprecatedlist>true</nodeprecatedlist>
+                            <noindex>false</noindex>
+                            <nonavbar>false</nonavbar>
+                            <notree>false</notree>
+                            <source>1.8</source>
+                            <splitindex>true</splitindex>
+                            <use>true</use>
+                            <version>true</version>
+                            <linksource>true</linksource>
+                            <noqualifier>
+                                java.lang:java.util:java.io:java.awt:java.net:java.awt.geom:javax.swing:cern.colt.matrix.tdouble
+                            </noqualifier>
+                            <overview>${project.basedir}/src/main/resources/resources/javadoc/overview-examples.html
+                            </overview>
+                            <links>
+                                <link>../parallelcolt</link>
+                            </links>
+                            <detectOfflineLinks>false</detectOfflineLinks>
+                            <tagletArtifact>
+                                <groupId>com.net2plan</groupId>
+                                <artifactId>net2plan-javadoc</artifactId>
+                                <version>${project.version}</version>
+                            </tagletArtifact>
+                            <taglets>
+                                <taglet>
+                                    <tagletClass>com.net2plan.documentation.Taglet_Description</tagletClass>
+                                </taglet>
+                                <taglet>
+                                    <tagletClass>com.net2plan.documentation.Taglet_Keywords</tagletClass>
+                                </taglet>
+                                <taglet>
+                                    <tagletClass>com.net2plan.documentation.Taglet_InputParameters</tagletClass>
+                                </taglet>
+                                <taglet>
+                                    <tagletClass>com.net2plan.documentation.Taglet_BookSections</tagletClass>
+                                </taglet>
+                            </taglets>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <!-- Net2Plan Examples-->
+                                <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                            <sourceFileIncludes>
+                                <include>com/net2plan/examples/general/offline/**</include>
+                                <include>com/net2plan/examples/general/onlineSim/**</include>
+                                <include>com/net2plan/examples/general/reports/**</include>
+                                <include>com/net2plan/examples/ocnbook/offline/**</include>
+                                <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
+                                <include>com/net2plan/examples/ocnbook/reports/**</include>
+                            </sourceFileIncludes>
+                            <sourceFileExcludes>
+                                <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
+                            </sourceFileExcludes>
+                            <additionalparam>
+                                -d ${project.build.directory}/apidocs/examples
+                            </additionalparam>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>keywordTable</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
+                            <docletArtifact>
+                                <groupId>com.net2plan</groupId>
+                                <artifactId>net2plan-javadoc</artifactId>
+                                <version>${project.version}</version>
+                            </docletArtifact>
+                            <detectOfflineLinks>false</detectOfflineLinks>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <!-- Net2Plan Examples-->
+                                <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                            <sourceFileIncludes>
+                                <include>com/net2plan/examples/general/offline/**</include>
+                                <include>com/net2plan/examples/general/onlineSim/**</include>
+                                <include>com/net2plan/examples/general/reports/**</include>
+                                <include>com/net2plan/examples/ocnbook/offline/**</include>
+                                <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
+                                <include>com/net2plan/examples/ocnbook/reports/**</include>
+                            </sourceFileIncludes>
+                            <sourceFileExcludes>
+                                <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
+                            </sourceFileExcludes>
+                            <additionalparam>-outputFolder ${project.build.directory}/apidocs/examples</additionalparam>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>bookSectionsTable</id>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
+                            <docletArtifact>
+                                <groupId>com.net2plan</groupId>
+                                <artifactId>net2plan-javadoc</artifactId>
+                                <version>${project.version}</version>
+                            </docletArtifact>
+                            <detectOfflineLinks>false</detectOfflineLinks>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <!-- Net2Plan Examples-->
+                                <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                            <sourceFileIncludes>
+                                <include>com/net2plan/examples/general/offline/**</include>
+                                <include>com/net2plan/examples/general/onlineSim/**</include>
+                                <include>com/net2plan/examples/general/reports/**</include>
+                                <include>com/net2plan/examples/ocnbook/offline/**</include>
+                                <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
+                                <include>com/net2plan/examples/ocnbook/reports/**</include>
+                            </sourceFileIncludes>
+                            <sourceFileExcludes>
+                                <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
+                            </sourceFileExcludes>
+                            <additionalparam>-outputFolder ${project.build.directory}/apidocs/examples</additionalparam>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Pack Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <appendAssemblyId>true</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>src/assembly/javadoc-descriptor.xsl</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

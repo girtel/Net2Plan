@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 /**
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElement
 {
     private static final int COLUMN_ID = 0;
@@ -594,7 +594,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                     createUpperLayerLinksFromDemandsItem.addActionListener(e ->
                     {
                         List<Long> layerIds = netPlan.getNetworkLayerIds();
-                        final JComboBox layerSelector = new WiderJComboBox();
+                        final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
                         for (long layerId : layerIds)
                         {
                             if (layerId == netPlan.getNetworkLayerDefault().getId()) continue;

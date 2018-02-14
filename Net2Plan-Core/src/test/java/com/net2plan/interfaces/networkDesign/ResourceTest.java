@@ -19,20 +19,16 @@ import static org.junit.Assert.assertTrue;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.net2plan.interfaces.TestConstants;
+import org.apache.commons.io.FileUtils;
+import org.junit.*;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Pablo
@@ -47,6 +43,9 @@ public class ResourceTest
 	private Route serviceChainUpper, serviceChainBase;
 	private Resource upperResource = null;
 	private Resource baseResource = null;
+
+	@Rule
+	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	// upper resource: capacity 10, occupied 5 in base
 	// base resource: capacity 10: occupied 1+5
@@ -98,7 +97,9 @@ public class ResourceTest
 		List<NetworkElement> pathBase = Arrays.asList(baseResource , interLink);
 		this.serviceChainBase = np.addServiceChain(demandBase , 100 , Arrays.asList(1.0 , 300.0) , pathBase , null);
 
-		File resourcesDir = new File(TestConstants.TEST_FILE_DIRECTORY);
+		temporaryFolder.create();
+
+		File resourcesDir = temporaryFolder.getRoot();
 		if (!resourcesDir.exists()) resourcesDir.mkdirs();
 	}
 
@@ -109,9 +110,9 @@ public class ResourceTest
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
-	}
 
-	
+		temporaryFolder.delete();
+	}
 
 	@Test
 	public void testCheckCaches() 
@@ -329,13 +330,9 @@ public class ResourceTest
 	}
 	
 	@Test
-	public void testReadSave ()
+	public void testReadSave () throws IOException
 	{
-		File file = null;
-		try
-		{
-			file = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
-		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
+		File file = temporaryFolder.newFile("temp.n2p");
 		assertTrue (file != null);
 		np.saveToFile(file);
 		NetPlan np2 = new NetPlan (file);
@@ -346,15 +343,10 @@ public class ResourceTest
 	}
 	
 	@Test
-	public void testReadSave2 ()
+	public void testReadSave2 () throws IOException
 	{
-		File fileIn = null;
-		File fileOut = null;
-		try
-		{
-			fileIn = new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"); //File.createTempFile("testN2p" , "n2p");
-			fileOut = new File (TestConstants.TEST_FILE_DIRECTORY, TestConstants.TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
-		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
+		File fileIn = FileUtils.toFile(this.getClass().getResource("/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
+		File fileOut = temporaryFolder.newFile("temp.n2p");
 		assertTrue (fileIn != null);
 		assertTrue (fileOut != null);
 		NetPlan np1 = new NetPlan (fileIn);
