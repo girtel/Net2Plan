@@ -35,6 +35,7 @@ import java.util.Map;
  * @author Jorge San Emeterio
  * @date 24/04/17
  */
+@SuppressWarnings("serial")
 public class TopologyTopBar extends JToolBar implements ActionListener
 {
     private final GUINetworkDesign callback;
@@ -101,7 +102,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_siteMode.setToolTipText("Toggle on/off node site view.");
         btn_siteMode.setEnabled(false);
         btn_osmMap = new JToggleButton();
-        btn_osmMap.setToolTipText("Toggle on/off OSM support. An Internet connection is requires for this function.");
+        btn_osmMap.setToolTipText("Toggle on/off OSM support. An Internet connection is required for this function.");
         btn_tableControlWindow = new JButton();
         btn_tableControlWindow.setToolTipText("Show the network topology control window.");
         btn_reset = new JButton("Reset");

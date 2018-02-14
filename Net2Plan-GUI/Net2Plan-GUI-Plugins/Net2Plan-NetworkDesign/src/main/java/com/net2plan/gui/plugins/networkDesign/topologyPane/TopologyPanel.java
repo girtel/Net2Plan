@@ -337,6 +337,10 @@ public class TopologyPanel extends JPanel
             boolean isOSMRunning = canvas.getState() == CanvasOption.OSMState;
             if (isOSMRunning) canvas.setState(CanvasOption.ViewState);
 
+            //Disable Site
+            boolean isSiteRunning = canvas.getState() == CanvasOption.SiteState;
+            if(isSiteRunning) canvas.setState(CanvasOption.ViewState);
+            
             NetPlan aux = fc_netPlan.readNetPlan();
 
             callback.setDesign(aux);
