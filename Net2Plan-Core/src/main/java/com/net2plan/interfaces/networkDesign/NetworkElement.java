@@ -368,7 +368,7 @@ public abstract class NetworkElement
 	 * @param key Attribute name
 	 * @param valueList Attribute value
 	 */
-	public void setAttributeAsNumberList (String key, List<Number> valueList)
+	public void setAttributeAsNumberList (String key, List<? extends Number> valueList)
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
@@ -377,7 +377,7 @@ public abstract class NetworkElement
 		for (Number val : valueList)
 		{
 			if (firstTime) { firstTime = false; } else { st.append(MATRIX_COLSEPARATOR); }
-			st.append(val.toString()); 
+			st.append(val.toString());
 		}
 		attributes.put (key,st.toString());
 	}
