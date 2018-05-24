@@ -229,12 +229,19 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         {
             if (callback.inOnlineSimulationMode()) return;
 
-            callback.setDesign(new NetPlan());
-            Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                    vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
-            vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
-            callback.updateVisualizationAfterNewTopology();
-            callback.addNetPlanChange();
+            int result = JOptionPane.showConfirmDialog(null, "Are you sure you want to reset the design?", "Reset Design", JOptionPane.YES_NO_OPTION);
+
+            if (result == JOptionPane.YES_OPTION)
+            {
+
+                callback.setDesign(new NetPlan());
+                Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                        vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+                vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+                callback.updateVisualizationAfterNewTopology();
+                callback.addNetPlanChange();
+            }
+
         } else if (src == btn_osmMap)
         {
             if (btn_osmMap.isSelected())
