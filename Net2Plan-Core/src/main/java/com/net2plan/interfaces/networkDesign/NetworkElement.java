@@ -196,7 +196,8 @@ public abstract class NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
-		if (val == null) return defaultValue;  
+		//if (val == null) return defaultValue;  
+		if(val.equals("")) return new ArrayList<String>();
 		try 
 		{
 			final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
@@ -220,7 +221,8 @@ public abstract class NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
-		if (val == null) return defaultValue;  
+		//if (val == null) return defaultValue; 
+		if(val.equals("")) return new ArrayList<List<String>>();
 		try 
 		{
 			final String [] rows = val.split(MATRIX_ROWSEPARATOR,-1);
@@ -391,16 +393,27 @@ public abstract class NetworkElement
 	 */
 	public void setAttributeAsStringList (String key, List<String> vals)
 	{
-		if (vals.isEmpty()) throw new Net2PlanException ("The list is empty");
-		checkAttachedToNetPlanObject();
-		netPlan.checkIsModifiable();
+		//if (vals.isEmpty()) throw new Net2PlanException ("The list is empty");
 		final StringBuffer st = new StringBuffer ();
-		boolean firstTime = true;
-		for (String val : vals)
+		if (vals.isEmpty()) 
 		{
-			if (firstTime) { firstTime = false; } else { st.append(MATRIX_COLSEPARATOR); }
-			st.append(escapedStringToWrite(val)); 
-		}
+			st.append("");
+		} else 
+		  {
+			checkAttachedToNetPlanObject();
+			netPlan.checkIsModifiable();
+			boolean firstTime = true;
+			
+			for (String val : vals)
+			{
+				if (firstTime) {
+					firstTime = false;
+				} else {
+					st.append(MATRIX_COLSEPARATOR);
+				}
+			if(val.isEmpty()) st.append(""); else st.append(escapedStringToWrite(val));
+			}
+		  }
 		attributes.put (key,st.toString());
 	}
 
@@ -411,25 +424,37 @@ public abstract class NetworkElement
 	 * @param key Attribute name
 	 * @param vals Attribute vals
 	 */
-	public void setAttributeAsStringMatrix (String key, List<List<String>> vals)
-	{
-		if (vals.isEmpty()) throw new Net2PlanException ("The matrix is empty");
-		for (List<String> row : vals) if (row.isEmpty()) throw new Net2PlanException ("One of the rows of the matrix is empty");
-		checkAttachedToNetPlanObject();
-		netPlan.checkIsModifiable();
-		final StringBuffer st = new StringBuffer ();
-		boolean firstRow = true;
-		for (List<String> row : vals)
-		{
-			if (firstRow) { firstRow = false; } else { st.append(MATRIX_ROWSEPARATOR); }
-			boolean firstColumn = true;
-			for (String cell : row)
-			{
-				if (firstColumn) { firstColumn = false; } else { st.append(MATRIX_COLSEPARATOR); }
-				st.append(escapedStringToWrite(cell));
+	public void setAttributeAsStringMatrix(String key, List<List<String>> vals) {
+		
+		final StringBuffer st = new StringBuffer();
+		if (vals.isEmpty()) {
+			st.append("");
+		} else {
+			// if (vals.isEmpty()) throw new Net2PlanException ("The matrix is empty");
+			// for (List<String> row : vals) if (row.isEmpty()) throw new
+			// Net2PlanException ("One of the rows of the matrix is empty");
+			checkAttachedToNetPlanObject();
+			netPlan.checkIsModifiable();
+
+			boolean firstRow = true;
+			for (List<String> row : vals) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					st.append(MATRIX_ROWSEPARATOR);	
+				}
+				boolean firstColumn = true;
+				for (String cell : row) {
+					if (firstColumn) {
+						firstColumn = false;
+					} else {
+						st.append(MATRIX_COLSEPARATOR);
+					}
+				if(cell.isEmpty()) st.append(""); else st.append(escapedStringToWrite(cell));
+				}
 			}
+			attributes.put(key, st.toString());
 		}
-		attributes.put (key,st.toString());
 	}
 
 	/**
