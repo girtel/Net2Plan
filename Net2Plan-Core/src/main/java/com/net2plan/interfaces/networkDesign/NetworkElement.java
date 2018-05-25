@@ -196,7 +196,7 @@ public abstract class NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
-		//if (val == null) return defaultValue;  
+		if (val == null) return defaultValue;  
 		if(val.equals("")) return new ArrayList<String>();
 		try 
 		{
@@ -221,7 +221,7 @@ public abstract class NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
-		//if (val == null) return defaultValue; 
+		if (val == null) return defaultValue; 
 		if(val.equals("")) return new ArrayList<List<String>>();
 		try 
 		{
