@@ -72,7 +72,7 @@ public class ImportMetroNetwork
         	final String arbitraryParamsString = readString (thisRowData , COLUMNS_NODESTAB.ARBITRARYPARAMS.ordinal() , "");
         	System.out.println("arbitraryParamsString loaded: "+arbitraryParamsString);
         	
-        	if(!type.equals("CoreMetro") && !type.equals("EdgeMetro")) throw new Net2PlanException ("Unkown node type: "+type+". Only CoreMetro and EdgeMetro are valid names");
+        	//if(!type.equals("CoreMetro") && !type.equals("EdgeMetro")) throw new Net2PlanException ("Unkown node type: "+type+". Only CoreMetro and EdgeMetro are valid names");
         	
         	final WNode n = net.addNode(xCoord, yCoord, name, type);
         	n.setIsConnectedToNetworkCore(isConnectedToCoreNode);
@@ -301,7 +301,7 @@ public class ImportMetroNetwork
 	}
 	private static String readString (Object [] cells , int index , String... defaultVal)
 	{
-		if (index >= cells.length) throw new Net2PlanException ("Unexisting cell of column: " + index + ". Num columns in this row: " + cells.length);
+		if (index >= cells.length) return defaultVal[0];
 		if (cells [index] == null) if (defaultVal.length > 0) return defaultVal[0]; else throw new Net2PlanException("Cell unkown instance " + (cells[index]).getClass().getName());
 		if (cells [index] instanceof Number) return ((Number) cells[index]).toString();
 		if (cells [index] instanceof String) return (String) cells[index];
