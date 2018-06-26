@@ -65,7 +65,7 @@ public class CommandLineParser extends PosixParser
 	 * @return Current parameters (key, value)
 	 * @since 0.3.0
 	 */
-	public static Map<String, String> getParameters(List<Triple<String, String, String>> defaultParameters, Map inputParameters)
+	public static SortedMap<String, String> getParameters(List<Triple<String, String, String>> defaultParameters, SortedMap inputParameters)
 	{
 		return getParameters(defaultParameters, inputParameters == null ? null : inputParameters.entrySet());
 	}
@@ -79,14 +79,14 @@ public class CommandLineParser extends PosixParser
 	 * @return Current parameters (key, value)
 	 * @since 0.2.2
 	 */
-	public static Map<String, String> getParameters(List<Triple<String, String, String>> defaultParameters, Properties inputParameters)
+	public static SortedMap<String, String> getParameters(List<Triple<String, String, String>> defaultParameters, Properties inputParameters)
 	{
 		return getParameters(defaultParameters, inputParameters == null ? null : inputParameters.entrySet());
 	}
 
-	private static Map<String, String> getParameters(List<Triple<String, String, String>> defaultParameters, Set<Entry<Object, Object>> inputParameters)
+	private static SortedMap<String, String> getParameters(List<Triple<String, String, String>> defaultParameters, Set<Entry<Object, Object>> inputParameters)
 	{
-		Map<String, String> parameters = new LinkedHashMap<String, String>();
+		SortedMap<String, String> parameters = new TreeMap<String, String>();
 
 		if (defaultParameters != null)
 		{

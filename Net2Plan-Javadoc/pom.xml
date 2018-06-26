@@ -16,7 +16,7 @@
     <parent>
         <artifactId>net2plan</artifactId>
         <groupId>com.net2plan</groupId>
-        <version>0.5.3</version>
+        <version>0.6.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -28,13 +28,13 @@
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-core</artifactId>
-            <version>0.5.3</version>
+            <version>0.6.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-examples</artifactId>
-            <version>0.5.3</version>
+            <version>0.6.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -116,6 +116,7 @@
                                 <include>com/net2plan/interfaces/simulation/**</include>
                                 <include>com/net2plan/libraries/**</include>
                                 <include>com/net2plan/utils/**</include>
+                                <include>com/net2plan/research/**</include>
                             </sourceFileIncludes>
                             <!-- Output directory -->
                             <additionalparam>-d ${project.build.directory}/apidocs/api</additionalparam>

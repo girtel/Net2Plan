@@ -13,12 +13,14 @@ package com.net2plan.interfaces.networkDesign;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.SortedSet;
 
+import org.assertj.core.util.Sets;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -28,12 +30,13 @@ import org.junit.Test;
 public class MulticastTreeTest 
 {
 	private NetPlan np = null;
-	private Node n1, n2 , n3;
+	private Node n1, n2 , n3 , n4;
 	private Link link12, link23 , link13;
 	private MulticastDemand d123;
-	private MulticastTree tStar, t123;
-	private Set<Link> star, line123;
-	private Set<Node> endNodes;
+	private MulticastDemand d1234;
+	private MulticastTree tStar, t123 , t134;
+	private SortedSet<Link> star, line123;
+	private SortedSet<Node> endNodes;
 	
 
 	@BeforeClass
@@ -51,15 +54,18 @@ public class MulticastTreeTest
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
+		this.n4 = np.addNode(0 , 0 , "node4" , null);
 		this.link12 = np.addLink(n1,n2,100,100,1,null);
 		this.link23 = np.addLink(n2,n3,100,100,1,null);
 		this.link13 = np.addLink(n1,n3,100,100,1,null);
-		this.endNodes = new HashSet<Node> (); endNodes.add(n2); endNodes.add(n3);
-		this.line123 = new HashSet<Link> (); line123.add(link12); line123.add(link23);
-		this.star = new HashSet<Link> (); star.add(link12); star.add(link13);
+		this.endNodes = new TreeSet<Node> (); endNodes.add(n2); endNodes.add(n3);
+		this.line123 = new TreeSet<Link> (); line123.add(link12); line123.add(link23);
+		this.star = new TreeSet<Link> (); star.add(link12); star.add(link13);
 		this.d123 = np.addMulticastDemand(n1 , endNodes , 100 , null);
+		this.d1234 = np.addMulticastDemand(n1 , new TreeSet<> (Arrays.asList(n2,n3,n4)) , 100 , null);
 		this.t123 = np.addMulticastTree(d123 , 10,15,line123,null);
 		this.tStar = np.addMulticastTree(d123 , 10,15,star,null);
+		this.t134 = np.addMulticastTree(d1234 , 10,15,new TreeSet<> (Arrays.asList(link13, link12)),null);
 	}
 
 	@After
@@ -78,6 +84,13 @@ public class MulticastTreeTest
 		assertTrue (np2.isDeepCopy(np));
 	}
 
+	@Test
+	public void testPartialTree()
+	{
+		assertEquals (t134.getEgressNodesReached() , Sets.newLinkedHashSet(n2,n3));
+		assertEquals (t123.getEgressNodesReached() , Sets.newLinkedHashSet(n2,n3));
+	}
+	
 	@Test
 	public void testGetInitialLinkSet()
 	{
@@ -152,8 +165,8 @@ public class MulticastTreeTest
 	@Test
 	public void testGetEgressNodes() 
 	{
-		assertEquals(t123.getEgressNodes() , endNodes);
-		assertEquals(tStar.getEgressNodes() , endNodes);
+		assertEquals(t123.getEgressNodesReached() , endNodes);
+		assertEquals(tStar.getEgressNodesReached() , endNodes);
 	}
 
 	@Test
@@ -198,7 +211,7 @@ public class MulticastTreeTest
 	@Test
 	public void testGetNodeSet() 
 	{
-		Set<Node> allNodes = new HashSet<Node> (); allNodes.add(n1); allNodes.add(n2); allNodes.add(n3);   
+		SortedSet<Node> allNodes = new TreeSet<Node> (); allNodes.add(n1); allNodes.add(n2); allNodes.add(n3);   
 		assertEquals(t123.getNodeSet() , allNodes);
 		assertEquals(tStar.getNodeSet() , allNodes);
 	}

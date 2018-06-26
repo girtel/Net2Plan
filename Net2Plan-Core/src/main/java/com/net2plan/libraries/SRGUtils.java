@@ -183,17 +183,17 @@ public class SRGUtils
 	 * @param considerDoubleFailureStates Flag to indicate whether or not double failure states are included
 	 * @return List of SRGs going down on each failure state
 	 */
-	public static List<Set<SharedRiskGroup>> enumerateFailureStates(Collection<SharedRiskGroup> srgs, boolean considerNoFailureState, boolean considerDoubleFailureStates)
+	public static List<SortedSet<SharedRiskGroup>> enumerateFailureStates(Collection<SharedRiskGroup> srgs, boolean considerNoFailureState, boolean considerDoubleFailureStates)
 	{
-		List<Set<SharedRiskGroup>> F_s = new LinkedList<Set<SharedRiskGroup>>();
+		List<SortedSet<SharedRiskGroup>> F_s = new LinkedList<SortedSet<SharedRiskGroup>>();
 
 		/* No failure */
-		if (considerNoFailureState) F_s.add(new HashSet<SharedRiskGroup>());
+		if (considerNoFailureState) F_s.add(new TreeSet<SharedRiskGroup>());
 
 		/* Single failure */
 		for (SharedRiskGroup srg : srgs)
 		{
-			Set<SharedRiskGroup> aux = new HashSet<SharedRiskGroup>(); aux.add(srg);
+			SortedSet<SharedRiskGroup> aux = new TreeSet<SharedRiskGroup>(); aux.add(srg);
 			F_s.add(aux);
 		}
 
@@ -206,7 +206,7 @@ public class SRGUtils
 				{
 					if (srg_2.getIndex () <= srg_1.getIndex ()) continue;
 					
-					Set<SharedRiskGroup> aux = new HashSet<SharedRiskGroup>(); aux.add(srg_1); aux.add(srg_2);
+					SortedSet<SharedRiskGroup> aux = new TreeSet<SharedRiskGroup>(); aux.add(srg_1); aux.add(srg_2);
 					F_s.add(aux);
 				}
 			}
@@ -225,12 +225,12 @@ public class SRGUtils
 	 */
 	public static DoubleMatrix2D getMatrixFailureState2SRG (Collection<SharedRiskGroup> srgs, boolean considerNoFailureState, boolean considerDoubleFailureStates)
 	{
-		List<Set<SharedRiskGroup>> F_s = SRGUtils.enumerateFailureStates(srgs, considerNoFailureState, considerDoubleFailureStates);
+		List<SortedSet<SharedRiskGroup>> F_s = SRGUtils.enumerateFailureStates(srgs, considerNoFailureState, considerDoubleFailureStates);
 		final int F = F_s.size ();
 		final int S = srgs.size ();
 		DoubleMatrix2D A_fs = DoubleFactory2D.sparse.make (F,S);
 		int f = 0;
-		for (Set<SharedRiskGroup> failingSRGs : F_s)
+		for (SortedSet<SharedRiskGroup> failingSRGs : F_s)
 		{
 			for (SharedRiskGroup srg : failingSRGs) A_fs.set (f , srg.getIndex () , 1.0);
 			f ++;
@@ -292,7 +292,7 @@ public class SRGUtils
 		int E = netPlan.getNumberOfLinks(layer);
 		int numSRGs = netPlan.getNumberOfSRGs();
 		Collection<SharedRiskGroup> srgs_thisNetPlan = netPlan.getSRGs();
-		Set<Node> nodesInSRGs = new LinkedHashSet<Node>();
+		SortedSet<Node> nodesInSRGs = new TreeSet<Node>();
 		for (SharedRiskGroup srg : srgs_thisNetPlan)
 		{
 			if (!srg.getLinksAllLayers().isEmpty())
@@ -326,11 +326,11 @@ public class SRGUtils
 
 		boolean isAnOneSRGPerLinkModel = true;
 
-		Set<Link> linksInSRG = new LinkedHashSet<Link>();
+		SortedSet<Link> linksInSRG = new TreeSet<Link>();
 		for (SharedRiskGroup srg : srgs_thisNetPlan)
 		{
-//			Set<Long> nodeIds_thisSRG = netPlan.getSRGNodes(srgId);
-//			Set<Long> linkIds_thisSRG = netPlan.getSRGLinks(layerId, srgId);
+//			SortedSet<Long> nodeIds_thisSRG = netPlan.getSRGNodes(srgId);
+//			SortedSet<Long> linkIds_thisSRG = netPlan.getSRGLinks(layerId, srgId);
 
 			if (!srg.getNodes ().isEmpty())
 			{
@@ -365,8 +365,8 @@ public class SRGUtils
 
 		for (SharedRiskGroup srg : srgs_thisNetPlan)
 		{
-//			Set<Long> nodeIds_thisSRG = netPlan.getSRGNodes(srgId);
-//			Set<Long> linkIds_thisSRG = netPlan.getSRGLinks(layerId, srgId);
+//			SortedSet<Long> nodeIds_thisSRG = netPlan.getSRGNodes(srgId);
+//			SortedSet<Long> linkIds_thisSRG = netPlan.getSRGLinks(layerId, srgId);
 
 			if (!srg.getNodes().isEmpty())
 			{
@@ -397,8 +397,8 @@ public class SRGUtils
 
 		for (SharedRiskGroup srg : srgs_thisNetPlan)
 		{
-//			Set<Long> nodeIds_thisSRG = netPlan.getSRGNodes(srgId);
-//			Set<Long> linkIds_thisSRG = netPlan.getSRGLinks(layerId, srgId);
+//			SortedSet<Long> nodeIds_thisSRG = netPlan.getSRGNodes(srgId);
+//			SortedSet<Long> linkIds_thisSRG = netPlan.getSRGLinks(layerId, srgId);
 
 			if (!srg.getNodes ().isEmpty())
 			{
@@ -445,12 +445,12 @@ public class SRGUtils
 	 * @param links Collection of links
 	 * @return SRGs affecting the links
 	 */
-	public static Set<SharedRiskGroup> getAffectingSRGs (Collection<Link> links)
+	public static SortedSet<SharedRiskGroup> getAffectingSRGs (Collection<Link> links)
 	{
-		if (links == null) return new HashSet<SharedRiskGroup> ();
-		if (links.isEmpty()) return new HashSet<SharedRiskGroup> ();
+		if (links == null) return new TreeSet<SharedRiskGroup> ();
+		if (links.isEmpty()) return new TreeSet<SharedRiskGroup> ();
 		final NetPlan np = links.iterator().next().getNetPlan();
-		Set<SharedRiskGroup> res = new HashSet<SharedRiskGroup> ();
+		SortedSet<SharedRiskGroup> res = new TreeSet<SharedRiskGroup> ();
 		res.addAll (links.iterator().next().getOriginNode().getSRGs());
 		for (Link e : links) 
 		{
@@ -491,13 +491,13 @@ public class SRGUtils
 			List<Node> seqNodes = route.getSeqNodes();
 
 			Collection<SharedRiskGroup> routeSRGIds = route.getSRGs();
-			Set<SharedRiskGroup> backupPathSRGs = new LinkedHashSet<SharedRiskGroup>();
+			SortedSet<SharedRiskGroup> backupPathSRGs = new TreeSet<SharedRiskGroup>();
 			for(List<Link> path : backupPaths) backupPathSRGs.addAll(getAffectingSRGs(path));
 			
-			Set<SharedRiskGroup> commonSRGs_withEndNodes = CollectionUtils.intersect(routeSRGIds, backupPathSRGs);
+			SortedSet<SharedRiskGroup> commonSRGs_withEndNodes = new TreeSet<> (CollectionUtils.intersect(routeSRGIds, backupPathSRGs));
 			if (!commonSRGs_withEndNodes.isEmpty()) srgDisjoint_withEndNodes = false;
 
-			Set<SharedRiskGroup> routeSRGIds_withoutEndNodes = new LinkedHashSet<SharedRiskGroup>();
+			SortedSet<SharedRiskGroup> routeSRGIds_withoutEndNodes = new TreeSet<SharedRiskGroup>();
 			Iterator<Node> nodeIt = seqNodes.iterator(); nodeIt.next();
 			while(nodeIt.hasNext())
 				if (nodeIt.hasNext())
@@ -506,7 +506,7 @@ public class SRGUtils
 			for (Link link : seqLinks)
 				routeSRGIds_withoutEndNodes.addAll(link.getSRGs());
 				
-			Set<SharedRiskGroup> commonSRGs_withoutEndNodes = CollectionUtils.intersect(routeSRGIds_withoutEndNodes, backupPathSRGs);
+			SortedSet<SharedRiskGroup> commonSRGs_withoutEndNodes = new TreeSet<> (CollectionUtils.intersect(routeSRGIds_withoutEndNodes, backupPathSRGs));
 			if (!commonSRGs_withoutEndNodes.isEmpty()) srgDisjoint_withoutEndNodes = false;
 
 			if (srgDisjoint_withEndNodes) accum_routeSRGDisjoint_withEndNodes++;
@@ -527,8 +527,8 @@ public class SRGUtils
 	 */
 	public static boolean isSRGDisjoint (Collection<Link> path1 , Collection<Link> path2)
 	{
-		final Set<SharedRiskGroup> srgs1 = SRGUtils.getAffectingSRGs(path1);
-		final Set<SharedRiskGroup> srgs2 = SRGUtils.getAffectingSRGs(path2);
+		final SortedSet<SharedRiskGroup> srgs1 = SRGUtils.getAffectingSRGs(path1);
+		final SortedSet<SharedRiskGroup> srgs2 = SRGUtils.getAffectingSRGs(path2);
 		return Sets.intersection(srgs1 , srgs2).isEmpty();
 	}
 	
@@ -540,8 +540,8 @@ public class SRGUtils
 	 */
 	public static boolean isSingleSRGFailureTolerant (NetPlan np , NetworkLayer failureTolerantLayer)
 	{
-		final Set<Node> originalNpFailingNodes = new HashSet<> (np.getNodesDown());
-		final Set<Link> originalNpFailingLinks = new HashSet<> (np.getLinksDownAllLayers());
+		final SortedSet<Node> originalNpFailingNodes = new TreeSet<> (np.getNodesDown());
+		final SortedSet<Link> originalNpFailingLinks = new TreeSet<> (np.getLinksDownAllLayers());
 		np.setLinksAndNodesFailureState(originalNpFailingLinks , null , originalNpFailingNodes , null);
 		final double precFactor = Configuration.precisionFactor;
 		if (failureTolerantLayer.getNetPlan() != np) throw new Net2PlanException ("The input layer does not belong to the input NetPlan");

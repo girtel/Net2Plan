@@ -1,3 +1,4 @@
+
 /*******************************************************************************
  * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
@@ -15,38 +16,37 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-import com.net2plan.utils.Constants.RoutingType;
-import org.junit.rules.TemporaryFolder;
 
 public class LinkTest 
 {
+    public static final String TEST_FILE_DIRECTORY = "src/test/resources/temp";
+    public static final String TEST_FILE_NAME = "test.n2p";
 	private NetPlan np = null;
 	private Node n1, n2 , n3;
 	private Link link12, link23 , link13;
 	private Demand d13, d12 , scd123;
 	private MulticastDemand d123;
 	private MulticastTree tStar, t123;
-	private Set<Link> star, line123;
-	private Set<Node> endNodes;
+	private SortedSet<Link> star, line123;
+	private SortedSet<Node> endNodes;
 	private Route r12, r123a, r123b , sc123;
 	private List<Link> path13;
 	private List<NetworkElement> pathSc123;
@@ -57,9 +57,6 @@ public class LinkTest
 	private Link upperMdLink12 , upperMdLink13;
 	private MulticastDemand upperMd123;
 	private MulticastTree upperMt123;
-
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 	
 
 	@Before
@@ -75,43 +72,39 @@ public class LinkTest
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
-		this.d13 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
-		this.d12 = np.addDemand(n1, n2, 3 , null,lowerLayer);
+		this.d13 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
+		this.d12 = np.addDemand(n1, n2, 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
 		this.r12 = np.addRoute(d12,1,1.5,Collections.singletonList(link12),null);
 		this.path13 = new LinkedList<Link> (); path13.add(link12); path13.add(link23);
 		this.r123a = np.addRoute(d13,1,1.5,path13,null);
 		this.r123b = np.addRoute(d13,1,1.5,path13,null);
 		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
 		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.scd123 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
+		this.scd123 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = Arrays.asList(link12 ,res2 , link23); 
 		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(300.0 , 50.0 , 302.0) , pathSc123 , null); 
 		this.segm13 = np.addRoute(d13 , 0 , 50 , Collections.singletonList(link13) , null);
 		this.r123a.addBackupRoute(segm13);
 		this.upperLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
-		this.d12.coupleToUpperLayerLink(upperLink12);
-		this.line123 = new HashSet<Link> (Arrays.asList(link12, link23)); 
-		this.star = new HashSet<Link> (Arrays.asList(link12, link13));
-		this.endNodes = new HashSet<Node> (Arrays.asList(n2,n3));
+		this.d12.coupleToUpperOrSameLayerLink(upperLink12);
+		this.line123 = new TreeSet<Link> (Arrays.asList(link12, link23)); 
+		this.star = new TreeSet<Link> (Arrays.asList(link12, link13));
+		this.endNodes = new TreeSet<Node> (Arrays.asList(n2,n3));
 		this.d123 = np.addMulticastDemand(n1 , endNodes , 100 , null , lowerLayer);
 		this.t123 = np.addMulticastTree(d123 , 10,15,line123,null);
 		this.tStar = np.addMulticastTree(d123 , 10,15,star,null);
 		this.upperMdLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
 		this.upperMdLink13 = np.addLink(n1,n3,10,100,1,null,upperLayer);
 		this.upperMd123 = np.addMulticastDemand (n1 , endNodes , 100 , null , upperLayer);
-		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
-		d123.couple(new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
-
-		temporaryFolder.create();
+		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new TreeSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
+		d123.couple(new TreeSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
 	}
 
 	@After
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
-
-		temporaryFolder.delete();
 	}
 
 	@Test
@@ -121,7 +114,7 @@ public class LinkTest
 	}
 
 	@Test
-	public void testBidirectional () throws IOException
+	public void testBidirectional ()
 	{
 		Pair<Link,Link> pair = np.addLinkBidirectional(n1, n2, 1, 1, 1, null);
 		assertTrue (pair.getFirst().isBidirectional());
@@ -141,7 +134,7 @@ public class LinkTest
 		assertEquals (other2.getBidirectionalPair() , pair.getSecond());
 		assertEquals (pair.getSecond().getBidirectionalPair() , other2);
 		
-		File f = temporaryFolder.newFile("temp.n2p");
+		File f = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME);
 		this.np.saveToFile(f);
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));
@@ -212,10 +205,10 @@ public class LinkTest
 	@Test
 	public void testGetForwardingRules() 
 	{
-		try { np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); fail ("Not in service chains"); } catch (Exception e) {}
+		try { np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); fail ("Not in service chains"); } catch (Exception e) {}
 		scd123.remove();
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); 
-		Map<Pair<Demand,Link>,Double> frLink12 = link12.getForwardingRules();
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); 
+		SortedMap<Pair<Demand,Link>,Double> frLink12 = link12.getForwardingRules();
 		assertEquals (frLink12.get(Pair.of(d12,link12)) , 1.0 , 0);
 		assertEquals (frLink12.get(Pair.of(d12,link23)) , null);
 		assertEquals (frLink12.get(Pair.of(d13,link12)) , 1.0 , 0);
@@ -394,29 +387,29 @@ public class LinkTest
 	@Test
 	public void testGetTraversingRoutes() 
 	{
-		assertEquals(link12.getTraversingRoutes() , new HashSet<Route> (Arrays.asList(r12,r123a,r123b,sc123)));
-		assertEquals(link23.getTraversingRoutes() , new HashSet<Route> (Arrays.asList(r123a,r123b,sc123)));
-		assertEquals(link13.getTraversingRoutes() , new HashSet<Route> (Arrays.asList(segm13)));
-		assertEquals(upperLink12.getTraversingRoutes() , new HashSet<Route> (Arrays.asList()));
-		assertEquals(upperMdLink12.getTraversingRoutes() , new HashSet<Route> (Arrays.asList()));
-		assertEquals(upperMdLink13.getTraversingRoutes() , new HashSet<Route> (Arrays.asList()));
+		assertEquals(link12.getTraversingRoutes() , new TreeSet<Route> (Arrays.asList(r12,r123a,r123b,sc123)));
+		assertEquals(link23.getTraversingRoutes() , new TreeSet<Route> (Arrays.asList(r123a,r123b,sc123)));
+		assertEquals(link13.getTraversingRoutes() , new TreeSet<Route> (Arrays.asList(segm13)));
+		assertEquals(upperLink12.getTraversingRoutes() , new TreeSet<Route> (Arrays.asList()));
+		assertEquals(upperMdLink12.getTraversingRoutes() , new TreeSet<Route> (Arrays.asList()));
+		assertEquals(upperMdLink13.getTraversingRoutes() , new TreeSet<Route> (Arrays.asList()));
 	}
 
 	@Test
 	public void testGetTraversingTrees() 
 	{
-		assertEquals(link12.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(t123 , tStar)));
-		assertEquals(link23.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(t123)));
-		assertEquals(link13.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(tStar)));
-		assertEquals(upperLink12.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList()));
-		assertEquals(upperMdLink12.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(upperMt123)));
-		assertEquals(upperMdLink13.getTraversingTrees() , new HashSet<MulticastTree> (Arrays.asList(upperMt123)));
+		assertEquals(link12.getTraversingTrees() , new TreeSet<MulticastTree> (Arrays.asList(t123 , tStar)));
+		assertEquals(link23.getTraversingTrees() , new TreeSet<MulticastTree> (Arrays.asList(t123)));
+		assertEquals(link13.getTraversingTrees() , new TreeSet<MulticastTree> (Arrays.asList(tStar)));
+		assertEquals(upperLink12.getTraversingTrees() , new TreeSet<MulticastTree> (Arrays.asList()));
+		assertEquals(upperMdLink12.getTraversingTrees() , new TreeSet<MulticastTree> (Arrays.asList(upperMt123)));
+		assertEquals(upperMdLink13.getTraversingTrees() , new TreeSet<MulticastTree> (Arrays.asList(upperMt123)));
 	}
 
 	@Test
 	public void testCoupleToLowerLayerDemand() 
 	{
-		final Demand dd13 = np.addDemand(n1,n3,10,null,lowerLayer);
+		final Demand dd13 = np.addDemand(n1,n3,10 , RoutingType.SOURCE_ROUTING,null,lowerLayer);
 		final Link ll13 = np.addLink(n1,n3,100,100,1,null,upperLayer);
 		ll13.coupleToLowerLayerDemand(dd13);
 		assertEquals(ll13.getCapacity() , 0 , 0);
@@ -429,20 +422,20 @@ public class LinkTest
 	public void testCoupleToNewDemandCreated() 
 	{
 		final Link ll13 = np.addLink(n1,n3,100,100,1,null,upperLayer);
-		final Demand dd13 = ll13.coupleToNewDemandCreated(lowerLayer);
+		final Demand dd13 = ll13.coupleToNewDemandCreated(lowerLayer , RoutingType.SOURCE_ROUTING);
 		assertEquals(ll13.getCapacity() , 0 , 0);
 		assertTrue(ll13.isCoupled());
 		assertEquals(ll13.getCoupledDemand() , dd13);
 		try { ll13.coupleToLowerLayerDemand(dd13); fail (); } catch (Exception e) {}
-		try { ll13.coupleToNewDemandCreated(lowerLayer); fail (); } catch (Exception e) {}
+		try { ll13.coupleToNewDemandCreated(lowerLayer , RoutingType.SOURCE_ROUTING); fail (); } catch (Exception e) {}
 	}
 
 	@Test
 	public void testRemoveAllForwardingRules() 
 	{
-		try { np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); fail ("Not in service chains"); } catch (Exception e) {}
+		try { np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); fail ("Not in service chains"); } catch (Exception e) {}
 		scd123.remove();
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); 
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer); 
 		link12.removeAllForwardingRules();
 		assertEquals (link12.getForwardingRules() , Collections.emptyMap());
 	}
@@ -492,7 +485,7 @@ public class LinkTest
 	@Test
 	public void testGetLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ()
 	{
-		Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> triple;
+		Triple<SortedMap<Demand,SortedSet<Link>>,SortedMap<Demand,SortedSet<Link>>,SortedMap<Pair<MulticastDemand,Node>,SortedSet<Link>>> triple;
 		triple = link12.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
 		assertEquals (triple.getFirst() , ImmutableMap.of(d12 , Sets.newHashSet(link12) , d13 , Sets.newHashSet(link12 , link23)
 				, scd123 , Sets.newHashSet(link12 , link23)));

@@ -16,6 +16,8 @@ import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Constants.RoutingType;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,8 +52,8 @@ public class Offline_fa_xpMultihourDynamicRoutingTest
 		NetPlan npTm1 = np.copy(); 
 		npTm0.removeAllDemands(); 
 		npTm1.removeAllDemands(); 
-		for (Node n1 : npTm0.getNodes()) for (Node n2 : npTm0.getNodes()) if (n1 != n2) npTm0.addDemand(n1, n2, 5*rng.nextDouble() , null);
-		for (Node n1 : npTm1.getNodes()) for (Node n2 : npTm1.getNodes()) if (n1 != n2) npTm1.addDemand(n1, n2, 5*rng.nextDouble() , null);
+		for (Node n1 : npTm0.getNodes()) for (Node n2 : npTm0.getNodes()) if (n1 != n2) npTm0.addDemand(n1, n2, 5*rng.nextDouble() , RoutingType.SOURCE_ROUTING , null);
+		for (Node n1 : npTm1.getNodes()) for (Node n2 : npTm1.getNodes()) if (n1 != n2) npTm1.addDemand(n1, n2, 5*rng.nextDouble() , RoutingType.SOURCE_ROUTING , null);
 		npTm0.saveToFile(new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootInput_tm0.n2p"));
 		npTm1.saveToFile(new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootInput_tm1.n2p"));
 	}

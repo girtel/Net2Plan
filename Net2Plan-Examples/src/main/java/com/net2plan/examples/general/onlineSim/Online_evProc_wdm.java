@@ -145,7 +145,6 @@ public class Online_evProc_wdm extends IEventProcessor
 			initialNetPlan.removeAllRoutes(wdmLayer);
 			initialNetPlan.removeAllMulticastTrees(wdmLayer);
 		}
-		initialNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING , wdmLayer);
 		if (wdmNumFrequencySlotsPerFiber.getInt() > 0) WDMUtils.setFibersNumFrequencySlots(initialNetPlan , wdmNumFrequencySlotsPerFiber.getInt() , wdmLayer);
 		
 		/* Get the transponders information */
@@ -215,7 +214,7 @@ public class Online_evProc_wdm extends IEventProcessor
 
 						if (DEBUG) { checkWaveOccupEqualsNp(currentNetPlan); checkClashing (currentNetPlan); } 
 						
-						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
+						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , RoutingType.SOURCE_ROUTING , null, wdmLayer) : addLpEvent.demand;
 						wdmLayerDemand.setIntendedRecoveryType(Demand.IntendedRecoveryType.PROTECTION_REVERT);
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa.getFirst(), lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa.getFirst() , wavelengthFiberOccupancy , null);
@@ -259,7 +258,7 @@ public class Online_evProc_wdm extends IEventProcessor
 					}
 					if (rwa != null)
 					{
-						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , null, wdmLayer) : addLpEvent.demand;
+						final Demand wdmLayerDemand = addLpEvent.demand == null? currentNetPlan.addDemand(addLpEvent.ingressNode, addLpEvent.egressNode, lineRateThisLp_Gbps , RoutingType.SOURCE_ROUTING , null, wdmLayer) : addLpEvent.demand;
 						wdmLayerDemand.setIntendedRecoveryType(isRestorationRecovery? Demand.IntendedRecoveryType.RESTORATION : Demand.IntendedRecoveryType.NONE);
 						final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rwa , lineRateThisLp_Gbps);
 						WDMUtils.allocateResources(rwa , wavelengthFiberOccupancy , null);

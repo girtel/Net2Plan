@@ -147,7 +147,7 @@ public class Offline_tcfa_xdeFormulationsMinLinkCost implements IAlgorithm
 		final DoubleMatrix2D xx_de = op.getPrimalSolution("xx_de").view2D().copy ();
 
 		/* Sets the routing, capacities and links. Remove unused links (no capacity) */
-		netPlan.setRoutingFromDemandLinkCarriedTraffic(xx_de , true , true);
+		netPlan.setRoutingFromDemandLinkCarriedTraffic(xx_de , true , true , null);
 		netPlan.setVectorLinkCapacity(u_e);
 		netPlan.removeAllLinksUnused (PRECISION_FACTOR);
 		

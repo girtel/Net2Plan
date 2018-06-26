@@ -35,8 +35,8 @@ import com.net2plan.interfaces.networkDesign.NetworkElement;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.2
  */
-public class StringLabeller {
-    private Object object;
+public class StringLabeller<T> {
+    private T object;
     private String label;
     private final boolean isModifiable;
 
@@ -48,12 +48,12 @@ public class StringLabeller {
      * @param isModifiable Indicates whether or not the elements can be changed after initialization
      * @since 0.3.1
      */
-    public StringLabeller(Object object, String label, boolean isModifiable) {
+    public StringLabeller(T object, String label, boolean isModifiable) {
         this.object = object;
         this.label = label;
         this.isModifiable = isModifiable;
-        if (object instanceof NetworkElement)
-            throw new RuntimeException("StringLabeller should not work with NetworkElements");
+//        if (object instanceof NetworkElement)
+//            throw new RuntimeException("StringLabeller should not work with NetworkElements");
     }
 
     /**
@@ -80,8 +80,8 @@ public class StringLabeller {
      * @return A new {@code StringLabeller} object
      * @since 0.2.2
      */
-    public static StringLabeller of(Object object, String label) {
-        return new StringLabeller(object, label, true);
+    public static <T> StringLabeller of(T object, String label) {
+        return new StringLabeller<T>(object, label, true);
     }
 
     /**
@@ -100,7 +100,7 @@ public class StringLabeller {
      * @return The original object
      * @since 0.2.2
      */
-    public Object getObject() {
+    public T getObject() {
         return object;
     }
 
@@ -121,11 +121,11 @@ public class StringLabeller {
      * @param object Object to be wrapped
      * @since 0.3.1
      */
-    public void setObject(Object object) {
+    public void setObject(T object) {
         checkIsModifiable();
         this.object = object;
-        if (object instanceof NetworkElement)
-            throw new RuntimeException("StringLabeller should not work with NetworkElements");
+//        if (object instanceof NetworkElement)
+//            throw new RuntimeException("StringLabeller should not work with NetworkElements");
     }
 
     /**
@@ -136,8 +136,8 @@ public class StringLabeller {
      * @return A new {@code StringLabeller} object
      * @since 0.3.1
      */
-    public static StringLabeller unmodifiableOf(Object object, String label) {
-        return new StringLabeller(object, label, false);
+    public static <T> StringLabeller unmodifiableOf(T object, String label) {
+        return new StringLabeller<T>(object, label, false);
     }
 
 }

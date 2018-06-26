@@ -24,14 +24,11 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -39,6 +36,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
@@ -58,7 +59,6 @@ import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.jgrapht.graph.Subgraph;
 import org.jgrapht.graph.UndirectedSubgraph;
 
-import com.google.common.collect.Sets;
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -66,6 +66,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
@@ -129,10 +130,10 @@ public class GraphUtils
 	{
 		if (seqLinks.isEmpty()) throw new Net2PlanException("No path");
 
-		if (checkCycles == CheckRoutingCycleType.NO_REPEAT_LINK && (new HashSet<Link>(seqLinks)).size() != seqLinks.size()) throw new Net2PlanException("There is a loop, seq. links = " + CollectionUtils.join(seqLinks, " => "));
+		if (checkCycles == CheckRoutingCycleType.NO_REPEAT_LINK && (new TreeSet<Link>(seqLinks)).size() != seqLinks.size()) throw new Net2PlanException("There is a loop, seq. links = " + CollectionUtils.join(seqLinks, " => "));
 
 		List<Node> seqNodes = convertSequenceOfLinksToSequenceOfNodes(seqLinks);
-		if (checkCycles == CheckRoutingCycleType.NO_REPEAT_NODE && (new HashSet<Node>(seqNodes)).size() != seqNodes.size()) throw new Net2PlanException("There is a loop, seq. links = " + CollectionUtils.join(seqLinks, " => ") + ", seq. nodes = " + CollectionUtils.join(seqNodes, " => "));
+		if (checkCycles == CheckRoutingCycleType.NO_REPEAT_NODE && (new TreeSet<Node>(seqNodes)).size() != seqNodes.size()) throw new Net2PlanException("There is a loop, seq. links = " + CollectionUtils.join(seqLinks, " => ") + ", seq. nodes = " + CollectionUtils.join(seqNodes, " => "));
 	}
 
 	/** Computes the Euclidean distance between two points.
@@ -174,13 +175,12 @@ public class GraphUtils
 	/** Computes the fundamental matrix of the absorbing Markov chain represented by a given demand-link routing for a given demand.
 	 * If the routing has closed loops, this is referred to in the RoutingCycleType, and the fundamental matrix is null  
 	 * @param demand Demand
-	 * @param nodes List of nodes
+	 * @param N Number of nodes
 	 * @param links List of links
 	 * @param f_de For each demand <i>d</i> (<i>d = 0</i> refers to the first demand in {@code demandIds}, <i>d = 1</i> refers to the second one, and so on), and each link <i>e</i> (<i>e = 0</i> refers to the first link in {@code linkMap.keySet()}, <i>e = 1</i> refers to the second one, and so on), {@code f_de[d][e]} sets the fraction of the traffic from demand <i>d</i> that arrives (or is generated in) node <i>a(e)</i> (the origin node of link <i>e</i>), that is forwarded through link <i>e</i>. It must hold that for every node <i>n</i> different of <i>b(d)</i>, the sum of the fractions <i>f<sub>te</sub></i> along its outgoing links must be lower or equal than 1 (unchecked)
 	 * @return <i>N</i>x<i>N</i> fundamental matrix and {@link com.net2plan.utils.Constants.RoutingCycleType RoutingCycleType} */
-	private static Pair<DoubleMatrix2D, RoutingCycleType> computeM_fde(Demand demand, List<Node> nodes, List<Link> links, DoubleMatrix2D f_de)
+	private static Pair<DoubleMatrix2D, RoutingCycleType> computeM_fde(Demand demand, int N , List<Link> links, DoubleMatrix2D f_de)
 	{
-		int N = nodes.size();
 		DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
 
 		/* Compute the I-Q matrix */
@@ -290,16 +290,17 @@ public class GraphUtils
 	 * it generates the resulting demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e).
 	 * When a demand has a closed routing loop, the traffic in the link would be infinite. Then, a {@code ClosedCycleRoutingException} is thrown
 	 * 
-	 * @param nodes List of nodes
+	 * @param numNodes Number of nodes
 	 * @param links List of links
-	 * @param demands List of demands
-	 * @param h_d The amount of traffic offered for each demand
+	 * @param demandsToConvert List of demands to convert
+	 * @param h_d The amount of traffic offered for each demand, a vector of as many elements as demands in the layer
 	 * @param f_de For each demand <i>d</i> (<i>d = 0</i> refers to the first demand index, <i>d = 1</i> refers to the second one, and so on), and each link <i>e</i> (<i>e = 0</i> refers to the first link index, <i>e = 1</i> refers to the second one, and so on), {@code f_de[d][e]} sets the fraction of the traffic from demand <i>d</i> that arrives (or is generated in) node <i>a(e)</i> (the origin node of link <i>e</i>), that is forwarded through link <i>e</i>. It must hold that for every node <i>n</i> different of <i>b(d)</i>, the sum of the fractions <i>f<sub>de</sub></i> along its outgoing links must be lower or equal than 1 (unchecked)
 	 * @return Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e), total carried traffic per demand, carried traffic per link, and routing cycle type (loopless, with open cycles...) per demand */
-	public static Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> convert_fde2xde(List<Node> nodes, List<Link> links, List<Demand> demands, DoubleMatrix1D h_d, DoubleMatrix2D f_de)
+	public static Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> convert_fde2xde
+	(int numNodes, List<Link> links, SortedSet<Demand> demandsToConvert , DoubleMatrix1D h_d, DoubleMatrix2D f_de)
 	{
 		int E = links.size();
-		int D = demands.size();
+		int D = f_de.rows();
 
 		DoubleMatrix2D x_de = DoubleFactory2D.sparse.make(D, E);
 		DoubleMatrix1D r_d = DoubleFactory1D.dense.make(D);
@@ -308,9 +309,9 @@ public class GraphUtils
 		double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 
 		/* For each demand 'd', detect if the routing is cycleless and well defined */
-		for (Demand demand : demands)
+		for (Demand demand : demandsToConvert)
 		{
-			Pair<DoubleMatrix2D, RoutingCycleType> out = computeM_fde(demand, nodes, links, f_de);
+			Pair<DoubleMatrix2D, RoutingCycleType> out = computeM_fde(demand, numNodes, links, f_de);
 			DoubleMatrix2D M = out.getFirst();
 			routingCycleType.add(out.getSecond());
 			if (M == null) 	throw new ClosedCycleRoutingException("Closed routing cycle for demand " + demand);
@@ -337,16 +338,17 @@ public class GraphUtils
 	}
 
 	/** Given a destination-based routing in the form f_te (fractions of traffic in a node, that is forwarded through each of its output links), it generates the resulting demand-link routing in the form f_de (fractions of traffic in a node from demand d, transmitted through link e).
-	 * 
-	 * @param demands List of demands
+	 *
+	 * @param numDemandsInLayer Number of demands in the layer.
+	 * @param demandsToConvert List of demands in the layer to apply conversion, the rest are untouched
 	 * @param f_te For each destination node <i>t</i> (<i>t = 0</i> refers to the first node index, <i>t = 1</i> refers to the second one, and so on), and each link <i>e</i> (<i>e = 0</i> refers to the first link index, <i>e = 1</i> refers to the second one, and so on), {@code f_te[t][e]} sets the fraction of the traffic targeted to node <i>t</i> that arrives (or is generated in) node <i>a(e)</i> (the origin node of link <i>e</i>), that is forwarded through link <i>e</i>. It must hold that for every node <i>n</i> different of <i>t</i>, the sum of the fractions <i>f<sub>te</sub></i> along its outgoing links must be lower or equal than 1 (unchecked)
 	 * @return Demand-link routing in the form f_de (fractions of traffic in a node from demand d, transmitted through link e) */
-	public static DoubleMatrix2D convert_fte2fde(List<Demand> demands, DoubleMatrix2D f_te)
+	public static DoubleMatrix2D convert_fte2fde(int numDemandsInLayer , SortedSet<Demand> demandsToConvert, DoubleMatrix2D f_te)
 	{
 		int E = f_te.columns();
-		int D = demands.size();
+		int D = numDemandsInLayer;
 		DoubleMatrix2D f_de = DoubleFactory2D.sparse.make(D, E);
-		for (Demand d : demands)
+		for (Demand d : demandsToConvert)
 			f_de.viewRow(d.getIndex()).assign(f_te.viewRow(d.getEgressNode().getIndex()));
 		return f_de;
 	}
@@ -354,19 +356,19 @@ public class GraphUtils
 	/** Given a destination-based routing in the form f_te (fractions of traffic in a node, that is forwarded through each of its output links), and an offered traffic to the network, it generates the resulting demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e).
 	 * If the routing of a demand has closed loops a {@code ClosedCycleRoutingException} is thrown
 	 * 
-	 * @param nodes List of nodes
+	 * @param numNodes Number of nodes
+	 * @param numDemandsInLayer Number of demand in the layer
 	 * @param links List of links
-	 * @param demands List of demands
+	 * @param demandsToConvert List of demands
 	 * @param f_te For each destination node <i>t</i> and each link <i>e</i>, {@code f_te[t][e]} sets the fraction of the traffic targeted to node <i>t</i> that arrives (or is generated in) node <i>a(e)</i> (the origin node of link <i>e</i>), that is forwarded through link <i>e</i>. It must hold that for every node <i>n</i> different of <i>t</i>, the sum of the fractions <i>f<sub>te</sub></i> along its outgoing links must be lower or equal than 1 (unchecked)
 	 * @return Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e), total carried traffic per demand, carried traffic per link, and routing cycle type (loopless, with open cycles...) per demand */
-	public static Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> convert_fte2xde(List<Node> nodes, List<Link> links, List<Demand> demands, DoubleMatrix2D f_te)
+	public static Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> convert_fte2xde(int numNodes, int numDemandsInLayer , List<Link> links, SortedSet<Demand> demandsToConvert, DoubleMatrix2D f_te)
 	{
-		final DoubleMatrix2D f_de = convert_fte2fde(demands, f_te);
-		final int D = demands.size();
-		DoubleMatrix1D h_d = DoubleFactory1D.dense.make(D);
-		for (int d = 0; d < D; d++)
-			h_d.set(d, demands.get(d).getOfferedTraffic());
-		return convert_fde2xde(nodes, links, demands, h_d, f_de);
+		final DoubleMatrix2D f_de = convert_fte2fde(numDemandsInLayer , demandsToConvert, f_te);
+		DoubleMatrix1D h_d = DoubleFactory1D.dense.make(numDemandsInLayer);
+		for (Demand d : demandsToConvert) 
+			h_d.set(d.getIndex(), d.getOfferedTraffic());
+		return convert_fde2xde(numNodes, links, demandsToConvert, h_d, f_de);
 	}
 
 	/** Given a destination-based routing in the form f_te (fractions of traffic in a node, that is forwarded through each of its 
@@ -378,93 +380,89 @@ public class GraphUtils
 	 * 
 	 * @param nodes List of nodes {@link com.net2plan.interfaces.networkDesign.NetPlan Net2Plan} object
 	 * @param links List of links
-	 * @param demands List of demands
+	 * @param numDemandsInLayer Number of demands in the layer
 	 * @param h_d The amount of traffic offered for each demand
 	 * @param f_te For each destination node <i>t</i> (<i>t = 0</i> refers to the first node in {@code nodeIds}, <i>t = 1</i> refers to the second one, and so on), and each link <i>e</i> (<i>e = 0</i> refers to the first link in {@code linkMap.keySet()}, <i>e = 1</i> refers to the second one, and so on), {@code f_te[t][e]} sets the fraction of the traffic targeted to node <i>t</i> that arrives (or is generated in) node <i>a(e)</i> (the origin node of link <i>e</i>), that is forwarded through link <i>e</i>. It must hold that for every node <i>n</i> different of <i>t</i>, the sum of the fractions <i>f<sub>te</sub></i> along its outgoing links must be lower or equal than 1 (unchecked)
 	 * @param d_p (Output parameter) Demand corresponding to each path. User should pass a initialized {@code List} object (i.e. {@code LinkedList} or {@code ArrayList})
 	 * @param x_p (Output parameter) Carried traffic per path. User should pass a initialized {@code List} object (i.e. {@code LinkedList} or {@code ArrayList})
 	 * @param pathList (Output parameter) List of paths, where each path is represented by its sequence of traversed links. User should pass a initialized {@code List} object (i.e. {@code LinkedList} or {@code ArrayList})
+	 * @param demandsToConvert List of demands
 	 * @since 0.3.1 */
-	public static void convert_fte2xp(List<Node> nodes, List<Link> links, List<Demand> demands, DoubleMatrix1D h_d, DoubleMatrix2D f_te, List<Demand> d_p, List<Double> x_p, List<List<Link>> pathList)
+	public static void convert_fte2xp(List<Node> nodes, List<Link> links, int numDemandsInLayer , SortedSet<Demand> demandsToConvert, DoubleMatrix1D h_d, DoubleMatrix2D f_te, List<Demand> d_p, List<Double> x_p, List<List<Link>> pathList)
 	{
-		Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> res = GraphUtils.convert_fte2xde(nodes, links, demands, f_te);
-//		for (RoutingCycleType routingCycleType : res.getFourth())
-//		{
-//			//if (routingCycleType == RoutingCycleType.OPEN_CYCLES) throw new Net2PlanException("There are some open cycles");
-//			//if (routingCycleType == RoutingCycleType.CLOSED_CYCLES) throw new Net2PlanException("There are some closed cycles");
-//		}
-		GraphUtils.convert_xde2xp(nodes, links, demands, res.getFirst(), d_p, x_p, pathList);
+		Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> res = GraphUtils.convert_fte2xde(nodes.size(), numDemandsInLayer , links, demandsToConvert, f_te);
+		GraphUtils.convert_xde2xp(nodes, links, demandsToConvert, res.getFirst(), d_p, x_p, pathList);
 	}
 
 	/** Given a destination-based routing in the form f_te (fractions of traffic in a node, that is forwarded through each of its output links), and an offered traffic to the network, it generates the resulting destination-based routing in the form x_te (amount of traffic targeted to node t, transmitted through link e).
 	 * If the routing has closed loops a {@code ClosedCycleRoutingException} is thrown
 	 * @param nodes List of nodes
 	 * @param links List of links
-	 * @param demands List of demands
+	 * @param demandsToConsider List of demands
 	 * @param h_d The amount of traffic offered for each demand
 	 * @param f_te For each destination node <i>t</i> (<i>t = 0</i> refers to the first node index, <i>t = 1</i> refers to the second one, and so on), and each link <i>e</i> (<i>e = 0</i> refers to the first link index, <i>e = 1</i> refers to the second one, and so on), {@code f_te[t][e]} sets the fraction of the traffic targeted to node <i>t</i> that arrives (or is generated in) node <i>a(e)</i> (the origin node of link <i>e</i>), that is forwarded through link <i>e</i>. It must hold that for every node <i>n</i> different of <i>t</i>, the sum of the fractions <i>f<sub>te</sub></i> along its outgoing links must be lower or equal than 1 (unchecked)
 	 * @return Destination-based routing in the form <i>f<sub>te</sub></i> (fractions of traffic in a node, that is forwarded through each of its output links) */
-	public static DoubleMatrix2D convert_fte2xte(List<Node> nodes, List<Link> links, List<Demand> demands, DoubleMatrix2D f_te, DoubleMatrix1D h_d)
+	public static DoubleMatrix2D convert_fte2xte(List<Node> nodes, List<Link> links, SortedSet<Demand> demandsToConsider, DoubleMatrix2D f_te, DoubleMatrix1D h_d)
 	{
-		final DoubleMatrix2D f_de = convert_fte2fde(demands, f_te);
-		final Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> res = convert_fde2xde(nodes, links, demands, h_d, f_de);
-		return convert_xde2xte(nodes, links, demands, res.getFirst());
+		final int D = (int) h_d.size();
+		final DoubleMatrix2D f_de = convert_fte2fde(D , demandsToConsider, f_te);
+		final Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> res = convert_fde2xde(nodes.size(), links, demandsToConsider, h_d, f_de);
+		return convert_xde2xte(nodes.size(), demandsToConsider, res.getFirst());
 	}
 
 	/** Given a demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e), returns the equivalent forwarding rule mapping (fractions of traffic entering a node from demand 'd', leaving that node through link 'e').
-	 * @param nodes List of nodes
 	 * @param links List of links
-	 * @param demands List of demands
 	 * @param x_de Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e)
 	 * @return Forwarding rule mapping (fractions of traffic entering a node from demand 'd', leaving that node through link 'e') */
-	public static DoubleMatrix2D convert_xde2fde(List<Node> nodes, List<Link> links, List<Demand> demands, DoubleMatrix2D x_de)
+	public static DoubleMatrix2D convert_xde2fde(List<Link> links, DoubleMatrix2D x_de)
 	{
-		final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-		final int D = demands.size();
-		final int E = links.size();
-		Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, links);
-		DoubleMatrix2D f_de = DoubleFactory2D.sparse.make(D, E);
-
-		/* For each node 'n', where we are filling the routing table */
-		for (Node node : nodes)
+		if (x_de.columns() != links.size()) throw new Net2PlanException ("Wrong matrix format");
+		final double PRECISION_FACTOR = Configuration.precisionFactor;
+		final int D = x_de.rows();
+		final int E = x_de.columns();
+		final DoubleMatrix2D f_de = DoubleFactory2D.sparse.make(D, E);
+		for (int d = 0; d < D ; d ++)
 		{
-			/* Compute the outgoing links from node n */
-			Collection<Link> outLinks = graph.getOutEdges(node);
-			if (outLinks == null) outLinks = new LinkedHashSet<Link>();
-
-			/* For each demand 'd', fill the f_de fractions */
-			for (Demand demand : demands)
+			final SortedMap<Node,List<Pair<Integer,Double>>> mapNode2Outlinks = new TreeMap<> ();
+			final IntArrayList es = new IntArrayList();
+			final DoubleArrayList vals = new DoubleArrayList();
+			x_de.viewRow(d).getNonZeros(es, vals);
+			for (int index = 0; index < es.size() ; index ++)
 			{
-				int d = demand.getIndex();
-				double outTraffic = 0;
-				for (Link link : outLinks)
-					outTraffic += x_de.get(demand.getIndex(), link.getIndex());
-
+				final Integer eIndex = es.getQuick(index);
+				final Double eTraffic = vals.getQuick(index);
+				final Node initialNode = links.get(eIndex).getOriginNode();
+				List<Pair<Integer,Double>> outLinks = mapNode2Outlinks.get(initialNode);
+				if (outLinks == null) { outLinks = new LinkedList<> (); mapNode2Outlinks.put(initialNode, outLinks); }
+				outLinks.add(Pair.of(eIndex, eTraffic));
+			}
+			for (Entry<Node,List<Pair<Integer,Double>>> entry : mapNode2Outlinks.entrySet())
+			{
+				final double outTraffic = entry.getValue().stream().mapToDouble(p->p.getSecond()).sum();
 				if (outTraffic > PRECISION_FACTOR) /* there is traffic leaving the node */
 				{
-					for (Link link : outLinks)
-						f_de.set(d, link.getIndex(), x_de.get(d, link.getIndex()) / outTraffic);
+					for (Pair<Integer,Double> link : entry.getValue())
+						f_de.set(d, link.getFirst(), link.getSecond() / outTraffic);
 				}
+
 			}
+			
 		}
 
 		return f_de;
 	}
 
 	/** Given a demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e), returns the equivalent forwarding rule mapping (fractions of traffic entering a node from demand 'd', leaving that node through link 'e').
-	 * @param nodes List of nodes
-	 * @param links List of links
-	 * @param demands List of demands
+	 * @param numNodes Number of nodes
+	 * @param demandsToConsider List of demands
 	 * @param x_de Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e)
 	 * @return Forwarding rule matrix (a <i>N</i>x<i>E</i> matrix where each element <i>&delta;<sub>ne</sub></i> equals the fraction of traffic entering a node 'n' from demand 'd', leaving that node through link 'e') */
-	public static DoubleMatrix2D convert_xde2xte(List<Node> nodes, List<Link> links, List<Demand> demands, DoubleMatrix2D x_de)
+	public static DoubleMatrix2D convert_xde2xte(int numNodes, SortedSet<Demand> demandsToConsider, DoubleMatrix2D x_de)
 	{
-		final int N = nodes.size();
-		final int D = demands.size();
-		final int E = links.size();
+		final int E = x_de.columns();
 
-		DoubleMatrix2D x_te = DoubleFactory2D.sparse.make(N, E);
-		for (Demand demand : demands)
+		DoubleMatrix2D x_te = DoubleFactory2D.sparse.make(numNodes, E);
+		for (Demand demand : demandsToConsider)
 		{
 			final int t = demand.getEgressNode().getIndex();
 			final int d = demand.getIndex();
@@ -480,24 +478,24 @@ public class GraphUtils
 	 * of traffic in each link, or fraction of traffic respect to demand offered traffic, carried in each link. The cycles are removed 
 	 * guaranteeing that the new routing has the same or less traffic of each demand in each link
 	 * This is specified in the xdeAsFractionRespecttoDemandOfferedTraffic parameter. 
-	 * @param nodes List of nodes
+	 * @param numNodes Number of nodes
 	 * @param links List of links
-	 * @param demands List of demands to which I want to remove the loops
+	 * @param demandsToConsider List of demands to which I want to remove the loops
 	 * @param x_de Demand-link routing matrix, with one row per demnad, and one column per link. Contains the traffic of demand d in link e, or the fraction of the traffic respect to the demand offered traffic
 	 * @param xdeAsFractionRespecttoDemandOfferedTraffic true is the matrix is in the fractional form, false otherwise
 	 * @param solverName the name of the solver to call for the internal formulation of the algorithm
 	 * @param solverLibraryName the solver library name
 	 * @param maxSolverTimeInSecondsPerDemand the maximum time the solver is allowed for each of the internal formulations (one for each demand). 
 	 * @return The new x_de matrix ) */
-	public static DoubleMatrix2D removeCyclesFrom_xde (List<Node> nodes, List<Link> links, List<Demand> demands, DoubleMatrix2D x_de , boolean xdeAsFractionRespecttoDemandOfferedTraffic , String solverName , String solverLibraryName , double maxSolverTimeInSecondsPerDemand)
+	public static DoubleMatrix2D removeCyclesFrom_xde (int numNodes, List<Link> links, Set<Demand> demandsToConsider, DoubleMatrix2D x_de , boolean xdeAsFractionRespecttoDemandOfferedTraffic , String solverName , String solverLibraryName , double maxSolverTimeInSecondsPerDemand)
 	{
 		DoubleMatrix2D newXde = x_de.copy();
 		final int E = x_de.columns();
-		final int N = nodes.size();
-		DoubleMatrix2D A_ne = DoubleFactory2D.sparse.make(N,E); for (Link e : links) { A_ne.set(e.getOriginNode().getIndex(), e.getIndex() ,  1); A_ne.set(e.getDestinationNode().getIndex(), e.getIndex() ,  -1); }
-		for (Demand d : demands)
+		DoubleMatrix2D A_ne = DoubleFactory2D.sparse.make(numNodes,E); 
+		for (Link e : links) { A_ne.set(e.getOriginNode().getIndex(), e.getIndex() ,  1); A_ne.set(e.getDestinationNode().getIndex(), e.getIndex() ,  -1); }
+		for (Demand d : demandsToConsider)
 		{
-			DoubleMatrix1D div = DoubleFactory1D.dense.make(N);
+			DoubleMatrix1D div = DoubleFactory1D.dense.make(numNodes);
 			div.set(d.getIngressNode().getIndex(), xdeAsFractionRespecttoDemandOfferedTraffic? 1.0 : d.getOfferedTraffic()); 
 			div.set(d.getEgressNode().getIndex(), xdeAsFractionRespecttoDemandOfferedTraffic? -1.0 : -d.getOfferedTraffic());
 			OptimizationProblem op = new OptimizationProblem();
@@ -507,9 +505,9 @@ public class GraphUtils
 			op.setObjectiveFunction("minimize" , "sum(x_e)");
 			op.addConstraint("A_ne * x_e == div");
 			if (solverLibraryName == null)
-				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName) , "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDemand);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName) , "maxSolverTimeInSeconds", maxSolverTimeInSecondsPerDemand);
 			else
-				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDemand);
+				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", maxSolverTimeInSecondsPerDemand);
 			if (!op.solutionIsFeasible()) throw new Net2PlanException ("A feasible solution was not found");
 			newXde.viewRow(d.getIndex()).assign(op.getPrimalSolution("x_e").view1D());
 		}
@@ -545,72 +543,26 @@ public class GraphUtils
 			op.setObjectiveFunction("minimize" , "sum(x_e)");
 			op.addConstraint("A_ne * x_e == div");
 			if (solverLibraryName == null)
-				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName), "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDestination);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName), "maxSolverTimeInSeconds", maxSolverTimeInSecondsPerDestination);
 			else
-				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerDestination);
+				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", maxSolverTimeInSecondsPerDestination);
 			if (!op.solutionIsFeasible()) throw new Net2PlanException ("A feasible solution was not found");
 			newXte.viewRow(t.getIndex()).assign(op.getPrimalSolution("x_e").view1D());
 		}
 		return newXte;
 	}
 
-	
-//	public static List<Pair<List<Link>,Double>> convert_xe2xpNoLoops (Node ingress , Node egress , Map<Link,Triple<Double,Double,Double>> frInfo , NetworkLayer... optionalLayerParameter)
-//	{
-//        final NetworkLayer layer = ingress.getNetPlan().checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-//		List<List<Link>> res = new ArrayList<> ();
-//		for (Link outLink : ingress.getOutgoingLinks(layer))
-//		{
-//			final Triple<Double,Double,Double> thisFr = frInfo.get(outLink);
-//			if (thisFr == null) continue;
-//			if (thisFr.getFirst() == 0) continue;
-//			res.add(Arrays.asList(outLink));
-//			if (outLink.getDestinationNode() ==  egress) continue;
-//			
-//		}
-//		return res;
-//	}
-//	private static void recursive_convert_xe2xpNoLoops (List<List<Link>> initialList , Set<Integer> pathIdsToContinue , Node ingress , Node egress , Set<Link> frLinks , NetworkLayer... optionalLayerParameter)
-//	{
-//		List<>boolean atLeastOnePahtAdded = false;
-//		for (int pathId : pathIdsToContinue)
-//		{
-//			final List<Link> path = initialList.get(pathId);
-//			final Node endNode = path.get(path.size() - 1).getDestinationNode(); 
-//			if (endNode == egress) { pathIdsToContinue.remove(pathId); continue; }
-//			boolean pathAlreadyContinued = false;
-//			for (Link e : frLinks)
-//				if (e.getOriginNode() == endNode)
-//				{
-//					if (pathAlreadyContinued) 
-//					path.add(e); atLeastOnePahtAdded = true; 
-//				}
-//		}
-//        final NetworkLayer layer = ingress.getNetPlan().checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-//		List<List<Link>> res = new ArrayList<> ();
-//		for (Link outLink : ingress.getOutgoingLinks(layer))
-//		{
-//			final Triple<Double,Double,Double> thisFr = frInfo.get(outLink);
-//			if (thisFr == null) continue;
-//			if (thisFr.getFirst() == 0) continue;
-//			res.add(Arrays.asList(outLink));
-//			if (outLink.getDestinationNode() ==  egress) continue;
-//			
-//		}
-//		return res;
-//	}
-	
-	/** Converts the routing in the form x_de into a set of loopless routes. If the x_de matrix has open or closed loops, they are removed
+	/** Converts the routing in the form x_de into a set of loopless routes, just for the indicated demands. If the x_de matrix has open or closed loops, they are removed
 	 * from the routing. The resulting routing (after removing the cycles if any) of each demand uses the same of less bandwidth than the original routing.
 	 * @param nodes List of nodes
 	 * @param links List of links
-	 * @param demands List of demands
-	 * @param x_de Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e)
+	 * @param demandsToConvert List of demands
+	 * @param x_de Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e), one row for each demand in layer (can be more than the demands in the matrix)
 	 * @param d_p (Output parameter) Demand corresponding to each path. User should pass a initialized {@code List} object (i.e. {@code LinkedList} or {@code ArrayList})
 	 * @param x_p (Output parameter) Carried traffic per path. User should pass a initialized {@code List} object (i.e. {@code LinkedList} or {@code ArrayList})
 	 * @param pathList (Output parameter) List of paths, where each path is represented by its sequence of traversed links. User should pass a initialized {@code List} object (i.e. {@code LinkedList} or {@code ArrayList})
 	 * @return Number of new paths */
-	public static int convert_xde2xp(List<Node> nodes, List<Link> links, List<Demand> demands, DoubleMatrix2D x_de, List<Demand> d_p, List<Double> x_p, List<List<Link>> pathList)
+	public static int convert_xde2xp(List<Node> nodes, List<Link> links, Set<Demand> demandsToConvert, DoubleMatrix2D x_de, List<Demand> d_p, List<Double> x_p, List<List<Link>> pathList)
 	{
 		double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
 		final int E = links.size();
@@ -618,7 +570,7 @@ public class GraphUtils
 		int numPaths = 0;
 		Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, links);
 		Transformer<Link, Double> nev = JUNGUtils.getEdgeWeightTransformer(null);
-		for (Demand demand : demands)
+		for (Demand demand : demandsToConvert)
 		{
 			Node ingressNode = demand.getIngressNode();
 			Node egressNode = demand.getEgressNode();
@@ -626,8 +578,8 @@ public class GraphUtils
 
 			Collection<Link> incomingLinksToIngressNode = graph.getInEdges(ingressNode);
 			Collection<Link> outgoingLinksFromIngressNode = graph.getOutEdges(ingressNode);
-			if (incomingLinksToIngressNode == null) incomingLinksToIngressNode = new LinkedHashSet<Link>();
-			if (outgoingLinksFromIngressNode == null) outgoingLinksFromIngressNode = new LinkedHashSet<Link>();
+			if (incomingLinksToIngressNode == null) incomingLinksToIngressNode = new TreeSet<Link>();
+			if (outgoingLinksFromIngressNode == null) outgoingLinksFromIngressNode = new TreeSet<Link>();
 
 			double divAtIngressNode = 0;
 			for (Link link : outgoingLinksFromIngressNode)
@@ -765,16 +717,17 @@ public class GraphUtils
 	/** Given a path-based routing, returns the amount of traffic for each demand d traversing each link e. The link 
 	 * occupation information is not used, only the route carried traffic (recall that a route carried traffic is zero if 
 	 * it traverses a failed link/node)  
-	 * @param links List of links
-	 * @param demands List of demands
+	 * @param E Number of links
+	 * @param D Number of demands
 	 * @param routes List of routes
 	 * @return Demand-link routing in the form x_de (amount of traffic from demand d, transmitted through link e) */
-	public static DoubleMatrix2D convert_xp2xde(List<Link> links, List<Demand> demands, List<Route> routes)
+	public static DoubleMatrix2D convert_xp2xde(int D , int E , List<Route> routes)
 	{
-		int E = links.size();
-		int D = demands.size();
 		DoubleMatrix2D x_de = DoubleFactory2D.sparse.make(D, E, 0);
-
+		if (routes.isEmpty()) return x_de;
+		final NetworkLayer layer = routes.iterator().next().getLayer();
+		if (E != layer.getNetPlan().getNumberOfLinks(layer)) throw new Net2PlanException ("Wrong format");
+		if (D != layer.getNetPlan().getNumberOfDemands(layer)) throw new Net2PlanException ("Wrong format");
 		for (Route route : routes)
 		{
 			final int d = route.getDemand().getIndex();
@@ -790,20 +743,18 @@ public class GraphUtils
 	/** Given a path-based routing, returns the forwarding rules map: fraction of traffic for each demand incoming to the link 
 	 * initial node (or produced in it) forwarded to the link. The link 
 	 * occupation information is not used, only the route carried traffic (the one if the network had no failures)
-	 * @param demands List of demands
 	 * @param routes List of routes
 	 * @return see above */
-	public static Map<Demand,Map<Link,Double>> convert_xp2fdeMap(List<Demand> demands, List<Route> routes)
+	public static SortedMap<Demand,SortedMap<Link,Double>> convert_xp2fdeMap(Collection<Route> routes)
 	{
-		Map<Pair<Demand,Node>,Double> xdeSumMap = new HashMap<> ();
-		Map<Demand,Map<Link,Double>> xdeMap = new HashMap<> ();
-		for (Demand d : demands) xdeMap.put(d, new HashMap<> ());
+		SortedMap<Pair<Demand,Node>,Double> xdeSumMap = new TreeMap<> ();
+		SortedMap<Demand,SortedMap<Link,Double>> xdeMap = new TreeMap<> ();
 		for (Route route : routes)
 		{
 			if (route.getCarriedTrafficInNoFailureState() == 0) continue;
 			final Demand d = route.getDemand();
-			final Map<Link,Double> xdeMapThisDemand = xdeMap.get(d);
-			if (xdeMapThisDemand == null) throw new Net2PlanException ("The demand list should contain at least all the demands of the routes");
+			SortedMap<Link,Double> xdeMapThisDemand = xdeMap.get(d);
+			if (xdeMapThisDemand == null) { xdeMapThisDemand = new TreeMap<> (); xdeMap.put(d, xdeMapThisDemand); } 
 			for (Link e : route.getSeqLinks())
 			{
 				final Node initNode = e.getOriginNode();
@@ -817,9 +768,9 @@ public class GraphUtils
 		}
 
 		/* From xde to fde */
-		for (Demand d : demands)
+		for (Demand d : xdeMap.keySet())
 		{
-			final Map<Link,Double> xdeMapThisDemand = xdeMap.get(d);
+			final SortedMap<Link,Double> xdeMapThisDemand = xdeMap.get(d);
 			for (Link e : new ArrayList<> (xdeMapThisDemand.keySet()))
 			{
 				final double totalTrafficOut = xdeSumMap.get(Pair.of(d, e.getOriginNode()));
@@ -848,7 +799,7 @@ public class GraphUtils
 	 * @param destinationNode Destination node
 	 * @param linkCostMap Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required
 	 * @return All loopless shortest paths */
-	public static List<List<Link>> getAllLooplessShortestPaths(List<Node> nodes, List<Link> links, Node originNode, Node destinationNode, Map<Link, Double> linkCostMap)
+	public static List<List<Link>> getAllLooplessShortestPaths(List<Node> nodes, List<Link> links, Node originNode, Node destinationNode, SortedMap<Link, Double> linkCostMap)
 	{
 		final List<Link> filteredLinks = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
 		Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, filteredLinks);
@@ -875,15 +826,15 @@ public class GraphUtils
 	 * @param linkSpareCapacityMap Current available capacity per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required. If <code>null</code> the spare capacity of each link is its capacity minus its carried traffic (summing the regular traffic and the ones in the protection segments), truncated to zero (negative values are not admitted).
 	 * @param capacityGoal Minimum capacity required
 	 * @return Shortest path fulfilling a minimum capacity requirement */
-	public static List<Link> getCapacitatedShortestPath(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, final Map<Link, Double> linkCostMap, Map<Link, Double> linkSpareCapacityMap, final double capacityGoal)
+	public static List<Link> getCapacitatedShortestPath(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, final SortedMap<Link, Double> linkCostMap, SortedMap<Link, Double> linkSpareCapacityMap, final double capacityGoal)
 	{
 		if (linkSpareCapacityMap == null)
 		{
-			linkSpareCapacityMap = new HashMap<Link, Double>();
+			linkSpareCapacityMap = new TreeMap<Link, Double>();
 			for (Link e : links)
 				linkSpareCapacityMap.put(e, Math.max(0, e.getCapacity() - e.getOccupiedCapacity()));
 		}
-		final Map<Link,Double> auxMapLinkCost = linkSpareCapacityMap;
+		final SortedMap<Link,Double> auxMapLinkCost = linkSpareCapacityMap;
 		final List<Link> validLinks = linkCostMap == null? links.stream().filter(e->auxMapLinkCost.get(e) >= capacityGoal).collect(Collectors.toList()) : 
 			links.stream().filter(e->auxMapLinkCost.get(e) >= capacityGoal && linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
 		final Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, validLinks);
@@ -920,7 +871,7 @@ public class GraphUtils
 		final List<Link> filteredListLinks = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
 		final Graph<Node, Link> g = JUNGUtils.getGraphFromLinkMap(nodes, filteredListLinks);
 		YenAlgorithm<Node, Link> paths = new YenAlgorithm<Node, Link>(g, 
-				(Transformer<Link, Double>) JUNGUtils.getEdgeWeightTransformer(linkCostMap), 
+				JUNGUtils.getEdgeWeightTransformer(linkCostMap), 
 				K, maxNumHops, maxLengthInKm, maxPropDelayInMs, maxRouteCost, 
 				maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath)
 		{
@@ -994,28 +945,28 @@ public class GraphUtils
 		if (resourceCost != null) for (Double val : resourceCost.values()) if (val < 0) throw new Net2PlanException ("All resource costs must be non-negative");
 		
 		/* initialize the link cost map */
-		Map<Link,Double> linkCostMap = new HashMap<Link,Double> (); 
+		SortedMap<Link,Double> linkCostMap = new TreeMap<Link,Double> (); 
 		for (int cont = 0; cont < E ; cont ++) linkCostMap.put(links.get(cont), linkCost.get(cont));
 	
 		/* initialize the nodes per phase. One element per resource type to traverse, plus one for the last node  */
-		List<Set<Node>> nodesPerPhase = new ArrayList<Set<Node>> ();
+		List<SortedSet<Node>> nodesPerPhase = new ArrayList<SortedSet<Node>> ();
 		for (String resourceType : sequenceOfResourceTypesToTraverse)
 		{
-			Set<Resource> resourcesNotInfiniteCostThisType = netPlan.getResources(resourceType);
+			SortedSet<Resource> resourcesNotInfiniteCostThisType = netPlan.getResources(resourceType);
 			if (resourceCost != null) resourcesNotInfiniteCostThisType.removeIf(e-> resourceCost.get(e) == Double.MAX_VALUE); 
 			if (resourcesNotInfiniteCostThisType.isEmpty()) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
-			final Set<Node> nodesWithResourcesNotInfiniteCostThisType = resourcesNotInfiniteCostThisType.stream().map(e -> e.getHostNode()).
-					collect(Collectors.toCollection(HashSet::new));
+			final SortedSet<Node> nodesWithResourcesNotInfiniteCostThisType = resourcesNotInfiniteCostThisType.stream().map(e -> e.getHostNode()).
+					collect(Collectors.toCollection(TreeSet::new));
 			nodesPerPhase.add(nodesWithResourcesNotInfiniteCostThisType);
 		}
-		nodesPerPhase.add(Collections.singleton(destinationNode));
+		nodesPerPhase.add(new TreeSet<> (Arrays.asList(destinationNode)));
 
 		/* initialize the path lists. This includes (n,n) pairs with one path of empty seq links and zero cost */
-		if (cacheSubpathLists == null) cacheSubpathLists = new HashMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
+		if (cacheSubpathLists == null) cacheSubpathLists = new TreeMap<Pair<Node,Node>,List<Pair<List<Link>,Double>>> ();
 		for (int contPhase = 0; contPhase < nodesPerPhase.size() ; contPhase ++)
 		{
-			final Set<Node> outputNodes = nodesPerPhase.get(contPhase);
-			final Set<Node> inputNodes = contPhase == 0? Collections.singleton(originNode) : nodesPerPhase.get(contPhase-1); 
+			final SortedSet<Node> outputNodes = nodesPerPhase.get(contPhase);
+			final SortedSet<Node> inputNodes = contPhase == 0? new TreeSet<> (Arrays.asList(originNode)) : nodesPerPhase.get(contPhase-1); 
 			for (Node nIn : inputNodes)
 				for (Node nOut : outputNodes)
 					if (!cacheSubpathLists.containsKey(Pair.of(nIn, nOut)))
@@ -1040,7 +991,7 @@ public class GraphUtils
 		/* Start the main loop */
 
 		/* Initialize the SCs per out node, with those from origin node, to each node with resources of the first type (or end node if this is not a SC) */
-		Map<Node , List<Pair<List<NetworkElement>,Double>>> outNodeToKSCsMap = new HashMap<Node , List<Pair<List<NetworkElement>,Double>>> (); 
+		SortedMap<Node , List<Pair<List<NetworkElement>,Double>>> outNodeToKSCsMap = new TreeMap<Node , List<Pair<List<NetworkElement>,Double>>> (); 
 		for (Node outNode : nodesPerPhase.get(0))
 		{
 			List<Pair<List<NetworkElement>,Double>> thisFirstStageNodeSCs = new ArrayList<Pair<List<NetworkElement>,Double>> ();
@@ -1053,15 +1004,16 @@ public class GraphUtils
 		final Comparator<Pair<List<NetworkElement>,Double>> scComparator = 
 				new Comparator<Pair<List<NetworkElement>,Double>> () 
 				{ 
-					public int compare(Pair<List<NetworkElement>,Double> t1, Pair<List<NetworkElement>,Double> t2) { return Double.compare(t1.getSecond() ,  t2.getSecond());  }   
+					@Override
+                    public int compare(Pair<List<NetworkElement>,Double> t1, Pair<List<NetworkElement>,Double> t2) { return Double.compare(t1.getSecond() ,  t2.getSecond());  }   
 				}; 
 		
 		for (int nextPhase = 1; nextPhase < nodesPerPhase.size() ; nextPhase ++)
 		{
-			final Set<Node> thisPhaseNodes = nodesPerPhase.get(nextPhase-1); 
-			final Set<Node> nextPhaseNodes = nodesPerPhase.get(nextPhase);
+			final SortedSet<Node> thisPhaseNodes = nodesPerPhase.get(nextPhase-1); 
+			final SortedSet<Node> nextPhaseNodes = nodesPerPhase.get(nextPhase);
 			final String intermediateNodeResourceType = sequenceOfResourceTypesToTraverse.get(nextPhase-1);
-			Map<Node , List<Pair<List<NetworkElement>,Double>>> new_outNodeToKSCsMap = new HashMap<Node , List<Pair<List<NetworkElement>,Double>>> ();		
+			SortedMap<Node , List<Pair<List<NetworkElement>,Double>>> new_outNodeToKSCsMap = new TreeMap<Node , List<Pair<List<NetworkElement>,Double>>> ();		
 			for (Node newOutNode : nextPhaseNodes)
 			{
 				List<Pair<List<NetworkElement>,Double>> kSCsToThisOutNode = new ArrayList<Pair<List<NetworkElement>,Double>> (); 
@@ -1164,7 +1116,7 @@ public class GraphUtils
 	 * @param destinationNode Destination node
 	 * @param linkCostMap Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required
 	 * @return Shortest pair of node-disjoint paths */
-	public static List<List<Link>> getTwoNodeDisjointPaths(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, Map<Link, Double> linkCostMap)
+	public static List<List<Link>> getTwoNodeDisjointPaths(Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, SortedMap<Link, Double> linkCostMap)
 	{
 		final Collection<Link> linksToUse = linkCostMap == null? links : links.stream().filter(e->linkCostMap.get(e) != Double.MAX_VALUE).collect(Collectors.toList());
 		final Graph<Node, Link> graph = JUNGUtils.getGraphFromLinkMap(nodes, linksToUse);
@@ -1172,7 +1124,34 @@ public class GraphUtils
 		final List<List<Link>> nodeDisjointSPs = JUNGUtils.getTwoNodeDisjointPaths(graph, nev, originNode, destinationNode);
 		return nodeDisjointSPs;
 	}
+	
+	public static List<List<Link>> getTwoMaximumLinkAndNodeDisjointPaths (Collection<Node> nodes, Collection<Link> links, Node originNode, Node destinationNode, SortedMap<Link, Double> linkCostMap)
+	{
+	    List<List<Link>> res;
+	    res = getTwoNodeDisjointPaths(nodes, links, originNode, destinationNode, linkCostMap);
+	    if (res.size() == 2) return res;
+//	    System.out.println("No two node disjoint paths: " + originNode + " - " + destinationNode);
+////	    res = getTwoLinkDisjointPaths(nodes, links, originNode, destinationNode, linkCostMap);
+//        if (res.size() == 2) return res;
+        if (res.size() == 1)
+        {
+            final double sumLinkCost = linkCostMap == null? links.size() + 1 : linkCostMap.values().stream().mapToDouble(e->e).sum(); 
+            final SortedSet<Link> traversedLinks = new TreeSet<> (res.get(0));
+            final SortedSet<Node> traversedNodesButEndNodes = new TreeSet<> ();
+            for (Link travLink : res.get(0)) 
+                if (travLink.getOriginNode() != originNode) 
+                    traversedNodesButEndNodes.add(travLink.getOriginNode());
+            final SortedMap<Link,Double> modifiedLinkCost = new TreeMap<> ();
+            links.forEach(e->modifiedLinkCost.put(e , traversedLinks.contains(e) || traversedNodesButEndNodes.contains(e.getOriginNode()) || traversedNodesButEndNodes.contains(e.getDestinationNode())? sumLinkCost + 1.0 : (linkCostMap == null? 1.0 : linkCostMap.get(e)))); 
+            final List<Link> spModified = getShortestPath(nodes, links, originNode, destinationNode, modifiedLinkCost);
+            res.add(spModified);
+//            System.out.println("No two links nor node disjoint paths: " + originNode + " - " + destinationNode + ": " + res);
+        }
+        return res;
+	}
 
+	
+	
 	/** <p>Given a map of links, it computes the adjacency matrix. This is a matrix with as many rows and columns as nodes. Position (<i>i</i>,<i>j</i>) accounts for the number of links/demands/paths from node <i>i</i> (<i>i = 0</i> refers to the first node in {@code nodeIds}, <i>i = 1</i> refers to the second one, and so on) to node <i>j</i> (<i>j = 0</i> refers to the first node in {@code nodeIds}, <i>j = 1</i> refers to the second one, and so on).</p>
 	 * 
 	 * <p>The output is in the sparse {@code DoubleMatrix2D} format, so that could be directly used along with the <a href='#jom'>JOM</a> library in order to solve optimization problems.</p>
@@ -1182,7 +1161,7 @@ public class GraphUtils
 	 * <p>{@code double[][] matrix = getAdjacencyMatrix(nodeIds, linkMap).toArray();}</p>
 	 * 
 	 * @param nodes List of nodes
-	 * @param linkMap Map of links, where the key is the unique link identifier and the value is a {@link com.net2plan.utils.Pair Pair} representing the origin node and the destination node of the link, respectively
+	 * @param linkMap SortedMap of links, where the key is the unique link identifier and the value is a {@link com.net2plan.utils.Pair Pair} representing the origin node and the destination node of the link, respectively
 	 * @return Adjacency matrix
 	 * @since 0.3.1
 	 * @see <a href='http://www.net2plan.com/jom/'>Java Optimization Modeler (JOM) website</a> */
@@ -1217,7 +1196,7 @@ public class GraphUtils
 	 * <p>{@code double[][] matrix = getBidirectionalMatrix(nodeIds, linkMap).toArray();}</p>
 	 * 
 	 * @param nodes List of nodes
-	 * @param linkMap Map of links, where the key is the unique link identifier and the value is a {@link com.net2plan.utils.Pair Pair} representing the origin node and the destination node of the link, respectively. It is mandatory that can be iterated in ascending order of link identifier (i.e. using {@code TreeMap} or those {@code Map} objects returned from {@link com.net2plan.interfaces.networkDesign.NetPlan Net2Plan} object
+	 * @param linkMap SortedMap of links, where the key is the unique link identifier and the value is a {@link com.net2plan.utils.Pair Pair} representing the origin node and the destination node of the link, respectively. It is mandatory that can be iterated in ascending order of link identifier (i.e. using {@code TreeMap} or those {@code SortedMap} objects returned from {@link com.net2plan.interfaces.networkDesign.NetPlan Net2Plan} object
 	 * @return Bidirectional matrix
 	 * @since 0.3.1
 	 * @see <a href='http://www.net2plan.com/jom/'>Java Optimization Modeler (JOM) website</a> */
@@ -1296,10 +1275,10 @@ public class GraphUtils
 	 * @param egressNode egress node
 	 * @return see above
 	 */
-	public static Pair<Double,Double> computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess (Map<Link,Double> frs , Map<Node,Set<Link>> outFrs , Node ingressNode , Node egressNode)
+	public static Pair<Double,Double> computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess (SortedMap<Link,Double> frs , SortedMap<Node,SortedSet<Link>> outFrs , Node ingressNode , Node egressNode)
 	{
-		final Map<Node,Pair<Double,Double>> inNodes = new HashMap<> ();
-		final Set<Node> nonEgressNodesReceivingLinks = new HashSet<> (); 
+		final SortedMap<Node,Pair<Double,Double>> inNodes = new TreeMap<> ();
+		final SortedSet<Node> nonEgressNodesReceivingLinks = new TreeSet<> (); 
 		inNodes.put(ingressNode, Pair.of(0.0, 0.0));
 		do
 		{
@@ -1307,19 +1286,22 @@ public class GraphUtils
 			{
 				if (n == egressNode)
 				{
-					final Set<Link> outFrsEgressNode = outFrs.get(n);
+					final SortedSet<Link> outFrsEgressNode = outFrs.get(n);
 					if (outFrsEgressNode == null) continue;
 					/* check if there are outgoing links of the egress node carrying traffic => cycle */
-					for (Link e : outFrsEgressNode) if (frs.get(e) > 0) return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
+					for (Link e : outFrsEgressNode) 
+					    if (frs.get(e) > 0) 
+					        return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
 					continue;
 				}
 				
 				/* If the node already received an input link (or is the ingress for the second time) => cycle */
-				if (nonEgressNodesReceivingLinks.add(n) == false) return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
+				if (nonEgressNodesReceivingLinks.add(n) == false) 
+				    return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
 				
 				/* Usual loop */
 				final Pair<Double,Double> wcSoFar = inNodes.get(n);
-				final Set<Link> outgoingFrsThisNode = outFrs == null? frs.keySet() : outFrs.get(n);
+				final SortedSet<Link> outgoingFrsThisNode = outFrs == null? new TreeSet<> (frs.keySet()) : outFrs.get(n);
 				if (outgoingFrsThisNode != null) 
 					for (Link e : outgoingFrsThisNode)
 					{
@@ -1334,10 +1316,12 @@ public class GraphUtils
 						else
 							inNodes.put(e.getDestinationNode(), Pair.of(thisPathCost_wc , thisPathCost_length));
 					}
+				
 				inNodes.remove(n);
 			}
 			
-			if (inNodes.isEmpty()) return Pair.of(Double.MAX_VALUE , Double.MAX_VALUE);
+			if (inNodes.isEmpty()) 
+			    return Pair.of(Double.MAX_VALUE , Double.MAX_VALUE); // PABLO: here it appears
 			if ((inNodes.size() == 1) && (inNodes.keySet().iterator().next() == egressNode)) return inNodes.get(egressNode);
 		} while (true);
 	}
@@ -1359,9 +1343,8 @@ public class GraphUtils
 	 * @param egressNode the egress node
 	 * @return See description above
 	 */
-	public static Quintuple<DoubleMatrix1D, RoutingCycleType,  Double , Double , Double> computeRoutingFundamentalVector(Map<Link,Double> frs , Map<Node,Set<Link>> outFrs , Node ingressNode , Node egressNode)
+	public static Quintuple<DoubleMatrix1D, RoutingCycleType,  Double , Double , Double> computeRoutingFundamentalVector(SortedMap<Link,Double> frs , SortedMap<Node,SortedSet<Link>> outFrs , Node ingressNode , Node egressNode)
 	{
-//		System.out.println("---------------------");
 		final int N = ingressNode.getNetPlan ().getNumberOfNodes();
 		DoubleMatrix2D eyeMinusQ_nn = new SparseCCDoubleMatrix2D (N,N);
 		for (Entry<Link,Double> frInfo : frs.entrySet())
@@ -1377,7 +1360,6 @@ public class GraphUtils
 		try 
 		{
 			DoubleMatrix1D e_k = DoubleFactory1D.sparse.make(N); e_k.set(ingressNode.getIndex (), 1.0);
-//			System.out.println(eyeMinusQ_nn);
 			Mv = new SparseDoubleAlgebra().solve(eyeMinusQ_nn, e_k);
 		}
 		catch(IllegalArgumentException e) { return Quintuple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n , Double.MAX_VALUE , Double.MAX_VALUE) ; }
@@ -1385,27 +1367,6 @@ public class GraphUtils
 		Pair<Double,Double> wcPropAndLength = computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(frs, outFrs, ingressNode, egressNode);
 		final RoutingCycleType routingCycleType = wcPropAndLength.getFirst() == Double.MAX_VALUE? RoutingCycleType.OPEN_CYCLES : RoutingCycleType.LOOPLESS;
 		return Quintuple.of(Mv, routingCycleType , s_n , wcPropAndLength.getFirst() , wcPropAndLength.getSecond());
-		
-//		final NetPlan netPlan = ingressNode.getNetPlan();
-//		final NetworkLayer layer = frs.keySet().iterator().next().getLayer();
-//		final int E = netPlan.getNumberOfLinks(layer);
-//		DoubleMatrix1D f_e = DoubleFactory1D.dense.make(E);
-//		for (Link e : frs.keySet()) f_e.set(e.getIndex(), frs.get(e));
-//		DoubleMatrix2D q_nn1 = DoubleFactory2D.sparse.make(N,E);
-//		netPlan.getMatrixNodeLinkIncomingIncidence(layer).zMult(DoubleFactory2D.sparse.diagonal(f_e) , q_nn1);
-//		DoubleMatrix2D q_nn2transpose = new SparseCCDoubleMatrix2D (N,N);//DoubleFactory2D.sparse.make(N,N);
-//		q_nn1.zMult(netPlan.getMatrixNodeLinkOutgoingIncidence(layer) , q_nn2transpose , 1 , 0 , false , true);
-//		final double s_n2 = egressNode == null? -1 : 1 - q_nn2transpose.viewColumn(egressNode.getIndex()).zSum();
-//		q_nn2transpose.assign(DoubleFunctions.neg);
-//		for (int n = 0; n < N ; n ++) q_nn2transpose.setQuick(n, n, q_nn2transpose.getQuick(n, n) + 1);//iMinusQTransposed.set(n, n, 1.0);
-//		try 
-//		{
-//			DoubleMatrix1D e_k = DoubleFactory1D.sparse.make(N); e_k.set(ingressNode.getIndex(), 1.0);
-//			System.out.println(q_nn2transpose);
-//			Mv = new SparseDoubleAlgebra().solve(q_nn2transpose, e_k);
-//		}
-//		catch(IllegalArgumentException e) { e.printStackTrace(); return Triple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n2) ; }
-//
 	}
 
 	
@@ -1491,27 +1452,32 @@ public class GraphUtils
 	/**
 	 * Returns the K-minimum cost multicast trees starting in the originNode and ending in the set destinationNodes, satisfying some user-defined constraints.
 	 * If only <i>n</i> multicast trees are found (n&lt;K), those are returned.
-	 * @param links the network links
+	 * @param layer the layer where to pick the network links. If null, picks the default layer
 	 * @param originNode the origin node of all the multicast trees
 	 * @param destinationNodes the set of destination nodes of all the multicast trees
 	 * @param Aout_ne the outgoing incidence matrix: a matrix with one row per node, and one column per link. Coordinate (n,e) is 1 if link e is an outgoing link of node n, and 0 otherwise.
 	 * @param Ain_ne the incoming incidence matrix: a matrix with one row per node, and one column per link. Coordinate (n,e) is 1 if link e is an incoming link of node n, and 0 otherwise.
-	 * @param linkCost the cost to be associated to each link
+	 * @param linkCost the cost to be associated to each link. A cost equal to Double.MAX_VALUE makes the link uneligible
 	 * @param solverName the name of the solver to call for the internal formulation of the algorithm
 	 * @param solverLibraryName the solver library name
 	 * @param maxSolverTimeInSecondsPerTree the maximum time the solver is allowed for each of the internal formulations (one for each new tree). The best solution found so far is returned. If non-positive, no time limit is set
-	 * @param K Desired nummber of trees (a lower number of trees may be returned if there are less than {@code K} multicast trees admissible)
-	 * @param maxCopyCapability the maximum number of copies of an input traffic a node can make. Then, a node can have at most this number of ouput links carrying traffic of a multicast tree 
+	 * @param K Desired number of trees (a lower number of trees may be returned if there are less than {@code K} multicast trees admissible)
+	 * @param maxCopyCapability the maximum number of copies of an input traffic a node can make. Then, a node can have at most this number of output links carrying traffic of a multicast tree
 	 * @param maxE2ELengthInKm Maximum path length measured in kilometers allowed for any tree, from the origin node, to any destination node 
 	 * @param maxE2ENumHops Maximum number of hops allowed for any tree, from the origin node, to any destination node 
-	 * @param maxE2EPropDelayInMs Maximum propagation delay in miliseconds allowed in a path, for any tree, from the origin node, to any destination node 
+	 * @param maxE2EPropDelayInMs Maximum propagation delay in milliseconds allowed in a path, for any tree, from the origin node, to any destination node
 	 * @param maxTreeCost Maximum tree weight allowed, summing the weights of the links 
 	 * @param maxTreeCostFactorRespectToMinimumCostTree Trees with higher weight (cost) than the cost of the minimum cost tree, multiplied by this factor, are not returned 
 	 * @param maxTreeCostRespectToMinimumCostTree Trees with higher weight (cost) than the cost of the minimum cost tree, plus this factor, are not returned. While the previous one is a multiplicative factor, this one is an additive factor
 	 * @return the list of k-minimum cost multicast trees constrained according to the method inputs
 	 */
-	public static List<Set<Link>> getKMinimumCostMulticastTrees(List<Link> links, Node originNode, Set<Node> destinationNodes, DoubleMatrix2D Aout_ne, DoubleMatrix2D Ain_ne, DoubleMatrix1D linkCost, String solverName, String solverLibraryName, double maxSolverTimeInSecondsPerTree, int K, int maxCopyCapability, double maxE2ELengthInKm, int maxE2ENumHops, double maxE2EPropDelayInMs, double maxTreeCost, double maxTreeCostFactorRespectToMinimumCostTree, double maxTreeCostRespectToMinimumCostTree)
+	public static List<SortedSet<Link>> getKMinimumCostMulticastTrees(NetworkLayer layer, Node originNode, SortedSet<Node> destinationNodes, DoubleMatrix2D Aout_ne, DoubleMatrix2D Ain_ne, DoubleMatrix1D linkCost, 
+			String solverName, String solverLibraryName, double maxSolverTimeInSecondsPerTree, int K, int maxCopyCapability, double maxE2ELengthInKm, int maxE2ENumHops, 
+			double maxE2EPropDelayInMs, double maxTreeCost, double maxTreeCostFactorRespectToMinimumCostTree, double maxTreeCostRespectToMinimumCostTree)
 	{
+		final NetPlan np = originNode.getNetPlan();
+		if (layer == null) layer = np.getNetworkLayerDefault();
+		final List<Link> links = np.getLinks(layer);
 		if (K <= 0) throw new Net2PlanException("'K' parameter must be greater than zero");
 		if (maxCopyCapability <= 0) maxCopyCapability = Integer.MAX_VALUE;
 		if (maxE2ELengthInKm <= 0) maxE2ELengthInKm = Double.MAX_VALUE;
@@ -1520,15 +1486,16 @@ public class GraphUtils
 		if (maxTreeCost <= 0) maxTreeCost = Double.MAX_VALUE;
 		if (maxTreeCostFactorRespectToMinimumCostTree <= 0) maxTreeCostFactorRespectToMinimumCostTree = Double.MAX_VALUE;
 		if (maxTreeCostRespectToMinimumCostTree <= 0) maxTreeCostRespectToMinimumCostTree = Double.MAX_VALUE;
-
-		List<Set<Link>> result = new LinkedList<Set<Link>>();
+		List<SortedSet<Link>> result = new LinkedList<SortedSet<Link>>();
 		final int E = links.size();
-		final int N = Aout_ne.rows();
+		final int N = np.getNumberOfNodes();
 		final int T = destinationNodes.size();
 		final int[] targetIndexes = new int[T];
 		int counter = 0;
 		for (Node n : destinationNodes)
 			targetIndexes[counter++] = n.getIndex();
+		if (Aout_ne == null) Aout_ne = np.getMatrixNodeLinkOutgoingIncidence(layer);
+		if (Ain_ne == null) Ain_ne = np.getMatrixNodeLinkIncomingIncidence(layer);
 		List<DoubleMatrix1D> previousTrees = new ArrayList<DoubleMatrix1D>();
 		DoubleMatrix1D delta_ad = DoubleFactory1D.sparse.make(N);
 		delta_ad.set(originNode.getIndex(), 1);
@@ -1536,9 +1503,8 @@ public class GraphUtils
 		for (Node n : destinationNodes)
 			delta_bd.set(n.getIndex(), 1);
 		double firstTreeCost = -1;
-		Set<Link> firstTree = null;
-		if (linkCost == null)
-                    linkCost = DoubleFactory1D.dense.make(E, 1);
+		SortedSet<Link> firstTree = null;
+		if (linkCost == null) linkCost = DoubleFactory1D.dense.make(E, 1);
 		for (int k = 0; k < K; k++)
 		{
 			OptimizationProblem op = new OptimizationProblem();
@@ -1558,7 +1524,9 @@ public class GraphUtils
 			op.setInputParameter("delta_ad", delta_ad, "row");
 			op.setInputParameter("delta_bd", delta_bd, "row");
 			op.setInputParameter("onesT", DoubleFactory1D.dense.make(T, 1.0), "row");
-			op.addDecisionVariable("x_e", true, new int[] { 1, E }, 0, 1);
+			DoubleMatrix1D linkEligibility = DoubleFactory1D.dense.make(E, 1);
+			for (int e = 0; e < E ; e ++) if (linkCost.get(e) == Double.MAX_VALUE) linkEligibility.set(e, 0);
+			op.addDecisionVariable("x_e", true, new int[] { 1, E }, DoubleFactory1D.dense.make(E, 0), linkEligibility);
 			op.addDecisionVariable("x_et", true, new int[] { E, T }, 0, 1); // 1 if link e is in the path of the tree from the demand ingress node to the t-th demand target node
 			op.setObjectiveFunction("minimize", "c_e * x_e'");
 			op.addConstraint("x_et <= x_e' * onesT"); // a link belongs to a path only if it is in the tree
@@ -1602,11 +1570,11 @@ public class GraphUtils
 			}
 
 			if (solverLibraryName == null)
-				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName) , "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerTree);
+				op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName) , "maxSolverTimeInSeconds", maxSolverTimeInSecondsPerTree);
 			else
-				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", (Double) maxSolverTimeInSecondsPerTree);
+				op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", maxSolverTimeInSecondsPerTree);
 
-			/* If the problem is infeqasible, there are no more trees for this demand */
+			/* If the problem is infeasible, there are no more trees for this demand */
 			if (op.feasibleSolutionDoesNotExist())
 			{
 				//System.out.println("*** K minimum cost multicast tree + BREAK when k = " + k);
@@ -1615,7 +1583,7 @@ public class GraphUtils
 			if (!op.solutionIsFeasible()) throw new Net2PlanException("The multicast tree ILP in the candidate tree list ended without producing a feasible solution nor guaranteeing unfeasibility: increase the solver time?");
 			/* Add the tree */
 			final double[] x_e = op.getPrimalSolution("x_e").to1DArray();
-			Set<Link> res = new HashSet<Link>();
+			SortedSet<Link> res = new TreeSet<Link>();
 			double treeCost = 0;
 			for (int e = 0; e < E; e++)
 				if (Math.abs(x_e[e] - 1) < 1E-3)
@@ -1634,15 +1602,21 @@ public class GraphUtils
 		return result;
 	}
 
-	public static Set<Link> getMinimumCostMulticastTree(List<Link> links, DoubleMatrix2D Aout_ne, DoubleMatrix2D Ain_ne, DoubleMatrix1D linkCost, Node originNode, Set<Node> destinationNodes, int maxCopyCapability, int maxE2ENumHops, double maxE2ELengthInKm, double maxE2EPropDelayInMs, String solverName, String solverLibraryName, double maxSolverTimeInSeconds, String... solverParam)
+	public static SortedSet<Link> getMinimumCostMulticastTree(NetworkLayer layer, DoubleMatrix2D Aout_ne, DoubleMatrix2D Ain_ne, DoubleMatrix1D linkCost, Node originNode, Set<Node> destinationNodes, int maxCopyCapability, int maxE2ENumHops, double maxE2ELengthInKm, double maxE2EPropDelayInMs, String solverName, String solverLibraryName, double maxSolverTimeInSeconds, String... solverParam)
 	{
-		final int E = Aout_ne.columns();
-		final int N = Aout_ne.rows();
+		if (layer == null) layer = originNode.getNetPlan().getNetworkLayerDefault();
+		final NetPlan np = layer.getNetPlan();
+		final List<Link> links = np.getLinks(layer);
+		final int E = np.getNumberOfLinks (layer);
+		final int N = np.getNumberOfNodes();
 		final int T = destinationNodes.size();
 		final int[] targetIndexes = new int[T];
 		int counter = 0;
 		for (Node n : destinationNodes)
 			targetIndexes[counter++] = n.getIndex();
+		if (Aout_ne == null) Aout_ne = np.getMatrixNodeLinkOutgoingIncidence(layer);
+		if (Ain_ne == null) Ain_ne = np.getMatrixNodeLinkIncomingIncidence(layer);
+		if (linkCost == null) linkCost = DoubleFactory1D.dense.make(E , 1.0);
 		if ((Ain_ne.rows() != N) || (Ain_ne.columns() != E) || (linkCost.size() != E)) throw new Net2PlanException("Wrong array size");
 		final DoubleMatrix1D delta_ad = DoubleFactory1D.sparse.make(N);
 		delta_ad.set(originNode.getIndex(), 1);
@@ -1696,18 +1670,20 @@ public class GraphUtils
 			op.setInputParameter("p_e", prop_e, "row");
 			op.addConstraint("p_e * x_et <= " + maxE2EPropDelayInMs);
 		}
-
+		if (solverName == null) solverName = Configuration.getDefaultIlpSolverName();
+		if (solverLibraryName == null) solverLibraryName = Configuration.getDefaultSolverLibraryName(solverName);
+		
 		if (solverLibraryName == null)
 			op.solve(solverName, "solverLibraryName" , Configuration.getDefaultSolverLibraryName(solverName)  , "maxSolverTimeInSeconds", maxSolverTimeInSeconds);
 		else
 			op.solve(solverName, "solverLibraryName", solverLibraryName, "maxSolverTimeInSeconds", maxSolverTimeInSeconds);
 
 		/* If the problem is infeqasible, there are no more trees for this demand */
-		if (op.feasibleSolutionDoesNotExist()) return new HashSet<Link>();
+		if (op.feasibleSolutionDoesNotExist()) return new TreeSet<Link>();
 		if (!op.solutionIsFeasible()) throw new Net2PlanException("The multicast tree ILP ended without producing a feasible solution nor guaranteeing unfeasibility: increase the solver time?");
 		/* Add the tree */
 		final double[] x_e = op.getPrimalSolution("x_e").to1DArray();
-		Set<Link> res = new HashSet<Link>();
+		SortedSet<Link> res = new TreeSet<Link>();
 		for (int e = 0; e < E; e++)
 			if (Math.abs(x_e[e] - 1) < 1e-3) res.add(links.get(e));
 		return res;
@@ -1732,7 +1708,7 @@ public class GraphUtils
 	public static boolean isConnected(List<Node> nodes, List<Link> links)
 	{
 		org.jgrapht.Graph<Node, Link> graph = JGraphTUtils.getGraphFromLinkMap(nodes, links);
-		return JGraphTUtils.isConnected(graph, new HashSet<Node>(nodes));
+		return JGraphTUtils.isConnected(graph, new TreeSet<Node>(nodes));
 	}
 
 	/** Returns the connected components of the given graph
@@ -1740,7 +1716,7 @@ public class GraphUtils
 	 * @param nodes List of nodes
 	 * @param links List of links
 	 * @return see above */
-	public static List<Set<Node>> getConnectedComponents (List<Node> nodes, List<Link> links)
+	public static List<Set<Node>> getConnectedComponents (Collection<Node> nodes, List<Link> links)
 	{
 		org.jgrapht.Graph<Node, Link> graph = JGraphTUtils.getGraphFromLinkMap(nodes, links);
 		final ConnectivityInspector<Node, Link> inspector = new ConnectivityInspector<Node, Link>((DirectedGraph<Node,Link>) graph);
@@ -1771,19 +1747,19 @@ public class GraphUtils
 		if (elements.get(0) instanceof Link)
 		{
 			org.jgrapht.Graph<Node, Link> auxGraph = JGraphTUtils.getGraphFromLinkMap(nodes, (List<Link>) elements);
-			Map<Link, Double> linkCostMapMap = CollectionUtils.toMap((List<Link>) elements, linkCostMap);
+			SortedMap<Link, Double> linkCostMapMap = CollectionUtils.toMap((List<Link>) elements, linkCostMap);
 			org.jgrapht.Graph<Node, Link> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
 			return JGraphTUtils.isWeightedBidirectional(graph);
 		} else if (elements.get(0) instanceof Demand)
 		{
 			org.jgrapht.Graph<Node, Demand> auxGraph = JGraphTUtils.getGraphFromDemandMap((List<Demand>) elements);
-			Map<Demand, Double> linkCostMapMap = CollectionUtils.toMap((List<Demand>) elements, linkCostMap);
+			SortedMap<Demand, Double> linkCostMapMap = CollectionUtils.toMap((List<Demand>) elements, linkCostMap);
 			org.jgrapht.Graph<Node, Demand> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
 			return JGraphTUtils.isWeightedBidirectional(graph);
 		} else if (elements.get(0) instanceof Route)
 		{
 			org.jgrapht.Graph<Node, Route> auxGraph = JGraphTUtils.getGraphFromRouteMap((List<Route>) elements);
-			Map<Route, Double> linkCostMapMap = CollectionUtils.toMap((List<Route>) elements, linkCostMap);
+			SortedMap<Route, Double> linkCostMapMap = CollectionUtils.toMap((List<Route>) elements, linkCostMap);
 			org.jgrapht.Graph<Node, Route> graph = JGraphTUtils.getAsWeightedGraph(auxGraph, linkCostMapMap);
 			return JGraphTUtils.isWeightedBidirectional(graph);
 		} else
@@ -1797,7 +1773,7 @@ public class GraphUtils
 	 * @return Matrix with the lower links weight between node pairs */
 	public static DoubleMatrix1D simplifyLinkMap(List<Link> links, DoubleMatrix1D linkCostMap)
 	{
-		Map<Pair<Node, Node>, Link> originDestinationNodePairLinkIdMapping = new LinkedHashMap<Pair<Node, Node>, Link>();
+		SortedMap<Pair<Node, Node>, Link> originDestinationNodePairLinkIdMapping = new TreeMap<Pair<Node, Node>, Link>();
 		for (Link link : links)
 		{
 			Pair<Node, Node> originDestinationNodePair = Pair.of(link.getOriginNode(), link.getDestinationNode());
@@ -1879,7 +1855,7 @@ public class GraphUtils
 			return getPath().equals(p.getPath()) && Math.abs(getPathWeight() - p.getPathWeight()) < 1e-10;
 		}
 
-		/** Returns a hash code value for the object. This method is supported for the benefit of hash tables such as those provided by {@code HashMap}.
+		/** Returns a hash code value for the object. This method is supported for the benefit of hash tables such as those provided by {@code TreeMap}.
 		 * 
 		 * @return Hash code value for this object
 		 * @since 0.2.0 */
@@ -1942,7 +1918,7 @@ public class GraphUtils
 		public static org.jgrapht.Graph<Node, Link> buildAuxiliaryNodeDisjointGraph(final org.jgrapht.Graph<Node, Link> graph, Node originNode, Node destinationNode)
 		{
 			org.jgrapht.Graph<Node, Link> auxGraph = new DirectedWeightedMultigraph<Node, Link>(Link.class);
-			Map<Node, Node> originalNodeId2AuxIdMapping = new LinkedHashMap<Node, Node>();
+			SortedMap<Node, Node> originalNodeId2AuxIdMapping = new TreeMap<Node, Node>();
 
 			for (Node vertex : graph.vertexSet())
 			{
@@ -1982,11 +1958,11 @@ public class GraphUtils
 		 * @param graph The backing graph over which a weighted view is to be created
 		 * @param edgeWeightMap A mapping of edges to weights (null means all to one)
 		 * @return Returns a weighted view of the backing graph specified in the constructor */
-		public static <V, E> org.jgrapht.WeightedGraph<V, E> getAsWeightedGraph(org.jgrapht.Graph<V, E> graph, Map<E, Double> edgeWeightMap)
+		public static <V, E> org.jgrapht.WeightedGraph<V, E> getAsWeightedGraph(org.jgrapht.Graph<V, E> graph, SortedMap<E, Double> edgeWeightMap)
 		{
 			if (edgeWeightMap == null)
 			{
-				edgeWeightMap = new LinkedHashMap<E, Double>();
+				edgeWeightMap = new TreeMap<E, Double>();
 				for (E edge : graph.edgeSet())
 					edgeWeightMap.put(edge, 1.0);
 			}
@@ -2050,7 +2026,7 @@ public class GraphUtils
 
 		/** <p>Obtains a {@code JGraphT} graph from a given route map.</p>
 		 * 
-		 * @param demands List of demands
+		 * @param routes List of routes
 		 * @return {@code JGraphT} graph */
 		public static org.jgrapht.Graph<Node, Route> getGraphFromRouteMap(List<Route> routes)
 		{
@@ -2110,7 +2086,7 @@ public class GraphUtils
 		 * @param graph The graph to analyze
 		 * @param vertices Subset of vertices
 		 * @return {@code true} if the subgraph is connected, and false otherwise */
-		public static boolean isConnected(org.jgrapht.Graph graph, Set vertices)
+		public static boolean isConnected(org.jgrapht.Graph graph, SortedSet vertices)
 		{
 			Subgraph subgraph;
 			if (graph instanceof DirectedGraph)
@@ -2223,7 +2199,7 @@ public class GraphUtils
 		public static Graph<Node, Link> buildAuxiliaryNodeDisjointGraph(final Graph<Node, Link> graph, Node originNode, Node destinationNode)
 		{
 			Graph<Node, Link> auxGraph = new DirectedSparseMultigraph<Node, Link>();
-			Map<Node, Node> originalNodeId2AuxIdMapping = new LinkedHashMap<Node, Node>();
+			SortedMap<Node, Node> originalNodeId2AuxIdMapping = new TreeMap<Node, Node>();
 
 			for (Node vertex : graph.getVertices())
 			{
@@ -2750,7 +2726,7 @@ public class GraphUtils
 		public static <V, E> Graph<V, E> simplifyGraph(Graph<V, E> graph, Transformer<E, Double> nev)
 		{
 			Collection<V> vertices = graph.getVertices();
-			Set<E> edgesToMaintain = new LinkedHashSet<E>();
+			SortedSet<E> edgesToMaintain = new TreeSet<E>();
 			for (V originVertex : vertices)
 			{
 				for (V destinationVertex : vertices)
@@ -3062,7 +3038,7 @@ public class GraphUtils
 		 * @since 0.3.0 */
 		private Transformer<E, Double> lengthTransformation(Graph<V, E> graph1, Transformer<V, Number> slTrans)
 		{
-			Map<E, Double> map = new LinkedHashMap<E, Double>();
+			SortedMap<E, Double> map = new TreeMap<E, Double>();
 
 			for (E link : graph1.getEdges())
 			{
@@ -3218,7 +3194,7 @@ public class GraphUtils
 		 * @since 0.3.0 */
 		private Graph<V, E> blockFilter(List<E> head, V deviation, List<List<E>> foundPaths)
 		{
-			final Set<E> blocked = new LinkedHashSet<E>();
+			final SortedSet<E> blocked = new TreeSet<E>();
 
 			/* Block incident edges to make all vertices in head unreachable. */
 			for (E e : head)

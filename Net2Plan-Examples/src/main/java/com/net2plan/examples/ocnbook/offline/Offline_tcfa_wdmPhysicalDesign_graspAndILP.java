@@ -97,7 +97,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		this.netPlan = netPlan;
 		/* Initializations */
 
-		netPlan.removeAllLinks(); netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		netPlan.removeAllLinks(); netPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		this.N = netPlan.getNumberOfNodes();
 		this.rng = new Random (algorithm_randomSeed.getLong ());
 		
@@ -110,7 +110,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		
 		/* If there is no traffic, create uniform traffic matrix */
 		if (netPlan.getNumberOfDemands() == 0)
-			for (Node n1 : netPlan.getNodes()) for (Node n2 : netPlan.getNodes()) if (n1 != n2) netPlan.addDemand(n1, n2, tcfa_circuitCapacity_Gbps.getDouble(), null);
+			for (Node n1 : netPlan.getNodes()) for (Node n2 : netPlan.getNodes()) if (n1 != n2) netPlan.addDemand(n1, n2, tcfa_circuitCapacity_Gbps.getDouble(), RoutingType.SOURCE_ROUTING , null);
 
 		
 		/* Convert the demand offered traffic in the upper multiple of circuit capacity */
@@ -119,8 +119,8 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		for (Node n1 : netPlan.getNodes()) for (Node n2 : netPlan.getNodes()) if (n1.getIndex () > n2.getIndex ())
 		{
 			final double maxTrafficBidir = Math.max(trafficMatrix.get(n1.getIndex (), n2.getIndex ()), trafficMatrix.get(n2.getIndex (), n1.getIndex ()));
-			netPlan.addDemand(n1, n2, tcfa_circuitCapacity_Gbps.getDouble() * Math.ceil(maxTrafficBidir / tcfa_circuitCapacity_Gbps.getDouble()) , null); 
-			netPlan.addDemand(n2, n1, tcfa_circuitCapacity_Gbps.getDouble() * Math.ceil(maxTrafficBidir / tcfa_circuitCapacity_Gbps.getDouble()) , null); 
+			netPlan.addDemand(n1, n2, tcfa_circuitCapacity_Gbps.getDouble() * Math.ceil(maxTrafficBidir / tcfa_circuitCapacity_Gbps.getDouble()) , RoutingType.SOURCE_ROUTING , null); 
+			netPlan.addDemand(n2, n1, tcfa_circuitCapacity_Gbps.getDouble() * Math.ceil(maxTrafficBidir / tcfa_circuitCapacity_Gbps.getDouble()) , RoutingType.SOURCE_ROUTING , null); 
 		}
 			
 		/* If 1+1 then decouple demands in one per channel */
@@ -131,7 +131,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 			for (Demand d : npcopy.getDemands())
 			{
 				final int numChannels = (int) Math.round (d.getOfferedTraffic() / tcfa_circuitCapacity_Gbps.getDouble ());
-				for (int cont = 0 ; cont < numChannels ; cont ++) netPlan.addDemand(netPlan.getNodeFromId (d.getIngressNode().getId ()), netPlan.getNodeFromId (d.getEgressNode().getId ()), tcfa_circuitCapacity_Gbps.getDouble () , d.getAttributes());
+				for (int cont = 0 ; cont < numChannels ; cont ++) netPlan.addDemand(netPlan.getNodeFromId (d.getIngressNode().getId ()), netPlan.getNodeFromId (d.getEgressNode().getId ()), tcfa_circuitCapacity_Gbps.getDouble () , RoutingType.SOURCE_ROUTING , d.getAttributes());
 			}
 		}
 
@@ -388,7 +388,7 @@ public class Offline_tcfa_wdmPhysicalDesign_graspAndILP implements IAlgorithm
 		Map<Route,Route> opposite_r = new HashMap<Route,Route> ();
 		for (Demand d : new HashSet<Demand> (np.getDemands()))
 		{
-			final Demand opDemand = np.addDemand(d.getEgressNode(), d.getIngressNode(), d.getOfferedTraffic(), null);
+			final Demand opDemand = np.addDemand(d.getEgressNode(), d.getIngressNode(), d.getOfferedTraffic(), RoutingType.SOURCE_ROUTING , null);
 			opposite_d.put(d,opDemand);
 			opposite_d.put(opDemand,d);
 			for (Route r : new HashSet<Route> (d.getRoutes ()))

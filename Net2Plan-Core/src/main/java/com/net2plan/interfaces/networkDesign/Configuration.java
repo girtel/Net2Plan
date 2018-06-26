@@ -60,7 +60,7 @@ public class Configuration
 	private final static File optionsFile;
 	private static File currentOptionsFile;
 	private final static List<Triple<String, String, String>> defaultOptions;
-	private final static Map<String, String> options;
+	private final static SortedMap<String, String> options;
 
 	public static double precisionFactor = 0.001;
 
@@ -79,9 +79,9 @@ public class Configuration
 		defaultOptions.add(Triple.unmodifiableOf("cplexSolverLibraryName", "", "Default path for cplex library (.dll/.so/.dylib file)"));
 		defaultOptions.add(Triple.unmodifiableOf("glpkSolverLibraryName", "", "Default path for glpk library (.dll/.so/.dylib file)"));
 		defaultOptions.add(Triple.unmodifiableOf("ipoptSolverLibraryName", "", "Default path for ipopt library (.dll/.so/.dylib file)"));
-		defaultOptions.add(Triple.unmodifiableOf("defaultILPSolver", "#select# glpk cplex xpress", "Default solver for LP/ILP models"));
+		defaultOptions.add(Triple.unmodifiableOf("defaultILPSolver", "#select# glpk mipcl cplex xpress", "Default solver for LP/ILP models"));
 		defaultOptions.add(Triple.unmodifiableOf("defaultNLPSolver", "#select# ipopt", "Default solver for NLP models"));
-		options = CommandLineParser.getParameters(defaultOptions, null);
+		options = CommandLineParser.getParameters(defaultOptions, (SortedMap) null);
 
 		optionsFile = new File(SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "options.ini");
 		currentOptionsFile = optionsFile;
@@ -104,7 +104,7 @@ public class Configuration
      * @param net2planParameters A key-value map with {@code Net2Plan}-wide configuration options
      * @since 0.2.2
      */
-    public static void check(Map<String, String> net2planParameters)
+    public static void check(SortedMap<String, String> net2planParameters)
 	{
 		try
 		{
@@ -120,24 +120,24 @@ public class Configuration
 	/**
 	 * Returns the current map of options (inlcuding ones those from plugins).
 	 *
-	 * @return Map of current options
+	 * @return SortedMap of current options
 	 * @since 0.2.0
 	 */
-	public static Map<String, String> getOptions()
+	public static SortedMap<String, String> getOptions()
 	{
-		return new LinkedHashMap<String, String>(options);
+		return new TreeMap<String, String>(options);
 	}
 
 
 	/**
 	 * Returns the current map of Net2Plan-wide options.
 	 *
-	 * @return Map of current options
+	 * @return SortedMap of current options
 	 * @since 0.3.0
 	 */
-	public static Map<String, String> getNet2PlanOptions()
+	public static SortedMap<String, String> getNet2PlanOptions()
 	{
-		final Map<String, String> map = new LinkedHashMap<String, String>();
+		final SortedMap<String, String> map = new TreeMap<String, String>();
 
         for(Triple<String, String, String> parameter : defaultOptions)
             map.put(parameter.getFirst(), getOption(parameter.getFirst()));
@@ -160,6 +160,14 @@ public class Configuration
 		}
 	}
 
+	/** Returns the default solver defined for ILP programs
+	 * @return see above
+	 */
+	public static String getDefaultIlpSolverName ()
+	{
+		return getOption ("defaultILPSolver");
+	}
+	
 	/** Returns the default name of the library file (to set as solverLibraryName in JOM calls), defined by the user
 	 * for the given solver name. In the XPRESS solver case, this corresponds to the credentials for the license (xpauth.xpr file typically).
 	 * Throws an Exception if the solver name matches any of the accepted by JOM
@@ -173,6 +181,7 @@ public class Configuration
 		else if (s.equals("glpk")) return getOption("glpkSolverLibraryName");
 		else if (s.equals("ipopt")) return getOption("ipoptSolverLibraryName");
 		else if (s.equals("xpress")) return getOption("xpressSolverLicenseFileName");
+		else if (s.equals("mipcl")) return "";
 		else { final RuntimeException e = new Net2PlanException ("Unknown solver name: " + solver); e.printStackTrace (); throw e; }
 	}
 
@@ -274,7 +283,7 @@ public class Configuration
 	 */
 	public static void readFromOptionsFile(File f) throws IOException
 	{
-		Map<String, String> oldOptions = new LinkedHashMap<String, String>(options);
+		SortedMap<String, String> oldOptions = new TreeMap<String, String>(options);
 		Properties p = new Properties();
 
 		try
@@ -377,7 +386,7 @@ public class Configuration
 	 */
 	public static void setOptions(Map<String, String> options)
 	{
-		Map<String, String> oldOptions = new LinkedHashMap<String, String>(options);
+		SortedMap<String, String> oldOptions = new TreeMap<String, String>(options);
 		Configuration.options.putAll(options);
 
 		try

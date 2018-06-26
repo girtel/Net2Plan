@@ -83,7 +83,6 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 	
 		/* Remove all unicast routed traffic. Any multicast routed traffic is kept */
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
 	
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();

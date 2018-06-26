@@ -524,7 +524,7 @@ public class AttributeEditor extends JDialog implements ActionListener
         shownColumns.add("Attribute");
         for (NetworkElement networkElement : networkElements)
         {
-            final NetworkElementType type = NetworkElementType.getType(networkElement);
+            final NetworkElementType type = networkElement.getNeType();
             if (type != null)
                 shownColumns.add(generateColumnName(type, networkElement.getId()));
         }

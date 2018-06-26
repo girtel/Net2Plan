@@ -10,15 +10,9 @@
     <fileSets>
         <!-- Add external resources -->
         <fileSet>
-            <directory>src/main/resources/data</directory>
-            <outputDirectory>workspace/data</outputDirectory>
-            <useDefaultExcludes>true</useDefaultExcludes>
-        </fileSet>
-        <fileSet>
             <directory>src/main/resources/help</directory>
             <outputDirectory>doc/help</outputDirectory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
     </fileSets>
-
 </assembly>

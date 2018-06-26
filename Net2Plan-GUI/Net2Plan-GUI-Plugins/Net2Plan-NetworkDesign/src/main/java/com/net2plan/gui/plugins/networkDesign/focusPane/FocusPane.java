@@ -10,21 +10,9 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.focusPane;
 
-import com.google.common.collect.Sets;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.libraries.SRGUtils;
-import com.net2plan.utils.Constants.RoutingCycleType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
-import net.miginfocom.swing.MigLayout;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
@@ -32,7 +20,39 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager.PickStateInfo;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.NetworkElementOrFr;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.libraries.SRGUtils;
+import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.DoubleUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
+
+import net.miginfocom.swing.MigLayout;
 
 public class FocusPane extends JPanel
 {
@@ -50,92 +70,87 @@ public class FocusPane extends JPanel
 
 	public void updateView ()
 	{
-
-
 		this.removeAll();
 		this.repaint();
 		final VisualizationState vs = callback.getVisualizationState();
-		final NetworkElementType elementType = vs.getPickedElementType();
-
-        final List<NetworkElement> pickedElement = vs.getPickedNetworkElements();
-        final List<Pair<Demand, Link>> pickedForwardingRule = vs.getPickedForwardingRules();
-
-        assert pickedElement != null;
-        assert pickedForwardingRule != null;
-
-		/* Return empty panel if zero or more than one element is picked */
-		/* Check if remove everything */
-		if (elementType == null) return; 
-        if (pickedElement.size() > 1) return;
-        if (pickedForwardingRule.size() > 1) return;
+		final PickStateInfo pickState = callback.getPickManager().getCurrentPick(callback.getDesign()).orElse(null);
+		if (pickState == null) return;
+		final NetworkElementOrFr nefr = pickState.getMainElement().orElse(null);
+		final Pair<NetworkElementType,NetworkLayer> elTypeAndLayer = pickState.getElementTypeOfMainElement().orElse(null);
+		if (nefr == null) return;
+		if (elTypeAndLayer == null) return;
+		final NetworkElementType elementType = elTypeAndLayer.getFirst();
+		final NetworkLayer layerPickedElement = elTypeAndLayer.getSecond();
+		if (elementType == null) return;
+		if (layerPickedElement == null) return;
 
 		/* Here if there is something new to show */
 		if (elementType == NetworkElementType.ROUTE)
 		{
-			final Route r = (Route) pickedElement.get(0);
+			final Route r = (Route) nefr.getNe();
 			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing(), r.getCarriedTraffic(), "Route " + r.getIndex() );
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getRouteInfoTables(r), r) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.DEMAND)
 		{
-			final Demand d = (Demand) pickedElement.get(0);
+			final Demand d = (Demand) nefr.getNe();
 			final FigureDemandSequencePanel fig = new FigureDemandSequencePanel(callback, d, "Demand " + d.getIndex());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getDemandInfoTables(d), d) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.FORWARDING_RULE)
 		{
-			final Pair<Demand,Link> fr = vs.getPickedForwardingRules().get(0);
+			final Pair<Demand,Link> fr = nefr.getFr();
 			final FigureForwardingRuleSequencePanel fig = new FigureForwardingRuleSequencePanel(callback, fr, callback.getDesign().getNetworkLayerDefault(), "Forwarding rule");
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getForwardingRuleInfoTables(fr), null) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.LAYER)
 		{
-			final NetworkLayer layer = (NetworkLayer) pickedElement.get(0);
+			final NetworkLayer layer = (NetworkLayer) nefr.getNe();
 //			final LinkSequencePanel fig = new LinkSequencePanel(r.getPath() , r.getLayer() , r.getSeqOccupiedCapacitiesIfNotFailing() , "Route " + r.getIndex() , r.getCarriedTraffic());
 //			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getLayerInfoTables(layer), layer) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.LINK)
 		{
-			final Link e = (Link) pickedElement.get(0);
+			final Link e = (Link) nefr.getNe();
 			final FigureLinkSequencePanel fig = new FigureLinkSequencePanel(callback , Arrays.asList(e) , e.getLayer() , Arrays.asList(e.getOccupiedCapacity()), e.getCarriedTraffic(), "Link " + e.getIndex());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getLinkInfoTables(e), e) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.MULTICAST_DEMAND)
 		{
-			final MulticastDemand md = (MulticastDemand) pickedElement.get(0);
+			final MulticastDemand md = (MulticastDemand) nefr.getNe();
 			final FigureMulticastDemandSequencePanel fig = new FigureMulticastDemandSequencePanel(callback, md, "Multicast demand " + md.getIndex());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getMulticastDemandInfoTables(md), md) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.MULTICAST_TREE)
 		{
-			final MulticastTree t = (MulticastTree) pickedElement.get(0);
+			final MulticastTree t = (MulticastTree) nefr.getNe();
 			final FigureMulticastTreePanel fig = new FigureMulticastTreePanel(callback , t , "Multicast tree " + t.getIndex() , t.getCarriedTraffic());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getMulticastTreeInfoTables(t), t) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.NODE)
 		{
-			final Node n = (Node) pickedElement.get(0);
-			final FigureNodeSequencePanel fig = new FigureNodeSequencePanel(callback , n , n.getNetPlan().getNetworkLayerDefault() , "Node " + n.getIndex());
+			final Node n = (Node) nefr.getNe();
+			final FigureNodeSequencePanel fig = new FigureNodeSequencePanel(callback , n , layerPickedElement , "Node " + n.getIndex());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getNodeInfoTables(n , n.getNetPlan().getNetworkLayerDefault()), n) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.RESOURCE)
 		{
-			final Resource r = (Resource) pickedElement.get(0);
+			final Resource r = (Resource) nefr.getNe();
 			final FigureResourcePanel fig = new FigureResourcePanel(callback , r , getResourceName(r));
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getResourceInfoTables(r), r) , BorderLayout.CENTER);
 		}
 		else if (elementType == NetworkElementType.SRG)
 		{
-			final SharedRiskGroup srg = (SharedRiskGroup) pickedElement.get(0);
+			final SharedRiskGroup srg = (SharedRiskGroup) nefr.getNe();
 			final FigureSRGSequencePanel fig = new FigureSRGSequencePanel(callback, srg, "Shared risk group " + srg.getIndex());
 			this.add(fig , BorderLayout.WEST);
 			this.add(createPanelInfo(getSRGInfoTables(srg), srg) , BorderLayout.CENTER);
@@ -157,7 +172,6 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Description" , layer.getDescription().equals("")? "No description" : layer.getDescription(), ""));
 		res.add(Triple.of("Demand traffic units" , trafUnits.equals("")? "Not specified" : trafUnits, ""));
 		res.add(Triple.of("Link capacity units" , capUnits.equals("")? "Not specified" : capUnits, ""));
-		res.add(Triple.of("Routing type" , layer.isSourceRouting()? "Source routing" : "Hop-by-hop routing", ""));
 		final double totalOccupiedCap = np.getLinks(layer).stream().mapToDouble(e->e.getOccupiedCapacity()).sum();
 		final double totalCap = np.getLinks(layer).stream().mapToDouble(e->e.getCapacity()).sum();
 		final double totalOfferedTrac = np.getDemands(layer).stream().mapToDouble(e->e.getOfferedTraffic()).sum();
@@ -166,10 +180,8 @@ public class FocusPane extends JPanel
 		final double totalCarMultTraffic = np.getMulticastDemands(layer).stream().mapToDouble(e->e.getCarriedTraffic()).sum();
 		res.add(Triple.of("# links (total occupied / capacity)", "" + np.getNumberOfLinks(layer) + " (" + df.format(totalOccupiedCap) + " / " + df.format(totalCap) + ") " + capUnits + ")" , ""));
 		res.add(Triple.of("# demands (total carried / offered)", "" + np.getNumberOfDemands(layer) + " (" + df.format(totalCarriedTrac) + " / " + df.format(totalOfferedTrac) + ") " + trafUnits, ""));
-		if (layer.isSourceRouting())
-			res.add(Triple.of("# routes", "" + np.getNumberOfRoutes(layer) , ""));
-		else
-			res.add(Triple.of("# forwarding rules", "" + np.getNumberOfForwardingRules(layer) , ""));
+		res.add(Triple.of("# routes", "" + np.getNumberOfRoutes(layer) , ""));
+		res.add(Triple.of("# forwarding rules", "" + np.getNumberOfForwardingRules(layer) , ""));
 		res.add(Triple.of("# multicast demands (total carried / offered)", "" + np.getNumberOfMulticastDemands(layer) + " (" + df.format(totalCarMultTraffic) + " / " + df.format(totalOffMultTraffic) + ") " + trafUnits, ""));
 		res.add(Triple.of("# multicast trees", "" + np.getNumberOfMulticastTrees(layer) , ""));
 		return res;
@@ -276,10 +288,8 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Is bottleneck?", "" + DoubleUtils.isEqualWithinRelativeTolerance(max_rho_e, e.getUtilization(), Configuration.precisionFactor) , ""));
 		res.add(Triple.of("Length (km)", "" + df.format(e.getLengthInKm()) + " km" , ""));
 		res.add(Triple.of("Length (ms)", "" + df.format(e.getPropagationDelayInMs()) + " ms" , ""));
-		if (layer.isSourceRouting())
-			res.add(Triple.of("# routes (total / backup)", "" + e.getTraversingRoutes().size() + " / " + e.getTraversingBackupRoutes().size(), ""));
-		else
-			res.add(Triple.of("# forw. rules", "" + e.getForwardingRules().size(), ""));
+		res.add(Triple.of("# routes (total / backup)", "" + e.getTraversingRoutes().size() + " / " + e.getTraversingBackupRoutes().size(), ""));
+		res.add(Triple.of("# forw. rules", "" + e.getForwardingRules().size(), ""));
 		res.add(Triple.of("# multicast trees", "" + e.getTraversingTrees().size() , ""));
 		final Set<SharedRiskGroup> affectingSRGs = SRGUtils.getAffectingSRGs(Arrays.asList(e));
 		res.add(Triple.of("# Affecting SRGs", "" + affectingSRGs.size() , ""));
@@ -371,13 +381,9 @@ public class FocusPane extends JPanel
 		if (d.isServiceChainRequest())
 			res.add(Triple.of("- Seq. resource types" , StringUtils.join(d.getServiceChainSequenceOfTraversedResourceTypes(),","), ""));
 		res.add(Triple.of("Has loops?" , isLoopless? "No" : cycleType.equals(RoutingCycleType.CLOSED_CYCLES)? "Yes (closed loops)" : "Yes (open loops)", ""));
-		res.add(Triple.of("Routing type" , layer.isSourceRouting()? "Source routing" : "Hop by hop", ""));
-		if (layer.isSourceRouting())
-		{
-			res.add(Triple.of("Num. routes (total/backup)" , "" + d.getRoutes().size() + "/" + d.getRoutesAreBackup().size(), ""));
-			for (Route r : d.getRoutes())
-				res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")" + (r.isBackupRoute()? " [backup]" : ""), "route" + r.getId()));
-		}
+		res.add(Triple.of("Num. routes (total/backup)" , "" + d.getRoutes().size() + "/" + d.getRoutesAreBackup().size(), ""));
+		for (Route r : d.getRoutes())
+			res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")" + (r.isBackupRoute()? " [backup]" : ""), "route" + r.getId()));
 		res.add(Triple.of("Worst case e2e latency" , df.format(d.getWorstCasePropagationTimeInMs()) + " ms", ""));
 		return res;
 	}
@@ -478,70 +484,71 @@ public class FocusPane extends JPanel
 	{
 		final NetPlan np = callback.getDesign();
 		final VisualizationState vs = callback.getVisualizationState();
+		final PickManager pickManager = callback.getPickManager();
 		if (internalLink.equals("")) return;
 		if (internalLink.startsWith("demand"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "demand".length()));
 			final Demand e = np.getDemandFromId(id);
-			vs.pickElement(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 
 		} else if (internalLink.startsWith("route"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "route".length()));
 			final Route e = np.getRouteFromId(id);
-			vs.pickElement(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("node"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "node".length()));
 			final Node e = np.getNodeFromId(id);
-			vs.pickElement(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("multicastDemand"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "multicastDemand".length()));
 			final MulticastDemand e = np.getMulticastDemandFromId(id);
-			vs.pickElement(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("multicastTree"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "multicastTree".length()));
 			final MulticastDemand e = np.getMulticastDemandFromId(id);
-			vs.pickElement(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("link"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "link".length()));
 			final Link e = np.getLinkFromId(id);
-			vs.pickElement(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("forwardingRule"))
 		{
 			final long demandId = Long.parseLong(internalLink.substring((int) "forwardingRule".length() , internalLink.indexOf(",")));
 			final long linkId = Long.parseLong(internalLink.substring(internalLink.indexOf(",") + 1));
 			final Pair<Demand,Link> e = Pair.of(np.getDemandFromId(demandId) , np.getLinkFromId(linkId));
-			vs.pickForwardingRule(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("resource"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "resource".length()));
 			final Resource e = np.getResourceFromId(id);
-			vs.pickElement(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("srg"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "srg".length()));
 			final SharedRiskGroup e = np.getSRGFromId(id);
-			vs.pickElement(e);
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
 		} else if (internalLink.startsWith("layer"))
 		{
 			final long id = Long.parseLong(internalLink.substring((int) "layer".length()));
 			final NetworkLayer e = np.getNetworkLayerFromId(id);
 			np.setNetworkLayerDefault(e);
-			callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LAYER));
-			vs.pickElement(e);
+			callback.updateVisualizationAfterChanges();
+			pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
 			callback.updateVisualizationAfterPick();
             callback.addNetPlanChange();
 		} else throw new RuntimeException ();

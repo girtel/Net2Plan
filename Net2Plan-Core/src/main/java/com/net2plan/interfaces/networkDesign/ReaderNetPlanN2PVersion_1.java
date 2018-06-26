@@ -10,15 +10,23 @@
  *******************************************************************************/
 package com.net2plan.interfaces.networkDesign;
 
-import org.codehaus.stax2.XMLStreamReader2;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.SortedSet;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
-import java.util.*;
+
+import org.codehaus.stax2.XMLStreamReader2;
+
+import com.net2plan.utils.Constants.RoutingType;
 
 class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 {
-	Map<Long, List<Long>> backupSegmentMap = new LinkedHashMap<Long, List<Long>>();
+	SortedMap<Long, List<Long>> backupSegmentMap = new TreeMap<Long, List<Long>>();
 	
 	@Override
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
@@ -41,7 +49,7 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 		long ingressNodeId = -1;
 		long egressNodeId = -1;
 		double offeredTraffic = 0;
-		Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+		SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 
 		int numAttributes = xmlStreamReader.getAttributeCount();
 		for(int i = 0; i < numAttributes; i++)
@@ -80,7 +88,7 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 					String endElementName = xmlStreamReader.getName().toString();
 					if (endElementName.equals("demandEntry"))
 					{
-						netPlan.addDemand(netPlan.nodes.get((int) ingressNodeId), netPlan.nodes.get((int) egressNodeId), offeredTraffic, attributeMap);
+						netPlan.addDemand(netPlan.nodes.get((int) ingressNodeId), netPlan.nodes.get((int) egressNodeId), offeredTraffic, RoutingType.SOURCE_ROUTING , attributeMap);
 						return;
 					}
 					break;
@@ -123,7 +131,7 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 	
 	protected void parseLink(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
-		Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+		SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 		double linkCapacity = 0;
 		double linkLengthInKm = 0;
 		long originNodeId = -1;
@@ -189,11 +197,11 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 			switch(localName)
 			{
 				case "description":
-					netPlan.setNetworkDescription(xmlStreamReader.getAttributeValue(i));
+					netPlan.setDescription(xmlStreamReader.getAttributeValue(i));
 					break;
 					
 				case "name":
-					netPlan.setNetworkName(xmlStreamReader.getAttributeValue(i));
+					netPlan.setName(xmlStreamReader.getAttributeValue(i));
 					break;
 					
 				default:
@@ -251,7 +259,7 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 		double xCoord = 0;
 		double yCoord = 0;
 		String nodeName = null;
-		Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+		SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 		
 		int numAttributes = xmlStreamReader.getAttributeCount();
 		for(int i = 0; i < numAttributes; i++)
@@ -368,7 +376,7 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 	protected void parseProtectionSegment(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
 		double reservedBandwidthInErlangs = 0;
-		Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+		SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 		
 		int numAttributes = xmlStreamReader.getAttributeCount();
 		for(int i = 0; i < numAttributes; i++)
@@ -426,7 +434,7 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 	{
 		long demandId = -1;
 		double carriedTrafficInErlangs = 0;
-		Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+		SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 		
 		int numAttributes = xmlStreamReader.getAttributeCount();
 		for(int i = 0; i < numAttributes; i++)
@@ -524,7 +532,7 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 	{
 		double mttf = 0;
 		double mttr = 0;
-		Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+		SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 		
 		int numAttributes = xmlStreamReader.getAttributeCount();
 		for(int i = 0; i < numAttributes; i++)
@@ -545,8 +553,8 @@ class ReaderNetPlanN2PVersion_1 implements IReaderNetPlan
 			}
 		}
 		
-		Set<Long> nodeIds_thisSRG = new LinkedHashSet<Long>();
-		Set<Long> linkIds_thisSRG = new LinkedHashSet<Long>();
+		SortedSet<Long> nodeIds_thisSRG = new TreeSet<Long>();
+		SortedSet<Long> linkIds_thisSRG = new TreeSet<Long>();
 
 		while(xmlStreamReader.hasNext())
 		{

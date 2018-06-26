@@ -11,10 +11,13 @@
 package com.net2plan.gui.plugins.networkDesign.interfaces;
 
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Pair;
 
 import java.util.*;
+
+import org.apache.poi.xdgf.usermodel.section.geometry.GeometryRowFactory;
 
 @SuppressWarnings("unchecked")
 public abstract class ITableRowFilter
@@ -61,6 +64,25 @@ public abstract class ITableRowFilter
 		}
 	}
 
+	public static List<?> getAllElements (NetPlan np , NetworkLayer layer , AJTableType tableType)
+	{
+		if (tableType.getNeType() == null) throw new RuntimeException();
+		switch (tableType.getNeType())
+		{
+		case DEMAND: return np.getDemands(layer);
+		case FORWARDING_RULE: return new ArrayList<> (np.getForwardingRules(layer).keySet());
+		case LAYER: return np.getNetworkLayers();
+		case LINK: return np.getLinks(layer);
+		case MULTICAST_DEMAND: return np.getMulticastDemands(layer);
+		case MULTICAST_TREE: return np.getMulticastTrees(layer);
+		case NODE: return np.getNodes();
+		case RESOURCE: return np.getResources();
+		case ROUTE: return np.getRoutes(layer);
+		case SRG: return np.getSRGs();
+		default: throw new RuntimeException();
+		}
+	}
+	
 	public abstract String getDescription ();
 	
 	public final List<Demand> getVisibleDemands (NetworkLayer layer) 	{ return Collections.unmodifiableList(vDemands.get(layer)); }
@@ -131,6 +153,26 @@ public abstract class ITableRowFilter
 		chainOfDescriptionsPreviousFiltersComposingThis.add(that.getDescription());
 	}
 
+	public List<?> getVisibleElements (NetworkLayer layer , AJTableType type)
+	{
+		switch (type.getNeType())
+		{
+		case DEMAND: return vDemands.get(layer);
+		case FORWARDING_RULE: return vFRs.get(layer);
+		case LAYER: return layer.getNetPlan().getNetworkLayers();
+		case LINK: return vLinks.get(layer);
+		case MULTICAST_DEMAND: return vMDemands.get(layer);
+		case MULTICAST_TREE: return vTrees.get(layer);
+		case NETWORK: return null;
+		case NODE: return vNodes.get(layer);
+		case RESOURCE: return vResources.get(layer);
+		case ROUTE: return vRoutes.get(layer);
+		case SRG: return vSRGs.get(layer);
+		default:
+			throw new RuntimeException();
+		}
+	}
+	
 	
 	private final List<? extends Object> filterAnd (List<? extends Object> l1 , List<? extends Object> l2)
 	{

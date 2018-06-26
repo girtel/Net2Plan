@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+
 <!--
     Copyright (c) 2017 Pablo Pavon Marino and others.
     All rights reserved. This program and the accompanying materials
@@ -20,10 +20,8 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan</artifactId>
-        <version>0.5.3</version>
+        <version>0.6.0</version>
     </parent>
-
-    <packaging>jar</packaging>
 
     <build>
         <!--Filters out external resources-->

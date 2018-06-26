@@ -35,11 +35,8 @@ public class TBFSelectionBased extends ITableRowFilter
         vNodes.put(layer, netPlan.getNodes());
         vResources.put(layer, netPlan.getResources());
         vSRGs.put(layer, netPlan.getSRGs());
-
-        if (layer.isSourceRouting())
-            vRoutes.put(layer, netPlan.getRoutes(layer));
-        else
-            vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
+        vRoutes.put(layer, netPlan.getRoutes(layer));
+        vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
 
         if (elementSelection.isEmpty()) return;
 
@@ -60,13 +57,13 @@ public class TBFSelectionBased extends ITableRowFilter
                 vMDemands.put(layer, new ArrayList<>((List<MulticastDemand>) elementSelection.getNetworkElements()));
                 break;
             case ROUTE:
-                if (layer.isSourceRouting()) vRoutes.put(layer, new ArrayList<>((List<Route>) elementSelection.getNetworkElements()));
+                vRoutes.put(layer, new ArrayList<>((List<Route>) elementSelection.getNetworkElements()));
                 break;
             case MULTICAST_TREE:
                 vTrees.put(layer, new ArrayList<>((List<MulticastTree>) elementSelection.getNetworkElements()));
                 break;
             case FORWARDING_RULE:
-                if (!layer.isSourceRouting()) vFRs.put(layer, new ArrayList<>(elementSelection.getForwardingRules()));
+                vFRs.put(layer, new ArrayList<>(elementSelection.getForwardingRules()));
                 break;
             case RESOURCE:
                 vResources.put(layer, new ArrayList<>((List<Resource>) elementSelection.getNetworkElements()));

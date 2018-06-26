@@ -10,26 +10,35 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.utils.Pair;
-import org.apache.commons.collections15.BidiMap;
-
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+
+import javax.swing.Box;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+
+import org.apache.commons.collections15.BidiMap;
+
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMException;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager.PickStateInfo;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.NetworkElementOrFr;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.Pair;
 
 /**
  * @author Jorge San Emeterio
@@ -288,13 +297,16 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         {
             if (btn_siteMode.isSelected())
             {
-                if (vs.getPickedElementType() == NetworkElementType.NODE)
+            	final PickStateInfo ps = callback.getPickManager().getCurrentPick(callback.getDesign()).orElse(null); 
+                if (ps != null)
                 {
-                    if (vs.getPickedNetworkElements().size() == 1)
-                    {
-                        final Node node = (Node) vs.getPickedNetworkElements().get(0);
-                        canvas.setState(CanvasOption.SiteState, node);
-                    }
+                	final NetworkElementOrFr nefr = ps.getMainElement().orElse(null); 
+                	if (nefr != null)
+                	{
+                		if (nefr.isNe())
+                			if (nefr.getNe() instanceof Node)
+                                canvas.setState(CanvasOption.SiteState, (Node) nefr.getNe());
+                	}
                 } else
                 {
                     btn_siteMode.setSelected(false);
@@ -335,31 +347,23 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         }
 
         final VisualizationState vs = callback.getVisualizationState();
-        final NetworkElementType pickedElementType = vs.getPickedElementType();
-
-        if (pickedElementType != null)
+        final PickManager pickManager = callback.getPickManager();
+        final PickStateInfo currentPick = pickManager.getCurrentPick(callback.getDesign()).orElse(null);
+        if (currentPick != null)
         {
-            if (pickedElementType == NetworkElementType.NODE)
-            {
-                final List<NetworkElement> pickedElements = vs.getPickedNetworkElements();
-
-                if (pickedElements.size() == 1)
-                {
-                    final Node node = (Node) pickedElements.get(0);
-
-                    if (node.getSiteName() != null)
-                        btn_siteMode.setEnabled(true);
-
-                } else
-                {
-                    if (stateDefinition != CanvasOption.SiteState)
-                        btn_siteMode.setEnabled(false);
-                }
+        	final NetworkElementOrFr nefr = currentPick.getMainElement().orElse(null);
+        	if (nefr != null)
+        	{
+        		if (nefr.isNe())
+        			if (nefr.getNe() instanceof Node)
+                        if (((Node) nefr.getNe()).getSiteName() != null)
+                        {
+                            btn_siteMode.setEnabled(true);
+                            return;
+                        }
             }
-        } else
-        {
-            if (canvas.getState() != CanvasOption.SiteState)
-                btn_siteMode.setEnabled(false);
-        }
+        } 
+        if (canvas.getState() != CanvasOption.SiteState)
+            btn_siteMode.setEnabled(false);
     }
 }

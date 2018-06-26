@@ -1,4 +1,5 @@
 /*******************************************************************************
+ * 
  * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the 2-clause BSD License 
@@ -11,130 +12,100 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
+// TODO: JAVIER. Header menu in abstract table: 1) Attribute columns can be collapsed or not, 2) Hide/show columns and column header right-click menu options, 3) increase/decrease number of decimals if double
+// TODO: JAVIER. Differential coloring to see the differences
+// TODO: JAVIER. Pick manager with ALT-LEFT/RIGHT
+// TODO: JAVIER. Left layer selector, 7 buttons. 5 for layer, 2 for up and down (each double, one for scroll up (only visible if more than 5 layers), other for moving up visually the active layer), only visible if more than 5 layers.  
+// TODO: PABLO: Do the multi traffic matrix thing for forecast, add the gravity model algorithm for traffic matrix prediction
+
+// TODO: All the layers shown at the same time
+// TODO: Simplify coloring exploiting we have id bidimap in the table
+// TODO: Tips per cell (not per column) to report extra information (e.g. when QoS violation, who and where)
+
+// pick, and everywhere FR or NE can come. 
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.swing.JFileChooser;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
+import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
+import com.net2plan.gui.plugins.networkDesign.utils.FilteredTablePanel;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.*;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_forwardingRule;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_link;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_multicastDemand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_multicastTree;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_node;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_resource;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_srg;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafficMatrix;
-import com.net2plan.gui.utils.FullScrollPaneLayout;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants;
+import com.net2plan.gui.utils.NetworkElementOrFr;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.SwingUtils;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class ViewEditTopologyTablesPane extends JPanel
 {
     private final GUINetworkDesign callback;
     private final JTabbedPane netPlanView;
-    private final JTabbedPane demandTabbedPaneListAndMatrix;
-    private NetPlanViewTableComponent_trafficMatrix trafficMatrixComponent;
-    private final Map<Constants.NetworkElementType, AdvancedJTable_networkElement> netPlanViewTable;
-    private final Map<Constants.NetworkElementType, JComponent> netPlanViewTableComponent;
-    private final Map<Constants.NetworkElementType, JLabel> netPlanViewTableNumEntriesLabel;
+    private final Map<NetworkLayer,Map<AJTableType, Pair<AdvancedJTable_abstractElement, FilteredTablePanel>>> netPlanViewTable = new HashMap<> (); //new EnumMap<>(AJTableType.class);
+    private final Map<NetworkLayer,JTabbedPane> demandTabbedPaneListAndMatrix = new HashMap<> (); //JTabbedPane ();
+    private final Map<NetworkLayer, JTabbedPane> layerSubTabbedPaneMap = new HashMap<>();
+    private Map<NetworkLayer,NetPlanViewTableComponent_trafficMatrix> trafficMatrixComponent;
+    private Map<NetworkLayer,NetPlanViewTableComponent_layer> highLevelTabComponent_layer;
+    private NetPlanViewTableComponent_network highLevelTabComponent_network;
 
     private final JMenuBar menuBar;
     private final JMenu exportMenu;
 
-    public ViewEditTopologyTablesPane(GUINetworkDesign callback, LayoutManager layout)
+    public ViewEditTopologyTablesPane(GUINetworkDesign callback)
     {
-        super(layout);
-
+        super(new BorderLayout());
         this.callback = callback;
+        this.netPlanView = new JTabbedPane();
+        final NetPlan np = callback.getDesign();
+        
+        final JSplitPane splitPane = new JSplitPane();
+        splitPane.setLeftComponent(netPlanView);
+        splitPane.setRightComponent(new JPanel ());
 
-        netPlanViewTable = new EnumMap<>(Constants.NetworkElementType.class);
-        netPlanViewTableComponent = new EnumMap<>(Constants.NetworkElementType.class);
-        netPlanViewTableNumEntriesLabel = new EnumMap<>(Constants.NetworkElementType.class);
+        splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setResizeWeight(0.3);
+        splitPane.setEnabled(true);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setDividerLocation(0.4);
 
-        netPlanViewTable.put(Constants.NetworkElementType.NODE, new AdvancedJTable_node(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.LINK, new AdvancedJTable_link(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.DEMAND, new AdvancedJTable_demand(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.ROUTE, new AdvancedJTable_route(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.FORWARDING_RULE, new AdvancedJTable_forwardingRule(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_DEMAND, new AdvancedJTable_multicastDemand(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.MULTICAST_TREE, new AdvancedJTable_multicastTree(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.SRG, new AdvancedJTable_srg(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.RESOURCE, new AdvancedJTable_resource(callback));
-        netPlanViewTable.put(Constants.NetworkElementType.LAYER, new AdvancedJTable_layer(callback));
+        this.add(splitPane, BorderLayout.CENTER);
 
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.NODE, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.LINK, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.DEMAND, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.ROUTE, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.FORWARDING_RULE, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.MULTICAST_DEMAND, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.MULTICAST_TREE, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.SRG, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.RESOURCE, new JLabel("Number of entries: "));
-        netPlanViewTableNumEntriesLabel.put(NetworkElementType.LAYER, new JLabel("Number of entries: "));
-
-        netPlanView = new JTabbedPane();
-        demandTabbedPaneListAndMatrix = new JTabbedPane();
-        this.trafficMatrixComponent = new NetPlanViewTableComponent_trafficMatrix(callback);
-        for (NetworkElementType elementType : NetworkElementType.values())
-        {
-            if (elementType == NetworkElementType.NETWORK)
-            {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_network(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
-            } else if (elementType == NetworkElementType.LAYER)
-            {
-                netPlanViewTableComponent.put(elementType, new NetPlanViewTableComponent_layer(callback, (AdvancedJTable_layer) netPlanViewTable.get(NetworkElementType.LAYER)));
-            } else
-            {
-                JScrollPane scrollPane = netPlanViewTable.get(elementType).getScrollPane();
-                scrollPane.setLayout(new FullScrollPaneLayout());
-                scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                final JPanel panel = new JPanel();
-                panel.setLayout(new BorderLayout());
-                JPanel labelsPanel = new JPanel();
-                labelsPanel.setLayout(new BorderLayout());
-                labelsPanel.setBackground(Color.YELLOW);
-                labelsPanel.setForeground(Color.BLACK);
-                labelsPanel.add(netPlanViewTableNumEntriesLabel.get(elementType), BorderLayout.CENTER);
-                {
-                    final JPanel buttonsPanel = new JPanel();
-                    final JButton resetTableRowFilters = new JButton("Reset VFs");
-                    buttonsPanel.add(resetTableRowFilters, BorderLayout.EAST);
-                    resetTableRowFilters.addActionListener(e ->
-                    {
-                        callback.getVisualizationState().updateTableRowFilter(null, FilterCombinationType.INCLUDEIF_AND);
-                        callback.updateVisualizationJustTables();
-                        callback.resetPickedStateAndUpdateView();
-                    });
-                    buttonsPanel.setOpaque(false);
-                    labelsPanel.add(buttonsPanel, BorderLayout.EAST);
-                }
-
-                labelsPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
-                panel.add(labelsPanel, BorderLayout.NORTH);
-                panel.add(scrollPane, BorderLayout.CENTER);
-                netPlanViewTableComponent.put(elementType, panel);
-                if (elementType == NetworkElementType.DEMAND)
-                {
-                    this.demandTabbedPaneListAndMatrix.addTab("List view", panel);
-                    this.demandTabbedPaneListAndMatrix.addTab("Traffic matrix view", trafficMatrixComponent);
-                }
-            }
-        }
-
+        this.recomputNetPlanView ();
+        
         this.add(netPlanView, BorderLayout.CENTER);
 
         final JMenuItem writeToExcel = new JMenuItem("To excel");
@@ -168,23 +139,16 @@ public class ViewEditTopologyTablesPane extends JPanel
                 try
                 {
                     final NetPlan netPlan = callback.getDesign();
-
-                    for (AdvancedJTable_networkElement table : netPlanViewTable.values())
+                    for (NetworkLayer layer : np.getNetworkLayers())
                     {
-                        if (table instanceof AdvancedJTable_forwardingRule)
-                            if (netPlan.getRoutingType() != RoutingType.HOP_BY_HOP_ROUTING)
-                                continue;
-
-                        if (table instanceof AdvancedJTable_route)
-                            if (netPlan.getRoutingType() != RoutingType.SOURCE_ROUTING)
-                                continue;
-
-                        table.writeTableToFile(file);
-
-                        if (table instanceof AdvancedJTable_demand)
-                            trafficMatrixComponent.writeTableToFile(file);
+                        for (Pair<AdvancedJTable_abstractElement, FilteredTablePanel> tableInfo : netPlanViewTable.get(layer).values())
+                        {
+                        	final AdvancedJTable_abstractElement table = tableInfo.getFirst();
+                            table.writeTableToFile(file , layer);
+                            if (table instanceof AdvancedJTable_demand)
+                                trafficMatrixComponent.get(layer).writeTrafficMatrixTableToFile(file , layer);
+                        }
                     }
-
                     ErrorHandling.showInformationDialog("Excel file successfully written", "Finished writing into file");
                 } catch (Exception e)
                 {
@@ -204,64 +168,38 @@ public class ViewEditTopologyTablesPane extends JPanel
         this.add(menuBar, BorderLayout.SOUTH);
     }
 
-    public Map<Constants.NetworkElementType, AdvancedJTable_networkElement> getNetPlanViewTable()
+    public Map<AJTableType, AdvancedJTable_abstractElement> getNetPlanViewTable(NetworkLayer layer)
     {
-        return netPlanViewTable;
+        return netPlanViewTable.get(layer).entrySet().stream().collect(Collectors.toMap(e->e.getKey(), e->e.getValue().getFirst()));
     }
 
     public void updateView()
     {
         /* Load current network state */
         final NetPlan currentState = callback.getDesign();
-        final NetworkLayer layer = currentState.getNetworkLayerDefault();
         if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
+        
+        this.recomputNetPlanView();
+        
+//        final AdvancedJTable_abstractElement layerTable = this.netPlanViewTable.get(AJTableType.LAYERS).getFirst();
+//    	System.out.println(layerTable.getTableScrollPane().getViewport());
+//    	System.out.println("View is null? " + (layerTable.getTableScrollPane().getViewport().getView() == null));
 
-        final int selectedTabIndex = netPlanView.getSelectedIndex();
-        netPlanView.removeAll();
-        final int selectedListOrMatrixDemands = demandTabbedPaneListAndMatrix.getSelectedIndex();
-        demandTabbedPaneListAndMatrix.removeAll();
-        for (NetworkElementType elementType : NetworkElementType.values())
+        highLevelTabComponent_network.updateNetPlanView(currentState);
+        for (NetworkLayer layer : currentState.getNetworkLayers())
         {
-            if (layer.isSourceRouting() && elementType == NetworkElementType.FORWARDING_RULE)
-                continue;
-            if (!layer.isSourceRouting() && (elementType == NetworkElementType.ROUTE))
-                continue;
-            if (elementType == NetworkElementType.DEMAND)
-            {
-                this.demandTabbedPaneListAndMatrix.addTab("List view", netPlanViewTableComponent.get(elementType));
-                this.demandTabbedPaneListAndMatrix.addTab("Traffic matrix view", trafficMatrixComponent);
-                netPlanView.addTab(netPlanViewTable.get(elementType).getTabName(), this.demandTabbedPaneListAndMatrix);
-                continue;
-            }
-            netPlanView.addTab(elementType == NetworkElementType.NETWORK ? "Network" : netPlanViewTable.get(elementType).getTabName(), netPlanViewTableComponent.get(elementType));
-        }
-        demandTabbedPaneListAndMatrix.setSelectedIndex(selectedListOrMatrixDemands);
-        if ((selectedTabIndex < netPlanView.getTabCount()) && (selectedTabIndex >= 0))
-            netPlanView.setSelectedIndex(selectedTabIndex);
+            netPlanViewTable.get(layer).values().stream().map(t -> t.getFirst()).forEach(t -> t.updateView());
+            trafficMatrixComponent.get(layer).updateNetPlanView();
+            highLevelTabComponent_layer.get(layer).updateNetPlanView(currentState);
 
-        if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
-
-        /* update the required tables */
-        for (Map.Entry<Constants.NetworkElementType, AdvancedJTable_networkElement> entry : netPlanViewTable.entrySet())
-        {
-            if (layer.isSourceRouting() && entry.getKey() == NetworkElementType.FORWARDING_RULE) continue;
-            if (!layer.isSourceRouting() && (entry.getKey() == NetworkElementType.ROUTE)) continue;
-            final AdvancedJTable_networkElement table = entry.getValue();
-            table.updateView(currentState);
-            final JLabel label = netPlanViewTableNumEntriesLabel.get(entry.getKey());
-            if (label != null)
-            {
-                final int numEntries = table.getModel().getRowCount() - 1; // last columns is for the aggregation
-                if (callback.getVisualizationState().getTableRowFilter() != null)
-                    label.setText("Number of entries: " + numEntries + " / " + table.getModel().getRowCount() + ", FILTERED VIEW: " + callback.getVisualizationState().getTableRowFilter().getDescription());
-                else
-                    label.setText("Number of entries: " + numEntries);
-            }
+            // Update filter header
+            for (AJTableType type : AJTableType.values())
+            	if (netPlanViewTable.get(layer).get(type).getSecond() != null)
+            		netPlanViewTable.get(layer).get(type).getSecond().updateHeader();
         }
 
-        trafficMatrixComponent.updateNetPlanView();
-        ((NetPlanViewTableComponent_layer) netPlanViewTableComponent.get(NetworkElementType.LAYER)).updateNetPlanView(currentState);
-        ((NetPlanViewTableComponent_network) netPlanViewTableComponent.get(NetworkElementType.NETWORK)).updateNetPlanView(currentState);
+
+        if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
     }
 
 
@@ -271,97 +209,191 @@ public class ViewEditTopologyTablesPane extends JPanel
      * @param type   Network element type
      * @param itemId Item identifier (if null, it will just show the tab)
      */
-    public void selectItemTab(NetworkElementType type, Object itemId)
+    public void selectItemTab(NetworkElementType type , NetworkLayer layer)
     {
-        AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-        int tabIndex = netPlanView.getSelectedIndex();
-        int col = 0;
-        if (netPlanView.getTitleAt(tabIndex).equals(type == NetworkElementType.NETWORK ? "Network" : table.getTabName()))
-        {
-            col = table.getSelectedColumn();
-            if (col == -1) col = 0;
-        } else
-        {
-            netPlanView.setSelectedComponent(netPlanViewTableComponent.get(type));
-        }
+    	if (type == NetworkElementType.NETWORK) { netPlanView.setSelectedComponent(highLevelTabComponent_network); return; } 
 
-        if (itemId == null)
-        {
-            table.clearSelection();
-            return;
-        }
-
-        TableModel model = table.getModel();
-        final int numRows = model.getRowCount();
-        for (int row = 0; row < numRows; row++)
-        {
-            Object obj = model.getValueAt(row, 0);
-            if (obj == null) continue;
-
-            if (type == NetworkElementType.FORWARDING_RULE)
-            {
-                obj = Pair.of(
-                        Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND).toString().split(" ")[0]),
-                        Integer.parseInt(model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK).toString().split(" ")[0]));
-                if (!obj.equals(itemId)) continue;
-            } else if ((long) obj != (long) itemId)
-            {
-                continue;
-            }
-
-            row = table.convertRowIndexToView(row);
-            table.changeSelection(row, col, false, true);
-            return;
-        }
-
-        throw new RuntimeException(type + " " + itemId + " does not exist");
+    	final JTabbedPane subpaneThisLayer = layerSubTabbedPaneMap.get(layer);
+		netPlanView.setSelectedComponent(subpaneThisLayer);
+		final JTabbedPane subtabOfLayer = (JTabbedPane) netPlanView.getComponent(1+layer.getIndex());
+		
+    	if (type == NetworkElementType.LAYER) { subtabOfLayer.setSelectedComponent(highLevelTabComponent_layer.get(layer)); return; } 
+    	if (type == NetworkElementType.DEMAND) 
+    	{ 
+    		subtabOfLayer.setSelectedComponent(demandTabbedPaneListAndMatrix.get(layer));
+    		demandTabbedPaneListAndMatrix.get(layer).setSelectedComponent(netPlanViewTable.get(layer).get(AJTableType.DEMANDS).getSecond());
+    		return;
+    	} 
+    	/* rest of the tables */
+    	subpaneThisLayer.setSelectedComponent(netPlanViewTable.get(layer).get(AJTableType.getTypeOfElement(type)).getSecond());
     }
 
-    public void selectItem(NetworkElementType type, Pair<Demand, Link> fr)
+    public void selectTabAndGivenItems(NetworkElementType type, NetworkLayer layer , List<NetworkElementOrFr> elements)
     {
-        final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-        final TableModel model = table.getModel();
-        final int numRows = model.getRowCount();
-        for (int row = 0; row < numRows; row++)
+        final AdvancedJTable_abstractElement table = (AdvancedJTable_abstractElement) netPlanViewTable.get(layer).get(AJTableType.getTypeOfElement(type)).getFirst();
+        final List<Integer> modelViewRows = elements.stream().map(ee->(Integer) table.getRowModelIndexOfElement(ee.getObject()).orElse(-1)).
+        		filter(ee->ee != -1).
+        		collect(Collectors.toList()); 
+        for (int rowModelIndex : modelViewRows)
         {
-            final Object demandInTable = model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_DEMAND);
-            final Object linkInTable = model.getValueAt(row, AdvancedJTable_forwardingRule.COLUMN_OUTGOINGLINK);
-            if (demandInTable == null) continue;
-            if (linkInTable == null) continue;
-            final Pair<Integer, Integer> obj = Pair.of(
-                    Integer.parseInt(demandInTable.toString().split(" ")[0]), Integer.parseInt(linkInTable.toString().split(" ")[0]));
-            if (obj.equals(fr))
-            {
-                table.addRowSelectionInterval(table.convertRowIndexToModel(row), table.convertRowIndexToModel(row));
-                return;
-            }
+            final int viewRow = table.convertRowIndexToView(rowModelIndex);
+            table.addRowSelectionInterval(viewRow, viewRow);
         }
+        selectItemTab(type , layer);
     }
 
-    public void selectItems(NetworkElementType type, List<NetworkElement> elements)
+    private Pair<AdvancedJTable_abstractElement, FilteredTablePanel> createPanelComponentInfo(AJTableType type , NetworkLayer layerThisTable)
     {
-        final AdvancedJTable_networkElement table = netPlanViewTable.get(type);
-        final Set<Long> idstoSelect = elements.stream().map(e -> e.getId()).collect(Collectors.toSet());
-
-        final int numRows = table.getRowCount();
-        int numSelected = 0;
-        for (int row = 0; row < numRows; row++)
+        AdvancedJTable_abstractElement table = null;
+        switch(type)
         {
-            try
-            {
-                final long elementID = (long) table.getModel().getValueAt(row, 0);
-                if (idstoSelect.contains(elementID))
-                {
-                    final int viewRow = table.convertRowIndexToView(row);
-                    table.addRowSelectionInterval(viewRow, viewRow);
-                    numSelected++;
-                    if (numSelected == elements.size()) return;
-                }
-            } catch (ClassCastException e)
-            {
-                ErrorHandling.log("Tried to use aggregation row at: " + row);
-            }
+		case DEMANDS:
+            table = new AdvancedJTable_demand(callback , layerThisTable);
+			break;
+		case FORWARDINGRULES:
+            table = new AdvancedJTable_forwardingRule(callback , layerThisTable);
+			break;
+		case LAYERS:
+            table = new AdvancedJTable_layer(callback , layerThisTable);
+			break;
+		case LINKS:
+            table = new AdvancedJTable_link(callback , layerThisTable);
+			break;
+		case MULTICAST_DEMANDS:
+            table = new AdvancedJTable_multicastDemand(callback , layerThisTable);
+			break;
+		case MULTICAST_TREES:
+            table = new AdvancedJTable_multicastTree(callback , layerThisTable);
+			break;
+		case NODES:
+            table = new AdvancedJTable_node(callback , layerThisTable);
+			break;
+		case RESOURCES:
+            table = new AdvancedJTable_resource(callback , layerThisTable);
+			break;
+		case ROUTES:
+            table = new AdvancedJTable_route(callback , layerThisTable);
+			break;
+		case SRGS:
+            table = new AdvancedJTable_srg(callback , layerThisTable);
+			break;
+		default:
+        	System.out.println(type);
+            assert false;
         }
+
+        return Pair.of(table, new FilteredTablePanel(callback, table.getTableScrollPane()));
     }
 
+
+    public void resetPickedState()
+    {
+    	for (NetworkLayer layer : callback.getDesign().getNetworkLayers())
+    		netPlanViewTable.get(layer).values().stream().filter(q -> q.getFirst() != null).forEach(q -> q.getFirst().clearSelection());
+    }
+
+    
+    private void recomputNetPlanView ()
+    {    	
+    	/* Save current selected tab */
+		final int selectedIndexFirstLevel = netPlanView.getSelectedIndex() == -1 ? 0 : netPlanView.getSelectedIndex();
+		int selectedIndexSecondLevel = -1;
+		if (netPlanView.getSelectedComponent() instanceof JTabbedPane)
+			selectedIndexSecondLevel = ((JTabbedPane) netPlanView.getSelectedComponent()).getSelectedIndex();
+
+    	
+    	/* Save hide columns, decimal formats and attribute collapsed */
+    	final Map<NetworkLayer, Map<AJTableType, Map<String, Boolean>>> hideColumnStatePerTable = new HashMap<>();
+    	final Map<NetworkLayer, Map<AJTableType, Map<String, Integer>>> columnDoubleFormatStatePerTable = new HashMap<>();
+    	final Map<NetworkLayer, Map<AJTableType, Boolean>> attributeCollapsedStatePerTable = new HashMap<>();
+    	
+    	for (Map.Entry<NetworkLayer, Map<AJTableType, Pair<AdvancedJTable_abstractElement, FilteredTablePanel>>> entry : netPlanViewTable.entrySet())
+    	{
+    		final NetworkLayer layer = entry.getKey();
+    		final Map<AJTableType, Map<String, Boolean>> hideColumnStateThisTable = new HashMap<>();
+    		final Map<AJTableType, Map<String, Integer>> columnDoubleFormatStateThisTable = new HashMap<>();
+    		final Map<AJTableType, Boolean> attributeCollapsedStateThisTable = new HashMap<>();
+
+    		for (AJTableType ajTableType : entry.getValue().keySet())
+    		{
+    			if (ajTableType == AJTableType.LAYERS) continue;
+    			
+    			final AdvancedJTable_abstractElement table = entry.getValue().get(ajTableType).getFirst();
+    			hideColumnStateThisTable.put(ajTableType, table.getColumnShowHideValueByHeaderMap());
+    			columnDoubleFormatStateThisTable.put(ajTableType, table.getColumnNumberOfDecimalsByHeaderMap());
+    			
+    			if (table instanceof AdvancedJTable_networkElement)
+    				attributeCollapsedStateThisTable.put(ajTableType, ((AdvancedJTable_networkElement) table).isAttributesAreCollapsedInOneColumn());
+    		}
+    		hideColumnStatePerTable.put(layer, hideColumnStateThisTable);
+    		columnDoubleFormatStatePerTable.put(layer, columnDoubleFormatStateThisTable);
+    		attributeCollapsedStatePerTable.put(layer, attributeCollapsedStateThisTable);
+    	}
+    	
+    	final NetPlan np = callback.getDesign();
+    	netPlanViewTable.clear();
+    	demandTabbedPaneListAndMatrix.clear();
+    	trafficMatrixComponent = new HashMap<> ();
+    	highLevelTabComponent_layer = new HashMap<> ();
+    	layerSubTabbedPaneMap.clear();
+
+    	netPlanView.removeAll();
+    	
+        final AdvancedJTable_layer layerTable = new AdvancedJTable_layer (callback , callback.getDesign().getNetworkLayerDefault());
+    	highLevelTabComponent_network = new NetPlanViewTableComponent_network(callback, layerTable);
+    	netPlanView.addTab("Network", highLevelTabComponent_network);
+    	
+        for (NetworkLayer layer : np.getNetworkLayers())
+        {
+        	layerSubTabbedPaneMap.put(layer, new JTabbedPane());
+        	final JTabbedPane subpaneThisLayer = layerSubTabbedPaneMap.get(layer);        
+        	netPlanViewTable.put (layer , new HashMap<> ());
+        	netPlanViewTable.get(layer).put(AJTableType.LAYERS, Pair.of(layerTable, null));
+        	demandTabbedPaneListAndMatrix.put(layer, new JTabbedPane ());
+        	highLevelTabComponent_layer.put(layer, new NetPlanViewTableComponent_layer(callback , layer));
+        	subpaneThisLayer.addTab("Layers", highLevelTabComponent_layer.get(layer));
+            for (AJTableType ajType : AJTableType.values())
+            {
+            	if (ajType == ajType.LAYERS) continue;
+            	if (ajType == ajType.DEMANDS)
+            	{
+                	final Pair<AdvancedJTable_abstractElement, FilteredTablePanel> component = createPanelComponentInfo(ajType , layer); 
+                	netPlanViewTable.get(layer).put(ajType, component);
+                	this.trafficMatrixComponent.put (layer, new NetPlanViewTableComponent_trafficMatrix(callback , layer));
+                    this.demandTabbedPaneListAndMatrix.get(layer).addTab("List view", component.getSecond());
+                    this.demandTabbedPaneListAndMatrix.get(layer).addTab("Traffic matrix view", trafficMatrixComponent.get(layer));
+                    subpaneThisLayer.addTab(ajType.getTabName(), demandTabbedPaneListAndMatrix.get(layer));
+            	}
+            	else
+            	{
+                	final Pair<AdvancedJTable_abstractElement, FilteredTablePanel> component = createPanelComponentInfo(ajType , layer);//createPanelComponentInfo(ajType); 
+                	netPlanViewTable.get(layer).put(ajType, component);
+                	subpaneThisLayer.addTab(ajType.getTabName(), component.getSecond());
+            	}
+            }
+        	netPlanView.addTab(layer.getName().equals("")? "Layer " + layer.getIndex() : layer.getName() , subpaneThisLayer);
+        }
+        
+        /* Recover hide columns, decimal formats and attribute collapsed */
+    	for (Map.Entry<NetworkLayer, Map<AJTableType, Pair<AdvancedJTable_abstractElement, FilteredTablePanel>>> entry : netPlanViewTable.entrySet())
+    	{
+    		final NetworkLayer layer = entry.getKey();
+    		for (AJTableType ajTableType : entry.getValue().keySet())
+    		{
+    			if (ajTableType == AJTableType.LAYERS) continue;
+    			
+    			final AdvancedJTable_abstractElement table = entry.getValue().get(ajTableType).getFirst();
+    			if (hideColumnStatePerTable.containsKey(layer)) 
+    				table.setColumnShowHideValueByHeaderMap(hideColumnStatePerTable.get(layer).get(ajTableType));
+    			if (columnDoubleFormatStatePerTable.containsKey(layer)) 
+    				table.setColumnNumberOfDecimalsByHeaderMap(columnDoubleFormatStatePerTable.get(layer).get(ajTableType));
+    			if (table instanceof AdvancedJTable_networkElement && attributeCollapsedStatePerTable.containsKey(layer))
+    				((AdvancedJTable_networkElement) table).setAttributesAreCollapsedInOneColumn(attributeCollapsedStatePerTable.get(layer).get(ajTableType));
+    		}
+    	}
+    	netPlanView.setSelectedIndex(selectedIndexFirstLevel);
+    	if (netPlanView.getSelectedComponent() instanceof JTabbedPane && selectedIndexSecondLevel >= 0)
+    		((JTabbedPane) netPlanView.getSelectedComponent()).setSelectedIndex(selectedIndexSecondLevel);
+    	
+    }
 }

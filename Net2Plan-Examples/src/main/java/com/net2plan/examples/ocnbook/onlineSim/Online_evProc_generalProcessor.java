@@ -148,7 +148,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 			initialNetPlan.removeAllMulticastTrees(layer);
 		}
 
-		initialNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		initialNetPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		for (Route r : initialNetPlan.getRoutesAreNotBackup(layer)) routeOriginalLinks.put (r , r.getSeqLinks());
 		this.finishTransitory(0);
 	}

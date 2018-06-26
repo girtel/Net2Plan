@@ -78,7 +78,7 @@ public class Offline_fa_ospfWeightOptimization_SAN implements IAlgorithm
 		final int E = netPlan.getNumberOfLinks ();
 		if (N == 0) throw new Net2PlanException("The input design must have nodes");
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING);
+		netPlan.setRoutingTypeAllDemands (RoutingType.HOP_BY_HOP_ROUTING);
 
 		final long algorithmInitialtime = System.nanoTime();
 		final long algorithmEndtime = algorithmInitialtime + (long) (algorithm_maxExecutionTimeInSeconds.getDouble() * 1E9);

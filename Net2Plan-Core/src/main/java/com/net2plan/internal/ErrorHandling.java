@@ -20,17 +20,42 @@
 
 package com.net2plan.internal;
 
-import com.net2plan.internal.Constants.UserInterface;
-import com.net2plan.utils.StringUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+
+import com.net2plan.internal.Constants.UserInterface;
+import com.net2plan.utils.StringUtils;
 
 /**
  * Class handling errors within Net2Plan.
@@ -51,6 +76,8 @@ public class ErrorHandling
 	private final static JTextArea log;
 	private final static String NEWLINE = StringUtils.getLineSeparator();
 	public static boolean DEBUG = false;
+	public static boolean LOGGING = false;
+	public static boolean PROFILE = false;
 
 	static
 	{
@@ -221,6 +248,16 @@ public class ErrorHandling
 	}
 	
 	/**
+	 * Indicates whether profile is enabled or not
+	 * 
+	 * @return {@code true} if profile is enabled. Otherwise, {@code false}
+	 */
+	public static boolean isProfileEnabled()
+	{
+		return PROFILE;
+	}
+
+	/**
 	 * Prints the whole stack trace of a {@code Throwable}.
 	 * 
 	 * @param throwable Internal {@code Throwable}
@@ -301,11 +338,21 @@ public class ErrorHandling
 	 */
 	public static void log(String text)
 	{
-		if (isDebugEnabled())
+		if (isDebugEnabled() || isLoggingEnabled())
 		{
 			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 			System.out.println(timestamp + ": " + text);
 		}
+	}
+
+	public static void setLogging(boolean logging)
+	{
+		LOGGING = logging;
+	}
+
+	private static boolean isLoggingEnabled()
+	{
+		return LOGGING;
 	}
 
 	/**

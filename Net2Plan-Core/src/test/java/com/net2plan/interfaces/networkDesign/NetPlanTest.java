@@ -16,31 +16,39 @@ import static org.junit.Assert.fail;
 
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collector;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
+import com.net2plan.interfaces.networkDesign.dynamicSrgs.DynamicSrgAllBidiLinksTwoNodes;
+import com.net2plan.internal.UnmodifiablePoint2D;
+import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import org.junit.rules.TemporaryFolder;
 
 public class NetPlanTest
 {
+    public static final String TEST_FILE_DIRECTORY = "src/test/resources/temp";
+    public static final String TEST_FILE_NAME = "test.n2p";
+
 	private NetPlan netTriangle = null;
 	private Node netTriangle_n1,  netTriangle_n2, netTriangle_n3;
 	private Resource netTriangle_r1,  netTriangle_r2, netTriangle_r3;
@@ -48,13 +56,13 @@ public class NetPlanTest
 	private Demand netTriangle_d12,  netTriangle_d21, netTriangle_d13 , netTriangle_d31 , netTriangle_d23 , netTriangle_d32;
 
 	private NetPlan np = null;
-	private Node n1, n2 , n3;
-	private Link link12, link23 , link13;
-	private Demand d13, d12 , scd123;
+	private Node n1, n2 , n3 , n4;
+	private Link link12, link23 , link13 , link34;
+	private Demand d13, d12 , scd123 , d24 , d24empty;
 	private MulticastDemand d123;
 	private MulticastTree tStar, t123;
-	private Set<Link> star, line123;
-	private Set<Node> endNodes;
+	private SortedSet<Link> star, line123;
+	private SortedSet<Node> endNodes;
 	private Route r12, r123a, r123b , sc123;
 	private List<Link> path13;
 	private List<NetworkElement> pathSc123;
@@ -65,9 +73,8 @@ public class NetPlanTest
 	private Link upperMdLink12 , upperMdLink13;
 	private MulticastDemand upperMd123;
 	private MulticastTree upperMt123;
-
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    private SharedRiskGroup srgDynN12L0 , srgNonDynN1;
+    
 
 
 	@BeforeClass
@@ -92,22 +99,37 @@ public class NetPlanTest
 		this.n1 = this.np.addNode(0 , 0 , "node1" , null);
 		n1.addTag("t1");
 		this.n2 = np.addNode(0 , 0 , "node2" , null);
-		n1.setPopulation(200);
+		n2.setPopulation(200);
 		this.n3 = np.addNode(0 , 0 , "node3" , null);
-		n1.setPopulation(100);
+		n3.setPopulation(100);
+		this.n4 = np.addNode(0 , 0 , "node4" , null);
+		n4.setPopulation(100);
 		n1.setAttribute("att" , "1");
 		n1.setSiteName("s12");
 		n2.setSiteName("s12");
 		n3.setSiteName("s3");
-		this.n1.setUrlNodeIcon(lowerLayer , new URL ("file:/lowerIcon"));
+		this.n1.setUrlNodeIcon(lowerLayer , new URL ("file:/lowerIcon") , 0.5);
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
+		this.link34 = np.addLink(n3,n4,100,100,1,null,lowerLayer);
+		link12.setMonitoredOrForecastedCarriedTraffic(new TrafficSeries ().addValue(new Date(10L), 10.0));
+
 		link12.addTag("t1");
-		this.d13 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
+		link23.setQosTypePriorityAndMaxLinkUtilization("qosType1", 1, 1);
+		this.d13 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
+		this.d24 = np.addDemand(n2 , n4 , 1.5  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
+		d24.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		np.setForwardingRules(Arrays.asList(d24,d24), Arrays.asList(link23,link34), Arrays.asList(1.0,1.0), true);
+		this.d24empty = np.addDemand(n2 , n4 , 1.5  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
+		d24empty.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 		d13.addTag("t1"); d13.addTag("t2");
+		d13.setName("d13Name"); d13.setDescription("d13Description");
 		d13.setIntendedRecoveryType(Demand.IntendedRecoveryType.NONE);
-		this.d12 = np.addDemand(n1, n2, 3 , null,lowerLayer);
+		d13.setOfferedTrafficPerPeriodGrowthFactor(1.2);
+		d13.setQoSType("qosType1");
+		d13.setMonitoredOrForecastedOfferedTraffic(new TrafficSeries ().addValue(new Date(3L), 2.0));
+		this.d12 = np.addDemand(n1, n2, 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
 		d12.setIntendedRecoveryType(Demand.IntendedRecoveryType.PROTECTION_NOREVERT);
 		this.r12 = np.addRoute(d12,1,1.5,Collections.singletonList(link12),null);
 		r12.addTag("t1"); r12.addTag("t3");
@@ -118,7 +140,7 @@ public class NetPlanTest
 		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
 		res2.addTag("t1");
 		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.scd123 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
+		this.scd123 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = Arrays.asList(link12 ,res2 , link23);
 		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(300.0 , 50.0 , 302.0) , pathSc123 , null);
@@ -126,20 +148,27 @@ public class NetPlanTest
 		this.segm13 = np.addRoute(d13 , 0 , 50 , Collections.singletonList(link13) , null);
 		this.r123a.addBackupRoute(segm13);
 		this.upperLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
-		this.d12.coupleToUpperLayerLink(upperLink12);
-		this.line123 = new HashSet<Link> (Arrays.asList(link12, link23));
-		this.star = new HashSet<Link> (Arrays.asList(link12, link13));
-		this.endNodes = new HashSet<Node> (Arrays.asList(n2,n3));
+		this.d12.coupleToUpperOrSameLayerLink(upperLink12);
+		this.line123 = new TreeSet<Link> (Arrays.asList(link12, link23));
+		this.star = new TreeSet<Link> (Arrays.asList(link12, link13));
+		this.endNodes = new TreeSet<Node> (Arrays.asList(n2,n3));
 		this.d123 = np.addMulticastDemand(n1 , endNodes , 100 , null , lowerLayer);
 		d123.addTag("t1");
+		d123.setMonitoredOrForecastedOfferedTraffic(new TrafficSeries ().addValue(new Date(1L), 1.0));
 		this.t123 = np.addMulticastTree(d123 , 10,15,line123,null);
 		t123.addTag("t1");
 		this.tStar = np.addMulticastTree(d123 , 10,15,star,null);
 		this.upperMdLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
 		this.upperMdLink13 = np.addLink(n1,n3,10,100,1,null,upperLayer);
 		this.upperMd123 = np.addMulticastDemand (n1 , endNodes , 100 , null , upperLayer);
-		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
-		d123.couple(new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
+		this.upperMd123.setOfferedTrafficPerPeriodGrowthFactor(1.3);
+		upperMd123.setQoSType("qosType2");
+		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new TreeSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
+		d123.couple(new TreeSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
+		this.srgDynN12L0 = np.addSRGDynamic(1, 1, DynamicSrgAllBidiLinksTwoNodes.class.getName(), "" + n1.getId() + " " + n2.getId() + " " + lowerLayer.getIndex(), null);
+		this.srgNonDynN1 = np.addSRG(1, 1, null);
+		this.srgNonDynN1.addNode(n1);
+		
 		np.addGlobalPlanningDomain("pd1");
 		np.addGlobalPlanningDomain("pd2");
 		n1.addToPlanningDomain("pd1");
@@ -156,19 +185,17 @@ public class NetPlanTest
 		this.netTriangle_e31 = this.netTriangle.addLink(netTriangle_n3,netTriangle_n1,100,1,1,null);
 		this.netTriangle_e23 = this.netTriangle.addLink(netTriangle_n2,netTriangle_n3,100,1,1,null);
 		this.netTriangle_e32 = this.netTriangle.addLink(netTriangle_n3,netTriangle_n2,100,1,1,null);
-		this.netTriangle_d12 = this.netTriangle.addDemand(netTriangle_n1,netTriangle_n2,1,null);
-		this.netTriangle_d21 = this.netTriangle.addDemand(netTriangle_n2,netTriangle_n1,1,null);
-		this.netTriangle_d13 = this.netTriangle.addDemand(netTriangle_n1,netTriangle_n3,1,null);
-		this.netTriangle_d31 = this.netTriangle.addDemand(netTriangle_n3,netTriangle_n1,1,null);
-		this.netTriangle_d23 = this.netTriangle.addDemand(netTriangle_n2,netTriangle_n3,1,null);
-		this.netTriangle_d32 = this.netTriangle.addDemand(netTriangle_n3,netTriangle_n2,1,null);
+		this.netTriangle_d12 = this.netTriangle.addDemand(netTriangle_n1,netTriangle_n2,1 , RoutingType.SOURCE_ROUTING,null);
+		this.netTriangle_d21 = this.netTriangle.addDemand(netTriangle_n2,netTriangle_n1,1 , RoutingType.SOURCE_ROUTING,null);
+		this.netTriangle_d13 = this.netTriangle.addDemand(netTriangle_n1,netTriangle_n3,1 , RoutingType.SOURCE_ROUTING,null);
+		this.netTriangle_d31 = this.netTriangle.addDemand(netTriangle_n3,netTriangle_n1,1 , RoutingType.SOURCE_ROUTING,null);
+		this.netTriangle_d23 = this.netTriangle.addDemand(netTriangle_n2,netTriangle_n3,1 , RoutingType.SOURCE_ROUTING,null);
+		this.netTriangle_d32 = this.netTriangle.addDemand(netTriangle_n3,netTriangle_n2,1 , RoutingType.SOURCE_ROUTING,null);
 		this.netTriangle_r1 = netTriangle.addResource("type1" , "name" , netTriangle_n1 , 100.0 , "units" , null , 1.0 , null);
 		this.netTriangle_r2 = netTriangle.addResource("type2" , "name" , netTriangle_n2 , 100.0 , "units" , null , 1.0 , null);
 		this.netTriangle_r3 = netTriangle.addResource("type3" , "name" , netTriangle_n3 , 100.0 , "units" , null , 1.0 , null);
 
-		temporaryFolder.create();
-
-		File resourcesDir = temporaryFolder.getRoot();
+		File resourcesDir = new File(TEST_FILE_DIRECTORY);
 		if (!resourcesDir.exists()) resourcesDir.mkdirs();
 	}
 
@@ -176,8 +203,6 @@ public class NetPlanTest
 	public void tearDown() throws Exception
 	{
 		np.checkCachesConsistency();
-
-		temporaryFolder.delete();
 	}
 
 	@Test
@@ -187,37 +212,142 @@ public class NetPlanTest
 	}
 
 	@Test
+	public void testOfferedTrafficGrowth()
+	{
+		assertEquals (d13.getOfferedTrafficPerPeriodGrowthFactor() , 1.2 , 0);
+		d13.setOfferedTrafficPerPeriodGrowthFactor(0.4);
+		assertEquals (d13.getOfferedTrafficPerPeriodGrowthFactor() , 0.4 , 0);
+
+		assertEquals (this.upperMd123.getOfferedTrafficPerPeriodGrowthFactor() , 1.3 , 0);
+		upperMd123.setOfferedTrafficPerPeriodGrowthFactor(0.5);
+		assertEquals (this.upperMd123.getOfferedTrafficPerPeriodGrowthFactor() , 0.5 , 0);
+	}
+
+    @Test
+    public void testAddRemoveLayout()
+    {
+        assertEquals (np.getAllPlotNodeLayoutsDefined() , ImmutableSet.of(np.getPlotNodeLayoutDefaultLayoutName()));
+        np.addPlotNodeLayout("New");
+        np.checkCachesConsistency();
+        assertEquals (np.getAllPlotNodeLayoutsDefined() , ImmutableSet.of(np.getPlotNodeLayoutDefaultLayoutName() , "New"));
+        np.removePlotNodeLayout("New");
+        np.checkCachesConsistency();
+        assertEquals (np.getAllPlotNodeLayoutsDefined() , ImmutableSet.of(np.getPlotNodeLayoutDefaultLayoutName()));
+        np.addPlotNodeLayout("New");
+        np.checkCachesConsistency();
+        try { np.addPlotNodeLayout("New"); fail ();} catch (Exception e) {}
+        try { np.setPlotNodeLayoutCurrentlyActive("Other"); fail ();} catch (Exception e) {}
+        np.setPlotNodeLayoutCurrentlyActive("New");
+        assertEquals (np.getPlotNodeLayoutCurrentlyActive() , "New");
+        np.checkCachesConsistency();
+        this.n1.setXYPositionMap(new UnmodifiablePoint2D(1, 2) , NetPlan.PLOTLAYTOUT_DEFAULTNODELAYOUTNAME);
+        assertEquals(this.n1.getXYPositionMap(NetPlan.PLOTLAYTOUT_DEFAULTNODELAYOUTNAME), new UnmodifiablePoint2D(1, 2));
+        this.n1.setXYPositionMap(new UnmodifiablePoint2D(1, 3) , "New");
+        assertEquals(this.n1.getXYPositionMap(NetPlan.PLOTLAYTOUT_DEFAULTNODELAYOUTNAME), new UnmodifiablePoint2D(1, 2));
+        assertEquals(this.n1.getXYPositionMap(), new UnmodifiablePoint2D(1, 3));
+        assertEquals(this.n1.getXYPositionMap("New"), new UnmodifiablePoint2D(1, 3));
+        NetPlan np2 = np.copy();
+        np.checkCachesConsistency();
+        np2.checkCachesConsistency();
+        assertTrue (np.isDeepCopy(np2));
+        assertTrue (np2.isDeepCopy(np));
+        np.assignFrom(np2);
+        np.checkCachesConsistency();
+        assertTrue (np.isDeepCopy(np2));
+        assertTrue (np2.isDeepCopy(np));
+
+        File f = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME);
+        this.np.saveToFile(f);
+        NetPlan readNp = new NetPlan (f);
+        assertTrue(readNp.isDeepCopy(np));
+        assertTrue(np.isDeepCopy(readNp));
+        
+        np.setPlotNodeLayoutCurrentlyActive(NetPlan.PLOTLAYTOUT_DEFAULTNODELAYOUTNAME);
+        np.removePlotNodeLayout("New");
+        f = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME);
+        this.np.saveToFile(f);
+        readNp = new NetPlan (f);
+        assertTrue(readNp.isDeepCopy(np));
+        assertTrue(np.isDeepCopy(readNp));
+    }
+
+
+	
+	@Test
+	public void testQosType_1()
+	{
+		assertEquals (lowerLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("" , "qosType1")));
+		assertEquals (upperLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("qosType2")));
+		
+		assertEquals (d13.getQosType() , "qosType1");
+		d13.setQoSType("bla");
+		assertEquals (d13.getQosType() , "bla");
+		assertEquals (lowerLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("" , "bla")));
+		assertEquals (upperLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("qosType2")));
+		
+		assertEquals (this.upperMd123.getQosType() , "qosType2");
+		upperMd123.setQoSType("ble");
+		assertEquals (this.upperMd123.getQosType() , "ble");
+		assertEquals (lowerLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("" , "bla")));
+		assertEquals (upperLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("ble")));
+
+		d13.remove();
+		assertEquals (lowerLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("")));
+		assertEquals (upperLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("ble")));
+
+		upperMd123.remove();
+		assertEquals (lowerLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList("")));
+		assertEquals (upperLayer.getDemandAndMulticastDemandQosTypes() , new TreeSet<> (Arrays.asList()));
+
+		
+	}
+
+	@Test
+	public void testQosViolation()
+	{
+		assertTrue (!link23.isQoSViolated("qosType1"));
+		System.out.println(link23.getPerQoSOccupationAndQosViolationMap());
+		link23.setQosTypePriorityAndMaxLinkUtilization("qosType1", 1, 0);
+		assertTrue (link23.isQoSViolated("qosType1"));
+		System.out.println(link23.getPerQoSOccupationAndQosViolationMap());
+		assertEquals (link23.getQosOccupationAndQosViolation("").getSecond() , Math.max(0, link23.getQosOccupationAndQosViolation("").getFirst() - link23.getCapacity()) , 0.0001);
+		assertEquals (link23.getQosOccupationAndQosViolation("qosType1").getSecond() , 3.0 , 0);
+	}	
+
+
+	
+	@Test
 	public void testGetSiteNames ()
 	{
-		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12", "s3"));
+		assertEquals(np.getSiteNames() ,  new TreeSet<> (Arrays.asList("s12", "s3")));
 		n3.setSiteName(null);
-		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12"));
+		assertEquals(np.getSiteNames() ,  new TreeSet<> (Arrays.asList("s12")));
 		n2.setSiteName(null);
-		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12"));
+		assertEquals(np.getSiteNames() ,  new TreeSet<> (Arrays.asList("s12")));
 	}
 
 	@Test
 	public void testGetSiteNodes ()
 	{
-		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12" , "s3"));
-		assertEquals(np.getSiteNodes("s12") ,  Sets.newHashSet(n1 , n2));
-		assertEquals(np.getSiteNodes("s3") ,  Sets.newHashSet(n3));
-		assertEquals(np.getSiteNodes("xxx") ,  Sets.newHashSet());
+		assertEquals(np.getSiteNames() ,  new TreeSet<> (Arrays.asList("s12" , "s3")));
+		assertEquals(np.getSiteNodes("s12") ,  new TreeSet<> (Arrays.asList(n1 , n2)));
+		assertEquals(np.getSiteNodes("s3") ,  new TreeSet<> (Arrays.asList(n3)));
+		assertEquals(np.getSiteNodes("xxx") ,  new TreeSet<> (Arrays.asList()));
 		n3.setSiteName(null);
-		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12"));
-		assertEquals(np.getSiteNodes("s3") ,  Sets.newHashSet());
+		assertEquals(np.getSiteNames() ,  new TreeSet<> (Arrays.asList("s12")));
+		assertEquals(np.getSiteNodes("s3") ,  new TreeSet<> (Arrays.asList()));
 		n2.setSiteName(null);
-		assertEquals(np.getSiteNames() ,  Sets.newHashSet("s12"));
-		assertEquals(np.getSiteNodes("s12") ,  Sets.newHashSet(n1));
+		assertEquals(np.getSiteNames() ,  new TreeSet<> (Arrays.asList("s12")));
+		assertEquals(np.getSiteNodes("s12") ,  new TreeSet<> (Arrays.asList(n1)));
 		n1.setSiteName(null);
-		assertEquals(np.getSiteNodes("s12") ,  Sets.newHashSet());
-		assertEquals(np.getSiteNames() ,  Sets.newHashSet());
+		assertEquals(np.getSiteNodes("s12") ,  new TreeSet<> (Arrays.asList()));
+		assertEquals(np.getSiteNames() ,  new TreeSet<> (Arrays.asList()));
 	}
 
 	@Test
-	public void testNetPlanFile() throws IOException
+	public void testNetPlanFile()
 	{
-		File f = temporaryFolder.newFile("temp.n2p");
+		File f = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME);
 		this.np.saveToFile(f);
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));
@@ -226,7 +356,7 @@ public class NetPlanTest
 		NetPlan np1 = new NetPlan (new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
 		np1.checkCachesConsistency();
 		np1.saveToFile(f);
-		NetPlan np2 = new NetPlan (f);
+		NetPlan np2 = new NetPlan (new File(TEST_FILE_DIRECTORY, TEST_FILE_NAME));
 		np2.checkCachesConsistency();
 		assertTrue (np1.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np1));
@@ -247,19 +377,41 @@ public class NetPlanTest
 	@Test
 	public void testAddDemand()
 	{
-		assertEquals(np.getDemands(lowerLayer) , Arrays.asList(d13, d12, scd123));
+		assertEquals(np.getDemands(lowerLayer) , Arrays.asList(d13, d24 , d24empty , d12, scd123));
 	}
 
 	@Test
 	public void testAddDemandBidirectional()
 	{
-		Pair<Demand,Demand> pair = np.addDemandBidirectional(n2,n3,10,null,upperLayer);
+		Pair<Demand,Demand> pair = np.addDemandBidirectional(n2,n3,10 , RoutingType.SOURCE_ROUTING,null,upperLayer);
 		assertEquals(pair.getFirst().getIngressNode() , n2);
 		assertEquals(pair.getSecond().getIngressNode() , n3);
 		assertEquals(pair.getFirst().getEgressNode() , n3);
 		assertEquals(pair.getSecond().getEgressNode() , n2);
 		assertEquals(np.getDemands(upperLayer) , Arrays.asList(pair.getFirst() , pair.getSecond()));
 	}
+
+    @Test
+    public void testBidirectionalRoutes()
+    {
+        final Demand d23 = np.addDemand(n2,n3,10 , RoutingType.SOURCE_ROUTING,null,lowerLayer);
+        final Demand d32 = np.addDemand(n3,n2,10 , RoutingType.SOURCE_ROUTING,null,lowerLayer);
+        final Route r23 = np.addRoute(d23, 1, 1, Arrays.asList(link23), null);
+        try { r23.createBidirectionalOppositePair(); fail (); } catch (Exception e) {}
+        Pair<Link,Link> pair21 = np.addLinkBidirectional(n2,n1,10,11,12,null,lowerLayer);
+        Pair<Link,Link> pair13 = np.addLinkBidirectional(n1,n3,10,11,12,null,lowerLayer);
+
+        r23.setSeqLinks(Arrays.asList(pair21.getFirst() , pair13.getFirst()));
+        try { r23.createBidirectionalOppositePair(); fail (); } catch (Exception e) {}
+        d23.setBidirectionalPair(d32);
+
+        final Route r32 = r23.createBidirectionalOppositePair();
+        assertEquals(r32.getSeqLinks() , Arrays.asList(pair13.getSecond() , pair21.getSecond()));
+        
+        r23.remove();
+        assertEquals(r32.getBidirectionalPair(), null);
+    }
+
 
 	@Test
 	public void testAddLayerStringStringStringStringMapOfStringString()
@@ -279,28 +431,28 @@ public class NetPlanTest
 	@Test
 	public void testGetNodePairDemands()
 	{
-		assertEquals(np.getNodePairDemands (n1,n3,false,lowerLayer) , Sets.newHashSet(d13,scd123));
-		assertEquals(np.getNodePairDemands (n1,n3,true,lowerLayer) , Sets.newHashSet(d13,scd123));
+		assertEquals(np.getNodePairDemands (n1,n3,false,lowerLayer) , new TreeSet<> (Arrays.asList(d13,scd123)));
+		assertEquals(np.getNodePairDemands (n1,n3,true,lowerLayer) , new TreeSet<> (Arrays.asList(d13,scd123)));
 		d13.remove();
-		assertEquals(np.getNodePairDemands (n1,n3,true,lowerLayer) , Sets.newHashSet(scd123));
+		assertEquals(np.getNodePairDemands (n1,n3,true,lowerLayer) , new TreeSet<> (Arrays.asList(scd123)));
 	}
 
 	@Test
 	public void testGetNodePairRoutes()
 	{
-		assertEquals(np.getNodePairRoutes (n1,n3,false,lowerLayer) , Sets.newHashSet(r123a, r123b , segm13 , sc123));
-		assertEquals(np.getNodePairRoutes (n1,n3,true,lowerLayer) , Sets.newHashSet(r123a, r123b , segm13 , sc123));
+		assertEquals(np.getNodePairRoutes (n1,n3,false,lowerLayer) , new TreeSet<> (Arrays.asList(r123a, r123b , segm13 , sc123)));
+		assertEquals(np.getNodePairRoutes (n1,n3,true,lowerLayer) , new TreeSet<> (Arrays.asList(r123a, r123b , segm13 , sc123)));
 		r123a.remove();
-		assertEquals(np.getNodePairRoutes (n1,n3,true,lowerLayer) , Sets.newHashSet(r123b , segm13 , sc123));
+		assertEquals(np.getNodePairRoutes (n1,n3,true,lowerLayer) , new TreeSet<> (Arrays.asList(r123b , segm13 , sc123)));
 	}
 
 	@Test
 	public void testGetNodePairLinks()
 	{
-		assertEquals(np.getNodePairLinks (n1,n2,false,lowerLayer) , Sets.newHashSet(link12));
-		assertEquals(np.getNodePairLinks (n1,n2,true,lowerLayer) , Sets.newHashSet(link12));
+		assertEquals(np.getNodePairLinks (n1,n2,false,lowerLayer) , new TreeSet<> (Arrays.asList(link12)));
+		assertEquals(np.getNodePairLinks (n1,n2,true,lowerLayer) , new TreeSet<> (Arrays.asList(link12)));
 		link12.remove();
-		assertEquals(np.getNodePairLinks (n1,n2,false,lowerLayer) , Sets.newHashSet());
+		assertEquals(np.getNodePairLinks (n1,n2,false,lowerLayer) , new TreeSet<> (Arrays.asList()));
 	}
 
 	@Test
@@ -339,7 +491,7 @@ public class NetPlanTest
 	{
 		this.tStar = np.addMulticastTree(d123 , 10,15,star,null);
 		assertEquals(tStar.getIngressNode() , n1);
-		assertEquals(tStar.getEgressNodes() , endNodes);
+		assertEquals(tStar.getEgressNodesReached() , endNodes);
 		assertEquals(tStar.getCarriedTrafficInNoFailureState() , 10, 0);
 		assertEquals(tStar.getOccupiedLinkCapacityInNoFailureState() , 15, 0);
 		assertEquals(tStar.getLayer() , lowerLayer);
@@ -396,14 +548,14 @@ public class NetPlanTest
 		double maxRouteCost = -1;
 		double maxRouteCostFactorRespectToShortestPath = -1;
 		double maxRouteCostRespectToShortestPath = -1;
-		Map<Pair<Node,Node>,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		SortedMap<Pair<Node,Node>,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 
 		K=2; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
+			final SortedSet<Node> allNodes = new TreeSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -414,7 +566,7 @@ public class NetPlanTest
 		K=3; cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
+			final SortedSet<Node> allNodes = new TreeSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -455,7 +607,7 @@ public class NetPlanTest
 		maxRouteCostFactorRespectToShortestPath = -1;
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
+			final SortedSet<Node> allNodes = new TreeSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -479,11 +631,11 @@ public class NetPlanTest
 		double maxRouteCost = -1;
 		double maxRouteCostFactorRespectToShortestPath = -1;
 		double maxRouteCostRespectToShortestPath = -1;
-		Map<Pair<Node,Node>,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
-		Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 1);
+		SortedMap<Pair<Node,Node>,List<List<Link>>> cpl = netTriangle.computeUnicastCandidatePathList(null ,K, maxLengthInKm, maxNumHops, maxPropDelayInMs, maxRouteCost,maxRouteCostFactorRespectToShortestPath, maxRouteCostRespectToShortestPath , null);
+		SortedMap<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 1);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
+			final SortedSet<Node> allNodes = new TreeSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -494,7 +646,7 @@ public class NetPlanTest
 		cpl11 = NetPlan.computeUnicastCandidate11PathList(cpl , 2);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
+			final SortedSet<Node> allNodes = new TreeSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -508,26 +660,34 @@ public class NetPlanTest
 			assertEquals(cpl11.get(Pair.of(d.getIngressNode(),d.getEgressNode())) , Arrays.asList());
 	}
 
+	@Test 
+	public void testDemandsDifferentRoutingType_1 ()
+	{
+		netTriangle_d12.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		
+	}
+	
+	
 	@Test
 	public void testComputeUnicastCandidate11ServiceChainList()
 	{
 		netTriangle_d12.setServiceChainSequenceOfTraversedResourceTypes(Arrays.asList("type2" , "type1"));
-		Map<Demand,List<List<NetworkElement>>> cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null , 3, -1 , -1, -1, -1);
-		Map<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>> cpl11 = NetPlan.computeUnicastCandidate11ServiceChainList(cpl , 1);
+		SortedMap<Demand,List<List<NetworkElement>>> cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null , 3, -1 , -1, -1, -1);
+		SortedMap<Demand,List<Pair<List<NetworkElement>,List<NetworkElement>>>> cpl11 = NetPlan.computeUnicastCandidate11ServiceChainList(cpl , 1);
 		assertEquals(cpl11.get(netTriangle_d12) , Arrays.asList());
 	}
 
 	@Test
 	public void testComputeUnicastCandidateServiceChainList()
 	{
-		Map<Demand,List<List<NetworkElement>>> cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null ,
+		SortedMap<Demand,List<List<NetworkElement>>> cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null ,
 				1, -1 , -1, -1, -1);
 		for (Demand d : netTriangle.getDemands())
 			assertEquals(cpl.get(d) , Arrays.asList(Arrays.asList(netTriangle.getNodePairLinks(d.getIngressNode() , d.getEgressNode() , false).iterator().next())));
 		cpl = netTriangle.computeUnicastCandidateServiceChainList (null , null , 2, -1 , -1, -1, -1);
 		for (Demand d : netTriangle.getDemands())
 		{
-			final Set<Node> allNodes = new HashSet<Node> (netTriangle.getNodes());
+			final SortedSet<Node> allNodes = new TreeSet<Node> (netTriangle.getNodes());
 			allNodes.removeAll(Arrays.asList(d.getIngressNode() , d.getEgressNode()));
 			final Node intermNode = allNodes.iterator().next();
 			final Link directLink = netTriangle.getNodePairLinks(d.getIngressNode(),d.getEgressNode(),false).iterator().next();
@@ -568,43 +728,43 @@ public class NetPlanTest
 
 		try
 		{
-		    Map<MulticastDemand, List<Set<Link>>> cpl;
+		    SortedMap<MulticastDemand, List<SortedSet<Link>>> cpl;
 			MulticastDemand d123 = netTriangle.addMulticastDemand(netTriangle_n1,
-					new HashSet<Node>(Arrays.asList(netTriangle_n2, netTriangle_n3)), 0, null);
+					new TreeSet<Node>(Arrays.asList(netTriangle_n2, netTriangle_n3)), 0, null);
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100");
 			assertEquals(cpl.get(d123), Arrays.asList(
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
-					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
+					new TreeSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxCopyCapability", "1");
 			assertEquals(cpl.get(d123), Arrays.asList(
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
-					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
+					new TreeSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxE2ELengthInKm", "1");
 			assertEquals(cpl.get(d123), Arrays.asList(
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxE2ENumHops", "1");
 			assertEquals(cpl.get(d123), Arrays.asList(
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxE2EPropDelayInMs", "1000");
 			assertEquals(cpl.get(d123), Arrays.asList(
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13))));
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxTreeCost", "1");
 			assertEquals(cpl.get(d123), Arrays.asList());
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxTreeCostFactorRespectToMinimumCostTree", "1");
 			assertEquals(cpl.get(d123), Arrays.asList(
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
-					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
+					new TreeSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100", "maxTreeCostRespectToMinimumCostTree", "0");
 			assertEquals(cpl.get(d123), Arrays.asList(
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
-					new HashSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
-					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e13)),
+					new TreeSet<Link>(Arrays.asList(netTriangle_e12, netTriangle_e23)),
+					new TreeSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
 			netTriangle_e12.remove();
 			cpl = netTriangle.computeMulticastCandidatePathList(null, "cplex", "cplex.dll", -1, "K", "100");
 			assertEquals(cpl.get(d123), Arrays.asList(
-					new HashSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
+					new TreeSet<Link>(Arrays.asList(netTriangle_e13, netTriangle_e32))));
 		} catch (UnsatisfiedLinkError e)
         {
             System.err.println(this.getClass().getName() + ": Could not find CPLEX solver, related tests will be ignored...");
@@ -684,9 +844,16 @@ public class NetPlanTest
 	@Test
 	public void testGetNetworkDescription()
 	{
-		np.setNetworkDescription("bla");
-		assertEquals(np.getNetworkDescription() , "bla");
+		np.setDescription("bla");
+		assertEquals(np.getDescription() , "bla");
 	}
+
+    @Test
+    public void testGetDescriptions()
+    {
+        n1.setDescription("aaa");
+        assertEquals(n1.getDescription() , "aaa");
+    }
 
 	@Test
 	public void testGetNetworkElementByAttribute()
@@ -708,8 +875,8 @@ public class NetPlanTest
 	@Test
 	public void testGetNetworkName()
 	{
-		np.setNetworkName("bla");
-		assertEquals (np.getNetworkName() , "bla");
+		np.setName("bla");
+		assertEquals (np.getName() , "bla");
 	}
 
 	@Test
@@ -724,7 +891,7 @@ public class NetPlanTest
 	@Test
 	public void testGetNumberOfNodePairs()
 	{
-		assertEquals (np.getNumberOfNodePairs() , 2*3);
+		assertEquals (np.getNumberOfNodePairs() , 3*4);
 	}
 
 	@Test
@@ -774,8 +941,8 @@ public class NetPlanTest
 	@Test
 	public void testRemoveAllForwardingRules()
 	{
-		try { np.removeAllForwardingRules(upperLayer); fail (); } catch (Exception e) {}
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , upperLayer);
+		np.removeAllForwardingRules(upperLayer); 
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , upperLayer);
 		np.removeAllForwardingRules(upperLayer);
 		assertEquals(np.getNumberOfForwardingRules(upperLayer) , 0);
 	}
@@ -840,17 +1007,17 @@ public class NetPlanTest
 	public void testRemoveAllLinksUnused()
 	{
 		np.removeAllLinksUnused(0.1 , lowerLayer);
-		assertEquals(np.getNumberOfLinks () , 3);
+		assertEquals(np.getNumberOfLinks () , 4);
 		link12.setCapacity(0);
 		np.removeAllLinksUnused(0.1 , lowerLayer);
-		assertEquals(np.getNumberOfLinks () , 2);
+		assertEquals(np.getNumberOfLinks () , 3);
 	}
 
 	@Test
 	public void testRemoveAllUnicastRoutingInformation()
 	{
 		np.removeAllUnicastRoutingInformation(lowerLayer);
-		assertEquals(np.getNumberOfLinks (lowerLayer) , 3);
+		assertEquals(np.getNumberOfLinks (lowerLayer) , 4);
 		assertEquals(np.getNumberOfRoutes (lowerLayer) , 0);
 		assertEquals(np.getNumberOfMulticastTrees(lowerLayer) , 2);
 	}
@@ -859,7 +1026,7 @@ public class NetPlanTest
 	public void testRemoveAllSRGs()
 	{
 		np.addSRG(1,2,null);
-		assertEquals(np.getNumberOfSRGs() , 1);
+		assertEquals(np.getNumberOfSRGs() , 3);
 		np.removeAllSRGs();
 		assertEquals(np.getNumberOfSRGs() , 0);
 	}
@@ -942,7 +1109,7 @@ public class NetPlanTest
 	{
 		sc123.remove();
 		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		np.checkCachesConsistency();
 		np.setForwardingRule(d12, link12 , 0.7);
 		np.checkCachesConsistency();
@@ -955,7 +1122,7 @@ public class NetPlanTest
 	{
 		sc123.remove();
 		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		np.setForwardingRules(Arrays.asList(d12 , d12), Arrays.asList(link12 , link13), Arrays.asList(0.7 , 0.1), true);
 		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
 		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link13) , 0.1 , 0);
@@ -966,10 +1133,10 @@ public class NetPlanTest
 	{
 		sc123.remove();
 		scd123.setServiceChainSequenceOfTraversedResourceTypes(null);
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		DoubleMatrix2D f_de = np.getMatrixDemandBasedForwardingRules(lowerLayer);
 		f_de.set(d12.getIndex(), link12.getIndex(), 0.7);
-		np.setForwardingRules(f_de , lowerLayer);
+		np.setForwardingRules(f_de , null , lowerLayer);
 		assertEquals(np.getForwardingRuleSplittingFactor(d12,   link12) , 0.7 , 0);
 	}
 
@@ -984,8 +1151,8 @@ public class NetPlanTest
 	@Test
 	public void testSetNetworkDescription()
 	{
-		np.setNetworkDescription("bla");
-		assertEquals(np.getNetworkDescription() , "bla");
+		np.setDescription("bla");
+		assertEquals(np.getDescription() , "bla");
 	}
 
 	@Test
@@ -1008,16 +1175,16 @@ public class NetPlanTest
 		double vals [][] = new double [] [] { {1 ,2 ,3.5 } , { 4 ,5 ,6.2} };
 		DoubleMatrix2D valsMatrix = DoubleFactory2D.dense.make(vals);
 		n1.setAttributeAsNumberMatrix("a", valsMatrix);
-		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", (DoubleMatrix2D) null) , valsMatrix);
 		valsMatrix = DoubleFactory2D.dense.make(0,0);
 		n1.setAttributeAsNumberMatrix("a", valsMatrix);
-		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", (DoubleMatrix2D) null) , valsMatrix);
 		valsMatrix = DoubleFactory2D.dense.make(1,2);
 		n1.setAttributeAsNumberMatrix("a", valsMatrix);
-		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", (DoubleMatrix2D) null) , valsMatrix);
 		valsMatrix = DoubleFactory2D.dense.make(2,1);
 		n1.setAttributeAsNumberMatrix("a", valsMatrix);
-		assertEquals(n1.getAttributeAsDoubleMatrix("a", null) , valsMatrix);
+		assertEquals(n1.getAttributeAsDoubleMatrix("a", (DoubleMatrix2D) null) , valsMatrix);
 		
 		String original = "1";
 		n1.setAttributeAsStringList("a", Arrays.asList(original , original , original));
@@ -1061,8 +1228,8 @@ public class NetPlanTest
 	@Test
 	public void testSetNetworkName()
 	{
-		np.setNetworkName("bla");
-		assertEquals(np.getNetworkName() , "bla");
+		np.setName("bla");
+		assertEquals(np.getName() , "bla");
 	}
 
 	@Test
@@ -1076,11 +1243,11 @@ public class NetPlanTest
 		d13.setOfferedTraffic(5);
 		d12.setOfferedTraffic(1);
 		NetPlan npSR = np.copy();
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		NetPlan npHR = np.copy ();
-		assertEquals (np.getRoutingType(lowerLayer) , RoutingType.HOP_BY_HOP_ROUTING);
-		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
-		assertEquals (np.getRoutingType(lowerLayer) , RoutingType.SOURCE_ROUTING);
+		assertTrue (np.getDemands (lowerLayer).stream().allMatch(d->d.getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING));
+		np.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING , lowerLayer);
+		assertTrue (np.getDemands (lowerLayer).stream().allMatch(d->d.getRoutingType() == RoutingType.SOURCE_ROUTING));
 		assertTrue (npSR.getVectorLinkCarriedTraffic(npSR.getNetworkLayer(lowerLayer.getIndex())).equals(np.getVectorLinkCarriedTraffic(lowerLayer)));
 		assertTrue (npSR.getVectorLinkCarriedTraffic(npSR.getNetworkLayer(upperLayer.getIndex())).equals(np.getVectorLinkCarriedTraffic(upperLayer)));
 		assertTrue (npHR.getVectorLinkCarriedTraffic(npHR.getNetworkLayer(lowerLayer.getIndex())).equals(np.getVectorLinkCarriedTraffic(lowerLayer)));
@@ -1091,7 +1258,7 @@ public class NetPlanTest
 	public void testSetTrafficMatrix()
 	{
 		DoubleMatrix2D m = DoubleFactory2D.dense.make(np.getNumberOfNodes() , np.getNumberOfNodes() , 3.0);
-		np.setTrafficMatrix(m, lowerLayer);
+		np.setTrafficMatrix(m , RoutingType.SOURCE_ROUTING, lowerLayer);
 		for (Demand d : np.getDemands (lowerLayer))
 			assertEquals (d.getOfferedTraffic() , 3.0 , 0);
 	}
@@ -1099,21 +1266,21 @@ public class NetPlanTest
 	@Test
 	public void testAddPlanningDomain ()
 	{
-		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("pd1","pd2"));
+		assertEquals (np.getGlobalPlanningDomains() , new TreeSet<> (Arrays.asList("pd1","pd2")));
 		np.addGlobalPlanningDomain("new1");
 		np.addGlobalPlanningDomain("new2");
-		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("pd1","pd2","new1" , "new2"));
+		assertEquals (np.getGlobalPlanningDomains() , new TreeSet<> (Arrays.asList("pd1","pd2","new1" , "new2")));
 
 		try { n1.addToPlanningDomain("xx"); fail (); } catch (Exception e) {}
 		n1.addToPlanningDomain("new1");
 		n2.addToPlanningDomain("new1");
-		assertEquals(np.getGlobalPlanningDomainNodes("new1"), Sets.newHashSet(n1,n2));
-		assertEquals(np.getGlobalPlanningDomainNodes("new2"), Sets.newHashSet());
+		assertEquals(np.getGlobalPlanningDomainNodes("new1"), new TreeSet<> (Arrays.asList(n1,n2)));
+		assertEquals(np.getGlobalPlanningDomainNodes("new2"), new TreeSet<> (Arrays.asList()));
 		assertEquals(np.getGlobalPlanningDomainNodes("aaa"), null);
 		try { np.removeGlobalPlanningDomain("new1"); fail (); } catch (Exception e) {}
 		np.removeGlobalPlanningDomain("new2"); 
-		assertEquals(np.getGlobalPlanningDomainNodes("new1"), Sets.newHashSet(n1,n2));
-		assertEquals (np.getGlobalPlanningDomains() , Sets.newHashSet("pd1","pd2","new1"));
+		assertEquals(np.getGlobalPlanningDomainNodes("new1"), new TreeSet<> (Arrays.asList(n1,n2)));
+		assertEquals (np.getGlobalPlanningDomains() , new TreeSet<> (Arrays.asList("pd1","pd2","new1")));
 	}
 		
 	@Test
@@ -1125,28 +1292,28 @@ public class NetPlanTest
 		checkEqual(np, merged);
 		
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId())));
+		restricted.restrictDesign(new TreeSet<> (Arrays.asList(restricted.getNodeFromId(n1.getId()))));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId())));
+		restricted.restrictDesign(new TreeSet<> (Arrays.asList(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId()))));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n3.getId())));
+		restricted.restrictDesign(new TreeSet<> (Arrays.asList(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n3.getId()))));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n2.getId()),restricted.getNodeFromId(n2.getId())));
+		restricted.restrictDesign(new TreeSet<> (Arrays.asList(restricted.getNodeFromId(n2.getId()),restricted.getNodeFromId(n2.getId()))));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 
 
 		restricted = np.copy();
-		restricted.restrictDesign(Sets.newHashSet(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId()) , restricted.getNodeFromId(n3.getId())));
+		restricted.restrictDesign(new TreeSet<> (Arrays.asList(restricted.getNodeFromId(n1.getId()),restricted.getNodeFromId(n2.getId()) , restricted.getNodeFromId(n3.getId()))));
 		merged = np.copy().mergeIntoThisDesign(restricted);
 		checkEqual(np, merged);
 		
@@ -1164,39 +1331,39 @@ public class NetPlanTest
 		final Node n4 = np.addNode(0, 0, "", null); final long idn4 = n4.getId();
 		final Link low12 = np.addLink(n1, n2, 0, 0, 200000, null , lowerLayer);
 		final Link low23 = np.addLink(n2, n3, 0, 0, 200000, null , lowerLayer);
-		final Demand dlow12 = np.addDemand(n1, n2, 0, null, lowerLayer);
+		final Demand dlow12 = np.addDemand(n1, n2, 0 , RoutingType.SOURCE_ROUTING, null, lowerLayer);
 		
 		NetPlan np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3),np2.getNodeFromId(idn4)));
+		np2.restrictDesign(new TreeSet<> (Arrays.asList(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3),np2.getNodeFromId(idn4))));
 		assertEquals(np2.getAllIds() , np.getAllIds());
 
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet());
-		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np , lowerLayer , upperLayer)));
+		np2.restrictDesign(new TreeSet<> (Arrays.asList()));
+		assertEquals(np2.getAllIds() , NetPlan.getIds(new TreeSet<> (Arrays.asList(np , lowerLayer , upperLayer))));
 		
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2)));
-		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np , lowerLayer , upperLayer , n1,n2,low12,dlow12)));
+		np2.restrictDesign(new TreeSet<> (Arrays.asList(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2))));
+		assertEquals(np2.getAllIds() , NetPlan.getIds(new TreeSet<> (Arrays.asList(np , lowerLayer , upperLayer , n1,n2,low12,dlow12))));
 
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3)));
-		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,n1,n2,n3,low12,low23,dlow12)));
+		np2.restrictDesign(new TreeSet<> (Arrays.asList(np2.getNodeFromId(idn1),np2.getNodeFromId(idn2),np2.getNodeFromId(idn3))));
+		assertEquals(np2.getAllIds() , NetPlan.getIds(new TreeSet<> (Arrays.asList(np,lowerLayer,upperLayer,n1,n2,n3,low12,low23,dlow12))));
 
-		final Demand dlow13 = np.addDemand(n1, n3, 0, null, lowerLayer);
+		final Demand dlow13 = np.addDemand(n1, n3, 0 , RoutingType.SOURCE_ROUTING, null, lowerLayer);
 		final Route rlow13 = np.addRoute(dlow13, 0, 0, Arrays.asList(low12,low23), null);
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)));
-		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,
-				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13)));
+		np2.restrictDesign(new TreeSet<> (Arrays.asList(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3))));
+		assertEquals(np2.getAllIds() , NetPlan.getIds(new TreeSet<> (Arrays.asList(np,lowerLayer,upperLayer,
+				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13))));
 
 		final Link upperLink13 = dlow13.coupleToNewLinkCreated(upperLayer);
 		np2 = np.copy();
-		np2.restrictDesign(Sets.newHashSet(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3)));
-		assertEquals(np2.getAllIds() , NetPlan.getIds(Sets.newHashSet(np,lowerLayer,upperLayer,
-				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13,upperLink13)));
+		np2.restrictDesign(new TreeSet<> (Arrays.asList(np2.getNodeFromId(idn1),np2.getNodeFromId(idn3))));
+		assertEquals(np2.getAllIds() , NetPlan.getIds(new TreeSet<> (Arrays.asList(np,lowerLayer,upperLayer,
+				n1,n2,n3,low12,low23,dlow12,dlow13,rlow13,upperLink13))));
 
 	}		
-//		allElements = new HashSet<> ();
+//		allElements = new TreeSet<> ();
 //		allElements.addAll(netTriangle.getNodes());
 //		allElements.addAll(netTriangle.getResources());
 //		allElements.addAll(netTriangle.getSRGs());
@@ -1209,7 +1376,7 @@ public class NetPlanTest
 //			allElements.addAll(netTriangle.getMulticastTrees (layer));
 //		}
 //		assertEquals (netTriangle.getGlobalPlanningDomainElements("new") , allElements);
-//		assertEquals (netTriangle.getGlobalPlanningDomainElements("") , Sets.newHashSet());
+//		assertEquals (netTriangle.getGlobalPlanningDomainElements("") , new TreeSet<> (Arrays.asList());
 //		assertEquals (netTriangle.getGlobalPlanningDomainElements("other") , null);
 //
 //	}
@@ -1235,49 +1402,49 @@ public class NetPlanTest
 //		NetworkLayer copyUpperLayer = null;
 //		
 //		NetPlan npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
 //		
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(idn1 , idn3));
 //		
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(idn1 , idn3));
 //
 //		final Link up13 = dlow13.coupleToNewLinkCreated(upperLayer);
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
 //		
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
 //		
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, false);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, false);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
 //		
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n3.getId()));
 //
 //		final Route r123 = np.addRoute(dlow13, 1, 1, Arrays.asList(low12 , low23), null);
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, false);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
 //		
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyLowerLayer, true);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
 //		
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, false);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, false);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
 //
 //		npCopy = np.copy(); copyLowerLayer = npCopy.getNetworkLayer(0); copyUpperLayer = npCopy.getNetworkLayer(1);
-//		npCopy.restrictToPlanningDomain(Sets.newHashSet(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
+//		npCopy.restrictToPlanningDomain(new TreeSet<> (Arrays.asList(npCopy.getNodeFromId(idn1),npCopy.getNodeFromId(idn3)), copyUpperLayer, true);
 //		assertEquals(npCopy.getNodeIds() , Arrays.asList(n1.getId() , n2.getId() , n3.getId()));
 //	}
 //
@@ -1296,7 +1463,7 @@ public class NetPlanTest
 			if (np1.getNumberOfDemands(l1) != np2.getNumberOfDemands(l2)) throw new RuntimeException();
 			if (np1.getNumberOfMulticastDemands(l1) != np2.getNumberOfMulticastDemands(l2)) throw new RuntimeException();
 			if (np1.getNumberOfMulticastTrees(l1) != np2.getNumberOfMulticastTrees(l2)) throw new RuntimeException();
-			if (l1.isSourceRouting())
+			if (np1.getDemands(l1).stream().allMatch(d->d.isSourceRouting()))
 			{
 				if (np1.getNumberOfRoutes(l1) != np2.getNumberOfRoutes(l2)) throw new RuntimeException();
 			}
@@ -1311,7 +1478,7 @@ public class NetPlanTest
 			assertEquals(np1.getVectorLinkCarriedTraffic(l1).zSum() , np2.getVectorLinkCarriedTraffic(l2).zSum() , 0.0001);
 			assertEquals(np1.getVectorLinkOccupiedCapacity(l1).zSum() , np2.getVectorLinkOccupiedCapacity(l2).zSum() , 0.0001);
 			assertEquals(np1.getVectorMulticastTreeCarriedTraffic(l1).zSum() , np2.getVectorMulticastTreeCarriedTraffic(l2).zSum() , 0.0001);
-			if (l1.isSourceRouting())
+			if (np1.getDemands(l1).stream().allMatch(d->d.isSourceRouting()))
 				assertEquals(np1.getVectorRouteCarriedTraffic(l1).zSum() , np2.getVectorRouteCarriedTraffic(l2).zSum() , 0.0001);
 			final long numCoupledLinks_1 = np1.getLinks(l1).stream().filter(e->e.isCoupled()).count();
 			final long numCoupledLinks_2 = np2.getLinks(l2).stream().filter(e->e.isCoupled()).count();

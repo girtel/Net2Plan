@@ -20,19 +20,26 @@
 
 package com.net2plan.examples.ocnbook.offline;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
+
 import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * Solves several variants of unicast routing problems with 1+1 protection, with flow-link formulations
@@ -64,7 +71,7 @@ public class Offline_fa_xde11PathProtection implements IAlgorithm
 
 		/* Remove all unicast routed traffic. Any multicast routed traffic is kept */
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		netPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		
 		/* Initialize some variables */
 		DoubleMatrix1D u_e = netPlan.getVectorLinkSpareCapacity(); // just the unused capacity (some capacity may be used by multicast traffic)
@@ -172,12 +179,12 @@ public class Offline_fa_xde11PathProtection implements IAlgorithm
 		List<Demand> primary_demands = new ArrayList<Demand>();
 		List<List<Link>> primary_seqLinks = new ArrayList<List<Link>>();
 		List<Double> primary_x_p = new ArrayList<Double>();
-		GraphUtils.convert_xde2xp(netPlan.getNodes (), netPlan.getLinks () , netPlan.getDemands () , x_de, primary_demands, primary_x_p, primary_seqLinks);
+		GraphUtils.convert_xde2xp(netPlan.getNodes (), netPlan.getLinks () , new TreeSet<> (netPlan.getDemands ()) , x_de, primary_demands, primary_x_p, primary_seqLinks);
 		
 		List<Demand> backup_demands = new ArrayList<Demand>();
 		List<List<Link>> backup_seqLinks = new ArrayList<List<Link>>();
 		List<Double> backup_x_p = new ArrayList<Double>();
-		GraphUtils.convert_xde2xp(netPlan.getNodes (), netPlan.getLinks () , netPlan.getDemands () , xx_de, backup_demands, backup_x_p, backup_seqLinks);
+		GraphUtils.convert_xde2xp(netPlan.getNodes (), netPlan.getLinks () , new TreeSet<> (netPlan.getDemands ()) , xx_de, backup_demands, backup_x_p, backup_seqLinks);
 
 		/* Update netPlan object adding the calculated routes */
 		if (primary_demands.size() != D) throw new Net2PlanException("Unexpected error");

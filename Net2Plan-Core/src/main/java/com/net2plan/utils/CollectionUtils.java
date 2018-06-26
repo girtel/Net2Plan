@@ -337,10 +337,10 @@ public class CollectionUtils
 	 * @param <K> Key type
 	 * @return Map containing the entries corresponding to the input keys and values
 	 */
-	public static <K> Map<K,Double> toMap (Collection<K> keys , DoubleMatrix1D vals)
+	public static <K> SortedMap<K,Double> toMap (Collection<K> keys , DoubleMatrix1D vals)
 	{
 		if (vals.size () != keys.size ()) throw new Net2PlanException ("Bad number of elements");
-		Map<K,Double> res = new HashMap<K,Double> ();
+		SortedMap<K,Double> res = new TreeMap<K,Double> ();
 		int counter = 0; for (K key : keys) res.put(key, vals.get(counter++)); 
 		return res;
 

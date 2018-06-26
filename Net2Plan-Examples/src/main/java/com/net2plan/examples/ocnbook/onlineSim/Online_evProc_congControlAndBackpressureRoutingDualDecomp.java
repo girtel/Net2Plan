@@ -151,7 +151,7 @@ public class Online_evProc_congControlAndBackpressureRoutingDualDecomp extends I
 
 		/* Computes the optimum NetPlan */
 		this.currentNetPlan.removeAllUnicastRoutingInformation();
-		this.currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		this.currentNetPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 
 		this.currentNetPlan.removeAllRoutes();
 		this.optNetPlan = computeOptimumSolution ();
@@ -488,7 +488,7 @@ public class Online_evProc_congControlAndBackpressureRoutingDualDecomp extends I
 		NetPlan np = this.currentNetPlan.copy();
 		np.removeAllUnicastRoutingInformation();
 		np.setVectorDemandOfferedTraffic(h_d_array);
-		np.setRoutingFromDemandLinkCarriedTraffic(x_de_array , false , false);
+		np.setRoutingFromDemandLinkCarriedTraffic(x_de_array , false , false , null);
 
 		/* Check solution: all traffic is carried, no link oversubscribed */
 		for (Demand d : np.getDemands())

@@ -24,6 +24,7 @@ import com.net2plan.internal.Constants.IOFeature;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Triple;
+import com.net2plan.utils.Constants.RoutingType;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -69,7 +70,7 @@ public class IOTrafficMatrix2DFile extends IOFilter
 	{
 		DoubleMatrix2D trafficMatrix = DoubleUtils.read2DMatrixFromFile(file);
 		NetPlan netPlan = new NetPlan();
-		netPlan.setTrafficMatrix(trafficMatrix);
+		netPlan.setTrafficMatrix(trafficMatrix , RoutingType.SOURCE_ROUTING);
 		
 		return netPlan;
 	}

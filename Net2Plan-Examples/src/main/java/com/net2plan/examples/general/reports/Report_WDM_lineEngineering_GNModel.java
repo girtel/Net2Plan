@@ -1,5 +1,17 @@
 package com.net2plan.examples.general.reports;
 
+import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.collections15.ListUtils;
+import org.apache.commons.lang.ArrayUtils;
+
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -12,18 +24,6 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
-
-import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.collections15.ListUtils;
-import org.apache.commons.lang.ArrayUtils;
 
 /**
  * <p>

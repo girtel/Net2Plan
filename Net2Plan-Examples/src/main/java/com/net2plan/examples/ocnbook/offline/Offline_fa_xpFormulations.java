@@ -20,20 +20,22 @@
 
 package com.net2plan.examples.ocnbook.offline;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.jet.math.tdouble.DoubleFunctions;
+import java.util.List;
+import java.util.Map;
+
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
-import java.util.List;
-import java.util.Map;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.jet.math.tdouble.DoubleFunctions;
 
 /**
  * Solves several variants of unicast routing problems, with flow-path formulations
@@ -71,7 +73,7 @@ public class Offline_fa_xpFormulations implements IAlgorithm
 
 		/* Remove all unicast routed traffic. Any multicast routed traffic is kept */
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		netPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();

@@ -18,6 +18,8 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.simulation.IEventGenerator;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Constants.RoutingType;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +46,7 @@ public class Online_evProc_adaptiveRoutingDualTest
 	public void setUp() throws Exception
 	{
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example4nodes.n2p"));
-		np.setTrafficMatrix(new NetPlan (new File ("src/test/resources/data/trafficMatrices/tm4nodes.n2p")).getMatrixNode2NodeOfferedTraffic());
+		np.setTrafficMatrix(new NetPlan (new File ("src/test/resources/data/trafficMatrices/tm4nodes.n2p")).getMatrixNode2NodeOfferedTraffic() , RoutingType.SOURCE_ROUTING);
 
 		/* Create the temporal directory for storing the test files */
 		this.temporalDirectoryTests = new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY);

@@ -13,15 +13,17 @@ package com.net2plan.interfaces.networkDesign;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.Collections;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.SortedMap;
 import java.util.Map.Entry;
+import java.util.SortedSet;
+import java.util.SortedSet;
 import java.util.stream.Collectors;
-import java.util.Set;
 
+import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
-import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
 /** <p>This class contains a representation of a network layer. This is an structure which contains a set of demands, multicast demands and links. 
@@ -37,10 +39,7 @@ import com.net2plan.utils.Pair;
 public class NetworkLayer extends NetworkElement
 {
 	String demandTrafficUnitsName;
-	String description;
-	String name;
 	String linkCapacityUnitsName;
-	RoutingType routingType;
 	
 	ArrayList<Link> links;
 	ArrayList<Demand> demands;
@@ -48,34 +47,32 @@ public class NetworkLayer extends NetworkElement
 	ArrayList<Route> routes;
 	ArrayList<MulticastTree> multicastTrees;
 
-//	DoubleMatrix2D forwardingRulesNoFailureState_f_de; // splitting ratios
-//	DoubleMatrix2D forwardingRulesCurrentFailureState_x_de; // carried traffics (both routings)
-//	DoubleMatrix2D forwardingRules_Aout_ne; // 1 if link e is outgoing from n, 0 otherwise
-//	DoubleMatrix2D forwardingRules_Ain_ne; // 1 if link e is incominng from n, 0 otherwise
-	Set<Link> cache_linksDown;
-	Set<Link> cache_linksZeroCap;
-	Set<Link> cache_coupledLinks;
-	Set<Demand> cache_coupledDemands;
-	Set<MulticastDemand> cache_coupledMulticastDemands;
+	SortedSet<Link> cache_linksDown;
+	SortedSet<Link> cache_linksZeroCap;
+	SortedSet<Link> cache_coupledLinks;
+	SortedSet<Demand> cache_coupledDemands;
+	SortedSet<MulticastDemand> cache_coupledMulticastDemands;
 	
-	Set<Route> cache_routesDown;
-	Set<Route> cache_routesTravLinkZeroCap;
-	Set<MulticastTree> cache_multicastTreesDown;
-	Set<MulticastTree> cache_multicastTreesTravLinkZeroCap;
-	Map<Pair<Node,Node>,Set<Link>> cache_nodePairLinksThisLayer;
-	Map<Pair<Node,Node>,Set<Demand>> cache_nodePairDemandsThisLayer;
+	SortedSet<Route> cache_routesDown;
+	SortedSet<Route> cache_routesTravLinkZeroCap;
+	SortedSet<MulticastTree> cache_multicastTreesDown;
+	SortedSet<MulticastTree> cache_multicastTreesTravLinkZeroCap;
+	SortedMap<Pair<Node,Node>,SortedSet<Link>> cache_nodePairLinksThisLayer;
+	SortedMap<Pair<Node,Node>,SortedSet<Demand>> cache_nodePairDemandsThisLayer;
+	SortedMap<String,Pair<SortedSet<Demand>,SortedSet<MulticastDemand>>> cache_qosTypes2DemandMap;
 	
 	URL defaultNodeIconURL;
 
 	NetworkLayer(NetPlan netPlan, long id, int index , String demandTrafficUnitsName, String description, String name, String linkCapacityUnitsName, URL defaultNodeIconURL , AttributeMap attributes)
 	{
 		super(netPlan, id , index , attributes);
+		this.setName ("Layer-" + index);
+
 		this.demandTrafficUnitsName = (demandTrafficUnitsName == null)? "" : demandTrafficUnitsName;
 		this.description =  (description == null)? "" : description;
 		this.name =  (name == null)? "" : name;
 		this.linkCapacityUnitsName =  (linkCapacityUnitsName == null)? "" : linkCapacityUnitsName;
 		this.defaultNodeIconURL = defaultNodeIconURL;
-		this.routingType = RoutingType.SOURCE_ROUTING;
 
 		this.links = new ArrayList<Link> ();
 		this.demands = new ArrayList<Demand> ();
@@ -83,18 +80,19 @@ public class NetworkLayer extends NetworkElement
 		this.routes = new ArrayList<Route> ();
 		this.multicastTrees = new ArrayList<MulticastTree> ();
 
-		this.cache_linksDown = new HashSet<Link> ();
-		this.cache_linksZeroCap = new HashSet<>();
-		this.cache_coupledLinks = new HashSet<Link> ();
-		this.cache_coupledDemands = new HashSet<Demand> ();
-		this.cache_coupledMulticastDemands = new HashSet<MulticastDemand> ();
+		this.cache_linksDown = new TreeSet<Link> ();
+		this.cache_linksZeroCap = new TreeSet<>();
+		this.cache_coupledLinks = new TreeSet<Link> ();
+		this.cache_coupledDemands = new TreeSet<Demand> ();
+		this.cache_coupledMulticastDemands = new TreeSet<MulticastDemand> ();
 
-		this.cache_routesDown = new HashSet<Route> ();
-		this.cache_routesTravLinkZeroCap = new HashSet<>();
-		this.cache_multicastTreesDown = new HashSet<MulticastTree> ();
-		this.cache_multicastTreesTravLinkZeroCap = new HashSet<> ();
-		this.cache_nodePairLinksThisLayer = new HashMap<> ();
-		this.cache_nodePairDemandsThisLayer = new HashMap<> ();
+		this.cache_routesDown = new TreeSet<Route> ();
+		this.cache_routesTravLinkZeroCap = new TreeSet<>();
+		this.cache_multicastTreesDown = new TreeSet<MulticastTree> ();
+		this.cache_multicastTreesTravLinkZeroCap = new TreeSet<> ();
+		this.cache_nodePairLinksThisLayer = new TreeMap<> ();
+		this.cache_nodePairDemandsThisLayer = new TreeMap<> ();
+		this.cache_qosTypes2DemandMap = new TreeMap<> ();
 
 //		this.forwardingRulesNoFailureState_f_de = null;
 //		this.forwardingRulesCurrentFailureState_x_de = null;
@@ -112,28 +110,6 @@ public class NetworkLayer extends NetworkElement
 		this.defaultNodeIconURL = origin.defaultNodeIconURL;
 		this.name = origin.name;
 		this.linkCapacityUnitsName = origin.linkCapacityUnitsName;
-		this.routingType = origin.routingType;
-//		for (Link e : origin.links) this.links.add((Link) this.netPlan.getPeerElementInThisNetPlan (e));
-//		for (Demand d : origin.demands) this.demands.add((Demand) this.netPlan.getPeerElementInThisNetPlan (d));
-//		for (MulticastDemand d : origin.multicastDemands) this.multicastDemands.add((MulticastDemand) this.netPlan.getPeerElementInThisNetPlan (d));
-//		for (Route r : origin.routes) this.routes.add((Route) this.netPlan.getPeerElementInThisNetPlan (r));
-//		for (MulticastTree t : origin.multicastTrees) this.multicastTrees.add((MulticastTree) this.netPlan.getPeerElementInThisNetPlan (t));
-//		for (ProtectionSegment s : origin.protectionSegments) this.protectionSegments.add((ProtectionSegment) this.netPlan.getPeerElementInThisNetPlan (s));
-		if (origin.routingType == routingType.HOP_BY_HOP_ROUTING)
-		{
-//			this.forwardingRulesNoFailureState_f_de = origin.forwardingRulesNoFailureState_f_de.copy();
-//			this.forwardingRulesCurrentFailureState_x_de = origin.forwardingRulesCurrentFailureState_x_de.copy();
-//			this.forwardingRules_Aout_ne = origin.forwardingRules_Aout_ne.copy();
-//			this.forwardingRules_Ain_ne = origin.forwardingRules_Ain_ne.copy();
-		}
-		else
-		{
-//			this.forwardingRulesNoFailureState_f_de = null;
-//			this.forwardingRulesCurrentFailureState_x_de = null;
-//			this.forwardingRules_Aout_ne = null;
-//			this.forwardingRules_Ain_ne = null;
-		}
-		
 		this.cache_linksDown.clear (); for (Link e : origin.cache_linksDown) this.cache_linksDown.add(this.netPlan.getLinkFromId (e.id));
 		this.cache_linksZeroCap.clear (); for (Link e : origin.cache_linksZeroCap) this.cache_linksZeroCap.add(this.netPlan.getLinkFromId (e.id));
 		this.cache_coupledLinks.clear (); for (Link e : origin.cache_coupledLinks) this.cache_coupledLinks.add(this.netPlan.getLinkFromId (e.id));
@@ -143,8 +119,9 @@ public class NetworkLayer extends NetworkElement
 		this.cache_routesTravLinkZeroCap.clear(); for (Route r : origin.cache_routesTravLinkZeroCap) this.cache_routesTravLinkZeroCap.add(this.netPlan.getRouteFromId (r.id));
 		this.cache_multicastTreesDown.clear (); for (MulticastTree t : origin.cache_multicastTreesDown) this.cache_multicastTreesDown.add(this.netPlan.getMulticastTreeFromId (t.id));
 		this.cache_multicastTreesTravLinkZeroCap.clear(); for (MulticastTree t : origin.cache_multicastTreesTravLinkZeroCap) this.cache_multicastTreesTravLinkZeroCap.add(this.netPlan.getMulticastTreeFromId (t.id));
-		this.cache_nodePairLinksThisLayer.clear(); for (Entry<Pair<Node,Node>,Set<Link>> entry : origin.cache_nodePairLinksThisLayer.entrySet()) this.cache_nodePairLinksThisLayer.put(Pair.of(this.netPlan.getNodeFromId(entry.getKey().getFirst().getId()) , this.netPlan.getNodeFromId(entry.getKey().getSecond().getId())) , (Set<Link>) (Set<?>) this.netPlan.translateCollectionToThisNetPlan(entry.getValue()));
-		this.cache_nodePairDemandsThisLayer.clear(); for (Entry<Pair<Node,Node>,Set<Demand>> entry : origin.cache_nodePairDemandsThisLayer.entrySet()) this.cache_nodePairDemandsThisLayer.put(Pair.of(this.netPlan.getNodeFromId(entry.getKey().getFirst().getId()) , this.netPlan.getNodeFromId(entry.getKey().getSecond().getId())) , (Set<Demand>) (Set<?>) this.netPlan.translateCollectionToThisNetPlan(entry.getValue()));
+		this.cache_nodePairLinksThisLayer.clear(); for (Entry<Pair<Node,Node>,SortedSet<Link>> entry : origin.cache_nodePairLinksThisLayer.entrySet()) this.cache_nodePairLinksThisLayer.put(Pair.of(this.netPlan.getNodeFromId(entry.getKey().getFirst().getId()) , this.netPlan.getNodeFromId(entry.getKey().getSecond().getId())) , (SortedSet<Link>) (SortedSet<?>) this.netPlan.translateCollectionToThisNetPlan(entry.getValue()));
+		this.cache_nodePairDemandsThisLayer.clear(); for (Entry<Pair<Node,Node>,SortedSet<Demand>> entry : origin.cache_nodePairDemandsThisLayer.entrySet()) this.cache_nodePairDemandsThisLayer.put(Pair.of(this.netPlan.getNodeFromId(entry.getKey().getFirst().getId()) , this.netPlan.getNodeFromId(entry.getKey().getSecond().getId())) , (SortedSet<Demand>) (SortedSet<?>) this.netPlan.translateCollectionToThisNetPlan(entry.getValue()));
+		this.cache_qosTypes2DemandMap.clear(); for (Entry<String,Pair<SortedSet<Demand>,SortedSet<MulticastDemand>>> entry : origin.cache_qosTypes2DemandMap.entrySet()) this.cache_qosTypes2DemandMap.put(entry.getKey() , Pair.of((SortedSet<Demand>) (SortedSet<?>) this.netPlan.translateCollectionToThisNetPlan(entry.getValue().getFirst()) , (SortedSet<MulticastDemand>) (SortedSet<?>) this.netPlan.translateCollectionToThisNetPlan(entry.getValue().getSecond())));
 		
 		for (Link e : origin.links) this.links.get(e.index).copyFrom(e);
 		for (Demand d : origin.demands) this.demands.get(d.index).copyFrom(d);
@@ -158,11 +135,6 @@ public class NetworkLayer extends NetworkElement
 	 */
 	public boolean isDefaultLayer () { return netPlan.getNetworkLayerDefault() == this; }
 
-	/** Returns true if the routing type in this layer is of the type source routing
-	 * @return see above
-	 */
-	public boolean isSourceRouting () { return routingType == RoutingType.SOURCE_ROUTING; }
-	
 	/** Returns true if the provided network layer is a deep copy of this
 	 * @param e2 the other element
 	 * @return see above
@@ -176,7 +148,6 @@ public class NetworkLayer extends NetworkElement
 		if (this.defaultNodeIconURL != null) if (!this.defaultNodeIconURL.equals(e2.defaultNodeIconURL)) return false;
 		if (!this.name.equals(e2.name)) return false;
 		if (!this.linkCapacityUnitsName.equals(e2.linkCapacityUnitsName)) return false;
-		if (this.routingType != e2.routingType) return false;
 		if (!NetPlan.isDeepCopy(this.links , e2.links)) return false;
 		if (!NetPlan.isDeepCopy(this.demands , e2.demands)) return false;
 		if (!NetPlan.isDeepCopy(this.multicastDemands , e2.multicastDemands)) return false;
@@ -196,34 +167,23 @@ public class NetworkLayer extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cache_routesTravLinkZeroCap , e2.cache_routesTravLinkZeroCap)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_multicastTreesDown , e2.cache_multicastTreesDown)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_multicastTreesTravLinkZeroCap , e2.cache_multicastTreesTravLinkZeroCap )) return false;
-		final Set<Demand> auxDemandThis = this.cache_nodePairDemandsThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toSet());
-		final Set<Demand> auxDemandE2 = e2.cache_nodePairDemandsThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toSet());
+		
+		final SortedSet<Demand> auxDemandThis = this.cache_nodePairDemandsThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
+		if (!this.cache_qosTypes2DemandMap.keySet().equals(e2.cache_qosTypes2DemandMap.keySet())) return false;
+		for (String qos : this.cache_qosTypes2DemandMap.keySet())
+		{
+			if (!NetPlan.isDeepCopy(this.cache_qosTypes2DemandMap.get(qos).getFirst(), e2.cache_qosTypes2DemandMap.get(qos).getFirst())) return false;
+			if (!NetPlan.isDeepCopy(this.cache_qosTypes2DemandMap.get(qos).getSecond(), e2.cache_qosTypes2DemandMap.get(qos).getSecond())) return false;
+		}
+		final SortedSet<Demand> auxDemandE2 = e2.cache_nodePairDemandsThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
 		if (!NetPlan.isDeepCopy(auxDemandThis , auxDemandE2)) return false;
-		final Set<Link> auxLinkThis = this.cache_nodePairLinksThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toSet());
-		final Set<Link> auxLinkE2 = e2.cache_nodePairLinksThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toSet());
+		final SortedSet<Link> auxLinkThis = this.cache_nodePairLinksThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
+		final SortedSet<Link> auxLinkE2 = e2.cache_nodePairLinksThisLayer.values().stream().flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
 		if (!NetPlan.isDeepCopy(auxLinkThis , auxLinkE2)) return false;
 
 		return true;
 	}
 	
-//	/**
-//	 * Returns the name of the units in which the offered traffic is measured (e.g. "Gbps")
-//	 * @since 0.4.0
-//	 */
-//	public String getDemandTrafficUnitsName() 
-//	{
-//		return demandTrafficUnitsName;
-//	}
-//
-	/**
-	 * <p>Returns the user-defined layer description</p>
-	 * @return The layer description
-	 */
-	public String getDescription() 
-	{
-		return description;
-	}
-
 	/**
 	 * <p>Returns the user-defined URL of the default icon to represent the nodes at this layer.</p>
 	 * @return see above
@@ -231,15 +191,6 @@ public class NetworkLayer extends NetworkElement
 	public URL getDefaultNodeIconURL() 
 	{
 		return defaultNodeIconURL;
-	}
-
-	/**
-	 * <p>Sets the user-defined layer description</p>
-	 * @param description The description message
-	 */
-	public void setDescription(String description) 
-	{
-		this.description = description;
 	}
 
 	/**
@@ -252,47 +203,37 @@ public class NetworkLayer extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the layer name. It does not have to be unique among layers</p>
-	 * @return  The layer name
-	 */
-	public String getName() 
-	{
-		return name;
-	}
-
-	/**
-	 * <p>Sets the layer name. It does not have to be unique among layers.</p>
-	 * @param name New layer name
-	 */
-	public void setName(String name) 
-	{
-		this.name = name;
-	}
-
-	/**
-	 * Checks whether routing type is the expected one. When negative, an exception will be thrown.
-	 * @param routingType Expected {@link com.net2plan.utils.Constants.RoutingType RoutingType}
-	 */
-	public void checkRoutingType(RoutingType routingType)
-	{
-		if (this.routingType != routingType) throw new Net2PlanException("Routing type of layer " + this + " must be " + routingType);
-	}
-
-	/**
 	 * <p>Returns a {@code String} representation of the network layer.</p>
 	 * @return {@code String} representation of the network layer
 	 */
-	public String toString () { return "layer" + index + " (id " + id + ")"; }
+	@Override
+    public String toString () { return "layer" + index + " (id " + id + ")"; }
 
+	public SortedSet<String> getDemandAndMulticastDemandQosTypes () 
+	{ 
+		return new TreeSet<> (cache_qosTypes2DemandMap.keySet()); 
+	} 
 	
-	void checkCachesConsistency ()
+	/** Given a Qos type, returns the uncoupled demands in this layer with that QoS type, or empty set if none.
+	 * @param qosType see above
+	 * @return see above
+	 */
+	public Pair<SortedSet<Demand>,SortedSet<MulticastDemand>> getDemandsPerQosType (String qosType)
+	{
+		final Pair<SortedSet<Demand>,SortedSet<MulticastDemand>> demandsCoupledAndNot = cache_qosTypes2DemandMap.get(qosType);
+		if (demandsCoupledAndNot == null) return Pair.of(new TreeSet<> () , new TreeSet<> ());
+		return Pair.of(Collections.unmodifiableSortedSet(demandsCoupledAndNot.getFirst()), Collections.unmodifiableSortedSet(demandsCoupledAndNot.getSecond()));
+	}
+	
+	@Override
+    void checkCachesConsistency ()
 	{
 		super.checkCachesConsistency ();
 
 		for (Link link : cache_linksDown) if (link.isUp) throw new RuntimeException ("Bad");
 		for (Link link : cache_linksZeroCap) if (link.getCapacity() != 0) throw new RuntimeException ("Bad");
-		for (Link link : cache_coupledLinks) if ((link.coupledLowerLayerDemand == null) && (link.coupledLowerLayerMulticastDemand == null)) throw new RuntimeException ("Bad");
-		for (Demand demand : cache_coupledDemands) if (demand.coupledUpperLayerLink == null) throw new RuntimeException ("Bad");
+		for (Link link : cache_coupledLinks) if ((link.coupledLowerOrThisLayerDemand == null) && (link.coupledLowerLayerMulticastDemand == null)) throw new RuntimeException ("Bad");
+		for (Demand demand : cache_coupledDemands) if (demand.coupledUpperOrSameLayerLink == null) throw new RuntimeException ("Bad");
 		for (MulticastDemand demand : cache_coupledMulticastDemands) if (demand.coupledUpperLayerLinks == null) throw new RuntimeException ("Bad");
 		for (Route route : routes)
 		{
@@ -308,13 +249,32 @@ public class NetworkLayer extends NetworkElement
 			final boolean shoulbBeUp = (tree.getLinkSet().stream().allMatch(e->e.isUp) && (tree.getNodeSet().stream().allMatch(n->n.isUp)));
 			final boolean travZeroCapLinks = tree.getLinkSet().stream().anyMatch(e->e.capacity < Configuration.precisionFactor);
 			if (shoulbBeUp && cache_multicastTreesDown.contains(tree)) throw new RuntimeException ();
-			if (!shoulbBeUp && !cache_multicastTreesDown.contains(tree)) throw new RuntimeException ();
+			if (!shoulbBeUp && !tree.getLinkSet().isEmpty() && !cache_multicastTreesDown.contains(tree)) 
+			    throw new RuntimeException ();
 			if (travZeroCapLinks && !cache_multicastTreesTravLinkZeroCap.contains(tree)) throw new RuntimeException ();
 			if (!travZeroCapLinks && cache_multicastTreesTravLinkZeroCap.contains(tree)) throw new RuntimeException ();
 		}
-		for (Set<Demand> dd : this.cache_nodePairDemandsThisLayer.values()) for (Demand d : dd) if (d.layer != this || d.netPlan != this.netPlan) throw new RuntimeException ();
-		for (Set<Link> ee : this.cache_nodePairLinksThisLayer.values()) for (Link e: ee) if (e.layer != this || e.netPlan != this.netPlan) throw new RuntimeException ();
-		for (Entry<Pair<Node,Node>,Set<Demand>> entry : this.cache_nodePairDemandsThisLayer.entrySet())
+		for (Demand d : demands)
+		{
+			assert cache_qosTypes2DemandMap.containsKey(d.qosType);
+			assert cache_qosTypes2DemandMap.get(d.qosType).getFirst ().contains(d);
+		}
+		for (MulticastDemand d : multicastDemands)
+		{
+			assert cache_qosTypes2DemandMap.containsKey(d.qosType);
+			assert cache_qosTypes2DemandMap.get(d.qosType).getSecond ().contains(d);
+		}
+		final SortedSet<String> currentDemandsQos = demands.stream().map(d->d.qosType).collect(Collectors.toCollection(TreeSet::new));
+		final SortedSet<String> currentMDemandsQos = multicastDemands.stream().map(d->d.qosType).collect(Collectors.toCollection(TreeSet::new));
+		assert Sets.union(currentDemandsQos, currentMDemandsQos).equals(cache_qosTypes2DemandMap.keySet());
+		for (String qosType : cache_qosTypes2DemandMap.keySet())
+		{
+			assert cache_qosTypes2DemandMap.get(qosType).getFirst().equals(demands.stream().filter(d->d.qosType.equals(qosType)).collect(Collectors.toSet()));
+			assert cache_qosTypes2DemandMap.get(qosType).getSecond().equals(multicastDemands.stream().filter(d->d.qosType.equals(qosType)).collect(Collectors.toSet()));
+		}
+		for (SortedSet<Demand> dd : this.cache_nodePairDemandsThisLayer.values()) for (Demand d : dd) if (d.layer != this || d.netPlan != this.netPlan) throw new RuntimeException ();
+		for (SortedSet<Link> ee : this.cache_nodePairLinksThisLayer.values()) for (Link e: ee) if (e.layer != this || e.netPlan != this.netPlan) throw new RuntimeException ();
+		for (Entry<Pair<Node,Node>,SortedSet<Demand>> entry : this.cache_nodePairDemandsThisLayer.entrySet())
 		{
 			for (Demand d : entry.getValue())
 			{
@@ -322,7 +282,7 @@ public class NetworkLayer extends NetworkElement
 				if (d.getEgressNode() != entry.getKey().getSecond()) throw new RuntimeException ();
 			}
 		}
-		for (Entry<Pair<Node,Node>,Set<Link>> entry : this.cache_nodePairLinksThisLayer.entrySet())
+		for (Entry<Pair<Node,Node>,SortedSet<Link>> entry : this.cache_nodePairLinksThisLayer.entrySet())
 		{
 			for (Link e : entry.getValue())
 			{
@@ -335,5 +295,7 @@ public class NetworkLayer extends NetworkElement
 	}
 
 
+	public String getDemandTrafficUnits () { return demandTrafficUnitsName; } 
+	public String getLinkCapacityUnits () { return linkCapacityUnitsName; } 
 	
 }

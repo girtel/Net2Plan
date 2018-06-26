@@ -10,36 +10,51 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
-import com.google.common.collect.Sets;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.ImageUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
-import edu.uci.ics.jung.visualization.FourPassImageShaper;
+import java.awt.Color;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.MapUtils;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.net.URL;
-import java.util.*;
-import java.util.List;
+import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager.PickStateInfo;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.utils.ImageUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 
-import static com.net2plan.internal.Constants.NetworkElementType;
+import edu.uci.ics.jung.visualization.FourPassImageShaper;
 
 public class VisualizationState
 {
     private static Map<Triple<URL, Integer, Color>, Pair<ImageIcon, Shape>> databaseOfAlreadyReadIcons = new HashMap<>(); // for each url, height, and border color, an image
-
+    private final GUINetworkDesign callback;
 
     private boolean showInCanvasNodeNames;
     private boolean showInCanvasLinkLabels;
@@ -66,7 +81,6 @@ public class VisualizationState
     private Set<Node> nodesToHideInCanvasAsMandatedByUserInTable;
     private Set<Link> linksToHideInCanvasAsMandatedByUserInTable;
 
-    private final PickManager pickManager;
     private VisualizationSnapshot visualizationSnapshot;
 
     /* These need is recomputed inside a rebuild */
@@ -81,9 +95,9 @@ public class VisualizationState
         return visualizationSnapshot.getNetPlan();
     }
 
-    public VisualizationState(NetPlan currentNp, BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer, Boolean> layerVisibilityMap, int maxSizePickUndoList)
+    public VisualizationState(GUINetworkDesign callback , BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder, Map<NetworkLayer, Boolean> layerVisibilityMap, int maxSizePickUndoList)
     {
-        this.visualizationSnapshot = new VisualizationSnapshot(currentNp);
+        this.visualizationSnapshot = new VisualizationSnapshot(callback.getDesign());
         this.showInCanvasNodeNames = false;
         this.showInCanvasLinkLabels = false;
         this.showInCanvasLinksInNonActiveLayer = true;
@@ -107,14 +121,9 @@ public class VisualizationState
         this.linkWidthIncreaseFactorRespectToDefault = 1;
         this.nodeSizeFactorRespectToDefault = 1;
 
-        this.pickManager = new PickManager(this);
+        this.callback = callback;
 
-        this.setCanvasLayerVisibilityAndOrder(currentNp, mapLayer2VisualizationOrder, layerVisibilityMap);
-    }
-
-    private void prepare()
-    {
-
+        this.setCanvasLayerVisibilityAndOrder(callback.getDesign(), mapLayer2VisualizationOrder, layerVisibilityMap);
     }
 
     public boolean isWhatIfAnalysisActive()
@@ -303,7 +312,7 @@ public class VisualizationState
             }
 
 			/* add the regular links */
-            Pair<Set<Link>, Set<Link>> traversedLinks = e.getCoupledDemand().getLinksThisLayerPotentiallyCarryingTraffic();
+            Pair<SortedSet<Link>, SortedSet<Link>> traversedLinks = e.getCoupledDemand().getLinksNoDownPropagationPotentiallyCarryingTraffic();
             for (Link ee : traversedLinks.getFirst())
             {
                 Pair<Set<GUILink>, Set<GUILink>> pairGuiLinks = getCanvasAssociatedGUILinksIncludingCoupling(ee, true);
@@ -442,7 +451,8 @@ public class VisualizationState
         }
 
         /* implicitly we restart the picking state */
-        pickManager.reset();
+        if (callback.getPickManager() != null)
+        	callback.getPickManager().reset();
 
         this.cache_canvasIntraNodeGUILinks = new HashMap<>();
         this.cache_canvasRegularLinkMap = new HashMap<>();
@@ -637,7 +647,7 @@ public class VisualizationState
         Set<GUILink> res = new HashSet<>();
         if (includeRegularLinks) res.addAll(cache_canvasRegularLinkMap.values());
         if (includeInterLayerLinks)
-            for (Node n : this.getNetPlan().getNodes())
+            for (Node n : cache_canvasIntraNodeGUILinks.keySet())
                 res.addAll(this.cache_canvasIntraNodeGUILinks.get(n));
         return res;
     }
@@ -796,12 +806,9 @@ public class VisualizationState
     {
         if (showLowerLayerPropagation == this.showInCanvasLowerLayerPropagation) return;
         this.showInCanvasLowerLayerPropagation = showLowerLayerPropagation;
-
-        if (this.getPickedElementType() != null)
-            if (this.getPickedNetworkElements() != null)
-                this.pickElement(this.getPickedNetworkElements());
-            else
-                this.pickForwardingRule(this.getPickedForwardingRules());
+        final PickStateInfo ps = callback.getPickManager().getCurrentPick(callback.getDesign()).orElse(null);
+        if (ps != null)
+        	ps.applyVisualizationInCurrentDesign();
     }
 
     /**
@@ -881,12 +888,9 @@ public class VisualizationState
     {
         if (showUpperLayerPropagation == this.showInCanvasUpperLayerPropagation) return;
         this.showInCanvasUpperLayerPropagation = showUpperLayerPropagation;
-
-        if (this.getPickedElementType() != null)
-            if (pickManager.getPickedNetworkElements() != null)
-                this.pickElement(pickManager.getPickedNetworkElements());
-            else
-                pickManager.pickForwardingRule(pickManager.getPickedForwardingRules());
+        final PickStateInfo ps = callback.getPickManager().getCurrentPick(callback.getDesign()).orElse(null);
+        if (ps != null)
+        	ps.applyVisualizationInCurrentDesign();
     }
 
     /**
@@ -896,11 +900,9 @@ public class VisualizationState
     {
         if (showThisLayerPropagation == this.showInCanvasThisLayerPropagation) return;
         this.showInCanvasThisLayerPropagation = showThisLayerPropagation;
-        if (this.getPickedElementType() != null)
-            if (this.getPickedNetworkElements() != null)
-                this.pickElement(this.getPickedNetworkElements());
-            else
-                this.pickForwardingRule(this.getPickedForwardingRules());
+        final PickStateInfo ps = callback.getPickManager().getCurrentPick(callback.getDesign()).orElse(null);
+        if (ps != null)
+        	ps.applyVisualizationInCurrentDesign();
     }
 
     public Map<NetworkLayer, Boolean> getCanvasLayerVisibilityMap()
@@ -949,103 +951,28 @@ public class VisualizationState
         }
     }
 
-    public Object getPickNavigationBackElement()
-    {
-        return pickManager.getPickNavigationBackElement();
-    }
-
-    public Object getPickNavigationForwardElement()
-    {
-        return pickManager.getPickNavigationForwardElement();
-    }
-
-    public void pickForwardingRule(Pair<Demand, Link> fr)
-    {
-        pickForwardingRule(Collections.singletonList(fr));
-    }
-
-    public void pickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
-    {
-        pickManager.pickForwardingRule(pickedFRs);
-    }
-
-    public NetworkElementType getPickedElementType()
-    {
-        final List<NetworkElement> pickedNetworkElements = getPickedNetworkElements();
-        final List<Pair<Demand, Link>> pickedForwardingRules = getPickedForwardingRules();
-
-        if (!pickedNetworkElements.isEmpty())
-            return NetworkElementType.getType(pickedNetworkElements);
-        else if (!pickedForwardingRules.isEmpty())
-            return NetworkElementType.FORWARDING_RULE;
-        else
-            return null;
-    }
-
-    public List<NetworkElement> getPickedNetworkElements()
-    {
-        return pickManager.getPickedNetworkElements();
-    }
-
-
-    public List<Pair<Demand, Link>> getPickedForwardingRules()
-    {
-        return pickManager.getPickedForwardingRules();
-    }
-
-    public void pickElement(NetworkElement es)
-    {
-        if (es == null) return;
-
-        try
-        {
-            if (es instanceof NetworkLayer) pickManager.pickLayer((NetworkLayer) es);
-            else if (es instanceof Node) pickManager.pickNode(Collections.singletonList((Node) es));
-            else if (es instanceof Link) pickManager.pickLink(Collections.singletonList((Link) es));
-            else if (es instanceof Demand) pickManager.pickDemand(Collections.singletonList((Demand) es));
-            else if (es instanceof Route) pickManager.pickRoute(Collections.singletonList((Route) es));
-            else if (es instanceof MulticastDemand)
-                pickManager.pickMulticastDemand(Collections.singletonList((MulticastDemand) es));
-            else if (es instanceof MulticastTree)
-                pickManager.pickMulticastTree(Collections.singletonList((MulticastTree) es));
-            else if (es instanceof Resource) pickManager.pickResource(Collections.singletonList((Resource) es));
-            else if (es instanceof SharedRiskGroup)
-                pickManager.pickSRG(Collections.singletonList((SharedRiskGroup) es));
-            else return;
-        } catch (ClassCastException e)
-        {
-            ErrorHandling.showErrorDialog("Error");
-            e.printStackTrace();
-        }
-    }
-
-    public void pickElement(List<? extends NetworkElement> es)
-    {
-        if (es == null) return;
-        if (es.isEmpty()) return;
-
-        try
-        {
-            if (es.get(0) instanceof Node) pickManager.pickNode((List<Node>) es);
-            else if (es.get(0) instanceof Link) pickManager.pickLink((List<Link>) es);
-            else if (es.get(0) instanceof Demand) pickManager.pickDemand((List<Demand>) es);
-            else if (es.get(0) instanceof Route) pickManager.pickRoute((List<Route>) es);
-            else if (es.get(0) instanceof MulticastDemand) pickManager.pickMulticastDemand((List<MulticastDemand>) es);
-            else if (es.get(0) instanceof MulticastTree) pickManager.pickMulticastTree((List<MulticastTree>) es);
-            else if (es.get(0) instanceof Resource) pickManager.pickResource((List<Resource>) es);
-            else if (es.get(0) instanceof SharedRiskGroup) pickManager.pickSRG((List<SharedRiskGroup>) es);
-            else return;
-        } catch (ClassCastException e)
-        {
-            ErrorHandling.showErrorDialog("Error");
-            e.printStackTrace();
-        }
-    }
-
-    public void resetPickedState()
-    {
-        pickManager.cleanPick();
-    }
+//    public NetworkElementType getPickedElementTypeOfMainElement()
+//    {
+//        final PickStateInfo ps = getPickedNetworkElements().orElse(null);
+//        if (ps == null) return null;
+//        return pickedNetworkElements.get(0).getFirst().getElementType();
+//    }
+//
+//    public Optional<PickStateInfo> getPickedNetworkElements()
+//    {
+//        return pickManager.getCurrentPick(callback.getDesign());
+//    }
+//
+//    public void pickElement(NetworkElement es , Optional<NetworkLayer> layer)
+//    {
+//    	final PickStateInfo p = pickManager.new PickStateInfo(es, layer);
+//    	pickManager.pickElements(p);
+//    }
+//
+//    public void resetPickedState()
+//    {
+//        pickManager.cleanPick();
+//    }
 
     float getLinkWidthFactor()
     {

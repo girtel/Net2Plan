@@ -16,30 +16,54 @@
 
 package com.net2plan.io;
 
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.colt.matrix.tint.IntFactory2D;
-import cern.colt.matrix.tint.IntMatrix2D;
-import com.net2plan.interfaces.networkDesign.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.EnumSet;
+import java.util.TreeMap;
+import java.util.TreeMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedMap;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.Triple;
-import org.w3c.dom.*;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.colt.matrix.tint.IntFactory2D;
+import cern.colt.matrix.tint.IntMatrix2D;
 
 /**
  * Importer filter for network designs from MatPlanWDM tool ({@code .xml}).
@@ -114,11 +138,11 @@ public class IOMatPlanWDM_design extends IOFilter
 				switch (attribName)
 				{
 					case "title":
-						templateNetPlan.setNetworkName(attribValue);
+						templateNetPlan.setName(attribValue);
 						break;
 
 					case "description":
-						templateNetPlan.setNetworkDescription(attribValue);
+						templateNetPlan.setDescription(attribValue);
 						break;
 						
 					default:
@@ -130,7 +154,7 @@ public class IOMatPlanWDM_design extends IOFilter
 			NodeList layers = doc.getElementsByTagName("layer");
 			int numLayers = layers.getLength();
 			
-			Map<String, String> options = getCurrentOptions();
+			SortedMap<String, String> options = getCurrentOptions();
 			double lightpathCapacity = Double.parseDouble(options.get("matplanwdm.defaultLightpathCapacity"));
 			
 			/* First, process physical topology */
@@ -159,8 +183,8 @@ public class IOMatPlanWDM_design extends IOFilter
 					
 					templateNetPlan.getNetworkLayer (0).setName ("Physical topology");
 					
-					NodeList nodeList = ((Element) layer).getElementsByTagName("node");
-					NodeList fiberList = ((Element) layer).getElementsByTagName("fiber");
+					NodeList nodeList = layer.getElementsByTagName("node");
+					NodeList fiberList = layer.getElementsByTagName("fiber");
 					
 					int N = nodeList.getLength();
 					int E = fiberList.getLength();
@@ -173,7 +197,7 @@ public class IOMatPlanWDM_design extends IOFilter
 						double yCoord = Double.parseDouble(node.getAttribute("yCoord"));
 						String name = node.getAttribute("nodeName");
 
-						Map<String, String> nodeAttributes = new HashMap<String, String>();
+						SortedMap<String, String> nodeAttributes = new TreeMap<String, String>();
 						nodeAttributes.put("id", node.getAttribute("id"));
 						nodeAttributes.put("level", node.getAttribute("nodeLevel"));
 						nodeAttributes.put("timezone", node.getAttribute("nodeTimezone"));
@@ -194,7 +218,7 @@ public class IOMatPlanWDM_design extends IOFilter
 						double linkLengthInKm = Double.parseDouble(fiber.getAttribute("linkLengthInKm"));
 						int numWavelengths = Integer.parseInt(fiber.getAttribute("numberWavelengths"));
 
-						Map<String, String> fiberAttributes = new HashMap<String, String>();
+						SortedMap<String, String> fiberAttributes = new TreeMap<String, String>();
 						fiberAttributes.put("id", fiber.getAttribute("id"));
 
 						templateNetPlan.addLink(originNode, destinationNode, numWavelengths, linkLengthInKm, 200000 , fiberAttributes);
@@ -212,7 +236,7 @@ public class IOMatPlanWDM_design extends IOFilter
 			NetPlan netPlan = templateNetPlan.copy();
 			for(int timeSlotId = 0; timeSlotId < numTimeSlots; timeSlotId++)
 			{
-				NetworkLayer wdmLayer = timeSlotId == 0 ? netPlan.getNetworkLayer ((int) 0) : netPlan.addLayerFrom(templateNetPlan.getNetworkLayer((int) 0));
+				NetworkLayer wdmLayer = timeSlotId == 0 ? netPlan.getNetworkLayer (0) : netPlan.addLayerFrom(templateNetPlan.getNetworkLayer(0));
 				NetworkLayer ipLayer = netPlan.addLayer(null, null, null, null, null , null);
 				
 				if (numTimeSlots == 1)
@@ -233,7 +257,7 @@ public class IOMatPlanWDM_design extends IOFilter
 					
 					if (layer.getAttribute("id").equals("virtualTopology"))
 					{
-						NodeList lightpathList = ((Element) layer).getElementsByTagName("lightpath");
+						NodeList lightpathList = layer.getElementsByTagName("lightpath");
 						int LP = lightpathList.getLength();
 						for (int i = 0; i < LP; i++)
 						{
@@ -242,16 +266,16 @@ public class IOMatPlanWDM_design extends IOFilter
 							Node originNode = (Node) NetPlan.getNetworkElementByAttribute (netPlan.getNodes () , "id", lightpath.getAttribute("origNodeId"));
 							Node destinationNode = (Node) NetPlan.getNetworkElementByAttribute (netPlan.getNodes () , "id", lightpath.getAttribute("destNodeId"));
 							
-							Map<String, String> lightpathAttributes = new HashMap<String, String>();
+							SortedMap<String, String> lightpathAttributes = new TreeMap<String, String>();
 							lightpathAttributes.put("id", lightpath.getAttribute("id"));
 							lightpathAttributes.put("serialNumber", lightpath.getAttribute("serialNumber"));
 
-							Demand lightpathDemand = netPlan.addDemand(originNode, destinationNode, lightpathCapacity, lightpathAttributes , wdmLayer);
+							Demand lightpathDemand = netPlan.addDemand(originNode, destinationNode, lightpathCapacity, RoutingType.SOURCE_ROUTING , lightpathAttributes , wdmLayer);
 							
 							Element lightpathRouting = ((Element) lightpath.getElementsByTagName("lightpathRouting").item(0));
-							NodeList fiberList_thisLightpath = ((Element) lightpathRouting).getElementsByTagName("fiberInLightpath");
+							NodeList fiberList_thisLightpath = lightpathRouting.getElementsByTagName("fiberInLightpath");
 							List<Link> fiberTable_thisLightpath = new LinkedList<Link>();
-							Map<Link, Integer> fiberWavelengthMap = new LinkedHashMap<Link, Integer>();
+							SortedMap<Link, Integer> fiberWavelengthMap = new TreeMap<Link, Integer>();
 							int E = fiberList_thisLightpath.getLength();
 							for(int j = 0; j < E; j++)
 							{
@@ -288,7 +312,7 @@ public class IOMatPlanWDM_design extends IOFilter
 					{
 						DoubleMatrix2D matXde = DoubleFactory2D.sparse.make (netPlan.getNumberOfDemands(ipLayer),netPlan.getNumberOfLinks(ipLayer));
 						
-						NodeList flowList = ((Element) layer).getElementsByTagName("flow");
+						NodeList flowList = layer.getElementsByTagName("flow");
 						int F = flowList.getLength();
 						for (int i = 0; i < F; i++)
 						{
@@ -298,17 +322,17 @@ public class IOMatPlanWDM_design extends IOFilter
 							Node destinationNode = (Node) netPlan.getNetworkElementByAttribute (netPlan.getNodes () , "id", flow.getAttribute("destNodeId"));
 							double h_d = Double.parseDouble(flow.getAttribute("flowAverageRateDemand"));
 							
-							Map<String, String> demandAttributes = new HashMap<String, String>();
+							SortedMap<String, String> demandAttributes = new TreeMap<String, String>();
 							demandAttributes.put("id", flow.getAttribute("id"));
 							demandAttributes.put("serialNumber", flow.getAttribute("serialNumber"));
 							if (flow.hasAttribute("flowPriority")) demandAttributes.put("flowPriority", flow.getAttribute("flowPriority"));
 							if (flow.hasAttribute("flowInitTime")) demandAttributes.put("flowInitTime", flow.getAttribute("flowInitTime"));
 							if (flow.hasAttribute("flowDuration")) demandAttributes.put("flowDuration", flow.getAttribute("flowDuration"));
 
-							long demandId = netPlan.addDemand(originNode, destinationNode, h_d, demandAttributes , ipLayer).getId ();
+							long demandId = netPlan.addDemand(originNode, destinationNode, h_d, RoutingType.SOURCE_ROUTING , demandAttributes , ipLayer).getId ();
 							
 							Element flowRouting = ((Element) flow.getElementsByTagName("flowRouting").item(0));
-							NodeList lightpathList_thisFlow = ((Element) flowRouting).getElementsByTagName("lightpathInFlow");
+							NodeList lightpathList_thisFlow = flowRouting.getElementsByTagName("lightpathInFlow");
 							int E = lightpathList_thisFlow.getLength();
 							for(int j = 0; j < E; j++)
 							{
@@ -325,7 +349,7 @@ public class IOMatPlanWDM_design extends IOFilter
 						
 						if (matXde.zSum () != 0)
 						{
-							netPlan.setRoutingFromDemandLinkCarriedTraffic(matXde , false , false , ipLayer);
+							netPlan.setRoutingFromDemandLinkCarriedTraffic(matXde , false , false , null , ipLayer);
 						}
 						
 						break;

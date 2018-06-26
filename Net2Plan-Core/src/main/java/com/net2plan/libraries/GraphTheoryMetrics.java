@@ -46,7 +46,7 @@ public class GraphTheoryMetrics
 {
 	private final List<Node> nodes;
 	private final List<Link> linkMap;
-	private Map<Link, Double> costMap;
+	private SortedMap<Link, Double> costMap;
 	private final int N;
 	private final int E;
 	private DoubleMatrix2D adjacencyMatrix;
@@ -69,7 +69,7 @@ public class GraphTheoryMetrics
 	 * @param links List of links
 	 * @param linkCostMap Cost per link, where the key is the link identifier and the value is the cost of traversing the link. No special iteration-order (i.e. ascending) is required
 	 */
-	public GraphTheoryMetrics(List<Node> nodes, List<Link> links, Map<Link, Double> linkCostMap)
+	public GraphTheoryMetrics(List<Node> nodes, List<Link> links, SortedMap<Link, Double> linkCostMap)
 	{
 		this.nodes = nodes;
 		this.linkMap = links;
@@ -195,7 +195,7 @@ public class GraphTheoryMetrics
 	public void configureLinkCostMap(Map<Link, Double> linkCostMap)
 	{
 		if (linkCostMap == null) this.costMap = null;
-		else this.costMap = new LinkedHashMap<Link, Double>(linkCostMap);
+		else this.costMap = new TreeMap<Link, Double>(linkCostMap);
 
 		averageSPLength = -1;
 		diameter = -1;
@@ -396,7 +396,7 @@ public class GraphTheoryMetrics
 
 		DoubleMatrix1D aux_outNodeDegree = getOutNodeDegree();
 
-		Map<Node, Double> clusteringCoefficient = new LinkedHashMap<Node, Double>();
+		SortedMap<Node, Double> clusteringCoefficient = new TreeMap<Node, Double>();
 		for (Node node : nodes)
 		{
 			switch ((int) aux_outNodeDegree.get(node.getIndex ()))

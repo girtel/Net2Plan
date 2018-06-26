@@ -16,40 +16,67 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import com.google.common.collect.Sets;
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.CellRenderers;
-import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
-import com.net2plan.gui.utils.AdvancedJTable;
-import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.JNumberField;
-import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.libraries.TrafficMatrixGenerationModels;
-import com.net2plan.utils.Pair;
-import net.miginfocom.swing.MigLayout;
-import org.apache.commons.collections15.BidiMap;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
+import org.apache.commons.collections15.BidiMap;
+
+import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.CellRenderers.NumberCellRenderer;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.JNumberField;
+import com.net2plan.gui.utils.NetworkElementOrFr;
+import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.TrafficMatrixGenerationModels;
+import com.net2plan.utils.Pair;
+
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import net.miginfocom.swing.MigLayout;
 
 public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 {
@@ -71,7 +98,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
     private static final int OPTIONINDEX_NORMALIZATION_PERNODETRAFIN = 6;
     private static final int OPTIONINDEX_NORMALIZATION_MAXIMUMSCALEDVERSION = 7;
 
-    private final JTable trafficMatrixTable;
+    private final AdvancedJTable trafficMatrixTable;
 
     private final JCheckBox cb_filterLinklessNodes;
     private final JComboBox<String> cmb_tagNodesSelector;
@@ -81,6 +108,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
     private final JButton applyTrafficNormalizationButton;
     private final JButton applyTrafficModelButton;
     private final GUINetworkDesign networkViewer;
+    private final NetworkLayer layerThisTable;
 
     private final SwitchableItemListener itemListener = new SwitchableItemListener()
     {
@@ -91,11 +119,12 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         }
     };
 
-    public NetPlanViewTableComponent_trafficMatrix(GUINetworkDesign networkViewer)
+    public NetPlanViewTableComponent_trafficMatrix(GUINetworkDesign networkViewer , NetworkLayer layerThisTable)
     {
         super(new BorderLayout());
         this.networkViewer = networkViewer;
-
+        this.layerThisTable = layerThisTable;
+        
         this.trafficMatrixTable = new AdvancedJTable();
         trafficMatrixTable.setDefaultRenderer(Object.class, new TotalRowColumnRenderer());
         trafficMatrixTable.setDefaultRenderer(Double.class, new TotalRowColumnRenderer());
@@ -250,8 +279,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
             if (filteringNodeTag != null)
                 if (!n.hasTag(filteringNodeTag)) continue;
             if (this.cb_filterLinklessNodes.isSelected())
-                if (!n.getOutgoingLinksAllLayers().stream().anyMatch(e -> e.getLayer().isDefaultLayer())
-                        && (!n.getIncomingLinksAllLayers().stream().anyMatch(e -> e.getLayer().isDefaultLayer())))
+                if (n.getOutgoingLinks(layerThisTable).isEmpty() && n.getIncomingLinks(layerThisTable).isEmpty())
                     continue;
             filteredNodes.add(n);
         }
@@ -260,11 +288,11 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
         if (filteringDemandTag == null)
         {
-            filteredDemands = new HashSet<>(np.getDemands());
+            filteredDemands = new HashSet<>(np.getDemands(layerThisTable));
         } else
         {
             filteredDemands = new HashSet<>();
-            for (Demand d : np.getDemands())
+            for (Demand d : np.getDemands(layerThisTable))
                 if (d.hasTag(filteringDemandTag)) filteredDemands.add(d);
         }
 
@@ -290,7 +318,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
 
         cmb_tagDemandsSelector.removeAllItems();
         cmb_tagDemandsSelector.addItem(DEFAULT_TAG_FILTER);
-        final Set<String> allTagsDemands = np.getDemands().stream().map(n -> n.getTags()).flatMap(e -> e.stream()).collect(Collectors.toSet());
+        final Set<String> allTagsDemands = np.getDemands(layerThisTable).stream().map(n -> n.getTags()).flatMap(e -> e.stream()).collect(Collectors.toSet());
         final List<String> allTagsDemandsOrdered = allTagsDemands.stream().sorted().collect(Collectors.toList());
         for (String tag : allTagsDemandsOrdered) this.cmb_tagDemandsSelector.addItem(tag);
 
@@ -312,7 +340,6 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         final Set<Demand> filteredDemands = filterInfo.getSecond();
 
         final int N = filteredNodes.size();
-        final NetworkLayer layer = np.getNetworkLayerDefault();
         String[] columnHeaders = new String[N + 2];
         Object[][] data = new Object[N + 1][N + 2];
         final Map<Node, Integer> nodeToIndexInFilteredListMap = new HashMap<>();
@@ -365,7 +392,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 final Node n1 = filteredNodes.get(row);
                 final Node n2 = filteredNodes.get(column - 1);
                 final Set<Demand> applicableDemands = Sets.intersection(
-                        np.getNodePairDemands(n1, n2, false, layer), filteredDemands);
+                        np.getNodePairDemands(n1, n2, false, layerThisTable), filteredDemands);
                 if (applicableDemands.isEmpty()) return false;
                 if (applicableDemands.size() > 1) return false;
                 if (applicableDemands.iterator().next().isCoupled()) return false;
@@ -387,7 +414,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     final Node n2 = filteredNodes.get(column - 1);
 
                     final Set<Demand> applicableDemands = Sets.intersection(
-                            np.getNodePairDemands(n1, n2, false, layer), filteredDemands);
+                            np.getNodePairDemands(n1, n2, false, layerThisTable), filteredDemands);
                     final Demand demand = applicableDemands.iterator().next();
                     if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
                     {
@@ -403,8 +430,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     {
                         demand.setOfferedTraffic(newOfferedTraffic);
                         super.setValueAt(newValue, row, column);
-                        networkViewer.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
-                        networkViewer.getVisualizationState().pickElement(demand);
+                        networkViewer.updateVisualizationAfterChanges();
+                        networkViewer.getPickManager().pickElements(demand);
                         networkViewer.updateVisualizationAfterPick();
                         networkViewer.addNetPlanChange();
                     }
@@ -418,7 +445,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         return model;
     }
 
-    private static class TotalRowColumnRenderer extends CellRenderers.NumberCellRenderer
+    private static class TotalRowColumnRenderer extends NumberCellRenderer
     {
         private final static Color BACKGROUND_COLOR = new Color(200, 200, 200);
 
@@ -435,7 +462,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         }
     }
 
-    public void writeTableToFile(File file)
+    public void writeTrafficMatrixTableToFile(File file , NetworkLayer layer)
     {
         TableModel dtm = trafficMatrixTable.getModel();
         int nRow = dtm.getRowCount();
@@ -450,8 +477,8 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
         for (int i = 1; i < nRow + 1; i++)
             for (int j = 0; j < nCol; j++)
                 tableData[i][j] = dtm.getValueAt(i - 1, j);
-
-        ExcelWriter.writeToFile(file, "Traffic matrix", tableData);
+        final String layerName = layer.getName().equals("")? "Layer " + layer.getIndex() : layer.getName();
+        ExcelWriter.writeToFile(file, layerName + " - Traffic matrix", tableData);
     }
 
     private class ApplyTrafficModels
@@ -1129,7 +1156,7 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 {
                     for (int cont = 0; cont < filteredDemandList.size(); cont++)
                         filteredDemandList.get(cont).setOfferedTraffic(demandOfferedTrafficsList.get(cont));
-                    networkViewer.updateVisualizationAfterChanges(Collections.singleton(NetworkElementType.DEMAND));
+                    networkViewer.updateVisualizationAfterChanges();
                     networkViewer.addNetPlanChange();
                 }
 

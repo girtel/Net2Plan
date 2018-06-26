@@ -16,10 +16,10 @@ import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.SortedSet;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -28,6 +28,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Constants.RoutingType;
 
 
 public class MulticastDemandTest 
@@ -38,8 +39,8 @@ public class MulticastDemandTest
 	private Demand scd123;
 	private MulticastDemand d123;
 	private MulticastTree tStar, t123;
-	private Set<Link> star, line123;
-	private Set<Node> endNodes;
+	private SortedSet<Link> star, line123;
+	private SortedSet<Node> endNodes;
 	private Route sc123;
 	private List<Link> path13;
 	private List<NetworkElement> pathSc123;
@@ -74,28 +75,38 @@ public class MulticastDemandTest
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
 		this.path13 = new LinkedList<Link> (); path13.add(link12); path13.add(link23);
 		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.scd123 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
+		this.scd123 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = Arrays.asList(link12 ,res2 , link23); 
 		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(300.0 , 50.0 , 302.0) , pathSc123 , null); 
 		this.upperLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
-		this.line123 = new HashSet<Link> (Arrays.asList(link12, link23)); 
-		this.star = new HashSet<Link> (Arrays.asList(link12, link13));
-		this.endNodes = new HashSet<Node> (Arrays.asList(n2,n3));
+		this.line123 = new TreeSet<Link> (Arrays.asList(link12, link23)); 
+		this.star = new TreeSet<Link> (Arrays.asList(link12, link13));
+		this.endNodes = new TreeSet<Node> (Arrays.asList(n2,n3));
 		this.d123 = np.addMulticastDemand(n1 , endNodes , 100 , null , lowerLayer);
 		this.t123 = np.addMulticastTree(d123 , 10,15,line123,null);
 		this.tStar = np.addMulticastTree(d123 , 10,15,star,null);
 		this.upperMdLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
 		this.upperMdLink13 = np.addLink(n1,n3,10,100,1,null,upperLayer);
 		this.upperMd123 = np.addMulticastDemand (n1 , endNodes , 100 , null , upperLayer);
-		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
-		d123.couple(new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
+		this.upperMt123 = np.addMulticastTree (upperMd123 , 10 , 15 , new TreeSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)) , null);
+		d123.couple(new TreeSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
 	}
 
 	@After
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
+	}
+
+	@Test
+	public void testSetMaximumLatencyE2E ()
+	{
+		assertEquals (upperMd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , Double.MAX_VALUE , 0);
+		upperMd123.setMaximumAcceptableE2EWorstCaseLatencyInMs(1);
+		assertEquals (upperMd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , 1 , 0);
+		upperMd123.setMaximumAcceptableE2EWorstCaseLatencyInMs(-1);
+		assertEquals (upperMd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , Double.MAX_VALUE , 0);
 	}
 
 	@Test
@@ -136,11 +147,11 @@ public class MulticastDemandTest
 	@Test
 	public void testGetEgressNodes() 
 	{
-		assertEquals(d123.getEgressNodes() , new HashSet<Node> (Arrays.asList(n2,n3)));
-		assertEquals(upperMd123.getEgressNodes() , new HashSet<Node> (Arrays.asList(n2,n3)));
+		assertEquals(d123.getEgressNodes() , new TreeSet<Node> (Arrays.asList(n2,n3)));
+		assertEquals(upperMd123.getEgressNodes() , new TreeSet<Node> (Arrays.asList(n2,n3)));
 		n1.setFailureState(false);
-		assertEquals(d123.getEgressNodes() , new HashSet<Node> (Arrays.asList(n2,n3)));
-		assertEquals(upperMd123.getEgressNodes() , new HashSet<Node> (Arrays.asList(n2,n3)));
+		assertEquals(d123.getEgressNodes() , new TreeSet<Node> (Arrays.asList(n2,n3)));
+		assertEquals(upperMd123.getEgressNodes() , new TreeSet<Node> (Arrays.asList(n2,n3)));
 	}
 
 	@Test
@@ -179,9 +190,9 @@ public class MulticastDemandTest
 	@Test
 	public void testComputeMinimumCostMulticastTrees() 
 	{
-		Set<MulticastTree> twoTrees = new HashSet<MulticastTree> (Arrays.asList(tStar , t123));
+		SortedSet<MulticastTree> twoTrees = new TreeSet<MulticastTree> (Arrays.asList(tStar , t123));
 		assertEquals (d123.computeMinimumCostMulticastTrees(null) , Pair.of(twoTrees , 2.0));
-		assertEquals (d123.computeMinimumCostMulticastTrees(new double [] { 1.0,2.0,1.0}) , Pair.of(new HashSet<MulticastTree> (Arrays.asList(tStar)) , 2.0));
+		assertEquals (d123.computeMinimumCostMulticastTrees(new double [] { 1.0,2.0,1.0}) , Pair.of(new TreeSet<MulticastTree> (Arrays.asList(tStar)) , 2.0));
 	}
 
 	@Test
@@ -204,22 +215,22 @@ public class MulticastDemandTest
 	@Test
 	public void testGetMulticastTrees() 
 	{
-		assertEquals(d123.getMulticastTrees() , new HashSet<MulticastTree> (Arrays.asList(t123 , tStar)));
-		assertEquals(upperMd123.getMulticastTrees() , new HashSet<MulticastTree>(Arrays.asList(upperMt123)));
+		assertEquals(d123.getMulticastTrees() , new TreeSet<MulticastTree> (Arrays.asList(t123 , tStar)));
+		assertEquals(upperMd123.getMulticastTrees() , new TreeSet<MulticastTree>(Arrays.asList(upperMt123)));
 	}
 
 	@Test
 	public void testCouple() 
 	{
 		assertTrue (d123.isCoupled());
-		assertEquals(d123.getCoupledLinks() , new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
+		assertEquals(d123.getCoupledLinks() , new TreeSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
 	}
 
 	@Test
 	public void testCoupleToNewLinksCreated() 
 	{
 		NetworkLayer upperUpperLayer = np.addLayer("" , "" , "upperTrafficUnits" , "Mbps" , null , null);
-		Set<Link> uuLinks = upperMd123.coupleToNewLinksCreated(upperUpperLayer);
+		SortedSet<Link> uuLinks = upperMd123.coupleToNewLinksCreated(upperUpperLayer);
 		assertEquals(uuLinks.size() , 2);
 		for (Link e : uuLinks)
 		{
@@ -232,8 +243,8 @@ public class MulticastDemandTest
 	@Test
 	public void testGetCoupledLinks() 
 	{
-		assertEquals(d123.getCoupledLinks() , new HashSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
-		assertEquals(upperMd123.getCoupledLinks() , new HashSet<Link> ());
+		assertEquals(d123.getCoupledLinks() , new TreeSet<Link> (Arrays.asList(upperMdLink12 , upperMdLink13)));
+		assertEquals(upperMd123.getCoupledLinks() , new TreeSet<Link> ());
 	}
 
 	@Test

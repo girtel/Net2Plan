@@ -28,8 +28,8 @@ package com.net2plan.internal;
  */
 public class Version
 {
-	private final static String VERSION = "0.5.3";
-	private final static String FILE_FORMAT_VERSION = "5";
+	private final static String VERSION = "0.6.0";
+	private final static String FILE_FORMAT_VERSION = "6";
 	
 	/**
 	 * Returns the current {@code .n2p} file format VERSION.

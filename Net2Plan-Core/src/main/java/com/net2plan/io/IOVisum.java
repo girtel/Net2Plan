@@ -32,16 +32,12 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.Triple;
+import com.net2plan.utils.Constants.RoutingType;
 
 import java.io.File;
 import java.util.*;
 
 /**
- * Importer filter for BRITE topology generator ({@code .brite}).
- * 
- * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
- * @since 0.3.1
- * @see <a href='http://www.cs.bu.edu/brite/user_manual/node29.html'>The BRITE Output Format</a>
  */
 public class IOVisum extends IOFilter
 {
@@ -80,9 +76,9 @@ public class IOVisum extends IOFilter
 		{
 			/* Load the nodes */
 			Table tableNode = DatabaseBuilder.open(file).getTable("NODE");
-			Map<String,Node> mapNo2Node = new HashMap<String,Node> ();
+			SortedMap<String,Node> mapNo2Node = new TreeMap<String,Node> ();
 			
-			Set<String> columnNames = new HashSet<String> ();
+			SortedSet<String> columnNames = new TreeSet<String> ();
 			for (Column c : tableNode.getColumns()) columnNames.add(c.getName());
 			
 			for(Row row : tableNode) 
@@ -91,7 +87,7 @@ public class IOVisum extends IOFilter
 				final String name = readField(row , "NAME");
 				final double xCoord = Double.parseDouble(readField(row , "XCOORD"));
 				final double yCoord = Double.parseDouble(readField(row , "YCOORD"));
-				Map<String,String> att = new HashMap<String,String> ();
+				SortedMap<String,String> att = new TreeMap<String,String> ();
 				att.put (ATTRIBUTEPREFIX + "isZone" , "false");
 				for (String columnName : columnNames)
 					att.put(ATTRIBUTEPREFIX + columnName , readField(row , columnName));
@@ -101,8 +97,8 @@ public class IOVisum extends IOFilter
 
 			/* Load the zones (the centroids, sources and destinations of traffic) */
 			Table tableZones = DatabaseBuilder.open(file).getTable("ZONE");
-			Map<String,Node> mapNoOfZone2Node = new HashMap<String,Node> ();
-			columnNames = new HashSet<String> ();
+			SortedMap<String,Node> mapNoOfZone2Node = new TreeMap<String,Node> ();
+			columnNames = new TreeSet<String> ();
 			for (Column c : tableZones.getColumns()) columnNames.add(c.getName());
 			for(Row row : tableZones) 
 			{
@@ -110,7 +106,7 @@ public class IOVisum extends IOFilter
 				final String name = readField(row , "NAME");
 				final double xCoord = Double.parseDouble(readField(row , "XCOORD"));
 				final double yCoord = Double.parseDouble(readField(row , "YCOORD"));
-				Map<String,String> att = new HashMap<String,String> ();
+				SortedMap<String,String> att = new TreeMap<String,String> ();
 				att.put (ATTRIBUTEPREFIX + "isZone" , "true");
 				for (String columnName : columnNames)
 					att.put(ATTRIBUTEPREFIX + columnName , readField(row , columnName));
@@ -120,7 +116,7 @@ public class IOVisum extends IOFilter
 			
 			/* Load the zones (the centroids, sources and destinations of traffic) */
 			Table tableConnector = DatabaseBuilder.open(file).getTable("CONNECTOR");
-			columnNames = new HashSet<String> ();
+			columnNames = new TreeSet<String> ();
 			for (Column c : tableConnector.getColumns()) columnNames.add(c.getName());
 			for(Row row : tableConnector) 
 			{
@@ -128,7 +124,7 @@ public class IOVisum extends IOFilter
 				final String nodeNo = readField(row , "NODENO");
 				final String directionConnector = readField(row , "DIRECTION");
 				final double lengthInKm = Double.parseDouble(readField(row , "LENGTH"));
-				Map<String,String> att = new HashMap<String,String> ();
+				SortedMap<String,String> att = new TreeMap<String,String> ();
 				att.put (ATTRIBUTEPREFIX + "isConnector" , "true");
 				for (String columnName : columnNames)
 					att.put(ATTRIBUTEPREFIX + columnName , readField(row , columnName));
@@ -144,7 +140,7 @@ public class IOVisum extends IOFilter
 
 			/* Load the links */
 			Table tableLink = DatabaseBuilder.open(file).getTable("LINK");
-			columnNames = new HashSet<String> ();
+			columnNames = new TreeSet<String> ();
 			for (Column c : tableLink.getColumns()) columnNames.add(c.getName());
 			for(Row row : tableLink) 
 			{
@@ -152,7 +148,7 @@ public class IOVisum extends IOFilter
 				final String toNodeNo = readField(row , "TONODENO");
 				final double lengthInKm = Double.parseDouble(readField(row , "LENGTH"));
 				// PABLO: HOW TO SET THE CAPACITIES? HOW TO SET THE PROPAGATION SPEED? WHICH ARE THESE FIELDS?
-				Map<String,String> att = new HashMap<String,String> ();
+				SortedMap<String,String> att = new TreeMap<String,String> ();
 				att.put (ATTRIBUTEPREFIX + "isConnector" , "false");
 				for (String columnName : columnNames)
 					att.put(ATTRIBUTEPREFIX + columnName , readField(row , columnName));
@@ -170,7 +166,7 @@ public class IOVisum extends IOFilter
 			{
 				Table tableDemand = DatabaseBuilder.open(new File (odMatrixFileName)).getTable("Vista de matriz");
 				
-				columnNames = new HashSet<String> ();
+				columnNames = new TreeSet<String> ();
 				for (Column c : tableDemand.getColumns()) columnNames.add(c.getName());
 				System.out.println("Column names: " + columnNames);
 				for(Row row : tableDemand) 
@@ -181,7 +177,7 @@ public class IOVisum extends IOFilter
 					final String toName = readField(row , "TONAME");
 					final double value = Double.parseDouble(readField(row , "VALUE"));
 					// PABLO: HOW TO SET THE CAPACITIES? HOW TO SET THE PROPAGATION SPEED? WHICH ARE THESE FIELDS?
-					Map<String,String> att = new HashMap<String,String> ();
+					SortedMap<String,String> att = new TreeMap<String,String> ();
 					for (String columnName : columnNames)
 						att.put(ATTRIBUTEPREFIX + columnName , readField(row , columnName));
 					final Node originNode = mapNoOfZone2Node.get(fromNodeNo);
@@ -194,7 +190,7 @@ public class IOVisum extends IOFilter
 						System.out.println ("VISUM reader: A demand has the same ingress and egress node (" + fromName + ") and non-zero value (" + value + "). The demand is ignored.");
 						continue;
 					}
-					Demand newDemand = netPlan.addDemand(originNode , destinationNode , value , att);
+					Demand newDemand = netPlan.addDemand(originNode , destinationNode , value , RoutingType.SOURCE_ROUTING , att);
 				}
 			}
 			
@@ -212,7 +208,7 @@ public class IOVisum extends IOFilter
 //					break;
 //			
 //			/* Read all nodes */
-//			Map<String, Long> nodeName2Id = new HashMap<String, Long>();
+//			SortedMap<String, Long> nodeName2Id = new TreeMap<String, Long>();
 //			while ((line = in.readLine()) != null)
 //			{
 //				line = line.trim();

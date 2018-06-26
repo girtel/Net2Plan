@@ -41,11 +41,6 @@ public class Report_delay implements IReport
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, reportParameters);
 
-		if (netPlan.getRoutingType() != RoutingType.SOURCE_ROUTING)
-		{
-			return "<html><body><p>No delay information available. The routing must be of the form SOURCE ROUTING.</p></body></html>";
-		}
-		
 		if (!netPlan.hasRoutes())
 		{
 			return "<html><body><p>No delay information available. Routing is not defined.</p></body></html>";

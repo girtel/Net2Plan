@@ -11,13 +11,14 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.internal.AttributeMap;
-import com.net2plan.internal.ErrorHandling;
-
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.SortedSet;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import com.net2plan.internal.AttributeMap;
+import com.net2plan.internal.ErrorHandling;
 
 /** <p>This class contains a representation of a Shared Risk Group (SRG). This is a concept representing a risk of failure in the network,
  * such that if this risk becomes true, a particular set of links and/or nodes simultaneously fail. For instance, a SRG can be the risk of 
@@ -37,45 +38,118 @@ import java.util.Set;
  */
 public class SharedRiskGroup extends NetworkElement
 {
-	Set<Node> nodes;
-	Set<Link> links;
+	private SortedSet<Node> nodesIfNonDynamic;
+	SortedSet<Link> linksIfNonDynamic;
 	double meanTimeToFailInHours;
 	double meanTimeToRepairInHours;
+	DynamicSrgImplementation dynamicSrgImplementation;
 	
 
-	SharedRiskGroup (NetPlan netPlan , long id , int index , Set<Node> nodes , Set<Link> links , double meanTimeToFailInHours ,  double meanTimeToRepairInHours , AttributeMap attributes)
+	SharedRiskGroup (NetPlan netPlan , long id , int index , SortedSet<Node> nodes , SortedSet<Link> links , double meanTimeToFailInHours ,  double meanTimeToRepairInHours , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
+		this.setName ("Srg-" + index);
 
-		if (links == null) links = new HashSet<Link> ();
-		if (nodes == null) nodes = new HashSet<Node> ();
+		if (links == null) links = new TreeSet<Link> ();
+		if (nodes == null) nodes = new TreeSet<Node> ();
 		
 		for (Link e : links) if (!netPlan.equals(e.netPlan)) throw new RuntimeException ("Bad"); 
 		for (Node n : nodes) if (!netPlan.equals(n.netPlan)) throw new RuntimeException ("Bad");
 
-		this.nodes = new HashSet<Node> (nodes);
-		this.links = new HashSet<Link> (links);
+		this.nodesIfNonDynamic = new TreeSet<Node> (nodes);
+		this.linksIfNonDynamic = new TreeSet<Link> (links);
 		this.meanTimeToFailInHours = meanTimeToFailInHours;
 		this.meanTimeToRepairInHours = meanTimeToRepairInHours;
+		for (Node n : nodes) n.cache_nodeNonDynamicSRGs.add(this);
+        for (Link e : links) e.cache_nonDynamicSrgs.add(this);
+        this.dynamicSrgImplementation = null;
 	}
 
-	void copyFrom (SharedRiskGroup origin)
+    SharedRiskGroup (NetPlan netPlan , long id , int index , String className , String dynamicInitializationString , double meanTimeToFailInHours ,  double meanTimeToRepairInHours , AttributeMap attributes)
+    {
+        super (netPlan , id , index , attributes);
+		this.setName ("Srg-" + index);
+        this.nodesIfNonDynamic = new TreeSet<> ();
+        this.linksIfNonDynamic = new TreeSet<> ();
+        this.meanTimeToFailInHours = meanTimeToFailInHours;
+        this.meanTimeToRepairInHours = meanTimeToRepairInHours;
+        try { this.dynamicSrgImplementation = (DynamicSrgImplementation) Class.forName(className).newInstance(); } catch (Exception e) { e.printStackTrace(); throw new Net2PlanException ("SRG Dynamic initialization error");} 
+        this.dynamicSrgImplementation.initialize(dynamicInitializationString , netPlan);
+    }
+
+    public boolean isDynamicSrg () { return dynamicSrgImplementation != null; }
+
+    /** Returns the object implementing the dynamic decision of which nodes/links belong to this SRG
+     * @return  see above
+     */
+    public DynamicSrgImplementation getDynamicSrgImplementation () { return dynamicSrgImplementation; }
+
+    public void setDynamicImplementation (DynamicSrgImplementation impl)
+    {
+        if (!isDynamicSrg()) throw new Net2PlanException ("The SRG is not dynamic");
+        this.dynamicSrgImplementation = impl;
+    }
+    
+    void copyFrom (SharedRiskGroup origin)
 	{
 		if ((this.id != origin.id) || (this.index != origin.index)) throw new RuntimeException ("Bad");
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 		this.meanTimeToFailInHours = origin.meanTimeToFailInHours;
 		this.meanTimeToRepairInHours = origin.meanTimeToRepairInHours;
-		this.links.clear (); for (Link e : origin.links) this.links.add(this.netPlan.getLinkFromId (e.id));
-		this.nodes.clear (); for (Node n : origin.nodes) this.nodes.add(this.netPlan.getNodeFromId (n.id));
+		if (origin.isDynamicSrg())
+		{
+		    this.linksIfNonDynamic.clear();
+            this.nodesIfNonDynamic.clear();
+            try { this.dynamicSrgImplementation = (DynamicSrgImplementation) Class.forName(origin.dynamicSrgImplementation.getClass().getName()).newInstance(); } catch (Exception e) { e.printStackTrace(); throw new Net2PlanException ("SRG Dynamic initialization error");} 
+            this.dynamicSrgImplementation.initialize(origin.dynamicSrgImplementation.getInitializationString (), this.netPlan);
+		}
+		else
+		{
+	        this.linksIfNonDynamic.clear (); for (Link e : origin.linksIfNonDynamic) this.linksIfNonDynamic.add(this.netPlan.getLinkFromId (e.id));
+	        this.nodesIfNonDynamic.clear (); for (Node n : origin.nodesIfNonDynamic) this.nodesIfNonDynamic.add(this.netPlan.getNodeFromId (n.id));
+	        this.dynamicSrgImplementation = null;
+		}
 	}
 
-	boolean isDeepCopy (SharedRiskGroup e2)
+    public boolean isStaticEmptySrg () { return !isDynamicSrg() && this.linksIfNonDynamic.isEmpty() && this.nodesIfNonDynamic.isEmpty(); }
+    
+    public boolean isDynamicCurrentlyEmptySrg () { return isDynamicSrg() && this.getLinksAllLayers().isEmpty() && this.getNodes().isEmpty(); }
+
+    public static SharedRiskGroup getDummyEmptyStaticSrg (NetPlan np)
+    {
+        final SharedRiskGroup srg = np.addSRG(1, 1, null);
+        srg.remove();
+        return srg;
+    }
+    
+    public static SortedSet<SharedRiskGroup> getSrgListCompletedWithDummyNoFailureStateIfNeeded (Collection<SharedRiskGroup> sourceSrgs , NetPlan np)
+    {
+        if (sourceSrgs == null) throw new Net2PlanException ("Wrong input parameters");
+        final SortedSet<SharedRiskGroup> res = new TreeSet<> (sourceSrgs);
+        final boolean hasNoFailure = res.stream().anyMatch(s->s.isStaticEmptySrg());
+        if (!hasNoFailure) res.add(getDummyEmptyStaticSrg(np));
+        return res;
+    }
+
+    boolean isDeepCopy (SharedRiskGroup e2)
 	{
 		if (!super.isDeepCopy(e2)) return false;
 		if (this.meanTimeToFailInHours != e2.meanTimeToFailInHours) return false;
 		if (this.meanTimeToRepairInHours != e2.meanTimeToRepairInHours) return false;
-		if (!NetPlan.isDeepCopy(this.nodes , e2.nodes)) return false;
-		if (!NetPlan.isDeepCopy(this.links, e2.links)) return false;
+		if (this.isDynamicSrg())
+		{
+		    if (!e2.isDynamicSrg()) return false;
+		    if (!this.dynamicSrgImplementation.getClass().getName().equals(e2.dynamicSrgImplementation.getClass().getName())) return false;
+		    if (!this.dynamicSrgImplementation.getInitializationString().equals(e2.dynamicSrgImplementation.getInitializationString())) return false;
+            if (!NetPlan.isDeepCopy(this.getLinksAllLayers() , e2.getLinksAllLayers())) return false;
+            if (!NetPlan.isDeepCopy(this.getNodes() , e2.getNodes())) return false;
+		}
+		else
+		{
+		    if (e2.isDynamicSrg()) return false;
+	        if (!NetPlan.isDeepCopy(this.nodesIfNonDynamic , e2.nodesIfNonDynamic)) return false;
+	        if (!NetPlan.isDeepCopy(this.linksIfNonDynamic, e2.linksIfNonDynamic)) return false;
+		}
 		return true;
 	}
 
@@ -83,20 +157,21 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns the set of nodes associated to the SRG (fail, when the SRG is in failure state)</p>
 	 * @return The set of failing nodes, as an unmodifiable set
 	 */
-	public Set<Node> getNodes()
+	public SortedSet<Node> getNodes()
 	{
-		return Collections.unmodifiableSet(nodes);
+	    if (isDynamicSrg()) return dynamicSrgImplementation.getNodes();
+		return Collections.unmodifiableSortedSet(nodesIfNonDynamic);
 	}
 
 	/**
 	 * <p>Returns all the links affected by the SRG at all the layers: the links affected, and the input and output links of the affected nodes</p>
 	 * @return All the affected links
 	 */
-	public Set<Link> getAffectedLinksAllLayers ()
+	public SortedSet<Link> getAffectedLinksAllLayers ()
 	{
-		Set<Link> res = new HashSet<Link> ();
-		res.addAll (links);
-		for (Node n : nodes) { res.addAll (n.cache_nodeIncomingLinks); res.addAll (n.cache_nodeOutgoingLinks); }
+		SortedSet<Link> res = new TreeSet<Link> ();
+		res.addAll (getLinksAllLayers());
+		for (Node n : getNodes ()) { res.addAll (n.cache_nodeIncomingLinks); res.addAll (n.cache_nodeOutgoingLinks); }
 		return res;
 	}
 
@@ -105,11 +180,11 @@ public class SharedRiskGroup extends NetworkElement
 	 * @param layer Network layer
 	 * @return All the affected links at a given layer
 	 */
-	public Set<Link> getAffectedLinks (NetworkLayer layer)
+	public SortedSet<Link> getAffectedLinks (NetworkLayer layer)
 	{
-		Set<Link> res = new HashSet<Link> ();
-		for (Link e : links) if (e.layer == layer) res.add (e);
-		for (Node n : nodes) 
+		SortedSet<Link> res = new TreeSet<Link> ();
+		for (Link e : getLinksAllLayers()) if (e.layer == layer) res.add (e);
+		for (Node n : getNodes ()) 
 		{
 			for (Link e : n.cache_nodeIncomingLinks) if (e.layer == layer) res.add (e);
 			for (Link e : n.cache_nodeOutgoingLinks) if (e.layer == layer) res.add (e);
@@ -121,11 +196,11 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns the set of routes affected by the SRG (fail, when the SRG is in failure state). </p>
 	 * @return The set of failing routes
 	 */
-	public Set<Route> getAffectedRoutesAllLayers ()
+	public SortedSet<Route> getAffectedRoutesAllLayers ()
 	{
-		Set<Route> res = new HashSet<Route> ();
-		for (Link e : links) res.addAll (e.cache_traversingRoutes.keySet());
-		for (Node n : nodes) res.addAll (n.cache_nodeAssociatedRoutes);
+		SortedSet<Route> res = new TreeSet<Route> ();
+		for (Link e : getLinksAllLayers()) res.addAll (e.cache_traversingRoutes.keySet());
+		for (Node n : getNodes()) res.addAll (n.cache_nodeAssociatedRoutes);
 		return res;
 	}
 
@@ -134,11 +209,11 @@ public class SharedRiskGroup extends NetworkElement
 	 * @param layer Network layer
 	 * @return The failing routes belonging to that layer
 	 */
-	public Set<Route> getAffectedRoutes (NetworkLayer layer)
+	public SortedSet<Route> getAffectedRoutes (NetworkLayer layer)
 	{
-		Set<Route> res = new HashSet<Route> ();
-		for (Link e : links) for (Route r : e.cache_traversingRoutes.keySet()) if (r.layer.equals(layer)) res.add (r);
-		for (Node n : nodes) for (Route r : n.cache_nodeAssociatedRoutes) if (r.layer.equals(layer)) res.add (r);
+		SortedSet<Route> res = new TreeSet<Route> ();
+		for (Link e : getLinksAllLayers()) for (Route r : e.cache_traversingRoutes.keySet()) if (r.layer.equals(layer)) res.add (r);
+		for (Node n : getNodes()) for (Route r : n.cache_nodeAssociatedRoutes) if (r.layer.equals(layer)) res.add (r);
 		return res;
 	}
 
@@ -146,11 +221,11 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns the set of multicast trees affected by the SRG (fail, when the SRG is in failure state). </p>
 	 * @return The set of failing multicast trees
 	 */
-	public Set<MulticastTree> getAffectedMulticastTreesAllLayers ()
+	public SortedSet<MulticastTree> getAffectedMulticastTreesAllLayers ()
 	{
-		Set<MulticastTree> res = new HashSet<MulticastTree> ();
-		for (Link e : links) res.addAll (e.cache_traversingTrees);
-		for (Node n : nodes) res.addAll (n.cache_nodeAssociatedulticastTrees);
+		SortedSet<MulticastTree> res = new TreeSet<MulticastTree> ();
+		for (Link e : getLinksAllLayers()) res.addAll (e.cache_traversingTrees);
+		for (Node n : getNodes()) res.addAll (n.cache_nodeAssociatedulticastTrees);
 		return res;
 	}
 
@@ -159,11 +234,11 @@ public class SharedRiskGroup extends NetworkElement
 	 * @param layer Network layer
 	 * @return The failing multicast trees belonging to the given layer
 	 */
-	public Set<MulticastTree> getAffectedMulticastTrees (NetworkLayer layer)
+	public SortedSet<MulticastTree> getAffectedMulticastTrees (NetworkLayer layer)
 	{
-		Set<MulticastTree> res = new HashSet<MulticastTree> ();
-		for (Link e : links) for (MulticastTree t : e.cache_traversingTrees) if (t.layer.equals(layer)) res.add (t);
-		for (Node n : nodes) for (MulticastTree t : n.cache_nodeAssociatedulticastTrees) if (t.layer.equals(layer)) res.add (t);
+		SortedSet<MulticastTree> res = new TreeSet<MulticastTree> ();
+		for (Link e : getLinksAllLayers()) for (MulticastTree t : e.cache_traversingTrees) if (t.layer.equals(layer)) res.add (t);
+		for (Node n : getNodes ()) for (MulticastTree t : n.cache_nodeAssociatedulticastTrees) if (t.layer.equals(layer)) res.add (t);
 		return res;
 	}
 
@@ -175,24 +250,25 @@ public class SharedRiskGroup extends NetworkElement
 	 */
 	public boolean affectsAnyOf (Collection<? extends NetworkElement> col)
 	{
+	    final SortedSet<Node> nodesThisSrg = getNodes ();
 		for (NetworkElement e : col)
 		{
 			if (e instanceof Link)
 			{
 				final Link ee = (Link) e;
-				if (nodes.contains(ee.originNode)) return true;
-				if (nodes.contains(ee.destinationNode)) return true;
-				if (links.contains(ee)) return true;
+				if (nodesThisSrg.contains(ee.originNode)) return true;
+				if (nodesThisSrg.contains(ee.destinationNode)) return true;
+				if (getLinksAllLayers().contains(ee)) return true;
 			}
 			else if (e instanceof Resource)
 			{
 				final Resource ee = (Resource) e;
-				if (nodes.contains(ee.hostNode)) return true;
+				if (nodesThisSrg.contains(ee.hostNode)) return true;
 			}
 			else if (e instanceof Node)
 			{
 				final Node ee = (Node) e;
-				if (nodes.contains(ee)) return true;
+				if (nodesThisSrg.contains(ee)) return true;
 			}
 			else throw new Net2PlanException ("The collection can contain only links, resources and/or nodes");
 		}
@@ -203,9 +279,10 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns the set of links associated to the SRG (fail, when the SRG is in failure state).</p>
 	 * @return The set of failing links, as an unmodifiable set
 	 */
-	public Set<Link> getLinksAllLayers()
+	public SortedSet<Link> getLinksAllLayers()
 	{
-		return Collections.unmodifiableSet(links);
+	    if (isDynamicSrg()) return dynamicSrgImplementation.getLinksAllLayers();
+		return Collections.unmodifiableSortedSet(linksIfNonDynamic);
 	}
 
 	/**
@@ -213,10 +290,10 @@ public class SharedRiskGroup extends NetworkElement
 	 * @param layer the layer
 	 * @return The set of failing links
 	 */
-	public Set<Link> getLinks(NetworkLayer layer)
+	public SortedSet<Link> getLinks(NetworkLayer layer)
 	{
-		Set<Link> res = new HashSet<Link> ();
-		for (Link e : links) if (e.layer.equals(layer)) res.add (e);
+		SortedSet<Link> res = new TreeSet<Link> ();
+		for (Link e : getLinksAllLayers()) if (e.layer.equals(layer)) res.add (e);
 		return res;
 	}
 
@@ -275,7 +352,7 @@ public class SharedRiskGroup extends NetworkElement
 	public void setAsDown ()
 	{
 		checkAttachedToNetPlanObject();
-		netPlan.setLinksAndNodesFailureState (null , links , null , nodes);
+		netPlan.setLinksAndNodesFailureState (null , getLinksAllLayers() , null , getNodes ());
 	}
 	
 	/**
@@ -285,7 +362,7 @@ public class SharedRiskGroup extends NetworkElement
 	public void setAsUp ()
 	{
 		checkAttachedToNetPlanObject();
-		netPlan.setLinksAndNodesFailureState (links , null , nodes , null);
+		netPlan.setLinksAndNodesFailureState (getLinksAllLayers() , null , getNodes (), null);
 	}
 
 	/**
@@ -294,10 +371,11 @@ public class SharedRiskGroup extends NetworkElement
 	 */
 	public void removeLink (Link e)
 	{
+	    if (isDynamicSrg()) throw new Net2PlanException ("Cannot modify dynamic SRGs");
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		e.cache_srgs.remove (this);
-		links.remove (e);
+		e.cache_nonDynamicSrgs.remove (this); 
+		linksIfNonDynamic.remove (e);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 	
@@ -307,10 +385,11 @@ public class SharedRiskGroup extends NetworkElement
 	 */
 	public void removeNode (Node n)
 	{
+        if (isDynamicSrg()) throw new Net2PlanException ("Cannot modify dynamic SRGs");
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		n.cache_nodeSRGs.remove (this);
-		nodes.remove (n);
+		n.cache_nodeNonDynamicSRGs.remove (this);
+		nodesIfNonDynamic.remove (n);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -322,13 +401,22 @@ public class SharedRiskGroup extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 
-		for (Node node : nodes) node.cache_nodeSRGs.remove (this);
-		for (Link link : links) link.cache_srgs.remove (this);
+		if (!isDynamicSrg())
+		{
+	        for (Node node : nodesIfNonDynamic) node.cache_nodeNonDynamicSRGs.remove (this);
+	        for (Link link : linksIfNonDynamic) link.cache_nonDynamicSrgs.remove (this);
+		}
+		else
+		{
+	        dynamicSrgImplementation.remove(); // release memory
+		}
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		netPlan.cache_id2srgMap.remove (id);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.srgs , index);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+		if (isDynamicSrg()) netPlan.cache_dynamicSrgs.remove(this);
+        final NetPlan npOld = this.netPlan;
+        removeId();
+        if (ErrorHandling.isDebugEnabled()) npOld.checkCachesConsistency();
 	}
 
 	/**
@@ -337,12 +425,13 @@ public class SharedRiskGroup extends NetworkElement
 	 */
 	public void addLink(Link link)
 	{
+        if (isDynamicSrg()) throw new Net2PlanException ("Cannot modify dynamic SRGs");
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		link.checkAttachedToNetPlanObject(this.netPlan);
-		if (this.links.contains(link)) return;
-		link.cache_srgs.add(this);
-		this.links.add(link);
+		if (this.linksIfNonDynamic.contains(link)) return;
+		link.cache_nonDynamicSrgs.add(this);
+		this.linksIfNonDynamic.add(link);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -352,12 +441,13 @@ public class SharedRiskGroup extends NetworkElement
 	 */
 	public void addNode(Node node)
 	{
+        if (isDynamicSrg()) throw new Net2PlanException ("Cannot modify dynamic SRGs");
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		node.checkAttachedToNetPlanObject(this.netPlan);
-		if (this.nodes.contains(node)) return;
-		node.cache_nodeSRGs.add(this);
-		this.nodes.add(node);
+		if (this.nodesIfNonDynamic.contains(node)) return;
+		node.cache_nodeNonDynamicSRGs.add(this);
+		this.nodesIfNonDynamic.add(node);
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -365,14 +455,26 @@ public class SharedRiskGroup extends NetworkElement
 	 * <p>Returns a {@code String} representation of the Shared Risk Group.</p>
 	 * @return {@code String} representation of the SRG
 	 */
-	public String toString () { return "srg" + index + " (id " + id + ")"; }
+	public String toString () 
+	{ 
+	    if (isDynamicSrg())
+	        return "SRG" + index + ". Dynamic: " + dynamicSrgImplementation.toString();
+	    else
+	        return "SRG" + index + ", links: " + linksIfNonDynamic + ", nodes: " + nodesIfNonDynamic; 
+	}
 
 	void checkCachesConsistency ()
 	{
 		super.checkCachesConsistency ();
 
-		for (Link link : links) if (!link.cache_srgs.contains(this)) throw new RuntimeException ("Bad");
-		for (Node node : nodes) if (!node.cache_nodeSRGs.contains(this)) throw new RuntimeException ("Bad");
+		assert getNodes ().stream().allMatch(n->n.getNetPlan()== this.netPlan);
+        assert getLinksAllLayers ().stream().allMatch(n->n.getNetPlan()== this.netPlan);
+		
+		if (isDynamicSrg())
+		{
+	        for (Link link : linksIfNonDynamic) if (!link.cache_nonDynamicSrgs.contains(this)) throw new RuntimeException ("Bad");
+	        for (Node node : nodesIfNonDynamic) if (!node.cache_nodeNonDynamicSRGs.contains(this)) throw new RuntimeException ("Bad");
+		}
 	}
 
 }

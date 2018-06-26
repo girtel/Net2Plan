@@ -11,11 +11,16 @@
 
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.utils.Pair;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.net2plan.gui.utils.NetworkElementOrFr;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.utils.Pair;
 
 /**
  * @author Jorge San Emeterio
@@ -24,7 +29,7 @@ import java.util.List;
 class PickTimeLineManager
 {
     private NetPlan netPlan;
-    private List<Object> timeLine;
+    private List<List<Pair<NetworkElementOrFr , NetworkLayer>>> timeLine;
     private int timelineCursor;
 
     private final int timelineMaxSize;
@@ -42,7 +47,7 @@ class PickTimeLineManager
         this.timelineCursor = -1;
     }
 
-    private <T> void updateTimeline(final NetPlan currentNp, final T element)
+    private void updateTimeline(final NetPlan currentNp, final List<Pair<NetworkElementOrFr , NetworkLayer>> element)
     {
         if (this.timelineMaxSize <= 1) return;
         if (element == null) throw new RuntimeException("Cannot add a null element.");
@@ -110,7 +115,7 @@ class PickTimeLineManager
     {
         if (timeLine.size() > timelineMaxSize) throw new RuntimeException("Timeline is over its capacity.");
 
-        final List<Object> newTimeLine = new ArrayList<>(timeLine);
+        final List<List<Pair<NetworkElementOrFr , NetworkLayer>>> newTimeLine = new ArrayList<>(timeLine);
         for (int index = 0; index < timeLine.size(); index++)
         {
             final Object o = timeLine.get(index);
@@ -161,7 +166,7 @@ class PickTimeLineManager
         this.timeLine = new ArrayList<>(newTimeLine);
     }
 
-    Object getPickNavigationBackElement()
+    List<Pair<NetworkElementOrFr , NetworkLayer>> getPickNavigationBackElement()
     {
         if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return null;
         if (timelineCursor == 0) return null; // End of the timeline, there is no more past.
@@ -172,7 +177,7 @@ class PickTimeLineManager
         return timeLine.get(--timelineCursor);
     }
 
-    Object getPickNavigationForwardElement()
+    List<Pair<NetworkElementOrFr , NetworkLayer>> getPickNavigationForwardElement()
     {
         if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return null;
         if (timelineCursor == timeLine.size() - 1) return null;
@@ -183,13 +188,9 @@ class PickTimeLineManager
         return timeLine.get(++timelineCursor);
     }
 
-    void addElement(final NetPlan currentNp, final NetworkElement element)
+    void addElement(final NetPlan currentNp, final List<Pair<NetworkElementOrFr , NetworkLayer>> element)
     {
         updateTimeline(currentNp, element);
     }
 
-    void addElement(final NetPlan currentNp, final Pair<Demand, Link> forwardingRule)
-    {
-        updateTimeline(currentNp, forwardingRule);
-    }
 }

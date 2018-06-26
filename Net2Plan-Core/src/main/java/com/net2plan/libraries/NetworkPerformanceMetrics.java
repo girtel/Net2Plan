@@ -127,60 +127,37 @@ public class NetworkPerformanceMetrics
 				if (numCoupledDemands > 0 && numCoupledDemands < multicastDemands_thisLayer.size()) warnings.add("Some unicast demands are coupled, but not all (this is ok, this just to check that it is intentional)" + thisLayerMsg);
 			}
 
-
-			if (netPlan.getRoutingType(layer) == Constants.RoutingType.SOURCE_ROUTING)
+			boolean routingCycles = false;
+			for (Route route : netPlan.getRoutes(layer))
 			{
-				if (!netPlan.hasRoutes(layer))
-				{
-					warnings.add("Routing is not defined" + thisLayerMsg);
-				}
-				else
-				{
-					Collection<Route> routes_thisLayer = netPlan.getRoutes(layer);
-					boolean routingCycles = false;
-					for (Route route : routes_thisLayer)
-					{
-						List<Node> sequenceOfNodes = route.getSeqNodes();
-						Set<Node> uniqueNodeIds = new HashSet<Node> (sequenceOfNodes);
+				List<Node> sequenceOfNodes = route.getSeqNodes();
+				Set<Node> uniqueNodeIds = new HashSet<Node> (sequenceOfNodes);
 
-						if (uniqueNodeIds.size() != sequenceOfNodes.size())
-						{
-							routingCycles = true;
-							break;
-						}
-					}
-
-					if (routingCycles) warnings.add("Some routes have cycles" + thisLayerMsg);
+				if (uniqueNodeIds.size() != sequenceOfNodes.size())
+				{
+					routingCycles = true;
+					break;
 				}
 			}
-			else
+			if (routingCycles) warnings.add("Some routes have cycles" + thisLayerMsg);
+
+			boolean hasClosedCycles = false;
+			boolean hasOpenCycles = false;
+			for (Demand demand : netPlan.getDemandsHopByHopRouted(layer))
 			{
-				if (!netPlan.hasForwardingRules(layer))
+				Constants.RoutingCycleType routingCycleType_thisDemand = demand.getRoutingCycleType();
+				if (routingCycleType_thisDemand == Constants.RoutingCycleType.CLOSED_CYCLES)
 				{
-					warnings.add("Forwarding rules not defined" + thisLayerMsg);
+					hasClosedCycles = true;
+					break;
 				}
-				else
+				else if (routingCycleType_thisDemand == Constants.RoutingCycleType.OPEN_CYCLES)
 				{
-					boolean hasClosedCycles = false;
-					boolean hasOpenCycles = false;
-					for (Demand demand : demands_thisLayer)
-					{
-						Constants.RoutingCycleType routingCycleType_thisDemand = demand.getRoutingCycleType();
-						if (routingCycleType_thisDemand == Constants.RoutingCycleType.CLOSED_CYCLES)
-						{
-							hasClosedCycles = true;
-							break;
-						}
-						else if (routingCycleType_thisDemand == Constants.RoutingCycleType.OPEN_CYCLES)
-						{
-							hasOpenCycles = true;
-						}
-					}
-					
-					if (hasClosedCycles) warnings.add("Forwarding rules not well-defined (traffic enters into a closed cycle) " + thisLayerMsg);
-					else if (hasOpenCycles) warnings.add("Forwarding rules non-strictly well-defined (some node is visited more than once)" + thisLayerMsg);
+					hasOpenCycles = true;
 				}
 			}
+			if (hasClosedCycles) warnings.add("Forwarding rules not well-defined (traffic enters into a closed cycle) " + thisLayerMsg);
+			else if (hasOpenCycles) warnings.add("Forwarding rules non-strictly well-defined (some node is visited more than once)" + thisLayerMsg);
 		}
 		
 		return warnings;

@@ -16,6 +16,8 @@ import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Constants.RoutingType;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +44,7 @@ public class Offline_ba_numFormulationsTest
 	{
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example4nodes.n2p"));
 		np.removeAllDemands();
-		for (Node n1 : np.getNodes ()) for (Node n2 : np.getNodes ()) if (n1 != n2) np.addDemand(n1, n2, 0, null);
+		for (Node n1 : np.getNodes ()) for (Node n2 : np.getNodes ()) if (n1 != n2) np.addDemand(n1, n2, 0, RoutingType.SOURCE_ROUTING , null);
 
 		/* Create the temporal directory for storing the test files */
 		this.temporalDirectoryTests = new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY);

@@ -70,7 +70,7 @@ public class Offline_fa_ospfWeightOptimization_EA implements IAlgorithm
 		this.E = netPlan.getNumberOfLinks();
 		if (N == 0) throw new Net2PlanException("The input design must have nodes");
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING);
+		netPlan.setRoutingTypeAllDemands (RoutingType.HOP_BY_HOP_ROUTING);
 
 		/* Initialize some variables */
 		if (ea_offSpringSize.getInt () > ea_populationSize.getInt () / 2.0) throw new Net2PlanException("The offspring size cannot exceed the population size divided by two");

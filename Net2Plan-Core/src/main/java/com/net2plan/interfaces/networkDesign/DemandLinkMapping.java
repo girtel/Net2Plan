@@ -11,23 +11,25 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
 
 class DemandLinkMapping
 {
 	private NetworkLayer demandSideLayer;
 	private NetworkLayer linkSideLayer;
-	final Map<Demand, Link> demandLinkMapping;
-	final Map<MulticastDemand, Set<Link>> multicastDemandLinkMapping;
+	final SortedMap<Demand, Link> demandLinkMapping;
+	final SortedMap<MulticastDemand, SortedSet<Link>> multicastDemandLinkMapping;
 	
 	public DemandLinkMapping()
 	{
 		demandSideLayer = null;
 		linkSideLayer = null;
-		demandLinkMapping = new LinkedHashMap<Demand, Link>();
-		multicastDemandLinkMapping = new LinkedHashMap<MulticastDemand, Set<Link>>();
+		demandLinkMapping = new TreeMap<>();
+		multicastDemandLinkMapping = new TreeMap<>();
 	}
 	
 	public boolean isEmpty()
@@ -42,7 +44,7 @@ class DemandLinkMapping
 		if (linkSideLayer == null) linkSideLayer = link.layer; else if (!linkSideLayer.equals(link.layer)) throw new RuntimeException ("Bad");
 	}
 	
-	public void put(MulticastDemand demand , Set<Link> links)
+	public void put(MulticastDemand demand , SortedSet<Link> links)
 	{
 		multicastDemandLinkMapping.put(demand, links);
 		if (demandSideLayer == null) demandSideLayer = demand.layer; else if (!demandSideLayer.equals(demand.layer)) throw new RuntimeException ("Bad");
@@ -59,9 +61,9 @@ class DemandLinkMapping
 		multicastDemandLinkMapping.remove(demand);
 	}
 
-	public Map<Demand,Link> getDemandMap () { return demandLinkMapping; }
+	public SortedMap<Demand,Link> getDemandMap () { return demandLinkMapping; }
 
-	public Map<MulticastDemand,Set<Link>> getMulticastDemandMap () { return multicastDemandLinkMapping; }
+	public SortedMap<MulticastDemand,SortedSet<Link>> getMulticastDemandMap () { return multicastDemandLinkMapping; }
 
 	public NetworkLayer getDemandSideLayer () { return demandSideLayer; }
 	public NetworkLayer getLinkSideLayer () { return linkSideLayer; }

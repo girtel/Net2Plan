@@ -44,4 +44,5 @@ public class WiderJComboBox extends JComboBox {
         if (!layingOut) dim.width = Math.max(dim.width, getPreferredSize().width);
         return dim;
     }
+    
 }
