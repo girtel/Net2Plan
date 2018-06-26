@@ -157,7 +157,7 @@ public class ImportMetroNetwork
         	System.out.println("OCCUPRAM_GB loaded: "+OCCUPRAM_GB);
         	final double OCCUPHD_GB = readDouble (thisRowData , COLUMNS_VNFTYPES.OCCUPHD_GB.ordinal());
         	System.out.println("OCCUPHD_GB loaded: "+OCCUPHD_GB);
-        	final double PROCESSINGTIME_MS = readDouble (thisRowData , COLUMNS_VNFTYPES.PROCESSINGTIME_GB.ordinal());
+        	final double PROCESSINGTIME_MS = readDouble (thisRowData , COLUMNS_VNFTYPES.PROCESSINGTIME_MS.ordinal());
         	System.out.println("PROCESSINGTIME_MS loaded: "+PROCESSINGTIME_MS);
         	final boolean ISCONSTRAINEDITSPLACEMENTTOSOMENODES = readBoolean(thisRowData, COLUMNS_VNFTYPES.ISCONSTRAINEDITSPLACEMENTTOSOMENODES.ordinal()); 
         	System.out.println("ISCONSTRAINEDITSPLACEMENTTOSOMENODES loaded: "+ISCONSTRAINEDITSPLACEMENTTOSOMENODES);
