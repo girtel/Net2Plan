@@ -24,7 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.net2plan.examples.TestConstants;
 import com.net2plan.examples.general.offline.Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming;
 import com.net2plan.examples.general.onlineSim.Online_evProc_ipOverWdm;
 import com.net2plan.examples.ocnbook.reports.Report_availability;
@@ -40,6 +39,8 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.StringUtils;
 public class ReportsTest
 {
+    public static final String TEST_FILE_DIRECTORY = "src/test/resources/temp";
+    public static final String TEST_FILE_NAME = "test.n2p";
 	private NetPlan np;
 	private NetworkLayer wdmLayer, ipLayer;
 
@@ -58,7 +59,7 @@ public class ReportsTest
 		paramFor11.put("networkRecoveryType" , "1+1-srg-disjoint-lps");
 		new Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming().executeAlgorithm(np , paramFor11 , null);
 
-		File resourcesFolder = new File(TestConstants.TEST_REPORT_FILE_DIRECTORY);
+		File resourcesFolder = new File(TEST_FILE_DIRECTORY);
 		if (!resourcesFolder.exists()) resourcesFolder.mkdirs();
 	}
 
@@ -202,7 +203,7 @@ public class ReportsTest
 			testingParameters.put("provisioningAlgorithm_parameters" , Arrays.asList(StringUtils.mapToString(provAlgorithmParam)));
 			testingParameters.put("considerTrafficInOversubscribedLinksAsLost" , Arrays.asList("true"));
 			testingParameters.put("failureModel" , Arrays.asList("perBidirectionalLinkBundle" , "SRGfromNetPlan"));
-			testingParameters.put("rootNameOfOutFiles", Collections.singletonList(TestConstants.TEST_REPORT_FILE_DIRECTORY + "/reportPerSRGFailure"));
+			testingParameters.put("rootNameOfOutFiles", Collections.singletonList(TEST_FILE_DIRECTORY + "/reportPerSRGFailure"));
 			List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
 			if (testsParam.isEmpty()) testsParam = Arrays.asList(InputParameter.getDefaultParameters(report.getParameters()));
 			for (Map<String,String> params : testsParam)

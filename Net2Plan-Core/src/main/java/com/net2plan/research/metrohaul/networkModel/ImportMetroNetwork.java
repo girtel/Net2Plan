@@ -53,7 +53,7 @@ public class ImportMetroNetwork
         	final Object[] thisRowData = sheet [i];
         	final String name = readString (thisRowData , COLUMNS_NODESTAB.NODEUNIQUENAME.ordinal());
         	System.out.println("Name loaded: "+name);
-        	final String type = readString (thisRowData , COLUMNS_NODESTAB.NODETYPESTRING.ordinal());
+        	final String type = readString (thisRowData , COLUMNS_NODESTAB.NODETYPESTRING.ordinal(), "");
         	System.out.println("Type loaded: "+type);
         	final double xCoord = readDouble (thisRowData , COLUMNS_NODESTAB.POSITIONLONGITUDE_DEGREEES.ordinal());
         	System.out.println("xCoord loaded: "+xCoord);
@@ -63,11 +63,11 @@ public class ImportMetroNetwork
         	System.out.println("isConnectedToCoreNode loaded: "+isConnectedToCoreNode);
         	final double nodeBasePopulation = readDouble (thisRowData , COLUMNS_NODESTAB.NODEBASEPOPULATION.ordinal());
         	System.out.println("nodeBasePopulation loaded: "+nodeBasePopulation);
-        	final double nodeCpus = readDouble (thisRowData , COLUMNS_NODESTAB.TOTALNUMCPUS.ordinal());
+        	final double nodeCpus = readDouble (thisRowData , COLUMNS_NODESTAB.TOTALNUMCPUS.ordinal(), 0.0);
         	System.out.println("nodeCpus loaded: "+nodeCpus);
-        	final double nodeRamGb = readDouble (thisRowData , COLUMNS_NODESTAB.TOTALRAM_GB.ordinal());
+        	final double nodeRamGb = readDouble (thisRowData , COLUMNS_NODESTAB.TOTALRAM_GB.ordinal(), 0.0);
         	System.out.println("nodeRamGb loaded: "+nodeRamGb);
-        	final double nodeHdGb = readDouble (thisRowData , COLUMNS_NODESTAB.TOTALHD_GB.ordinal());
+        	final double nodeHdGb = readDouble (thisRowData , COLUMNS_NODESTAB.TOTALHD_GB.ordinal(), 0.0);
         	System.out.println("nodeHdGb loaded: "+nodeHdGb);
         	final String arbitraryParamsString = readString (thisRowData , COLUMNS_NODESTAB.ARBITRARYPARAMS.ordinal() , "");
         	System.out.println("arbitraryParamsString loaded: "+arbitraryParamsString);
@@ -102,21 +102,21 @@ public class ImportMetroNetwork
         	System.out.println("LENGTH_KM loaded: "+LENGTH_KM);
         	final boolean ISBIDIRECTIONAL = readBoolean(thisRowData, COLUMNS_FIBERSTAB.ISBIDIRECTIONAL.ordinal()); 
         	System.out.println("ISBIDIRECTIONAL loaded: "+ISBIDIRECTIONAL);
-        	final List<Double> VALIDOPTICALSLOTRANGES = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.VALIDOPTICALSLOTRANGES.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER);
+        	final List<Double> VALIDOPTICALSLOTRANGES = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.VALIDOPTICALSLOTRANGES.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES);
         	System.out.println("VALIDOPTICALSLOTRANGES loaded: "+VALIDOPTICALSLOTRANGES);
-        	final double FIBERATTENUATIONCOEFFICIENT_DBPERKM = readDouble (thisRowData , COLUMNS_FIBERSTAB.FIBERATTENUATIONCOEFFICIENT_DBPERKM.ordinal());
+        	final double FIBERATTENUATIONCOEFFICIENT_DBPERKM = readDouble (thisRowData , COLUMNS_FIBERSTAB.FIBERATTENUATIONCOEFFICIENT_DBPERKM.ordinal(), WNetConstants.WFIBER_DEFAULT_ATTCOEFFICIENTDBPERKM);
         	System.out.println("FIBERATTENUATIONCOEFFICIENT_DBPERKM loaded: "+FIBERATTENUATIONCOEFFICIENT_DBPERKM);
-        	final double FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM = readDouble (thisRowData , COLUMNS_FIBERSTAB.FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM.ordinal());
+        	final double FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM = readDouble (thisRowData , COLUMNS_FIBERSTAB.FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM.ordinal(),WNetConstants.WFIBER_DEFAULT_CDCOEFF_PSPERNMKM);
         	System.out.println("FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM loaded: "+FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM);
-        	final double FIBERLINKDESIGNVALUEPMD_PSPERSQRKM = readDouble (thisRowData , COLUMNS_FIBERSTAB.FIBERLINKDESIGNVALUEPMD_PSPERSQRKM.ordinal());
+        	final double FIBERLINKDESIGNVALUEPMD_PSPERSQRKM = readDouble (thisRowData , COLUMNS_FIBERSTAB.FIBERLINKDESIGNVALUEPMD_PSPERSQRKM.ordinal(),WNetConstants.WFIBER_DEFAULT_PMDCOEFF_PSPERSQRKM);
         	System.out.println("FIBERLINKDESIGNVALUEPMD_PSPERSQRKM loaded: "+FIBERLINKDESIGNVALUEPMD_PSPERSQRKM);
-        	final List<Double> AMPLIFIERSPOSITIONFROMORIGIN_KM = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERSPOSITIONFROMORIGIN_KM.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER);
+        	final List<Double> AMPLIFIERSPOSITIONFROMORIGIN_KM = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERSPOSITIONFROMORIGIN_KM.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER,WNetConstants.WFIBER_DEFAULT_AMPLIFIERPOSITION);
         	System.out.println("AMPLIFIERSPOSITIONFROMORIGIN_KM loaded: "+AMPLIFIERSPOSITIONFROMORIGIN_KM);
-        	final List<Double> AMPLIFIERGAINS_DB = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERGAINS_DB.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER);
+        	final List<Double> AMPLIFIERGAINS_DB = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERGAINS_DB.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER,WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB);
         	System.out.println("AMPLIFIERGAINS_DB loaded: "+AMPLIFIERGAINS_DB);
-        	final List<Double> AMPLIFIERNOISEFACTOR_DB = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERNOISEFACTOR_DB.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER);
+        	final List<Double> AMPLIFIERNOISEFACTOR_DB = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERNOISEFACTOR_DB.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER,WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB);
         	System.out.println("AMPLIFIER_NOISE FACTOR loaded: "+AMPLIFIERNOISEFACTOR_DB);
-        	final List<Double> AMPLIFIERPMD_PS = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERPMD_PS.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER);
+        	final List<Double> AMPLIFIERPMD_PS = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERPMD_PS.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER, WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS);
         	System.out.println("AMPLIFIERPMD_PS loaded: "+AMPLIFIERPMD_PS);
         	final String arbitraryParamsString = readString (thisRowData , COLUMNS_FIBERSTAB.ARBITRARYPARAMS.ordinal() ,"");
         	System.out.println("arbitraryParamsString loaded: "+arbitraryParamsString);
@@ -147,17 +147,17 @@ public class ImportMetroNetwork
         	System.out.println("Row number "+i);
         	System.out.println();
         	final Object[] thisRowData = sheet [i];
-        	final String VNFTYPEUNIQUENAME = readString (thisRowData , COLUMNS_VNFTYPES.VNFTYPEUNIQUENAME.ordinal());
+        	final String VNFTYPEUNIQUENAME = readString (thisRowData , COLUMNS_VNFTYPES.VNFTYPEUNIQUENAME.ordinal(), "");
         	System.out.println("VNFTYPEUNIQUENAME loaded: "+VNFTYPEUNIQUENAME);
-        	final double VNFINSTANCECAPACITY_GBPS = readDouble (thisRowData , COLUMNS_VNFTYPES.VNFINSTANCECAPACITY_GBPS.ordinal());
+        	final double VNFINSTANCECAPACITY_GBPS = readDouble (thisRowData , COLUMNS_VNFTYPES.VNFINSTANCECAPACITY_GBPS.ordinal(), 0.0);
         	System.out.println("VNFINSTANCECAPACITY_GBPS loaded: "+VNFINSTANCECAPACITY_GBPS);
-        	final double OCCUPCPU = readDouble (thisRowData , COLUMNS_VNFTYPES.OCCUPCPU.ordinal());
+        	final double OCCUPCPU = readDouble (thisRowData , COLUMNS_VNFTYPES.OCCUPCPU.ordinal(), 0.0);
         	System.out.println("OCCUPCPU loaded: "+OCCUPCPU);
-        	final double OCCUPRAM_GB = readDouble (thisRowData , COLUMNS_VNFTYPES.OCCUPRAM_GB.ordinal());
+        	final double OCCUPRAM_GB = readDouble (thisRowData , COLUMNS_VNFTYPES.OCCUPRAM_GB.ordinal(), 0.0);
         	System.out.println("OCCUPRAM_GB loaded: "+OCCUPRAM_GB);
-        	final double OCCUPHD_GB = readDouble (thisRowData , COLUMNS_VNFTYPES.OCCUPHD_GB.ordinal());
+        	final double OCCUPHD_GB = readDouble (thisRowData , COLUMNS_VNFTYPES.OCCUPHD_GB.ordinal(), 0.0);
         	System.out.println("OCCUPHD_GB loaded: "+OCCUPHD_GB);
-        	final double PROCESSINGTIME_MS = readDouble (thisRowData , COLUMNS_VNFTYPES.PROCESSINGTIME_MS.ordinal());
+        	final double PROCESSINGTIME_MS = readDouble (thisRowData , COLUMNS_VNFTYPES.PROCESSINGTIME_MS.ordinal(), 0.0);
         	System.out.println("PROCESSINGTIME_MS loaded: "+PROCESSINGTIME_MS);
         	final boolean ISCONSTRAINEDITSPLACEMENTTOSOMENODES = readBoolean(thisRowData, COLUMNS_VNFTYPES.ISCONSTRAINEDITSPLACEMENTTOSOMENODES.ordinal()); 
         	System.out.println("ISCONSTRAINEDITSPLACEMENTTOSOMENODES loaded: "+ISCONSTRAINEDITSPLACEMENTTOSOMENODES);
@@ -285,7 +285,7 @@ public class ImportMetroNetwork
 	
 	private static double readDouble (Object [] cells , int index , Double...defaultVal)
 	{
-		if (index >= cells.length) throw new Net2PlanException ("Unexisting cell of column: " + index + ". Num columns in this row: " + cells.length);
+		if (index >= cells.length) return defaultVal[0];
 		if (cells [index] == null) if (defaultVal.length > 0) return defaultVal[0]; else throw new Net2PlanException ("Cell unkown instance " + (cells[index]).getClass().getName());
 		if (cells [index] instanceof Number) return ((Number) cells[index]).doubleValue();
 		if (cells [index] instanceof String) return Double.parseDouble((String) cells[index]);
@@ -318,10 +318,11 @@ public class ImportMetroNetwork
 
 	}
 	
-	private static List<Double> readDoubleList (Object [] cells , int index , String separator)
+	private static List<Double> readDoubleList (Object [] cells , int index , String separator,List<Double>... defaultVal)
 	{
-		final String st = readString (cells , index);
-		return Arrays.asList(st.split(separator)).stream().map(s->s.trim()).map(s->Double.parseDouble(s)).collect(Collectors.toCollection(ArrayList::new));
+		final String st = readString (cells , index,"");
+		if( st.length() == 0) return defaultVal[0];
+		else return Arrays.asList(st.split(separator)).stream().map(s->s.trim()).map(s->Double.parseDouble(s)).collect(Collectors.toCollection(ArrayList::new));
 	}
 	private static List<String> readStringList (Object [] cells , int index , String separator)
 	{

@@ -316,7 +316,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement<Route>
             demandSelector.addItem(StringLabeller.of(demandId, demandLabel));
         }
 
-        if (demandSelector.getItemCount() == 0) throw new Net2PlanException("Bad - No node has outgoing links");
+        if (demandSelector.getItemCount() == 0) throw new Net2PlanException("Bad - There are no demands in this layer");
 
         demandSelector.setSelectedIndex(0);
 

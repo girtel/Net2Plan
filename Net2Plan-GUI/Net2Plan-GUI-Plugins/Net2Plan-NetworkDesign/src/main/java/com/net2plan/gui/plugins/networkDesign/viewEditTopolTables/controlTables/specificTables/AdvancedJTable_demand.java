@@ -479,7 +479,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
             Node destinationNode = (Node) ((StringLabeller) destinationNodeSelector.getSelectedItem()).getObject();
             if (networkElementType == NetworkElementType.LINK)
             {
-                final Link e = netPlan.addLink(originNode, destinationNode, 0, 0, 200000, null);
+                final Link e = netPlan.addLink(originNode, destinationNode, 0, 0, 200000, null, layer);
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges();
                 callback.getPickManager().pickElements(e);

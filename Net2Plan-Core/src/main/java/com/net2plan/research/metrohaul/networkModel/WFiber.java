@@ -126,17 +126,17 @@ public class WFiber extends WAbstractNetworkElement
 	/** Get gains of the amplifiers traversed, in the same order as they are traversed
 	 * @return see above
 	 */
-	public List<Double> getAmplifierGains_dB () { return getAttributeAsListDoubleOrDefault (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERGAINS_DB , Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB)); }
+	public List<Double> getAmplifierGains_dB () { return getAttributeAsListDoubleOrDefault (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERGAINS_DB , Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB.get(0))); }
 
 	/** Gets the PMD in ps added to the signal by the amplifier
 	 * @return see above
 	 */
-	public List<Double> getAmplifierPmd_ps () { return getAttributeAsListDoubleOrDefault (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERPMD_PS , Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS)); }
+	public List<Double> getAmplifierPmd_ps () { return getAttributeAsListDoubleOrDefault (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERPMD_PS , Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS.get(0))); }
 
 	/** Gets the list of amplifier noise factors in dB
 	 * @return see above
 	 */
-	public List<Double> getAmplifierNoiseFactor_dB () { return getAttributeAsListDoubleOrDefault (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB , Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB)); }
+	public List<Double> getAmplifierNoiseFactor_dB () { return getAttributeAsListDoubleOrDefault (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB , Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB.get(0))); }
 
 	/** Sets the traversed amplifiers information
 	 * @param positionFromLinkOrigin_km list of positions in km, counting from the link origin

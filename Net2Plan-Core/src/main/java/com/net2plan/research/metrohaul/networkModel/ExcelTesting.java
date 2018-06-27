@@ -10,7 +10,7 @@ class ExcelTesting
 	
 	public static void main(String[]args){
 
-		File file = new File("MetroNetwork_v4.xlsx");		
+		File file = new File("MHTopology_Nodes_Links.xlsx");		
 		ImportMetroNetwork.importFromExcelFile(file);	
 	}
 }

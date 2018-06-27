@@ -10,17 +10,8 @@
  *******************************************************************************/
 package com.net2plan.examples.ocnbook.offline;
 
-import com.google.common.collect.ImmutableMap;
-import com.net2plan.examples.TestConstants;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.libraries.SRGUtils;
-import com.net2plan.libraries.SRGUtils.SharedRiskModel;
-import com.net2plan.utils.InputParameter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
@@ -28,8 +19,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.libraries.SRGUtils;
+import com.net2plan.libraries.SRGUtils.SharedRiskModel;
+import com.net2plan.utils.InputParameter;
 
 public class Offline_fa_xdeSharedRestorationTest 
 {
@@ -67,7 +67,7 @@ public class Offline_fa_xdeSharedRestorationTest
 				algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
 			} catch (UnsatisfiedLinkError e)
 			{
-				System.err.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+				System.err.println(this.getClass().getName() + ": CPLEX_NOT_FOUND_ERROR");
 				return;
 			}
 			checkValidity (npInput , np , paramsUsedToCall);
