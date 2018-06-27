@@ -1,29 +1,14 @@
 package com.net2plan.research.metrohaul.examples;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedSet;
-
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.research.metrohaul.networkModel.OpticalSpectrumManager;
-import com.net2plan.research.metrohaul.networkModel.WAbstractNetworkElement;
-import com.net2plan.research.metrohaul.networkModel.WFiber;
-import com.net2plan.research.metrohaul.networkModel.WIpLink;
-import com.net2plan.research.metrohaul.networkModel.WLightpathRequest;
-import com.net2plan.research.metrohaul.networkModel.WLightpathUnregenerated;
-import com.net2plan.research.metrohaul.networkModel.WNet;
-import com.net2plan.research.metrohaul.networkModel.WNode;
-import com.net2plan.research.metrohaul.networkModel.WServiceChain;
-import com.net2plan.research.metrohaul.networkModel.WServiceChainRequest;
-import com.net2plan.research.metrohaul.networkModel.WVnfInstance;
-import com.net2plan.research.metrohaul.networkModel.WVnfType;
+import com.net2plan.research.metrohaul.networkModel.*;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
+
+import java.io.File;
+import java.util.*;
 
 public class TutorialAlgorithm implements IAlgorithm
 {
@@ -34,7 +19,7 @@ public class TutorialAlgorithm implements IAlgorithm
 
 	public static void main(String[] args)
 	{
-		NetPlan netPlan = NetPlan.loadFromFile(new File("ExcelTest_v2.n2p"));
+		NetPlan netPlan = NetPlan.loadFromFile(new File("Tutorial_excel.n2p"));
 		Map<String, String> parameters = new HashMap<>();
 		parameters.put("linerate_Gbps", String.valueOf(40.0));
 		parameters.put("slotsPerLightpath", String.valueOf(4));
@@ -44,6 +29,7 @@ public class TutorialAlgorithm implements IAlgorithm
 		TutorialAlgorithm tutorialAlgorithm = new TutorialAlgorithm();
 		tutorialAlgorithm.getParameters();
 		System.out.println(tutorialAlgorithm.executeAlgorithm(netPlan, parameters, null));
+		netPlan.saveToFile(new File("RESULT.n2p"));
 	}
 
 	@Override
@@ -57,13 +43,15 @@ public class TutorialAlgorithm implements IAlgorithm
 		//Perform here initial checks
 
 		/* Remove any existing lightpath, VNF instances and any existing service chain */
-		for (WLightpathRequest lpr : wNet.getLightpathRequests())
+		for(WLightpathRequest lpr : wNet.getLightpathRequests())
 			lpr.remove(); // this removes also the lps
-		for (WVnfInstance vnf : wNet.getVnfInstances())
-			vnf.remove(); 
-		for (WServiceChain sc : wNet.getServiceChains())
-			sc.remove(); 
-		
+
+		for(WVnfInstance vnf : wNet.getVnfInstances())
+			vnf.remove();
+
+		for(WServiceChain sc : wNet.getServiceChains())
+			sc.remove();
+
 		/* Add full mesh of lightpaths and IP links */
 		for(WNode node1 : wNet.getNodes())
 		{
@@ -92,17 +80,17 @@ public class TutorialAlgorithm implements IAlgorithm
 				lpr.coupleToIpLink(ipLink);
 			}
 		}
-			
+
 		/* Create one VNF per type in all the nodes */
-		for (WNode n : wNet.getNodes())
-			for (WVnfType vnfType : wNet.getVnfTypes())
+		for(WNode n : wNet.getNodes())
+			for(WVnfType vnfType : wNet.getVnfTypes())
 			{
-				if (vnfType.isConstrainedToBeInstantiatedOnlyInUserDefinedNodes())
-					if (!vnfType.getValidMetroNodesForInstantiation().contains(n.getName()))
+				if(vnfType.isConstrainedToBeInstantiatedOnlyInUserDefinedNodes())
+					if(! vnfType.getValidMetroNodesForInstantiation().contains(n.getName()))
 						continue;
-				wNet.addVnfInstance(n, "", vnfType);
+				wNet.addVnfInstance(n, vnfType.getVnfTypeName(), vnfType);
 			}
-						
+
 		/* Deploy service chain */
 		for(WServiceChainRequest serviceChainRequest : wNet.getServiceChainRequests())
 		{
@@ -122,34 +110,31 @@ public class TutorialAlgorithm implements IAlgorithm
 				for(WNode destination : potentialDestinations)
 				{
 					final List<List<? extends WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K.getInt(), origin, destination, vnfsToTraverse, Optional.empty(), Optional.empty());
-					if (paths.isEmpty()) continue; 
+					if(paths.isEmpty()) continue;
 					isSCAllocated = true;
 					WServiceChain serviceChain = serviceChainRequest.addServiceChain(paths.get(0), ti.get());
 				}
 				if(isSCAllocated) break;
 			}
 		}
+		//
+		//		/* Dimension the VNF instances, consuming the resources CPU, HD, RAM */
+		//		for (WVnfInstance vnf : wNet.getVnfInstances())
+		//			vnf.scaleVnfCapacityAndConsumptionToBaseInstanceMultiple();
+		//
+		//		/* Remove those VNF instances that have zero capacity */
+		//		for (WVnfInstance vnf : wNet.getVnfInstances())
+		//			if (vnf.getOccupiedCapacityInGbps() == 0)
+		//				vnf.remove();
 
-		/* Dimension the VNF instances, consuming the resources CPU, HD, RAM */
-		for (WVnfInstance vnf : wNet.getVnfInstances())
-			vnf.scaleVnfCapacityAndConsumptionToBaseInstanceMultiple();
-
-		/* Remove those VNF instances that have zero capacity */
-		for (WVnfInstance vnf : wNet.getVnfInstances())
-			if (vnf.getOccupiedCapacityInGbps() == 0)
-				vnf.remove();
-
-		
 		// Extra: consider service chain injected traffic as the worst case among the morning/afternoon/night
-		
+
 		// Extra: make each lightpath be 1+1 protected with a link disjoint lightpath if possible [e.g. choose the main path as now, and the backup choose it as the one in the k-ranking with less common links, and among them, the one of lower length]
 
 		// Extra: some nodes may have consumed more CPUs/RAM/HD than they have... what to do with them
-		
+
 		// Extra: some IP links may have more traffic than they can carry... what to do with them
-		
-		
-		
+
 		return "Ok";
 	}
 
