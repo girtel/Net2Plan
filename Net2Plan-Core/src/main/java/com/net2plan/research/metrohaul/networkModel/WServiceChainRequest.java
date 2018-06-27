@@ -11,27 +11,11 @@
 
 package com.net2plan.research.metrohaul.networkModel;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-
-import com.google.common.collect.Sets;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.utils.Pair;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /** <p>Instances of this class are service chain requests in the IP layer. Service chain requests can be realized by one or more service chains, so each 
  * service chain should start in one among a set of given input nodes, and end in one out of the given output nodes, 

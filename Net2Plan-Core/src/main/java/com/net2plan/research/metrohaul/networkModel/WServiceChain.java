@@ -11,17 +11,13 @@
 
 package com.net2plan.research.metrohaul.networkModel;
 
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.utils.Pair;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.utils.Pair;
 
 /** Instances of this class are service chains, realizing service chain requests. A service chain should start in one of the origin nodes of the service chain, and end in 
  * one of the destination nodes of the service chain. The injection traffic of the service chain is the traffic produced by its origin node. Note that when the service chain 
@@ -102,9 +98,11 @@ public class WServiceChain extends WAbstractNetworkElement
 		// checks
 		if (seqIpLinksAndVnfInstances.isEmpty()) throw new Net2PlanException ("Wrong path");
 		if (seqIpLinksAndVnfInstances.stream().anyMatch(e->!e.isVnfInstance() && !e.isWIpLink())) throw new Net2PlanException ("Wrong path");
+		final WAbstractNetworkElement firstElement = seqIpLinksAndVnfInstances.get(0);
+		final WAbstractNetworkElement lastElement = seqIpLinksAndVnfInstances.get(seqIpLinksAndVnfInstances.size()-1);
+		final WNode firstNode =  firstElement instanceof WVnfInstance ? ((WVnfInstance) firstElement).getHostingNode() : ((WIpLink) firstElement).getA();
+		final WNode lastNode = lastElement instanceof WVnfInstance ? ((WVnfInstance) lastElement).getHostingNode() : ((WIpLink) lastElement).getB();
 		final List<WIpLink> seqIpLinks = seqIpLinksAndVnfInstances.stream().filter(e->e.isWIpLink()).map(ee->(WIpLink) ee).collect(Collectors.toList());
-		final WNode firstNode = seqIpLinks.get(0).getA();
-		final WNode lastNode = seqIpLinks.get(seqIpLinks.size()-1).getB();
 		if (!scRequest.getPotentiallyValidOrigins().isEmpty()) if (!scRequest.getPotentiallyValidOrigins().contains(firstNode)) throw new Net2PlanException ("Wrong path"); 
 		if (!scRequest.getPotentiallyValidDestinations().isEmpty()) if (!scRequest.getPotentiallyValidDestinations().contains(lastNode)) throw new Net2PlanException ("Wrong path");
 		final List<Double> newOccupationInformation = new ArrayList<> ();

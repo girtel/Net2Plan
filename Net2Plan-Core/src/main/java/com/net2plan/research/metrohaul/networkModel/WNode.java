@@ -11,17 +11,17 @@
 
 package com.net2plan.research.metrohaul.networkModel;
 
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
 
 /** This class represents a node in the network, capable of initiating or ending IP and WDM links, as well as lightpaths and service chains
  */
