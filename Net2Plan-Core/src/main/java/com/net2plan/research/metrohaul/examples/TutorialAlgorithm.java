@@ -117,15 +117,15 @@ public class TutorialAlgorithm implements IAlgorithm
 				if(isSCAllocated) break;
 			}
 		}
-		//
-		//		/* Dimension the VNF instances, consuming the resources CPU, HD, RAM */
-		//		for (WVnfInstance vnf : wNet.getVnfInstances())
-		//			vnf.scaleVnfCapacityAndConsumptionToBaseInstanceMultiple();
-		//
-		//		/* Remove those VNF instances that have zero capacity */
-		//		for (WVnfInstance vnf : wNet.getVnfInstances())
-		//			if (vnf.getOccupiedCapacityInGbps() == 0)
-		//				vnf.remove();
+
+		/* Dimension the VNF instances, consuming the resources CPU, HD, RAM */
+		for(WVnfInstance vnf : wNet.getVnfInstances())
+			vnf.scaleVnfCapacityAndConsumptionToBaseInstanceMultiple();
+
+		/* Remove those VNF instances that have zero capacity */
+		for(WVnfInstance vnf : wNet.getVnfInstances())
+			if(vnf.getOccupiedCapacityInGbps() == 0)
+				vnf.remove();
 
 		// Extra: consider service chain injected traffic as the worst case among the morning/afternoon/night
 
