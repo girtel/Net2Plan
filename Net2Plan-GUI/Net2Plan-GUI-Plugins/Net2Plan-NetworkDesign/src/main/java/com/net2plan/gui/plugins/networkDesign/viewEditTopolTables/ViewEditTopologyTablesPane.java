@@ -231,6 +231,7 @@ public class ViewEditTopologyTablesPane extends JPanel
     public void selectTabAndGivenItems(NetworkElementType type, NetworkLayer layer , List<NetworkElementOrFr> elements)
     {
         final AdvancedJTable_abstractElement table = (AdvancedJTable_abstractElement) netPlanViewTable.get(layer).get(AJTableType.getTypeOfElement(type)).getFirst();
+		table.clearSelection();
         final List<Integer> modelViewRows = elements.stream().map(ee->(Integer) table.getRowModelIndexOfElement(ee.getObject()).orElse(-1)).
         		filter(ee->ee != -1).
         		collect(Collectors.toList()); 

@@ -69,8 +69,8 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
       res.add(new AjtColumnInfo<Node>(this , String.class, null , "Site", "The site this node belongs to", (d,val)->d.setSiteName((String) val) , d->d.getSiteName() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "SRGs", "The SRGs that this node belongs to", null , d->d.getSRGs() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Resources", "The resources hosted in this node", null , d->d.getResources() , AGTYPE.SUMCOLLECTIONCOUNT , null));
-      res.add(new AjtColumnInfo<Node>(this , Integer.class, null , "Out links", "The outgoing links of the node", null , d->d.getOutgoingLinks(layer) , AGTYPE.SUMCOLLECTIONCOUNT , null));
-      res.add(new AjtColumnInfo<Node>(this , Integer.class, null , "In links", "The incoming links of the node", null , d->d.getIncomingLinks(layer) , AGTYPE.SUMCOLLECTIONCOUNT , null));
+      res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Out links", "The outgoing links of the node", null , d->d.getOutgoingLinks(layer) , AGTYPE.SUMCOLLECTIONCOUNT , null));
+      res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "In links", "The incoming links of the node", null , d->d.getIncomingLinks(layer) , AGTYPE.SUMCOLLECTIONCOUNT , null));
       res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Out capacity (" + layer.getLinkCapacityUnits() + ")", "The sum of the capacity of the outgoing links", null , d->d.getOutgoingLinksCapacity(layer) , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Out traffic (" + layer.getDemandTrafficUnits() + ")", "The sum of the traffic carried in the outgoing links", null , d->d.getOutgoingLinksTraffic(layer) , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<Node>(this , Double.class, null , "In capacity (" + layer.getLinkCapacityUnits() + ")", "The sum of the capacity of the incoming links", null , d->d.getIncomingLinksCapacity(layer) , AGTYPE.SUMDOUBLE, null));
