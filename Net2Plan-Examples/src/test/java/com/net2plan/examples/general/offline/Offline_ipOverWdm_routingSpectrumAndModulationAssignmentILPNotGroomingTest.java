@@ -27,7 +27,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.net2plan.examples.TestConstants;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -42,6 +41,8 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Quadruple;
 public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroomingTest
 {
+    public static final String TEST_FILE_DIRECTORY = "src/test/resources/temp";
+    public static final String TEST_FILE_NAME = "test.n2p";
 	private NetPlan np;
 	private int wdmLayerIndex, ipLayerIndex;
 	
@@ -88,7 +89,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
                 new Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGrooming ().executeAlgorithm(np , params , null);
             } catch (UnsatisfiedLinkError e)
             {
-				System.err.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+				System.err.println(this.getClass().getName() + ": Cplex not found");
 				return;
 			}
 			checkValidity (npInput , np , params);
