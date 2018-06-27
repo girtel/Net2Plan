@@ -89,7 +89,7 @@ public class OfflineExecutionPanel extends JPanel implements ThreadExecutionCont
         Configuration.updateSolverLibraryNameParameter(algorithmParameters); // put default path to libraries if solverLibraryName is ""
         final Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
         NetPlan netPlan = mainWindow.getDesign().copy();
-        IAlgorithm instance = ClassLoaderUtils.getInstance(algorithm.getFirst(), algorithm.getSecond(), IAlgorithm.class , this.getClass().getClassLoader());
+        IAlgorithm instance = ClassLoaderUtils.getInstance(algorithm.getFirst(), algorithm.getSecond(), IAlgorithm.class , null);
 //		System.out.println ("BEFORE EXECUTING");
         String out = instance.executeAlgorithm(netPlan, algorithmParameters, net2planParameters);
 //		System.out.println ("AFTER EXECUTING");
