@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -280,9 +281,9 @@ public class WNet extends WAbstractNetworkElement
 	/** Returns the map associating the VNF type, with the associated VNF object, as was defined by the user 
 	 * @return see above
 	 */
-	public SortedMap<String , WVnfType> getVnfTypesMap ()
+	public List<WVnfType> getVnfTypes ()
 	{
-		final SortedMap<String , WVnfType> res = new TreeMap<> ();
+		final List<WVnfType> res = new ArrayList<> ();
 		final List<List<String>> matrix = getNe().getAttributeAsStringMatrix(ATTNAME_VNFTYPELIST, null);
 		if (matrix == null) throw new Net2PlanException("Wrong format");
 		for (List<String> row : matrix)
@@ -290,7 +291,7 @@ public class WNet extends WAbstractNetworkElement
 			if (row.size() != 9) throw new Net2PlanException ("Wrong format"); 
 			final String vnfTypeName = row.get(0);
 			if (vnfTypeName.contains(WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER)) throw new Net2PlanException ("VNF type names cannot contain the character: " + WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER); 
-			if (res.containsKey(vnfTypeName)) throw new Net2PlanException ("VNF type names must be unique");
+			if (res.stream().anyMatch(v->vnfTypeName.equals(v.getVnfTypeName()))) throw new Net2PlanException ("VNF type names must be unique");
 			final double maxInputTraffic_Gbps = Double.parseDouble(row.get(1));
 			final double numCpus = Double.parseDouble(row.get(2));
 			final double numRam = Double.parseDouble(row.get(3));
@@ -299,20 +300,29 @@ public class WNet extends WAbstractNetworkElement
 			final boolean isConstrained = Boolean.parseBoolean(row.get(6));
 			final SortedSet<String> nodeNames = new TreeSet<> (Arrays.asList(row.get(7).split(WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER)));
 			final String arbitraryParamString = row.get(8);
-			res.put(vnfTypeName, new WVnfType(vnfTypeName, maxInputTraffic_Gbps , numCpus, numRam, numHd , processingTimeMs , isConstrained , nodeNames , arbitraryParamString));
+			res.add(new WVnfType(vnfTypeName, maxInputTraffic_Gbps , numCpus, numRam, numHd , processingTimeMs , isConstrained , nodeNames , arbitraryParamString));
 		}
 		return res;
 	}
 
+	/** Returns the WVnfType object assigned to that name, if any 
+	 * @param typeName see above
+	 * @return see above
+	 */
+	public Optional<WVnfType> getVnfType (String typeName)
+	{
+		return getVnfTypes().stream().filter(v->v.getVnfTypeName().equals(typeName)).findFirst();
+	}
+	
 	/** Adds a new VNF type to the network, with the provided information
 	 * @param info see above
 	 */
 	public void addOrUpdateVnfType (WVnfType info)
 	{
-		SortedMap<String , WVnfType> newInfo = new TreeMap<> ();
-		if(getNe().getAttributeAsStringMatrix(ATTNAME_VNFTYPELIST, null) != null){newInfo = this.getVnfTypesMap();}
-		newInfo.put(info.getVnfTypeName(), info);
-		this.setVnfTypesMap(newInfo);
+		SortedSet<WVnfType> newInfo = new TreeSet<> ();
+		if(getNe().getAttributeAsStringMatrix(ATTNAME_VNFTYPELIST, null) != null){newInfo = new TreeSet<> (this.getVnfTypes());}
+		newInfo.add(info);
+		this.setVnfTypesRemovingPreviousInfo(newInfo);
 	}
 	
 	/** Removes a defined VNF type
@@ -320,29 +330,28 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public void removeVnfType (String vnfTypeName)
 	{
-		final SortedMap<String , WVnfType> newInfo = this.getVnfTypesMap();
-		newInfo.remove(vnfTypeName);
-		this.setVnfTypesMap(newInfo);
+		final SortedSet<WVnfType> newInfo = this.getVnfTypes().stream().filter(v->!v.getVnfTypeName().equals(vnfTypeName)).collect(Collectors.toCollection(TreeSet::new));
+		this.setVnfTypesRemovingPreviousInfo(newInfo);
 	}
 
 	/** Sets a new VNF type map, removing all previous VNF types defined
 	 * @param newInfo see above
 	 */
-	public void setVnfTypesMap (SortedMap<String , WVnfType> newInfo)
+	public void setVnfTypesRemovingPreviousInfo (SortedSet<WVnfType> newInfo)
 	{
 		final List<List<String>> matrix = new ArrayList<> ();
-		for (Entry<String , WVnfType> entry : newInfo.entrySet())
+		for (WVnfType entry : newInfo)
 		{
 			final List<String> infoThisVnf = new LinkedList<> ();
-			infoThisVnf.add(entry.getKey());
-			infoThisVnf.add(entry.getValue().getMaxInputTrafficPerVnfInstance_Gbps() + "");
-			infoThisVnf.add(entry.getValue().getOccupCpu() + "");
-			infoThisVnf.add(entry.getValue().getOccupRamGBytes() + "");
-			infoThisVnf.add(entry.getValue().getOccupHdGBytes() + "");
-			infoThisVnf.add(entry.getValue().getProcessingTime_ms() + "");
-			infoThisVnf.add(new Boolean (entry.getValue().isConstrainedToBeInstantiatedOnlyInUserDefinedNodes()).toString());
-			infoThisVnf.add(entry.getValue().getValidMetroNodesForInstantiation().stream().collect(Collectors.joining(WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER)));
-			infoThisVnf.add(entry.getValue().getArbitraryParamString());
+			infoThisVnf.add(entry.getVnfTypeName());
+			infoThisVnf.add(entry.getMaxInputTrafficPerVnfInstance_Gbps() + "");
+			infoThisVnf.add(entry.getOccupCpu() + "");
+			infoThisVnf.add(entry.getOccupRamGBytes() + "");
+			infoThisVnf.add(entry.getOccupHdGBytes() + "");
+			infoThisVnf.add(entry.getProcessingTime_ms() + "");
+			infoThisVnf.add(new Boolean (entry.isConstrainedToBeInstantiatedOnlyInUserDefinedNodes()).toString());
+			infoThisVnf.add(entry.getValidMetroNodesForInstantiation().stream().collect(Collectors.joining(WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER)));
+			infoThisVnf.add(entry.getArbitraryParamString());
 			matrix.add(infoThisVnf);
 		}
 		np.setAttributeAsStringMatrix(ATTNAME_VNFTYPELIST, matrix);
@@ -351,7 +360,7 @@ public class WNet extends WAbstractNetworkElement
 	/** Returns the set of VNF type names defined
 	 * @return see above
 	 */
-	public SortedSet<String> getVnfTypeNames () { return new TreeSet<> (getVnfTypesMap().keySet()); }
+	public SortedSet<String> getVnfTypeNames () { return getVnfTypes().stream().map(v->v.getVnfTypeName()).collect(Collectors.toCollection(TreeSet::new)); }
 
 	/** Returns the user service information defined, in a map with key the user service identifier, and value the user service object 
 	 * @return see above
