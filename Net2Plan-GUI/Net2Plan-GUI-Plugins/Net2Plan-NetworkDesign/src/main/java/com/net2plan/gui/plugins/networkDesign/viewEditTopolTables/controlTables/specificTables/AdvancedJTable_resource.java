@@ -95,7 +95,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
     {
     	final NetPlan np = callback.getDesign();
         final List<AjtRcMenu> res = new ArrayList<> ();
-        res.add(new AjtRcMenu("Add node", e->
+        res.add(new AjtRcMenu("Add resource", e->
         {
             JComboBox<StringLabeller> hostNodeSelector = new WiderJComboBox();
             JTextField capUnitsField = new JTextField(20);
