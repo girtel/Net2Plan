@@ -139,5 +139,9 @@ public class WServiceChain extends WAbstractNetworkElement
 	public WNode getB () { final List<WIpLink> links = getSequenceOfTraversedIpLinks(); return links.get(links.size()-1).getB(); }
 
 	public String toString () { return "SChain(" + this.getInitiallyInjectedTrafficGbps() + "G) " + getA().getName() + "->" + getB().getName(); }
+
+	/** Removes this service chain, realeasing the resources
+	 */
+	public void remove () { this.r.remove(); }
 	
 }

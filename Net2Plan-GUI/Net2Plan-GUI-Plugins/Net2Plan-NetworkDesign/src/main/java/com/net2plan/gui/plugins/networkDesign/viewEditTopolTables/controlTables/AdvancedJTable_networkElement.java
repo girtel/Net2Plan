@@ -40,6 +40,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualiza
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager.PickStateInfo;
 import com.net2plan.gui.utils.JScrollPopupMenu;
 import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -428,8 +429,8 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 			{
 				final List<NetworkElement> es = new ArrayList<>();
 				es.addAll((Collection) value);
-				pm.createPickStateFromListNe((Collection) value);
-//				callback.getVisualizationState().pickElementsOfTypeFirstElement(es.stream().map(e->new NetworkElementOrFr(e)).collect(Collectors.toList()) , Optional.empty());
+				final PickStateInfo pickState = pm.createPickStateFromListNe((Collection) value);
+                pm.pickElements(pickState);
 				callback.updateVisualizationAfterPick();
 			}
         }

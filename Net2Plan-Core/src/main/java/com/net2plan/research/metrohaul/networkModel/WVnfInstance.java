@@ -13,11 +13,12 @@ package com.net2plan.research.metrohaul.networkModel;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Maps;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Resource;
 
 /** An instance of this class is a VNF instance hosted in a node, of a given type, with a given capacity. The characteristics of the 
@@ -97,7 +98,7 @@ public class WVnfInstance extends WAbstractNetworkElement
 		return r.getTraversingRouteOccupiedCapacity(sc.getNe());
 	}
 
-	/** Sets the VNF capacity of this instance
+	/** Sets the VNF capacity and RAM/CPU/HD occupation of this instance
 	 * @param newProcessingCapacityInGbps the new processing capacity of the VNF, measured as the maximum amount of Gbps considering the traffic of the traversing service chains, at the input of the VNF 
 	 * @param newOccupiedCpu the amount of CPU occupied by this instance
 	 * @param newOccupiedRam the amount of RAM in GBytes occupied by this instance
@@ -110,6 +111,20 @@ public class WVnfInstance extends WAbstractNetworkElement
 		map.put (getHostingNode().getRamBaseResource() , newOccupiedRam);
 		map.put (getHostingNode().getHdBaseResource() , newOccupiedHd);		
 		r.setCapacity(newProcessingCapacityInGbps, map);
+	}
+
+	/** Sets the capacity of this VNF instance as well as the CPU, RAM, HD consumption, so the VNF capacity is the minimum multiple of the
+	 * capacity of the instance VNF type. As an example, if the VNF type sets a per-instance capacity of 1 Gbps, consuming 1 CPU, 2 GBs RAM and 3 GBs HD, and the current 
+	 * VNF instance receives 1.5 GBps of traffic, the new VNF instance is scaled to have 2 Gbps of capacity, consuming 2 CPUs, 4 GBs RAM and 6 GBs HD.
+	 */
+	public void scaleVnfCapacityAndConsumptionToBaseInstanceMultiple ()
+	{
+		final WVnfType vnfType = getNet().getVnfType(this.getType()).orElse(null);
+		if (vnfType == null) throw new Net2PlanException ("No detailed information of the VNF type is available");
+		final double occupiedCapacityGbps = this.getOccupiedCapacityInGbps();
+		final double capacityOfEachSubinstance = vnfType.getMaxInputTrafficPerVnfInstance_Gbps();
+		final int numSubinstances = (int) Math.ceil(occupiedCapacityGbps / capacityOfEachSubinstance);
+		setCapacityInGbpsOfInputTraffic(numSubinstances * capacityOfEachSubinstance , numSubinstances * vnfType.getOccupCpu(), numSubinstances * vnfType.getOccupRamGBytes(), numSubinstances * vnfType.getOccupHdGBytes());
 	}
 	
 	/** Returns the current capacity of this VNF
@@ -145,6 +160,15 @@ public class WVnfInstance extends WAbstractNetworkElement
 	 */
 	public void remove () { r.remove(); }
 
+	/** Returns the WVnfType object assigned to this instance type, if any 
+	 * @return see above
+	 */
+	public Optional<WVnfType> getVnfType ()
+	{
+		return getNet().getVnfType(this.getType ());
+	}
+
+	
 	boolean isBaseResourceNotAVnf () { return this.getType().contains(WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER); }
 	
 }

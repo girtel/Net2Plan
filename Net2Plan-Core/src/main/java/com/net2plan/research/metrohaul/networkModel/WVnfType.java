@@ -19,7 +19,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 /** This class represents the information of a type of VNF defined for the network. This is used when a VNF is instantiated in a node, since 
  * instantiated VNFs must be of a previously defined type. 
  */
-public class WVnfType
+public class WVnfType implements Comparable<WVnfType>
 {
 	final private String vnfTypeName;
 	final private double processingTime_ms;
@@ -131,4 +131,39 @@ public class WVnfType
 	public String toString () { return "VnfType(" + this.getVnfTypeName()+ ")"; }
 	
 
+
+    @Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((vnfTypeName == null) ? 0 : vnfTypeName.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		WVnfType other = (WVnfType) obj;
+		if (vnfTypeName == null) {
+			if (other.vnfTypeName != null)
+				return false;
+		} else if (!vnfTypeName.equals(other.vnfTypeName))
+			return false;
+		return true;
+	}
+
+	@Override
+    public final int compareTo(WVnfType o)
+	{
+	    if (this.equals(o)) return 0;
+	    if (o == null) throw new NullPointerException ();
+	    return this.vnfTypeName.compareTo(o.vnfTypeName);
+	}
+
+	
 }
