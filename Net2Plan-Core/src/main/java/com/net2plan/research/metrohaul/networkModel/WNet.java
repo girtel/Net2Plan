@@ -166,7 +166,7 @@ public class WNet extends WAbstractNetworkElement
 	public Pair<WFiber,WFiber> addFiber (WNode a , WNode b , List<Integer> validOpticalSlotRanges , double lengthInKm , boolean isBidirectional)
 	{
 		checkInThisWNet (a , b);
-		if (lengthInKm < 0) lengthInKm = getNetPlan().getNodePairEuclideanDistance(a.getNe(), b.getNe());
+		if (lengthInKm < 0) lengthInKm = getNetPlan().getNodePairHaversineDistanceInKm(a.getNe(), b.getNe());
 		final SortedSet<Integer> opticalSlots = WFiber.computeValidOpticalSlotIds(validOpticalSlotRanges);
 		if (isBidirectional)
 		{
