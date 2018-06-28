@@ -1,4 +1,4 @@
-package com.net2plan.research.metrohaul.examples;
+package com.net2plan.examples.general.offline.metrohaul;
 
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
