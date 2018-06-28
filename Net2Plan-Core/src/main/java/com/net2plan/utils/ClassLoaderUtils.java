@@ -60,7 +60,7 @@ public class ClassLoaderUtils
 			new URL("http://localhost/").openConnection().setDefaultUseCaches(false);
 			if (classLoaderToUse == null)
 			{
-				URLClassLoader ucl = new URLClassLoader(new URL[] { aux.getFirst().toURI().toURL() } , ClassLoader.getSystemClassLoader());
+				URLClassLoader ucl = new URLClassLoader(new URL[] { aux.getFirst().toURI().toURL() });
 				return ucl.loadClass(aux.getSecond());
 			}
 			else
