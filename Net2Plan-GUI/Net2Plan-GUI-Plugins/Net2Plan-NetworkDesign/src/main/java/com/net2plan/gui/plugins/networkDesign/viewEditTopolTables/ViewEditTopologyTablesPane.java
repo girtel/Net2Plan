@@ -12,7 +12,6 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
-// TODO: JAVIER. Header menu in abstract table: 1) Attribute columns can be collapsed or not, 2) Hide/show columns and column header right-click menu options, 3) increase/decrease number of decimals if double
 // TODO: JAVIER. Differential coloring to see the differences
 // TODO: JAVIER. Pick manager with ALT-LEFT/RIGHT
 // TODO: JAVIER. Left layer selector, 7 buttons. 5 for layer, 2 for up and down (each double, one for scroll up (only visible if more than 5 layers), other for moving up visually the active layer), only visible if more than 5 layers.  
@@ -90,7 +89,6 @@ public class ViewEditTopologyTablesPane extends JPanel
         super(new BorderLayout());
         this.callback = callback;
         this.netPlanView = new JTabbedPane();
-        final NetPlan np = callback.getDesign();
         
         final JSplitPane splitPane = new JSplitPane();
         splitPane.setLeftComponent(netPlanView);
@@ -139,7 +137,7 @@ public class ViewEditTopologyTablesPane extends JPanel
                 try
                 {
                     final NetPlan netPlan = callback.getDesign();
-                    for (NetworkLayer layer : np.getNetworkLayers())
+                    for (NetworkLayer layer : netPlan.getNetworkLayers())
                     {
                         for (Pair<AdvancedJTable_abstractElement, FilteredTablePanel> tableInfo : netPlanViewTable.get(layer).values())
                         {
