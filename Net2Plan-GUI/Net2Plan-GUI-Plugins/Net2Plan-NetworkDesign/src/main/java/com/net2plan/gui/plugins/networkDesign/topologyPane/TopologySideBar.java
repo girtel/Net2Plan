@@ -14,6 +14,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
@@ -21,6 +22,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -33,6 +36,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.ScrollPaneLayout;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -68,6 +72,7 @@ public class TopologySideBar extends JPanel implements ActionListener
         this.setLayout(new BorderLayout());
 
         this.layerToolBar = new JToolBar();
+        this.layerToolBar.setLayout(new MigLayout("insets 0 0 0 0, fillx, gap 0, wrap 1"));
         this.layerToolBar.setOrientation(JToolBar.VERTICAL);
         this.layerToolBar.setRollover(true);
         this.layerToolBar.setFloatable(false);
@@ -110,8 +115,8 @@ public class TopologySideBar extends JPanel implements ActionListener
         this.btn_npChangeRedo.addActionListener(this);
         
         /* Layers panel */
-        layersPanel = new JPanel(new MigLayout("insets 0 0 0 0, wrap 1"));
-        layersPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        layersPanel = new JPanel(new MigLayout("insets 0, gap 1, fillx, wrap 1"));
+
         updateLayersPanel();
         
         final JScrollPane scPane = new JScrollPane(layersPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -130,7 +135,7 @@ public class TopologySideBar extends JPanel implements ActionListener
               availR.height -= insets.top  + insets.bottom;
 
               Rectangle vsbR = new Rectangle();
-              vsbR.width  = 8;
+              vsbR.width  = 5;
               vsbR.height = availR.height;
               vsbR.x = availR.x + availR.width - vsbR.width;
               vsbR.y = availR.y;
@@ -186,15 +191,38 @@ public class TopologySideBar extends JPanel implements ActionListener
               scrollbar.repaint();
             }
           });
-
-        this.layerToolBar.add(btn_increaseInterLayerDistance);
-        this.layerToolBar.add(btn_decreaseInterLayerDistance);
-        this.layerToolBar.add(btn_showLowerLayerInfo);
-        this.layerToolBar.add(btn_showUpperLayerInfo);
-        this.layerToolBar.add(btn_showThisLayerInfo);
+        
+        scPane.setPreferredSize(new Dimension(0, 200));
+        scPane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.GRAY));
+        
+        /* Up down active layer buttons */
+//        final JButton upButton = new JButton("\u25B2");
+//		upButton.setOpaque(false);
+//		upButton.setContentAreaFilled(false);
+//		upButton.setBorder(null);
+//		upButton.setBorderPainted(false);
+//		upButton.setBorderPainted(false);
+//		upButton.setFocusable(false);
+//		upButton.setMargin(new Insets(0, 0, 0, 0));
+//		
+//	        final JButton downButton = new JButton("\u25BC");
+//	        downButton.setOpaque(false);
+//	        downButton.setContentAreaFilled(false);
+//	        downButton.setBorder(null);
+//	        downButton.setBorderPainted(false);
+//	        downButton.setBorderPainted(false);
+//	        downButton.setFocusable(false);
+//	        downButton.setMargin(new Insets(0, 0, 0, 0));
+        
+        this.layerToolBar.add(btn_increaseInterLayerDistance, "growx");
+        this.layerToolBar.add(btn_decreaseInterLayerDistance, "growx");
+        this.layerToolBar.add(btn_showLowerLayerInfo, "growx");
+        this.layerToolBar.add(btn_showUpperLayerInfo, "growx");
+        this.layerToolBar.add(btn_showThisLayerInfo, "growx");
         //multiLayerToolbar.add(btn_npChangeUndo);
         //multiLayerToolbar.add(btn_npChangeRedo);
-        this.layerToolBar.add(scPane);
+        this.layerToolBar.add(new JToolBar.Separator());
+        this.layerToolBar.add(scPane, "growx");
         this.layerToolBar.add(Box.createVerticalGlue());
 
         this.add(layerToolBar, BorderLayout.WEST);
@@ -257,6 +285,7 @@ public class TopologySideBar extends JPanel implements ActionListener
     	layersPanel.removeAll();
     	
     	final NetPlan netPlan = callback.getDesign();
+    	final VisualizationState vs = callback.getVisualizationState();
     	
     	for (NetworkLayer layer : netPlan.getNetworkLayers())
     	{
@@ -265,12 +294,60 @@ public class TopologySideBar extends JPanel implements ActionListener
 			final JButton layerButton = new JButton();
 			layerButton.setOpaque(false);
 			layerButton.setContentAreaFilled(false);
+			layerButton.setBorder(null);
+			layerButton.setBorderPainted(false);
 			layerButton.setBorderPainted(false);
 			layerButton.setFocusable(false);
 			layerButton.setMargin(new Insets(0, 0, 0, 0));
 	        layerButton.setText(buttonText.toUpperCase());
-    		layerButton.setToolTipText(layerName);
-    		layersPanel.add(layerButton);
+
+	        final String layerState;
+    		final Font buttonFont;
+    		
+    		if (layer.isDefaultLayer())
+    		{
+    			buttonFont = new Font("Segoe UI", Font.BOLD, 16);
+    			layerButton.setFont(buttonFont.deriveFont(Font.BOLD));
+    			layerState = "active";
+    		}
+    		else if (vs.isLayerVisibleInCanvas(layer))
+    		{
+    			buttonFont = new Font("Segoe UI", Font.PLAIN, 14);
+    			layerState = "visible";
+    		}
+    		else
+    		{
+    			buttonFont = new Font("Segoe UI", Font.PLAIN, 14);
+    			layerButton.setForeground(Color.GRAY);
+    			layerState = "hidden";
+    		}
+    		
+    		layerButton.setFont(buttonFont);
+    		layerButton.setToolTipText(layer + " (" + layerState + ")");
+    		
+    		layerButton.addMouseListener(new MouseAdapter() {
+    			@Override
+    			public void mouseClicked(MouseEvent e)
+    			{
+    				if (!layer.isDefaultLayer())
+    	            {
+    	                if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1)
+    	                {                                                
+    	                    callback.getVisualizationState().setCanvasLayerVisibility(layer, !vs.isLayerVisibleInCanvas(layer));
+    	                    callback.updateVisualizationAfterChanges();
+    	                }
+    	                else if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2)
+    	                {
+    	                    callback.getDesign().setNetworkLayerDefault(layer);
+    	                    callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
+    	                    callback.updateVisualizationAfterChanges();
+    	                }
+    	                updateLayersPanel();
+    	            }  
+    			}
+			});
+    		
+    		layersPanel.add(layerButton, "align center");
     		
     	}
     	
