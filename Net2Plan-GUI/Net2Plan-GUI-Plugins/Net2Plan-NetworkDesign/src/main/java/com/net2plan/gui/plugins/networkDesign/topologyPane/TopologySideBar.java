@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -38,6 +39,9 @@ import javax.swing.JToolBar;
 import javax.swing.ScrollPaneLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+
+import org.apache.commons.collections15.BidiMap;
+import org.apache.commons.collections15.bidimap.DualHashBidiMap;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
@@ -56,7 +60,7 @@ public class TopologySideBar extends JPanel implements ActionListener
     private final ITopologyCanvas canvas;
 
     private final JToolBar layerToolBar;
-    private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance;
+    private final JButton btn_increaseInterLayerDistance, btn_decreaseInterLayerDistance, btn_moveUpLayer, btn_moveDownLayer;
     private final JButton btn_npChangeUndo, btn_npChangeRedo;
     private final JToggleButton btn_showLowerLayerInfo, btn_showUpperLayerInfo, btn_showThisLayerInfo;
     private final JPanel layersPanel;
@@ -117,8 +121,6 @@ public class TopologySideBar extends JPanel implements ActionListener
         /* Layers panel */
         layersPanel = new JPanel(new MigLayout("insets 0, gap 1, fillx, wrap 1"));
 
-        updateLayersPanel();
-        
         final JScrollPane scPane = new JScrollPane(layersPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scPane.setLayout(new ScrollPaneLayout() {
             @Override
@@ -195,24 +197,37 @@ public class TopologySideBar extends JPanel implements ActionListener
         scPane.setPreferredSize(new Dimension(0, 200));
         scPane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.GRAY));
         
+        final JPanel upDownButtonsPanel = new JPanel();
+        
         /* Up down active layer buttons */
-//        final JButton upButton = new JButton("\u25B2");
-//		upButton.setOpaque(false);
-//		upButton.setContentAreaFilled(false);
-//		upButton.setBorder(null);
-//		upButton.setBorderPainted(false);
-//		upButton.setBorderPainted(false);
-//		upButton.setFocusable(false);
-//		upButton.setMargin(new Insets(0, 0, 0, 0));
-//		
-//	        final JButton downButton = new JButton("\u25BC");
-//	        downButton.setOpaque(false);
-//	        downButton.setContentAreaFilled(false);
-//	        downButton.setBorder(null);
-//	        downButton.setBorderPainted(false);
-//	        downButton.setBorderPainted(false);
-//	        downButton.setFocusable(false);
-//	        downButton.setMargin(new Insets(0, 0, 0, 0));
+        btn_moveUpLayer = new JButton("\u25B2");
+		btn_moveUpLayer.setOpaque(false);
+		btn_moveUpLayer.setContentAreaFilled(false);
+		btn_moveUpLayer.setBorder(null);
+		btn_moveUpLayer.setBorderPainted(false);
+		btn_moveUpLayer.setBorderPainted(false);
+		btn_moveUpLayer.setFocusable(false);
+		btn_moveUpLayer.setMargin(new Insets(0, 0, 0, 0));
+		btn_moveUpLayer.setToolTipText("Move up the active layer");
+        btn_moveUpLayer.addActionListener(this);
+
+		
+        btn_moveDownLayer = new JButton("\u25BC");
+        btn_moveDownLayer.setOpaque(false);
+        btn_moveDownLayer.setContentAreaFilled(false);
+        btn_moveDownLayer.setBorder(null);
+        btn_moveDownLayer.setBorderPainted(false);
+        btn_moveDownLayer.setBorderPainted(false);
+        btn_moveDownLayer.setFocusable(false);
+        btn_moveDownLayer.setMargin(new Insets(0, 0, 0, 0));
+        btn_moveDownLayer.setToolTipText("Move down the active layer");
+        btn_moveDownLayer.addActionListener(this);
+
+		
+        upDownButtonsPanel.add(btn_moveUpLayer);
+        upDownButtonsPanel.add(btn_moveDownLayer);
+        
+        updateLayersPanel();
         
         this.layerToolBar.add(btn_increaseInterLayerDistance, "growx");
         this.layerToolBar.add(btn_decreaseInterLayerDistance, "growx");
@@ -221,8 +236,8 @@ public class TopologySideBar extends JPanel implements ActionListener
         this.layerToolBar.add(btn_showThisLayerInfo, "growx");
         //multiLayerToolbar.add(btn_npChangeUndo);
         //multiLayerToolbar.add(btn_npChangeRedo);
-        this.layerToolBar.add(new JToolBar.Separator());
         this.layerToolBar.add(scPane, "growx");
+        this.layerToolBar.add(upDownButtonsPanel, "growx");
         this.layerToolBar.add(Box.createVerticalGlue());
 
         this.add(layerToolBar, BorderLayout.WEST);
@@ -278,6 +293,44 @@ public class TopologySideBar extends JPanel implements ActionListener
         {
             callback.requestRedoAction();
         }
+        else if (src == btn_moveUpLayer)
+        {
+            final NetworkLayer defaultLayer = callback.getDesign().getNetworkLayerDefault();
+
+            final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = new DualHashBidiMap<>(vs.getCanvasLayerOrderIndexMap(true));
+            final int defaultLayerIndex = layerOrderMapConsideringNonVisible.get(defaultLayer);
+            
+            if (defaultLayerIndex == 0) return;
+            
+            final NetworkLayer neighbourLayer = layerOrderMapConsideringNonVisible.inverseBidiMap().get(defaultLayerIndex - 1);
+
+            // Swap the selected layer with the one on top of it.
+            this.swap(layerOrderMapConsideringNonVisible, defaultLayer, neighbourLayer);
+
+            vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible, vs.getCanvasLayerVisibilityMap());
+
+            callback.updateVisualizationAfterChanges();
+            updateLayersPanel();
+        }
+        else if (src == btn_moveDownLayer)
+        {
+            final NetworkLayer defaultLayer = callback.getDesign().getNetworkLayerDefault();
+
+            final BidiMap<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = new DualHashBidiMap<>(vs.getCanvasLayerOrderIndexMap(true));
+            final int defaultLayerIndex = layerOrderMapConsideringNonVisible.get(defaultLayer);
+            
+    		if (defaultLayerIndex == layerOrderMapConsideringNonVisible.size() - 1) return;
+            
+            final NetworkLayer neighbourLayer = layerOrderMapConsideringNonVisible.inverseBidiMap().get(defaultLayerIndex + 1);
+
+            // Swap the selected layer with the one on top of it.
+            this.swap(layerOrderMapConsideringNonVisible, defaultLayer, neighbourLayer);
+
+            vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), layerOrderMapConsideringNonVisible, vs.getCanvasLayerVisibilityMap());
+
+            callback.updateVisualizationAfterChanges();
+            updateLayersPanel();
+        }
     }
 
     public void updateLayersPanel()
@@ -287,7 +340,7 @@ public class TopologySideBar extends JPanel implements ActionListener
     	final NetPlan netPlan = callback.getDesign();
     	final VisualizationState vs = callback.getVisualizationState();
     	
-    	for (NetworkLayer layer : netPlan.getNetworkLayers())
+    	for (NetworkLayer layer : vs.getCanvasLayersInVisualizationOrder(true))
     	{
     		final String layerName = layer.getName().replaceAll(" ", "");
     		final String buttonText = layerName.isEmpty() || layerName.contains("Layer") ? "LAY" + layer.getIndex() : (layerName.length() <= 4 ? layerName : layerName.substring(0, 4));
@@ -353,7 +406,44 @@ public class TopologySideBar extends JPanel implements ActionListener
     	
     	layersPanel.revalidate();
     	layersPanel.updateUI();
+    	
+    	/* Update up/down buttons */
+    	final NetworkLayer defaultLayer = netPlan.getNetworkLayerDefault();
+    	final Map<NetworkLayer, Integer> layerOrderMapConsideringNonVisible = vs.getCanvasLayerOrderIndexMap(true);
+        final int defaultLayerIndex = layerOrderMapConsideringNonVisible.get(defaultLayer);
+        
+        if (defaultLayerIndex == 0) 
+        {
+        	btn_moveUpLayer.setEnabled(false);
+        	btn_moveUpLayer.setForeground(Color.GRAY);
+        }
+		else
+		{
+			btn_moveUpLayer.setEnabled(true);
+        	btn_moveUpLayer.setForeground(Color.BLACK);
+		}
+        
+		if (defaultLayerIndex == layerOrderMapConsideringNonVisible.size() - 1)
+		{
+			btn_moveDownLayer.setEnabled(false);
+			btn_moveDownLayer.setForeground(Color.GRAY);
+		}
+		else
+		{
+			btn_moveDownLayer.setEnabled(true);
+			btn_moveDownLayer.setForeground(Color.BLACK);
+		}
     }
     
+    private <K, V> void swap(Map<K, V> map, K k1, K k2)
+    {
+        final V value1 = map.get(k1);
+        final V value2 = map.get(k2);
+        if ((value1 == null) || (value2 == null)) throw new RuntimeException();
+        map.remove(k1);
+        map.remove(k2);
+        map.put(k1, value2);
+        map.put(k2, value1);
+    }
     
 }
