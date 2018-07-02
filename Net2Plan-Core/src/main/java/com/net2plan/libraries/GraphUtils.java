@@ -955,7 +955,8 @@ public class GraphUtils
 			SortedSet<Resource> resourcesNotInfiniteCostThisType = netPlan.getResources(resourceType);
 			if (resourceCost != null) resourcesNotInfiniteCostThisType.removeIf(e-> resourceCost.get(e) == Double.MAX_VALUE); 
 			if (resourcesNotInfiniteCostThisType.isEmpty()) return new LinkedList<Pair<List<NetworkElement>,Double>> ();
-			final SortedSet<Node> nodesWithResourcesNotInfiniteCostThisType = resourcesNotInfiniteCostThisType.stream().map(e -> e.getHostNode()).
+			final SortedSet<Node> nodesWithResourcesNotInfiniteCostThisType = resourcesNotInfiniteCostThisType.
+					stream().filter(e->e.iAttachedToANode()).map(e -> e.getHostNode().get()).
 					collect(Collectors.toCollection(TreeSet::new));
 			nodesPerPhase.add(nodesWithResourcesNotInfiniteCostThisType);
 		}

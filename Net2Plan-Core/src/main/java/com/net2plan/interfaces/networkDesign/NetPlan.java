@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -904,14 +905,14 @@ public class NetPlan extends NetworkElement
      * @param attributes                            The resource attributes
      * @return The created Resource object
      */
-    public Resource addResource(String type, String name, Node hostNode, double capacity, String capacityMeasurementUnits,
+    public Resource addResource(String type, String name, Optional<Node> hostNode, double capacity, String capacityMeasurementUnits,
                                 Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, Map<String,String> attributes)
     {
         return addResource(null, type, name, hostNode, capacity, capacityMeasurementUnits,
                 capacityIOccupyInBaseResource, processingTimeToTraversingTrafficInMs, attributes);
     }
 
-    Resource addResource(Long resourceId, String type, String name, Node hostNode, double capacity, String capacityMeasurementUnits,
+    Resource addResource(Long resourceId, String type, String name, Optional<Node> hostNode, double capacity, String capacityMeasurementUnits,
                          Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, 
                          Map<String,String> attributes)
     {
@@ -922,6 +923,7 @@ public class NetPlan extends NetworkElement
         if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new TreeMap<Resource, Double>();
         for (Double val : capacityIOccupyInBaseResource.values())
             if (val < 0) throw new Net2PlanException("Resource capacity cannot be negative");
+        if (!hostNode.isPresent() && !capacityIOccupyInBaseResource.isEmpty()) throw new Net2PlanException ("Not attached resources cannot have base resources"); 
         
         if (resourceId == null)
         {
@@ -941,7 +943,7 @@ public class NetPlan extends NetworkElement
             cache_type2Resources.put(type, resOfThisType);
         }
         resOfThisType.add(resource);
-        hostNode.cache_nodeResources.add(resource);
+        if (hostNode.isPresent()) hostNode.get().cache_nodeResources.add(resource);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return resource;
     }
@@ -1942,10 +1944,11 @@ public class NetPlan extends NetworkElement
             if (e instanceof Link) links.add((Link) e);
             else if (e instanceof Resource)
             {
+            	if (!((Resource) e).iAttachedToANode()) throw new Net2PlanException ("The resource is not attached to a node");
                 resources.add((Resource) e);
-                if (links.isEmpty() && !((Resource) e).hostNode.equals(d.ingressNode))
+                if (links.isEmpty() && !((Resource) e).hostNode.get().equals(d.ingressNode))
                     throw new Net2PlanException("Wrong resource node in the service chain");
-                if (!links.isEmpty() && !((Resource) e).hostNode.equals(links.getLast().destinationNode))
+                if (!links.isEmpty() && !((Resource) e).hostNode.get().equals(links.getLast().destinationNode))
                     throw new Net2PlanException("Wrong resource node in the service chain");
             } else throw new Net2PlanException("A list of links and/or resources is expected");
         }
@@ -2025,7 +2028,7 @@ public class NetPlan extends NetworkElement
 			}
     		if (e == null)
     		{
-    			final Node thisHostNode = (Node)thatToThisTranslation.get(other.getHostNode());
+    			final Optional<Node> thisHostNode = other.iAttachedToANode ()? Optional.of((Node)thatToThisTranslation.get(other.getHostNode().get())) : Optional.empty();
     			if (thisHostNode == null) throw new RuntimeException ();
     			e = this.addResource(other.getType(), other.getName(), thisHostNode, 0 , "" , thisOccupMap , 0 , null);
     		}
@@ -2340,8 +2343,9 @@ public class NetPlan extends NetworkElement
         }
         for (Resource originResource : originNetPlan.resources)
         {
+        	final Optional<Node> hostNode = originResource.iAttachedToANode()? Optional.of(this.cache_id2NodeMap.get(originResource.hostNode.get().id)) : Optional.empty();
             Resource newElement = new Resource(this, originResource.id, originResource.index, originResource.type,
-                    originResource.name, this.cache_id2NodeMap.get(originResource.hostNode.id),
+                    originResource.name, hostNode,
                     originResource.capacity, originResource.capacityMeasurementUnits, null, 
                     originResource.processingTimeToTraversingTrafficInMs, originResource.attributes);
             for (String tag : originResource.getTags ()) newElement.addTag (tag);
@@ -3446,7 +3450,8 @@ public class NetPlan extends NetworkElement
     {
         DoubleMatrix2D delta_en = DoubleFactory2D.sparse.make(resources.size(), nodes.size());
         for (Resource res : resources)
-            delta_en.set(res.index, res.hostNode.index, 1.0);
+        	if (res.iAttachedToANode())
+        		delta_en.set(res.index, res.hostNode.get().index, 1.0);
         return delta_en;
     }
 
@@ -4570,6 +4575,24 @@ public class NetPlan extends NetworkElement
     }
 
     /**
+     * <p>Returns the set of resources which are not attached to any node
+     * @return see above
+     */
+    public SortedSet<Resource> getUnattachedResources()
+    {
+        return resources.stream().filter(t->!t.iAttachedToANode()).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    /**
+     * <p>Returns the set of resources which are attached to any node (that is, not unattached)
+     * @return see above
+     */
+    public SortedSet<Resource> getResourcesAttachedToAnyNode ()
+    {
+        return resources.stream().filter(t->t.iAttachedToANode()).collect(Collectors.toCollection(TreeSet::new));
+    }
+    
+    /**
      * Returns the set of resources in the network for the given type. If none resource exists for that type, an empty set is returned
      *
      * @param type the type
@@ -5658,7 +5681,7 @@ public class NetPlan extends NetworkElement
             {
                 final Resource ee = (Resource) e;
                 if (ee.netPlan != this) return false;
-                if (!ee.hostNode.isUp) return false;
+                if (ee.iAttachedToANode()) if (!ee.hostNode.get().isUp) return false;
             } else if (e instanceof Link)
             {
                 final Link ee = (Link) e;
@@ -6117,7 +6140,7 @@ public class NetPlan extends NetworkElement
                 writer.writeAttribute("id", Long.toString(res.id));
                 writer.writeAttribute("description", res.getDescription());
                 writer.writeAttribute("name", res.getName());
-                writer.writeAttribute("hostNodeId", Long.toString(res.hostNode.id));
+                writer.writeAttribute("hostNodeId", Long.toString(res.iAttachedToANode()? res.hostNode.get().id : -1));
                 writer.writeAttribute("type", res.type);
                 writer.writeAttribute("capacityMeasurementUnits", res.capacityMeasurementUnits);
                 writer.writeAttribute("processingTimeToTraversingTrafficInMs", Double.toString(res.processingTimeToTraversingTrafficInMs));

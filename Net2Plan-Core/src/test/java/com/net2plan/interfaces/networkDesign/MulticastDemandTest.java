@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.TreeSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.SortedSet;
 
 import org.junit.After;
@@ -74,7 +75,7 @@ public class MulticastDemandTest
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
 		this.path13 = new LinkedList<Link> (); path13.add(link12); path13.add(link23);
-		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
+		this.res2 = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
 		this.scd123 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = Arrays.asList(link12 ,res2 , link23); 

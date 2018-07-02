@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -68,8 +69,8 @@ public class RouteTest
 		this.segm13 = np.addServiceChain(d13 , 0.0 , Arrays.asList(25.0) , Arrays.asList(link13) , null);
 		this.r123a.addBackupRoute(segm13);
 		this.r123b = np.addRoute(d13,1,1.5,path13,null);
-		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
+		this.res2 = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
+		this.res2backup = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
 		this.scd123 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = new LinkedList<NetworkElement> (); pathSc123.add(link12); pathSc123.add(res2); pathSc123.add(link23); 

@@ -18,6 +18,7 @@ import com.net2plan.interfaces.networkDesign.Resource;
 
 import java.awt.geom.Point2D;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -136,7 +137,7 @@ public class WNode extends WAbstractNetworkElement
 		final Set<Resource> res = n.getResources(RESOURCETYPE_CPU);
 		if (res.size() > 1) throw new Net2PlanException ("Format error");
 		if (res.isEmpty()) 
-			res.add(n.getNetPlan().addResource(RESOURCETYPE_CPU, RESOURCETYPE_CPU, n, totalNumCpus, RESOURCETYPE_CPU, new HashMap<> (), 0.0, null));
+			res.add(n.getNetPlan().addResource(RESOURCETYPE_CPU, RESOURCETYPE_CPU, Optional.of(n), totalNumCpus, RESOURCETYPE_CPU, new HashMap<> (), 0.0, null));
 		else 
 			res.iterator().next().setCapacity(totalNumCpus, new HashMap<> ());
 	}
@@ -152,7 +153,7 @@ public class WNode extends WAbstractNetworkElement
 		final Set<Resource> res = n.getResources(RESOURCETYPE_RAM);
 		if (res.size() > 1) throw new Net2PlanException ("Format error");
 		if (res.isEmpty()) 
-			res.add(n.getNetPlan().addResource(RESOURCETYPE_RAM, RESOURCETYPE_RAM, n, totalRamGB, "GB", new HashMap<> (), 0.0, null));
+			res.add(n.getNetPlan().addResource(RESOURCETYPE_RAM, RESOURCETYPE_RAM, Optional.of(n), totalRamGB, "GB", new HashMap<> (), 0.0, null));
 		else 
 			res.iterator().next().setCapacity(totalRamGB, new HashMap<> ());
 	}
@@ -168,7 +169,7 @@ public class WNode extends WAbstractNetworkElement
 		final Set<Resource> res = n.getResources(RESOURCETYPE_HD);
 		if (res.size() > 1) throw new Net2PlanException ("Format error");
 		if (res.isEmpty()) 
-			res.add(n.getNetPlan().addResource(RESOURCETYPE_HD, RESOURCETYPE_HD, n, totalHdGB, "GB", new HashMap<> (), 0.0, null));
+			res.add(n.getNetPlan().addResource(RESOURCETYPE_HD, RESOURCETYPE_HD, Optional.of(n), totalHdGB, "GB", new HashMap<> (), 0.0, null));
 		else 
 			res.iterator().next().setCapacity(totalHdGB, new HashMap<> ());
 	}

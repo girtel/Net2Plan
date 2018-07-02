@@ -659,12 +659,13 @@ public class PickManager
     	if (layer == null) layer = callback.getDesign().getNetworkLayerDefault();
         for (Resource pickedResource : pickedResources)
         {
-            for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes(pickedResource.getHostNode()))
-            {
-            	if (!gn.getLayer().equals(layer)) continue;
-                gn.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
-                gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
-            }
+        	if (pickedResource.iAttachedToANode())
+	            for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes(pickedResource.getHostNode().get()))
+	            {
+	            	if (!gn.getLayer().equals(layer)) continue;
+	                gn.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
+	                gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
+	            }
         }
     }
 

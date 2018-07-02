@@ -93,9 +93,9 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 			netPlan.removeAllResources();
 			for (Node n : netPlan.getNodes())
 			{
-				netPlan.addResource("CPU", "", n, cpuRamHdCap.get(0), "", null, 0.0, null);
-				netPlan.addResource("RAM", "", n, cpuRamHdCap.get(1), "", null, 0.0, null);
-				netPlan.addResource("HD", "", n, cpuRamHdCap.get(2), "", null, 0.0, null);
+				netPlan.addResource("CPU", "", Optional.of(n), cpuRamHdCap.get(0), "", null, 0.0, null);
+				netPlan.addResource("RAM", "", Optional.of(n), cpuRamHdCap.get(1), "", null, 0.0, null);
+				netPlan.addResource("HD", "", Optional.of(n), cpuRamHdCap.get(2), "", null, 0.0, null);
 			}
 		}
 		if (overideSequenceTraversedNFVs.getBoolean())
@@ -156,7 +156,7 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 				if (nfvCpu_f.get(indexNFVType) > cpuNode) continue;
 				if (nfvRam_f.get(indexNFVType)  > ramNode) continue;
 				if (nfvHardDisk_f.get(indexNFVType)  > hdNode) continue;
-				netPlan.addResource(nfvType_f.get(indexNFVType), "", n, nfvCap_f.get(indexNFVType), "", n.getResources("CPU", "RAM", "HD").stream().collect(Collectors.toMap(e -> e ,  e-> 0.0)) , 0, null);
+				netPlan.addResource(nfvType_f.get(indexNFVType), "", Optional.of(n), nfvCap_f.get(indexNFVType), "", n.getResources("CPU", "RAM", "HD").stream().collect(Collectors.toMap(e -> e ,  e-> 0.0)) , 0, null);
 			}
 		}
 		

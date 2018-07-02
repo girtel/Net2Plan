@@ -218,10 +218,10 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Resource index/id" , "Resource " + r.getIndex() + " (id " + r.getId() + ")", "resource" + r.getId()));
 		res.add(Triple.of("Name" , r.getName().equals("")? "No name" : r.getName(), ""));
 		res.add(Triple.of("Type" , r.getType() , ""));
-		res.add(Triple.of("Host node" , getNodeName(r.getHostNode()) , ""));
+		res.add(Triple.of("Host node" , r.iAttachedToANode()? getNodeName(r.getHostNode().get()) : "---" , ""));
 		res.add(Triple.of("Capacity occupied / total" , df.format(r.getOccupiedCapacity()) + " / " + df.format(r.getCapacity()) + " " + resCapUnits , ""));
 		res.add(Triple.of("Processing time" , df.format(r.getProcessingTimeToTraversingTrafficInMs()) + " ms", ""));
-		res.add(Triple.of("Is up?", "" + r.getHostNode().isUp() , ""));
+		res.add(Triple.of("Is up?", "" + (r.iAttachedToANode()? r.getHostNode().get().isUp() : true) , ""));
 		res.add(Triple.of("# base resources", "" + r.getBaseResources().size() , ""));
 		for (Resource br : r.getBaseResources())
 			res.add(Triple.of(getResourceName(br) + " (" + br.getType() + ")" , "Occup: " + df.format(r.getCapacityOccupiedInBaseResource(br)) + " " + br.getCapacityMeasurementUnits() , "resource" + br.getId()));

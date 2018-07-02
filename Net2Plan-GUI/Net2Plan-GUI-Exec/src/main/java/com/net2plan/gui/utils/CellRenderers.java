@@ -14,6 +14,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 
 
+
 public class CellRenderers
 {
     public static final Color bgColorLastRow = new Color(200, 200, 200);

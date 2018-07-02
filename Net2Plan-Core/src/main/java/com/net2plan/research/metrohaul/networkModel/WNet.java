@@ -590,7 +590,7 @@ public class WNet extends WAbstractNetworkElement
 		cpuRamHdOccupied.put(hostNode.getCpuBaseResource(), type.getOccupCpu());
 		cpuRamHdOccupied.put(hostNode.getRamBaseResource(), type.getOccupRamGBytes());
 		cpuRamHdOccupied.put(hostNode.getHdBaseResource(), type.getOccupHdGBytes());
-		final Resource resource = np.addResource(type.getVnfTypeName(), name, hostNode.getNe(), type.getMaxInputTrafficPerVnfInstance_Gbps(), "Gbps", cpuRamHdOccupied, type.getProcessingTime_ms(), null);
+		final Resource resource = np.addResource(type.getVnfTypeName(), name, Optional.of(hostNode.getNe()), type.getMaxInputTrafficPerVnfInstance_Gbps(), "Gbps", cpuRamHdOccupied, type.getProcessingTime_ms(), null);
 		return new WVnfInstance(resource);
 	}
 	

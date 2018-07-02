@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -67,7 +68,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
 
     public AdvancedJTable_resource(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.RESOURCES , layerThisTable , true , r->r.getHostNode().isDown()? Color.RED : null);
+        super(callback, AJTableType.RESOURCES , layerThisTable , true , r->!r.iAttachedToANode()? null : (r.getHostNode().get().isDown()? Color.RED : null));
     }
 
     @Override
@@ -77,7 +78,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
 		final List<AjtColumnInfo<Resource>> res = new LinkedList<> ();
       res.add(new AjtColumnInfo<Resource>(this , String.class, null , "Name", "Resource name", (d,val)->d.setName((String) val), d->d.getName() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Resource>(this , String.class, null , "Type", "Resource type", null , d->d.getType() , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<Resource>(this , Boolean.class, null , "Up?", "If the resource is up or down (just the state of its hosting node)", null , d->d.getHostNode().isUp() , AGTYPE.COUNTTRUE , r->r.getHostNode().isDown()? Color.RED : null));
+      res.add(new AjtColumnInfo<Resource>(this , Boolean.class, null , "Up?", "If the resource is up or down (just the state of its hosting node)", null , d->d.iAttachedToANode()? d.getHostNode().get().isUp() : true , AGTYPE.COUNTTRUE , r->!r.iAttachedToANode()? null : r.getHostNode().get().isDown()? Color.RED : null));
       res.add(new AjtColumnInfo<Resource>(this , Node.class, null , "Host node", "The node hosting this resource", null , d->d.getHostNode() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Resource>(this , Double.class, null , "Capacity", "The current capacity of the resource", null , d->d.getCapacity() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Resource>(this , Double.class, null , "Occupied capacity", "The current occupied capacity of the resource", null , d->d.getOccupiedCapacity() , AGTYPE.NOAGGREGATION , null));
@@ -135,10 +136,9 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
             int baseResCounter = 0;
             for (Resource r : np.getResources())
             {
+            	if (!r.iAttachedToANode()) continue;
                 if (r.getHostNode().toString().equals(hostNode.toString()))
-                {
                     baseResCounter++;
-                }
             }
             Object[][] newData = new Object[baseResCounter][headers.length];
             int counter = 0;
@@ -170,9 +170,30 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
                     newBaseResources.put(r, Double.parseDouble(capacity));
 
             }
-            np.addResource(resType, "Resource " + np.getResources().size(), hostNode,
+            np.addResource(resType, "Resource " + np.getResources().size(), Optional.of(hostNode),
                     0, capacityUnits, newBaseResources, 0, null);
         }, (a,b)->true, null));
+
+        res.add(new AjtRcMenu("Add unatacched resource", e->
+        {
+            JTextField capUnitsField = new JTextField(20);
+            JTextField typeSelector = new JTextField(20);
+            String capacityUnits;
+            String resType;
+            JPanel pane = new JPanel();
+            pane.add(new JLabel("Resource Type"));
+            pane.add(typeSelector);
+            pane.add(Box.createHorizontalStrut(30));
+            pane.add(new JLabel("Capacity Units"));
+            pane.add(capUnitsField);
+
+            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter parameters for the new resource" , JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (result != JOptionPane.OK_OPTION) return;
+            capacityUnits = capUnitsField.getText();
+            resType = typeSelector.getText();
+            np.addResource(resType, "Resource " + np.getResources().size(), Optional.empty(),0, capacityUnits, null, 0, null);
+        } , (a,b)->b==1, null));
+
         res.add(new AjtRcMenu("Remove selected resources", e->getSelectedElements().forEach(dd->((Resource)dd).remove()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set capacity to selected resources", e->
         {

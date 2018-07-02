@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -52,7 +53,8 @@ public class ResourceTest
 	private Route serviceChainUpper, serviceChainBase;
 	private Resource upperResource = null;
 	private Resource baseResource = null;
-
+	private Resource unattached = null;
+	
 	// upper resource: capacity 10, occupied 5 in base
 	// base resource: capacity 10: occupied 1+5
 	// serviceChainUpper (carries 100, occupies 200, occupies 1.0 in upper)
@@ -89,12 +91,12 @@ public class ResourceTest
 		this.demandBase.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("baseType"));
 		
 		/* create resources */
-		this.baseResource = np.addResource("baseType" , "baseName" , hostNode , 10 , "Mbps" , null , 1 , null);
+		this.baseResource = np.addResource("baseType" , "baseName" , Optional.of(hostNode) , 10 , "Mbps" , null , 1 , null);
 		assertTrue (baseResource.getIndex() == 0);
 		assertTrue (np.getNumberOfResources() == 1);
 		
 		final SortedMap<Resource , Double> sm = new TreeMap<> (); sm.put(baseResource , 5.0);
-		this.upperResource = np.addResource("upperType", "upperName" , hostNode , 10 , "Mbps", sm , 1 , null);
+		this.upperResource = np.addResource("upperType", "upperName" , Optional.of(hostNode) , 10 , "Mbps", sm , 1 , null);
 		assertTrue (upperResource.getIndex() == 1);
 		assertTrue (np.getNumberOfResources() == 2);
 		
@@ -104,6 +106,8 @@ public class ResourceTest
 		List<NetworkElement> pathBase = Arrays.asList(baseResource , interLink);
 		this.serviceChainBase = np.addServiceChain(demandBase , 100 , Arrays.asList(1.0 , 300.0) , pathBase , null);
 
+		this.unattached = np.addResource("una", "unaName", Optional.empty(), 2.0, "units", null, 1.0, null);
+		
 		File resourcesDir = new File(TEST_FILE_DIRECTORY);
 		if (!resourcesDir.exists()) resourcesDir.mkdirs();
 	}
@@ -137,6 +141,7 @@ public class ResourceTest
 		assertEquals(np.getResources("baseType"), Collections.emptySet());
 	}
 
+	
 	@Test
 	public void testGetResources () 
 	{
@@ -199,7 +204,7 @@ public class ResourceTest
 	@Test
 	public void testGetHostNode ()
 	{
-		assertTrue(upperResource.getHostNode() == np.getNode(0));
+		assertTrue(upperResource.getHostNode().get() == np.getNode(0));
 	}
 
 	@Test
@@ -299,6 +304,23 @@ public class ResourceTest
 		np2.checkCachesConsistency();
 		assertTrue (np.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np));
+		
+		this.unattached.attachToNode(this.hostNode);
+		np2.checkCachesConsistency();
+		np2 = np.copy();
+		np2.checkCachesConsistency();
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+		np2.checkCachesConsistency();
+		
+		this.unattached.dettachFromNode();
+		np2.checkCachesConsistency();
+		np2 = np.copy();
+		np2.checkCachesConsistency();
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+		np2.checkCachesConsistency();
+		
 //		assertEquals(np2.getResource(0).getId() , np.getResource(0).getId());
 //		assertEquals(np2.getResource(1).getId() , np.getResource(1).getId());
 //		assertEquals(np2.getRoute(0).getId() , np.getRoute(0).getId());

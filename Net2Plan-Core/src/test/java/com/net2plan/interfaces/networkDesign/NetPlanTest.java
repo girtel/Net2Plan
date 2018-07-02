@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -66,7 +67,7 @@ public class NetPlanTest
 	private Route r12, r123a, r123b , sc123;
 	private List<Link> path13;
 	private List<NetworkElement> pathSc123;
-	private Resource res2 , res2backup;
+	private Resource res2 , res2backup , unattached;
 	private Route segm13;
 	private NetworkLayer lowerLayer , upperLayer;
 	private Link upperLink12;
@@ -114,7 +115,7 @@ public class NetPlanTest
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
 		this.link34 = np.addLink(n3,n4,100,100,1,null,lowerLayer);
 		link12.setMonitoredOrForecastedCarriedTraffic(new TrafficSeries ().addValue(new Date(10L), 10.0));
-
+		this.unattached = np.addResource("una", "unaName", Optional.empty(), 2.0, "units", null, 1.0, null);
 		link12.addTag("t1");
 		link23.setQosTypePriorityAndMaxLinkUtilization("qosType1", 1, 1);
 		this.d13 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
@@ -137,9 +138,9 @@ public class NetPlanTest
 		this.path13 = new LinkedList<Link> (); path13.add(link12); path13.add(link23);
 		this.r123a = np.addRoute(d13,1,1.5,path13,null);
 		this.r123b = np.addRoute(d13,1,1.5,path13,null);
-		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
+		this.res2 = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
 		res2.addTag("t1");
-		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
+		this.res2backup = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
 		this.scd123 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = Arrays.asList(link12 ,res2 , link23);
@@ -191,9 +192,9 @@ public class NetPlanTest
 		this.netTriangle_d31 = this.netTriangle.addDemand(netTriangle_n3,netTriangle_n1,1 , RoutingType.SOURCE_ROUTING,null);
 		this.netTriangle_d23 = this.netTriangle.addDemand(netTriangle_n2,netTriangle_n3,1 , RoutingType.SOURCE_ROUTING,null);
 		this.netTriangle_d32 = this.netTriangle.addDemand(netTriangle_n3,netTriangle_n2,1 , RoutingType.SOURCE_ROUTING,null);
-		this.netTriangle_r1 = netTriangle.addResource("type1" , "name" , netTriangle_n1 , 100.0 , "units" , null , 1.0 , null);
-		this.netTriangle_r2 = netTriangle.addResource("type2" , "name" , netTriangle_n2 , 100.0 , "units" , null , 1.0 , null);
-		this.netTriangle_r3 = netTriangle.addResource("type3" , "name" , netTriangle_n3 , 100.0 , "units" , null , 1.0 , null);
+		this.netTriangle_r1 = netTriangle.addResource("type1" , "name" , Optional.of(netTriangle_n1) , 100.0 , "units" , null , 1.0 , null);
+		this.netTriangle_r2 = netTriangle.addResource("type2" , "name" , Optional.of(netTriangle_n2) , 100.0 , "units" , null , 1.0 , null);
+		this.netTriangle_r3 = netTriangle.addResource("type3" , "name" , Optional.of(netTriangle_n3) , 100.0 , "units" , null , 1.0 , null);
 
 		File resourcesDir = new File(TEST_FILE_DIRECTORY);
 		if (!resourcesDir.exists()) resourcesDir.mkdirs();
@@ -509,10 +510,10 @@ public class NetPlanTest
 	@Test
 	public void testAddResource()
 	{
-		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
+		this.res2 = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
 		assertEquals(res2.getType() , "type");
 		assertEquals(res2.getName() , "name");
-		assertEquals(res2.getHostNode() , n2);
+		assertEquals(res2.getHostNode().get() , n2);
 		assertEquals(res2.getCapacity() , 100 , 0);
 		assertEquals(res2.getCapacityMeasurementUnits() , "Mbps");
 		assertEquals(res2.getCapacityOccupiedInBaseResourcesMap() , Collections.emptyMap ());

@@ -47,7 +47,7 @@ public class WVnfInstance extends WAbstractNetworkElement
 	/** Returns the hosting node of the VNF instance
 	 * @return see above
 	 */
-	public WNode getHostingNode () { return new WNode (r.getHostNode()); }
+	public WNode getHostingNode () { return new WNode (r.getHostNode().get()); }
 	
 	/** Returns the VNF type of this instance
 	 * @return see above

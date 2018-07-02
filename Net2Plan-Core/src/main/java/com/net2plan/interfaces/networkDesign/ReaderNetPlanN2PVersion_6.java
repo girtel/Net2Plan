@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.Map.Entry;
 import java.util.SortedSet;
@@ -481,7 +482,8 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
 		final long resId = getLong ("id");
 		if (resId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		final long hostNodeId = getLong ("hostNodeId");
-		if (netPlan.getNodeFromId(hostNodeId) == null) throw new Net2PlanException ("Could not find the hot node of a resource when reading");
+		final boolean isAttachedToANode = hostNodeId != -1;
+		if (isAttachedToANode && netPlan.getNodeFromId(hostNodeId) == null) throw new Net2PlanException ("Could not find the hot node of a resource when reading");
 		final String type = getString ("type");
 		final String name = getString ("name");
 		final String capacityMeasurementUnits = getString ("capacityMeasurementUnits");
@@ -491,7 +493,8 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
 		URL urlIcon = null; try { urlIcon = new URL (getString ("urlIcon")); } catch (Exception e) {}
 		final List<Double> baseResourceAndOccupiedCapacitiesMap = getListDouble("baseResourceAndOccupiedCapacitiesMap");
 		SortedMap<Resource,Double> occupiedCapacitiesInBaseResources = getResourceOccupationMap(netPlan, baseResourceAndOccupiedCapacitiesMap); 
-		Resource newResource = netPlan.addResource(resId , type , name , netPlan.getNodeFromId(hostNodeId) , capacity , capacityMeasurementUnits , 
+		final Optional<Node> hostNode = isAttachedToANode? Optional.of(netPlan.getNodeFromId(hostNodeId)): Optional.empty();
+		Resource newResource = netPlan.addResource(resId , type , name , hostNode , capacity , capacityMeasurementUnits , 
 				occupiedCapacitiesInBaseResources , processingTimeToTraversingTrafficInMs , null);
 		newResource.setUrlIcon(urlIcon);
 		newResource.setName(getStringOrDefault("name", ""));
