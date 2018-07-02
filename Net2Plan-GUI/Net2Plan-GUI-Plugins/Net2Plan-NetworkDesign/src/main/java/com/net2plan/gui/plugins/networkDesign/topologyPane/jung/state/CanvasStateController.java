@@ -38,8 +38,6 @@ public class CanvasStateController
 
     private final OSMController mapController;
 
-    private CanvasStateMirror stateMirror;
-
     public CanvasStateController(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
     {
         assert callback != null;
@@ -57,17 +55,11 @@ public class CanvasStateController
         siteState = new SiteState(callback, canvas, mapController);
 
         currentState = viewState;
-        stateMirror = new CanvasStateMirror(viewState, canvas.getCanvasCenter(), canvas.getCurrentCanvasScale());
     }
 
     public void setState(CanvasOption state, Object... stateParameters)
     {
         assert state != null;
-
-        // Save state information
-        stateMirror = new CanvasStateMirror(currentState
-                , canvas.getCanvasPointFromMovement(canvas.getCanvasCenter())
-                , currentState.getState() == CanvasOption.OSMState ? mapController.getZoomLevel() : canvas.getCurrentCanvasScale());
 
         // Change state
         currentState.stop();
@@ -101,7 +93,6 @@ public class CanvasStateController
             canvas.getCanvasComponent().setBackground(currentState.getBackgroundColor());
         } catch (RuntimeException e)
         {
-            ErrorHandling.showErrorDialog("Error");
             e.printStackTrace();
             this.setState(viewState.getState());
         }
@@ -110,41 +101,6 @@ public class CanvasStateController
     public CanvasOption getState()
     {
         return currentState.getState();
-    }
-
-    public void returnToPreviousState()
-    {
-        // Mirror data
-        final ICanvasState prevState = stateMirror.getState();
-        final Point2D prevCenter = stateMirror.getCanvasCenter();
-        final double prevZoom = stateMirror.getZoomLevel();
-
-        if (prevState == siteState) return;
-
-        // Move to old state
-        setState(prevState.getState());
-
-        // Setting to reference point
-        zoomAll();
-
-        // Moving to previous positions.
-        if (prevState == viewState)
-        {
-            // Moving the canvas to the center of the map
-            final Point2D referenceCenter = canvas.getCanvasPointFromMovement(canvas.getCanvasCenter());
-
-            final double dxJungCoord = (referenceCenter.getX() - prevCenter.getX());
-            final double dyJungCoord = (referenceCenter.getY() - prevCenter.getY());
-
-            canvas.zoom(canvas.getCanvasCenter(), 1 / ((float) canvas.getCurrentCanvasScale()));
-            canvas.zoom(canvas.getCanvasCenter(), (float) prevZoom);
-
-            canvas.moveCanvasTo(new Point2D.Double(dxJungCoord, -dyJungCoord));
-        } else if (prevState == osmState)
-        {
-            mapController.zoomToLevel(((Double) prevZoom).intValue());
-            mapController.moveMapTo(new GeoPosition(prevCenter.getY(), prevCenter.getX()));
-        }
     }
 
     // ** Mediator interface **
