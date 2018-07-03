@@ -830,6 +830,7 @@ public class Node extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 
+		for (Resource resource : new LinkedList<Resource> (cache_nodeResources)) resource.remove();
 		for (MulticastTree tree : new LinkedList<MulticastTree> (cache_nodeAssociatedulticastTrees)) tree.remove ();
 		for (Route route : new LinkedList<Route> (cache_nodeAssociatedRoutes)) route.remove ();
 		for (SharedRiskGroup srg : new LinkedList<SharedRiskGroup> (cache_nodeNonDynamicSRGs)) srg.remove ();

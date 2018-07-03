@@ -115,7 +115,7 @@ public class PickManager
         }
     }
 
-    @SuppressWarnings("unchecked")
+//    @SuppressWarnings("unchecked")
     private void cleanTimeLineDuty()
     {
         if (timeLine.size() > timelineMaxSize) throw new RuntimeException("Timeline is over its capacity.");
@@ -134,6 +134,22 @@ public class PickManager
                 }
             }
         }
+        
+        /* Clean elements removed */
+        for (int index = 0; index < timeLine.size(); index++)
+        {
+            final PickStateInfo o = timeLine.get(index);
+            if (o.getMainElement().isPresent() && o.getMainElement().get().isNe())
+            {
+            	final NetworkElement ne = o.getMainElement().get().getNe();
+            	if (ne.wasRemoved())
+            	{
+            		newTimeLine.remove(o);
+                    timelineCursor--;
+            	}
+           	}
+        }
+        
         this.timeLine.clear();
         this.timeLine.addAll(newTimeLine);
     }
@@ -325,8 +341,8 @@ public class PickManager
     
     public void reset()
     {
-        this.timeLine.clear();
-        this.timelineCursor = -1;
+//        this.timeLine.clear();
+//        this.timelineCursor = -1;
         cleanPick();
     }
 

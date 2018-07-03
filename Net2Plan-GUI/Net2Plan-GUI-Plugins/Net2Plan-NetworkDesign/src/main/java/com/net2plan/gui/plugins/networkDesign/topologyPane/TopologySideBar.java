@@ -38,6 +38,8 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.ScrollPaneLayout;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 import org.apache.commons.collections15.BidiMap;
@@ -195,9 +197,12 @@ public class TopologySideBar extends JPanel implements ActionListener
           });
         
         scPane.setPreferredSize(new Dimension(0, 200));
-        scPane.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.GRAY));
+        scPane.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
         
         final JPanel upDownButtonsPanel = new JPanel();
+        final Border insetsBorder = BorderFactory.createEmptyBorder(10, 0, 0, 0);
+        final Border lineBorder = BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY);
+        upDownButtonsPanel.setBorder(new CompoundBorder(insetsBorder, lineBorder));
         
         /* Up down active layer buttons */
         btn_moveUpLayer = new JButton("\u25B2");
@@ -236,8 +241,9 @@ public class TopologySideBar extends JPanel implements ActionListener
         this.layerToolBar.add(btn_showThisLayerInfo, "growx");
         //multiLayerToolbar.add(btn_npChangeUndo);
         //multiLayerToolbar.add(btn_npChangeRedo);
-        this.layerToolBar.add(scPane, "growx");
+        this.layerToolBar.addSeparator();
         this.layerToolBar.add(upDownButtonsPanel, "growx");
+        this.layerToolBar.add(scPane, "growx");
         this.layerToolBar.add(Box.createVerticalGlue());
 
         this.add(layerToolBar, BorderLayout.WEST);
@@ -361,18 +367,18 @@ public class TopologySideBar extends JPanel implements ActionListener
     		{
     			buttonFont = new Font("Segoe UI", Font.BOLD, 16);
     			layerButton.setFont(buttonFont.deriveFont(Font.BOLD));
-    			layerState = "active";
+    			layerState = "active layer";
     		}
     		else if (vs.isLayerVisibleInCanvas(layer))
     		{
     			buttonFont = new Font("Segoe UI", Font.PLAIN, 14);
-    			layerState = "visible";
+    			layerState = "visible layer";
     		}
     		else
     		{
     			buttonFont = new Font("Segoe UI", Font.PLAIN, 14);
     			layerButton.setForeground(Color.GRAY);
-    			layerState = "hidden";
+    			layerState = "hidden layer";
     		}
     		
     		layerButton.setFont(buttonFont);

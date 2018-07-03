@@ -414,8 +414,15 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
         if (selectedElements.isEmpty()) callback.resetPickedStateAndUpdateView();
         if (rowModelIndexOfClickOrMinus1IfOut == -1) return;
         final Object value = getModel().getValueAt(rowModelIndexOfClickOrMinus1IfOut, columnModelIndexOfClickOrMinus1IfOut);
+        final T elementThisRow = this.getElementAtModelRowIndex(rowModelIndexOfClickOrMinus1IfOut);
         if (value instanceof NetworkElement)
         {
+        	/* Add element this row to pick navigator list */
+        	if (!isForwardingRulesTable())
+        		pm.pickElements(pm.new PickStateInfo((NetworkElement) elementThisRow , Optional.of(this.getTableNetworkLayer())));
+        	else
+        		pm.pickElements(pm.new PickStateInfo((Pair<Demand,Link>) elementThisRow , Optional.of(this.getTableNetworkLayer())));
+
         	pm.pickElements(pm.new PickStateInfo((NetworkElement) value , Optional.empty()));
             callback.updateVisualizationAfterPick();
         }
@@ -427,6 +434,12 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 
 			if (firstElement instanceof NetworkElement)
 			{
+	        	/* Add element this row to pick navigator list */
+	        	if (!isForwardingRulesTable())
+	        		pm.pickElements(pm.new PickStateInfo((NetworkElement) elementThisRow , Optional.of(this.getTableNetworkLayer())));
+	        	else
+	        		pm.pickElements(pm.new PickStateInfo((Pair<Demand,Link>) elementThisRow , Optional.of(this.getTableNetworkLayer())));
+				
 				final List<NetworkElement> es = new ArrayList<>();
 				es.addAll((Collection) value);
 				final PickStateInfo pickState = pm.createPickStateFromListNe((Collection) value);

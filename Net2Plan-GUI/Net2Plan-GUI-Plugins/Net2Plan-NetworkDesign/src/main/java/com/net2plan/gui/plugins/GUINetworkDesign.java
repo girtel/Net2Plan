@@ -349,32 +349,6 @@ public class GUINetworkDesign extends IGUIModule
         navigationToolbar.setFloatable(false);
         navigationToolbar.setOpaque(false);
 
-        final JButton btn_pickNavigationUndo, btn_pickNavigationRedo;
-
-        btn_pickNavigationUndo = new JButton("");
-        btn_pickNavigationUndo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/undoPick.png")));
-        btn_pickNavigationUndo.setToolTipText("Navigate back to the previous element picked");
-        btn_pickNavigationRedo = new JButton("");
-        btn_pickNavigationRedo.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/redoPick.png")));
-        btn_pickNavigationRedo.setToolTipText("Navigate forward to the next element picked");
-
-        final ActionListener action = e ->
-        {
-            final PickStateInfo backOrForwardNewNp = (e.getSource() == btn_pickNavigationUndo) ? pickManager.getPickNavigationBackElement(getDesign ()).orElse(null) : pickManager.getPickNavigationForwardElement (getDesign ()).orElse(null);
-            if (backOrForwardNewNp == null) pickManager.reset();
-            else backOrForwardNewNp.applyVisualizationInCurrentDesign();
-            GUINetworkDesign.this.updateVisualizationAfterPick();
-        };
-
-        btn_pickNavigationUndo.addActionListener(action);
-        btn_pickNavigationRedo.addActionListener(action);
-
-        btn_pickNavigationRedo.setFocusable(false);
-        btn_pickNavigationUndo.setFocusable(false);
-
-        navigationToolbar.add(btn_pickNavigationUndo);
-        navigationToolbar.add(btn_pickNavigationRedo);
-
         final JScrollPane scPane = new JScrollPane(focusPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scPane.getVerticalScrollBar().setUnitIncrement(20);
         scPane.getHorizontalScrollBar().setUnitIncrement(20);
@@ -632,6 +606,31 @@ public class GUINetworkDesign extends IGUIModule
 
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
+        
+        /* Pick navigator */
+        addKeyCombinationAction(JComponent.WHEN_IN_FOCUSED_WINDOW,"Pick previous element picked", new AbstractAction()
+        {
+        	@Override
+        	public void actionPerformed(ActionEvent e)
+        	{
+        		final PickStateInfo backOrForwardNewNp = pickManager.getPickNavigationBackElement(getDesign ()).orElse(null);
+                if (backOrForwardNewNp == null) return;
+                else backOrForwardNewNp.applyVisualizationInCurrentDesign();
+                GUINetworkDesign.this.updateVisualizationAfterPick();
+        	}
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK));
+        
+        addKeyCombinationAction(JComponent.WHEN_IN_FOCUSED_WINDOW,"Pick next element picked", new AbstractAction()
+        {
+        	@Override
+        	public void actionPerformed(ActionEvent e)
+        	{
+        		final PickStateInfo backOrForwardNewNp = pickManager.getPickNavigationForwardElement (getDesign ()).orElse(null);
+                if (backOrForwardNewNp == null) return;
+                else backOrForwardNewNp.applyVisualizationInCurrentDesign();
+                GUINetworkDesign.this.updateVisualizationAfterPick();
+        	}
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK));
 
         // Windows
         addKeyCombinationAction(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT , "Show control window", new AbstractAction()
