@@ -298,7 +298,7 @@ public class TopologyPanel extends JPanel
 
     public final void updateMultilayerPanel()
     {
-        sideBar.refresh();
+        sideBar.updateLayersPanel();
     }
 
     public JPanel getCanvasPanel()

@@ -313,7 +313,8 @@ public class TopologyTopBar extends JToolBar implements ActionListener
                 }
             } else
             {
-                canvas.returnToPreviousState();
+            	canvas.setState(CanvasOption.ViewState);
+            	btn_osmMap.setSelected(false);
                 btn_siteMode.setSelected(false);
             }
         } else if (src == btn_linkStyle)
