@@ -16,6 +16,7 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -65,14 +66,12 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.libraries.TrafficMatrixForecastUtils;
 import com.net2plan.libraries.TrafficMatrixForecastUtils.TmEstimationResults;
-import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.libraries.TrafficSeries.FITTINGTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.SwingUtils;
 
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -80,9 +79,14 @@ import net.miginfocom.swing.MigLayout;
 @SuppressWarnings({ "unchecked", "serial" })
 public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 {
+	private static final DateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+	
     public AdvancedJTable_link(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
         super(callback, AJTableType.LINKS , layerThisTable , true , e->e.isUp()? null : Color.RED);
+        
+    	dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
 
     @Override
@@ -385,8 +389,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	final boolean isDemandTable =  table.getAjType() == AJTableType.DEMANDS;
     	final boolean isMDemandTable =  table.getAjType() == AJTableType.MULTICAST_DEMANDS;
     	final String elementName = isLinkTable? "link" : (isDemandTable? "demand" : "multicast demand");
-    	final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
     	
     	if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
         return new AjtRcMenu("Add synthetic monitoring trace to selected links", e->
@@ -501,7 +503,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 /* */
                 tableData [0][0] = "Link Id";
                 for (int contDate = 0; contDate < nDates ; contDate ++) 
-                	tableData [1+contDate][0] = allDates.get(contDate);
+                	tableData [1+contDate][0] = dateFormatGmt.format(allDates.get(contDate));
                 for (int contLink = 0; contLink < nLinks ; contLink ++)
                 {
                 	final T element = selectedElements.get(contLink);
@@ -559,9 +561,9 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 	{
                 		try
                 		{
-                    		final Date rowDate = (Date) thisSheetInfo [contRow][0];
+                    		final Date rowDate = dateFormatGmt.parse((String) thisSheetInfo [contRow][0]);
                     		dates2RowIndex.put(rowDate, contRow);
-                		} catch (Exception ee) {}
+                		} catch (Exception ee) {System.out.println(thisSheetInfo [contRow][0]);}
                 	}
                 	/* Fill info for links  */
                 	for (int contCol = 1; contCol < nCols ; contCol ++)
@@ -613,8 +615,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	final boolean isMDemandTable =  table.getAjType() == AJTableType.MULTICAST_DEMANDS;
     	final String elementName = isLinkTable? "link" : (isDemandTable? "demand" : "multicast demand");
     	if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
-    	final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return new AjtRcMenu("Set monitored traffic for selected elements", e->
                 {
                 	final Calendar now = Calendar.getInstance();
@@ -632,8 +632,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             	{
                             		final Date date;
                             		try { date = dateFormatGmt.parse((String) list.get(0).get()); } catch (Exception exc) { throw new Net2PlanException ("Wrong date format"); } 
-                            		final boolean useCurrentElementTraffic = (Boolean) list.get(1).get();
-                            		final double trafficConstantUserDefined = (Double) list.get(2).get();
+                            		final double trafficConstantUserDefined = (Double) list.get(1).get();
+                            		final boolean useCurrentElementTraffic = (Boolean) list.get(2).get();
                             		if (isDemandTable)
                             			table.getSelectedElements().forEach(d->((Demand)d).getMonitoredOrForecastedOfferedTraffic().addValue(date, useCurrentElementTraffic? ((Demand)d).getOfferedTraffic(): trafficConstantUserDefined));
                             		else if (isMDemandTable)
@@ -654,8 +654,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	final boolean isDemandTable =  table.getAjType() == AJTableType.DEMANDS;
     	final boolean isMDemandTable =  table.getAjType() == AJTableType.MULTICAST_DEMANDS;
     	if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
-    	final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return new AjtRcMenu("Forecast selected elements traffic from monitor info", e->
                 {
                 	final Calendar now = Calendar.getInstance();
@@ -682,13 +680,21 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             		if (probSubestimation <= 0 || probSubestimation >= 1) throw new Net2PlanException ("Wrong value of probability");
                             		for (T ee : table.getSelectedElements())
                             		{
-                            			final TrafficSeries tm = isDemandTable? ((Demand)ee).getMonitoredOrForecastedOfferedTraffic() : ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
-                            			if (tm.getSize() < 3) throw new Net2PlanException ("Not enough data to make the analysis for element of index: " + ee.getIndex());
+                            			TrafficSeries tm = null;
+                        				if (isLinkTable) tm = ((Link) ee).getMonitoredOrForecastedCarriedTraffic();
+                        				else if (isDemandTable) tm = ((Demand) ee).getMonitoredOrForecastedOfferedTraffic();
+                        				else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
+                        				assert tm != null;                            			
+                        				if (tm.getSize() < 3) throw new Net2PlanException ("Not enough data to make the analysis for element of index: " + ee.getIndex());
                             		}
                             		for (T ee : table.getSelectedElements())
                             		{
-                            			final TrafficSeries tm = isDemandTable? ((Demand)ee).getMonitoredOrForecastedOfferedTraffic() : ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
-                            			final TrafficSeries.TrafficPredictor tp = tm.getFunctionPredictionSoProbSubestimationIsBounded(fittingType);
+                            			TrafficSeries tm = null;
+                        				if (isLinkTable) tm = ((Link) ee).getMonitoredOrForecastedCarriedTraffic();
+                        				else if (isDemandTable) tm = ((Demand) ee).getMonitoredOrForecastedOfferedTraffic();
+                        				else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
+                        				assert tm != null;                            			
+                        				final TrafficSeries.TrafficPredictor tp = tm.getFunctionPredictionSoProbSubestimationIsBounded(fittingType);
                             			final double val = tp.getPredictorFunction(probSubestimation).apply(date);
                             			varianceExplained.put(ee, tp.getRegResuls().getRSquared());
                             			if (storeAsNewSample) tm.addValue(date, val);
@@ -716,7 +722,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	final boolean isMDemandTable =  table.getAjType() == AJTableType.MULTICAST_DEMANDS;
     	if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
     	final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return new AjtRcMenu(beforeTrueAfterFalse? "before date..." : "after date..." , e->
                 {
                 	final Calendar now = Calendar.getInstance();
@@ -763,8 +768,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     
     public static <T extends NetworkElement>  AjtRcMenu getMenuForecastDemandTrafficUsingGravityModel (AdvancedJTable_networkElement<T> table)
     {
-    	final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
     	
 		return new AjtRcMenu("Forecast demands traffic using gravity model...", null , (a,b)->true, Arrays.asList(
 				new AjtRcMenu("from monitored traffic", e->
@@ -778,7 +781,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 	if (demands.stream().map(d->d.getIngressNode()).anyMatch(n->n.getOutgoingLinks(layer).isEmpty())) throw new Net2PlanException ("A demand origin node has no output links");
                 	if (demands.stream().map(d->d.getEgressNode()).anyMatch(n->n.getIncomingLinks(layer).isEmpty())) throw new Net2PlanException ("A demand end node has no input links");
                 	final SortedSet<Date> datesWithEnoughInformationFromGM = TrafficMatrixForecastUtils.getDatesWhereGravityModelCanBeApplied (layer);
-                	if (datesWithEnoughInformationFromGM.isEmpty()) throw new Net2PlanException ("No dates exist with enough monitoring indformation to apply the gravity model");
+                	if (datesWithEnoughInformationFromGM.isEmpty()) throw new Net2PlanException ("No dates exist with enough monitoring information to apply the gravity model");
                     MtnDialogBuilder.launch(
                     		"Forecast demands traffic using gravity model",
                             "Please indicate the requested parameters. The demands offered traffic will be estimated according to link monitored carried "
@@ -835,8 +838,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	final boolean isDemandTable =  table.getAjType() == AJTableType.DEMANDS;
     	final boolean isMDemandTable =  table.getAjType() == AJTableType.MULTICAST_DEMANDS;
     	if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
-    	final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
     	final SortedSet<Date> datesWihtAtLeastOneLinkMonitInfo = TrafficMatrixForecastUtils.getDatesWithAtLeastOneLinkMonitorInfo(layer);
     	final SortedSet<Date> datesWihtAtLeastOneDemandMonitInfo = TrafficMatrixForecastUtils.getDatesWithAtLeastOneUnicastDemandMonitorInfo(layer);
     	final SortedSet<Date> datesWihtAtLeastOneMDemandMonitInfo = TrafficMatrixForecastUtils.getDatesWithAtLeastOneMulticastDemandMonitorInfo(layer);
@@ -874,7 +875,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             		final double coeff_preferFitRouting0PreferFitDemand1 = (Double) list.get(2).get();
                             		if (coeff_preferFitRouting0PreferFitDemand1 < 0 || coeff_preferFitRouting0PreferFitDemand1 > 1) throw new Net2PlanException ("Wrong value of balance coefficient");
                             		final int indexSelectionInputDemandMonit = optionsInputDemandMonit.indexOf((String) list.get(3).get());
-                            		final boolean applyOnlyForDatesWithFullLinkMonitInfo = (Boolean) list.get(3).get();
+                            		final boolean applyOnlyForDatesWithFullLinkMonitInfo = (Boolean) list.get(4).get();
                             		assert indexSelectionInputDemandMonit != -1;
                             		final SortedSet<Date> datesToApplyEstimation = datesWithDemandMDemandOrLinkInfo.stream().
                             				filter(d->!d.before(initialDate) && !d.after(endDate)).
