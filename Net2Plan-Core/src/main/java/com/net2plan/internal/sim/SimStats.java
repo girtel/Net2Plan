@@ -1055,7 +1055,7 @@ public class SimStats
 			writer.close();
 
 			String xml = os.toString(StandardCharsets.UTF_8.name());
-			return HTMLUtils.getHTMLFromXML(xml, SimStats.class.getResource("/com/net2plan/internal/sim/SimStats.xsl").toURI().toURL());
+			return HTMLUtils.getHTMLFromXML(xml, SimStats.class.getResource("/resources/sim/SimStats.xsl").toURI().toURL());
 		}
 		catch(Throwable e)
 		{
