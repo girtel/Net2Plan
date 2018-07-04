@@ -3,7 +3,7 @@ package com.net2plan.examples.general.offline.metrohaul;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.research.metrohaul.networkModel.*;
+import com.net2plan.research.niw.networkModel.*;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 

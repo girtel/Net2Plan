@@ -1,4 +1,4 @@
-package com.net2plan.research.metrohaul.networkModel;
+package com.net2plan.research.niw.networkModel;
 
 import java.io.File;
 import java.io.FileInputStream;

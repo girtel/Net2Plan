@@ -9,7 +9,7 @@
  *     Pablo Pavon Marino and others - initial API and implementation
  *******************************************************************************/
 
-package com.net2plan.research.metrohaul.networkModel;
+package com.net2plan.research.niw.networkModel;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,11 +21,11 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.research.metrohaul.networkModel.ExcelImporterConstants.COLUMNS_FIBERSTAB;
-import com.net2plan.research.metrohaul.networkModel.ExcelImporterConstants.COLUMNS_NODESTAB;
-import com.net2plan.research.metrohaul.networkModel.ExcelImporterConstants.COLUMNS_PERNODEANDSERVICETIMEINTENSITYGBPS;
-import com.net2plan.research.metrohaul.networkModel.ExcelImporterConstants.COLUMNS_USERSERVICES;
-import com.net2plan.research.metrohaul.networkModel.ExcelImporterConstants.COLUMNS_VNFTYPES;
+import com.net2plan.research.niw.networkModel.ExcelImporterConstants.COLUMNS_FIBERSTAB;
+import com.net2plan.research.niw.networkModel.ExcelImporterConstants.COLUMNS_NODESTAB;
+import com.net2plan.research.niw.networkModel.ExcelImporterConstants.COLUMNS_PERNODEANDSERVICETIMEINTENSITYGBPS;
+import com.net2plan.research.niw.networkModel.ExcelImporterConstants.COLUMNS_USERSERVICES;
+import com.net2plan.research.niw.networkModel.ExcelImporterConstants.COLUMNS_VNFTYPES;
 import com.net2plan.utils.Pair;
 
 /** This class is an importer for the metro network

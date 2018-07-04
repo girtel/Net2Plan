@@ -24,6 +24,17 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.net2plan.research.niw.networkModel.OpticalSpectrumManager;
+import com.net2plan.research.niw.networkModel.WFiber;
+import com.net2plan.research.niw.networkModel.WIpLink;
+import com.net2plan.research.niw.networkModel.WLightpathRequest;
+import com.net2plan.research.niw.networkModel.WLightpathUnregenerated;
+import com.net2plan.research.niw.networkModel.WNet;
+import com.net2plan.research.niw.networkModel.WNode;
+import com.net2plan.research.niw.networkModel.WServiceChain;
+import com.net2plan.research.niw.networkModel.WServiceChainRequest;
+import com.net2plan.research.niw.networkModel.WUserService;
+import com.net2plan.research.niw.networkModel.WVnfType;
 import com.net2plan.utils.Pair;
 
 public class MetroHaulModelTest

@@ -9,7 +9,7 @@
  *     Pablo Pavon Marino and others - initial API and implementation
  *******************************************************************************/
 
-package com.net2plan.research.metrohaul.networkModel;
+package com.net2plan.research.niw.networkModel;
 
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
