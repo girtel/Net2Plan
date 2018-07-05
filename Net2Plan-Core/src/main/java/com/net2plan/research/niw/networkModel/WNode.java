@@ -53,7 +53,7 @@ public class WNode extends WAbstractNetworkElement
 		final Set<Resource> cpuResources = n.getResources(RESOURCETYPE_CPU);
 		assert cpuResources.size() < 2;
 		if (cpuResources.isEmpty()) setTotalNumCpus(0);
-		assert cpuResources.size() == 1;
+		assert n.getResources(RESOURCETYPE_CPU).size() == 1;
 		return n.getResources(RESOURCETYPE_CPU).iterator().next();
 	}
 	Resource getRamBaseResource ()
@@ -61,7 +61,7 @@ public class WNode extends WAbstractNetworkElement
 		final Set<Resource> ramResources = n.getResources(RESOURCETYPE_RAM);
 		assert ramResources.size() < 2;
 		if (ramResources.isEmpty()) setTotalRamGB(0);
-		assert ramResources.size() == 1;
+		assert n.getResources(RESOURCETYPE_RAM).size() == 1;
 		return n.getResources(RESOURCETYPE_RAM).iterator().next();
 	}
 	Resource getHdBaseResource ()
@@ -69,7 +69,7 @@ public class WNode extends WAbstractNetworkElement
 		final Set<Resource> hdResources = n.getResources(RESOURCETYPE_HD);
 		assert hdResources.size() < 2;
 		if (hdResources.isEmpty()) setTotalHdGB(0);
-		assert hdResources.size() == 1;
+		assert n.getResources(RESOURCETYPE_HD).size() == 1;
 		return n.getResources(RESOURCETYPE_HD).iterator().next();
 	}
 	
@@ -137,7 +137,7 @@ public class WNode extends WAbstractNetworkElement
 		final Set<Resource> res = n.getResources(RESOURCETYPE_CPU);
 		if (res.size() > 1) throw new Net2PlanException ("Format error");
 		if (res.isEmpty()) 
-			res.add(n.getNetPlan().addResource(RESOURCETYPE_CPU, RESOURCETYPE_CPU, Optional.of(n), totalNumCpus, RESOURCETYPE_CPU, new HashMap<> (), 0.0, null));
+			n.getNetPlan().addResource(RESOURCETYPE_CPU, RESOURCETYPE_CPU, Optional.of(n), totalNumCpus, RESOURCETYPE_CPU, new HashMap<> (), 0.0, null);
 		else 
 			res.iterator().next().setCapacity(totalNumCpus, new HashMap<> ());
 	}

@@ -1035,7 +1035,6 @@ public class NetPlanTest
 	@Test
 	public void testRemoveAllResources()
 	{
-		assertEquals(np.getNumberOfResources() , 2);
 		np.removeAllResources();
 		assertEquals(np.getNumberOfResources() , 0);
 	}

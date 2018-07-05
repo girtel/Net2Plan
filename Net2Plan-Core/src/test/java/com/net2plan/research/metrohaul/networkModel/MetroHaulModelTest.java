@@ -175,8 +175,4 @@ public class MetroHaulModelTest
     {
     }
 
-    @Test
-    public void testListToStringSpecificSeparator()
-    {
-    }
 }

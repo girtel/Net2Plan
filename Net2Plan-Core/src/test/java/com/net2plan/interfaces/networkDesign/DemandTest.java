@@ -107,19 +107,23 @@ public class DemandTest
 	}
 
 	@Test
-	public void testSetMaximumLatencyE2E ()
-	{
-		assertEquals (scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , Double.MAX_VALUE , 0);
+	public void testSetMaximumLatencyE2E () {
+		assertEquals(scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs(), Double.MAX_VALUE, 0);
 		scd123.setMaximumAcceptableE2EWorstCaseLatencyInMs(1);
-		assertEquals (scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , 1 , 0);
-		File f = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME);
-		this.np.saveToFile(f);
-		NetPlan readNp = new NetPlan (f);
-		assertEquals (readNp.getDemandFromId(scd123.getId()).getMaximumAcceptableE2EWorstCaseLatencyInMs() , 1 , 0);
-		scd123.setMaximumAcceptableE2EWorstCaseLatencyInMs(-1);
-		assertEquals (scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , Double.MAX_VALUE , 0);
+		assertEquals(scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs(), 1, 0);
+		File f = new File(TEST_FILE_DIRECTORY, TEST_FILE_NAME);
+		try {
+			this.np.saveToFile(f);
+			NetPlan readNp = new NetPlan(f);
+			assertEquals(readNp.getDemandFromId(scd123.getId()).getMaximumAcceptableE2EWorstCaseLatencyInMs(), 1, 0);
+			scd123.setMaximumAcceptableE2EWorstCaseLatencyInMs(-1);
+			assertEquals(scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs(), Double.MAX_VALUE, 0);
+		} catch (Net2PlanException e) {
+			e.printStackTrace();
+		}
+
 	}
-	
+
 	@Test
 	public void testBidirectional ()
 	{
@@ -142,10 +146,17 @@ public class DemandTest
 		assertEquals (pair.getSecond().getBidirectionalPair() , otherDemand2);
 		
 		File f = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME);
-		this.np.saveToFile(f);
-		NetPlan readNp = new NetPlan (f);
-		assertTrue(readNp.isDeepCopy(np));
-		assertTrue(np.isDeepCopy(readNp));
+		try{
+			this.np.saveToFile(f);
+			NetPlan readNp = new NetPlan (f);
+			assertTrue(readNp.isDeepCopy(np));
+			assertTrue(np.isDeepCopy(readNp));
+		}
+		catch (Net2PlanException e)
+		{
+			e.printStackTrace();
+		}
+
 	}
 	
 	
