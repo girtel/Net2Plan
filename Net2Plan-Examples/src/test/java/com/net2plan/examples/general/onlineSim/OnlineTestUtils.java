@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.net2plan.examples.general.onlineSim;
 
+
+
 import com.jom.JOMException;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
