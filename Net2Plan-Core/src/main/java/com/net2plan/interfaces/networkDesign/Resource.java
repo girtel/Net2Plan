@@ -1,13 +1,4 @@
 
-//1) Repasar esto
-//2) Que todos los cambios impliquen update: anadir cambios de factores, completar todos
-//3) las rutas no se pueden anadir aqui: aqui solo tenemos una cache, es en las rutas donde se fija esto.
-//Ojo que al cambiar la secuencia de enlaces, hay que cambiar tambien los recursos ocupados. SI una demanda es de una
-//service chain, todas sus rutas deben atravesar recursos en cualquier estado, y no pueden tener protection segments
-
-// rutas: al hacer addroute, se chequea si hay service chain. En ese caso, hay que pasarle en constructor info de
-//recursos ocupados (lista pares recurso-ocupacion). La ruta comprueba que van en orden con demanda, y con lista enlaces
-
 /*******************************************************************************
  * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials

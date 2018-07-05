@@ -12,17 +12,6 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
-// TODO: JAVIER. Differential coloring to see the differences
-// TODO: JAVIER. Pick manager with ALT-LEFT/RIGHT
-// TODO: JAVIER. Left layer selector, 7 buttons. 5 for layer, 2 for up and down (each double, one for scroll up (only visible if more than 5 layers), other for moving up visually the active layer), only visible if more than 5 layers.  
-// TODO: PABLO: Do the multi traffic matrix thing for forecast, add the gravity model algorithm for traffic matrix prediction
-
-// TODO: All the layers shown at the same time
-// TODO: Simplify coloring exploiting we have id bidimap in the table
-// TODO: Tips per cell (not per column) to report extra information (e.g. when QoS violation, who and where)
-
-// pick, and everywhere FR or NE can come. 
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
