@@ -10,71 +10,349 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.visualizationControl;
 
+import java.awt.BasicStroke;
+import java.awt.Paint;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.TreeMap;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.Sets;
+import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.gui.utils.NetworkElementOrFr;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
-import java.awt.*;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
- * @author Jorge San Emeterio
- * @date 25/04/17
  */
-class PickManager
+public class PickManager
 {
-    private final VisualizationState vs;
+	private final VisualizationState vs;
+	private final GUINetworkDesign callback;
+    private final List<PickStateInfo> timeLine;
+    private int timelineCursor;
+    private final int timelineMaxSize;
 
-    private final PickTimeLineManager pickTimeLineManager;
-
-    private List<? extends NetworkElement> pickedElement;
-    private List<Pair<Demand, Link>> pickedForwardingRule;
-
-    PickManager(VisualizationState vs)
+    public PickManager(GUINetworkDesign callback , final int timelineMaxSize)
     {
-        this.vs = vs;
-
-        this.pickTimeLineManager = new PickTimeLineManager();
+        this.callback = callback;
+        this.vs = callback.getVisualizationState();
+        this.timelineMaxSize = timelineMaxSize;
+        this.timeLine = new ArrayList<>(timelineMaxSize + 1);
+        this.timelineCursor = -1;
     }
 
-    void reset()
+    private void addElement (final PickStateInfo element)
     {
-        this.pickedElement = null;
-        this.pickedForwardingRule = null;
+        if (this.timelineMaxSize <= 1) return;
+        if (element == null) throw new RuntimeException("Cannot add a null element.");
+
+        // Check pointer validity
+        if (!timeLine.isEmpty())
+        {
+            if (!(timelineCursor >= 0 && timelineCursor < timeLine.size()))
+                throw new RuntimeException("Timeline cursor has been misplaced.");
+        } else
+        {
+            if (timelineCursor != -1)
+                throw new RuntimeException("Timeline cursor has been misplaced.");
+        }
+
+        // Sanity check: remove duplicates
+        cleanTimeLineDuty();
+
+        // Clean duty can leave the timeline empty.
+        if (!(timeLine.isEmpty() && timelineCursor == -1))
+        {
+            // Do not add the same element that is currently be clicked upon.
+            if (element.equals(timeLine.get(timelineCursor))) return;
+
+            // If the new element if different from what is stored, remove all the elements that were stored
+            if (timelineCursor != (timeLine.size() - 1))
+            {
+                final int nextElementCursorIndex = timelineCursor + 1;
+
+                final PickStateInfo nextTimelineElement = timeLine.get(nextElementCursorIndex);
+                final PickStateInfo currentTimelineElement = timeLine.get(timelineCursor);
+
+                if (!nextTimelineElement.equals(currentTimelineElement))
+                    timeLine.subList(nextElementCursorIndex, timeLine.size()).clear();
+            }
+        }
+
+        /* Add the elements at the end of the list */
+        timeLine.add(element);
+        timelineCursor++;
+
+        // Remove the oldest pick if the list get too big.
+        if (timeLine.size() > timelineMaxSize)
+        {
+            timeLine.remove(0);
+            timelineCursor--;
+        }
     }
 
-    List<NetworkElement> getPickedNetworkElements()
+//    @SuppressWarnings("unchecked")
+    private void cleanTimeLineDuty()
     {
-        return pickedElement == null ? new ArrayList<>() : Collections.unmodifiableList(pickedElement);
+        if (timeLine.size() > timelineMaxSize) throw new RuntimeException("Timeline is over its capacity.");
+
+        final List<PickStateInfo> newTimeLine = new ArrayList<>(timeLine);
+        for (int index = 0; index < timeLine.size(); index++)
+        {
+            final PickStateInfo o = timeLine.get(index);
+            // Do not have duplicate elements next to each other
+            if (index != timeLine.size() - 1)
+            {
+                if (o == timeLine.get(index + 1))
+                {
+                    newTimeLine.remove(o);
+                    timelineCursor--;
+                }
+            }
+        }
+        
+        /* Clean elements removed */
+        for (int index = 0; index < timeLine.size(); index++)
+        {
+            final PickStateInfo o = timeLine.get(index);
+            if (o.getMainElement().isPresent() && o.getMainElement().get().isNe())
+            {
+            	final NetworkElement ne = o.getMainElement().get().getNe();
+            	if (ne.wasRemoved())
+            	{
+            		newTimeLine.remove(o);
+                    timelineCursor--;
+            	}
+           	}
+        }
+        
+        this.timeLine.clear();
+        this.timeLine.addAll(newTimeLine);
     }
 
-
-    List<Pair<Demand, Link>> getPickedForwardingRules()
+    public Optional<PickStateInfo> getCurrentPick (NetPlan targetNp)
     {
-        return pickedForwardingRule == null ? new ArrayList<>() : Collections.unmodifiableList(pickedForwardingRule);
+    	if (timeLine.isEmpty()) return Optional.empty();
+    	return timeLine.get(timelineCursor).getTranslationToGivenNetPlan(targetNp);
+    }
+    
+    public Optional<PickStateInfo> getPickNavigationBackElement(NetPlan targetNp)
+    {
+        if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return Optional.empty();
+        if (timelineCursor == 0) return Optional.empty(); // End of the timeline, there is no more past.
+    	do
+    	{
+            cleanTimeLineDuty();
+            if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return Optional.empty();
+            if (timelineCursor == 0) return null; // End of the timeline, there is no more past.
+
+            // Clean the timeline before giving anything
+            final PickStateInfo info = timeLine.get(--timelineCursor);
+            final Optional<PickStateInfo> pickInNewNp = info.getTranslationToGivenNetPlan(targetNp);
+            if (pickInNewNp.isPresent()) return pickInNewNp;
+    	} while (true);
     }
 
-    void pickLayer(NetworkLayer pickedLayer)
+    public Optional<PickStateInfo> getPickNavigationForwardElement(NetPlan targetNp)
     {
+        if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return Optional.empty();
+        if (timelineCursor == timeLine.size() - 1) return Optional.empty();
+    	do
+    	{
+            cleanTimeLineDuty();
+            if (timeLine.isEmpty() || this.timelineMaxSize <= 1) return Optional.empty();
+            if (timelineCursor == timeLine.size() - 1) return Optional.empty();
+
+            // Clean the timeline before giving anything
+            final PickStateInfo info = timeLine.get(++timelineCursor);
+            final Optional<PickStateInfo> pickInNewNp = info.getTranslationToGivenNetPlan(targetNp);
+            if (pickInNewNp.isPresent()) return pickInNewNp;
+    	} while (true);
+    }
+
+	public PickStateInfo createPickStateFromListNe (Collection<? extends NetworkElement> state) 
+	{
+		final List<Pair<NetworkElementOrFr,NetworkLayer>> newState = new ArrayList<> ();
+		for (NetworkElement ne : state)
+		{
+			final NetworkElementOrFr nefr = new NetworkElementOrFr(ne);
+			final NetworkLayer layer = nefr.getOrEstimateLayer();
+			newState.add(Pair.of(nefr, layer));
+		}
+		return this.new PickStateInfo(newState);
+	}
+
+    public class PickStateInfo
+    {
+    	final private List<Pair<NetworkElementOrFr,NetworkLayer>> state;
+
+		public PickStateInfo(NetworkElement ne , Optional<NetworkLayer> layer) 
+		{
+			final NetworkElementOrFr nefr = new NetworkElementOrFr(ne);
+			if (!layer.isPresent()) layer = Optional.of(nefr.getOrEstimateLayer());
+			this.state = Arrays.asList(Pair.of(nefr, layer.get()));
+		}
+		public PickStateInfo(Pair<Demand,Link> fr , Optional<NetworkLayer> layer)
+		{
+			final NetworkElementOrFr nefr = new NetworkElementOrFr(fr);
+			if (!layer.isPresent()) layer = Optional.of(nefr.getOrEstimateLayer());
+			this.state = Arrays.asList(Pair.of(nefr, layer.get()));
+		}
+		public PickStateInfo(List<Pair<NetworkElementOrFr, NetworkLayer>> state) 
+		{
+			this.state = state;
+		}
+		public List<Pair<NetworkElementOrFr, NetworkLayer>> getState() 
+		{
+			return state;
+		}
+		public List<NetworkElementOrFr> getStateOnlyNeFr() 
+		{
+			return state.stream().map(p->p.getFirst()).collect(Collectors.toList());
+		}
+		public Optional<Pair<NetworkElementType,NetworkLayer>> getElementTypeOfMainElement () 
+		{
+			if (state == null) return Optional.empty();
+			if (state.isEmpty()) return Optional.empty();
+			return Optional.of(Pair.of(state.get(0).getFirst().getElementType() , state.get(0).getSecond()));
+		}
+		public Optional<NetworkElementOrFr> getMainElement () 
+		{
+			if (state == null) return Optional.empty();
+			if (state.isEmpty()) return Optional.empty();
+			return Optional.of(state.get(0).getFirst());
+		}
+		
+		public boolean isFullyTranslatableToGivenNetPlan (NetPlan targetNp)
+		{
+			return getTranslationToGivenNetPlan (targetNp).isPresent();
+		}
+		public Optional<PickStateInfo> getTranslationToGivenNetPlan (NetPlan targetNp)
+		{
+			final List<Pair<NetworkElementOrFr, NetworkLayer>> newState = new ArrayList<> ();
+			for (Pair<NetworkElementOrFr,NetworkLayer> element : state)
+			{
+				final NetworkElementOrFr nefr = element.getFirst();
+				final NetworkLayer layer = element.getSecond();
+				final NetworkLayer layerNewNp = targetNp.getNetworkLayerFromId(layer.getId());
+				if (layerNewNp == null) return Optional.empty();
+				NetworkElementOrFr nefrNewNp = null;
+				if (nefr.isNe ())
+				{
+					final NetworkElement ne = nefr.getNe(); if (ne == null) return Optional.empty();
+					final NetworkElement neNewNp = targetNp.getNetworkElement(ne.getId());
+					if (neNewNp == null) return Optional.empty();
+					if (ne.getNeType() != neNewNp.getNeType()) return Optional.empty();
+					nefrNewNp = new NetworkElementOrFr(neNewNp);
+				}
+				else if (nefr.isFr())
+				{
+					final Pair<Demand,Link> fr = nefr.getFr(); if (fr == null) return Optional.empty();
+					final Demand d = fr.getFirst(); 
+					final Link e = fr.getSecond(); 
+					final Demand dNewNp = targetNp.getDemandFromId(d.getId());
+					final Link eNewNp = targetNp.getLinkFromId(e.getId());
+					if (dNewNp == null || eNewNp == null) return Optional.empty();
+					if (!dNewNp.getLayer().equals(eNewNp.getLayer ())) return Optional.empty();
+					nefrNewNp = new NetworkElementOrFr(Pair.of(dNewNp, eNewNp));
+				}
+				if (nefrNewNp == null) continue;
+				newState.add(Pair.of(nefrNewNp, layerNewNp));
+			}
+			return Optional.of(new PickStateInfo(newState));
+		}
+	    public boolean isSomethingPicked () { return !isEmptyPick(); }
+		public boolean isEmptyPick () { return state.isEmpty(); }
+		
+		public void applyVisualizationInCurrentDesign ()
+		{
+	        cleanPick();
+	        final Optional<PickStateInfo> pickStateNewNp = getTranslationToGivenNetPlan (callback.getDesign());
+	        if (!pickStateNewNp.isPresent()) return;
+
+	        for (Pair<NetworkElementOrFr,NetworkLayer> thisNeFr : state)
+			{
+				final NetworkElementOrFr nefr = thisNeFr.getFirst();
+				final NetworkLayer layerIfnodeResourceEtc = thisNeFr.getSecond();
+				switch (nefr.getElementType())
+				{
+				case DEMAND: 
+					applyVisualizationPickDemand(Arrays.asList((Demand) nefr.getNe()));
+					break;
+				case FORWARDING_RULE:
+					applyVisualizationPickForwardingRule(Arrays.asList(nefr.getFr()));
+					break;
+				case LAYER:
+					applyVisualizationPickLayer((NetworkLayer) nefr.getNe());
+					break;
+				case LINK:
+					applyVisualizationPickLink(Arrays.asList((Link) nefr.getNe()));
+					break;
+				case MULTICAST_DEMAND:
+					applyVisualizationPickMulticastDemand(Arrays.asList((MulticastDemand) nefr.getNe()));
+					break;
+				case MULTICAST_TREE:
+					applyVisualizationPickMulticastTree(Arrays.asList((MulticastTree) nefr.getNe()));
+					break;
+				case NETWORK:
+					break;
+				case NODE:
+					applyVisualizationPickNode(Arrays.asList((Node) nefr.getNe()) , layerIfnodeResourceEtc);
+					break;
+				case RESOURCE:
+					applyVisualizationPickResource(Arrays.asList((Resource) nefr.getNe()) , layerIfnodeResourceEtc);
+					break;
+				case ROUTE:
+					applyVisualizationPickRoute(Arrays.asList((Route) nefr.getNe()));
+					break;
+				case SRG:
+					applyVisualizationPickSRG(Arrays.asList((SharedRiskGroup) nefr.getNe()));
+					break;
+				default:
+					break;
+				}
+			}
+		}
+    }
+    
+    public void reset()
+    {
+//        this.timeLine.clear();
+//        this.timelineCursor = -1;
         cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = Arrays.asList(pickedLayer);
-        this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedLayer);
     }
 
-    void pickDemand(List<Demand> pickedDemands)
+    private void applyVisualizationPickLayer(NetworkLayer pickedLayer)
     {
-        cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = pickedDemands;
-        if (pickedDemands.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedDemands.get(0));
+    }
 
-        Pair<Set<Link>, Set<Link>> thisLayerPropagation = null;
+    private void applyVisualizationPickDemand(List<Demand> pickedDemands)
+    {
+        Pair<SortedSet<Link>, SortedSet<Link>> thisLayerPropagation = null;
         for (Demand pickedDemand : pickedDemands)
         {
             final boolean isDemandLayerVisibleInTheCanvas = vs.isLayerVisibleInCanvas(pickedDemand.getLayer());
@@ -83,10 +361,10 @@ class PickManager
 
             if (vs.isShowInCanvasThisLayerPropagation() && isDemandLayerVisibleInTheCanvas)
             {
-                thisLayerPropagation = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic();
-                final Set<Link> linksPrimary = thisLayerPropagation.getFirst();
-                final Set<Link> linksBackup = thisLayerPropagation.getSecond();
-                final Set<Link> linksPrimaryAndBackup = Sets.intersection(linksPrimary, linksBackup);
+                thisLayerPropagation = pickedDemand.getLinksNoDownPropagationPotentiallyCarryingTraffic();
+                final SortedSet<Link> linksPrimary = thisLayerPropagation.getFirst();
+                final SortedSet<Link> linksBackup = thisLayerPropagation.getSecond();
+                final SortedSet<Link> linksPrimaryAndBackup = new TreeSet<> (Sets.intersection(linksPrimary, linksBackup));
                 DrawUtils.drawCollateralLinks(vs, Sets.difference(linksPrimary, linksPrimaryAndBackup), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawCollateralLinks(vs, Sets.difference(linksBackup, linksPrimaryAndBackup), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUP);
                 DrawUtils.drawCollateralLinks(vs, linksPrimaryAndBackup, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY);
@@ -95,16 +373,16 @@ class PickManager
             if (vs.isShowInCanvasLowerLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1))
             {
                 if (thisLayerPropagation == null)
-                    thisLayerPropagation = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic();
-                final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> downLayerInfoPrimary = DrawUtils.getDownCoupling(thisLayerPropagation.getFirst());
-                final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> downLayerInfoBackup = DrawUtils.getDownCoupling(thisLayerPropagation.getSecond());
+                    thisLayerPropagation = pickedDemand.getLinksNoDownPropagationPotentiallyCarryingTraffic();
+                final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> downLayerInfoPrimary = DrawUtils.getDownCoupling(thisLayerPropagation.getFirst());
+                final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> downLayerInfoBackup = DrawUtils.getDownCoupling(thisLayerPropagation.getSecond());
                 final InterLayerPropagationGraph ipgPrimary = new InterLayerPropagationGraph(downLayerInfoPrimary.getFirst(), null, downLayerInfoPrimary.getSecond(), false);
                 final InterLayerPropagationGraph ipgBackup = new InterLayerPropagationGraph(downLayerInfoBackup.getFirst(), null, downLayerInfoBackup.getSecond(), false);
-                final Set<Link> linksPrimary = ipgPrimary.getLinksInGraph();
-                final Set<Link> linksBackup = ipgBackup.getLinksInGraph();
-                final Set<Link> linksPrimaryAndBackup = Sets.intersection(linksPrimary, linksBackup);
-                final Set<Link> linksOnlyPrimary = Sets.difference(linksPrimary, linksPrimaryAndBackup);
-                final Set<Link> linksOnlyBackup = Sets.difference(linksBackup, linksPrimaryAndBackup);
+                final SortedSet<Link> linksPrimary = ipgPrimary.getLinksInGraph();
+                final SortedSet<Link> linksBackup = ipgBackup.getLinksInGraph();
+                final SortedSet<Link> linksPrimaryAndBackup = new TreeSet<> (Sets.intersection(linksPrimary, linksBackup));
+                final SortedSet<Link> linksOnlyPrimary = new TreeSet<> (Sets.difference(linksPrimary, linksPrimaryAndBackup));
+                final SortedSet<Link> linksOnlyBackup = new TreeSet<> (Sets.difference(linksBackup, linksPrimaryAndBackup));
                 DrawUtils.drawCollateralLinks(vs, linksOnlyPrimary, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, linksOnlyPrimary, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawCollateralLinks(vs, linksOnlyBackup, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUP);
@@ -114,7 +392,7 @@ class PickManager
             }
             if (vs.isShowInCanvasUpperLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1) && pickedDemand.isCoupled())
             {
-                final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, Sets.newHashSet(pickedDemand.getCoupledLink()), null, true);
+                final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, new TreeSet<> (Arrays.asList(pickedDemand.getCoupledLink())), null, true);
                 DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
@@ -130,26 +408,21 @@ class PickManager
         }
     }
 
-    void pickSRG(List<SharedRiskGroup> pickedSRGs)
+    private void applyVisualizationPickSRG(List<SharedRiskGroup> pickedSRGs)
     {
-        cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = pickedSRGs;
-        if (pickedSRGs.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedSRGs.get(0));
-
         for (SharedRiskGroup pickedSRG : pickedSRGs)
         {
-            final Set<Link> allAffectedLinks = pickedSRG.getAffectedLinksAllLayers();
-            Map<Link, Triple<Map<Demand, Set<Link>>, Map<Demand, Set<Link>>, Map<Pair<MulticastDemand, Node>, Set<Link>>>> thisLayerPropInfo = new HashMap<>();
+            final SortedSet<Link> allAffectedLinks = pickedSRG.getAffectedLinksAllLayers();
+            SortedMap<Link, Triple<SortedMap<Demand, SortedSet<Link>>, SortedMap<Demand, SortedSet<Link>>, SortedMap<Pair<MulticastDemand, Node>, SortedSet<Link>>>> thisLayerPropInfo = new TreeMap<>();
             if (vs.isShowInCanvasThisLayerPropagation())
             {
                 for (Link link : allAffectedLinks)
                 {
                     thisLayerPropInfo.put(link, link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink());
-                    final Set<Link> linksPrimary = thisLayerPropInfo.get(link).getFirst().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
-                    final Set<Link> linksBackup = thisLayerPropInfo.get(link).getSecond().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
-                    final Set<Link> linksMulticast = thisLayerPropInfo.get(link).getThird().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
-                    final Set<Link> links = new HashSet<>();
+                    final SortedSet<Link> linksPrimary = thisLayerPropInfo.get(link).getFirst().values().stream().flatMap(set -> set.stream()).collect(Collectors.toCollection(TreeSet::new));
+                    final SortedSet<Link> linksBackup = thisLayerPropInfo.get(link).getSecond().values().stream().flatMap(set -> set.stream()).collect(Collectors.toCollection(TreeSet::new));
+                    final SortedSet<Link> linksMulticast = thisLayerPropInfo.get(link).getThird().values().stream().flatMap(set -> set.stream()).collect(Collectors.toCollection(TreeSet::new));
+                    final SortedSet<Link> links = new TreeSet<>();
                     if (linksPrimary != null) links.addAll(linksPrimary);
                     if (linksBackup != null) links.addAll(linksBackup);
                     if (linksMulticast != null) links.addAll(linksMulticast);
@@ -158,25 +431,25 @@ class PickManager
             }
             if (vs.isShowInCanvasLowerLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1))
             {
-                final Set<Link> affectedCoupledLinks = allAffectedLinks.stream().filter(e -> e.isCoupled()).collect(Collectors.toSet());
-                final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> couplingInfo = DrawUtils.getDownCoupling(affectedCoupledLinks);
+                final SortedSet<Link> affectedCoupledLinks = allAffectedLinks.stream().filter(e -> e.isCoupled()).collect(Collectors.toCollection(TreeSet::new));
+                final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> couplingInfo = DrawUtils.getDownCoupling(affectedCoupledLinks);
                 final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(couplingInfo.getFirst(), null, couplingInfo.getSecond(), false);
-                final Set<Link> lowerLayerLinks = ipg.getLinksInGraph();
+                final SortedSet<Link> lowerLayerLinks = ipg.getLinksInGraph();
                 DrawUtils.drawCollateralLinks(vs, lowerLayerLinks, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, lowerLayerLinks, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
             }
             if (vs.isShowInCanvasUpperLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1))
             {
-                final Set<Demand> demandsPrimaryAndBackup = new HashSet<>();
-                final Set<Pair<MulticastDemand, Node>> demandsMulticast = new HashSet<>();
+                final SortedSet<Demand> demandsPrimaryAndBackup = new TreeSet<>();
+                final SortedSet<Pair<MulticastDemand, Node>> demandsMulticast = new TreeSet<>();
                 for (Link link : allAffectedLinks)
                 {
-                    final Triple<Map<Demand, Set<Link>>, Map<Demand, Set<Link>>, Map<Pair<MulticastDemand, Node>, Set<Link>>> thisLinkInfo =
+                    final Triple<SortedMap<Demand, SortedSet<Link>>, SortedMap<Demand, SortedSet<Link>>, SortedMap<Pair<MulticastDemand, Node>, SortedSet<Link>>> thisLinkInfo =
                             vs.isShowInCanvasThisLayerPropagation() ? thisLayerPropInfo.get(link) : link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
                     demandsPrimaryAndBackup.addAll(Sets.union(thisLinkInfo.getFirst().keySet(), thisLinkInfo.getSecond().keySet()));
                     demandsMulticast.addAll(thisLinkInfo.getThird().keySet());
                 }
-                final Set<Link> coupledUpperLinks = DrawUtils.getUpCoupling(demandsPrimaryAndBackup, demandsMulticast);
+                final SortedSet<Link> coupledUpperLinks = DrawUtils.getUpCoupling(demandsPrimaryAndBackup, demandsMulticast);
                 final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, coupledUpperLinks, null, true);
                 DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_AFFECTEDFAILURES);
@@ -205,39 +478,34 @@ class PickManager
         }
     }
 
-    void pickMulticastDemand(List<MulticastDemand> pickedDemands)
+    private void applyVisualizationPickMulticastDemand(List<MulticastDemand> pickedDemands)
     {
-        cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = pickedDemands;
-        if (pickedDemands.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedDemands.get(0));
-
         for (MulticastDemand pickedDemand : pickedDemands)
         {
             final boolean isDemandLayerVisibleInTheCanvas = vs.isLayerVisibleInCanvas(pickedDemand.getLayer());
             final GUINode gnOrigin = vs.getCanvasAssociatedGUINode(pickedDemand.getIngressNode(), pickedDemand.getLayer());
-            Set<Link> linksThisLayer = null;
+            SortedSet<Link> linksThisLayer = null;
             for (Node egressNode : pickedDemand.getEgressNodes())
             {
                 final GUINode gnDestination = vs.getCanvasAssociatedGUINode(egressNode, pickedDemand.getLayer());
                 if (vs.isShowInCanvasThisLayerPropagation() && isDemandLayerVisibleInTheCanvas)
                 {
-                    linksThisLayer = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode);
+                    linksThisLayer = pickedDemand.getLinksNoDownPropagationPotentiallyCarryingTraffic(egressNode);
                     DrawUtils.drawCollateralLinks(vs, linksThisLayer, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 }
                 if (vs.isShowInCanvasLowerLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1))
                 {
                     if (linksThisLayer == null)
-                        linksThisLayer = pickedDemand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode);
-                    final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> downLayerInfo = DrawUtils.getDownCoupling(linksThisLayer);
+                        linksThisLayer = pickedDemand.getLinksNoDownPropagationPotentiallyCarryingTraffic(egressNode);
+                    final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> downLayerInfo = DrawUtils.getDownCoupling(linksThisLayer);
                     final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(downLayerInfo.getFirst(), null, downLayerInfo.getSecond(), false);
-                    final Set<Link> linksLowerLayers = ipg.getLinksInGraph();
+                    final SortedSet<Link> linksLowerLayers = ipg.getLinksInGraph();
                     DrawUtils.drawCollateralLinks(vs, linksLowerLayers, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                     DrawUtils.drawDownPropagationInterLayerLinks(vs, linksLowerLayers, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 }
                 if (vs.isShowInCanvasUpperLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1) && pickedDemand.isCoupled())
                 {
-                    final Set<Link> upCoupledLink = DrawUtils.getUpCoupling(null, Collections.singleton(Pair.of(pickedDemand, egressNode)));
+                    final SortedSet<Link> upCoupledLink = DrawUtils.getUpCoupling(null, Collections.singleton(Pair.of(pickedDemand, egressNode)));
                     final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, upCoupledLink, null, true);
                     DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                     DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
@@ -258,13 +526,8 @@ class PickManager
         }
     }
 
-    void pickRoute(List<Route> pickedRoutes)
+    private void applyVisualizationPickRoute(List<Route> pickedRoutes)
     {
-        cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = pickedRoutes;
-        if (pickedRoutes.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedRoutes.get(0));
-
         for (Route pickedRoute : pickedRoutes)
         {
             final boolean isRouteLayerVisibleInTheCanvas = vs.isLayerVisibleInCanvas(pickedRoute.getLayer());
@@ -275,14 +538,14 @@ class PickManager
             }
             if (vs.isShowInCanvasLowerLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1))
             {
-                final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> downInfo = DrawUtils.getDownCoupling(pickedRoute.getSeqLinks());
+                final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> downInfo = DrawUtils.getDownCoupling(pickedRoute.getSeqLinks());
                 final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(downInfo.getFirst(), null, downInfo.getSecond(), false);
                 DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), pickedRoute.isBackupRoute() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUP : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), pickedRoute.isBackupRoute() ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_BACKUP : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
             if (vs.isShowInCanvasUpperLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1) && pickedRoute.getDemand().isCoupled())
             {
-                final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, Sets.newHashSet(pickedRoute.getDemand().getCoupledLink()), null, true);
+                final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, new TreeSet<> (Arrays.asList(pickedRoute.getDemand().getCoupledLink())), null, true);
                 DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
@@ -299,18 +562,13 @@ class PickManager
         }
     }
 
-    void pickMulticastTree(List<MulticastTree> pickedTrees)
+    private void applyVisualizationPickMulticastTree(List<MulticastTree> pickedTrees)
     {
-        cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = pickedTrees;
-        if (pickedTrees.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedTrees.get(0));
-
         for (MulticastTree pickedTree : pickedTrees)
         {
             final boolean isTreeLayerVisibleInTheCanvas = vs.isLayerVisibleInCanvas(pickedTree.getLayer());
             final GUINode gnOrigin = vs.getCanvasAssociatedGUINode(pickedTree.getIngressNode(), pickedTree.getLayer());
-            for (Node egressNode : pickedTree.getEgressNodes())
+            for (Node egressNode : pickedTree.getEgressNodesReached())
             {
                 final GUINode gnDestination = vs.getCanvasAssociatedGUINode(egressNode, pickedTree.getLayer());
                 if (vs.isShowInCanvasThisLayerPropagation() && isTreeLayerVisibleInTheCanvas)
@@ -320,14 +578,14 @@ class PickManager
                 }
                 if (vs.isShowInCanvasLowerLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1))
                 {
-                    final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> downInfo = DrawUtils.getDownCoupling(pickedTree.getSeqLinksToEgressNode(egressNode));
+                    final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> downInfo = DrawUtils.getDownCoupling(pickedTree.getSeqLinksToEgressNode(egressNode));
                     final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(downInfo.getFirst(), null, downInfo.getSecond(), false);
                     DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                     DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 }
                 if (vs.isShowInCanvasUpperLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1) && pickedTree.getMulticastDemand().isCoupled())
                 {
-                    final Set<Link> upperCoupledLink = DrawUtils.getUpCoupling(null, Arrays.asList(Pair.of(pickedTree.getMulticastDemand(), egressNode)));
+                    final SortedSet<Link> upperCoupledLink = DrawUtils.getUpCoupling(null, Arrays.asList(Pair.of(pickedTree.getMulticastDemand(), egressNode)));
                     final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, upperCoupledLink, null, true);
                     DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                     DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
@@ -347,28 +605,23 @@ class PickManager
         }
     }
 
-    void pickLink(List<Link> pickedLinks)
+    private void applyVisualizationPickLink(List<Link> pickedLinks)
     {
-        cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = pickedLinks;
-        if (pickedLinks.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedLinks.get(0));
-
         for (Link pickedLink : pickedLinks)
         {
             final boolean isLinkLayerVisibleInTheCanvas = vs.isLayerVisibleInCanvas(pickedLink.getLayer());
-            Triple<Map<Demand, Set<Link>>, Map<Demand, Set<Link>>, Map<Pair<MulticastDemand, Node>, Set<Link>>> thisLayerTraversalInfo = null;
+            Triple<SortedMap<Demand, SortedSet<Link>>, SortedMap<Demand, SortedSet<Link>>, SortedMap<Pair<MulticastDemand, Node>, SortedSet<Link>>> thisLayerTraversalInfo = null;
             if (vs.isShowInCanvasThisLayerPropagation() && isLinkLayerVisibleInTheCanvas)
             {
                 thisLayerTraversalInfo = pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-                final Set<Link> linksPrimary = thisLayerTraversalInfo.getFirst().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
-                final Set<Link> linksBackup = thisLayerTraversalInfo.getSecond().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
-                final Set<Link> linksMulticast = thisLayerTraversalInfo.getThird().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet());
+                final SortedSet<Link> linksPrimary = thisLayerTraversalInfo.getFirst().values().stream().flatMap(set -> set.stream()).collect(Collectors.toCollection(TreeSet::new));
+                final SortedSet<Link> linksBackup = thisLayerTraversalInfo.getSecond().values().stream().flatMap(set -> set.stream()).collect(Collectors.toCollection(TreeSet::new));
+                final SortedSet<Link> linksMulticast = thisLayerTraversalInfo.getThird().values().stream().flatMap(set -> set.stream()).collect(Collectors.toCollection(TreeSet::new));
                 DrawUtils.drawCollateralLinks(vs, Sets.union(Sets.union(linksPrimary, linksBackup), linksMulticast), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
             if (vs.isShowInCanvasLowerLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1) && pickedLink.isCoupled())
             {
-                final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> downLayerInfo = DrawUtils.getDownCoupling(Arrays.asList(pickedLink));
+                final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> downLayerInfo = DrawUtils.getDownCoupling(Arrays.asList(pickedLink));
                 final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(downLayerInfo.getFirst(), null, downLayerInfo.getSecond(), false);
                 DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
@@ -377,10 +630,10 @@ class PickManager
             {
                 if (thisLayerTraversalInfo == null)
                     thisLayerTraversalInfo = pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-                final Set<Demand> demandsPrimaryAndBackup = Sets.union(thisLayerTraversalInfo.getFirst().keySet(), thisLayerTraversalInfo.getSecond().keySet());
-                final Set<Pair<MulticastDemand, Node>> mDemands = thisLayerTraversalInfo.getThird().keySet();
-                final Set<Link> initialUpperLinks = DrawUtils.getUpCoupling(demandsPrimaryAndBackup, mDemands);
-                final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, Sets.newHashSet(initialUpperLinks), null, true);
+                final SortedSet<Demand> demandsPrimaryAndBackup = new TreeSet<> (Sets.union(thisLayerTraversalInfo.getFirst().keySet(), thisLayerTraversalInfo.getSecond().keySet()));
+                final SortedSet<Pair<MulticastDemand, Node>> mDemands = new TreeSet<> (thisLayerTraversalInfo.getThird().keySet());
+                final SortedSet<Link> initialUpperLinks = DrawUtils.getUpCoupling(demandsPrimaryAndBackup, mDemands);
+                final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, initialUpperLinks, null, true);
                 DrawUtils.drawCollateralLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, ipg.getLinksInGraph(), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
@@ -397,21 +650,18 @@ class PickManager
         }
     }
 
-    void pickNode(List<Node> pickedNodes)
+    private void applyVisualizationPickNode(List<Node> pickedNodes , NetworkLayer layer)
     {
-        cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = pickedNodes;
-        if (pickedNodes.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedNodes.get(0));
-
+    	if (layer == null) layer = callback.getDesign().getNetworkLayerDefault();
         for (Node pickedNode : pickedNodes)
         {
             for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes(pickedNode))
             {
+            	if (!gn.getLayer().equals(layer)) continue;
                 gn.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK);
                 gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_PICK);
             }
-            for (Link e : Sets.union(pickedNode.getOutgoingLinks(vs.getNetPlan().getNetworkLayerDefault()), pickedNode.getIncomingLinks(vs.getNetPlan().getNetworkLayerDefault())))
+            for (Link e : Sets.union(pickedNode.getOutgoingLinks(layer), pickedNode.getIncomingLinks(layer)))
             {
                 final GUILink gl = vs.getCanvasAssociatedGUILink(e);
                 gl.setShownSeparated(true);
@@ -420,30 +670,23 @@ class PickManager
         }
     }
 
-    void pickResource(List<Resource> pickedResources)
+    private void applyVisualizationPickResource(List<Resource> pickedResources , NetworkLayer layer)
     {
-        cleanPick();
-        this.pickedForwardingRule = null;
-        this.pickedElement = pickedResources;
-        if (pickedResources.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedResources.get(0));
-
+    	if (layer == null) layer = callback.getDesign().getNetworkLayerDefault();
         for (Resource pickedResource : pickedResources)
         {
-            for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes(pickedResource.getHostNode()))
-            {
-                gn.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
-                gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
-            }
+        	if (pickedResource.iAttachedToANode())
+	            for (GUINode gn : vs.getCanvasVerticallyStackedGUINodes(pickedResource.getHostNode().get()))
+	            {
+	            	if (!gn.getLayer().equals(layer)) continue;
+	                gn.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
+	                gn.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_RESOURCE);
+	            }
         }
     }
 
-    void pickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
+    private void applyVisualizationPickForwardingRule(List<Pair<Demand, Link>> pickedFRs)
     {
-        cleanPick();
-        this.pickedForwardingRule = pickedFRs;
-        this.pickedElement = null;
-        if (pickedFRs.size() == 1) this.pickTimeLineManager.addElement(vs.getNetPlan(), pickedFRs.get(0));
-
         for (Pair<Demand, Link> pickedFR : pickedFRs)
         {
             final boolean isFRLayerVisibleInTheCanvas = vs.isLayerVisibleInCanvas(pickedFR.getFirst().getLayer());
@@ -451,25 +694,25 @@ class PickManager
             final Link pickedLink = pickedFR.getSecond();
             if (vs.isShowInCanvasThisLayerPropagation() && isFRLayerVisibleInTheCanvas)
             {
-                final Triple<Map<Demand, Set<Link>>, Map<Demand, Set<Link>>, Map<Pair<MulticastDemand, Node>, Set<Link>>> triple =
+                final Triple<SortedMap<Demand, SortedSet<Link>>, SortedMap<Demand, SortedSet<Link>>, SortedMap<Pair<MulticastDemand, Node>, SortedSet<Link>>> triple =
                         pickedLink.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
-                final Set<Link> linksPrimary = triple.getFirst().get(pickedDemand);
-                final Set<Link> linksBackup = triple.getSecond().get(pickedDemand);
-                DrawUtils.drawCollateralLinks(vs, Sets.union(linksPrimary == null ? new HashSet<>() : linksPrimary, linksBackup == null ? new HashSet<>() : linksBackup
+                final SortedSet<Link> linksPrimary = triple.getFirst().get(pickedDemand);
+                final SortedSet<Link> linksBackup = triple.getSecond().get(pickedDemand);
+                DrawUtils.drawCollateralLinks(vs, Sets.union(linksPrimary == null ? new TreeSet<>() : linksPrimary, linksBackup == null ? new TreeSet<>() : linksBackup
                 ), VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
             if (vs.isShowInCanvasLowerLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1) && pickedLink.isCoupled())
             {
-                final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> downLayerInfo = DrawUtils.getDownCoupling(Arrays.asList(pickedLink));
+                final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> downLayerInfo = DrawUtils.getDownCoupling(Arrays.asList(pickedLink));
                 final InterLayerPropagationGraph ipgCausedByLink = new InterLayerPropagationGraph(downLayerInfo.getFirst(), null, downLayerInfo.getSecond(), false);
-                final Set<Link> frPropagationLinks = ipgCausedByLink.getLinksInGraph();
+                final SortedSet<Link> frPropagationLinks = ipgCausedByLink.getLinksInGraph();
                 DrawUtils.drawCollateralLinks(vs, frPropagationLinks, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, frPropagationLinks, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
             if (vs.isShowInCanvasUpperLayerPropagation() && (vs.getNetPlan().getNumberOfLayers() > 1) && pickedDemand.isCoupled())
             {
-                final InterLayerPropagationGraph ipgCausedByDemand = new InterLayerPropagationGraph(null, Sets.newHashSet(pickedDemand.getCoupledLink()), null, true);
-                final Set<Link> frPropagationLinks = ipgCausedByDemand.getLinksInGraph();
+                final InterLayerPropagationGraph ipgCausedByDemand = new InterLayerPropagationGraph(null, new TreeSet<> (Arrays.asList(pickedDemand.getCoupledLink())), null, true);
+                final SortedSet<Link> frPropagationLinks = ipgCausedByDemand.getLinksInGraph();
                 DrawUtils.drawCollateralLinks(vs, frPropagationLinks, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
                 DrawUtils.drawDownPropagationInterLayerLinks(vs, frPropagationLinks, VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_PICKED);
             }
@@ -492,21 +735,9 @@ class PickManager
 
     }
 
-    Object getPickNavigationBackElement()
+    private void cleanPick()
     {
-        return pickTimeLineManager.getPickNavigationBackElement();
-    }
-
-    Object getPickNavigationForwardElement()
-    {
-        return pickTimeLineManager.getPickNavigationForwardElement();
-    }
-
-    void cleanPick()
-    {
-        this.pickedElement = null;
-        this.pickedForwardingRule = null;
-
+    	final VisualizationState vs = callback.getVisualizationState();
         for (GUINode n : vs.getCanvasAllGUINodes())
         {
             n.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR);
@@ -546,10 +777,10 @@ class PickManager
             }
         }
 
-        static Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> getDownCoupling(Collection<Link> links)
+        static Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> getDownCoupling(Collection<Link> links)
         {
-            final Set<Demand> res_1 = new HashSet<>();
-            final Set<Pair<MulticastDemand, Node>> res_2 = new HashSet<>();
+            final SortedSet<Demand> res_1 = new TreeSet<>();
+            final SortedSet<Pair<MulticastDemand, Node>> res_2 = new TreeSet<>();
             for (Link link : links)
             {
                 if (link.getCoupledDemand() != null) res_1.add(link.getCoupledDemand());
@@ -560,9 +791,9 @@ class PickManager
 
         }
 
-        static Set<Link> getUpCoupling(Collection<Demand> demands, Collection<Pair<MulticastDemand, Node>> mDemands)
+        static SortedSet<Link> getUpCoupling(Collection<Demand> demands, Collection<Pair<MulticastDemand, Node>> mDemands)
         {
-            final Set<Link> res = new HashSet<>();
+            final SortedSet<Link> res = new TreeSet<>();
             if (demands != null)
                 for (Demand d : demands)
                     if (d.isCoupled()) res.add(d.getCoupledLink());
@@ -587,7 +818,7 @@ class PickManager
             return res;
         }
 
-        static void drawDownPropagationInterLayerLinks(VisualizationState vs, Set<Link> links, Paint color)
+        static void drawDownPropagationInterLayerLinks(VisualizationState vs, SortedSet<Link> links, Paint color)
         {
             for (Link link : links)
             {
@@ -620,4 +851,28 @@ class PickManager
             e.setEdgeStroke(VisualizationUtils.resizedBasicStroke(a, vs.getLinkWidthFactor()), VisualizationUtils.resizedBasicStroke(na, vs.getLinkWidthFactor()));
         }
     }
+
+    public void pickElements (PickStateInfo pickState)
+    {
+    	final PickStateInfo stateThisNp = pickState.getTranslationToGivenNetPlan(callback.getDesign ()).orElse(null);
+    	if (stateThisNp == null) return;
+    	this.addElement(stateThisNp);
+    	stateThisNp.applyVisualizationInCurrentDesign();
+    }
+    public void pickElements (NetworkElement e)
+    {
+    	final PickStateInfo ps = new PickStateInfo(e, Optional.empty());
+    	pickElements(ps);
+    }
+    public void pickElements (NetworkElement e , NetworkLayer layer)
+    {
+    	final PickStateInfo ps = new PickStateInfo(e, layer == null? Optional.empty() : Optional.of(layer));
+    	pickElements(ps);
+    }
+    public void pickElements (Pair<Demand,Link> e)
+    {
+    	final PickStateInfo ps = new PickStateInfo(e, Optional.empty());
+    	pickElements(ps);
+    }
+
 }

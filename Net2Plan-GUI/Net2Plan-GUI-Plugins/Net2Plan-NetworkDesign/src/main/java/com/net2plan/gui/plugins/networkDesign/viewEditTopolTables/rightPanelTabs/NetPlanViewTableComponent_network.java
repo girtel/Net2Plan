@@ -31,12 +31,11 @@ public class NetPlanViewTableComponent_network extends JPanel {
     private final static String[] tagTableHeader = StringUtils.arrayOf("Tag");
     private final static String[] tagTableTip = StringUtils.arrayOf("Name of the tag");
 
-    private JTextField txt_networkName, txt_layerLinkCapacityUnits, txt_layerDemandTrafficUnits, txt_numLayers, txt_numNodes, txt_numSRGs;
+    private JTextField txt_networkName, txt_numLayers, txt_numNodes, txt_numSRGs;
     private JTextArea txt_networkDescription;
     private AdvancedJTable networkTagTable;
     private AdvancedJTable networkAttributeTable;
     private AdvancedJTable_layer layerTable;
-    private JScrollPane scrollPane;
     private final GUINetworkDesign networkViewer;
 
     public NetPlanViewTableComponent_network(final GUINetworkDesign networkViewer, AdvancedJTable_layer layerTable) {
@@ -62,14 +61,14 @@ public class NetPlanViewTableComponent_network extends JPanel {
             txt_networkName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
-                    networkViewer.getDesign().setNetworkName(text);
+                    networkViewer.getDesign().setName(text);
                 }
             });
 
             txt_networkDescription.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
                 @Override
                 protected void updateInfo(String text) {
-                    networkViewer.getDesign().setNetworkDescription(text);
+                    networkViewer.getDesign().setDescription(text);
                 }
             });
         }
@@ -95,8 +94,6 @@ public class NetPlanViewTableComponent_network extends JPanel {
         sp_tags.setLayout(tagLayout);
         sp_tags.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-        //
-
         networkAttributeTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][attributeTableHeader.length], attributeTableHeader));
         if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             networkAttributeTable.addMouseListener(new SingleElementAttributeEditor(networkViewer, NetworkElementType.NETWORK));
@@ -116,24 +113,6 @@ public class NetPlanViewTableComponent_network extends JPanel {
         scrollPane.setLayout(layout);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-//		ColumnHeaderToolTips tips1 = new ColumnHeaderToolTips();
-//		for (int c = 0; c < layerTable.getTableHeaders().length; c++)
-//			tips1.setToolTip(layerTable.getColumnModel().getColumn(c), layerTable.getTableTips() [c]);
-//		layerTable.getTableHeader().addMouseMotionListener(tips1);
-
-//		layerTable.setAutoCreateRowSorter(true);
-
-        JScrollPane scrollPane1 = new JScrollPane(layerTable);
-        ScrollPaneLayout layout1 = new FullScrollPaneLayout();
-        scrollPane1.setLayout(layout1);
-        scrollPane1.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-
-//		layerTable.addMouseListener(new PopupMenuNetPlan(networkViewer, networkViewer.getTopologyPanel(), layerTable.getModel(), NetworkElementType.LAYER, networkViewer.isEditable()));
-//
-
-
-//		netPlanViewTableComponent.put(NetworkElementType.LAYER, scrollPane1);
-
         this.add(new JLabel("Name"));
         this.add(txt_networkName, "grow, wrap");
         this.add(new JLabel("Description"), "aligny top");
@@ -147,8 +126,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
         this.add(new JLabel("Number of SRGs"), "grow");
         this.add(txt_numSRGs, "grow, wrap");
         this.add(new JLabel("Layer information"), "grow, spanx2, wrap");
-        this.add(scrollPane1, "grow, spanx 2");
-//		netPlanViewTableComponent.put(elementType, networkPane);
+        this.add(layerTable.getTableScrollPane(), "grow, spanx 2");
         networkAttributeTable.addKeyListener(new TableCursorNavigation());
     }
 
@@ -192,8 +170,10 @@ public class NetPlanViewTableComponent_network extends JPanel {
             ((DefaultTableModel) networkTagTable.getModel()).setDataVector(tagData, tagTableHeader);
         }
 
-        txt_networkName.setText(currentState.getNetworkName());
-        txt_networkDescription.setText(currentState.getNetworkDescription());
+        this.layerTable.updateView();
+        
+        txt_networkName.setText(currentState.getName());
+        txt_networkDescription.setText(currentState.getDescription());
         txt_networkDescription.setCaretPosition(0);
     }
 

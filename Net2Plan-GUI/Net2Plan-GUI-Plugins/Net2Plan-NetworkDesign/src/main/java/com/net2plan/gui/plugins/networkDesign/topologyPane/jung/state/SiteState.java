@@ -10,16 +10,22 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import javax.swing.UIManager;
+
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager.PickStateInfo;
+import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.tools.javac.util.Pair;
 
 /**
  * @author Jorge San Emeterio
@@ -44,8 +50,9 @@ class SiteState extends ViewState
     @Override
     public void stop()
     {
+    	final PickManager pickManager = callback.getPickManager();
         callback.resetPickedStateAndUpdateView();
-        callback.getVisualizationState().pickElement(siteNode);
+        pickManager.pickElements(pickManager.new PickStateInfo(siteNode , Optional.empty()));
         callback.updateVisualizationAfterPick();
     }
 
@@ -58,10 +65,10 @@ class SiteState extends ViewState
     public void zoomSite()
     {
         final NetPlan netPlan = callback.getDesign();
-
-        // Finding site nodes
+        final PickManager pickManager = callback.getPickManager();
         final List<Node> nodeList = new ArrayList<>(netPlan.getSiteNodes(siteNode.getSiteName()));
-        callback.getVisualizationState().pickElement(nodeList);
+        final PickStateInfo ps = pickManager.createPickStateFromListNe (nodeList);
+        pickManager.pickElements(ps);
         callback.updateVisualizationAfterPick();
 
         zoomNodes(nodeList);

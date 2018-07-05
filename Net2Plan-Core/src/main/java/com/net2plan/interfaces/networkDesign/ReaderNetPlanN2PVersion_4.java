@@ -20,46 +20,56 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+import org.codehaus.stax2.XMLStreamReader2;
+
+import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.LongUtils;
 
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.LongUtils;
-import org.codehaus.stax2.XMLStreamReader2;
-
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
-import java.util.*;
-
 class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanFormat_v3
 {
 	final static String KEY_STRING_BIDIRECTIONALCOUPLE = "bidirectionalCouple";
-	protected Map<Long,Node> mapOldId2Node;
-	protected Map<Long,SharedRiskGroup> mapOldId2Srg;
-	protected Map<Long,NetworkLayer> mapOldId2Layer;
-	protected Map<Long,Link> mapOldId2Link;
-	protected Map<Long,Demand> mapOldId2Demand;
-	protected Map<Long,MulticastDemand> mapOldId2MulticastDemand;
-	protected Map<Long,Route> mapOldId2Route;
-	protected Map<Long,MulticastTree> mapOldId2MulticastTree;
-	//protected Map<Long,ProtectionSegment> mapOldId2ProtectionSegment;
+	final SortedMap<NetworkLayer,RoutingType> newLayer2RoutingTypeMap = new TreeMap<> ();
+	protected SortedMap<Long,Node> mapOldId2Node;
+	protected SortedMap<Long,SharedRiskGroup> mapOldId2Srg;
+	protected SortedMap<Long,NetworkLayer> mapOldId2Layer;
+	protected SortedMap<Long,Link> mapOldId2Link;
+	protected SortedMap<Long,Demand> mapOldId2Demand;
+	protected SortedMap<Long,MulticastDemand> mapOldId2MulticastDemand;
+	protected SortedMap<Long,Route> mapOldId2Route;
+	protected SortedMap<Long,MulticastTree> mapOldId2MulticastTree;
+	//protected SortedMap<Long,ProtectionSegment> mapOldId2ProtectionSegment;
 	protected boolean hasAlreadyReadOneLayer;
 	
-	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
+	@Override
+    public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
-		this.mapOldId2Node = new HashMap<Long,Node> ();
-		this.mapOldId2Srg = new HashMap<Long,SharedRiskGroup> ();
-		this.mapOldId2Layer = new HashMap<Long,NetworkLayer> ();
-		this.mapOldId2Link = new HashMap<Long,Link> ();
-		this.mapOldId2Demand = new HashMap<Long,Demand> ();
-		this.mapOldId2MulticastDemand = new HashMap<Long,MulticastDemand> ();
-		this.mapOldId2Route = new HashMap<Long,Route> ();
-		this.mapOldId2MulticastTree = new HashMap<Long,MulticastTree> ();
-		//this.mapOldId2ProtectionSegment = new HashMap<Long,ProtectionSegment> ();
+		this.mapOldId2Node = new TreeMap<Long,Node> ();
+		this.mapOldId2Srg = new TreeMap<Long,SharedRiskGroup> ();
+		this.mapOldId2Layer = new TreeMap<Long,NetworkLayer> ();
+		this.mapOldId2Link = new TreeMap<Long,Link> ();
+		this.mapOldId2Demand = new TreeMap<Long,Demand> ();
+		this.mapOldId2MulticastDemand = new TreeMap<Long,MulticastDemand> ();
+		this.mapOldId2Route = new TreeMap<Long,Route> ();
+		this.mapOldId2MulticastTree = new TreeMap<Long,MulticastTree> ();
+		//this.mapOldId2ProtectionSegment = new TreeMap<Long,ProtectionSegment> ();
 		this.hasAlreadyReadOneLayer = false;
 		parseNetwork(netPlan, xmlStreamReader);
+		
 
 //		System.out.println ("End ReaderNetPlan_v4: " + netPlan + " ----------- ");
 		
@@ -70,8 +80,8 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 	{
 		String networkDescription_thisNetPlan = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "description"));
 		String networkName_thisNetPlan = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "name"));
-		netPlan.setNetworkDescription(networkDescription_thisNetPlan);
-		netPlan.setNetworkName(networkName_thisNetPlan);
+		netPlan.setDescription(networkDescription_thisNetPlan);
+		netPlan.setName(networkName_thisNetPlan);
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -103,13 +113,13 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 						case "layerCouplingDemand":
 							long upperLayerLinkId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "upperLayerLinkId"));
 							long lowerLayerDemandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "lowerLayerDemandId"));
-							mapOldId2Demand.get(lowerLayerDemandId).coupleToUpperLayerLink(mapOldId2Link.get(upperLayerLinkId));
+							mapOldId2Demand.get(lowerLayerDemandId).coupleToUpperOrSameLayerLink(mapOldId2Link.get(upperLayerLinkId));
 							break;
 
 						case "layerCouplingMulticastDemand":
 							List<Long> upperLayerLinkIds = LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "upperLayerLinkIds")));
 							long lowerLayerMulticastDemandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "lowerLayerDemandId"));
-							Set<Link> setLinksToCouple = new HashSet<Link> (); for (long oldLinkId : upperLayerLinkIds) setLinksToCouple.add (mapOldId2Link.get(oldLinkId));
+							SortedSet<Link> setLinksToCouple = new TreeSet<Link> (); for (long oldLinkId : upperLayerLinkIds) setLinksToCouple.add (mapOldId2Link.get(oldLinkId));
 							mapOldId2MulticastDemand.get(lowerLayerMulticastDemandId).couple(setLinksToCouple);
 							break;
 
@@ -226,7 +236,9 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 		long egressNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "egressNodeId"));
 		double offeredTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "offeredTraffic"));
 //		netPlan.nextDemandId.put(layerId, demandId);
-		Demand newDemand = netPlan.addDemand(mapOldId2Node.get(ingressNodeId), mapOldId2Node.get(egressNodeId), offeredTraffic, null , mapOldId2Layer.get(layerId));
+		assert newLayer2RoutingTypeMap.containsKey(mapOldId2Layer.get(layerId));
+		final RoutingType rtLayer = newLayer2RoutingTypeMap.get(mapOldId2Layer.get(layerId));
+		Demand newDemand = netPlan.addDemand(mapOldId2Node.get(ingressNodeId), mapOldId2Node.get(egressNodeId), offeredTraffic, rtLayer , null , mapOldId2Layer.get(layerId));
 		mapOldId2Demand.put (demandId , newDemand);
 
 		while(xmlStreamReader.hasNext())
@@ -361,7 +373,8 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 
 	protected void parseHopByHopRouting(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
-		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING , mapOldId2Layer.get(layerId) );
+		netPlan.setRoutingTypeAllDemands (RoutingType.HOP_BY_HOP_ROUTING , mapOldId2Layer.get(layerId) );
+		newLayer2RoutingTypeMap.put(mapOldId2Layer.get(layerId), RoutingType.HOP_BY_HOP_ROUTING);
 		final NetworkLayer layer = mapOldId2Layer.get(layerId);
 		final int D = netPlan.getNumberOfDemands(layer);
 		final int E = netPlan.getNumberOfLinks(layer);
@@ -391,7 +404,7 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 					if (endElementName.equals("hopByHopRouting")) 
 					{ 
 						NetworkLayer thisLayer = mapOldId2Layer.get(layerId); 
-						netPlan.setForwardingRules(f_de , thisLayer); 
+						netPlan.setForwardingRules(f_de , null , thisLayer); 
 						return;
 					}
 					break;
@@ -585,8 +598,8 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 	{
 		long demandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "id"));
 		long ingressNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "ingressNodeId"));
-		Set<Long> egressNodeIds = new HashSet <Long>(LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "egressNodeIds"))));
-		Set<Node> newEgressNodes = new HashSet<Node> (); for (long nodeId : egressNodeIds) newEgressNodes.add (mapOldId2Node.get(nodeId));
+		SortedSet<Long> egressNodeIds = new TreeSet <Long>(LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "egressNodeIds"))));
+		SortedSet<Node> newEgressNodes = new TreeSet<Node> (); for (long nodeId : egressNodeIds) newEgressNodes.add (mapOldId2Node.get(nodeId));
 		
 		double offeredTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "offeredTraffic"));
 		MulticastDemand newDemand = netPlan.addMulticastDemand(mapOldId2Node.get(ingressNodeId), newEgressNodes , offeredTraffic, null , mapOldId2Layer.get(layerId));
@@ -626,7 +639,8 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 
 	protected void parseSourceRouting(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
-		netPlan.setRoutingType (RoutingType.SOURCE_ROUTING , mapOldId2Layer.get(layerId));
+		netPlan.setRoutingTypeAllDemands (RoutingType.SOURCE_ROUTING , mapOldId2Layer.get(layerId));
+		newLayer2RoutingTypeMap.put(mapOldId2Layer.get(layerId), RoutingType.SOURCE_ROUTING);
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -671,10 +685,10 @@ class ReaderNetPlanN2PVersion_4 implements IReaderNetPlan //extends NetPlanForma
 		double occupiedLinkCapacityIfNotFailing = occupiedCapacity; try { occupiedLinkCapacityIfNotFailing = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "occupiedLinkCapacityIfNotFailing")); } catch (Exception e) {} 
 		if (occupiedCapacity < 0) occupiedCapacity = carriedTraffic;
 		MulticastDemand demand = mapOldId2MulticastDemand.get(demandId);
-		Set<Long> currentSetLinks = new HashSet<Long> (LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSetLinks"))));
-		Set<Long> initialSetLinksWhenWasCreated = new HashSet<Long> (LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "linkIds"))));
-		Set<Link> initialSetLinks_link = new HashSet<Link> (); for (long linkId : initialSetLinksWhenWasCreated) initialSetLinks_link.add (mapOldId2Link.get(linkId));
-		Set<Link> currentSetLinks_link = new HashSet<Link> (); for (long linkId : currentSetLinks) currentSetLinks_link.add (mapOldId2Link.get(linkId));
+		SortedSet<Long> currentSetLinks = new TreeSet<Long> (LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "currentSetLinks"))));
+		SortedSet<Long> initialSetLinksWhenWasCreated = new TreeSet<Long> (LongUtils.toList(xmlStreamReader.getAttributeAsLongArray(xmlStreamReader.getAttributeIndex(null, "linkIds"))));
+		SortedSet<Link> initialSetLinks_link = new TreeSet<Link> (); for (long linkId : initialSetLinksWhenWasCreated) initialSetLinks_link.add (mapOldId2Link.get(linkId));
+		SortedSet<Link> currentSetLinks_link = new TreeSet<Link> (); for (long linkId : currentSetLinks) currentSetLinks_link.add (mapOldId2Link.get(linkId));
 		MulticastTree newTree = netPlan.addMulticastTree(demand , carriedTrafficIfNotFailing , occupiedLinkCapacityIfNotFailing , initialSetLinks_link , null);
 		mapOldId2MulticastTree.put (treeId , newTree);
 		newTree.setLinks(currentSetLinks_link);

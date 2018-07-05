@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -53,6 +54,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 	private boolean hasAlreadyReadOneLayer;
 	private XMLStreamReader2 xmlStreamReader;
 	private Map<Route,List<Long>> backupRouteIdsMap;
+	private Map<Long , RoutingType> networkLayer2RoutingType = new HashMap<> ();
 	private Map<Long , List<Pair<Node,URL>>> nodeAndLayerToIconURLMap;
 	
 	public void create(NetPlan netPlan, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
@@ -76,8 +78,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final String networkDescription_thisNetPlan = getString ("description");
 		final String networkName_thisNetPlan = getString ("name");
 		final Long nexElementId_thisNetPlan = getLong ("nextElementId");
-		netPlan.setNetworkDescription(networkDescription_thisNetPlan);
-		netPlan.setNetworkName(networkName_thisNetPlan);
+		netPlan.setDescription(networkDescription_thisNetPlan);
+		netPlan.setName(networkName_thisNetPlan);
 		netPlan.nextElementId = new MutableLong(nexElementId_thisNetPlan);
 		if (netPlan.nextElementId.toLong() <= 0) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		while (true) { try { netPlan.addGlobalPlanningDomain(getString ("planningDomain_" + (netPlan.getGlobalPlanningDomains().size())));  } catch(Exception e) { break; }   } 
@@ -119,7 +121,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 						case "layerCouplingDemand":
 							final long upperLayerLinkId = getLong ("upperLayerLinkId");
 							final long lowerLayerDemandId = getLong ("lowerLayerDemandId");
-							netPlan.getDemandFromId(lowerLayerDemandId).coupleToUpperLayerLink(netPlan.getLinkFromId(upperLayerLinkId));
+							netPlan.getDemandFromId(lowerLayerDemandId).coupleToUpperOrSameLayerLink(netPlan.getLinkFromId(upperLayerLinkId));
 							break;
 
 						case "layerCouplingMulticastDemand":
@@ -193,7 +195,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		catch (Exception e) { recoveryType = Demand.IntendedRecoveryType.UNKNOWNTYPE; }
 		long bidirectionalPairId = -1; try { bidirectionalPairId = getLong ("bidirectionalPairId"); } catch (Exception e) {}
 		
-		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, null , netPlan.getNetworkLayerFromId(layerId));
+		Demand newDemand = netPlan.addDemand(demandId , netPlan.getNodeFromId(ingressNodeId), netPlan.getNodeFromId(egressNodeId), offeredTraffic, networkLayer2RoutingType.get(layerId) , null , netPlan.getNetworkLayerFromId(layerId));
 		newDemand.setIntendedRecoveryType(recoveryType);
 		final Demand bidirPairDemand = bidirectionalPairId == -1? null : netPlan.getDemandFromId(bidirectionalPairId); 
 		if (bidirPairDemand != null)
@@ -241,7 +243,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		}
 
 		if (!finalElementRead) throw new RuntimeException("'Demand' element not parsed correctly (end tag not found)");
-		newDemand.setServiceChainSequenceOfTraversedResourceTypes(mandatorySequenceOfTraversedResourceTypes);
+		if (!mandatorySequenceOfTraversedResourceTypes.isEmpty()) newDemand.setServiceChainSequenceOfTraversedResourceTypes(mandatorySequenceOfTraversedResourceTypes);
 	}
 
 	private void parseRoute(NetPlan netPlan, long layerId) throws XMLStreamException
@@ -284,7 +286,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 
 	private void parseHopByHopRouting(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
-		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING , netPlan.getNetworkLayerFromId(layerId) );
+		networkLayer2RoutingType.put(layerId, RoutingType.HOP_BY_HOP_ROUTING);
+		netPlan.setRoutingTypeAllDemands (RoutingType.HOP_BY_HOP_ROUTING , netPlan.getNetworkLayerFromId(layerId) );
 		final NetworkLayer layer = netPlan.getNetworkLayerFromId(layerId);
 		final int D = netPlan.getNumberOfDemands(layer);
 		final int E = netPlan.getNumberOfLinks(layer);
@@ -314,7 +317,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 					if (endElementName.equals("hopByHopRouting")) 
 					{ 
 						NetworkLayer thisLayer = netPlan.getNetworkLayerFromId(layerId); 
-						netPlan.setForwardingRules(f_de , thisLayer); 
+						netPlan.setForwardingRules(f_de , null , thisLayer); 
 						return; 
 					}
 					break;
@@ -368,7 +371,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		final long resId = getLong ("id");
 		if (resId >= netPlan.nextElementId.toLong()) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		final long hostNodeId = getLong ("hostNodeId");
-		if (netPlan.getNodeFromId(hostNodeId) == null) throw new Net2PlanException ("Could not find the hot node of a resource when reading");
+		final boolean isAttachedToANode = hostNodeId != -1;
+		if (isAttachedToANode && netPlan.getNodeFromId(hostNodeId) == null) throw new Net2PlanException ("Could not find the hot node of a resource when reading");
 		final String type = getString ("type");
 		final String name = getString ("name");
 		final String capacityMeasurementUnits = getString ("capacityMeasurementUnits");
@@ -377,8 +381,9 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 
 		URL urlIcon = null; try { urlIcon = new URL (getString ("urlIcon")); } catch (Exception e) {}
 		final List<Double> baseResourceAndOccupiedCapacitiesMap = getListDouble("baseResourceAndOccupiedCapacitiesMap");
+		final Optional<Node> hostNode = isAttachedToANode? Optional.of(netPlan.getNodeFromId(hostNodeId)): Optional.empty();
 		Map<Resource,Double> occupiedCapacitiesInBaseResources = getResourceOccupationMap(netPlan, baseResourceAndOccupiedCapacitiesMap); 
-		Resource newResource = netPlan.addResource(resId , type , name , netPlan.getNodeFromId(hostNodeId) , capacity , capacityMeasurementUnits , 
+		Resource newResource = netPlan.addResource(resId , type , name , hostNode , capacity , capacityMeasurementUnits , 
 				occupiedCapacitiesInBaseResources , processingTimeToTraversingTrafficInMs , null);
 		newResource.setUrlIcon(urlIcon);
 		readAndAddAttributesToEndAndPdForNodes(newResource, "resource");
@@ -424,7 +429,7 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 		/* write the node icons information, that is already there */
 		if (nodeAndLayerToIconURLMap.containsKey(newLayer.getId()))
 			for (Pair<Node,URL> iconInfo : nodeAndLayerToIconURLMap.get(newLayer.getId()))
-				iconInfo.getFirst().setUrlNodeIcon(newLayer , iconInfo.getSecond());
+				iconInfo.getFirst().setUrlNodeIcon(newLayer , iconInfo.getSecond() , 1.0);
 		
 		if (isDefaultLayer) netPlan.setNetworkLayerDefault(newLayer);
 
@@ -499,7 +504,8 @@ class ReaderNetPlanN2PVersion_5 implements IReaderNetPlan //extends NetPlanForma
 
 	private void parseSourceRouting(NetPlan netPlan, long layerId) throws XMLStreamException
 	{
-		netPlan.setRoutingType (RoutingType.SOURCE_ROUTING , netPlan.getNetworkLayerFromId(layerId));
+		this.networkLayer2RoutingType.put(layerId, RoutingType.SOURCE_ROUTING);
+		netPlan.setRoutingTypeAllDemands (RoutingType.SOURCE_ROUTING , netPlan.getNetworkLayerFromId(layerId));
 		this.backupRouteIdsMap.clear(); // in multiple layers, we have to refresh this
 		
 		while(xmlStreamReader.hasNext())

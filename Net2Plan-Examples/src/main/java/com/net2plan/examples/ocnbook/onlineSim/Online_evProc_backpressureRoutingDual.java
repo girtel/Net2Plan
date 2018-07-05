@@ -135,7 +135,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		this.stat_mapRouteId2CarriedPacketsLastInterval = new HashMap<Route,Integer> ();
 
 		this.currentNetPlan.removeAllUnicastRoutingInformation();
-		this.currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		this.currentNetPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		final Pair<NetPlan,double [][]> pOpt = computeOptimumSolution (false);
 		final Pair<NetPlan,double [][]> pOpt01 = computeOptimumSolution (true);
 		this.optNetPlan = pOpt.getFirst();
@@ -453,7 +453,7 @@ public class Online_evProc_backpressureRoutingDual extends IEventProcessor
 		/* Convert the x_de variables into a set of routes for each demand  */
 		NetPlan np = this.currentNetPlan.copy();
 		np.removeAllUnicastRoutingInformation();
-		np.setRoutingFromDemandLinkCarriedTraffic(x_de_array , xdeVariablesAsFractionsOfTraffic , false);
+		np.setRoutingFromDemandLinkCarriedTraffic(x_de_array , xdeVariablesAsFractionsOfTraffic , false , null);
 		
 		/* Check solution: all traffic is carried, no link oversubscribed */
 		for (Demand d : np.getDemands()) if (d.getBlockedTraffic() > 1E-3) throw new RuntimeException ("d: " + d + ", hd: " +  d.getOfferedTraffic() + ", carried_d: " + d.getCarriedTraffic() + "... Bad");

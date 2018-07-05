@@ -122,8 +122,8 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 	private InputParameter maxPropagationDelayMs = new InputParameter ("maxPropagationDelayMs", (double) -1 , "Maximum allowed propagation time of a lighptath in miliseconds. If non-positive, no limit is assumed");
 	
 	private NetPlan netPlan;
-	private Map<Pair<Node,Node>,List<List<Link>>> cpl;
-	private Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11;
+	private SortedMap<Pair<Node,Node>,List<List<Link>>> cpl;
+	private SortedMap<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11;
 	private NetworkLayer wdmLayer, ipLayer;
 	private WDMUtils.TransponderTypesInfo tpInfo;
 	private int N, Ewdm, Dip, S, T;
@@ -147,7 +147,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 			this.netPlan.setLinkCapacityUnitsName("Frequency slots");
 			this.ipLayer = netPlan.addLayer("IP" , "IP layer" , "Gbps" , "Gbps" , null , null);
 			for (Demand wdmDemand : netPlan.getDemands(wdmLayer))
-				netPlan.addDemand(wdmDemand.getIngressNode(), wdmDemand.getEgressNode() , wdmDemand.getOfferedTraffic() , wdmDemand.getAttributes() , ipLayer);
+				netPlan.addDemand(wdmDemand.getIngressNode(), wdmDemand.getEgressNode() , wdmDemand.getOfferedTraffic() , RoutingType.HOP_BY_HOP_ROUTING , wdmDemand.getAttributes() , ipLayer);
 		}
 		else
 		{
@@ -181,8 +181,6 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 		netPlan.removeAllLinks (ipLayer);
 		netPlan.removeAllDemands (wdmLayer);
 		netPlan.removeAllMulticastDemands(wdmLayer);
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING , wdmLayer);
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING , ipLayer);
 
 		/* Initialize the slot occupancy */
 		this.frequencySlot2FiberOccupancy_se = DoubleFactory2D.dense.make(S , Ewdm); 
@@ -261,6 +259,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				if (ipDemandIndexesNotToTry.contains(ipDemandIndex)) continue;
 
 				final Demand ipDemand = netPlan.getDemand(ipDemandIndex , ipLayer);
+				ipDemand.setRoutingType(RoutingType.SOURCE_ROUTING);
 
 				/* If the demand is already fully satisfied, skip it */
 				if (isIpDemandFullySatisfied(ipDemand)) { ipDemandIndexesNotToTry.add(ipDemandIndex); continue; } 
@@ -305,7 +304,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNo
 				/* Add the lightpath to the design */
 				atLeastOneLpAdded = true;
 				totalCost += cost_p.get(best_pathIndex);
-				final Demand newWDMDemand = netPlan.addDemand(best_rsa.ingressNode , best_rsa.egressNode , lineRate_p.get(best_pathIndex) , null , wdmLayer);
+				final Demand newWDMDemand = netPlan.addDemand(best_rsa.ingressNode , best_rsa.egressNode , lineRate_p.get(best_pathIndex) , RoutingType.SOURCE_ROUTING , null , wdmLayer);
 				newWDMDemand.setIntendedRecoveryType(recoveryTypeNewLps);
 				final Route lp = WDMUtils.addLightpath(newWDMDemand , best_rsa , lineRate_p.get(best_pathIndex));
 				final Link ipLink = newWDMDemand.coupleToNewLinkCreated(ipLayer);

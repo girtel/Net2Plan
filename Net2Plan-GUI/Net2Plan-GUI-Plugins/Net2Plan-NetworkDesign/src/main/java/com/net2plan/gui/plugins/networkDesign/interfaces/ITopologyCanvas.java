@@ -120,8 +120,6 @@ public interface ITopologyCanvas extends Plugin
 
 	CanvasOption getState();
 
-	void returnToPreviousState();
-
 	void moveCanvasTo(Point2D destinationPoint);
 
 	void updateAllVerticesXYPosition();

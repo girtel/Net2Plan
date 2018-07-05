@@ -20,5 +20,4 @@
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
     </fileSets>
-
 </assembly>

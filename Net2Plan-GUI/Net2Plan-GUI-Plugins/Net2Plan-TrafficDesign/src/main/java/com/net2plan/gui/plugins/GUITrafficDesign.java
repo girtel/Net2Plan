@@ -30,6 +30,8 @@ import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.TrafficMatrixGenerationModels;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+import com.net2plan.utils.Constants.RoutingType;
+
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -278,7 +280,7 @@ public final class GUITrafficDesign extends IGUIModule
 
                             DoubleMatrix2D trafficMatrix = getTrafficMatrix(matrixId);
                             for (int n = 0; n < trafficMatrix.rows(); n++) netPlan.addNode(0, 0, "no-name-" + n, null);
-                            netPlan.setTrafficMatrix(trafficMatrix);
+                            netPlan.setTrafficMatrix(trafficMatrix , RoutingType.SOURCE_ROUTING);
 
                             if (!netPlan.hasDemands()) {
                                 throw new Exception("This matrix has no demands (all entries are zero)");
@@ -317,7 +319,7 @@ public final class GUITrafficDesign extends IGUIModule
                                 DoubleMatrix2D trafficMatrix = getTrafficMatrix(matrixId);
                                 for (int n = 0; n < trafficMatrix.rows(); n++)
                                     netPlan.addNode(0, 0, "no-name-" + n, null);
-                                netPlan.setTrafficMatrix(trafficMatrix);
+                                netPlan.setTrafficMatrix(trafficMatrix , RoutingType.SOURCE_ROUTING);
 
                                 if (netPlan.hasDemands())
                                     netPlans.add(netPlan);
@@ -1794,7 +1796,7 @@ public final class GUITrafficDesign extends IGUIModule
 
                     for (int matrixId = initialMatrixId; matrixId < initialMatrixId + numMatrices; matrixId++) {
                         DoubleMatrix2D trafficMatrix = getTrafficMatrix(matrixId);
-                        aux.setTrafficMatrix(trafficMatrix);
+                        aux.setTrafficMatrix(trafficMatrix , RoutingType.SOURCE_ROUTING);
 
                         DoubleMatrix1D h_d;
                         switch (out) {

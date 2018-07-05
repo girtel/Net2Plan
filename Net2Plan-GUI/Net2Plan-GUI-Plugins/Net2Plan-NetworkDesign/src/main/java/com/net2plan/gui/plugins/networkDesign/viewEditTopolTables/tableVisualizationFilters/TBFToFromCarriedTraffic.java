@@ -10,15 +10,34 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.InterLayerPropagationGraph;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.MulticastTree;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class TBFToFromCarriedTraffic extends ITableRowFilter
 {
@@ -27,7 +46,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
     private final Pair<Demand, Link> initialFR;
     private final NetworkLayer auxLayerInNodes;
 
-    public TBFToFromCarriedTraffic(Demand demand, boolean onlyThisLayer)
+    private TBFToFromCarriedTraffic(Demand demand, boolean onlyThisLayer)
     {
         super(demand.getNetPlan());
 
@@ -42,7 +61,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 
         demandsAllLayers.add(demand);
 
-        final Pair<Set<Link>, Set<Link>> thisLayerPropagation = demand.getLinksThisLayerPotentiallyCarryingTraffic();
+        final Pair<SortedSet<Link>, SortedSet<Link>> thisLayerPropagation = demand.getLinksNoDownPropagationPotentiallyCarryingTraffic();
         linksAllLayers.addAll(thisLayerPropagation.getFirst());
         linksAllLayers.addAll(thisLayerPropagation.getSecond());
         if (!onlyThisLayer)
@@ -53,7 +72,27 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         updateAllButLinksDemandsMDemandsUsingExistingInfo(linksAllLayers, demandsAllLayers, mDemandsAllLayers, layersToKeepAllElements);
     }
 
-    public TBFToFromCarriedTraffic(Link link, boolean onlyThisLayer)
+    public static TBFToFromCarriedTraffic createTBTFilter (NetworkElement el, Optional<NetworkLayer> networkLayer , boolean onlyThisLayer)
+    {
+    	switch(el.getNeType())
+    	{
+		case DEMAND: return new TBFToFromCarriedTraffic ((Demand) el , onlyThisLayer);
+		case LINK:return new TBFToFromCarriedTraffic ((Link) el , onlyThisLayer);
+		case MULTICAST_DEMAND:return new TBFToFromCarriedTraffic ((MulticastDemand) el , onlyThisLayer);
+		case MULTICAST_TREE:return new TBFToFromCarriedTraffic ((MulticastTree) el , onlyThisLayer);
+		case NODE:return new TBFToFromCarriedTraffic ((Node) el , networkLayer.get() , onlyThisLayer);
+		case RESOURCE:return new TBFToFromCarriedTraffic ((Resource) el , networkLayer.get() , onlyThisLayer);
+		case ROUTE:return new TBFToFromCarriedTraffic ((Route) el , onlyThisLayer);
+		case SRG:return new TBFToFromCarriedTraffic ((SharedRiskGroup) el);
+		default:
+			throw new RuntimeException ("Filters for this tables do not exist");
+    	}
+    }
+    public static TBFToFromCarriedTraffic createTBTFilter (Pair<Demand, Link> fr, boolean onlyThisLayer)
+    {
+    	return new TBFToFromCarriedTraffic(fr, onlyThisLayer);
+    }
+    private TBFToFromCarriedTraffic(Link link, boolean onlyThisLayer)
     {
         super(link.getNetPlan());
 
@@ -68,7 +107,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 
         linksAllLayers.add(link);
 
-        Triple<Map<Demand, Set<Link>>, Map<Demand, Set<Link>>, Map<Pair<MulticastDemand, Node>, Set<Link>>> thisLayerTraversalInfo =
+        Triple<SortedMap<Demand, SortedSet<Link>>, SortedMap<Demand, SortedSet<Link>>, SortedMap<Pair<MulticastDemand, Node>, SortedSet<Link>>> thisLayerTraversalInfo =
                 link.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink();
         linksAllLayers.addAll(thisLayerTraversalInfo.getFirst().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet()));
         linksAllLayers.addAll(thisLayerTraversalInfo.getSecond().values().stream().flatMap(set -> set.stream()).collect(Collectors.toSet()));
@@ -84,7 +123,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         updateAllButLinksDemandsMDemandsUsingExistingInfo(linksAllLayers, demandsAllLayers, mDemandsAllLayers, layersToKeepAllElements);
     }
 
-    public TBFToFromCarriedTraffic(MulticastTree tree, boolean onlyThisLayer)
+    private TBFToFromCarriedTraffic(MulticastTree tree, boolean onlyThisLayer)
     {
         super(tree.getNetPlan());
 
@@ -107,7 +146,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         updateAllButLinksDemandsMDemandsUsingExistingInfo(linksAllLayers, demandsAllLayers, mDemandsAllLayers, layersToKeepAllElements);
     }
 
-    public TBFToFromCarriedTraffic(Route route, boolean onlyThisLayer)
+    private TBFToFromCarriedTraffic(Route route, boolean onlyThisLayer)
     {
         super(route.getNetPlan());
 
@@ -131,7 +170,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         updateAllButLinksDemandsMDemandsUsingExistingInfo(linksAllLayers, demandsAllLayers, mDemandsAllLayers, layersToKeepAllElements);
     }
 
-    public TBFToFromCarriedTraffic(Resource resource, NetworkLayer layer, boolean onlyThisLayer)
+    private TBFToFromCarriedTraffic(Resource resource, NetworkLayer layer, boolean onlyThisLayer)
     {
         super(resource.getNetPlan());
 
@@ -161,7 +200,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
             this.vResources.get(layer).add(resource); // add the resource if not there
     }
 
-    public TBFToFromCarriedTraffic(Node node, NetworkLayer layer, boolean onlyThisLayer)
+    private TBFToFromCarriedTraffic(Node node, NetworkLayer layer, boolean onlyThisLayer)
     {
         super(node.getNetPlan());
 
@@ -189,7 +228,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         updateAllButLinksDemandsMDemandsUsingExistingInfo(linksAllLayers, demandsAllLayers, mDemandsAllLayers, layersToKeepAllElements);
     }
 
-    public TBFToFromCarriedTraffic(SharedRiskGroup srg)
+    private TBFToFromCarriedTraffic(SharedRiskGroup srg)
     {
         super(srg.getNetPlan());
 
@@ -216,7 +255,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         updateAllButLinksDemandsMDemandsUsingExistingInfo(linksAllLayers, demandsAllLayers, mDemandsAllLayers, layersToKeepAllElements);
     }
 
-    public TBFToFromCarriedTraffic(Pair<Demand, Link> fr, boolean onlyThisLayer)
+    private TBFToFromCarriedTraffic(Pair<Demand, Link> fr, boolean onlyThisLayer)
     {
         super(fr.getFirst().getNetPlan());
 
@@ -244,7 +283,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         updateAllButLinksDemandsMDemandsUsingExistingInfo(linksAllLayers, demandsAllLayers, mDemandsAllLayers, layersToKeepAllElements);
     }
 
-    public TBFToFromCarriedTraffic(MulticastDemand demand, boolean onlyThisLayer)
+    private TBFToFromCarriedTraffic(MulticastDemand demand, boolean onlyThisLayer)
     {
         super(demand.getNetPlan());
 
@@ -261,7 +300,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 
         final Set<Link> thisLayerPropagation = new HashSet<>();
         for (Node egressNode : demand.getEgressNodes())
-            thisLayerPropagation.addAll(demand.getLinksThisLayerPotentiallyCarryingTraffic(egressNode));
+            thisLayerPropagation.addAll(demand.getLinksNoDownPropagationPotentiallyCarryingTraffic(egressNode));
         linksAllLayers.addAll(thisLayerPropagation);
 
         if (!onlyThisLayer)
@@ -337,7 +376,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
     {
         if (netPlan.getNumberOfLayers() > 1)
         {
-            final Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> downInfo = getDownCoupling(linksToPropagateDown);
+            final Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> downInfo = getDownCoupling(linksToPropagateDown);
             if (downInfo.getFirst().isEmpty() && downInfo.getSecond().isEmpty()) return;
             final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(downInfo.getFirst(), null, downInfo.getSecond(), false);
             linksAllLayersToUpdate.addAll(ipg.getLinksInGraph());
@@ -357,7 +396,7 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
                 for (MulticastDemand md : mDemandsToPropagateUp)
                     for (Node n : md.getEgressNodes())
                         mDemandsAllEgressNodes.add(Pair.of(md, n));
-            final Set<Link> initialUpperLinks = getUpCoupling(demandsToPropagateUp, mDemandsAllEgressNodes);
+            final SortedSet<Link> initialUpperLinks = getUpCoupling(demandsToPropagateUp, mDemandsAllEgressNodes);
             if (initialUpperLinks.isEmpty()) return;
             final InterLayerPropagationGraph ipg = new InterLayerPropagationGraph(null, initialUpperLinks, null, true);
             linksAllLayersToUpdate.addAll(ipg.getLinksInGraph());
@@ -381,10 +420,10 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         return r.getName().equals("") ? "Resource " + r.getIndex() : r.getName();
     }
 
-    private static Pair<Set<Demand>, Set<Pair<MulticastDemand, Node>>> getDownCoupling(Collection<Link> links)
+    private static Pair<SortedSet<Demand>, SortedSet<Pair<MulticastDemand, Node>>> getDownCoupling(Collection<Link> links)
     {
-        final Set<Demand> res_1 = new HashSet<>();
-        final Set<Pair<MulticastDemand, Node>> res_2 = new HashSet<>();
+        final SortedSet<Demand> res_1 = new TreeSet<>();
+        final SortedSet<Pair<MulticastDemand, Node>> res_2 = new TreeSet<>();
         for (Link link : links)
         {
             if (link.getCoupledDemand() != null) res_1.add(link.getCoupledDemand());
@@ -395,9 +434,9 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
 
     }
 
-    private static Set<Link> getUpCoupling(Collection<Demand> demands, Collection<Pair<MulticastDemand, Node>> mDemands)
+    private static SortedSet<Link> getUpCoupling(Collection<Demand> demands, Collection<Pair<MulticastDemand, Node>> mDemands)
     {
-        final Set<Link> res = new HashSet<>();
+        final SortedSet<Link> res = new TreeSet<>();
         if (demands != null)
             for (Demand d : demands)
                 if (d.isCoupled()) res.add(d.getCoupledLink());
@@ -415,13 +454,12 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
         /* update the rest according to this */
         for (NetworkLayer layer : netPlan.getNetworkLayers())
         {
-            final boolean isSourceRouting = layer.isSourceRouting();
             if (layersToKeepAllElements.contains(layer))
             {
 				/* keep this layer unchanged */
                 vDemands.put(layer, netPlan.getDemands(layer));
-                if (!isSourceRouting) vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
-                if (isSourceRouting) vRoutes.put(layer, netPlan.getRoutes(layer));
+                vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
+                vRoutes.put(layer, netPlan.getRoutes(layer));
                 vLinks.put(layer, netPlan.getLinks(layer));
                 vMDemands.put(layer, netPlan.getMulticastDemands(layer));
                 vTrees.put(layer, netPlan.getMulticastTrees(layer));
@@ -444,19 +482,17 @@ public class TBFToFromCarriedTraffic extends ITableRowFilter
             final Set<Node> nodes = new HashSet<>();
 			
 			/* Update the FRs: all of the ones associated to the demands */
-            if (!isSourceRouting)
-                for (Demand d : demands) frs.addAll(d.getForwardingRules().keySet());
+            for (Demand d : demands) frs.addAll(d.getForwardingRules().keySet());
 
 			/* The routes and the resources: all the ones of a demand in 
 			 * the set that traverse a link in the set => for them the traversed resources */
-            if (isSourceRouting)
-                for (Link e : links)
-                    for (Route r : e.getTraversingRoutes())
-                        if (demands.contains(r.getDemand()))
-                        {
-                            routes.add(r);
-                            resources.addAll(r.getSeqResourcesTraversed());
-                        }
+            for (Link e : links)
+                for (Route r : e.getTraversingRoutes())
+                    if (demands.contains(r.getDemand()))
+                    {
+                        routes.add(r);
+                        resources.addAll(r.getSeqResourcesTraversed());
+                    }
 			
 			/* The multicast trees: the ones in the multicast demands AND also traverse involved links */
             for (Link e : links)

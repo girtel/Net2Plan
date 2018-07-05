@@ -90,7 +90,7 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecomposition implements
 		this.stat_pie = new TimeTrace ();
 
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING);
+		netPlan.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING);
 		
 	    /* The diagonal in the traffic matrix contains minus the amount of traffic destined to that node */
 		double [][] trafficMatrix = netPlan.getMatrixNode2NodeOfferedTraffic().toArray();
@@ -252,7 +252,7 @@ public class Offline_cfa_modularCapacitiesAndRoutingDualDecomposition implements
 	void saveNetPlan (NetPlan netPlan , DoubleMatrix2D x_te , DoubleMatrix1D n_e)
 	{
 		/* Set the routing at the IP layer */
-		netPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		netPlan.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING);
 		netPlan.removeAllForwardingRules();
 		netPlan.setRoutingFromDestinationLinkCarriedTraffic(x_te , true);
 		for (Link e : netPlan.getLinks())

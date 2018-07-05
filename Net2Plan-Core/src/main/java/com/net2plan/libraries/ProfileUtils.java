@@ -10,23 +10,32 @@
  *******************************************************************************/
 package com.net2plan.libraries;
 
-public class ProfileUtils 
+import com.net2plan.internal.ErrorHandling;
+
+public class ProfileUtils
 {
 	private static long lastTimeCall;
-    public static long printTime (String m , long previousTime)
+    public static void printTime (String m , long previousTime)
     {
+    	if (!ErrorHandling.isProfileEnabled()) return;
+
     	lastTimeCall = System.nanoTime();
     	if (previousTime<0) 
-    		System.out.println(m);
+    		System.out.println("PROFILE: " +m);
     	else
-    		System.out.println(m + " - elapsed time " + (lastTimeCall - previousTime)*1e-6  + " ms");
-    	return System.nanoTime();
+    		System.out.println("PROFILE: " +m + " - elapsed time " + (lastTimeCall - previousTime)*1e-6  + " ms");
     }
-    public static long printTime (String m)
+    public static void printTime (String m)
     {
+		if (!ErrorHandling.isProfileEnabled()) return;
+
     	final long newLastTimeCall = System.nanoTime();
-   		System.out.println(m + " - elapsed time " + (newLastTimeCall - lastTimeCall)*1e-6  + " ms");
+    	System.out.println("PROFILE: " + m + " - elapsed time " + (newLastTimeCall - lastTimeCall)*1e-6  + " ms");
    		lastTimeCall = newLastTimeCall;
-    	return newLastTimeCall;
+    }
+    public static void resetTimer ()
+    {
+		if (!ErrorHandling.isProfileEnabled()) return;
+   		lastTimeCall = System.nanoTime();
     }
 }

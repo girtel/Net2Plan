@@ -73,7 +73,6 @@ public class Online_evProc_ipOspf extends IEventProcessor
 
 		this.ipLayer = initialNetPlan.getNetworkLayer("IP"); if (ipLayer == null) throw new Net2PlanException ("IP layer not found");
 		
-		initialNetPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , ipLayer);
 		DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(initialNetPlan , ipLayer);
 		linkIGPWeightSetting.assign (initialNetPlan.getVectorLinkUpState(ipLayer) , new DoubleDoubleFunction () { public double apply (double x , double y) { return y == 1? x : Double.MAX_VALUE; }  } );
 		IPUtils.setECMPForwardingRulesFromLinkWeights(initialNetPlan , linkIGPWeightSetting , ipLayer);
@@ -98,7 +97,7 @@ public class Online_evProc_ipOspf extends IEventProcessor
 		if (event.getEventObject () instanceof SimEvent.DemandAdd)
 		{
 			SimEvent.DemandAdd ev = (SimEvent.DemandAdd) event.getEventObject ();
-			Demand d = currentNetPlan.addDemand(ev.ingressNode, ev.egressNode, ev.offeredTraffic, null, ev.layer); 
+			Demand d = currentNetPlan.addDemand(ev.ingressNode, ev.egressNode, ev.offeredTraffic, ev.routingType , null, ev.layer); 
 			ev.demandAddedToFillByProcessor = d;
 		} else if (event.getEventObject () instanceof SimEvent.DemandRemove)
 		{

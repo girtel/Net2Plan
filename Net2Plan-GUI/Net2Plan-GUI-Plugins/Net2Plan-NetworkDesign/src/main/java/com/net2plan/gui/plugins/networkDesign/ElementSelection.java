@@ -11,16 +11,17 @@
 
 package com.net2plan.gui.plugins.networkDesign;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Jorge San Emeterio Villalain
@@ -40,27 +41,31 @@ public class ElementSelection
         this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
     }
 
-    public ElementSelection(final NetworkElementType elementType, final List<? extends NetworkElement> networkElements)
+    public ElementSelection (final NetworkElementType elementType, final Collection<?> networkElementsOrForwRules)
     {
-        if (elementType == null) throw new NullPointerException();
-        this.elementType = elementType;
-
-        final NetworkElementType aux = NetworkElementType.getType(networkElements);
-        if (aux == null) throw new RuntimeException("All elements in selection do not belong to the same type");
-        if (aux != this.elementType) throw new RuntimeException("Given element type and list do not match up");
-
-        this.networkElementList = new ArrayList<>(networkElements);
-        this.forwardingRuleList = Collections.unmodifiableList(Collections.emptyList());
+    	assert elementType != null;
+    	this.elementType = elementType;
+        this.networkElementList = new ArrayList<> ();
+        this.forwardingRuleList = new ArrayList<> ();
+    	for (Object ne : networkElementsOrForwRules)
+    	{
+    		if (ne instanceof NetworkElement)
+    		{
+    			final NetworkElement e = (NetworkElement) ne;
+    			if (e.getNeType() == elementType) this.networkElementList.add(e);
+    		}
+    		else if (ne instanceof Pair)
+    		{
+    			if (elementType != NetworkElementType.FORWARDING_RULE) continue;
+    			final Pair e = (Pair) ne;
+    			if (e.getFirst() instanceof Demand && e.getSecond() instanceof Link)
+    				this.forwardingRuleList.add(e);
+    			else throw new RuntimeException ();
+    		}
+    		else throw new RuntimeException ();
+    	}
     }
-
-    public ElementSelection(final List<Pair<Demand, Link>> forwardingRuleList)
-    {
-        this.elementType = NetworkElementType.FORWARDING_RULE;
-
-        this.networkElementList = Collections.unmodifiableList(Collections.emptyList());
-        this.forwardingRuleList = new ArrayList<>(forwardingRuleList);
-    }
-
+    
     public boolean isEmpty()
     {
         return (networkElementList.isEmpty() && forwardingRuleList.isEmpty()) || elementType == null;
@@ -139,7 +144,7 @@ public class ElementSelection
             case FORWARDING_RULE:
                 final List<Pair<Demand, Link>> forwardingRules = new ArrayList<>(netPlan.getForwardingRules().keySet());
                 forwardingRules.removeAll(getForwardingRules());
-                elementSelection = new ElementSelection(forwardingRules);
+                elementSelection = new ElementSelection(NetworkElementType.FORWARDING_RULE , forwardingRules);
                 break;
             default:
                 return null;

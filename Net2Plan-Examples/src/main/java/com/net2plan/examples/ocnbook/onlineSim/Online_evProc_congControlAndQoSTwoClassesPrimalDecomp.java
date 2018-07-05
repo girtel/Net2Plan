@@ -156,19 +156,19 @@ public class Online_evProc_congControlAndQoSTwoClassesPrimalDecomp extends IEven
 		
 		/* Initialize the demands and routers per demand */
 		this.currentNetPlan.removeAllDemands();
-		this.currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		this.currentNetPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		this.demandType = DoubleFactory1D.dense.make (D1+D2);
 		for (Node n1 : this.currentNetPlan.getNodes())
 			for (Node n2 : this.currentNetPlan.getNodes())
 				if (n1 != n2) 
 				{ 
-					final Demand d1 = this.currentNetPlan.addDemand(n1, n2, 0.0, null); d1.setAttribute("type" , "1"); demandType.set(d1.getIndex (), 1); 
-					final Demand d2 = this.currentNetPlan.addDemand(n1, n2, 0.0, null); d1.setAttribute("type" , "2"); demandType.set(d2.getIndex (), 2); 
+					final Demand d1 = this.currentNetPlan.addDemand(n1, n2, 0.0, RoutingType.SOURCE_ROUTING , null); d1.setAttribute("type" , "1"); demandType.set(d1.getIndex (), 1); 
+					final Demand d2 = this.currentNetPlan.addDemand(n1, n2, 0.0, RoutingType.SOURCE_ROUTING , null); d1.setAttribute("type" , "2"); demandType.set(d2.getIndex (), 2); 
 				}
 		
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		currentNetPlan.removeAllUnicastRoutingInformation();
-		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		currentNetPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
 
 		

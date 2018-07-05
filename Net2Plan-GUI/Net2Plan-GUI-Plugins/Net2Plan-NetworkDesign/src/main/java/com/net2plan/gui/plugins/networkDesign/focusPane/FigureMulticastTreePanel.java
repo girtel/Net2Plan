@@ -86,7 +86,7 @@ public class FigureMulticastTreePanel extends FigureSequencePanel
         for (int numHops = 1; numHops <= maxNumberOfHops; numHops++)
         {
             Set<Link> linksThisHopIndex = new HashSet<>();
-            for (Node egressNode : tree.getEgressNodes())
+            for (Node egressNode : tree.getEgressNodesReached())
             {
                 final List<Link> seqLinks = tree.getSeqLinksToEgressNode(egressNode);
                 if (numHops - 1 < seqLinks.size()) linksThisHopIndex.add(seqLinks.get(numHops - 1));
@@ -103,7 +103,7 @@ public class FigureMulticastTreePanel extends FigureSequencePanel
                 final Point dnTopLeftPosition = new Point(initialXTitle + numHops * xSeparationDnCenters, yPositionTopDn);
                 final DrawNode dn = new DrawNode(tree.getIngressNode(), tree.getLayer(), maxHeightOrSizeIcon);
                 this.drawnNodes.add(dn);
-                DrawNode.addNodeToGraphics(g2d, dn, dnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, tree.getEgressNodes().contains(n) ? Color.CYAN : null);
+                DrawNode.addNodeToGraphics(g2d, dn, dnTopLeftPosition, fontMetrics, regularInterlineSpacePixels, tree.getEgressNodesReached().contains(n) ? Color.CYAN : null);
                 nodesToDnMap.put(n, dn);
                 yPositionTopDn += spaceBetweenVerticalNodes;
 

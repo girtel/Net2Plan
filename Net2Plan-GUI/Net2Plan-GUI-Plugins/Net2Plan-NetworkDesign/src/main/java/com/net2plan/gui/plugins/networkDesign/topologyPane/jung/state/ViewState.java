@@ -172,10 +172,12 @@ class ViewState implements ICanvasState
     @Override
     public void addNode(Point2D pos)
     {
-        callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
+        final Node node = callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        callback.updateVisualizationAfterChanges();
         callback.addNetPlanChange();
+        callback.getPickManager().pickElements(node);
+        callback.updateVisualizationAfterPick();
     }
 
     @Override
@@ -183,7 +185,7 @@ class ViewState implements ICanvasState
     {
         node.remove();
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        callback.updateVisualizationAfterChanges();
         callback.addNetPlanChange();
     }
 

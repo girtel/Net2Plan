@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -340,7 +341,8 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         return aboutPanel;
     }
 
-    private void showKeyCombinations() {
+    private void showKeyCombinations() 
+    {
         Component component = container.getComponent(0);
         if (!(component instanceof IGUIModule)) {
             ErrorHandling.showErrorDialog("No tool is active", "Unable to show key associations");
@@ -371,7 +373,9 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         table.getTableHeader().addMouseListener(new ColumnFitAdapter());
 
         IGUIModule module = (IGUIModule) component;
-        Map<String, KeyStroke> keyCombinations = module.getKeyCombinations();
+        Map<String, KeyStroke> keyCombinations = new HashMap<> ();
+        for (int focusLevel : Arrays.asList(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT , JComponent.WHEN_FOCUSED ,  JComponent.WHEN_IN_FOCUSED_WINDOW))
+        	keyCombinations.putAll(module.getKeyCombinations(focusLevel));
         if (!keyCombinations.isEmpty()) {
             model.removeRow(0);
 

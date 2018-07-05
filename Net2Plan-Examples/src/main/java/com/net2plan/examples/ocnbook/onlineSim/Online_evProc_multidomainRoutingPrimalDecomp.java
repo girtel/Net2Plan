@@ -133,7 +133,7 @@ public class Online_evProc_multidomainRoutingPrimalDecomp extends IEventProcesso
 			this.net2planParameters = net2planParameters;
 
 			this.currentNetPlan.removeAllUnicastRoutingInformation();
-			this.currentNetPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+			this.currentNetPlan.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING);
 
 			this.N = this.currentNetPlan.getNumberOfNodes(); // total number of nodes in the network
 			this.E = this.currentNetPlan.getNumberOfLinks(); // total number of nodes in the network
@@ -366,7 +366,7 @@ public class Online_evProc_multidomainRoutingPrimalDecomp extends IEventProcesso
 						if ((Math.abs(outFR_dn.get(d, n) - 1) > 1e-3) && (Math.abs(outFR_dn.get(d, n)) > 1e-3)) throw new RuntimeException("Bad. outFR_dn:  " + outFR_dn);
 
 				/* In some rare occasions, the routing may create loops. These routings are not applied to the network */
-				try { this.currentNetPlan.setForwardingRules(new_fde); } catch (ClosedCycleRoutingException e) { System.out.println ("The routing after this domain update would produce a closed loop. It is not applied.");	}
+				try { this.currentNetPlan.setForwardingRules(new_fde , null); } catch (ClosedCycleRoutingException e) { System.out.println ("The routing after this domain update would produce a closed loop. It is not applied.");	}
 
 				if (time > 0)
 				{

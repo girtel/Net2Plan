@@ -11,10 +11,13 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
+
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
 import java.util.*;
@@ -35,18 +38,22 @@ public class MulticastDemand extends NetworkElement
 {
 	final NetworkLayer layer;
 	final Node ingressNode;
-	final Set<Node> egressNodes;
+	final SortedSet<Node> egressNodes;
 	double offeredTraffic;
 	double carriedTraffic;
+	double maximumAcceptableE2EWorstCaseLatencyInMs;
+	double offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth;
+	String qosType;
+	private TrafficSeries monitoredOrForecastedTraffics;
 	
-	Set<MulticastTree> cache_multicastTrees;
-	Map<Node,Link> coupledUpperLayerLinks;
-	
-	
+	SortedMap<Node,Link> coupledUpperLayerLinks;
+	SortedSet<MulticastTree> cache_multicastTrees;
+
 	MulticastDemand (NetPlan netPlan , long id , int index , NetworkLayer layer , Node ingressNode , Set<Node> egressNodes , double offeredTraffic , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
-		
+		this.setName ("MulticastDemand-" + index);
+
 		if (!netPlan.equals(layer.netPlan)) throw new RuntimeException ("Bad");
 		if (!netPlan.equals(ingressNode.netPlan)) throw new RuntimeException ("Bad");
 		for (Node n : egressNodes) if (!netPlan.equals(n.netPlan)) throw new RuntimeException ("Bad");
@@ -56,11 +63,16 @@ public class MulticastDemand extends NetworkElement
 
 		this.layer = layer;
 		this.ingressNode = ingressNode;
-		this.egressNodes = new HashSet<Node> (egressNodes);
+		this.egressNodes = new TreeSet<Node> (egressNodes);
 		this.offeredTraffic = offeredTraffic;
 		this.carriedTraffic = 0;
-		this.cache_multicastTrees = new HashSet<MulticastTree> ();
+		this.cache_multicastTrees = new TreeSet<MulticastTree> ();
 		this.coupledUpperLayerLinks = null;
+		this.maximumAcceptableE2EWorstCaseLatencyInMs = -1;
+		this.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth = 0;
+		this.qosType = null;
+		this.monitoredOrForecastedTraffics = new TrafficSeries ();
+		setQoSType("");
 	}
 
 	void copyFrom (MulticastDemand origin)
@@ -69,18 +81,87 @@ public class MulticastDemand extends NetworkElement
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 		this.offeredTraffic = origin.offeredTraffic;
 		this.carriedTraffic = origin.carriedTraffic;
-		this.cache_multicastTrees = new HashSet<MulticastTree> ();
-		for (MulticastTree t : origin.cache_multicastTrees) this.cache_multicastTrees.add((MulticastTree) this.netPlan.getPeerElementInThisNetPlan (t));
+		this.maximumAcceptableE2EWorstCaseLatencyInMs = origin.maximumAcceptableE2EWorstCaseLatencyInMs;
+		this.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth = origin.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth;
+		this.qosType = origin.qosType;
+		this.cache_multicastTrees = new TreeSet<MulticastTree> ();
+		for (MulticastTree t : origin.cache_multicastTrees) this.addMulticastTree((MulticastTree) this.netPlan.getPeerElementInThisNetPlan (t));
 		if (origin.coupledUpperLayerLinks == null)
 			this.coupledUpperLayerLinks = null;
 		else
 		{
-			this.coupledUpperLayerLinks = new HashMap<Node,Link> ();
+			this.coupledUpperLayerLinks = new TreeMap<> ();
 			for (Node nOrigin : origin.coupledUpperLayerLinks.keySet()) 
 				this.coupledUpperLayerLinks.put(this.netPlan.getNodeFromId (nOrigin.id) , this.netPlan.getLinkFromId (origin.coupledUpperLayerLinks.get(nOrigin).id));
 		}
+		this.monitoredOrForecastedTraffics = origin.monitoredOrForecastedTraffics;
 	}
 
+	/** Sets the maximum latency in ms acceptable for the demand. A non-positive value is equivalent to no limit 
+	 * @param maxLatencyMs see above
+	 */
+	public void setMaximumAcceptableE2EWorstCaseLatencyInMs (double maxLatencyMs)
+	{
+		this.maximumAcceptableE2EWorstCaseLatencyInMs = maxLatencyMs;
+	}
+
+	/** Returns the maximum e2e latency registered as acceptable for the demand (in ms)
+	 * @return see above
+	 */
+	public double getMaximumAcceptableE2EWorstCaseLatencyInMs ()
+	{
+		return maximumAcceptableE2EWorstCaseLatencyInMs <= 0? Double.MAX_VALUE : maximumAcceptableE2EWorstCaseLatencyInMs;
+	}
+	
+
+	/** Sets the QoS type of the demand. Any previous type is removed. 
+	 * @param newQosType  see above
+	 */
+	public void setQoSType (String newQosType)
+	{
+		if (newQosType == null) throw new Net2PlanException ("Wrong value");
+		if (this.qosType != null)
+		{
+			final Pair<SortedSet<Demand>,SortedSet<MulticastDemand>> demandsOldType = layer.cache_qosTypes2DemandMap.get (this.qosType);
+			assert demandsOldType.getSecond().contains(this);
+			demandsOldType.getSecond().remove(this);
+			if (demandsOldType.getFirst().isEmpty() && demandsOldType.getSecond().isEmpty()) 
+				layer.cache_qosTypes2DemandMap.remove(this.qosType);
+		}
+		
+		Pair<SortedSet<Demand>,SortedSet<MulticastDemand>> demandsNewType = layer.cache_qosTypes2DemandMap.get(newQosType);
+		if (demandsNewType == null) { demandsNewType = Pair.of(new TreeSet<> (),new TreeSet<> ()); layer.cache_qosTypes2DemandMap.put(newQosType, demandsNewType); }
+		demandsNewType.getSecond().add(this);
+		this.qosType = newQosType;
+	}
+
+
+	/** Return the QoS type of the demand 
+	 * @return  see above
+	 */
+	public String getQosType ()
+	{
+		return this.qosType;
+	}
+
+	/** Sets the growth factor of the offered traffic in subsequent periods. 
+	 * Offered traffic in period t+1, is the offered traffic in period t, multiplied by (1+growthFactor)
+	 * @param growthFactor  see above
+	 */
+	public void setOfferedTrafficPerPeriodGrowthFactor (double growthFactor)
+	{
+		if (growthFactor < -1) throw new Net2PlanException ("The growth factor cannot be lower than -1");
+		this.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth = growthFactor;
+	}
+
+	/** Return the growth factor of the offered traffic in subsequent periods.
+	 * @return  see above
+	 */
+	public double getOfferedTrafficPerPeriodGrowthFactor ()
+	{
+		return offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth;
+	}
+	
 
 	boolean isDeepCopy (MulticastDemand e2)
 	{
@@ -89,6 +170,8 @@ public class MulticastDemand extends NetworkElement
 		if (ingressNode.id != e2.ingressNode.id) return false;
 		if (this.offeredTraffic != e2.offeredTraffic) return false;
 		if (this.carriedTraffic != e2.carriedTraffic) return false;
+		if (this.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth != e2.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth) return false;
+		if (!this.qosType.equals(e2.qosType)) return false;
 		if (!NetPlan.isDeepCopy(this.egressNodes , e2.egressNodes)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_multicastTrees , e2.cache_multicastTrees)) return false;
 		if ((this.coupledUpperLayerLinks == null) != (e2.coupledUpperLayerLinks == null)) return false; 
@@ -103,6 +186,7 @@ public class MulticastDemand extends NetworkElement
 				if (l2.id != this.coupledUpperLayerLinks.get(n1).id) return false;
 			}
 		}
+		if (!this.monitoredOrForecastedTraffics.equals(e2.monitoredOrForecastedTraffics)) return false;
 		return true;
 	}
 
@@ -172,12 +256,12 @@ public class MulticastDemand extends NetworkElement
 
 
 	/**
-	 * <p>Returns the {@code Set} of demand egress {@link com.net2plan.interfaces.networkDesign.Node Nodes}.</p>
-	 * @return The {@code Set} of demand egress nodes as an unmodifiable set
+	 * <p>Returns the {@code SortedSet} of demand egress {@link com.net2plan.interfaces.networkDesign.Node Nodes}.</p>
+	 * @return The {@code SortedSet} of demand egress nodes as an unmodifiable set
 	 */
-	public Set<Node> getEgressNodes()
+	public SortedSet<Node> getEgressNodes()
 	{
-		return Collections.unmodifiableSet(egressNodes);
+		return Collections.unmodifiableSortedSet(egressNodes);
 	}
 
 	/**
@@ -214,14 +298,14 @@ public class MulticastDemand extends NetworkElement
 	 * all links are assigned a cost of one.</p>
 	 *
 	 * @param costs Link weights
-	 * @return A {@code Pair} where the first element is a {@code Set} of minimum cost trees, and the second element is the common minimum cost
+	 * @return A {@code Pair} where the first element is a {@code SortedSet} of minimum cost trees, and the second element is the common minimum cost
 	 */
-	public Pair<Set<MulticastTree>,Double> computeMinimumCostMulticastTrees (double [] costs)
+	public Pair<SortedSet<MulticastTree>,Double> computeMinimumCostMulticastTrees (double [] costs)
 	{
 		checkAttachedToNetPlanObject();
 
 		if (costs == null) costs = DoubleUtils.ones(layer.links.size ()); else if (costs.length != layer.links.size()) throw new Net2PlanException ("The array of costs must have the same length as the number of links in the layer");
-		Set<MulticastTree> minCostTrees = new HashSet<MulticastTree> ();
+		SortedSet<MulticastTree> minCostTrees = new TreeSet<MulticastTree> ();
 		double minCost = Double.MAX_VALUE;
 		for (MulticastTree t : cache_multicastTrees)
 		{
@@ -255,16 +339,33 @@ public class MulticastDemand extends NetworkElement
 
 	/**
 	 * <p>Returns the {@link com.net2plan.interfaces.networkDesign.MulticastTree Multicast Trees} associated to this demand.</p>
-	 * @return The {@code Set} of {@code MulticastTree} as an unmodifable set (empty if no trees exist)
+	 * @return The {@code SortedSet} of {@code MulticastTree} as an unmodifable set (empty if no trees exist)
 	 */
-	public Set<MulticastTree> getMulticastTrees ()
+	public SortedSet<MulticastTree> getMulticastTrees ()
 	{
-		return Collections.unmodifiableSet(cache_multicastTrees);
+		return Collections.unmodifiableSortedSet(cache_multicastTrees);
+	}
+
+	/** Returns true if all the multicast trees of the demand, reach all the multicast demand egress nodes 
+	 * @return  see above
+	 */
+	public boolean isAllTreesReachingAllEgressNodes () 
+	{
+		return getMulticastTrees().stream().allMatch(t->t.isReachinAllDemandEgressNodes());
 	}
 
 	
 	/**
-	 * <p>Couples this demand to the given {@code Set} of {@link com.net2plan.interfaces.networkDesign.Link Links} in the upper layer. The number of links equals to the number of egress nodes of the
+	 * Associates a new Multicast Tree to this Multicast Demand.
+	 * @param multicastTree The Multicast Tree to be added.
+	 */
+	void addMulticastTree(MulticastTree multicastTree)
+	{
+		this.cache_multicastTrees.add(multicastTree);
+	}
+
+	/**
+	 * <p>Couples this demand to the given {@code SortedSet} of {@link com.net2plan.interfaces.networkDesign.Link Links} in the upper layer. The number of links equals to the number of egress nodes of the
 	 * demand. Links must start in the demand ingress node, and end in each of the multicast demand egress nodes.</p>
 	 * <p><b>Important:</b> This demand and the links must not be already coupled.</p>
 	 * @param links The set of links to couple to
@@ -280,11 +381,11 @@ public class MulticastDemand extends NetworkElement
 		if (upperLayer.equals(lowerLayer)) throw new Net2PlanException("Bad - Trying to couple links and demands in the same layer");
 		if (!upperLayer.linkCapacityUnitsName.equals(lowerLayer.demandTrafficUnitsName))
 			throw new Net2PlanException(String.format(netPlan.TEMPLATE_CROSS_LAYER_UNITS_NOT_MATCHING, upperLayer.id, upperLayer.linkCapacityUnitsName, lowerLayer.id, lowerLayer.demandTrafficUnitsName));
-		Map<Node,Link> mapLink2EgressNode = new HashMap<Node,Link> ();
+		SortedMap<Node,Link> mapLink2EgressNode = new TreeMap<> ();
 		for (Link link : links)
 		{
 			link.checkAttachedToNetPlanObject(netPlan);
-			if ((link.coupledLowerLayerDemand!= null) || (link.coupledLowerLayerMulticastDemand != null)) throw new Net2PlanException("Link " + link + " at layer " + upperLayer.id + " is already associated to a lower layer demand");
+			if ((link.coupledLowerOrThisLayerDemand!= null) || (link.coupledLowerLayerMulticastDemand != null)) throw new Net2PlanException("Link " + link + " at layer " + upperLayer.id + " is already associated to a lower layer demand");
 			if (!link.originNode.equals(ingressNode)) throw new Net2PlanException ("Multicast demands can be coupled to a set of links, starting in the demand ingress node, and ending in each of the multicast demand egress nodes");
 			if (!link.layer.equals(upperLayer)) throw new Net2PlanException ("Multicast demands can be coupled to a set of links, starting in the demand ingress node, and ending in each of the multicast demand egress nodes");
 			mapLink2EgressNode.put(link.destinationNode, link);
@@ -302,7 +403,7 @@ public class MulticastDemand extends NetworkElement
 		}
 
 		/* Link capacity at the upper layer is equal to the carried traffic at the lower layer */
-		coupledUpperLayerLinks = new HashMap<Node , Link> ();
+		coupledUpperLayerLinks = new TreeMap<> ();
 		layer.cache_coupledMulticastDemands.add (this);
 		for (Link link : links)
 		{
@@ -310,8 +411,9 @@ public class MulticastDemand extends NetworkElement
 			link.coupledLowerLayerMulticastDemand = this;
 			link.layer.cache_coupledLinks.add (link);
 			this.coupledUpperLayerLinks.put(link.destinationNode, link);
+			link.updateWorstCasePropagationTraversingUnicastDemandsAndMaybeRoutes();
 		}
-		coupling_thisLayerPair.put(this, new HashSet<Link> (links));
+		coupling_thisLayerPair.put(this, new TreeSet<Link> (links));
 		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
 	}
 
@@ -320,14 +422,14 @@ public class MulticastDemand extends NetworkElement
 	 * @param newLinkLayer The layer where the new links will be created
 	 * @return The set of created links, already coupled to the demand
 	 */
-	public Set<Link> coupleToNewLinksCreated (NetworkLayer newLinkLayer)
+	public SortedSet<Link> coupleToNewLinksCreated (NetworkLayer newLinkLayer)
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		newLinkLayer.checkAttachedToNetPlanObject(this.netPlan);
 		if (this.layer.equals (newLinkLayer)) throw new Net2PlanException ("Cannot couple a link and a demand in the same layer");
 		if (isCoupled()) throw new Net2PlanException ("The multicast demand is already coupled");
-		Set<Link> newLinks = new HashSet<Link> ();
+		SortedSet<Link> newLinks = new TreeSet<Link> ();
 		try
 		{
 			for (Node egressNode : egressNodes)
@@ -342,13 +444,13 @@ public class MulticastDemand extends NetworkElement
 	}
 	
 	/**
-	 * <p>Returns the {@code Set} of {@link com.net2plan.interfaces.networkDesign.Link Links} this demand is coupled to, or an empty {@code Set} if this demand is not coupled.</p>
-	 * @return The {@code Set} of links (a copy , any changes will not affect the coupling)
+	 * <p>Returns the {@code SortedSet} of {@link com.net2plan.interfaces.networkDesign.Link Links} this demand is coupled to, or an empty {@code SortedSet} if this demand is not coupled.</p>
+	 * @return The {@code SortedSet} of links (a copy , any changes will not affect the coupling)
 	 */
-	public Set<Link> getCoupledLinks ()
+	public SortedSet<Link> getCoupledLinks ()
 	{ 
 		checkAttachedToNetPlanObject();
-		return coupledUpperLayerLinks == null? new HashSet<Link> () : new HashSet<Link> (coupledUpperLayerLinks.values());
+		return coupledUpperLayerLinks == null? new TreeSet<Link> () : new TreeSet<Link> (coupledUpperLayerLinks.values());
 	}
 
 	/**
@@ -392,15 +494,22 @@ public class MulticastDemand extends NetworkElement
 		netPlan.checkIsModifiable();
 		if (this.coupledUpperLayerLinks != null) this.decouple ();
 		
-		for (MulticastTree tree : new HashSet<MulticastTree> (cache_multicastTrees)) tree.remove();
+		for (MulticastTree tree : new TreeSet<MulticastTree> (cache_multicastTrees)) tree.remove();
 
 		netPlan.cache_id2MulticastDemandMap.remove(id);
 		NetPlan.removeNetworkElementAndShiftIndexes (layer.multicastDemands , index);
 		ingressNode.cache_nodeOutgoingMulticastDemands.remove (this);
 		for (Node egressNode : egressNodes) egressNode.cache_nodeIncomingMulticastDemands.remove (this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+		final Pair<SortedSet<Demand>,SortedSet<MulticastDemand>> qosInfo = layer.cache_qosTypes2DemandMap.get(qosType);
+		assert qosInfo != null;
+		final boolean removed = qosInfo.getSecond().remove(this);
+		assert removed;
+		if (qosInfo.getFirst().isEmpty() && qosInfo.getSecond().isEmpty()) layer.cache_qosTypes2DemandMap.remove(qosType);
+
+        final NetPlan npOld = this.netPlan;
+        removeId();
+        if (ErrorHandling.isDebugEnabled()) npOld.checkCachesConsistency();
 	}
 
 	
@@ -441,6 +550,25 @@ public class MulticastDemand extends NetworkElement
 		if (!layer.multicastDemands.contains(this)) throw new RuntimeException ("Bad");
 	}
 
+    /** Returns a map with an entry for each traversed link, and associated to it the demand's traffic carried in that link. 
+     * If selected by the user, the carried traffic is given as a fraction respect to the demand offered traffic
+     * @param normalizedToOfferedTraffic  see above
+     * @return  see above
+     */
+    public SortedMap<Link, Double> getTraversedLinksAndCarriedTraffic(final boolean normalizedToOfferedTraffic)
+    {
+        final SortedMap<Link, Double> res = new TreeMap<>();
+        final double normalizationFactor = (normalizedToOfferedTraffic ? (offeredTraffic <= Configuration.precisionFactor ? 1.0 : 1 / offeredTraffic) : 1.0);
+        for (MulticastTree r : getMulticastTrees())
+            for (Link e : r.getLinkSet())
+            {
+                final Double currentVal = res.get(e);
+                final double newValue = (currentVal == null ? 0 : currentVal) + (r.getCarriedTraffic() * normalizationFactor);
+                res.put(e, newValue);
+            }
+        return res;
+    }
+
 	
 	/** Returns the set of links in this layer that could potentially carry traffic of this multicast demand, 
 	 * when flowing from the origin node to the given egress node, according to the multicast trees defined. 
@@ -450,20 +578,29 @@ public class MulticastDemand extends NetworkElement
 	 * @param egressNode the egress node
 	 * @return see above
 	 */
-	public Set<Link> getLinksThisLayerPotentiallyCarryingTraffic  (Node egressNode)
+	public SortedSet<Link> getLinksNoDownPropagationPotentiallyCarryingTraffic  (Node egressNode)
 	{
 		checkAttachedToNetPlanObject();
 		if (!this.egressNodes.contains(egressNode)) throw new Net2PlanException ("This is not an egress node of the multicast demand");
 		
-		Set<Link> res = new HashSet<> ();
+		SortedSet<Link> res = new TreeSet<> ();
 		for (MulticastTree t : cache_multicastTrees)
 		{
 			List<Link> pathToTarget = t.getSeqLinksToEgressNode(egressNode);
+			if (pathToTarget == null) continue;
 			if (!netPlan.isUp(pathToTarget)) continue;
 			res.addAll(pathToTarget);
 		}
 		return res;
 	}
 
+	/** Returns the object contianing the monitored or forecasted time series information for the offered traffic
+	 * @return see above
+	 */
+	public TrafficSeries getMonitoredOrForecastedOfferedTraffic () { return this.monitoredOrForecastedTraffics; }
 
+	/** Sets the new time series for the monitored or forecasted offered traffic, eliminating any previous values 
+	 * @param newTimeSeries  see above
+	 */
+	public void setMonitoredOrForecastedOfferedTraffic (TrafficSeries newTimeSeries) { this.monitoredOrForecastedTraffics = new TrafficSeries (newTimeSeries.getValues()); }
 }

@@ -39,13 +39,12 @@ public class TBFTagBased extends ITableRowFilter
 		/* update the rest according to this */
         for (NetworkLayer layer : netPlan.getNetworkLayers())
         {
-            final boolean isSourceRouting = layer.isSourceRouting();
             if ((restrictToThisLayer != null) && (restrictToThisLayer != layer))
             {
                 /* keep this layer unchanged */
                 vDemands.put(layer, netPlan.getDemands(layer));
-                if (!isSourceRouting) vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
-                if (isSourceRouting) vRoutes.put(layer, netPlan.getRoutes(layer));
+                vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
+                vRoutes.put(layer, netPlan.getRoutes(layer));
                 vLinks.put(layer, netPlan.getLinks(layer));
                 vMDemands.put(layer, netPlan.getMulticastDemands(layer));
                 vTrees.put(layer, netPlan.getMulticastTrees(layer));
@@ -57,8 +56,8 @@ public class TBFTagBased extends ITableRowFilter
 				
 			/* Here if we filter out by this layer */
             vDemands.put(layer, (List<Demand>) filteredView(netPlan.getDemands(layer)));
-            if (!isSourceRouting) vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
-            if (isSourceRouting) vRoutes.put(layer, (List<Route>) filteredView(netPlan.getRoutes(layer)));
+            vFRs.put(layer, new ArrayList<>(netPlan.getForwardingRules(layer).keySet()));
+            vRoutes.put(layer, (List<Route>) filteredView(netPlan.getRoutes(layer)));
             vLinks.put(layer, (List<Link>) filteredView(netPlan.getLinks(layer)));
             vMDemands.put(layer, (List<MulticastDemand>) filteredView(netPlan.getMulticastDemands(layer)));
             vTrees.put(layer, (List<MulticastTree>) filteredView(netPlan.getMulticastTrees(layer)));

@@ -19,16 +19,23 @@ import static org.junit.Assert.assertTrue;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-import org.apache.commons.io.FileUtils;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.net2plan.utils.Constants.RoutingType;
 
 /**
  * @author Pablo
@@ -36,6 +43,9 @@ import org.junit.rules.TemporaryFolder;
  */
 public class ResourceTest 
 {
+    public static final String TEST_FILE_DIRECTORY = "src/test/resources/temp";
+    public static final String TEST_FILE_NAME = "test.n2p";
+
 	private NetPlan np = null;
 	private Node hostNode , endDemandNode;
 	private Link interLink;
@@ -43,10 +53,8 @@ public class ResourceTest
 	private Route serviceChainUpper, serviceChainBase;
 	private Resource upperResource = null;
 	private Resource baseResource = null;
-
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
+	private Resource unattached = null;
+	
 	// upper resource: capacity 10, occupied 5 in base
 	// base resource: capacity 10: occupied 1+5
 	// serviceChainUpper (carries 100, occupies 200, occupies 1.0 in upper)
@@ -77,17 +85,18 @@ public class ResourceTest
 		this.hostNode = this.np.addNode(0 , 0 , "node0" , null);
 		this.endDemandNode = np.addNode(0 , 0 , "node1" , null);
 		this.interLink = np.addLink(hostNode,endDemandNode,100,100,1,null);
-		this.demandUpper = np.addDemand(hostNode , endDemandNode , 3 , null);
+		this.demandUpper = np.addDemand(hostNode , endDemandNode , 3  , RoutingType.SOURCE_ROUTING, null);
 		this.demandUpper.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("upperType"));
-		this.demandBase = np.addDemand(hostNode , endDemandNode , 3 , null);
+		this.demandBase = np.addDemand(hostNode , endDemandNode , 3  , RoutingType.SOURCE_ROUTING, null);
 		this.demandBase.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("baseType"));
 		
 		/* create resources */
-		this.baseResource = np.addResource("baseType" , "baseName" , hostNode , 10 , "Mbps" , null , 1 , null);
+		this.baseResource = np.addResource("baseType" , "baseName" , Optional.of(hostNode) , 10 , "Mbps" , null , 1 , null);
 		assertTrue (baseResource.getIndex() == 0);
 		assertTrue (np.getNumberOfResources() == 1);
 		
-		this.upperResource = np.addResource("upperType", "upperName" , hostNode , 10 , "Mbps", Collections.singletonMap(baseResource , 5.0) , 1 , null);
+		final SortedMap<Resource , Double> sm = new TreeMap<> (); sm.put(baseResource , 5.0);
+		this.upperResource = np.addResource("upperType", "upperName" , Optional.of(hostNode) , 10 , "Mbps", sm , 1 , null);
 		assertTrue (upperResource.getIndex() == 1);
 		assertTrue (np.getNumberOfResources() == 2);
 		
@@ -97,9 +106,9 @@ public class ResourceTest
 		List<NetworkElement> pathBase = Arrays.asList(baseResource , interLink);
 		this.serviceChainBase = np.addServiceChain(demandBase , 100 , Arrays.asList(1.0 , 300.0) , pathBase , null);
 
-		temporaryFolder.create();
-
-		File resourcesDir = temporaryFolder.getRoot();
+		this.unattached = np.addResource("una", "unaName", Optional.empty(), 2.0, "units", null, 1.0, null);
+		
+		File resourcesDir = new File(TEST_FILE_DIRECTORY);
 		if (!resourcesDir.exists()) resourcesDir.mkdirs();
 	}
 
@@ -110,9 +119,9 @@ public class ResourceTest
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
-
-		temporaryFolder.delete();
 	}
+
+	
 
 	@Test
 	public void testCheckCaches() 
@@ -132,6 +141,7 @@ public class ResourceTest
 		assertEquals(np.getResources("baseType"), Collections.emptySet());
 	}
 
+	
 	@Test
 	public void testGetResources () 
 	{
@@ -194,7 +204,7 @@ public class ResourceTest
 	@Test
 	public void testGetHostNode ()
 	{
-		assertTrue(upperResource.getHostNode() == np.getNode(0));
+		assertTrue(upperResource.getHostNode().get() == np.getNode(0));
 	}
 
 	@Test
@@ -278,7 +288,8 @@ public class ResourceTest
 	{
 		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
 		assertEquals(baseResource.getOccupiedCapacity() , 6.0 , 0.0);
-		upperResource.setCapacity(10 , Collections.singletonMap(baseResource , 3.0));
+		final SortedMap<Resource , Double> sm = new TreeMap<> (); sm.put(baseResource , 3.0);
+		upperResource.setCapacity(10 , sm);
 		np.checkCachesConsistency();
 		assertEquals(upperResource.getCapacity() , 10.0 , 0.0);
 		assertEquals(upperResource.getOccupiedCapacity() , 1.0 , 0.0);
@@ -293,6 +304,23 @@ public class ResourceTest
 		np2.checkCachesConsistency();
 		assertTrue (np.isDeepCopy(np2));
 		assertTrue (np2.isDeepCopy(np));
+		
+		this.unattached.attachToNode(this.hostNode);
+		np2.checkCachesConsistency();
+		np2 = np.copy();
+		np2.checkCachesConsistency();
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+		np2.checkCachesConsistency();
+		
+		this.unattached.dettachFromNode();
+		np2.checkCachesConsistency();
+		np2 = np.copy();
+		np2.checkCachesConsistency();
+		assertTrue (np.isDeepCopy(np2));
+		assertTrue (np2.isDeepCopy(np));
+		np2.checkCachesConsistency();
+		
 //		assertEquals(np2.getResource(0).getId() , np.getResource(0).getId());
 //		assertEquals(np2.getResource(1).getId() , np.getResource(1).getId());
 //		assertEquals(np2.getRoute(0).getId() , np.getRoute(0).getId());
@@ -330,11 +358,16 @@ public class ResourceTest
 	}
 	
 	@Test
-	public void testReadSave () throws IOException
+	public void testReadSave ()
 	{
-		File file = temporaryFolder.newFile("temp.n2p");
+		File file = null;
+		try
+		{
+			file = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
+		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (file != null);
 		np.saveToFile(file);
+		System.out.println(file);
 		NetPlan np2 = new NetPlan (file);
 		np.checkCachesConsistency();
 		np2.checkCachesConsistency();
@@ -343,10 +376,15 @@ public class ResourceTest
 	}
 	
 	@Test
-	public void testReadSave2 () throws IOException
+	public void testReadSave2 ()
 	{
-		File fileIn = FileUtils.toFile(this.getClass().getResource("/data/networkTopologies/example7nodes_ipOverWDM.n2p"));
-		File fileOut = temporaryFolder.newFile("temp.n2p");
+		File fileIn = null;
+		File fileOut = null;
+		try
+		{
+			fileIn = new File ("src/main/resources/data/networkTopologies/example7nodes_ipOverWDM.n2p"); //File.createTempFile("testN2p" , "n2p");
+			fileOut = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME); //File.createTempFile("testN2p" , "n2p");
+		} catch (Exception e) { Assert.fail ("could not make the test: no temprary file creation possible"); }
 		assertTrue (fileIn != null);
 		assertTrue (fileOut != null);
 		NetPlan np1 = new NetPlan (fileIn);

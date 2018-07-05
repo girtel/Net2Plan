@@ -17,6 +17,9 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+
+import com.sun.tools.extcheck.Main;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -60,7 +63,10 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
     {
         this.scroll = scroll;
         this.frozenColumns = frozenColumns;
+
         mainTable = (JTable) scroll.getViewport().getView();
+        if (mainTable == null)
+        	assert false;
         mainTable.setAutoCreateColumnsFromModel(false);
         mainTable.addPropertyChangeListener(this);
         fixedTable = new JTableImpl();
@@ -79,10 +85,9 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         fixedTable.setPreferredScrollableViewportSize(fixedTable.getPreferredSize());
         scroll.setRowHeaderView(fixedTable);
         scroll.setCorner(JScrollPane.UPPER_LEFT_CORNER, fixedTable.getTableHeader());
-
         scroll.getRowHeader().addChangeListener(this);
 
-        mainTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        mainTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         fixedTable.setSelectionModel(mainTable.getSelectionModel());
         fixedTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
         mainTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
@@ -91,7 +96,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
         mainTable.setUpdateSelectionOnSort(true);
         fixedTable.setUpdateSelectionOnSort(false);
 
-
         for (MouseMotionListener listener : mainTable.getTableHeader().getMouseMotionListeners())
         {
             if (!(listener instanceof BasicTableHeaderUI.MouseInputHandler))
@@ -99,14 +103,6 @@ public class FixedColumnDecorator implements ChangeListener, PropertyChangeListe
                 fixedTable.getTableHeader().addMouseMotionListener(listener);
             }
         }
-
-        fixedTable.setDefaultRenderer(Boolean.class, mainTable.getDefaultRenderer(Boolean.class));
-        fixedTable.setDefaultRenderer(Double.class, mainTable.getDefaultRenderer(Double.class));
-        fixedTable.setDefaultRenderer(Object.class, mainTable.getDefaultRenderer(Object.class));
-        fixedTable.setDefaultRenderer(Float.class, mainTable.getDefaultRenderer(Float.class));
-        fixedTable.setDefaultRenderer(Long.class, mainTable.getDefaultRenderer(Long.class));
-        fixedTable.setDefaultRenderer(Integer.class, mainTable.getDefaultRenderer(Integer.class));
-        fixedTable.setDefaultRenderer(String.class, mainTable.getDefaultRenderer(String.class));
 
         Set<Class> fixedTableCurrentMouseListenerClass = new LinkedHashSet<Class>();
         for (MouseListener listener : fixedTable.getMouseListeners())

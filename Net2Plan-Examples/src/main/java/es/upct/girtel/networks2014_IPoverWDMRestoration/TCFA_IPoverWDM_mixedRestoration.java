@@ -20,6 +20,7 @@ import com.net2plan.libraries.SRGUtils;
 import com.net2plan.libraries.WDMUtils;
 import com.net2plan.utils.*;
 import com.net2plan.utils.Constants.OrderingType;
+import com.net2plan.utils.Constants.RoutingType;
 
 import java.util.*;
 
@@ -75,9 +76,9 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
 		
 		/* Initialize multilayer design (links and demands in the input design are fibers in the lower layer and demands in the upper layer, respectively) */
         wdmLayer.setName("WDM");
-        netPlan.setRoutingType(Constants.RoutingType.SOURCE_ROUTING, wdmLayer);
+        netPlan.setRoutingTypeAllDemands(Constants.RoutingType.SOURCE_ROUTING, wdmLayer);
         ipLayer.setName("IP");
-        netPlan.setRoutingType(Constants.RoutingType.HOP_BY_HOP_ROUTING, ipLayer);
+        netPlan.setRoutingTypeAllDemands(Constants.RoutingType.HOP_BY_HOP_ROUTING, ipLayer);
         netPlan.setNetworkLayerDefault(wdmLayer);
         for (Link fiber : netPlan.getLinks(wdmLayer))
             WDMUtils.setFiberNumFrequencySlots(fiber, W); /* Set the number of wavelengths per fiber */
@@ -87,7 +88,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
 		/* Generate a candidate path list for the WDM layer (using an auxiliary traffic matrix) */
         NetPlan cpl = netPlan.copy();
         cpl.removeNetworkLayer(cpl.getNetworkLayerFromId(ipLayer.getId()));
-        for (Node n1 : cpl.getNodes()) for (Node n2 : cpl.getNodes()) if (n1 != n2) cpl.addDemand(n1, n2, 0.0, null);
+        for (Node n1 : cpl.getNodes()) for (Node n2 : cpl.getNodes()) if (n1 != n2) cpl.addDemand(n1, n2, 0.0, RoutingType.SOURCE_ROUTING , null);
 		cpl.addRoutesFromCandidatePathList(cpl.computeUnicastCandidatePathList(null , K, -1, -1, -1, -1, -1, -1 , null));
 		
 		/* Configure SRGs */
@@ -131,7 +132,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
             pendingCarriedTraffic_d.set(ipLayerDemandIndex, pendingCarriedTraffic_thisDemand - trafficToCarry);
 			
 			/* Add a demand and a route in the WDM layer */
-            final Demand wdmLayerDemand = netPlan.addDemand(ingressNode, egressNode, lineRatePerLightpath_Gbps, null, wdmLayer);
+            final Demand wdmLayerDemand = netPlan.addDemand(ingressNode, egressNode, lineRatePerLightpath_Gbps, RoutingType.SOURCE_ROUTING , null, wdmLayer);
             WDMUtils.RSA rsa = new WDMUtils.RSA (seqFibers, wavelengthId);
             final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rsa , lineRatePerLightpath_Gbps);
             WDMUtils.allocateResources(rsa , wavelengthFiberOccupancy , null);
@@ -141,7 +142,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
             IPUtils.setLinkWeight(ipLayerLightpath, fixedOSPFWeight);
 
 			/* Couple IP link with WDM demand */
-            wdmLayerDemand.coupleToUpperLayerLink(ipLayerLightpath);
+            wdmLayerDemand.coupleToUpperOrSameLayerLink(ipLayerLightpath);
         }
 		
 		/* Compute ECMP routing according to IGP weights */
@@ -228,7 +229,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
                     final int wavelengthId = lp.getSecond();
 					
 					/* Add a demand and a route in the WDM layer */
-                    final Demand wdmLayerDemand = netPlan.addDemand(originNode, destinationNode, lineRatePerLightpath_Gbps, null, wdmLayer);
+                    final Demand wdmLayerDemand = netPlan.addDemand(originNode, destinationNode, lineRatePerLightpath_Gbps, RoutingType.SOURCE_ROUTING , null, wdmLayer);
                     final WDMUtils.RSA rsa = new WDMUtils.RSA(seqFibers, wavelengthId);
                     final Route wdmLayerRoute = WDMUtils.addLightpath(wdmLayerDemand, rsa , lineRatePerLightpath_Gbps);
                     WDMUtils.allocateResources(rsa , wavelengthFiberOccupancy , null);
@@ -238,7 +239,7 @@ public class TCFA_IPoverWDM_mixedRestoration implements IAlgorithm {
                     IPUtils.setLinkWeight(ipLayerLightpath, fixedOSPFWeight);
 
 					/* Couple IP link with WDM demand */
-                    wdmLayerDemand.coupleToUpperLayerLink(ipLayerLightpath);
+                    wdmLayerDemand.coupleToUpperOrSameLayerLink(ipLayerLightpath);
 
                     atLeastOneLightpathAdded = true;
                     break;

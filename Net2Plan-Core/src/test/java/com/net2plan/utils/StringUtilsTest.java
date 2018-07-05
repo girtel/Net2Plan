@@ -36,7 +36,7 @@ public class StringUtilsTest
     @Test
     public void testListToStringDefaultSeparator()
     {
-        final String string = StringUtils.listToString(testList);
+        final String string = StringUtils.collectionToString(testList);
 
         Assert.assertEquals("test1, test2, test3", string);
     }
@@ -44,7 +44,7 @@ public class StringUtilsTest
     @Test
     public void testListToStringSpecificSeparator()
     {
-        final String string = StringUtils.listToString(testList, "; ");
+        final String string = StringUtils.collectionToString(testList, "; ");
 
         Assert.assertEquals("test1; test2; test3", string);
     }

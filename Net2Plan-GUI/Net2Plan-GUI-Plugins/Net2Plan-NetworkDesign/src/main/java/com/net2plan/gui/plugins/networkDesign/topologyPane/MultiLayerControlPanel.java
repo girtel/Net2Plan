@@ -93,7 +93,7 @@ public final class MultiLayerControlPanel extends JPanel
 
                 vs.setCanvasLayerVisibilityAndOrder(netPlan, layerOrderMapConsideringNonVisible, vs.getCanvasLayerVisibilityMap());
 
-                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+                callback.updateVisualizationAfterChanges();
             });
             componentMatrix[thisRow][0] = upButton;
 
@@ -116,7 +116,7 @@ public final class MultiLayerControlPanel extends JPanel
 
                 vs.setCanvasLayerVisibilityAndOrder(netPlan, layerOrderMapConsideringNonVisible, vs.getCanvasLayerVisibilityMap());
 
-                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+                callback.updateVisualizationAfterChanges();
             });
             componentMatrix[thisRow][1] = downButton;
 
@@ -132,7 +132,7 @@ public final class MultiLayerControlPanel extends JPanel
                 netPlan.setNetworkLayerDefault(layer);
                 callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
 
-                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+                callback.updateVisualizationAfterChanges();
             });
             componentMatrix[thisRow][2] = activeButton;
 
@@ -146,7 +146,7 @@ public final class MultiLayerControlPanel extends JPanel
             {
                 callback.getVisualizationState().setCanvasLayerVisibility(layer, visibleButton.isSelected());
 
-                callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+                callback.updateVisualizationAfterChanges();
             });
             componentMatrix[thisRow][3] = visibleButton;
 

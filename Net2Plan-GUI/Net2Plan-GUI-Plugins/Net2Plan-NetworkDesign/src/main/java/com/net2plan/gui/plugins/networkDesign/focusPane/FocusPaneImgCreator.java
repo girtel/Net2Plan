@@ -10,11 +10,21 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.focusPane;
 
-import com.net2plan.interfaces.networkDesign.*;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.util.Arrays;
+import java.util.Optional;
+
+import javax.swing.JFrame;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.Constants.RoutingType;
 
 public class FocusPaneImgCreator {
 
@@ -26,9 +36,9 @@ public class FocusPaneImgCreator {
     	final Node n3 = np.addNode(0 , 0 , "name3" , null);
     	final Link e12 = np.addLink(n1,n2,3,100,200000,null);
     	final Link e23 = np.addLink(n2,n3,3,100,200000,null);
-    	final Resource r1 = np.addResource("CPU" , "nameRes1" , n1 , 10 , "Mbps" , null , 5 , null);
-    	final Resource r2 = np.addResource("RAM" , "nameRes2" , n2 , 10 , "Mbps" , null , 5 , null);
-    	final Demand d = np.addDemand(n1 , n3 , 0 , null);
+    	final Resource r1 = np.addResource("CPU" , "nameRes1" , Optional.of(n1) , 10 , "Mbps" , null , 5 , null);
+    	final Resource r2 = np.addResource("RAM" , "nameRes2" , Optional.of(n2) , 10 , "Mbps" , null , 5 , null);
+    	final Demand d = np.addDemand(n1 , n3 , 0 , RoutingType.SOURCE_ROUTING , null);
     	d.setServiceChainSequenceOfTraversedResourceTypes(Arrays.asList("CPU" , "RAM"));
     	final Route r = np.addServiceChain(d , 2.0 , Arrays.asList(1.0,2.0,3.0,4.0) , Arrays.asList(r1,e12,r2,e23) , null);
     	final NetworkLayer layer = np.getNetworkLayerDefault();

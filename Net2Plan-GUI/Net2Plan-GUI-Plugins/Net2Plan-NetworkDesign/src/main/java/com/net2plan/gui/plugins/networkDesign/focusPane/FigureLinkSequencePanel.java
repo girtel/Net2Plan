@@ -86,7 +86,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
         final int xSeparationDnCenters = maxHeightOrSizeIcon * 3;
 
     	/* Initial dn */
-    	final Node firstNode = path.get(0) instanceof Resource? ((Resource) path.get(0)).getHostNode() : ((Link) path.get(0)).getOriginNode();
+    	final Node firstNode = path.get(0) instanceof Resource? ((Resource) path.get(0)).getHostNode().get() : ((Link) path.get(0)).getOriginNode();
     	this.drawnNodes.add(new DrawNode(firstNode , layer , maxHeightOrSizeIcon));
     	DrawNode.addNodeToGraphics(g2d , drawnNodes.get(0) , initialDnTopLeftPosition , fontMetrics , regularInterlineSpacePixels , null);
 

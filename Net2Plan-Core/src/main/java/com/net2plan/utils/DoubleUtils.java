@@ -1387,6 +1387,8 @@ public class DoubleUtils
 	 */
 	public static double round(double number, int decimals)
 	{
+		if (number == Double.MAX_VALUE) return Double.MAX_VALUE;
+
 		double out = number * Math.pow(10, decimals);
 		out = Math.round(out) / Math.pow(10, decimals);
 

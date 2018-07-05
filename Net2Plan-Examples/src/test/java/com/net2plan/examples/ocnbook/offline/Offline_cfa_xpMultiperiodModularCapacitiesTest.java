@@ -10,39 +10,42 @@
  *******************************************************************************/
 package com.net2plan.examples.ocnbook.offline;
 
-import com.google.common.collect.ImmutableMap;
-import com.net2plan.examples.TestConstants;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.utils.InputParameter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.google.common.collect.ImmutableMap;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.InputParameter;
 
 public class Offline_cfa_xpMultiperiodModularCapacitiesTest 
 {
 	private NetPlan np;
-	private File temporalDirectoryTests;
+	@Rule
+    public TemporaryFolder temporalDirectoryTests= new TemporaryFolder();	
+	 
 
 	@Before
 	public void setUp() throws Exception 
 	{
-		/* Create the temporal directory for storing the test files */
-		this.temporalDirectoryTests = new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY);
-		temporalDirectoryTests.mkdirs();
-		/* delete everything inside temporalDirectoryTests, including subfolders */
-		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
-
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example4nodes.n2p"));
 		
 		final Random rng = new Random (0L);
@@ -50,17 +53,17 @@ public class Offline_cfa_xpMultiperiodModularCapacitiesTest
 		NetPlan npTm1 = np.copy(); 
 		npTm0.removeAllDemands(); 
 		npTm1.removeAllDemands(); 
-		for (Node n1 : npTm0.getNodes()) for (Node n2 : npTm0.getNodes()) if (n1 != n2) npTm0.addDemand(n1, n2, 100*rng.nextDouble() , null);
-		for (Node n1 : npTm1.getNodes()) for (Node n2 : npTm1.getNodes()) if (n1 != n2) npTm1.addDemand(n1, n2, 100*rng.nextDouble() , null);
-		npTm0.saveToFile(new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootInput_tm0.n2p"));
-		npTm1.saveToFile(new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootInput_tm1.n2p"));
+		for (Node n1 : npTm0.getNodes()) for (Node n2 : npTm0.getNodes()) if (n1 != n2) npTm0.addDemand(n1, n2, 100*rng.nextDouble() , RoutingType.SOURCE_ROUTING , null);
+		for (Node n1 : npTm1.getNodes()) for (Node n2 : npTm1.getNodes()) if (n1 != n2) npTm1.addDemand(n1, n2, 100*rng.nextDouble() , RoutingType.SOURCE_ROUTING , null);
+		npTm0.saveToFile(new File (temporalDirectoryTests.getRoot().getAbsolutePath() + "/rootInput_tm0.n2p"));
+		npTm1.saveToFile(new File (temporalDirectoryTests.getRoot().getAbsolutePath() + "/rootInput_tm1.n2p"));
 	}
 
 	@After
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
-		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
+		Files.walk(Paths.get(temporalDirectoryTests.getRoot().getAbsolutePath())).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
 		temporalDirectoryTests.delete();
 	}
 
@@ -69,8 +72,8 @@ public class Offline_cfa_xpMultiperiodModularCapacitiesTest
 	{
 		final IAlgorithm algorithm = new Offline_cfa_xpMultiperiodModularCapacities();
 		Map<String,List<String>> testingParameters = new HashMap<> ();
-		testingParameters.put("rootOfNameOfInputTrafficFiles" , Arrays.asList(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootInput"));
-		testingParameters.put("rootOfNameOfOutputFiles" , Arrays.asList(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY + "/rootOutput"));
+		testingParameters.put("rootOfNameOfInputTrafficFiles" , Arrays.asList(temporalDirectoryTests.getRoot().getAbsolutePath() + "/rootInput"));
+		testingParameters.put("rootOfNameOfOutputFiles" , Arrays.asList(temporalDirectoryTests.getRoot().getAbsolutePath() + "/rootOutput"));
 		testingParameters.put("nonBifurcatedRouting" , Arrays.asList("true" , "false"));
 		testingParameters.put("solverName" , Arrays.asList("cplex"));
 		List<Map<String,String>> testsParam = InputParameter.getCartesianProductOfParameters (testingParameters);
@@ -85,7 +88,7 @@ public class Offline_cfa_xpMultiperiodModularCapacitiesTest
 				algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
 			} catch (UnsatisfiedLinkError e)
 			{
-				System.err.println(this.getClass().getName() + ": " + TestConstants.CPLEX_NOT_FOUND_ERROR);
+				System.err.println(this.getClass().getName() + ": CPLEX_NOT_FOUND_ERROR");
 				return;
 			}
 			checkValidity (npInput , np , paramsUsedToCall);

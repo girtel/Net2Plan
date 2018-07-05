@@ -76,8 +76,8 @@ public class Offline_fa_xpMultihourObliviousRouting implements IAlgorithm
 
 		/* Remove all unicast routed traffic. Any multicast routed traffic is kept */
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
-		netPlan.setTrafficMatrix(DoubleFactory2D.dense.make (N,N,1.0)); // just to create the demands
+		netPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
+		netPlan.setTrafficMatrix(DoubleFactory2D.dense.make (N,N,1.0) , RoutingType.SOURCE_ROUTING); // just to create the demands
 
 		/* Add all the k-shortest candidate routes to the netPlan object carrying no traffic */
 		final DoubleMatrix1D linkCostVector = shortestPathType.getString().equalsIgnoreCase("hops")? DoubleFactory1D.dense.make (E , 1.0) : netPlan.getVectorLinkLengthInKm();

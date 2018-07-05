@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -27,6 +28,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.net2plan.utils.Triple;
+import com.net2plan.utils.Constants.RoutingType;
 
 public class RouteTest 
 {
@@ -59,17 +61,17 @@ public class RouteTest
 		this.link12 = np.addLink(n1,n2,100,100,1,null);
 		this.link23 = np.addLink(n2,n3,100,100,1,null);
 		this.link13 = np.addLink(n1,n3,100,100,1,null);
-		this.d13 = np.addDemand(n1 , n3 , 3 , null);
-		this.d12 = np.addDemand(n1, n2, 3 , null);
+		this.d13 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null);
+		this.d12 = np.addDemand(n1, n2, 3  , RoutingType.SOURCE_ROUTING, null);
 		this.r12 = np.addRoute(d12,1,1.5,Collections.singletonList(link12),null);
 		this.path13 = Arrays.asList(link12 , link23);
 		this.r123a = np.addRoute(d13,1,1.5,path13,null);
 		this.segm13 = np.addServiceChain(d13 , 0.0 , Arrays.asList(25.0) , Arrays.asList(link13) , null);
 		this.r123a.addBackupRoute(segm13);
 		this.r123b = np.addRoute(d13,1,1.5,path13,null);
-		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.scd123 = np.addDemand(n1 , n3 , 3 , null);
+		this.res2 = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
+		this.res2backup = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
+		this.scd123 = np.addDemand(n1 , n3 , 3  , RoutingType.SOURCE_ROUTING, null);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = new LinkedList<NetworkElement> (); pathSc123.add(link12); pathSc123.add(res2); pathSc123.add(link23); 
 		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(100.0 , 1.0 , 200.0) , Arrays.asList(link12 , res2 , link23) , null);

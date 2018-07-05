@@ -13,16 +13,26 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map.Entry;
+import java.util.SortedSet;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Constants.RoutingCycleType;
-import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * <p>This class contains a representation of a unidirectional route, an structure used to carry traffic of unicast demands at a layer,
@@ -47,6 +57,7 @@ public class Route extends NetworkElement
 	final Demand demand;
 	final Node ingressNode;
 	final Node egressNode;
+	Route bidirectionalPair;
 	List<NetworkElement> currentPath; // each object is a Link, or a Resource
 	double currentCarriedTrafficIfNotFailing;
 	List<Double> currentLinksAndResourcesOccupationIfNotFailing;
@@ -56,14 +67,15 @@ public class Route extends NetworkElement
 	List<Route> backupRoutes;
 	List<Link> cache_seqLinksRealPath;
 	List<Node> cache_seqNodesRealPath;
-	Map<NetworkElement,Double> cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap;
-	Set<Route> cache_routesIAmBackUp;
+	SortedMap<NetworkElement,Double> cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap;
+	SortedSet<Route> cache_routesIAmBackUp;
 	boolean cache_hasLoops;
 	double cache_propagationDelayMs;
 
 	Route (NetPlan netPlan , long id , int index , Demand demand , List<? extends NetworkElement> seqLinksAndResourcesTraversed , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
+		this.setName ("Route-" + index);
 
 		if (!netPlan.equals(demand.netPlan)) throw new RuntimeException ("Bad");
 		for (NetworkElement e : seqLinksAndResourcesTraversed)
@@ -73,7 +85,8 @@ public class Route extends NetworkElement
 			else throw new RuntimeException ("Bad");
 		}
 		netPlan.checkPathValidityForDemand (seqLinksAndResourcesTraversed, demand);
-
+		
+		
 		this.layer = demand.getLayer ();
 		this.demand = demand;
 		this.ingressNode = demand.ingressNode;
@@ -85,10 +98,11 @@ public class Route extends NetworkElement
 		this.initialStateCarriedTrafficIfNotFailing = -1;
 		this.initialStateOccupationIfNotFailing = null;
 		this.initialStatePath = new ArrayList<NetworkElement> (seqLinksAndResourcesTraversed);
+		this.bidirectionalPair = null;
 		this.cache_seqLinksRealPath = Route.getSeqLinks(seqLinksAndResourcesTraversed);
 		this.cache_seqNodesRealPath = Route.listTraversedNodes(cache_seqLinksRealPath);
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
-		this.cache_routesIAmBackUp = new HashSet<Route> ();
+		this.cache_routesIAmBackUp = new TreeSet<Route> ();
 		this.cache_hasLoops = hasLoops (cache_seqNodesRealPath);
 		if (cache_hasLoops) demand.routingCycleType = RoutingCycleType.OPEN_CYCLES;
 		this.cache_propagationDelayMs = 0;
@@ -109,6 +123,9 @@ public class Route extends NetworkElement
 		if (!this.initialStateOccupationIfNotFailing.equals(e2.initialStateOccupationIfNotFailing)) return false;
 		if (!NetPlan.isDeepCopy(this.initialStatePath , e2.initialStatePath)) return false;
 		if (backupRoutes.size() != e2.backupRoutes.size()) return false;
+        if ((this.bidirectionalPair == null) != (e2.bidirectionalPair == null)) return false;
+        if (this.bidirectionalPair != null) if (this.bidirectionalPair.id != e2.bidirectionalPair.id) return false;
+
 		if (!NetPlan.isDeepCopy(this.backupRoutes , e2.backupRoutes)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_seqLinksRealPath , e2.cache_seqLinksRealPath)) return false;
 		if (!NetPlan.isDeepCopy(this.cache_seqNodesRealPath , e2.cache_seqNodesRealPath)) return false;
@@ -125,18 +142,77 @@ public class Route extends NetworkElement
 		this.currentLinksAndResourcesOccupationIfNotFailing = new ArrayList<Double> (origin.currentLinksAndResourcesOccupationIfNotFailing);
 		this.initialStateCarriedTrafficIfNotFailing = origin.initialStateCarriedTrafficIfNotFailing;
 		this.initialStateOccupationIfNotFailing = new ArrayList<Double> (origin.initialStateOccupationIfNotFailing);
-		this.initialStatePath = (List<NetworkElement>) getInThisNetPlan(origin.initialStatePath);
 		this.currentPath = (List<NetworkElement>) getInThisNetPlan(origin.currentPath);
+        try { this.initialStatePath = (List<NetworkElement>) getInThisNetPlan(origin.initialStatePath); } catch (Exception e) { this.initialStatePath = new ArrayList<> (currentPath); } 
 		this.backupRoutes = (List<Route>) getInThisNetPlan(origin.backupRoutes);
-		this.cache_routesIAmBackUp = (Set<Route>) getInThisNetPlan(origin.cache_routesIAmBackUp);
+		this.cache_routesIAmBackUp = (SortedSet<Route>) getInThisNetPlan(origin.cache_routesIAmBackUp);
 		this.cache_seqLinksRealPath = (List<Link>) getInThisNetPlan(origin.cache_seqLinksRealPath);
 		this.cache_seqNodesRealPath = (List<Node>) getInThisNetPlan(origin.cache_seqNodesRealPath);
 		this.cache_hasLoops = origin.cache_hasLoops;
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.clear();
+	    this.bidirectionalPair = origin.bidirectionalPair == null? null : netPlan.getRouteFromId(origin.bidirectionalPair.getId());
 		for (Entry<NetworkElement,Double> e : origin.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.entrySet()) this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.put(getInThisNetPlan (e.getKey()) , e.getValue());
 	}
 
+    /**
+     * <p>If this route was added using the method addRouteBidirectional(),
+     * returns the route in the other direction (if it was not previously removed). Returns null otherwise. </p>
+     * @return see above
+     */
+    public Route getBidirectionalPair()
+    {
+        checkAttachedToNetPlanObject();
+        return bidirectionalPair;
+    }
 
+    /**
+     * <p>Sets the given route as the bidirectional pair of this route. If any of the routes was previously set as bidirectional 
+     * pair of other route, such relation is removed. The routes demands must be bidirectional pairs of each other
+     * @param r the other route
+     */
+    public void setBidirectionalPair(Route r)
+    {
+        checkAttachedToNetPlanObject();
+        r.checkAttachedToNetPlanObject(this.netPlan);
+        if (r.layer != this.layer) throw new Net2PlanException ("Wrong layer");
+        if (r.demand.bidirectionalPair != this.demand) throw new Net2PlanException ("The demand route has to be this demand bidirectional pair");
+        if (this.bidirectionalPair != null) this.bidirectionalPair.bidirectionalPair = null;
+        if (r.bidirectionalPair != null) r.bidirectionalPair.bidirectionalPair = null;
+        this.bidirectionalPair = r;
+        r.bidirectionalPair = this;
+    }
+
+    /**
+     * Returns true if the route is bidirectional. That is, it has an associated route in the other direction
+     * @return see above
+     */
+    public boolean isBidirectional()
+    {
+        return bidirectionalPair != null;
+    }
+
+    /**
+     * Creates a route in the opposite direction as this, and associate both as bidirectional pairs.
+     * If this route is already bidirectional, makes nothing and returns null. The traversed links must be bidirectional, 
+     * the demand cannot be a service chain. The opposite route carried traffic and occupied capacity is set to zero
+     * @return the newly created route
+     */
+    public Route createBidirectionalOppositePair ()
+    {
+        checkAttachedToNetPlanObject();
+        if (this.isBidirectional()) return null;
+        if (!this.demand.isSourceRouting()) throw new Net2PlanException ("The demand routing type must be source routing");
+        if (!this.demand.isBidirectional()) throw new Net2PlanException ("The demand must be bidirectional");
+        if (this.demand.isServiceChainRequest()) throw new Net2PlanException ("The demand cannot be of service chain type");
+        if (this.getSeqLinks().stream().anyMatch(e->!e.isBidirectional())) throw new Net2PlanException ("All the traversed links must be bidirectional");
+        final Demand bidiPairDemand = demand.getBidirectionalPair();
+        final Route r = netPlan.addRoute(bidiPairDemand, 0, 0, 
+                Lists.reverse(this.getSeqLinks()).stream().map(e->e.getBidirectionalPair()).collect(Collectors.toList()), null);
+        this.bidirectionalPair = r;
+        r.bidirectionalPair = this;
+        return r;
+    }
+    
 	/** Indicates if the route is a serivce chain: traverses resources
 	 * @return see above
 	 */
@@ -146,7 +222,7 @@ public class Route extends NetworkElement
 	/** Return the set of routes that this route is a designated as a backup for them
 	 * @return The initial sequence of links as an unmodifiable list
 	 */
-	public Set<Route> getRoutesIAmBackup () { return Collections.unmodifiableSet(this.cache_routesIAmBackUp); }
+	public SortedSet<Route> getRoutesIAmBackup () { return Collections.unmodifiableSortedSet(this.cache_routesIAmBackUp); }
 
 	/** Returns the list of backup routes for this route (the ones defined as backup by the user)
 	 * @return The initial sequence of links as an unmodifiable list
@@ -163,6 +239,17 @@ public class Route extends NetworkElement
 	 * @return The info
 	 */
 	public List<NetworkElement> getPath () { return Collections.unmodifiableList(this.currentPath);}
+
+    /** Return the opposite path of this route, from the destination to the origin traversing the 
+     * bidirectional pairs of the traversed links, and the same resources. If any traversed link is not bidirectional, 
+     * an exception is thrown
+     * @return The info
+     */
+    public List<NetworkElement> getOppositePath () 
+    {
+        if (this.currentPath.stream().filter(e->e instanceof Link).map(e->(Link) e).anyMatch(e->!e.isBidirectional())) throw new Net2PlanException ("The path traverses links that are not bidirectional");
+        return Lists.reverse(this.currentPath).stream().map(e->e instanceof Link? (NetworkElement) (((Link) e).bidirectionalPair) : e).collect (Collectors.toList());
+    }
 
 	/** Returns true if this route has been defined as a backup route for other
 	 * @return the info
@@ -343,7 +430,7 @@ public class Route extends NetworkElement
 	 */
 	public double getLengthInKm ()
 	{
-		double accum = 0; for (Link e : cache_seqLinksRealPath) accum += e.lengthInKm;
+		double accum = 0; for (Link e : cache_seqLinksRealPath) accum += e.getLengthInKm();
 		return accum;
 	}
 
@@ -381,6 +468,9 @@ public class Route extends NetworkElement
 		}
 		demand.cache_worstCasePropagationTimeMs = Math.max(demand.cache_worstCasePropagationTimeMs, this.cache_propagationDelayMs);
 		demand.cache_worstCaseLengthInKm = Math.max(demand.cache_worstCaseLengthInKm, thisRouteLengthKm);
+		
+		if (demand.coupledUpperOrSameLayerLink != null)
+			demand.coupledUpperOrSameLayerLink.updateWorstCasePropagationTraversingUnicastDemandsAndMaybeRoutes();
 	}
 
 	/** Returns the route average propagation speed in km per second, as the ratio between the total route length and the total route delay
@@ -400,6 +490,11 @@ public class Route extends NetworkElement
 	public List<Double> getSeqOccupiedCapacitiesIfNotFailing()
 	{
 		return Collections.unmodifiableList(currentLinksAndResourcesOccupationIfNotFailing);
+	}
+	
+	public boolean isOccupyingDifferentCapacitiesInDifferentLinksInNoFailureState ()
+	{
+		return currentLinksAndResourcesOccupationIfNotFailing.stream().distinct().count () > 1;
 	}
 
 	/** Returns the route current sequence of traversed resources, in the order they are traversed (and thus, a resource will
@@ -427,6 +522,18 @@ public class Route extends NetworkElement
 		return Collections.unmodifiableList(cache_seqNodesRealPath);
 	}
 
+    /** Returns the route sequence of traversed nodes, removing the origin and end node
+     * @return see description above
+     * */
+    public List<Node> getSeqIntermediateNodes ()
+    {
+        final List<Node> res = new ArrayList<> (cache_seqNodesRealPath.size()-2);
+        for (int cont = 1; cont < cache_seqNodesRealPath.size()-1 ; cont ++)
+            res.add(cache_seqNodesRealPath.get(cont));
+        return res;
+    }
+
+
 	/** Returns the number of times that a particular link or resource is traversed
 	 * @param e the link or resource to check
 	 * @return the number of times it is traversed
@@ -447,11 +554,11 @@ public class Route extends NetworkElement
 	/** Returns the SRGs the route is affected by (any traversed node or link is in the SRG)
 	 * @return see description above
 	 */
-	public Set<SharedRiskGroup> getSRGs ()
+	public SortedSet<SharedRiskGroup> getSRGs ()
 	{
-		Set<SharedRiskGroup> res = new HashSet<SharedRiskGroup> ();
-		for (Link e : cache_seqLinksRealPath) res.addAll (e.cache_srgs);
-		for (Node n : cache_seqNodesRealPath) res.addAll (n.cache_nodeSRGs);
+		SortedSet<SharedRiskGroup> res = new TreeSet<SharedRiskGroup> ();
+		for (Link e : cache_seqLinksRealPath) res.addAll (e.getSRGs());
+		for (Node n : cache_seqNodesRealPath) res.addAll (n.getSRGs());
 		return res;
 	}
 
@@ -464,7 +571,7 @@ public class Route extends NetworkElement
 	}
 	private static boolean hasLoops (List<Node> seqNodes)
 	{
-		Set<Node> nodes = new HashSet<Node> (seqNodes);
+		SortedSet<Node> nodes = new TreeSet<Node> (seqNodes);
 		return nodes.size () < seqNodes.size();
 	}
 
@@ -492,9 +599,10 @@ public class Route extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		this.setCarriedTraffic(0, 0); // release all previous occupation
 
+		if (bidirectionalPair != null) { this.bidirectionalPair.bidirectionalPair = null; this.bidirectionalPair = null; }
+		
 		for (Node node : cache_seqNodesRealPath) node.cache_nodeAssociatedRoutes.remove(this);
 		for (Link link : cache_seqLinksRealPath)
 			link.cache_traversingRoutes.remove(this);
@@ -505,7 +613,7 @@ public class Route extends NetworkElement
 
 		netPlan.cache_id2RouteMap.remove(id);
 		layer.cache_routesDown.remove (this);
-		layer.cache_linksZeroCap.remove(this);
+                layer.cache_routesTravLinkZeroCap.remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(layer.routes , index);
 
 		/* remove the resources info */
@@ -533,8 +641,9 @@ public class Route extends NetworkElement
         	for (Route r : demand.cache_routes) demand.cache_worstCaseLengthInKm = Math.max(demand.cache_worstCaseLengthInKm, r.getLengthInKm());
         }
 
-        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+        final NetPlan npOld = this.netPlan;
+        removeId();
+        if (ErrorHandling.isDebugEnabled()) npOld.checkCachesConsistency();
 	}
 
 	/** Sets the route carried traffic and the occupied capacity in the traversed links and resources (typically the same as the carried traffic),
@@ -560,7 +669,6 @@ public class Route extends NetworkElement
 	 */
 	public void setCarriedTraffic (double newCarriedTraffic , List<Double> linkAndResourcesOccupationInformation)
 	{
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		netPlan.checkIsModifiable();
 		final double oldRouteCarriedTrafficIfNotFailing = this.currentCarriedTrafficIfNotFailing;
 		final boolean isThisRouteDown = this.isDown();
@@ -590,8 +698,8 @@ public class Route extends NetworkElement
 		this.cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap = updateLinkResourceOccupationCache ();
 
 		demand.carriedTraffic = 0; for (Route r : demand.cache_routes) demand.carriedTraffic += r.getCarriedTraffic();
-		if (demand.coupledUpperLayerLink != null)
-			demand.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(demand.carriedTraffic);
+		if (demand.coupledUpperOrSameLayerLink != null)
+			demand.coupledUpperOrSameLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(demand.carriedTraffic);
 
 		for (NetworkElement e : cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet())
 			if (e instanceof Resource)
@@ -612,7 +720,6 @@ public class Route extends NetworkElement
 	 */
 	public void setPath (double newCarriedTraffic , List<? extends NetworkElement> newPath , List<Double> newOccupationInformation)
 	{
-		layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
 		netPlan.checkIsModifiable();
 		Pair<List<Link>,List<Resource>> res = netPlan.checkPathValidityForDemand (newPath, demand);
 		List<Link> newSeqLinks = res.getFirst();
@@ -620,6 +727,18 @@ public class Route extends NetworkElement
 		if (newPath.size() != newOccupationInformation.size()) throw new Net2PlanException ("Wrong size of occupation array");
 		for (Double val : newOccupationInformation) if (val < 0) throw new Net2PlanException ("The occupation of a link/resource cannot be negative");
 		if (newPath.size() != newOccupationInformation.size()) throw new Net2PlanException ("Wrong size of array");
+		if (demand.isCoupledInSameLayer())
+		{
+			final SortedSet<Link> intraLayerUpPropagation = demand.coupledUpperOrSameLayerLink.getIntraLayerUpPropagationIncludingMe();
+			for (NetworkElement e : newPath)
+				if (e instanceof Link)
+				{
+					final SortedSet<Link> downProp = ((Link) e).getIntraLayerDownPropagationIncludingMe();
+					if (!Sets.intersection(downProp, intraLayerUpPropagation).isEmpty())
+						throw new Net2PlanException ("The sequence of links produces a loop in the intra-layer coupling");
+					
+				}
+		}
 
 		/* Remove the old route trace in the traversed nodes and links */
 		this.setCarriedTraffic(0 , 0); // releases all links, segments and resources occupation
@@ -680,16 +799,27 @@ public class Route extends NetworkElement
 		setPath(this.currentCarriedTrafficIfNotFailing, seqLinks, Collections.nCopies(seqLinks.size(), firstLinkOccup));
 	}
 
-	public String toString () { return "r" + index + " (id " + id + ")"; }
+	@Override
+    public String toString () { return "r" + index + " (id " + id + ")"; }
 
 
-	void checkCachesConsistency ()
+	@Override
+    void checkCachesConsistency ()
 	{
 		super.checkCachesConsistency ();
 
 		if (!(layer.routes.contains(this))) throw new RuntimeException();
 		if (!(demand.cache_routes.contains(this))) throw new RuntimeException();
-
+        if (this.bidirectionalPair != null)
+        {
+            if (this.bidirectionalPair.bidirectionalPair != this) throw new RuntimeException ("Bad: this.bidirectionalPair.bidirectionalPair : " + this.bidirectionalPair.bidirectionalPair);
+            if (this.bidirectionalPair.netPlan != this.netPlan) throw new RuntimeException ("Bad");
+            if (this.demand.bidirectionalPair != this.bidirectionalPair.demand) throw new RuntimeException ("Bad");
+            if (this.bidirectionalPair.ingressNode != this.egressNode) throw new RuntimeException ("Bad");
+            if (this.bidirectionalPair.egressNode != this.ingressNode) throw new RuntimeException ("Bad");
+            if (this.bidirectionalPair.layer != this.layer) throw new RuntimeException ("Bad");
+        }
+		
 		if (ingressNode.netPlan == null) throw new RuntimeException();
 		if (egressNode.netPlan == null) throw new RuntimeException();
 		if (layer.netPlan == null) throw new RuntimeException();
@@ -702,7 +832,7 @@ public class Route extends NetworkElement
 		if (cache_seqNodesRealPath == null) throw new RuntimeException();
 		if (cache_routesIAmBackUp == null) throw new RuntimeException();
 
-		if (!this.cache_hasLoops != (new HashSet<> (cache_seqNodesRealPath).size() == cache_seqNodesRealPath.size())) throw new RuntimeException();
+		if (!this.cache_hasLoops != (new TreeSet<> (cache_seqNodesRealPath).size() == cache_seqNodesRealPath.size())) throw new RuntimeException();
 
 		netPlan.checkInThisNetPlanAndLayer(currentPath , layer);
 		netPlan.checkInThisNetPlanAndLayer(cache_linkAndResourcesTraversedOccupiedCapIfnotFailMap.keySet() , layer);
@@ -817,7 +947,7 @@ public class Route extends NetworkElement
 
 	private static List<Node> listTraversedNodes (List<Link> path)
 	{
-		List<Node> res = new LinkedList<Node> (); res.add (path.get(0).originNode); for (Link e : path) res.add (e.getDestinationNode());
+		List<Node> res = new ArrayList<> (); res.add (path.get(0).originNode); for (Link e : path) res.add (e.getDestinationNode());
 		return res;
 	}
 
@@ -847,9 +977,9 @@ public class Route extends NetworkElement
 		return res;
 	}
 
-	private Set<? extends NetworkElement> getInThisNetPlan (Set<? extends NetworkElement> list)
+	private SortedSet<? extends NetworkElement> getInThisNetPlan (SortedSet<? extends NetworkElement> list)
 	{
-		Set<NetworkElement> res = new HashSet<NetworkElement> (list.size());
+		SortedSet<NetworkElement> res = new TreeSet<> ();
 		for (NetworkElement e : list)
 		{
 			NetworkElement ee = null;
@@ -864,9 +994,9 @@ public class Route extends NetworkElement
 		return res;
 	}
 
-	private Map<NetworkElement,Double> updateLinkResourceOccupationCache ()
+	private SortedMap<NetworkElement,Double> updateLinkResourceOccupationCache ()
 	{
-		Map<NetworkElement,Double> res = new HashMap<NetworkElement,Double> ();
+		SortedMap<NetworkElement,Double> res = new TreeMap<NetworkElement,Double> ();
 		for (int step = 0; step < currentPath.size() ; step ++)
 		{
 			final NetworkElement e = currentPath.get(step);

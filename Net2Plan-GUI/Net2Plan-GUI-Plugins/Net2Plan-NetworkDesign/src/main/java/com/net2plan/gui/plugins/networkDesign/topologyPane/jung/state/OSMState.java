@@ -111,11 +111,13 @@ class OSMState implements ICanvasState
         }
 
         final NetPlan netPlan = callback.getDesign();
-        netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), "Node" + netPlan.getNumberOfNodes(), null);
+        final Node node = netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), "Node" + netPlan.getNumberOfNodes(), null);
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-        callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.NODE));
+        callback.updateVisualizationAfterChanges();
         mapController.refreshTopologyAlignment();
         callback.addNetPlanChange();
+        callback.getPickManager().pickElements(node);
+        callback.updateVisualizationAfterPick();
     }
 
     @Override
@@ -123,7 +125,7 @@ class OSMState implements ICanvasState
     {
         node.remove();
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-        callback.updateVisualizationAfterChanges(Sets.newHashSet(Constants.NetworkElementType.NODE));
+        callback.updateVisualizationAfterChanges();
         mapController.refreshTopologyAlignment();
         callback.addNetPlanChange();
     }

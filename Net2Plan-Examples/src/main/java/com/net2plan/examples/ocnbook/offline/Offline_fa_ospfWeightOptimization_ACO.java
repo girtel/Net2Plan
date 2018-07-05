@@ -67,7 +67,7 @@ public class Offline_fa_ospfWeightOptimization_ACO implements IAlgorithm
 		final int E = netPlan.getNumberOfLinks();
 		if (N == 0) throw new Net2PlanException("The input design must have nodes");
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING);
+		netPlan.setRoutingTypeAllDemands (RoutingType.HOP_BY_HOP_ROUTING);
 		
 		Random rng = new Random (algorithm_randomSeed.getLong());
 		this.ospfEngine = new OSPFHeuristicUtils(netPlan, ospf_maxLinkWeight.getInt (), ospf_weightOfMaxUtilizationInObjectiveFunction.getDouble(), rng);

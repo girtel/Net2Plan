@@ -64,11 +64,11 @@ public class Offline_cba_wirelessCongControlTransmissionPowerAssignment implemen
 
 		/* Remove all demands, then create a demand per input output node pair */
 		netPlan.removeAllDemands();
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		netPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		for (Node n1 : netPlan.getNodes())
 			for (Node n2 : netPlan.getNodes())
 				if (n1 != n2)
-					netPlan.addDemand(n1, n2, cc_minHd.getDouble(), null);
+					netPlan.addDemand(n1, n2, cc_minHd.getDouble(), RoutingType.SOURCE_ROUTING , null);
 		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm() , 1 , -1, -1, -1, -1, -1, -1, null)); // one route per demand, so P equals D
 		
 		

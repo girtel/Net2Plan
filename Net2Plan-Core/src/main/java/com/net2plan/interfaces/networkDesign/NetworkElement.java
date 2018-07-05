@@ -11,11 +11,21 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import com.net2plan.internal.AttributeMap;
+import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.StringUtils;
+
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import com.net2plan.internal.AttributeMap;
-
-import java.util.*;
 
 /**
  * <p>Class defining a generic network element.</p>
@@ -24,32 +34,55 @@ import java.util.*;
  * demands, etc.
  * </p>
  */
-public abstract class NetworkElement 
+public abstract class NetworkElement implements Comparable<NetworkElement>
 {
 	private final static String MATRIX_COLSEPARATOR = " ";
 	private final static String MATRIX_ROWSEPARATOR = ";";
-	private final static String STRINGESCAPECHARACTER = ">";
-	private final static String AFTERSCAPE_COLSEP = "A";
-	private final static String AFTERSCAPE_ROWSEP = "B";
-	private final static String AFTERSCAPE_ESCAPE = "E";
 
 	protected NetPlan netPlan;
 	final protected long id;
 	protected int index;
 	protected final AttributeMap attributes;
-	protected final Set<String> tags;
-	
+	protected final SortedSet<String> tags;
+	protected String description;
+    protected String name;
+    private final NetworkElementType elementType;
+    
 	NetworkElement (NetPlan netPlan , long id , int index , AttributeMap attributes) 
 	{ 
 		this.netPlan = netPlan; 
 		this.id = id; 
 		this.index = index; 
-		this.attributes = new AttributeMap (attributes); 
-		this.tags = new HashSet<> (); 
+		this.attributes = new AttributeMap (attributes);
+        this.name = "";
+		this.description = "";
+		this.tags = new TreeSet<> (); 
+		this.elementType = NetworkElement.getNetworkElementType(this);
 	}
 
+	public NetworkElementType getNeType () { return this.elementType; }
 	
-	/**
+	/** Sets this element name
+	 * @param name  see above
+	 */
+	public final void setName (String name) { this.name = name == null? "" : name; }
+
+	/** Returns current element name String
+	 * @return see above
+	 */
+	public final String getName () { return this.name; }
+	
+    /** Sets this element description
+     * @param description  see above
+     */
+    public final void setDescription (String description) { this.description = description == null? "" : description; }
+
+    /** Returns current element description String
+     * @return see above
+     */
+    public final String getDescription () { return this.description; }
+
+    /**
 	 * <p>Checks whether this element (demand, node, route...) is attached to a netPlan object. When negative, an exception will be thrown.</p>
 	 */
 	public final void checkAttachedToNetPlanObject () { if (netPlan == null) throw new Net2PlanException ("The element " + this + " is not associated to any NetPlan object"); }
@@ -70,9 +103,19 @@ public abstract class NetworkElement
 	 * @return true if it was removed
 	 * @since 0.4.0
 	 */
-	final public boolean equals(Object o) 
+	@Override
+    final public boolean equals(Object o) 
 	{
 			return (o == this); 
+	}
+	
+	final public int compareTo(NetworkElement o)
+	{
+		if (this.equals(o)) return 0;
+		if (o == null) throw new NullPointerException();
+//		if (this.netPlan != o.getNetPlan())
+//			throw new Net2PlanException ("Different N2p object");
+		return Long.compare(this.id , o.id);
 	}
 	
 	final boolean isDeepCopy (NetworkElement e2) 
@@ -81,6 +124,8 @@ public abstract class NetworkElement
 		if (this.index != e2.index) return false;
 		if (!this.attributes.equals(e2.attributes)) return false;
 		if (!this.tags.equals (e2.tags)) return false;
+		if (!this.name.equals(e2.name)) return false;
+        if (!this.description.equals(e2.description)) return false;
 //		if (!this.planningDomains.equals(e2.planningDomains)) return false;
 		return true;
 	}
@@ -104,7 +149,6 @@ public abstract class NetworkElement
 	 */
 	public String getAttribute(String key , String defaultValue)
 	{
-		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
 		return val == null? defaultValue : val;
 	}
@@ -117,7 +161,6 @@ public abstract class NetworkElement
 	 */
 	public Double getAttributeAsDouble (String key , Double defaultValue)
 	{
-		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
 		if (val == null) return defaultValue;
 		try 
@@ -162,6 +205,37 @@ public abstract class NetworkElement
 		} catch (Exception ee) { return defaultValue; }
 	}
 
+	   /**
+     * Returns the value of a given attribute for this network element, in form of a matrix, as stored using the setAttributeAsDoubleMatrix method
+     * @param key Attribute name
+     * @param defaultValue default value to return if not found, or could not be parsed
+     * @return see above
+     */
+    public List<List<Double>> getAttributeAsDoubleMatrix (String key , List<List<Double>> defaultValue)
+    {
+        checkAttachedToNetPlanObject();
+        final String val = attributes.get(key);
+        if (val == null) return defaultValue;  
+        try 
+        {
+            final String [] rows = val.split(MATRIX_ROWSEPARATOR,-1);
+            final List<List<Double>> res = new ArrayList<> (rows.length);
+            for (String row : rows)
+            {
+                if (row.equals("")) continue;
+                final List<Double> rowVals = new LinkedList<> ();
+                res.add(rowVals);
+                for (String cell : row.split(MATRIX_COLSEPARATOR,-1))
+                {
+                    if (cell.equals("")) continue;
+                    rowVals.add(Double.parseDouble(cell));
+                }
+            }
+            return res;
+        } catch (Exception ee) { return defaultValue; }
+    }
+
+	
 	/**
 	 * Returns the value of a given attribute for this network element, in form of a list of doubles, as stored using the setAttributeAsDoubleList method
 	 * @param key Attribute name
@@ -197,18 +271,7 @@ public abstract class NetworkElement
 		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
 		if (val == null) return defaultValue;  
-		if(val.equals("")) return new ArrayList<String>();
-		try 
-		{
-			final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
-			final List<String> res = new ArrayList<> (parts.length);
-			for (String part : parts)
-			{
-				//if (part.equals("")) continue;
-				res.add(unescapedStringRead(part));
-			}
-			return res;
-		} catch (Exception ee) { return defaultValue; }
+		return StringUtils.readEscapedString_asStringList (val , defaultValue);
 	}
 	
 	/**
@@ -221,8 +284,8 @@ public abstract class NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		final String val = attributes.get(key);
-		if (val == null) return defaultValue; 
-		if(val.equals("")) return new ArrayList<List<String>>();
+		if (val == null) return defaultValue;  
+		if (val.equals("")) return new ArrayList<> ();
 		try 
 		{
 			final String [] rows = val.split(MATRIX_ROWSEPARATOR,-1);
@@ -236,7 +299,7 @@ public abstract class NetworkElement
     			for (String cell : row.split(MATRIX_COLSEPARATOR,-1))
     			{
     				//if (cell.equals("")) continue;
-    				rowVals.add(unescapedStringRead(cell));
+    				rowVals.add(StringUtils.unescapedStringRead(cell));
     			}
     			numCols = Math.max(numCols, rowVals.size());
 			}
@@ -250,8 +313,8 @@ public abstract class NetworkElement
 	public void addTag (String tag)
 	{
 		this.tags.add (tag);
-		Set<NetworkElement> setElements = netPlan.cache_taggedElements.get (tag);
-		if (setElements == null) { setElements = new HashSet<> (); netPlan.cache_taggedElements.put (tag , setElements); }
+		SortedSet<NetworkElement> setElements = netPlan.cache_taggedElements.get (tag);
+		if (setElements == null) { setElements = new TreeSet<> (); netPlan.cache_taggedElements.put (tag , setElements); }
 		setElements.add (this);
 	}
 	
@@ -279,9 +342,9 @@ public abstract class NetworkElement
 	/** Returns the set of tags assigned to this network element
 	 * @return the set (unmodifiable)
 	 */
-	public Set<String> getTags ()
+	public SortedSet<String> getTags ()
 	{
-		return Collections.unmodifiableSet(this.tags);
+		return Collections.unmodifiableSortedSet(this.tags);
 	}
 	
 	
@@ -290,7 +353,7 @@ public abstract class NetworkElement
 	 * @return the attribute map
 	 * @since 0.4.0
 	 */
-	final public Map<String,String> getAttributes () { return Collections.unmodifiableMap(attributes); }
+	final public SortedMap<String,String> getAttributes () { return Collections.unmodifiableSortedMap(attributes); }
 
 	/**
 	 * <p>Returns the unique identifier</p>
@@ -370,7 +433,7 @@ public abstract class NetworkElement
 	 * @param key Attribute name
 	 * @param valueList Attribute value
 	 */
-	public void setAttributeAsNumberList (String key, List<Number> valueList)
+	public void setAttributeAsNumberList (String key, List<? extends Number> valueList)
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
@@ -393,28 +456,9 @@ public abstract class NetworkElement
 	 */
 	public void setAttributeAsStringList (String key, List<String> vals)
 	{
-		//if (vals.isEmpty()) throw new Net2PlanException ("The list is empty");
-		final StringBuffer st = new StringBuffer ();
-		if (vals.isEmpty()) 
-		{
-			st.append("");
-		} else 
-		  {
-			checkAttachedToNetPlanObject();
-			netPlan.checkIsModifiable();
-			boolean firstTime = true;
-			
-			for (String val : vals)
-			{
-				if (firstTime) {
-					firstTime = false;
-				} else {
-					st.append(MATRIX_COLSEPARATOR);
-				}
-			if(val.isEmpty()) st.append(""); else st.append(escapedStringToWrite(val));
-			}
-		  }
-		attributes.put (key,st.toString());
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		attributes.put (key, StringUtils.createEscapedString_asStringList (vals));
 	}
 
 	/**
@@ -424,37 +468,25 @@ public abstract class NetworkElement
 	 * @param key Attribute name
 	 * @param vals Attribute vals
 	 */
-	public void setAttributeAsStringMatrix(String key, List<List<String>> vals) {
-		
-		final StringBuffer st = new StringBuffer();
-		if (vals.isEmpty()) {
-			st.append("");
-		} else {
-			// if (vals.isEmpty()) throw new Net2PlanException ("The matrix is empty");
-			// for (List<String> row : vals) if (row.isEmpty()) throw new
-			// Net2PlanException ("One of the rows of the matrix is empty");
-			checkAttachedToNetPlanObject();
-			netPlan.checkIsModifiable();
-
-			boolean firstRow = true;
-			for (List<String> row : vals) {
-				if (firstRow) {
-					firstRow = false;
-				} else {
-					st.append(MATRIX_ROWSEPARATOR);	
-				}
-				boolean firstColumn = true;
-				for (String cell : row) {
-					if (firstColumn) {
-						firstColumn = false;
-					} else {
-						st.append(MATRIX_COLSEPARATOR);
-					}
-				if(cell.isEmpty()) st.append(""); else st.append(escapedStringToWrite(cell));
-				}
+	public void setAttributeAsStringMatrix (String key, List<List<String>> vals)
+	{
+		if (vals.isEmpty()) { attributes.put (key,""); return; }
+		for (List<String> row : vals) if (row.isEmpty()) throw new Net2PlanException ("One of the rows of the matrix is empty");
+		checkAttachedToNetPlanObject();
+		netPlan.checkIsModifiable();
+		final StringBuffer st = new StringBuffer ();
+		boolean firstRow = true;
+		for (List<String> row : vals)
+		{
+			if (firstRow) { firstRow = false; } else { st.append(MATRIX_ROWSEPARATOR); }
+			boolean firstColumn = true;
+			for (String cell : row)
+			{
+				if (firstColumn) { firstColumn = false; } else { st.append(MATRIX_COLSEPARATOR); }
+				st.append(StringUtils.escapedStringToWrite(cell));
 			}
-			attributes.put(key, st.toString());
 		}
+		attributes.put (key,st.toString());
 	}
 
 	/**
@@ -480,7 +512,31 @@ public abstract class NetworkElement
 		attributes.put (key,st.toString());
 	}
 	
-	/**
+    /**
+     * Sets an attribute for this element, storing the values of the given matrix, so it can be read with setAttributeAsNumberMatrix method.
+     * If it already exists, previous value is lost. 
+     * @param key Attribute name
+     * @param vals Attribute vals
+     */
+    public void setAttributeAsNumberMatrix (String key, List<List<Number>> vals)
+    {
+        checkAttachedToNetPlanObject();
+        netPlan.checkIsModifiable();
+        final StringBuffer st = new StringBuffer ();
+        for (int row = 0; row < vals.size() ; row ++)
+        {
+            final List<Number> rowVals = vals.get(row);
+            for (int col = 0; col < rowVals.size() ; col ++)
+            {
+                st.append(rowVals.get(col));
+                if (col != rowVals.size()-1) st.append(MATRIX_COLSEPARATOR);
+            }
+            if (row != vals.size()-1) st.append(MATRIX_ROWSEPARATOR);
+        }
+        attributes.put (key,st.toString());
+    }
+
+    /**
 	 * <p>Sets the attributes for this network element. Any previous attributes will be removed.</p>
 	 * @param map Attribute where the keys are the attribute names and the values the attribute values
 	 */
@@ -490,7 +546,7 @@ public abstract class NetworkElement
 		netPlan.checkIsModifiable();
 		attributes.clear(); 
 		if (map != null) 
-			for (Map.Entry<String,String> e : map.entrySet())
+			for (SortedMap.Entry<String,String> e : map.entrySet())
 				attributes.put (e.getKey() , e.getValue());
 	}
 
@@ -498,7 +554,8 @@ public abstract class NetworkElement
 	 * <p>Returns a {@code String} representation of the network element.</p>
 	 * @return {@code String} representation of the network element
 	 */
-	public String toString ()
+	@Override
+    public String toString ()
 	{
 		if (this instanceof Link) return "Link id=" + id;
 		if (this instanceof NetworkLayer) return "Network layer id=" + id;
@@ -531,19 +588,21 @@ public abstract class NetworkElement
 		for (String tag : tags) if (!netPlan.cache_taggedElements.get(tag).contains (this)) throw new RuntimeException ("tag: " + tag);
 	}
 
-	private static String escapedStringToWrite (String s)
-	{
-		String res = s.replaceAll(STRINGESCAPECHARACTER , STRINGESCAPECHARACTER + AFTERSCAPE_ESCAPE);
-		res = res.replaceAll(MATRIX_COLSEPARATOR , STRINGESCAPECHARACTER + AFTERSCAPE_COLSEP);
-		res = res.replaceAll(MATRIX_ROWSEPARATOR , STRINGESCAPECHARACTER + AFTERSCAPE_ROWSEP);
-		return res;
-	}
-	private static String unescapedStringRead (String s)
-	{
-		String res = s.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_COLSEP, MATRIX_COLSEPARATOR);
-		res = res.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_ROWSEP, MATRIX_ROWSEPARATOR);
-		res = res.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_ESCAPE, STRINGESCAPECHARACTER);
-		return res;
-	}
+    private static NetworkElementType getNetworkElementType(NetworkElement e)
+    {
+        if (e instanceof Node) return NetworkElementType.NODE;
+        if (e instanceof Link) return NetworkElementType.LINK;
+        if (e instanceof Demand) return NetworkElementType.DEMAND;
+        if (e instanceof MulticastDemand) return NetworkElementType.MULTICAST_DEMAND;
+        if (e instanceof MulticastTree) return NetworkElementType.MULTICAST_TREE;
+        if (e instanceof Route) return NetworkElementType.ROUTE;
+        if (e instanceof SharedRiskGroup) return NetworkElementType.SRG;
+        if (e instanceof NetworkLayer) return NetworkElementType.LAYER;
+        if (e instanceof Resource) return NetworkElementType.RESOURCE;
+        if (e instanceof NetPlan) return NetworkElementType.NETWORK;
+        throw new RuntimeException ();
+    }
+
+
 	
 }

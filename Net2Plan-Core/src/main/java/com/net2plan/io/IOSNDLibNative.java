@@ -24,6 +24,7 @@ import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
+import com.net2plan.utils.Constants.RoutingType;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -74,7 +75,7 @@ public class IOSNDLibNative extends IOFilter
 	@Override
 	public NetPlan readFromFile(File file)
 	{
-		Map<String, String> options = getCurrentOptions();
+		SortedMap<String, String> options = getCurrentOptions();
 		boolean bidirectionalDemands = options.get("sndlib.demandModel").equals("undirected");
 		boolean bidirectionalLinks = options.get("sndlib.linkModel").equals("undirected");
 		boolean isEuclidean = options.get("sndlib.nodeCoordinatesType").equals("xy");
@@ -93,7 +94,7 @@ public class IOSNDLibNative extends IOFilter
 			}
 			
 			/* Read all nodes */
-			Map<String, Long> nodeName2Id = new HashMap<String, Long>();
+			SortedMap<String, Long> nodeName2Id = new TreeMap<String, Long>();
 			while ((line = in.readLine()) != null)
 			{
 				line = line.trim();
@@ -126,7 +127,7 @@ public class IOSNDLibNative extends IOFilter
 				long destinationNodeId = nodeName2Id.get(data[2]); Node destinationNode = netPlan.getNodeFromId (destinationNodeId);
 				double capacity = Double.parseDouble(data[3]);
 				double lengthInKm = isEuclidean ? netPlan.getNodePairEuclideanDistance(originNode, destinationNode) : netPlan.getNodePairHaversineDistanceInKm(originNode, destinationNode);
-				Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+				SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 				attributeMap.put("name", name);
 				
 				if (bidirectionalLinks) netPlan.addLinkBidirectional(originNode, destinationNode, capacity, lengthInKm, 200000 , attributeMap);
@@ -150,11 +151,11 @@ public class IOSNDLibNative extends IOFilter
 				long ingressNodeId = nodeName2Id.get(data[1]); Node ingressNode = netPlan.getNodeFromId (ingressNodeId);
 				long egressNodeId = nodeName2Id.get(data[2]); Node egressNode = netPlan.getNodeFromId (egressNodeId);
 				double offeredTraffic = Double.parseDouble(data[4]);
-				Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+				SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 				attributeMap.put("name", name);
 				
-				if (bidirectionalDemands) netPlan.addDemandBidirectional(ingressNode, egressNode, offeredTraffic, attributeMap);
-				else netPlan.addDemand(ingressNode, egressNode, offeredTraffic, attributeMap);
+				if (bidirectionalDemands) netPlan.addDemandBidirectional(ingressNode, egressNode, offeredTraffic, RoutingType.SOURCE_ROUTING , attributeMap);
+				else netPlan.addDemand(ingressNode, egressNode, offeredTraffic, RoutingType.SOURCE_ROUTING , attributeMap);
 			}
 
 			/* Loop until "Admissible paths" section */
@@ -180,7 +181,7 @@ public class IOSNDLibNative extends IOFilter
 					if (data1.length < 1) break;
 					
 					String name = data1[0];
-					Map<String, String> attributeMap = new LinkedHashMap<String, String>();
+					SortedMap<String, String> attributeMap = new TreeMap<String, String>();
 					attributeMap.put("name", name);
 					
 					List<Link> linkMap = new LinkedList<Link> ();

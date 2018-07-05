@@ -11,13 +11,19 @@
 
 package com.net2plan.interfaces.simulation;
 
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.utils.StringUtils;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.StringUtils;
 
 /**
  * <p>Class representing a simulation event.</p>
@@ -59,7 +65,12 @@ public class SimEvent implements Comparable<SimEvent>
 	 */
 	public static class DemandAdd
 	{
-		public Demand demandAddedToFillByProcessor; public final Node ingressNode; public final Node egressNode; public final NetworkLayer layer; public double offeredTraffic;
+		public Demand demandAddedToFillByProcessor; 
+		public final Node ingressNode; 
+		public final Node egressNode; 
+		public final NetworkLayer layer; 
+		public double offeredTraffic;
+		public final RoutingType routingType;
 
 		/**
 		 * Default constructor.
@@ -67,9 +78,10 @@ public class SimEvent implements Comparable<SimEvent>
 		 * @param egressNode Egress Node
 		 * @param layer Network Layer
 		 * @param offeredTraffic Offered traffic
+		 * @param routingType Routing type
 		 */
 		public DemandAdd
-			(Node ingressNode, Node egressNode, NetworkLayer layer, double offeredTraffic) { this.ingressNode = ingressNode; this.egressNode = egressNode; this.layer = layer; this.offeredTraffic = offeredTraffic;	}
+			(Node ingressNode, Node egressNode, NetworkLayer layer, double offeredTraffic , RoutingType routingType) { this.ingressNode = ingressNode; this.egressNode = egressNode; this.layer = layer; this.offeredTraffic = offeredTraffic;this.routingType = routingType;	}
 		@Override
 		public String toString()
 		{

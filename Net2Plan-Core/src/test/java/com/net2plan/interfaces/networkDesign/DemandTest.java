@@ -9,6 +9,7 @@
  *     Pablo Pavon Marino and others - initial API and implementation
  *******************************************************************************/
 
+
 package com.net2plan.interfaces.networkDesign;
 
 import static org.junit.Assert.assertEquals;
@@ -16,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,19 +24,26 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
+import java.util.SortedSet;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import com.google.common.collect.Sets;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
-import org.junit.rules.TemporaryFolder;
 
-public class DemandTest
+public class DemandTest 
 {
+    public static final String TEST_FILE_DIRECTORY = "src/test/resources/temp";
+    public static final String TEST_FILE_NAME = "test.n2p";
+
 	private NetPlan np = null;
 	private Node n1, n2 , n3;
 	private Link link12, link23 , link13;
@@ -48,9 +55,6 @@ public class DemandTest
 	private Route segm13;
 	private NetworkLayer lowerLayer , upperLayer;
 	private Link upperLink12;
-
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception 
@@ -74,27 +78,25 @@ public class DemandTest
 		this.link12 = np.addLink(n1,n2,100,100,1,null,lowerLayer);
 		this.link23 = np.addLink(n2,n3,100,100,1,null,lowerLayer);
 		this.link13 = np.addLink(n1,n3,100,100,1,null,lowerLayer);
-		this.d13 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
+		this.d13 = np.addDemand(n1 , n3 , 3 , RoutingType.SOURCE_ROUTING , null,lowerLayer);
 		d13.setIntendedRecoveryType(Demand.IntendedRecoveryType.NONE);
-		this.d12 = np.addDemand(n1, n2, 3 , null,lowerLayer);
+		this.d12 = np.addDemand(n1, n2, 3  , RoutingType.SOURCE_ROUTING, null,lowerLayer);
 		this.r12 = np.addRoute(d12,1,1.5,Collections.singletonList(link12),null);
 		this.path13 = new LinkedList<Link> (); path13.add(link12); path13.add(link23);
 		this.r123a = np.addRoute(d13,1,1.5,path13,null);
 		this.r123b = np.addRoute(d13,1,1.5,path13,null);
-		this.res2 = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.res2backup = np.addResource("type" , "name" , n2 , 100 , "Mbps" , null , 10 , null);
-		this.scd123 = np.addDemand(n1 , n3 , 3 , null,lowerLayer);
+		this.res2 = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
+		this.res2backup = np.addResource("type" , "name" , Optional.of(n2) , 100 , "Mbps" , null , 10 , null);
+		this.scd123 = np.addDemand(n1 , n3 , 3 , RoutingType.SOURCE_ROUTING , null,lowerLayer);
 		this.scd123.setServiceChainSequenceOfTraversedResourceTypes(Collections.singletonList("type"));
 		this.pathSc123 = Arrays.asList(link12 ,res2 , link23); 
 		this.sc123 = np.addServiceChain(scd123 , 100 , Arrays.asList(300.0 , 50.0 , 302.0) , pathSc123 , null); 
 		this.segm13 = np.addRoute(d13 , 0 , 50 , Collections.singletonList(link13) , null);
 		this.r123a.addBackupRoute(segm13);
 		this.upperLink12 = np.addLink(n1,n2,10,100,1,null,upperLayer);
-		this.d12.coupleToUpperLayerLink(upperLink12);
+		this.d12.coupleToUpperOrSameLayerLink(upperLink12);
 
 		np.checkCachesConsistency();
-
-		temporaryFolder.create();
 	}
 
 
@@ -102,14 +104,26 @@ public class DemandTest
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
-
-		temporaryFolder.delete();
 	}
 
 	@Test
-	public void testBidirectional () throws IOException
+	public void testSetMaximumLatencyE2E ()
 	{
-		Pair<Demand,Demand> pair = np.addDemandBidirectional(n1, n2, 1, null);
+		assertEquals (scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , Double.MAX_VALUE , 0);
+		scd123.setMaximumAcceptableE2EWorstCaseLatencyInMs(1);
+		assertEquals (scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , 1 , 0);
+		File f = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME);
+		this.np.saveToFile(f);
+		NetPlan readNp = new NetPlan (f);
+		assertEquals (readNp.getDemandFromId(scd123.getId()).getMaximumAcceptableE2EWorstCaseLatencyInMs() , 1 , 0);
+		scd123.setMaximumAcceptableE2EWorstCaseLatencyInMs(-1);
+		assertEquals (scd123.getMaximumAcceptableE2EWorstCaseLatencyInMs() , Double.MAX_VALUE , 0);
+	}
+	
+	@Test
+	public void testBidirectional ()
+	{
+		Pair<Demand,Demand> pair = np.addDemandBidirectional(n1, n2, 1 , RoutingType.SOURCE_ROUTING, null);
 		assertTrue (pair.getFirst().isBidirectional());
 		assertTrue (pair.getSecond().isBidirectional());
 		assertEquals (pair.getFirst().getBidirectionalPair() , pair.getSecond());
@@ -118,16 +132,16 @@ public class DemandTest
 		assertTrue (!pair.getSecond().isBidirectional());
 		assertEquals (pair.getSecond().getBidirectionalPair() , null);
 		
-		Demand otherDemand = np.addDemand(n1, n3, 1, null);
+		Demand otherDemand = np.addDemand(n1, n3, 1 , RoutingType.SOURCE_ROUTING, null);
 		try { otherDemand.setBidirectionalPair(pair.getFirst()); fail (); } catch (Exception e) {}
 		
-		Demand otherDemand2 = np.addDemand(n1, n2, 1, null);
+		Demand otherDemand2 = np.addDemand(n1, n2, 1 , RoutingType.SOURCE_ROUTING, null);
 		pair.getSecond().setBidirectionalPair(otherDemand2);
 		assertTrue (pair.getSecond().isBidirectional());
 		assertEquals (otherDemand2.getBidirectionalPair() , pair.getSecond());
 		assertEquals (pair.getSecond().getBidirectionalPair() , otherDemand2);
-
-		File f = temporaryFolder.newFile("temp.n2p");
+		
+		File f = new File (TEST_FILE_DIRECTORY, TEST_FILE_NAME);
 		this.np.saveToFile(f);
 		NetPlan readNp = new NetPlan (f);
 		assertTrue(readNp.isDeepCopy(np));
@@ -293,7 +307,7 @@ public class DemandTest
 	public void testGetForwardingRules() 
 	{
 		scd123.remove();
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		Map<Pair<Demand,Link>,Double> frs = new HashMap<Pair<Demand,Link>,Double> ();
 		frs.put(Pair.of(d12 , link12) , 1.0);
 		assertEquals (d12.getForwardingRules() , frs);
@@ -326,16 +340,16 @@ public class DemandTest
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		assertEquals (scd123.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		scd123.remove();
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		assertEquals (d12.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.LOOPLESS);
-		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING , lowerLayer);
 		Link link21 = np.addLink(n2,n1,100,100,1,null,lowerLayer);
 		List<Link> path1213 = new LinkedList<Link> (); path1213.add(link12); path1213.add(link21); path1213.add(link13); 
 		Route r1213 = np.addRoute(d13,1,1.5,path1213,null);
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
 		np.checkCachesConsistency();
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		np.checkCachesConsistency();
 		assertEquals (d13.getRoutingCycleType() , RoutingCycleType.OPEN_CYCLES);
 		np.checkCachesConsistency();
@@ -367,7 +381,7 @@ public class DemandTest
 	public void testGetBidirectionalPair() 
 	{
 		assertEquals (d12.getBidirectionalPair() , null);
-		Pair<Demand,Demand> pair = np.addDemandBidirectional(n1,n2,3,null,lowerLayer);
+		Pair<Demand,Demand> pair = np.addDemandBidirectional(n1,n2,3 , RoutingType.SOURCE_ROUTING,null,lowerLayer);
 		assertEquals (pair.getFirst().getBidirectionalPair() , pair.getSecond());
 		assertEquals (pair.getSecond().getBidirectionalPair() , pair.getFirst());
 	}
@@ -408,7 +422,7 @@ public class DemandTest
 	{
 		try { d12.removeAllForwardingRules(); fail ("Bad"); } catch (Exception e) {}
 		scd123.remove();
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		d12.removeAllForwardingRules();
 		assertEquals (d12.getCarriedTraffic() , 0 , 0.0);
 		assertEquals (d12.getForwardingRules() , Collections.emptyMap());
@@ -417,7 +431,7 @@ public class DemandTest
 	@Test
 	public void testComputeShortestPathRoutes() 
 	{
-		Pair<Set<Route>,Double> sps = d12.computeShortestPathRoutes(null);
+		Pair<SortedSet<Route>,Double> sps = d12.computeShortestPathRoutes(null);
 		assertEquals (sps.getFirst() , Collections.singleton(r12));
 		assertEquals (sps.getSecond() , 1.0 , 0.0);
 		sps = d13.computeShortestPathRoutes(null);
@@ -449,9 +463,9 @@ public class DemandTest
 	public void testComputeRoutingFundamentalMatrixDemand() 
 	{
 		scd123.remove();
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , lowerLayer);
 		np.checkCachesConsistency();
-		np.setRoutingType(RoutingType.SOURCE_ROUTING , lowerLayer);
+		np.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING , lowerLayer);
 		np.checkCachesConsistency();
 		assertEquals(d12.getRoutes().size() , 1);
 		assertEquals(d12.getRoutes().iterator().next().getSeqLinks() , Collections.singletonList(link12));
