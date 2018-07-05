@@ -68,7 +68,7 @@ public class Offline_cba_congControLinkBwSplitTwolQoS implements IAlgorithm
 		
 		/* Remove all demands, then create a demand per input output node pair. One route for it  */
 		netPlan.removeAllDemands();
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		netPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		List<Integer> arrayIndexesOfDemand1 = new LinkedList<Integer> ();
 		List<Integer> arrayIndexesOfDemand2 = new LinkedList<Integer> ();
 		this.demandType = DoubleFactory1D.dense.make (D);
@@ -76,15 +76,15 @@ public class Offline_cba_congControLinkBwSplitTwolQoS implements IAlgorithm
 			for (Node n2 : netPlan.getNodes())
 				if (n1 != n2) 
 				{ 
-					final Demand d1 = netPlan.addDemand(n1, n2, 0.0, null); d1.setAttribute("type" , "1"); demandType.set(d1.getIndex (), 1); 
-					final Demand d2 = netPlan.addDemand(n1, n2, 0.0, null); d2.setAttribute("type" , "2"); demandType.set(d2.getIndex (), 2); 
+					final Demand d1 = netPlan.addDemand(n1, n2, 0.0, RoutingType.SOURCE_ROUTING , null); d1.setAttribute("type" , "1"); demandType.set(d1.getIndex (), 1); 
+					final Demand d2 = netPlan.addDemand(n1, n2, 0.0, RoutingType.SOURCE_ROUTING , null); d2.setAttribute("type" , "2"); demandType.set(d2.getIndex (), 2); 
 					arrayIndexesOfDemand1.add (d1.getIndex ());
 					arrayIndexesOfDemand2.add (d2.getIndex ());
 				}
 
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		netPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		netPlan.addRoutesFromCandidatePathList(netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm() , 1 , -1, -1, -1, -1, -1, -1, null)); // one route per demand, so P equals D
 
 		

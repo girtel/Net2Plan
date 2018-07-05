@@ -164,11 +164,11 @@ public class Online_evProc_congControlAndTransmissionPowerAssignmentDualDecomp e
 		
 		/* Remove all routes, and create one with the shortest path in km for each demand */
 		this.currentNetPlan.removeAllDemands();
-		currentNetPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		currentNetPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		for (Node n1 : this.currentNetPlan.getNodes())
 			for (Node n2 : this.currentNetPlan.getNodes())
 				if (n1 != n2)
-					this.currentNetPlan.addDemand(n1, n2, cc_minHd.getDouble(), null);
+					this.currentNetPlan.addDemand(n1, n2, cc_minHd.getDouble(), RoutingType.SOURCE_ROUTING , null);
 		this.currentNetPlan.addRoutesFromCandidatePathList(currentNetPlan.computeUnicastCandidatePathList(currentNetPlan.getVectorLinkLengthInKm() , 1, -1, -1, -1, -1, -1, -1 , null));
 
 		

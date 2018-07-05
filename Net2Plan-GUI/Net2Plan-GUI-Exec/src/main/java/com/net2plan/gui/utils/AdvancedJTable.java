@@ -60,8 +60,6 @@ public class AdvancedJTable extends JTable {
     private boolean isSelectAllForActionEvent = true;
     private boolean isSelectAllForKeyEvent = true;
 
-
-
     /**
      * Default constructor.
      *
@@ -70,15 +68,16 @@ public class AdvancedJTable extends JTable {
     public AdvancedJTable() {
         super();
 
-
         setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         addKeyListener(new TableCursorNavigation());
-        cellEditorMap = new LinkedHashMap<Pair<Integer, Integer>, TableCellEditor>();
-        cellRendererMap = new LinkedHashMap<Pair<Integer, Integer>, TableCellRenderer>();
-        tooltipMap = new LinkedHashMap<Pair<Integer, Integer>, String>();
+        cellEditorMap = new LinkedHashMap<>();
+        cellRendererMap = new LinkedHashMap<>();
+        tooltipMap = new LinkedHashMap<>();
 
         disableSetAutoResizeMode = true;
         this.getTableHeader().setReorderingAllowed(false);
+
+        this.addKeyboardActions();
     }
 
     /**
@@ -90,13 +89,33 @@ public class AdvancedJTable extends JTable {
     public AdvancedJTable(TableModel model) {
         this();
 
-        setModel(model);
-        this.getTableHeader().setReorderingAllowed(false);
+        this.setModel(model);
     }
 
     @Override
     public void setModel(TableModel model){
         super.setModel(model);
+    }
+
+    protected void addKeyboardActions()
+    {
+        final AbstractAction invertSelectionAction = new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent)
+            {
+                final AdvancedJTable parent = AdvancedJTable.this;
+                final int[] selectedRows = parent.getSelectedRows();
+
+                parent.selectAll();
+
+                for (int selectedRow : selectedRows)
+                    parent.removeRowSelectionInterval(selectedRow, selectedRow);
+            }
+        };
+
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_MASK), "invertSelection");
+        this.getActionMap().put("invertSelection", invertSelectionAction);
     }
 
     @Override

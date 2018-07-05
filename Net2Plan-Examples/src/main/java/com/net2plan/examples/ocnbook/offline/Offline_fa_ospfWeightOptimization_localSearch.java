@@ -64,7 +64,7 @@ public class Offline_fa_ospfWeightOptimization_localSearch implements IAlgorithm
 		final int N = netPlan.getNumberOfNodes();
 		if (N == 0) throw new Net2PlanException("The input design must have nodes");
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING);
+		netPlan.setRoutingTypeAllDemands (RoutingType.HOP_BY_HOP_ROUTING);
 		
 		
 		/* Initialize some variables */

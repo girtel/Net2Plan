@@ -98,7 +98,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
                 {
                     netPlan.setNetworkLayerDefault(layer);
                     callback.getVisualizationState().setCanvasLayerVisibility(layer, true);
-                    callback.updateVisualizationAfterChanges(Collections.singleton(Constants.NetworkElementType.LAYER));
+                    callback.updateVisualizationAfterChanges();
                 }
             }
         }

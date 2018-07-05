@@ -25,7 +25,6 @@ class DrawLine
     private static final Stroke STROKE_LINKSREGULAR = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
     private static final Stroke STROKE_LINKSNOURL = new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
 
-    // TODO: These have to be private.
     private DrawNode from;
     private DrawNode to;
     private Polygon shapeLineToCreateByPainter;

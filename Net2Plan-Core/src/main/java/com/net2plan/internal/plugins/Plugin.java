@@ -18,9 +18,9 @@
 
 package com.net2plan.internal.plugins;
 
-import com.net2plan.internal.IExternal;
-
 import java.util.Map;
+
+import com.net2plan.internal.IExternal;
 
 /**
  * Interface to be implemented by any external plugin.
@@ -28,7 +28,7 @@ import java.util.Map;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.3.0
  */
-public interface Plugin extends IExternal
+public interface Plugin extends IExternal 
 {
 	/**
 	 * Returns the current value for the plugin options.
@@ -54,4 +54,7 @@ public interface Plugin extends IExternal
 	 * @since 0.3.1
 	 */
 	public int getPriority();
+
+
+
 }

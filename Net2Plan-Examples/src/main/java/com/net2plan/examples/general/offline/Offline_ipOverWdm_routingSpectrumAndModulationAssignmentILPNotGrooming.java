@@ -155,7 +155,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 			netPlan.setLinkCapacityUnitsName("Frequency slots");
 			this.ipLayer = netPlan.addLayer("IP" , "IP layer" , "Gbps" , "Gbps" , null , null);
 			for (Demand wdmDemand : netPlan.getDemands(wdmLayer))
-				netPlan.addDemand(wdmDemand.getIngressNode(), wdmDemand.getEgressNode() , wdmDemand.getOfferedTraffic() , wdmDemand.getAttributes() , ipLayer);
+				netPlan.addDemand(wdmDemand.getIngressNode(), wdmDemand.getEgressNode() , wdmDemand.getOfferedTraffic() , RoutingType.SOURCE_ROUTING , wdmDemand.getAttributes() , ipLayer);
 		}
 		else
 		{
@@ -186,12 +186,10 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 		netPlan.removeAllLinks (ipLayer);
 		netPlan.removeAllDemands (wdmLayer);
 		netPlan.removeAllMulticastDemands(wdmLayer);
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING , wdmLayer);
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING , ipLayer);
 
 		/* Compute the candidate path list of possible paths */
-		final Map<Pair<Node,Node>,List<List<Link>>> cpl = netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm(wdmLayer) , k.getInt(), tpInfo.getMaxOpticalReachKm() , -1, maxPropagationDelayMs.getDouble(), -1, -1, -1 , null , wdmLayer);
-		final Map<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11 = networkRecoveryType.getString().equals("1+1-srg-disjoint-lps")? NetPlan.computeUnicastCandidate11PathList(cpl,0) : null;
+		final SortedMap<Pair<Node,Node>,List<List<Link>>> cpl = netPlan.computeUnicastCandidatePathList(netPlan.getVectorLinkLengthInKm(wdmLayer) , k.getInt(), tpInfo.getMaxOpticalReachKm() , -1, maxPropagationDelayMs.getDouble(), -1, -1, -1 , null , wdmLayer);
+		final SortedMap<Pair<Node,Node>,List<Pair<List<Link>,List<Link>>>> cpl11 = networkRecoveryType.getString().equals("1+1-srg-disjoint-lps")? NetPlan.computeUnicastCandidate11PathList(cpl,0) : null;
 		
 		/* Compute the CPL, adding the routes */
 		/* 1+1 case: as many routes as 1+1 valid pairs (then, the same sequence of links can be in more than one Route). The route index and segment index are the same (1+1 pair index) */
@@ -209,6 +207,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 		List<Demand> ipDemand_p = new ArrayList<Demand> (maximumNumberOfPaths);
 		for (Demand ipDemand : netPlan.getDemands(ipLayer))
 		{
+			ipDemand.setRoutingType(RoutingType.SOURCE_ROUTING);
 			boolean atLeastOnePathOrPathPair = false;
 			for (int t = 0 ; t < T ; t ++)
 			{
@@ -414,7 +413,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 			{
 				final int s = slots.get (cont);
 				final Demand newWDMDemand = netPlan.addDemand(ipDemand.getIngressNode() , ipDemand.getEgressNode() , 
-						lineRate_p.get(p) , null , wdmLayer);
+						lineRate_p.get(p) , RoutingType.SOURCE_ROUTING , null , wdmLayer);
 				final Route r = WDMUtils.addLightpath(newWDMDemand , new WDMUtils.RSA(seqLinks_p.get(p) , s , numSlots_p.get(p) , regPositions_p.get(p)) , lineRate_p.get(p));
 				final Link ipLink = newWDMDemand.coupleToNewLinkCreated(ipLayer);
 				final double ipTrafficToCarry = Math.min(lineRate_p.get(p) , ipDemand.getBlockedTraffic());

@@ -427,12 +427,6 @@ public final class JUNGCanvas implements ITopologyCanvas
         return stateController.getState();
     }
 
-    @Override
-    public void returnToPreviousState()
-    {
-        stateController.returnToPreviousState();
-    }
-
     /** ------ **/
 
     private class NodeLabelRenderer extends BasicVertexLabelRenderer<GUINode, GUILink>

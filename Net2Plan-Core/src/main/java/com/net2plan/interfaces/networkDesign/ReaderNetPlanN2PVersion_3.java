@@ -147,7 +147,7 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 
 	protected void parseHopByHopRouting(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
-		netPlan.setRoutingType (RoutingType.HOP_BY_HOP_ROUTING , mapOldId2Layer.get(layerId));
+		netPlan.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING , mapOldId2Layer.get(layerId));
 		final NetworkLayer layer = mapOldId2Layer.get(layerId);
 		final int D = netPlan.getNumberOfDemands(layer);
 		final int E = netPlan.getNumberOfLinks(layer);
@@ -178,7 +178,7 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 					{ 
 						NetworkLayer thisLayer = mapOldId2Layer.get(layerId); 
 						
-						netPlan.setForwardingRules(f_de , thisLayer); 
+						netPlan.setForwardingRules(f_de , null , thisLayer); 
 						return; 
 					}
 					break;
@@ -190,7 +190,7 @@ class ReaderNetPlanN2PVersion_3 extends ReaderNetPlanN2PVersion_2
 
 	protected void parseSourceRouting(NetPlan netPlan, long layerId, XMLStreamReader2 xmlStreamReader) throws XMLStreamException
 	{
-		netPlan.setRoutingType (RoutingType.SOURCE_ROUTING , mapOldId2Layer.get(layerId));
+		netPlan.setRoutingTypeAllDemands (RoutingType.SOURCE_ROUTING , mapOldId2Layer.get(layerId));
 
 		while(xmlStreamReader.hasNext())
 		{

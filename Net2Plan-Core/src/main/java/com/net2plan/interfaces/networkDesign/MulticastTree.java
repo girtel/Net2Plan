@@ -11,12 +11,21 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.utils.Triple;
-
-import java.util.*;
-import java.util.Map.Entry;
 
 
 /**
@@ -41,28 +50,29 @@ public class MulticastTree extends NetworkElement
 {
 	final NetworkLayer layer;
 	final MulticastDemand demand;
-	Map<Node,List<Link>> pathToEgressNode;
-	Set<Link> linkSet;
-	final Set<Link> initialSetLinksWhenWasCreated;
+	private SortedMap<Node,List<Link>> pathToReachableEgressNode;
+	SortedSet<Link> linkSet;
+	final SortedSet<Link> initialSetLinksWhenWasCreated;
 	double carriedTrafficIfNotFailing;
 	double occupiedLinkCapacityIfNotFailing;
-	Set<Node> cache_traversedNodes;
-	Map<Node,Link> cache_ingressLinkOfNode;
-	Map<Node,Set<Link>> cache_egressLinksOfNode;
+	SortedSet<Node> cache_traversedNodes;
+	SortedMap<Node,Link> cache_ingressLinkOfNode;
+	SortedMap<Node,SortedSet<Link>> cache_egressLinksOfNode;
 	
 
 	MulticastTree (NetPlan netPlan , long id , int index,  MulticastDemand demand , Set<Link> links , AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
-		
-		this.pathToEgressNode = netPlan.checkMulticastTreeValidityForDemand(links, demand).getFirst();
+		this.setName ("MulticastTree-" + index);
+
+		this.pathToReachableEgressNode = netPlan.checkMulticastTreeValidityForDemand(links, demand).getFirst();
 		this.layer = demand.layer;
 		this.demand = demand;
-		this.linkSet = new HashSet<Link> (links);
-		this.initialSetLinksWhenWasCreated = new HashSet<Link> (links);
+		this.linkSet = new TreeSet<Link> (links);
+		this.initialSetLinksWhenWasCreated = new TreeSet<Link> (links);
 		this.carriedTrafficIfNotFailing = 0; 
 		this.occupiedLinkCapacityIfNotFailing = 0; 
-		Triple<Set<Node>,Map<Node,Link>,Map<Node,Set<Link>>> caches = updateCaches ();	
+		Triple<SortedSet<Node>,SortedMap<Node,Link>,SortedMap<Node,SortedSet<Link>>> caches = updateCaches (demand.ingressNode , this.pathToReachableEgressNode , this.linkSet);	
 		this.cache_traversedNodes = caches.getFirst ();
 		this.cache_ingressLinkOfNode = caches.getSecond ();
 		this.cache_egressLinksOfNode = caches.getThird ();
@@ -74,12 +84,12 @@ public class MulticastTree extends NetworkElement
 		if (!super.isDeepCopy(e2)) return false;
 		if (layer.id != e2.layer.id) return false;
 		if (demand.id != e2.demand.id) return false;
-		if (!NetPlan.isDeepCopy(this.pathToEgressNode.keySet() , e2.pathToEgressNode.keySet ())) return false;
-		for (Node n1 : pathToEgressNode.keySet())
+		if (!NetPlan.isDeepCopy(this.pathToReachableEgressNode.keySet() , e2.pathToReachableEgressNode.keySet ())) return false;
+		for (Node n1 : pathToReachableEgressNode.keySet())
 		{
 			final Node n2 = e2.netPlan.getNodeFromId(n1.id);
-			final Collection<Long> l1Links = NetPlan.getIds(pathToEgressNode.get(n1));
-			final Collection<Long> l2Links = NetPlan.getIds(e2.pathToEgressNode.get(n2));
+			final Collection<Long> l1Links = NetPlan.getIds(pathToReachableEgressNode.get(n1));
+			final Collection<Long> l2Links = NetPlan.getIds(e2.pathToReachableEgressNode.get(n2));
 			if (!l1Links.equals(l2Links)) return false;
 		}
 		if (!NetPlan.isDeepCopy(this.linkSet , e2.linkSet)) return false;
@@ -152,18 +162,18 @@ public class MulticastTree extends NetworkElement
 			final Link eOrigin = neOrigin.getValue (); final Link eThis = (eOrigin == null)? (Link) null : (Link) this.netPlan.getPeerElementInThisNetPlan (eOrigin);
 			this.cache_ingressLinkOfNode.put(nThis , eThis);
 		}
-		this.pathToEgressNode.clear ();
-		for (Node nOrigin : origin.pathToEgressNode.keySet()) 
+		this.pathToReachableEgressNode.clear ();
+		for (Node nOrigin : origin.pathToReachableEgressNode.keySet()) 
 		{
-			List<Link> originPath = origin.pathToEgressNode.get(nOrigin);
+			List<Link> originPath = origin.pathToReachableEgressNode.get(nOrigin);
 			List<Link> newPath = new LinkedList<Link> (); for (Link originLink : originPath) newPath.add((Link) this.netPlan.getPeerElementInThisNetPlan (originLink));
-			this.pathToEgressNode.put((Node) this.netPlan.getPeerElementInThisNetPlan (nOrigin) , newPath);
+			this.pathToReachableEgressNode.put((Node) this.netPlan.getPeerElementInThisNetPlan (nOrigin) , newPath);
 		}
 		this.cache_egressLinksOfNode.clear ();
 		for (Node nOrigin : origin.cache_egressLinksOfNode.keySet()) 
 		{
-			Set<Link> originEgressLinks = origin.cache_egressLinksOfNode.get(nOrigin);
-			Set<Link> newEgressLinks = new HashSet<Link> (); for (Link originLink : originEgressLinks) newEgressLinks.add((Link) this.netPlan.getPeerElementInThisNetPlan (originLink));
+			SortedSet<Link> originEgressLinks = origin.cache_egressLinksOfNode.get(nOrigin);
+			SortedSet<Link> newEgressLinks = new TreeSet<> (); for (Link originLink : originEgressLinks) newEgressLinks.add((Link) this.netPlan.getPeerElementInThisNetPlan (originLink));
 			this.cache_egressLinksOfNode.put((Node) this.netPlan.getPeerElementInThisNetPlan (nOrigin) , newEgressLinks);
 		}
 	}
@@ -186,9 +196,9 @@ public class MulticastTree extends NetworkElement
 	public Set<SharedRiskGroup> getSRGs ()
 	{
 		checkAttachedToNetPlanObject();
-		Set<SharedRiskGroup> res = new HashSet<SharedRiskGroup> ();
-		for (Link e : linkSet) res.addAll (e.cache_srgs);
-		for (Node n : cache_traversedNodes) res.addAll (n.cache_nodeSRGs);
+		Set<SharedRiskGroup> res = new TreeSet<SharedRiskGroup> ();
+		for (Link e : linkSet) res.addAll (e.getSRGs());
+		for (Node n : cache_traversedNodes) res.addAll (n.getSRGs());
 		return res;
 	}
 
@@ -211,22 +221,45 @@ public class MulticastTree extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the {@code Set} of egress {@link com.net2plan.interfaces.networkDesign.Node Nodes} of the tree (i.e the ones of the associated multicast demand).</p>
-	 * @return The {@code Set} of egress nodes, as an unmodifiable set
+	 * <p>Returns the subset of the egress nodes of the tree (i.e the ones of the associated multicast demand), that 
+	 * are actually reached by the tree links, as an unmodifiable set</p>
+	 * @return see above
 	 */
-	public Set<Node> getEgressNodes() 
+	public Set<Node> getEgressNodesReached() 
 	{ 
-		return Collections.unmodifiableSet(pathToEgressNode.keySet()); 	
+		return Collections.unmodifiableSet(pathToReachableEgressNode.keySet()); 	
 	}
+	
+//	/**
+//	 * <p>Returns the subset of the egress nodes of the tree (i.e the ones of the associated multicast demand), that 
+//	 * are actually reached by the tree links, as an unmodifiable set</p>
+//	 * @return see above
+//	 */
+//	public Set<Node> getEgressNodesReached() 
+//	{ 
+//		return Collections.unmodifiableSet(this.pathToReachableEgressNode.keySet()); 	
+//	}
+	
+	/** Returns true if the given node is a reached egress node of the multicast tree
+	 * @param n the node
+	 * @return see above
+	 */
+	public boolean isReachedEgressNode (Node n) { return this.pathToReachableEgressNode.containsKey(n); }
+	
+	/** Returns true if the multicast tree is reaching all the egress nodes of the demand 
+	 * @return see above
+	 */
+	public boolean isReachinAllDemandEgressNodes () { return getEgressNodesReached().equals(getMulticastDemand().getEgressNodes()); }
 
 	/**
-	 * <p>Given an egress {@link com.net2plan.interfaces.networkDesign.Node Node}, returns the unique sequence of tree {@link com.net2plan.interfaces.networkDesign.Link Links} from the ingress node to it.</p>
+	 * <p>Given an egress node, returns the unique sequence of tree links from the ingress node to it, or null if the egress 
+	 * node is not part of the tree, or the node passed is not an egress node of the multicast demand.</p>
 	 * @param egressNode The egress node
-	 * @return The sequence of links as an unmodifiable {@code List}, or {@code null} if {@code egressNode} is not an egress node of the tree
+	 * @return see above
 	 */
 	public List<Link> getSeqLinksToEgressNode(Node egressNode) 
 	{ 
-		final List<Link> seqLinks = pathToEgressNode.get(egressNode); return (seqLinks == null)? null : Collections.unmodifiableList(seqLinks); 
+		final List<Link> seqLinks = pathToReachableEgressNode.get(egressNode); return (seqLinks == null)? null : Collections.unmodifiableList(seqLinks); 
 	}
 
 	/**
@@ -238,7 +271,7 @@ public class MulticastTree extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		Map<Node,List<Link>> newPathToEgressNode = netPlan.checkMulticastTreeValidityForDemand (newLinkSet , demand).getFirst();
+		SortedMap<Node,List<Link>> newPathToEgressNodeOfReachedNodes = netPlan.checkMulticastTreeValidityForDemand (newLinkSet , demand).getFirst();
 
 		/* Remove the old tree trace in the traversed nodes and links */
 		final double currentCarriedTrafficIfAllOk = carriedTrafficIfNotFailing;
@@ -252,9 +285,9 @@ public class MulticastTree extends NetworkElement
 			node.cache_nodeAssociatedulticastTrees.remove (this);
 
 		/* update the tree information of the object */
-		this.linkSet = newLinkSet;
-		this.pathToEgressNode = newPathToEgressNode;
-		Triple<Set<Node>,Map<Node,Link>,Map<Node,Set<Link>>> caches = updateCaches ();	
+		this.linkSet = new TreeSet<> (newLinkSet);
+		this.pathToReachableEgressNode = newPathToEgressNodeOfReachedNodes;
+		Triple<SortedSet<Node>,SortedMap<Node,Link>,SortedMap<Node,SortedSet<Link>>> caches = updateCaches (demand.ingressNode , this.pathToReachableEgressNode , this.linkSet);	
 		this.cache_traversedNodes = caches.getFirst ();
 		this.cache_ingressLinkOfNode = caches.getSecond ();
 		this.cache_egressLinksOfNode = caches.getThird ();
@@ -269,7 +302,10 @@ public class MulticastTree extends NetworkElement
 			if (e.capacity < Configuration.precisionFactor) treeIsTravZeroCapLink = true;
 		}
 		for (Node node : cache_traversedNodes)
+		{
+		    treeIsUp = treeIsUp && node.isUp;
 			node.cache_nodeAssociatedulticastTrees.add (this);
+		}
 		if (!treeIsUp) layer.cache_multicastTreesDown.add (this);
 		if (treeIsTravZeroCapLink) layer.cache_multicastTreesTravLinkZeroCap.add(this);
 		setCarriedTraffic(currentCarriedTrafficIfAllOk, currentOccupiedCapacityIfAllOk);
@@ -306,9 +342,9 @@ public class MulticastTree extends NetworkElement
 	}
 	
 	/**
-	 * <p>Returns the {@code Set} of {@link com.net2plan.interfaces.networkDesign.Node Nodes} in the tree: those that are the initial or end node of a
-	 * {@link com.net2plan.interfaces.networkDesign.Link Link} in the tree.
-	 * The number of traversed nodes in a tree equals the number of travsersed links plus one.</p>
+	 * <p>Returns the set of nodes in the tree: those that are the initial or end node of a
+	 * link in the tree. The number of traversed nodes in a tree equals the number of travsersed links plus one. 
+	 * Note that the set of reached egress nodes is a subset of this set, but non-reached nodes are not part of this set.</p>
 	 * @return The {@code Set} of traversed nodes as an unmodifiable set
 	 */
 	public Set<Node> getNodeSet () 
@@ -351,14 +387,14 @@ public class MulticastTree extends NetworkElement
 
 
 	/**
-	 * <p>Returns the length in kms of the longest path from the ingress {@link com.net2plan.interfaces.networkDesign.Node Node} to the egress nodes.</p>
-	 * @return The maximum end to end length in km for the tree
+	 * <p>Returns the length in kms of the longest path from the ingress node to the reachable egress nodes.</p>
+	 * @return see above
 	 */
 	public double getTreeMaximumPathLengthInKm () 
 	{
 		checkAttachedToNetPlanObject();
 		double max = 0; 
-		for (List<Link> seqLinks : pathToEgressNode.values())
+		for (List<Link> seqLinks : pathToReachableEgressNode.values())
 		{
 			double accum = 0; for (Link e : seqLinks) accum += e.getLengthInKm();
 			max = Math.max(max, accum);
@@ -367,28 +403,28 @@ public class MulticastTree extends NetworkElement
 	}
 
 	/**
-	 * <p>Returns the average length in kms among the paths from the ingress {@link com.net2plan.interfaces.networkDesign.Node Node} to each of the egress nodes.</p>
-	 * @return The average length in kilometers among the paths from the ingress to egress nodes
+	 * <p>Returns the average length in kms among the paths from the ingress node to each of the reachable egress nodes.</p>
+	 * @return see above
 	 */
 	public double getTreeAveragePathLengthInKm () 
 	{
 		checkAttachedToNetPlanObject();
 		double accum = 0; 
-		for (List<Link> seqLinks : pathToEgressNode.values())
+		for (List<Link> seqLinks : pathToReachableEgressNode.values())
 			for (Link e : seqLinks) accum += e.getLengthInKm();
 		return accum / demand.egressNodes.size();
 	}
 
 	/**
-	 * <p>Returns the propagation delay in miliseconds of the longest (in terms of propagation delay) path from the ingress {@link com.net2plan.interfaces.networkDesign.Node Node} to the egress
-	 * nodes.</p>
-	 * @return The maximum end to end propagation delay in miliseconds
+	 * <p>Returns the propagation delay in milliseconds of the longest (in terms of propagation delay) path from the
+	 * ingress node to the reachable egress nodes.</p>
+	 * @return The maximum end to end propagation delay in milliseconds
 	 */
-	public double getTreeMaximumPropagationDelayInMs () 
+	public double getTreeMaximumPropagationDelayInMs ()
 	{
 		checkAttachedToNetPlanObject();
 		double max = 0; 
-		for (List<Link> seqLinks : pathToEgressNode.values())
+		for (List<Link> seqLinks : pathToReachableEgressNode.values())
 		{
 			double accum = 0; for (Link e : seqLinks) accum += e.getPropagationDelayInMs();
 			max = Math.max(max, accum);
@@ -404,7 +440,7 @@ public class MulticastTree extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		double accum = 0; 
-		for (List<Link> seqLinks : pathToEgressNode.values())
+		for (List<Link> seqLinks : pathToReachableEgressNode.values())
 			for (Link e : seqLinks) accum += e.getPropagationDelayInMs();
 		return accum / demand.egressNodes.size();
 	}
@@ -417,7 +453,7 @@ public class MulticastTree extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		int max = 0; 
-		for (List<Link> seqLinks : pathToEgressNode.values())
+		for (List<Link> seqLinks : pathToReachableEgressNode.values())
 			max = Math.max(max, seqLinks.size());
 		return max;
 	}
@@ -430,7 +466,7 @@ public class MulticastTree extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		int accum = 0; 
-		for (List<Link> seqLinks : pathToEgressNode.values())
+		for (List<Link> seqLinks : pathToReachableEgressNode.values())
 			accum += seqLinks.size();
 		return ((double) accum) / demand.egressNodes.size();
 	}
@@ -534,25 +570,25 @@ public class MulticastTree extends NetworkElement
 		layer.cache_multicastTreesDown.remove(this);
 		layer.cache_multicastTreesTravLinkZeroCap.remove(this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId();
+        final NetPlan npOld = this.netPlan;
+        removeId();
+        if (ErrorHandling.isDebugEnabled()) npOld.checkCachesConsistency();
 	}
 
 	
 	
 	/* From the set of paths and the set of links (are supposed to be vaild paths and associated link set), check
 	 * if the */
-	private Triple<Set<Node>,Map<Node,Link>,Map<Node,Set<Link>>> updateCaches ()
+	private static Triple<SortedSet<Node>,SortedMap<Node,Link>,SortedMap<Node,SortedSet<Link>>> updateCaches (Node ingressNode , SortedMap<Node,List<Link>> pathToEgressNode , SortedSet<Link> linkSetForCheck)
 	{
-		Set<Node> traversedNodes = new HashSet<Node> (); 
-		Map<Node,Link> ingressLinkOfNode = new HashMap<Node,Link> ();
-		Map<Node,Set<Link>> egressLinksOfNode = new HashMap<Node,Set<Link>> ();
+		SortedSet<Node> traversedNodes = new TreeSet<> (); 
+		SortedMap<Node,Link> ingressLinkOfNode = new TreeMap<> ();
+		SortedMap<Node,SortedSet<Link>> egressLinksOfNode = new TreeMap<> ();
 
 		/* update for the ingress node info */
-		Node ingressNode = demand.getIngressNode ();
 		traversedNodes.add(ingressNode);
 		ingressLinkOfNode.put (ingressNode , null);
-		egressLinksOfNode.put(ingressNode, new HashSet<Link> ());
+		egressLinksOfNode.put(ingressNode, new TreeSet<Link> ());
 		for (List<Link> seqLinks : pathToEgressNode.values())
 			for (Link e : seqLinks)
 			{
@@ -560,7 +596,7 @@ public class MulticastTree extends NetworkElement
 				final Node linkEndNode = e.getDestinationNode();
 				final boolean endNodeIsNewNode = traversedNodes.add(linkEndNode);
 				if (endNodeIsNewNode)
-					egressLinksOfNode.put(linkEndNode , new HashSet<Link> ());
+					egressLinksOfNode.put(linkEndNode , new TreeSet<Link> ());
 				else
 					if (ingressLinkOfNode.get(linkEndNode) != e) throw new RuntimeException ("Bad");
 				ingressLinkOfNode.put(linkEndNode , e);
@@ -568,15 +604,15 @@ public class MulticastTree extends NetworkElement
 			}
 		
 		/* check */
-		Set<Link> linkSetFromEgressLinks = new HashSet<Link> ();
+		Set<Link> linkSetFromEgressLinks = new TreeSet<Link> ();
 		for (Set<Link> links : egressLinksOfNode.values())
 			linkSetFromEgressLinks.addAll(links);
-		if (!this.linkSet.equals(linkSetFromEgressLinks)) throw new RuntimeException ("Bad");
+		if (!linkSetForCheck.equals(linkSetFromEgressLinks)) throw new RuntimeException ("Bad");
 
-		Set<Link> linkSetFromIngressLinks = new HashSet<Link> ();
+		Set<Link> linkSetFromIngressLinks = new TreeSet<Link> ();
 		for (Link link : ingressLinkOfNode.values())
 			if (link != null) linkSetFromIngressLinks.add(link);
-		if (!this.linkSet.equals(linkSetFromIngressLinks)) throw new RuntimeException ("Bad: linkSet: " + linkSet + ", linkSetFromIngress: " + linkSetFromIngressLinks);
+		if (!linkSetForCheck.equals(linkSetFromIngressLinks)) throw new RuntimeException ("Bad: linkSet: " + linkSetForCheck + ", linkSetFromIngress: " + linkSetFromIngressLinks);
 		
 		return Triple.of (traversedNodes , ingressLinkOfNode , egressLinksOfNode);
 	}
@@ -588,7 +624,7 @@ public class MulticastTree extends NetworkElement
 		if (seqLinks.isEmpty()) return false;
 		final Link firstLink = seqLinks.iterator().next();
 		final Node pathInitialNode = firstLink.getOriginNode();
-		Set<Node> traversedNodes = new HashSet<Node> (); traversedNodes.add(pathInitialNode);
+		Set<Node> traversedNodes = new TreeSet<Node> (); traversedNodes.add(pathInitialNode);
 		Node previousLinkOutNode = pathInitialNode;
 		for (Link e : seqLinks)
 		{
@@ -608,10 +644,12 @@ public class MulticastTree extends NetworkElement
 	 * <p>Returns a {@code String} representation of the multicast tree.</p>
 	 * @return {@code String} representation of the multicast tree
 	 */
-	public String toString () { return "mt" + index + " (id " + id + ")"; }
+	@Override
+    public String toString () { return "mt" + index + " (id " + id + ")"; }
 
 	
-	void checkCachesConsistency ()
+	@Override
+    void checkCachesConsistency ()
 	{
 		super.checkCachesConsistency ();
 
@@ -624,7 +662,8 @@ public class MulticastTree extends NetworkElement
 		for (Node node : cache_traversedNodes) if (!node.cache_nodeAssociatedulticastTrees.contains(this)) throw new RuntimeException ("Bad");
 		boolean shouldBeUp = true; for (Link e : linkSet) if (!e.isUp) { shouldBeUp = false; break; }
 		if (shouldBeUp) for (Node n : cache_traversedNodes) if (!n.isUp) { shouldBeUp = false; break; }
-		if (!shouldBeUp != this.isDown()) throw new RuntimeException("Bad");
+		if (!shouldBeUp != this.isDown()) 
+		    throw new RuntimeException("Bad");
 		if (shouldBeUp)
 		{
 			if (getCarriedTraffic() != carriedTrafficIfNotFailing) throw new RuntimeException ("Bad");

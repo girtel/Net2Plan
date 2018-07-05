@@ -19,6 +19,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.plugins.ICLIModule;
 import com.net2plan.libraries.TrafficMatrixGenerationModels;
+import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
@@ -375,7 +376,7 @@ public class CLITrafficDesign extends ICLIModule {
 
                     case "max-traffic-estimated-minHop":
                         for (int tmId = 0; tmId < numMatrices; tmId++) {
-                            netPlan.setTrafficMatrix(trafficMatrices[tmId]);
+                            netPlan.setTrafficMatrix(trafficMatrices[tmId] , RoutingType.SOURCE_ROUTING);
                             netPlan.setVectorDemandOfferedTraffic(TrafficMatrixGenerationModels.normalizeTraffic_networkCapacity(netPlan));
                             trafficMatrices[tmId] = netPlan.getMatrixNode2NodeOfferedTraffic();
                         }
@@ -390,7 +391,7 @@ public class CLITrafficDesign extends ICLIModule {
 //                        else if (solverName.equalsIgnoreCase("xpress")) solverLibraryName = Configuration.getOption("xpressSolverLicenseFileName");
 //
                         for (int tmId = 0; tmId < numMatrices; tmId++) {
-                            netPlan.setTrafficMatrix(trafficMatrices[tmId]);
+                            netPlan.setTrafficMatrix(trafficMatrices[tmId] , RoutingType.SOURCE_ROUTING);
                             netPlan.setVectorDemandOfferedTraffic(TrafficMatrixGenerationModels.normalizeTraffic_linkCapacity_xde(netPlan, solverName, solverLibraryName));
                             trafficMatrices[tmId] = netPlan.getMatrixNode2NodeOfferedTraffic();
                         }
@@ -406,7 +407,7 @@ public class CLITrafficDesign extends ICLIModule {
         for (int tmId = 0; tmId < numMatrices; tmId++) {
             NetPlan aux = new NetPlan();
 
-            aux.setTrafficMatrix(trafficMatrices[tmId]);
+            aux.setTrafficMatrix(trafficMatrices[tmId] , RoutingType.SOURCE_ROUTING);
             outputDemandSets.add(aux);
 
             trafficMatrices[tmId] = null;

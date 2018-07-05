@@ -26,6 +26,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.plugins.IOFilter;
 import com.net2plan.utils.Triple;
+import com.net2plan.utils.Constants.RoutingType;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -114,7 +115,7 @@ public class IOMatPlanWDM_trafficMatrix extends IOFilter
 		if (N == -1 || currentRow != N) throw new Net2PlanException("Bad - Wrong format");
 
 		NetPlan netPlan = new NetPlan();
-		netPlan.setTrafficMatrix(trafficMatrix);
+		netPlan.setTrafficMatrix(trafficMatrix , RoutingType.SOURCE_ROUTING);
 
 		return netPlan;
 	}

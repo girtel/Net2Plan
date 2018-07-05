@@ -25,8 +25,13 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 
 /**
  * Generic template for plugins (tools) within Net2Plan.
@@ -66,9 +71,9 @@ public abstract class IGUIModule extends JPanel implements Plugin
 	 * @param action Action to be triggered by {@code keyCombination}
 	 * @since 0.3.0
 	 */
-	public final void addKeyCombinationAction(String description, Action action, KeyStroke... keyCombination)
+	public final void addKeyCombinationAction(int focusLevel, String description, Action action, KeyStroke... keyCombination)
 	{
-		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		InputMap inputMap = getInputMap(focusLevel);
 		KeyStroke[] currentKeyCombinationArray = inputMap.keys();
 		if (currentKeyCombinationArray != null)
 		{
@@ -98,14 +103,14 @@ public abstract class IGUIModule extends JPanel implements Plugin
 	 * @return Key combination mapping: key is the description, and value is the key combination
 	 * @since 0.3.0
 	 */
-	public Map<String, KeyStroke> getKeyCombinations()
+	public Map<String, KeyStroke> getKeyCombinations(int focusLevel)
 	{
-		Map<String, KeyStroke> keyCombinationMap = new TreeMap<String, KeyStroke>();
-		InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		Map<String, KeyStroke> keyCombinationMap = new TreeMap<>();
+		InputMap inputMap = getInputMap(focusLevel);
 		KeyStroke[] currentKeyCombinationArray = inputMap.keys();
 		if (currentKeyCombinationArray != null)
 		{
-			Set<KeyStroke> currentKeyCombinationSet = new LinkedHashSet<KeyStroke>(Arrays.asList(currentKeyCombinationArray));
+			Set<KeyStroke> currentKeyCombinationSet = new LinkedHashSet<>(Arrays.asList(currentKeyCombinationArray));
 			for(KeyStroke i : currentKeyCombinationSet)
 			{
 				String description = inputMap.get(i).toString();
@@ -149,11 +154,10 @@ public abstract class IGUIModule extends JPanel implements Plugin
 		else
 		{
 			setLayout(new MigLayout("insets 0 0 0 0, nocache", "[grow]", "[50px][grow]"));
-			JPanel pnl_title = new JPanel();
-
+			JPanel pnl_title = new JPanel(new MigLayout());
+            pnl_title.setBackground (Color.YELLOW);//(new Color(0, 94, 184));
 			JLabel lbl_title = new JLabel(title);
-			pnl_title.setBackground(Color.YELLOW);
-			pnl_title.add(lbl_title);
+			pnl_title.add(lbl_title, "push, align center");
 			lbl_title.setFont(new Font(lbl_title.getFont().getName(), Font.BOLD, 20));
 			lbl_title.setForeground(Color.BLACK);
 			add(pnl_title, "grow, wrap");

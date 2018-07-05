@@ -82,10 +82,10 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
             fieldArray[i] = new JNumberField(linkUtilizationColor.get(i), 0, 100, 1);
         }
 
-        Rectangle[] rectangleArray = new Rectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
+        ColorRectangle[] rectangleArray = new ColorRectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
 
         for (int i = 0; i < rectangleArray.length; i++)
-            rectangleArray[i] = new Rectangle(VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i));
+            rectangleArray[i] = new ColorRectangle(VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i));
 
         JToggleButton btn_apply = new JToggleButton("Is applied", _visualizationState.getIsActiveLinkUtilizationColorThresholdList());
         btn_apply.setToolTipText("The link coloring per utilization is active or not");
@@ -265,10 +265,10 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
             fieldArray[i].setHorizontalAlignment(SwingConstants.RIGHT);
         }
 
-        Rectangle[] rectangleArray = new Rectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
+        ColorRectangle[] rectangleArray = new ColorRectangle[VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.size()];
 
         for (int i = 0; i < rectangleArray.length; i++)
-            rectangleArray[i] = new Rectangle(VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i));
+            rectangleArray[i] = new ColorRectangle(VisualizationConstants.DEFAULT_LINKCOLORSPERUTILIZATIONANDRUNOUT.get(i));
 
         JToggleButton btn_apply = new JToggleButton("Is applied", _visualizationState.getIsActiveLinkRunoutTimeColorThresholdList());
         btn_apply.setToolTipText("The link coloring per run-out capacity time is active or not");
@@ -595,11 +595,11 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
     }
 }
 
-class Rectangle extends JPanel
+class ColorRectangle extends JPanel
 {
     private Color color;
 
-    public Rectangle(Color color)
+    public ColorRectangle(Color color)
     {
         this.color = color;
     }

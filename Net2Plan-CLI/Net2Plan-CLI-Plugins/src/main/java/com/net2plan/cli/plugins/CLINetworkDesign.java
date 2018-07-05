@@ -26,6 +26,7 @@ import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.net2plan.utils.Constants.RoutingType;
 
 /**
  * Offline network design tool (CLI mode).
@@ -118,7 +119,7 @@ public class CLINetworkDesign extends ICLIModule
             netPlan.removeAllDemands(layer);
             for (Demand demand : demands.getDemands())
             {
-                netPlan.addDemand(demand.getIngressNode(), demand.getEgressNode(), demand.getOfferedTraffic(), demand.getAttributes(), layer);
+                netPlan.addDemand(demand.getIngressNode(), demand.getEgressNode(), demand.getOfferedTraffic(), RoutingType.SOURCE_ROUTING , demand.getAttributes(), layer);
             }
             netPlan.removeAllMulticastDemands(layer);
             for (MulticastDemand demand : demands.getMulticastDemands())

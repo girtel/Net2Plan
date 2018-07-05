@@ -112,7 +112,6 @@ public class TrafficComputationEngine
 		if (optionalLayerParameter.length >= 2) throw new Net2PlanException ("None or one layer parameter can be supplied");
 		NetworkLayer layer = (optionalLayerParameter.length == 1)? optionalLayerParameter [0] : netPlan.getNetworkLayerDefault();
 		layer.checkAttachedToNetPlanObject(netPlan);
-		if (netPlan.getRoutingType(layer) == RoutingType.HOP_BY_HOP_ROUTING) return 0;
 		
 		double totalCarriedTraffic = 0;
 		double totalCarriedAndProtectedTraffic = 0;

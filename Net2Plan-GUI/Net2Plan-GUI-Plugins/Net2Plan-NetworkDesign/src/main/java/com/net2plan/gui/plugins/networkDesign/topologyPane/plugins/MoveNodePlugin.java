@@ -12,18 +12,21 @@
 
 package com.net2plan.gui.plugins.networkDesign.topologyPane.plugins;
 
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.interfaces.networkDesign.Node;
-
-import java.awt.*;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.List;
+import java.util.Optional;
+
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.NetworkElementOrFr;
+import com.net2plan.interfaces.networkDesign.Node;
 
 /**
  * Plugin that enables to move nodes.
@@ -85,11 +88,14 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mousePressed(MouseEvent e) 
+    {
+    	final PickManager pm = callback.getPickManager();
         if (checkModifiers(e)) {
             GUINode node = canvas.getVertex(e);
-            if (node != null) {
-                callback.getVisualizationState().pickElement(node.getAssociatedNode());
+            if (node != null) 
+            {
+            	pm.pickElements(pm.new PickStateInfo(node.getAssociatedNode() , Optional.of(node.getLayer())));
                 callback.updateVisualizationAfterPick();
                 startVertex = node;
                 e.consume();

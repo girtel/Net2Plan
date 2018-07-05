@@ -12,24 +12,33 @@
 
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins;
 
-import com.google.common.collect.Sets;
-import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
-import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
-import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants.NetworkElementType;
-import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.util.ArrowFactory;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Shape;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
+import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
+import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.utils.Pair;
+
+import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
+import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.util.ArrowFactory;
 
 /**
  * Plugin that allows to add new links graphically over the canvas.
@@ -99,13 +108,14 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {
+    public void mouseClicked(MouseEvent e) 
+    {
+    	final PickManager pickManager = callback.getPickManager();
         if (checkModifiers(e)) {
             GUINode guiNode = canvas.getVertex(e);
             Node node = guiNode == null? null : guiNode.getAssociatedNode();
             if (node != null) {
-                callback.getVisualizationState().pickElement(node);
-
+                pickManager.pickElements(pickManager.new PickStateInfo (node , Optional.empty()));
                 e.consume();
             } else {
                 GUILink link = canvas.getEdge(e);
@@ -113,7 +123,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
                 {
                 	if (!link.isIntraNodeLink())
                 	{ 
-                		callback.getVisualizationState().pickElement(link.getAssociatedNetPlanLink());
+                        pickManager.pickElements(pickManager.new PickStateInfo (link.getAssociatedNetPlanLink() , Optional.empty()));
                 	}
                     e.consume();
                 }
@@ -171,11 +181,18 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             	if (guiNode.getLayer() == startVertex.getLayer ())
     			{
         			boolean bidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
-                    if (bidirectional) node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNode(), node,0,0,200000,null);
-                    else node.getNetPlan().addLink(startVertex.getAssociatedNode(), node,0,0,200000,null);
+        			final Link linkToPick;
+                    if (bidirectional) 
+                    {
+                    	linkToPick = node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNode(), node,0,0,200000,null).getFirst(); 
+                    }
+                    else
+                    	linkToPick = node.getNetPlan().addLink(startVertex.getAssociatedNode(), node,0,0,200000,null);
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals(); // implies a reset picked
-                    callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.LINK));
+                    callback.updateVisualizationAfterChanges();
                     callback.addNetPlanChange();
+                    callback.getPickManager().pickElements(linkToPick);
+                    callback.updateVisualizationAfterPick();
     			}
                 //if (node == startVertex.getAssociatedNode()) callback.resetPickedStateAndUpdateView();
             }

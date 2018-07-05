@@ -11,6 +11,7 @@
 
 
 
+
  
 
 
@@ -18,20 +19,29 @@
 
 package com.net2plan.internal.sim;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import com.jom.JOMException;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.simulation.*;
+import com.net2plan.interfaces.simulation.ICombinedEventGenerator;
+import com.net2plan.interfaces.simulation.ICombinedEventProcessor;
+import com.net2plan.interfaces.simulation.IEventGenerator;
+import com.net2plan.interfaces.simulation.IEventProcessor;
+import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.internal.CommandLineParser;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.IExternal;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Core-class for simulators. Users are only responsible to implement their
@@ -67,7 +77,7 @@ public class SimKernel implements IEventCallback
 	public SimKernel()
 	{
 		simCore = new SimCore(this);
-		setNetPlan(new NetPlan());
+		setNetPlan(new NetPlan ());
 	}
 
 	@Override
@@ -290,9 +300,9 @@ public class SimKernel implements IEventCallback
 		double cpuTime = simCore.getCPUTime();
 		long processedEvents = simCore.getFutureEventList().getNumberOfProcessedEvents();
 		int pendingEvents = simCore.getFutureEventList().getNumberOfPendingEvents();
-		double evToSecRatio = cpuTime == 0 ? 0 : (double) processedEvents / cpuTime;
-		double simToWallRatio = cpuTime == 0 ? 0 : (double) simTime / cpuTime;
-		double evToSimSecRatio = simTime == 0 ? 0 : (double) processedEvents / simTime;
+		double evToSecRatio = cpuTime == 0 ? 0 : processedEvents / cpuTime;
+		double simToWallRatio = cpuTime == 0 ? 0 : simTime / cpuTime;
+		double evToSimSecRatio = simTime == 0 ? 0 : processedEvents / simTime;
 		
 		StringBuilder info = new StringBuilder();
 		info.append(String.format("Current date: %s", DATE_FORMAT.format(Calendar.getInstance().getTime())));
@@ -342,9 +352,9 @@ public class SimKernel implements IEventCallback
 		double cpuTime = getSimCore().getCPUTime();
 		long processedEvents = getSimCore().getFutureEventList().getNumberOfProcessedEvents();
 		int pendingEvents = getSimCore().getFutureEventList().getNumberOfPendingEvents();
-		double evToSecRatio = cpuTime == 0 ? 0 : (double) processedEvents / cpuTime;
-		double simToWallRatio = cpuTime == 0 ? 0 : (double) simTime / cpuTime;
-		double evToSimSecRatio = simTime == 0 ? 0 : (double) processedEvents / simTime;
+		double evToSecRatio = cpuTime == 0 ? 0 : processedEvents / cpuTime;
+		double simToWallRatio = cpuTime == 0 ? 0 : simTime / cpuTime;
+		double evToSimSecRatio = simTime == 0 ? 0 : processedEvents / simTime;
 		
 		StringBuilder info = new StringBuilder();
 		info.append("<html><head><title>Simulation report</title></head>");

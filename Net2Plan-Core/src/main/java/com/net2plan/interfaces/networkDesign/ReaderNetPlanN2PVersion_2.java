@@ -11,17 +11,20 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.LongUtils;
-import com.net2plan.utils.Pair;
-import org.codehaus.stax2.XMLStreamReader2;
-
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+import org.codehaus.stax2.XMLStreamReader2;
+
+import com.net2plan.internal.ErrorHandling;
+import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.LongUtils;
+import com.net2plan.utils.Pair;
 
 class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 {
@@ -61,9 +64,9 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 		long egressNodeId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "egressNodeId"));
 		double offeredTraffic = xmlStreamReader.getAttributeAsDouble(xmlStreamReader.getAttributeIndex(null, "offeredTraffic"));
 //		netPlan.nextDemandId.put(layerId, demandId);
-		Demand newDemand = netPlan.addDemand(mapOldId2Node.get(ingressNodeId), mapOldId2Node.get(egressNodeId), offeredTraffic, null , mapOldId2Layer.get(layerId));
+		Demand newDemand = netPlan.addDemand(mapOldId2Node.get(ingressNodeId), mapOldId2Node.get(egressNodeId), offeredTraffic, RoutingType.SOURCE_ROUTING , null , mapOldId2Layer.get(layerId));
 		mapOldId2Demand.put (Pair.of (layerId , demandId) , newDemand);
-
+		
 		while(xmlStreamReader.hasNext())
 		{
 			xmlStreamReader.next();
@@ -214,8 +217,8 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 	{
 		String networkDescription_thisNetPlan = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "description"));
 		String networkName_thisNetPlan = xmlStreamReader.getAttributeValue(xmlStreamReader.getAttributeIndex(null, "name"));
-		netPlan.setNetworkDescription(networkDescription_thisNetPlan);
-		netPlan.setNetworkName(networkName_thisNetPlan);
+		netPlan.setDescription(networkDescription_thisNetPlan);
+		netPlan.setName(networkName_thisNetPlan);
 
 		while(xmlStreamReader.hasNext())
 		{
@@ -249,7 +252,7 @@ class ReaderNetPlanN2PVersion_2 implements IReaderNetPlan
 							long upperLayerId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "upperLayerId"));
 							long lowerLayerDemandId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "lowerLayerDemandId"));
 							long lowerLayerId = xmlStreamReader.getAttributeAsLong(xmlStreamReader.getAttributeIndex(null, "lowerLayerId"));
-							mapOldId2Demand.get(Pair.of(lowerLayerId, lowerLayerDemandId)).coupleToUpperLayerLink(mapOldId2Link.get(Pair.of (upperLayerId, upperLayerLinkId)));
+							mapOldId2Demand.get(Pair.of(lowerLayerId, lowerLayerDemandId)).coupleToUpperOrSameLayerLink(mapOldId2Link.get(Pair.of (upperLayerId, upperLayerLinkId)));
 							break;
 
 						default:

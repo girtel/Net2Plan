@@ -1,13 +1,4 @@
 
-//1) Repasar esto
-//2) Que todos los cambios impliquen update: anadir cambios de factores, completar todos
-//3) las rutas no se pueden anadir aqui: aqui solo tenemos una cache, es en las rutas donde se fija esto.
-//Ojo que al cambiar la secuencia de enlaces, hay que cambiar tambien los recursos ocupados. SI una demanda es de una
-//service chain, todas sus rutas deben atravesar recursos en cualquier estado, y no pueden tener protection segments
-
-// rutas: al hacer addroute, se chequea si hay service chain. En ese caso, hay que pasarle en constructor info de
-//recursos ocupados (lista pares recurso-ocupacion). La ruta comprueba que van en orden con demanda, y con lista enlaces
-
 /*******************************************************************************
  * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
@@ -21,12 +12,20 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
-
-import java.net.URL;
-import java.util.*;
-import java.util.Map.Entry;
 
 /** <p>.</p> 
  * @author Pablo Pavon-Marino
@@ -34,36 +33,37 @@ import java.util.Map.Entry;
 public class Resource extends NetworkElement
 {
 	/* this information never changes after creation */
-	Node hostNode; // never changes after created, but with copyFrom
+	Optional<Node> hostNode; // never changes after created, but with copyFrom
 	String capacityMeasurementUnits; // never changes after created, but with copyFrom
 	String type; // never changes after created, but with copyFrom
 	double processingTimeToTraversingTrafficInMs;
 	URL urlIcon;
 	
 	/* this information can change after creation */
-	String name; // descriptive name of the resource. Can change.
-	Map<Resource,Double> capacityUpperResourcesOccupyInMe;
-	Map<Resource , Double> capacityIOccupyInBaseResource; // capacity can change, but no new resources can be put (if not, there is danger of loops!!) 
+	SortedMap<Resource,Double> capacityUpperResourcesOccupyInMe;
+	SortedMap<Resource , Double> capacityIOccupyInBaseResource; // capacity can change, but no new resources can be put (if not, there is danger of loops!!) 
 	double capacity;
 	double cache_totalOccupiedCapacity;
-	Map<Route,Double> cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute;
+	SortedMap<Route,Double> cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute;
 	
-	Resource (NetPlan netPlan , long id , int index , String type , String name , Node hostNode , 
+	Resource (NetPlan netPlan , long id , int index , String type , String name , Optional<Node> hostNode , 
 			double capacity , String capacityMeasurementUnits,
 			Map<Resource,Double> capacityIOccupyInBaseResource , double processingTimeToTraversingTraffic , 
 			AttributeMap attributes)
 	{
 		super (netPlan , id , index , attributes);
 
-		if (!netPlan.equals(hostNode.netPlan)) throw new Net2PlanException ("The Resource host node is in a different NetPlan object (or removed)"); 
+		if (hostNode.isPresent()) if (!netPlan.equals(hostNode.get().netPlan)) throw new Net2PlanException ("The Resource host node is in a different NetPlan object (or removed)"); 
 		if (capacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative");
 		if (processingTimeToTraversingTraffic < 0)throw new Net2PlanException ("The processing time for the traversing traffic cannot be negative");
-		if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new HashMap<Resource,Double> (); 
+		if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new TreeMap<Resource,Double> (); 
+		if (!hostNode.isPresent() && !capacityIOccupyInBaseResource.isEmpty()) throw new Net2PlanException ("Resources not attached to a node cannot consume base resources");
 		for (Entry<Resource,Double> resPolicyInfo : capacityIOccupyInBaseResource.entrySet())
 		{
 			final Resource r = resPolicyInfo.getKey();
+			if (!r.iAttachedToANode()) throw new Net2PlanException ("The resource is not attached to a node");
 			if (!netPlan.equals(r.netPlan)) throw new Net2PlanException ("The consumed resources of a resource must be in the same NetPlan object");
-			if (r.hostNode != hostNode) throw new Net2PlanException ("All the resources consumed by a resource must be in the same node resource");
+			if (r.hostNode.get() != hostNode.get()) throw new Net2PlanException ("All the resources consumed by a resource must be in the same node resource");
 			if (resPolicyInfo.getValue() < 0) throw new Net2PlanException ("The consumed capacity in base resource cannot be negative");
 		}
 		this.type = type;
@@ -73,15 +73,15 @@ public class Resource extends NetworkElement
 		this.capacity = capacity;
 		this.cache_totalOccupiedCapacity = 0;
 		this.processingTimeToTraversingTrafficInMs = processingTimeToTraversingTraffic;
-		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
-		this.capacityIOccupyInBaseResource = new HashMap<Resource,Double> (capacityIOccupyInBaseResource);
+		this.capacityUpperResourcesOccupyInMe = new TreeMap<Resource,Double> ();
+		this.capacityIOccupyInBaseResource = new TreeMap<Resource,Double> (capacityIOccupyInBaseResource);
 		this.urlIcon = null;
 		for (Entry<Resource,Double> entry : this.capacityIOccupyInBaseResource.entrySet())
 		{		
 			entry.getKey().capacityUpperResourcesOccupyInMe.put(this , entry.getValue());
 			entry.getKey().updateTotalOccupiedCapacity();
 		}
-		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute = new HashMap<Route,Double> ();
+		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute = new TreeMap<> ();
 	}
 
 	void copyFrom (Resource origin)
@@ -90,27 +90,27 @@ public class Resource extends NetworkElement
 		if ((this.netPlan == null) || (origin.netPlan == null) || (this.netPlan == origin.netPlan)) throw new RuntimeException ("Bad");
 		this.type = origin.type;
 		this.name = origin.name;
-		this.hostNode = this.netPlan.getNodeFromId (origin.hostNode.id);
+		this.hostNode = origin.hostNode.isPresent()? Optional.of(this.netPlan.getNodeFromId (origin.hostNode.get().id)) : Optional.empty();
 		this.capacityMeasurementUnits = origin.capacityMeasurementUnits;
 		this.capacity = origin.capacity;
 		this.cache_totalOccupiedCapacity = origin.cache_totalOccupiedCapacity;
 		this.processingTimeToTraversingTrafficInMs = origin.processingTimeToTraversingTrafficInMs;
 		this.urlIcon = origin.urlIcon;
-		this.capacityUpperResourcesOccupyInMe = new HashMap<Resource,Double> ();
+		this.capacityUpperResourcesOccupyInMe = new TreeMap<Resource,Double> ();
 		for (Entry<Resource,Double> entry : origin.capacityUpperResourcesOccupyInMe.entrySet())
 		{
 			final Resource resourceThisNp = this.netPlan.getResourceFromId(entry.getKey().id);
 			if (resourceThisNp == null) throw new RuntimeException ("Bad");
 			this.capacityUpperResourcesOccupyInMe.put(resourceThisNp , entry.getValue());
 		}
-		this.capacityIOccupyInBaseResource = new HashMap<Resource,Double> ();
+		this.capacityIOccupyInBaseResource = new TreeMap<Resource,Double> ();
 		for (Entry<Resource,Double> entry : origin.capacityIOccupyInBaseResource.entrySet())
 		{
 			final Resource resourceThisNp = this.netPlan.getResourceFromId(entry.getKey().id);
 			if (resourceThisNp == null) throw new RuntimeException ("Bad");
 			this.capacityIOccupyInBaseResource.put(resourceThisNp , entry.getValue());
 		}
-		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute = new HashMap<Route,Double> ();
+		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute = new TreeMap<Route,Double> ();
 		for (Entry<Route,Double> originRoute : origin.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.entrySet())
 		{
 			final Route routeThisNp = this.netPlan.getRouteFromId(originRoute.getKey().id);
@@ -122,7 +122,9 @@ public class Resource extends NetworkElement
 	boolean isDeepCopy (Resource r2)
 	{
 		if (!super.isDeepCopy(r2)) return false;
-		if (this.hostNode.id != r2.hostNode.id) return false;
+		if (this.hostNode.isPresent() != r2.hostNode.isPresent()) return false;
+		if (this.hostNode.isPresent())
+			if (this.hostNode.get().id != r2.hostNode.get().id) return false;
 		if (!this.capacityMeasurementUnits.equals(r2.capacityMeasurementUnits)) return false;
 		if (!this.type.equals(r2.type)) return false;
 		if (!this.name.equals(r2.name)) return false;
@@ -196,21 +198,22 @@ public class Resource extends NetworkElement
 		return type;
 	}
 
-	/** Returns the name of the resource
-	 * @return the name
-	 */
-	public String getName() 
-	{
-		return name;
-	}
-
 	/** Returns the host node of this resource
 	 * @return the hostNode
 	 */
-	public Node getHostNode() 
+	public Optional<Node> getHostNode() 
 	{
 		return hostNode;
 	}
+
+	/** Indicates if this resource is attached to a node, or else, is not attached to any
+	 * @return see above
+	 */
+	public boolean iAttachedToANode () 
+	{
+		return hostNode.isPresent();
+	}
+
 
 	/** Gets the units in which the capacity of this resource is measured
 	 * @return the capacityMeasurementUnits
@@ -244,28 +247,30 @@ public class Resource extends NetworkElement
 		return cache_totalOccupiedCapacity;
 	}
 
-	/** Sets the name of the resource
-	 * @param name The name
+	/** Indicates if the resource has more than one bsae resource with the same type
+	 * @return see above
 	 */
-	public void setName(String name) 
+	public boolean isHavingMoreThanOneBaseResourceWithTheSameType () 
 	{
-		this.name = name;
+		final SortedSet<String> baseResourceTypes = new TreeSet<> ();
+		for (Resource r : getBaseResources()) { if (baseResourceTypes.contains(r.getType())) return true; else baseResourceTypes.add(r.getType()); }
+		return false;
 	}
-
+	
 	/** Returns the set of base resources of this resource
 	 * @return the set of base resources (an unmodificable set)
 	 */
-	public Set<Resource> getBaseResources ()
+	public SortedSet<Resource> getBaseResources ()
 	{
-		return Collections.unmodifiableSet(capacityIOccupyInBaseResource.keySet());
+		return new TreeSet<> (capacityIOccupyInBaseResource.keySet());
 	}
 
 	/** Returns the set of resources that are above of this resource, so this resource is a base resource for them
 	 * @return the set of upper resources (an unmodificable set)
 	 */
-	public Set<Resource> getUpperResources ()
+	public SortedSet<Resource> getUpperResources ()
 	{
-		return Collections.unmodifiableSet(capacityUpperResourcesOccupyInMe.keySet());
+		return new TreeSet<> (capacityUpperResourcesOccupyInMe.keySet());
 	}
 
 
@@ -293,35 +298,34 @@ public class Resource extends NetworkElement
 	/** Returns the map with an element for each base resource, and the key the amount of capacity occupied in it
 	 * @return the map
 	 */
-	public Map<Resource, Double> getCapacityOccupiedInBaseResourcesMap() 
+	public SortedMap<Resource, Double> getCapacityOccupiedInBaseResourcesMap() 
 	{
-		return Collections.unmodifiableMap(capacityIOccupyInBaseResource);
+		return Collections.unmodifiableSortedMap(capacityIOccupyInBaseResource);
 	}
 
 	/** Returns the map with the information on the upper resources (the resources for which this resource is a base 
 	 * resource), and the amount of occupied capacity they are incurring in me
 	 * @return the map
 	 */
-	public Map<Resource, Double> getCapacityOccupiedByUpperResourcesMap() 
+	public SortedMap<Resource, Double> getCapacityOccupiedByUpperResourcesMap() 
 	{
-		return Collections.unmodifiableMap(capacityUpperResourcesOccupyInMe);
+		return Collections.unmodifiableSortedMap(capacityUpperResourcesOccupyInMe);
 	}
 
 	/** Returns a set with the demands that have at least one route traversing this resource
 	 * @return the traversing demands
 	 */
-	public Set<Demand> getTraversingDemands() 
+	public SortedSet<Demand> getTraversingDemands() 
 	{
-		Set<Demand> res = new HashSet<Demand> (); for (Route r : cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet()) res.add(r.demand);
-		return res;
+		return cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet().stream().map(r->r.demand).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/** Returns a set with the routes that are traversing this resource
 	 * @return the traversingRoutes
 	 */
-	public Set<Route> getTraversingRoutes() 
+	public SortedSet<Route> getTraversingRoutes() 
 	{
-		return cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet();
+		return new TreeSet<> (cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.keySet());
 	}
 
 	/** Returns the capacity that is occupied in this resource, because of a traversing route. If the route is not traversing 
@@ -340,14 +344,15 @@ public class Resource extends NetworkElement
 	 * come backs to its previous value when the route becomes up again
 	 * @return the map
 	 */
-	public Map<Route,Double> getTraversingRouteOccupiedCapacityMap() 
+	public SortedMap<Route,Double> getTraversingRouteOccupiedCapacityMap() 
 	{
-		Map<Route,Double> res = new HashMap<Route,Double> (cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute);
+		SortedMap<Route,Double> res = new TreeMap<Route,Double> (cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute);
 		for (Route r : res.keySet()) if (r.isDown()) res.put(r , 0.0);
 		return res;
 	}
 	
-	/** Resets the capacity of a resource, as well as the occupied capacity in the base resources. The set of base resources cannot have 
+	/** Resets the capacity of a resource, as well as the occupied capacity in the base resources. If the resource is currently being 
+	 * used by an upper resource, the set of base resources cannot have 
 	 * new elements respect to the ones already established in the constructor. This limit is set to avoid loops in resources occupations.
 	 *  Any base resource that is in the current map, that is not in newCapacityIOccupyInBaseResourcesMap, is assumed to maintain the same occupation.
 	 * @param newCapacity the new capacity value to set in this resource
@@ -357,11 +362,12 @@ public class Resource extends NetworkElement
 	{
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
-		if (newCapacityIOccupyInBaseResourcesMap == null) newCapacityIOccupyInBaseResourcesMap = new HashMap<Resource,Double> ();
+		if (newCapacityIOccupyInBaseResourcesMap == null) newCapacityIOccupyInBaseResourcesMap = new TreeMap<Resource,Double> ();
+		final boolean isUsedByUpperResources = !this.getUpperResources().isEmpty();
 		for (Entry<Resource,Double> entry : newCapacityIOccupyInBaseResourcesMap.entrySet())
 		{
 			netPlan.checkInThisNetPlan(entry.getKey());
-			if (!this.capacityIOccupyInBaseResource.keySet().contains(entry.getKey())) throw new Net2PlanException ("When resizing a resource capacity, we cannot increase its set of base resources");
+			if (isUsedByUpperResources && !this.capacityIOccupyInBaseResource.keySet().contains(entry.getKey())) throw new Net2PlanException ("When resizing a resource capacity, we cannot increase its set of base resources");
 			if (entry.getValue() < 0) throw new Net2PlanException ("The capacity occupied in a base resource cannot be negative");
 		}
 		if (newCapacity < 0) throw new Net2PlanException ("The capacity of a resource cannot be negative");
@@ -382,7 +388,10 @@ public class Resource extends NetworkElement
 		checkAttachedToNetPlanObject();
 		netPlan.checkIsModifiable();
 		netPlan.checkInThisNetPlan(upperResource);
-		if (upperResource.hostNode != this.hostNode) throw new Net2PlanException ("Upper resource must be in the same node as this resource");
+		if (!capacityUpperResourcesOccupyInMe.containsKey(upperResource)) return;
+		if (!this.iAttachedToANode()) throw new Net2PlanException ("This resource is not attachde to a node");
+		if (!upperResource.iAttachedToANode()) throw new Net2PlanException ("This resource is not attachde to a node");
+		if (upperResource.hostNode.get() != this.hostNode.get()) throw new Net2PlanException ("Upper resource must be in the same node as this resource");
 		if (occupiedCapacity < 0) throw new Net2PlanException ("The occupied capacity cannot be negative");
 		capacityUpperResourcesOccupyInMe.put(upperResource , occupiedCapacity);
 		updateTotalOccupiedCapacity();
@@ -399,7 +408,8 @@ public class Resource extends NetworkElement
 
 	void addTraversingRoute (Route r , double resourceOccupiedCapacityByThisRouteIfNotFailing)
 	{
-		if (!r.getSeqNodes().contains(this.hostNode)) throw new Net2PlanException ("The route does not traverse the host node of this resource");
+		if (!this.iAttachedToANode())throw new Net2PlanException ("The resource is not attached to a node");
+		if (!r.getSeqNodes().contains(this.hostNode.get())) throw new Net2PlanException ("The route does not traverse the host node of this resource");
 		this.cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.put(r , resourceOccupiedCapacityByThisRouteIfNotFailing);
 		updateTotalOccupiedCapacity();
 	}
@@ -434,14 +444,15 @@ public class Resource extends NetworkElement
 		for (Resource upperResource : new ArrayList<> (capacityUpperResourcesOccupyInMe.keySet())) upperResource.remove();
 		for (Resource baseResource : new ArrayList<> (capacityIOccupyInBaseResource.keySet())) baseResource.removeUpperResourceOccupation(this);
 		netPlan.cache_id2ResourceMap.remove (id);
-		Set<Resource> resourcesThisType = netPlan.cache_type2Resources.get(type);
+		SortedSet<Resource> resourcesThisType = netPlan.cache_type2Resources.get(type);
 		if (!resourcesThisType.contains(this)) throw new RuntimeException ("Bad");
 		if (resourcesThisType.size() == 1) netPlan.cache_type2Resources.remove (type); else resourcesThisType.remove(this);
-		hostNode.cache_nodeResources.remove(this);
+		if (hostNode.isPresent()) hostNode.get().cache_nodeResources.remove(this);
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.resources , index);
-		if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
-		removeId ();
+        final NetPlan npOld = this.netPlan;
+        removeId();
+        if (ErrorHandling.isDebugEnabled()) npOld.checkCachesConsistency();
 	}
 
 	
@@ -450,14 +461,19 @@ public class Resource extends NetworkElement
 	 * <p>Returns a {@code String} representation of the Shared Risk Group.</p>
 	 * @return {@code String} representation of the SRG
 	 */
-	public String toString () { return "resource " + index + " (id " + id + ")"; }
+	@Override
+    public String toString () { return "resource " + index + " (id " + id + ")"; }
 
-	void checkCachesConsistency ()
+	@Override
+    void checkCachesConsistency ()
 	{
 		super.checkCachesConsistency ();
 
 		if (!netPlan.cache_type2Resources.get(this.type).contains(this)) throw new RuntimeException ("Bad");
 
+		if (!this.iAttachedToANode()) assert getTraversingRoutes().isEmpty();
+		if (!this.iAttachedToANode()) assert getBaseResources().isEmpty();
+		
 		double accumOccupCap = 0;
 		for (Entry<Resource,Double> upperEntry : capacityUpperResourcesOccupyInMe.entrySet())
 		{
@@ -492,5 +508,40 @@ public class Resource extends NetworkElement
 		}
 	}
 
-
+	/** Dettaches this resource from its current node, so it will stop using any base resources. 
+	 * Only possible if the resource is not being traversed by any service chain, or used by any upper resource.
+	 */
+	public void dettachFromNode ()
+	{
+		checkAttachedToNetPlanObject();
+		if (!this.iAttachedToANode()) return;
+		if (!this.getTraversingRoutes().isEmpty()) throw new Net2PlanException ("Cannot dettach a used resource");
+		if (!this.getUpperResources().isEmpty()) throw new Net2PlanException ("Cannot dettach a used resource");
+		for (Resource baseResource : new ArrayList<> (capacityIOccupyInBaseResource.keySet())) baseResource.removeUpperResourceOccupation(this);
+		assert capacityIOccupyInBaseResource.isEmpty();
+		assert cache_totalOccupiedCapacity == 0;
+		assert capacityUpperResourcesOccupyInMe.isEmpty();
+		assert cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.isEmpty();
+		hostNode.get().cache_nodeResources.remove(this);
+	}
+	
+	/** Attaches this resource, now dettached of other node, to a new indicated node. The user can later use setCapacity method to add 
+	 * base resources and its occupation
+	 * @param node see above
+	 */
+	public void attachToNode (Node node)
+	{
+		checkAttachedToNetPlanObject();
+		if (this.iAttachedToANode()) throw new Net2PlanException ("The resource is already attached to a node");
+		if (node == null) throw new Net2PlanException ("Node cannot be null");
+		assert capacityIOccupyInBaseResource.isEmpty();
+		assert cache_totalOccupiedCapacity == 0;
+		assert capacityUpperResourcesOccupyInMe.isEmpty();
+		assert cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.isEmpty();
+		hostNode = Optional.of(node);
+		node.cache_nodeResources.add(this);
+	}
+	
+	
+	
 }

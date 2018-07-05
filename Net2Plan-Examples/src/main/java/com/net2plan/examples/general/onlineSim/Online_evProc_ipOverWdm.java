@@ -130,7 +130,7 @@ public class Online_evProc_ipOverWdm extends IEventProcessor
 				if (evIp.linkAddedToFillByProcessor == null) throw new RuntimeException ("Bad");
 				IPUtils.setLinkWeight(evIp.linkAddedToFillByProcessor , (double) 1);
 				final Demand lpWdmDemand = addedLp.getDemand(); if (lpWdmDemand.getRoutes().size() != 1) throw new Net2PlanException ("Each lightpath must be hosted in its own WDM demand");
-				lpWdmDemand.coupleToUpperLayerLink(evIp.linkAddedToFillByProcessor);
+				lpWdmDemand.coupleToUpperOrSameLayerLink(evIp.linkAddedToFillByProcessor);
 			}
 		}
 		else if (event.getEventObject () instanceof WDMUtils.LightpathRemove)

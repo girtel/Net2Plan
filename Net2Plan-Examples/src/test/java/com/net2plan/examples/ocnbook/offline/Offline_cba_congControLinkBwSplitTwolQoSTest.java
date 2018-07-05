@@ -10,52 +10,46 @@
  *******************************************************************************/
 package com.net2plan.examples.ocnbook.offline;
 
-import com.google.common.collect.ImmutableMap;
-import com.jom.JOMException;
-import com.net2plan.examples.TestConstants;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.utils.InputParameter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.google.common.collect.ImmutableMap;
+import com.jom.JOMException;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.utils.InputParameter;
 
 public class Offline_cba_congControLinkBwSplitTwolQoSTest 
 {
 	private NetPlan np;
-	private File temporalDirectoryTests;
+	@Rule
+    public TemporaryFolder temporalDirectoryTests= new TemporaryFolder();	
+	 
 
 	@Before
 	public void setUp() throws Exception 
 	{
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example4nodes.n2p"));
 		
-		/* Create the temporal directory for storing the test files */
-		this.temporalDirectoryTests = new File (TestConstants.TEST_ALGORITHM_FILE_DIRECTORY);
-		temporalDirectoryTests.mkdirs();
-		/* delete everything inside temporalDirectoryTests, including subfolders */
-		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
 	}
 
 	@After
 	public void tearDown() throws Exception 
 	{
 		np.checkCachesConsistency();
-		Files.walk(Paths.get(TestConstants.TEST_ALGORITHM_FILE_DIRECTORY)).filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
-		temporalDirectoryTests.delete();
 	}
 
 	@Test
@@ -75,7 +69,7 @@ public class Offline_cba_congControLinkBwSplitTwolQoSTest
 				algorithm.executeAlgorithm(np , paramsUsedToCall , ImmutableMap.of("precisionFactor" , "0.0001"));
 			} catch (UnsatisfiedLinkError e)
 			{
-				System.err.println(this.getClass().getName() + ": " + TestConstants.IPOPT_NOT_FOUND_ERROR);
+				System.err.println(this.getClass().getName() + ": IPOPT_NOT_FOUND_ERROR");
 				return;
 			} catch (JOMException e)
 			{

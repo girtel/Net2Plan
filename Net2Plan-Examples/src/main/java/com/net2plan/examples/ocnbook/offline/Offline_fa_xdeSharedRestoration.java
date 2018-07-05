@@ -67,7 +67,7 @@ public class Offline_fa_xdeSharedRestoration implements IAlgorithm
 
 		/* Remove all unicast routed traffic. Any multicast routed traffic is kept */
 		netPlan.removeAllUnicastRoutingInformation();
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING);
+		netPlan.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
 		
 		/* Initialize some variables */
 		DoubleMatrix1D u_e = netPlan.getVectorLinkSpareCapacity(); // just the unused capacity (some capacity may be used by multicast traffic)
@@ -143,7 +143,7 @@ public class Offline_fa_xdeSharedRestoration implements IAlgorithm
 		DoubleMatrix2D xx_de = op.getPrimalSolution("xx_de").view2D();
 		DoubleMatrix3D xx_des = op.getPrimalSolution("xx_des").view3D("sparse");
 
-		netPlan.setRoutingFromDemandLinkCarriedTraffic(xx_de , true , false);
+		netPlan.setRoutingFromDemandLinkCarriedTraffic(xx_de , true , false , null);
 
 		checkSolution(netPlan, xx_de , xx_des);
 
@@ -174,7 +174,7 @@ public class Offline_fa_xdeSharedRestoration implements IAlgorithm
 			npThis.removeAllUnicastRoutingInformation();
 			DoubleMatrix2D this_xxde = xx_des.viewColumn (srg.getIndex ()).copy ();
 			for (Link e : srg.getAffectedLinksAllLayers()) if (this_xxde.viewColumn(e.getIndex ()).zSum () != 0) throw new Net2PlanException("Bad - some failing links carry traffic");
-			npThis.setRoutingFromDemandLinkCarriedTraffic(this_xxde , true , false);
+			npThis.setRoutingFromDemandLinkCarriedTraffic(this_xxde , true , false , null);
 			if (!npThis.getLinksOversubscribed().isEmpty()) throw new Net2PlanException("Bad - Some link is oversubscribed (constraint violated) in a failure");
 			if (!npThis.getDemandsBlocked().isEmpty()) throw new Net2PlanException("Bad - Some demand is blocked (constraint violated) in a failure");
 			for (Demand d : netPlan.getDemands ())

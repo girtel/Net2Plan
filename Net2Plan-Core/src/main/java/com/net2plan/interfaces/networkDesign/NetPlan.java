@@ -24,15 +24,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.FactoryConfigurationError;
@@ -49,16 +52,17 @@ import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.internal.Version;
 import com.net2plan.internal.XMLUtils;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.ProfileUtils;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 
@@ -102,6 +106,8 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 @SuppressWarnings("unchecked")
 public class NetPlan extends NetworkElement
 {
+    public final static String PLOTLAYTOUT_DEFAULTNODELAYOUTNAME = "";
+    public final static String PLOTLAYTOUT_DEFAULTNODELAYOUTGUINAME = "Real Positioning (default)"; 
     final static String TEMPLATE_CROSS_LAYER_UNITS_NOT_MATCHING = "Link capacity units at layer %d (%s) do not match demand traffic units at layer %d (%s)";
     final static String TEMPLATE_NO_MORE_NETWORK_ELEMENTS_ALLOWED = "Maximum number of identifiers in the design reached";
     final static String TEMPLATE_NO_MORE_NODES_ALLOWED = "Maximum node identifier reached";
@@ -133,9 +139,11 @@ public class NetPlan extends NetworkElement
 
     RoutingType DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
     boolean isModifiable;
-    String networkDescription;
-    String networkName;
+//    String networkDescription;
+//    String networkName;
     NetworkLayer defaultLayer;
+    String currentPlotNodeLayout;
+    SortedSet<String> cache_definedPlotNodeLayouts;
     MutableLong nextElementId;
 
     ArrayList<NetworkLayer> layers;
@@ -143,23 +151,32 @@ public class NetPlan extends NetworkElement
     ArrayList<Resource> resources;
     ArrayList<SharedRiskGroup> srgs;
 
-    HashSet<Node> cache_nodesDown;
-    Map<String, Set<Resource>> cache_type2Resources;
-    Map<Long, Node> cache_id2NodeMap;
-    Map<Long, Resource> cache_id2ResourceMap;
-    Map<Long, NetworkLayer> cache_id2LayerMap;
-    Map<Long, Link> cache_id2LinkMap;
-    Map<Long, Demand> cache_id2DemandMap;
-    Map<Long, MulticastDemand> cache_id2MulticastDemandMap;
-    Map<Long, Route> cache_id2RouteMap;
-    Map<Long, MulticastTree> cache_id2MulticastTreeMap;
-    Map<Long, SharedRiskGroup> cache_id2srgMap;
+//    pablo: hacer cache dynamic srgs
+//    
+//    node.getsrgs y link getsrgs deben mirar si dynamic
+//    
+//    he puesto cambio de nombre cache enlace y nodo son nondynamic solo
+    
+    SortedSet<Node> cache_nodesDown;
+    SortedSet<SharedRiskGroup> cache_dynamicSrgs;
+    SortedMap<String, SortedSet<Resource>> cache_type2Resources;
+    SortedMap<Long, Node> cache_id2NodeMap;
+    SortedMap<Long, Resource> cache_id2ResourceMap;
+    SortedMap<Long, NetworkLayer> cache_id2LayerMap;
+    SortedMap<Long, Link> cache_id2LinkMap;
+    SortedMap<Long, Demand> cache_id2DemandMap;
+    SortedMap<Long, MulticastDemand> cache_id2MulticastDemandMap;
+    SortedMap<Long, Route> cache_id2RouteMap;
+    SortedMap<Long, MulticastTree> cache_id2MulticastTreeMap;
+    SortedMap<Long, SharedRiskGroup> cache_id2srgMap;
 
-    Map<String,Set<NetworkElement>> cache_taggedElements;
-    Map<String,Set<Node>> cache_nodesPerSiteName;
-    Map<String, Set<Node>> cache_planningDomain2nodes;
+    SortedMap<String,SortedSet<NetworkElement>> cache_taggedElements;
+    SortedMap<String,SortedSet<Node>> cache_nodesPerSiteName;
+    SortedMap<String, SortedSet<Node>> cache_planningDomain2nodes;
 
     DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
+    
+    boolean defaultNodePairDistanceMetricIsHaversine = false;
     
     
     /**
@@ -170,13 +187,16 @@ public class NetPlan extends NetworkElement
     public NetPlan()
     {
         super(null, 0, 0, new AttributeMap());
+		this.setName ("NetPlan");
 
         this.netPlan = this;
         DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
         isModifiable = true;
 
-        networkDescription = "";
-        networkName = "";
+        this.description = "";
+        this.name = "";
+        this.currentPlotNodeLayout = PLOTLAYTOUT_DEFAULTNODELAYOUTNAME;
+        this.cache_definedPlotNodeLayouts = new TreeSet<> (); cache_definedPlotNodeLayouts.add(currentPlotNodeLayout);
 
         nextElementId = new MutableLong(1);
 
@@ -185,21 +205,22 @@ public class NetPlan extends NetworkElement
         srgs = new ArrayList<SharedRiskGroup>();
         resources = new ArrayList<Resource>();
 
-        cache_nodesDown = new HashSet<Node>();
-        this.cache_type2Resources = new HashMap<String, Set<Resource>>();
-        this.cache_id2NodeMap = new HashMap<Long, Node>();
-        this.cache_id2ResourceMap = new HashMap<Long, Resource>();
-        this.cache_id2LayerMap = new HashMap<Long, NetworkLayer>();
-        this.cache_id2srgMap = new HashMap<Long, SharedRiskGroup>();
-        this.cache_id2LinkMap = new HashMap<Long, Link>();
-        this.cache_id2DemandMap = new HashMap<Long, Demand>();
-        this.cache_id2MulticastDemandMap = new HashMap<Long, MulticastDemand>();
-        this.cache_id2RouteMap = new HashMap<Long, Route>();
-        this.cache_id2MulticastTreeMap = new HashMap<Long, MulticastTree>();
+        cache_nodesDown = new TreeSet<Node>();
+        this.cache_dynamicSrgs = new TreeSet<> ();
+        this.cache_type2Resources = new TreeMap<String, SortedSet<Resource>>();
+        this.cache_id2NodeMap = new TreeMap<Long, Node>();
+        this.cache_id2ResourceMap = new TreeMap<Long, Resource>();
+        this.cache_id2LayerMap = new TreeMap<Long, NetworkLayer>();
+        this.cache_id2srgMap = new TreeMap<Long, SharedRiskGroup>();
+        this.cache_id2LinkMap = new TreeMap<Long, Link>();
+        this.cache_id2DemandMap = new TreeMap<Long, Demand>();
+        this.cache_id2MulticastDemandMap = new TreeMap<Long, MulticastDemand>();
+        this.cache_id2RouteMap = new TreeMap<Long, Route>();
+        this.cache_id2MulticastTreeMap = new TreeMap<Long, MulticastTree>();
         
-        this.cache_taggedElements = new HashMap<> ();
-        this.cache_nodesPerSiteName = new HashMap<> ();
-        this.cache_planningDomain2nodes = new HashMap<> ();
+        this.cache_taggedElements = new TreeMap<> ();
+        this.cache_nodesPerSiteName = new TreeMap<> ();
+        this.cache_planningDomain2nodes = new TreeMap<> ();
         interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
 
         defaultLayer = addLayer("Layer 0", null, null, null, null, null);
@@ -282,8 +303,13 @@ public class NetPlan extends NetworkElement
                                     break;
 
                                 case 5:
+//                                  System.out.println("Version 5");
+                                  netPlanFormat = new ReaderNetPlanN2PVersion_5();
+                                  break;
+
+                                case 6:
 //                                    System.out.println("Version 5");
-                                    netPlanFormat = new ReaderNetPlanN2PVersion_5();
+                                    netPlanFormat = new ReaderNetPlanN2PVersion_6();
                                     break;
 
                                 default:
@@ -316,12 +342,12 @@ public class NetPlan extends NetworkElement
      * <p>Returns the unique ids of the provided network elements.</p>
      *
      * @param collection Network elements
-     * @return Unique ids of the provided network elements. If the input {@code Collection} is a {@code Set}, the returned collection is a {@code HashSet}. If the input
+     * @return Unique ids of the provided network elements. If the input {@code Collection} is a {@code SortedSet}, the returned collection is a {@code TreeSet}. If the input
      * {@code Collection} is a {@code List}, an {@code ArrayList} is returned}.
      */
     public static Collection<Long> getIds(Collection<? extends NetworkElement> collection)
     {
-        Collection<Long> res = (collection instanceof Set) ? new HashSet<Long>() : new ArrayList<Long>(collection.size());
+        Collection<Long> res = (collection instanceof SortedSet) ? new TreeSet<Long>() : new ArrayList<Long>(collection.size());
         for (NetworkElement e : collection)
             res.add(e.id);
         return res;
@@ -331,12 +357,12 @@ public class NetPlan extends NetworkElement
      * <p>Returns the indexes of the provided network elements. </p>
      *
      * @param collection Network elements
-     * @return Indexes of the provided network elements. If the input {@code Collection} is a {@code Set}, the returned collection is a {@code HashSet}. If the input
+     * @return Indexes of the provided network elements. If the input {@code Collection} is a {@code SortedSet}, the returned collection is a {@code TreeSet}. If the input
      * {@code Collection} is a {@code List}, an {@code ArrayList} is returned}.
      */
     public static Collection<Integer> getIndexes(Collection<? extends NetworkElement> collection)
     {
-        Collection<Integer> res = (collection instanceof Set) ? new HashSet<Integer>() : new ArrayList<Integer>(collection.size());
+        Collection<Integer> res = (collection instanceof SortedSet) ? new TreeSet<Integer>() : new ArrayList<Integer>(collection.size());
         for (NetworkElement e : collection)
             res.add(e.index);
         return res;
@@ -375,40 +401,37 @@ public class NetPlan extends NetworkElement
      */
     public boolean isDeepCopy(NetPlan np2)
     {
-        if (this.DEFAULT_ROUTING_TYPE != np2.DEFAULT_ROUTING_TYPE) throw new RuntimeException("Bad"); //return false;
-        if (this.isModifiable != np2.isModifiable) throw new RuntimeException("Bad"); //return false;
-        if (!this.networkDescription.equals(np2.networkDescription)) throw new RuntimeException("Bad"); //return false;
-        if (!this.networkName.equals(np2.networkName)) throw new RuntimeException("Bad"); //return false;
-        if (this.defaultLayer.id != np2.defaultLayer.id) throw new RuntimeException("Bad"); //return false;
-        if (this.nextElementId.longValue() != np2.nextElementId.longValue())
-        {
-//            System.out.println(this.nextElementId + "," + np2.nextElementId);
-            throw new RuntimeException("Bad");
-        } //return false;
-        if (!this.tags.equals(np2.tags)) throw new RuntimeException("Bad. Tags: " + this.tags + ", otheR: " + np2.tags);
-        if (!this.cache_taggedElements.keySet().equals(np2.cache_taggedElements.keySet())) throw new RuntimeException("Bad");
-        if (!this.cache_nodesPerSiteName.keySet().equals(np2.cache_nodesPerSiteName.keySet())) throw new RuntimeException("Bad");
-        if (!this.cache_planningDomain2nodes.keySet().equals(np2.cache_planningDomain2nodes.keySet())) throw new RuntimeException("Bad");
+        if (this.DEFAULT_ROUTING_TYPE != np2.DEFAULT_ROUTING_TYPE) return false;
+        if (this.isModifiable != np2.isModifiable) return false;
+        if (!this.description.equals(np2.description)) return false;
+        if (!this.name.equals(np2.name)) return false;
+        if (!this.cache_definedPlotNodeLayouts.equals(np2.cache_definedPlotNodeLayouts)) return false;
+        if (this.defaultLayer.id != np2.defaultLayer.id) return false;
+        if (this.nextElementId.longValue() != np2.nextElementId.longValue()) return false;
+        if (!this.tags.equals(np2.tags)) return false;
+        if (!this.cache_taggedElements.keySet().equals(np2.cache_taggedElements.keySet())) return false;
+        if (!this.cache_nodesPerSiteName.keySet().equals(np2.cache_nodesPerSiteName.keySet())) return false;
+        if (!this.cache_planningDomain2nodes.keySet().equals(np2.cache_planningDomain2nodes.keySet())) return false;
         for (String tag : cache_taggedElements.keySet()) 
        		if (this.cache_taggedElements.get(tag).size() != np2.cache_taggedElements.get(tag).size())
-       			throw new RuntimeException("Bad");
+       			return false;
         for (String pd : cache_planningDomain2nodes.keySet()) 
        		if (!NetPlan.getIds(this.cache_planningDomain2nodes.get(pd)).equals(NetPlan.getIds(np2.cache_planningDomain2nodes.get(pd))))
-       			throw new RuntimeException("Bad");
+       			return false;
         for (String siteName : cache_nodesPerSiteName.keySet()) 
        		if (this.cache_nodesPerSiteName.get(siteName).size() != np2.cache_nodesPerSiteName.get(siteName).size())
-       			throw new RuntimeException("Bad");
+       			return false;
         for (int cont = 0; cont < nodes.size(); cont++)
-            if (!this.getNode(cont).isDeepCopy(np2.getNode(cont))) throw new RuntimeException("Bad"); //return false;
+            if (!this.getNode(cont).isDeepCopy(np2.getNode(cont))) return false;
         for (int cont = 0; cont < resources.size(); cont++)
             if (!this.getResource(cont).isDeepCopy(np2.getResource(cont)))
-                throw new RuntimeException("Bad"); //return false;
+            	return false;
         
         for (int cont = 0; cont < srgs.size(); cont++)
-            if (!this.getSRG(cont).isDeepCopy(np2.getSRG(cont))) throw new RuntimeException("Bad"); //return false;
+            if (!this.getSRG(cont).isDeepCopy(np2.getSRG(cont))) return false;
         for (int cont = 0; cont < layers.size(); cont++)
             if (!this.getNetworkLayer(cont).isDeepCopy(np2.getNetworkLayer(cont)))
-                throw new RuntimeException("Bad"); //return false;
+            	return false;
         return true;
     }
 
@@ -432,10 +455,11 @@ public class NetPlan extends NetworkElement
      * <p>Adds new traffic demands froma traffic matrix given as a {@code DoubleMatrix2D} object. Previous demands are not removed.</p>
      *
      * @param trafficMatrix          Traffix matrix where i-th row is the ingress node, the j-th column the egress node and each entry the offered traffic
+     * @param routingType Routing type
      * @param optionalLayerParameter Network layer to which to add the demands (optional)
      * @return A list with the newly created demands
      */
-    public List<Demand> addDemandsFromTrafficMatrix(DoubleMatrix2D trafficMatrix, NetworkLayer... optionalLayerParameter)
+    public List<Demand> addDemandsFromTrafficMatrix(DoubleMatrix2D trafficMatrix, RoutingType routingType , NetworkLayer... optionalLayerParameter)
     {
         trafficMatrix = NetPlan.adjustToTolerance(trafficMatrix);
         checkIsModifiable();
@@ -446,7 +470,7 @@ public class NetPlan extends NetworkElement
         for (int n1 = 0; n1 < nodes.size(); n1++)
             for (int n2 = 0; n2 < nodes.size(); n2++)
                 if (n1 != n2)
-                    demands.add(addDemand(nodes.get(n1), nodes.get(n2), trafficMatrix.get(n1, n2), null, layer));
+                    demands.add(addDemand(nodes.get(n1), nodes.get(n2), trafficMatrix.get(n1, n2), routingType, null, layer));
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return demands;
     }
@@ -458,16 +482,17 @@ public class NetPlan extends NetworkElement
      * @param ingressNode            Ingress node
      * @param egressNode             Egress node
      * @param offeredTraffic         Offered traffic by this demand. It must be greater or equal than zero
-     * @param attributes             Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes             SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param routingType            Routing type
      * @param optionalLayerParameter Network layer to which add the demand (optional)
      * @return The newly added demand object
      */
-    public Demand addDemand(Node ingressNode, Node egressNode, double offeredTraffic, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
+    public Demand addDemand(Node ingressNode, Node egressNode, double offeredTraffic, RoutingType routingType , Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
-        return addDemand(null, ingressNode, egressNode, offeredTraffic, attributes, optionalLayerParameter);
+        return addDemand(null, ingressNode, egressNode, offeredTraffic, routingType , attributes, optionalLayerParameter);
     }
 
-    Demand addDemand(Long demandId, Node ingressNode, Node egressNode, double offeredTraffic, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
+    Demand addDemand(Long demandId, Node ingressNode, Node egressNode, double offeredTraffic, RoutingType routingType , Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
         offeredTraffic = NetPlan.adjustToTolerance(offeredTraffic);
         checkIsModifiable();
@@ -483,14 +508,14 @@ public class NetPlan extends NetworkElement
             nextElementId.increment();
         }
 
-        Demand demand = new Demand(this, demandId, layer.demands.size(), layer, ingressNode, egressNode, offeredTraffic, new AttributeMap(attributes));
+        Demand demand = new Demand(this, demandId, layer.demands.size(), layer, ingressNode, egressNode, offeredTraffic, routingType , new AttributeMap(attributes));
 
         cache_id2DemandMap.put(demandId, demand);
         layer.demands.add(demand);
         egressNode.cache_nodeIncomingDemands.add(demand);
         ingressNode.cache_nodeOutgoingDemands.add(demand);
-        Set<Demand> setDemandsNodePair = layer.cache_nodePairDemandsThisLayer.get(Pair.of(ingressNode, egressNode));
-        if (setDemandsNodePair == null) { setDemandsNodePair = new HashSet<> (); layer.cache_nodePairDemandsThisLayer.put(Pair.of(ingressNode, egressNode) , setDemandsNodePair); }  
+        SortedSet<Demand> setDemandsNodePair = layer.cache_nodePairDemandsThisLayer.get(Pair.of(ingressNode, egressNode));
+        if (setDemandsNodePair == null) { setDemandsNodePair = new TreeSet<> (); layer.cache_nodePairDemandsThisLayer.put(Pair.of(ingressNode, egressNode) , setDemandsNodePair); }  
         setDemandsNodePair.add(demand);
 
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -504,13 +529,14 @@ public class NetPlan extends NetworkElement
      * @param ingressNode            Identifier of the ingress node
      * @param egressNode             Identifier of the egress node
      * @param offeredTraffic         Offered traffic by this demand. It must be greater or equal than zero
-     * @param attributes             Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes             SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @param optionalLayerParameter Network layer to which add the demand (optional)
+     * @param routingType            Routing type
      * @return A pair object with the two newly created demands
      * @see com.net2plan.interfaces.networkDesign.Demand
      * @see com.net2plan.utils.Pair
      */
-    public Pair<Demand, Demand> addDemandBidirectional(Node ingressNode, Node egressNode, double offeredTraffic, Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
+    public Pair<Demand, Demand> addDemandBidirectional(Node ingressNode, Node egressNode, double offeredTraffic, RoutingType routingType , Map<String, String> attributes, NetworkLayer... optionalLayerParameter)
     {
         offeredTraffic = NetPlan.adjustToTolerance(offeredTraffic);
         checkIsModifiable();
@@ -520,8 +546,8 @@ public class NetPlan extends NetworkElement
         if (ingressNode.equals(egressNode)) throw new Net2PlanException("Self-demands are not allowed");
         if (offeredTraffic < 0) throw new Net2PlanException("Offered traffic must be non-negative");
 
-        Demand d1 = addDemand(ingressNode, egressNode, offeredTraffic, attributes, layer);
-        Demand d2 = addDemand(egressNode, ingressNode, offeredTraffic, attributes, layer);
+        Demand d1 = addDemand(ingressNode, egressNode, offeredTraffic, routingType , attributes, layer);
+        Demand d2 = addDemand(egressNode, ingressNode, offeredTraffic, routingType , attributes, layer);
         d1.bidirectionalPair = d2;
         d2.bidirectionalPair = d1;
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -536,7 +562,7 @@ public class NetPlan extends NetworkElement
      * @param linkCapacityUnitsName  Textual description of link capacity units ({@code null} means empty)
      * @param demandTrafficUnitsName Textual description of demand traffic units ({@code null} means empty)
      * @param defaultNodeIconURL     The URL of the default icon for the layer nodes
-     * @param attributes             Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes             SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @return The newly created layer object
      */
     public NetworkLayer addLayer(String name, String description, String linkCapacityUnitsName, String demandTrafficUnitsName, URL defaultNodeIconURL, Map<String, String> attributes)
@@ -594,12 +620,12 @@ public class NetPlan extends NetworkElement
             this.addLink(nodes.get(originLink.originNode.index), nodes.get(originLink.destinationNode.index), originLink.capacity, originLink.lengthInKm, originLink.propagationSpeedInKmPerSecond, originLink.attributes, newLayer);
         for (Demand originDemand : origin.demands)
         {
-            Demand newDemand = this.addDemand(nodes.get(originDemand.ingressNode.index), nodes.get(originDemand.egressNode.index), originDemand.offeredTraffic, originDemand.attributes, newLayer);
+            Demand newDemand = this.addDemand(nodes.get(originDemand.ingressNode.index), nodes.get(originDemand.egressNode.index), originDemand.offeredTraffic, originDemand.routingType , originDemand.attributes, newLayer);
             newDemand.setServiceChainSequenceOfTraversedResourceTypes(originDemand.getServiceChainSequenceOfTraversedResourceTypes());
         }
         for (MulticastDemand originDemand : origin.multicastDemands)
         {
-            Set<Node> newEgressNodes = new HashSet<Node>();
+        	SortedSet<Node> newEgressNodes = new TreeSet<Node>();
             for (Node originEgress : originDemand.egressNodes) newEgressNodes.add(nodes.get(originEgress.index));
             this.addMulticastDemand(nodes.get(originDemand.ingressNode.index), newEgressNodes, originDemand.offeredTraffic, originDemand.attributes, newLayer);
         }
@@ -620,7 +646,7 @@ public class NetPlan extends NetworkElement
 
         for (MulticastTree originTree : origin.multicastTrees)
         {
-            Set<Link> newSetLinks = new HashSet<Link>();
+        	SortedSet<Link> newSetLinks = new TreeSet<Link>();
             for (Link originLink : originTree.linkSet) newSetLinks.add(newLayer.links.get(originLink.index));
             this.addMulticastTree(newLayer.multicastDemands.get(originTree.demand.index), originTree.carriedTrafficIfNotFailing, originTree.occupiedLinkCapacityIfNotFailing, newSetLinks, originTree.attributes);
         }
@@ -640,7 +666,7 @@ public class NetPlan extends NetworkElement
      *                                      (for Euclidean distance) or {@link #getNodePairHaversineDistanceInKm(Node, Node) getNodePairHaversineDistanceInKm} (for airlinea distance) methods.
      * @param propagationSpeedInKmPerSecond Link propagation speed in km/s. It must be greater than zero ({@code Double.MAX_VALUE} means no propagation delay, a non-positive value is changed into
      *                                      200000 km/seg, a typical speed of light in the wires)
-     * @param attributes                    Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes                    SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @param optionalLayerParameter        Network layer to which add the link (optional)
      * @return The newly created link object
      * @see com.net2plan.interfaces.networkDesign.Link
@@ -675,8 +701,8 @@ public class NetPlan extends NetworkElement
         layer.links.add(link);
         originNode.cache_nodeOutgoingLinks.add(link);
         destinationNode.cache_nodeIncomingLinks.add(link);
-        Set<Link> setLinksNodePair = layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode));
-        if (setLinksNodePair == null) { setLinksNodePair = new HashSet<> (); layer.cache_nodePairLinksThisLayer.put(Pair.of(originNode, destinationNode) , setLinksNodePair); }  
+        SortedSet<Link> setLinksNodePair = layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode));
+        if (setLinksNodePair == null) { setLinksNodePair = new TreeSet<> (); layer.cache_nodePairLinksThisLayer.put(Pair.of(originNode, destinationNode) , setLinksNodePair); }  
         setLinksNodePair.add(link);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return link;
@@ -693,7 +719,7 @@ public class NetPlan extends NetworkElement
      *                                      (for Euclidean distance) or {@link #getNodePairHaversineDistanceInKm(Node, Node) getNodePairHaversineDistanceInKm} (for airlinea distance) methods.
      * @param propagationSpeedInKmPerSecond Link propagation speed in km/s. It must be greater than zero ({@code Double.MAX_VALUE} means no propagation delay, a non-positive value is changed into
      *                                      200000 km/seg, a typical speed of light in the wires)
-     * @param attributes                    Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes                    SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @param optionalLayerParameter        Network layer to which add the links (optional)
      * @return A {@code Pair} object with the two newly created links
      * @see com.net2plan.interfaces.networkDesign.Link
@@ -729,7 +755,7 @@ public class NetPlan extends NetworkElement
      * @param ingressNode            Ingress node
      * @param egressNodes            Egress node
      * @param offeredTraffic         Offered traffic of the demand. It must be greater or equal than zero
-     * @param attributes             Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes             SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @param optionalLayerParameter Network layer to which add the demand (optional)
      * @return The newly created multicast demand
      * @see com.net2plan.interfaces.networkDesign.MulticastDemand
@@ -780,9 +806,9 @@ public class NetPlan extends NetworkElement
      * @param demand               Multi cast demand to be associated with the tree
      * @param carriedTraffic       Carried traffic. It must be greater or equal than zero
      * @param occupiedLinkCapacity Occupied link capacity. If -1, it will be assumed to be equal to the carried traffic. Otherwise, it must be greater or equal than zero
-     * @param linkSet              {@code Set} of links of the multicast tree
-     * @param attributes           Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
-     * @return The newly reated multicast tree
+     * @param linkSet              {@code SortedSet} of links of the multicast tree
+     * @param attributes           SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @return The newly created multicast tree
      * @see com.net2plan.interfaces.networkDesign.MulticastTree
      * @see com.net2plan.interfaces.networkDesign.MulticastDemand
      * @see com.net2plan.interfaces.networkDesign.Link
@@ -828,7 +854,7 @@ public class NetPlan extends NetworkElement
         }
         if (!treeIsUp) layer.cache_multicastTreesDown.add(tree);
         if (treeTravZeroCapLinks) layer.cache_multicastTreesTravLinkZeroCap.add(tree);
-        demand.cache_multicastTrees.add(tree);
+        demand.addMulticastTree(tree);
         tree.setCarriedTraffic(carriedTraffic, occupiedLinkCapacity);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return tree;
@@ -840,7 +866,7 @@ public class NetPlan extends NetworkElement
      * @param xCoord     Node position in x-axis
      * @param yCoord     Node position in y-axis
      * @param name       Node name ({@code null} will be converted to "Node " + node identifier)
-     * @param attributes Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @return The newly created node object
      * @see com.net2plan.interfaces.networkDesign.Node
      */
@@ -879,24 +905,25 @@ public class NetPlan extends NetworkElement
      * @param attributes                            The resource attributes
      * @return The created Resource object
      */
-    public Resource addResource(String type, String name, Node hostNode, double capacity, String capacityMeasurementUnits,
-                                Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, AttributeMap attributes)
+    public Resource addResource(String type, String name, Optional<Node> hostNode, double capacity, String capacityMeasurementUnits,
+                                Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, Map<String,String> attributes)
     {
         return addResource(null, type, name, hostNode, capacity, capacityMeasurementUnits,
                 capacityIOccupyInBaseResource, processingTimeToTraversingTrafficInMs, attributes);
     }
 
-    Resource addResource(Long resourceId, String type, String name, Node hostNode, double capacity, String capacityMeasurementUnits,
+    Resource addResource(Long resourceId, String type, String name, Optional<Node> hostNode, double capacity, String capacityMeasurementUnits,
                          Map<Resource, Double> capacityIOccupyInBaseResource, double processingTimeToTraversingTrafficInMs, 
-                         AttributeMap attributes)
+                         Map<String,String> attributes)
     {
         checkIsModifiable();
         if (capacity < 0) throw new Net2PlanException("Resource capacity cannot be negative");
         if (processingTimeToTraversingTrafficInMs < 0)
             throw new Net2PlanException("Resource processing time cannot be negative");
-        if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new HashMap<Resource, Double>();
+        if (capacityIOccupyInBaseResource == null) capacityIOccupyInBaseResource = new TreeMap<Resource, Double>();
         for (Double val : capacityIOccupyInBaseResource.values())
             if (val < 0) throw new Net2PlanException("Resource capacity cannot be negative");
+        if (!hostNode.isPresent() && !capacityIOccupyInBaseResource.isEmpty()) throw new Net2PlanException ("Not attached resources cannot have base resources"); 
         
         if (resourceId == null)
         {
@@ -905,18 +932,18 @@ public class NetPlan extends NetworkElement
         }
 
         Resource resource = new Resource(this, resourceId, resources.size(), type, name, hostNode, capacity,
-                capacityMeasurementUnits, capacityIOccupyInBaseResource, processingTimeToTraversingTrafficInMs, attributes);
+                capacityMeasurementUnits, capacityIOccupyInBaseResource, processingTimeToTraversingTrafficInMs, new AttributeMap (attributes));
 
         resources.add(resource);
         cache_id2ResourceMap.put(resourceId, resource);
-        Set<Resource> resOfThisType = cache_type2Resources.get(type);
+        SortedSet<Resource> resOfThisType = cache_type2Resources.get(type);
         if (resOfThisType == null)
         {
-            resOfThisType = new HashSet<Resource>();
+            resOfThisType = new TreeSet<Resource>();
             cache_type2Resources.put(type, resOfThisType);
         }
         resOfThisType.add(resource);
-        hostNode.cache_nodeResources.add(resource);
+        if (hostNode.isPresent()) hostNode.get().cache_nodeResources.add(resource);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return resource;
     }
@@ -930,7 +957,7 @@ public class NetPlan extends NetworkElement
      * @param carriedTraffic       Carried traffic. It must be greater or equal than zero
      * @param occupiedLinkCapacity Occupied link capacity, it must be greater or equal than zero.
      * @param sequenceOfLinks      Sequence of links traversed by the route
-     * @param attributes           Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes           SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @return The newly created route object
      * @see com.net2plan.interfaces.networkDesign.Route
      * @see com.net2plan.interfaces.networkDesign.Demand
@@ -949,7 +976,7 @@ public class NetPlan extends NetworkElement
      * @param carriedTraffic                    Carried traffic. It must be greater or equal than zero
      * @param occupiedLinkAndResourceCapacities Occupied link capacity, it must be greater or equal than zero.
      * @param sequenceOfLinksAndResources       Sequence of Link and Resource objects defining the sequence traversed by the route
-     * @param attributes                        Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes                        SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @return The newly created route object
      */
     public Route addServiceChain(Demand demand, double carriedTraffic, List<Double> occupiedLinkAndResourceCapacities, List<? extends NetworkElement> sequenceOfLinksAndResources, Map<String, String> attributes)
@@ -965,14 +992,25 @@ public class NetPlan extends NetworkElement
         checkIsModifiable();
         checkInThisNetPlan(demand);
         Pair<List<Link>, List<Resource>> listLinksAndListResources = checkPathValidityForDemand(sequenceOfLinksAndResources, demand);
-        demand.layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
+        demand.checkRoutingType(RoutingType.SOURCE_ROUTING);
         if (carriedTraffic < 0) throw new Net2PlanException("Carried traffic must be non-negative");
         if (occupiedLinkAndResourceCapacities.size() != sequenceOfLinksAndResources.size())
             throw new Net2PlanException("Wrong size of occupations vector");
         for (double val : occupiedLinkAndResourceCapacities)
             if (val < 0) throw new Net2PlanException("Occupied capacities cannot be negative");
-        
-        NetworkLayer layer = demand.layer;
+		if (demand.isCoupledInSameLayer())
+		{
+			final SortedSet<Link> intraLayerUpPropagation = demand.coupledUpperOrSameLayerLink.getIntraLayerUpPropagationIncludingMe();
+			for (NetworkElement e : sequenceOfLinksAndResources)
+				if (e instanceof Link)
+				{
+					final SortedSet<Link> downProp = ((Link) e).getIntraLayerDownPropagationIncludingMe();
+					if (!Sets.intersection(downProp, intraLayerUpPropagation).isEmpty())
+						throw new Net2PlanException ("The sequence of links produces a loop in the intra-layer coupling");
+					
+				}
+		}
+        final NetworkLayer layer = demand.layer;
 
         if (routeId == null)
         {
@@ -1015,12 +1053,12 @@ public class NetPlan extends NetworkElement
      * @param disjointType Type of disjointness: 0 for SRG-disjoint, 1 for link and node disjoint, other value means link disjoint
      * @return List of disjoint path pairs for each demand
      */
-    public static Map<Pair<Node, Node>, List<Pair<List<Link>, List<Link>>>> computeUnicastCandidate11PathList(Map<Pair<Node, Node>, List<List<Link>>> cpl, int disjointType)
+    public static SortedMap<Pair<Node, Node>, List<Pair<List<Link>, List<Link>>>> computeUnicastCandidate11PathList(Map<Pair<Node, Node>, List<List<Link>>> cpl, int disjointType)
     {
         final boolean srgDisjoint = disjointType == 0;
         final boolean linkAndNodeDisjoint = disjointType == 1;
         final boolean linkDisjoint = !srgDisjoint && !linkAndNodeDisjoint;
-        Map<Pair<Node, Node>, List<Pair<List<Link>, List<Link>>>> result = new HashMap<>();
+        SortedMap<Pair<Node, Node>, List<Pair<List<Link>, List<Link>>>> result = new TreeMap<>();
         if (cpl.isEmpty()) return result;
 
         for (Pair<Node, Node> nodePair : cpl.keySet())
@@ -1030,14 +1068,14 @@ public class NetPlan extends NetworkElement
             final int P_d = paths.size();
             for (int firstPathIndex = 0; firstPathIndex < P_d - 1; firstPathIndex++)
             {
-                final List<Link> firstPathSeqLinks = paths.get(firstPathIndex).stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
-                final Set<Link> firstPathLinks = new HashSet<Link>(firstPathSeqLinks);
-                Set<Node> firstPathNodesButLastAndFirst = null;
-                Set<SharedRiskGroup> firstPathSRGs = null;
+                final List<Link> firstPathSeqLinks = paths.get(firstPathIndex).stream().filter(e -> e instanceof Link).map(e -> e).collect(Collectors.toList());
+                final SortedSet<Link> firstPathLinks = new TreeSet<Link>(firstPathSeqLinks);
+                SortedSet<Node> firstPathNodesButLastAndFirst = null;
+                SortedSet<SharedRiskGroup> firstPathSRGs = null;
                 if (linkAndNodeDisjoint)
                 {
                     List<Node> firstPathSeqNodes = GraphUtils.convertSequenceOfLinksToSequenceOfNodes(firstPathSeqLinks);
-                    firstPathNodesButLastAndFirst = new HashSet<Node>(firstPathSeqNodes);
+                    firstPathNodesButLastAndFirst = new TreeSet<Node>(firstPathSeqNodes);
                     firstPathNodesButLastAndFirst.remove(nodePair.getFirst());
                     firstPathNodesButLastAndFirst.remove(nodePair.getSecond());
                 } else if (srgDisjoint)
@@ -1051,13 +1089,13 @@ public class NetPlan extends NetworkElement
                     boolean disjoint = true;
                     if (linkDisjoint)
                     {
-                        disjoint = Sets.intersection(firstPathLinks, new HashSet<>(secondPathSeqLinks)).isEmpty();
+                        disjoint = Sets.intersection(firstPathLinks, new TreeSet<>(secondPathSeqLinks)).isEmpty();
                     } else if (linkAndNodeDisjoint)
                     {
-                        Set<Node> secondPathNodes = new HashSet<Node>(GraphUtils.convertSequenceOfLinksToSequenceOfNodes(secondPathSeqLinks));
+                        SortedSet<Node> secondPathNodes = new TreeSet<Node>(GraphUtils.convertSequenceOfLinksToSequenceOfNodes(secondPathSeqLinks));
                         secondPathNodes.remove(nodePair.getFirst());
                         secondPathNodes.remove(nodePair.getSecond());
-                        disjoint = Sets.intersection(firstPathLinks, new HashSet<>(secondPathSeqLinks)).isEmpty() &&
+                        disjoint = Sets.intersection(firstPathLinks, new TreeSet<>(secondPathSeqLinks)).isEmpty() &&
                                 Sets.intersection(firstPathNodesButLastAndFirst, secondPathNodes).isEmpty();
                     } else if (srgDisjoint)
                     {
@@ -1083,12 +1121,12 @@ public class NetPlan extends NetworkElement
      * @param disjointType Type of disjointness: 0 for SRG-disjoint, 1 for link and node disjoint, other value means link disjoint
      * @return List of disjoint path pairs for each demand
      */
-    public static Map<Demand, List<Pair<List<NetworkElement>, List<NetworkElement>>>> computeUnicastCandidate11ServiceChainList(Map<Demand, List<List<NetworkElement>>> cpl, int disjointType)
+    public static SortedMap<Demand, List<Pair<List<NetworkElement>, List<NetworkElement>>>> computeUnicastCandidate11ServiceChainList(SortedMap<Demand, List<List<NetworkElement>>> cpl, int disjointType)
     {
         final boolean srgDisjoint = disjointType == 0;
         final boolean linkAndNodeDisjoint = disjointType == 1;
         final boolean linkDisjoint = !srgDisjoint && !linkAndNodeDisjoint;
-        Map<Demand, List<Pair<List<NetworkElement>, List<NetworkElement>>>> result = new HashMap<>();
+        SortedMap<Demand, List<Pair<List<NetworkElement>, List<NetworkElement>>>> result = new TreeMap<>();
         if (cpl.isEmpty()) return result;
         final NetPlan thisNp = cpl.keySet().iterator().next().netPlan;
 
@@ -1101,13 +1139,13 @@ public class NetPlan extends NetworkElement
             for (int firstPathIndex = 0; firstPathIndex < P_d - 1; firstPathIndex++)
             {
                 final List<Link> firstPathSeqLinks = paths.get(firstPathIndex).stream().filter(e -> e instanceof Link).map(e -> (Link) e).collect(Collectors.toList());
-                final Set<Link> firstPathLinks = new HashSet<Link>(firstPathSeqLinks);
-                Set<Node> firstPathNodesButLastAndFirst = null;
-                Set<SharedRiskGroup> firstPathSRGs = null;
+                final SortedSet<Link> firstPathLinks = new TreeSet<Link>(firstPathSeqLinks);
+                SortedSet<Node> firstPathNodesButLastAndFirst = null;
+                SortedSet<SharedRiskGroup> firstPathSRGs = null;
                 if (linkAndNodeDisjoint)
                 {
                     List<Node> firstPathSeqNodes = GraphUtils.convertSequenceOfLinksToSequenceOfNodes(firstPathSeqLinks);
-                    firstPathNodesButLastAndFirst = new HashSet<Node>(firstPathSeqNodes);
+                    firstPathNodesButLastAndFirst = new TreeSet<Node>(firstPathSeqNodes);
                     firstPathNodesButLastAndFirst.remove(d.getIngressNode());
                     firstPathNodesButLastAndFirst.remove(d.getEgressNode());
                 } else if (srgDisjoint)
@@ -1171,13 +1209,13 @@ public class NetPlan extends NetworkElement
 
         if (disjointnessType == 0) // SRG disjoint
         {
-            Set<SharedRiskGroup> srg1 = new HashSet<SharedRiskGroup>();
+            SortedSet<SharedRiskGroup> srg1 = new TreeSet<SharedRiskGroup>();
             for (Link e : p1) srg1.addAll(e.getSRGs());
             for (Link e : p2)
                 for (SharedRiskGroup srg : e.getSRGs()) if (srg1.contains(srg)) throw new RuntimeException("Bad");
         } else if (disjointnessType == 1) // link and node
         {
-            Set<NetworkElement> resourcesP1 = new HashSet<NetworkElement>();
+            SortedSet<NetworkElement> resourcesP1 = new TreeSet<NetworkElement>();
             boolean firstLink = true;
             for (Link e : p1)
             {
@@ -1188,7 +1226,7 @@ public class NetPlan extends NetworkElement
             for (Link e : p2) if (resourcesP1.contains(e)) throw new RuntimeException("Bad");
         } else if (disjointnessType == 2) // link
         {
-            Set<Link> linksP1 = new HashSet<Link>(p1);
+            SortedSet<Link> linksP1 = new TreeSet<Link>(p1);
             for (Link e : p2) if (linksP1.contains(e)) throw new RuntimeException("Bad: p1: " + p1 + ", p2: " + p2);
         } else throw new RuntimeException("Bad");
 
@@ -1208,20 +1246,20 @@ public class NetPlan extends NetworkElement
      * @param maxNumHopsPerSubpath       The maximum number of traversed links in each subpath. Service chains not satisfying this are not enumerated
      * @param maxPropDelayInMsPerSubpath The propagation delay summing the links in each subpath. Service chains not satisfying this are not enumerated
      * @param optionalLayerParameter     the optional layer parameter
-     * @return Map with all the computed service chain paths (values) per demands (keys)
+     * @return SortedMap with all the computed service chain paths (values) per demands (keys)
      */
-    public Map<Demand, List<List<NetworkElement>>> computeUnicastCandidateServiceChainList(DoubleMatrix1D linkCosts, DoubleMatrix1D resourceCosts,
+    public SortedMap<Demand, List<List<NetworkElement>>> computeUnicastCandidateServiceChainList(DoubleMatrix1D linkCosts, DoubleMatrix1D resourceCosts,
                                                                                            int K, double maxCostServiceChain, double maxLengthInKmPerSubpath, int maxNumHopsPerSubpath, double maxPropDelayInMsPerSubpath,
                                                                                            NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Map<Pair<Node, Node>, List<Pair<List<Link>, Double>>> cacheSubpathLists = new HashMap<>();
+        SortedMap<Pair<Node, Node>, List<Pair<List<Link>, Double>>> cacheSubpathLists = new TreeMap<>();
         if (linkCosts == null) linkCosts = DoubleFactory1D.dense.make(layer.links.size(), 1.0);
         if (resourceCosts == null) resourceCosts = DoubleFactory1D.dense.make(resources.size(), 0.0);
-        Map<Resource, Double> resourceCostMap = new HashMap<Resource, Double>();
+        SortedMap<Resource, Double> resourceCostMap = new TreeMap<Resource, Double>();
         for (int rIndex = 0; rIndex < resources.size(); rIndex++)
             resourceCostMap.put(resources.get(rIndex), resourceCosts.get(rIndex));
-        Map<Demand, List<List<NetworkElement>>> cpl = new HashMap<Demand, List<List<NetworkElement>>>();
+        SortedMap<Demand, List<List<NetworkElement>>> cpl = new TreeMap<Demand, List<List<NetworkElement>>>();
         for (Demand d : layer.demands)
         {
             List<Pair<List<NetworkElement>, Double>> kSCsInfo = GraphUtils.getKMinimumCostServiceChains(layer.links,
@@ -1248,22 +1286,22 @@ public class NetPlan extends NetworkElement
      * @param maxRouteCostRespectToShortestPath       Maximum route cost respect to the shortest path. If non-positive, no maximum limit is assumed
      * @param nodePairs                               if this parameter is not null, the paths are computed only for this node pairs
      * @param optionalLayerParameter                  the layer (optional)
-     * @return Map with all the computed paths (values) per node pairs (keys)
+     * @return SortedMap with all the computed paths (values) per node pairs (keys)
      */
-    public Map<Pair<Node, Node>, List<List<Link>>> computeUnicastCandidatePathList(DoubleMatrix1D linkCosts,
+    public SortedMap<Pair<Node, Node>, List<List<Link>>> computeUnicastCandidatePathList(DoubleMatrix1D linkCosts,
                                                                                    int K, double maxLengthInKm, int maxNumHops, double maxPropDelayInMs, double maxRouteCost,
-                                                                                   double maxRouteCostFactorRespectToShortestPath, double maxRouteCostRespectToShortestPath, Set<Pair<Node, Node>> nodePairs, NetworkLayer... optionalLayerParameter)
+                                                                                   double maxRouteCostFactorRespectToShortestPath, double maxRouteCostRespectToShortestPath, SortedSet<Pair<Node, Node>> nodePairs, NetworkLayer... optionalLayerParameter)
     {
         checkIsModifiable();
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         if (linkCosts != null) if (linkCosts.size() != layer.links.size())
             throw new Net2PlanException("The array of costs must have the same length as the number of links in the layer");
-        Map<Pair<Node, Node>, List<List<Link>>> cpl = new HashMap<>();
-        Map<Link, Double> linkCostMap = new HashMap<Link, Double>();
+        SortedMap<Pair<Node, Node>, List<List<Link>>> cpl = new TreeMap<>();
+        SortedMap<Link, Double> linkCostMap = new TreeMap<Link, Double>();
         for (Link e : layer.links) linkCostMap.put(e, linkCosts == null ? 1.0 : linkCosts.get(e.index));
         if (nodePairs == null)
         {
-            nodePairs = new HashSet<>();
+            nodePairs = new TreeSet<>();
             for (Node n1 : nodes)
                 for (Node n2 : nodes)
                     if (n1 != n2) nodePairs.add(Pair.of(n1, n2));
@@ -1277,10 +1315,10 @@ public class NetPlan extends NetworkElement
      * <p>Adds multiples routes for each demand of the given layer, using the paths in an input Candidate Path List.
      * The paths should use the links of the same layer</p>
      *
-     * @param cpl           {@code Map} where the keys are the node pairs and the values a list of sequence of links (each sequence is a route)
+     * @param cpl           {@code SortedMap} where the keys are the node pairs and the values a list of sequence of links (each sequence is a route)
      * @param optionalLayer the layer (optional)
      */
-    public void addRoutesFromCandidatePathList(Map<Pair<Node, Node>, List<List<Link>>> cpl, NetworkLayer... optionalLayer)
+    public void addRoutesFromCandidatePathList(SortedMap<Pair<Node, Node>, List<List<Link>>> cpl, NetworkLayer... optionalLayer)
     {
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayer);
@@ -1305,7 +1343,7 @@ public class NetPlan extends NetworkElement
      * @param cpl11         a map with the path info
      * @param optionalLayer the layer (optional)
      */
-    public void addRoutesAndBackupRoutesFromCandidate11PathList(Map<Pair<Node, Node>, List<Pair<List<Link>, List<Link>>>> cpl11, NetworkLayer... optionalLayer)
+    public void addRoutesAndBackupRoutesFromCandidate11PathList(SortedMap<Pair<Node, Node>, List<Pair<List<Link>, List<Link>>>> cpl11, NetworkLayer... optionalLayer)
     {
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayer);
@@ -1339,7 +1377,7 @@ public class NetPlan extends NetworkElement
      * @param candidateTreeListParamValuePairs see {@code computeMulticastCandidatePathList}
      * @return see {@code computeMulticastCandidatePathList}
      */
-    public Map<MulticastDemand, List<Set<Link>>> computeMulticastCandidatePathList(DoubleMatrix1D costs, String solverName, String solverLibraryName, double maxSolverTimeInSecondsPerTree, String... candidateTreeListParamValuePairs)
+    public SortedMap<MulticastDemand, List<SortedSet<Link>>> computeMulticastCandidatePathList(DoubleMatrix1D costs, String solverName, String solverLibraryName, double maxSolverTimeInSecondsPerTree, String... candidateTreeListParamValuePairs)
     {
         return computeMulticastCandidatePathList(defaultLayer, costs, solverName, solverLibraryName, maxSolverTimeInSecondsPerTree, candidateTreeListParamValuePairs);
     }
@@ -1371,15 +1409,15 @@ public class NetPlan extends NetworkElement
      *                                         The best solution found so far is returned. If non-positive, no time limit is set
      * @param candidateTreeListParamValuePairs Parameters to be passed to the class to tune its operation. An even number of {@code String} is to be passed. For each {@code String} pair, first {@code String}
      *                                         must be the name of the parameter, second a {@code String} with its value. If no name-value pairs are set, default values are used
-     * @return Map with a list of all the computed trees (a tree is a set of links) per multicast demands
+     * @return SortedMap with a list of all the computed trees (a tree is a set of links) per multicast demands
      */
-    public Map<MulticastDemand, List<Set<Link>>> computeMulticastCandidatePathList(NetworkLayer layer, DoubleMatrix1D linkCosts, String solverName, String solverLibraryName, double maxSolverTimeInSecondsPerTree, String... candidateTreeListParamValuePairs)
+    public SortedMap<MulticastDemand, List<SortedSet<Link>>> computeMulticastCandidatePathList(NetworkLayer layer, DoubleMatrix1D linkCosts, String solverName, String solverLibraryName, double maxSolverTimeInSecondsPerTree, String... candidateTreeListParamValuePairs)
     {
         checkInThisNetPlan(layer);
         if (linkCosts == null) linkCosts = DoubleFactory1D.dense.make(layer.links.size(), 1);
         if (linkCosts.size() != layer.links.size())
             throw new Net2PlanException("The array of costs must have the same length as the number of links in the layer");
-        Map<MulticastDemand, List<Set<Link>>> cpl = new HashMap<MulticastDemand, List<Set<Link>>>();
+        SortedMap<MulticastDemand, List<SortedSet<Link>>> cpl = new TreeMap<MulticastDemand, List<SortedSet<Link>>>();
         int K = 3;
         int maxCopyCapability = Integer.MAX_VALUE;
         double maxE2ELengthInKm = Double.MAX_VALUE;
@@ -1389,7 +1427,7 @@ public class NetPlan extends NetworkElement
         double maxTreeCostFactorRespectToMinimumCostTree = Double.MAX_VALUE;
         double maxTreeCostRespectToMinimumCostTree = Double.MAX_VALUE;
 
-        int numParameters = (int) (candidateTreeListParamValuePairs.length / 2);
+        int numParameters = candidateTreeListParamValuePairs.length / 2;
         if (numParameters * 2 != candidateTreeListParamValuePairs.length)
             throw new Net2PlanException("A parameter has not assigned its value");
 
@@ -1425,7 +1463,7 @@ public class NetPlan extends NetworkElement
 
         for (MulticastDemand d : layer.multicastDemands)
         {
-            List<Set<Link>> trees = GraphUtils.getKMinimumCostMulticastTrees(layer.links,
+            List<SortedSet<Link>> trees = GraphUtils.getKMinimumCostMulticastTrees(layer,
                     d.getIngressNode(), d.getEgressNodes(),
                     Aout_ne, Ain_ne, linkCosts,
                     solverName, solverLibraryName,
@@ -1440,18 +1478,18 @@ public class NetPlan extends NetworkElement
     /**
      * <p>Adds multiple multicast trees from a Candidate Tree list.</p>
      *
-     * @param cpl {@code Map} where the keys are multicast demands and the values lists of link sets
+     * @param cpl {@code SortedMap} where the keys are multicast demands and the values lists of link sets
      * @see com.net2plan.interfaces.networkDesign.MulticastDemand
      * @see com.net2plan.interfaces.networkDesign.Link
      */
-    public void addMulticastTreesFromCandidateTreeList(Map<MulticastDemand, List<Set<Link>>> cpl)
+    public void addMulticastTreesFromCandidateTreeList(SortedMap<MulticastDemand, List<SortedSet<Link>>> cpl)
     {
         checkIsModifiable();
         List<MulticastTree> trees = new LinkedList<MulticastTree>();
         try
         {
-            for (Entry<MulticastDemand, List<Set<Link>>> entry : cpl.entrySet())
-                for (Set<Link> linkSet : entry.getValue())
+            for (Entry<MulticastDemand, List<SortedSet<Link>>> entry : cpl.entrySet())
+                for (SortedSet<Link> linkSet : entry.getValue())
                     trees.add(addMulticastTree(entry.getKey(), 0, 0, linkSet, null));
         } catch (Exception e)
         {
@@ -1466,7 +1504,7 @@ public class NetPlan extends NetworkElement
      *
      * @param mttfInHours Mean Time To Fail (in hours). Must be greater than zero
      * @param mttrInHours Mean Time To Repair (in hours). Must be greater than zero
-     * @param attributes  Map for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @param attributes  SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
      * @return The newly created shared risk group object
      * @see com.net2plan.interfaces.networkDesign.SharedRiskGroup
      */
@@ -1474,7 +1512,6 @@ public class NetPlan extends NetworkElement
     {
         return addSRG(null, mttfInHours, mttrInHours, attributes);
     }
-
     SharedRiskGroup addSRG(Long srgId, double mttfInHours, double mttrInHours, Map<String, String> attributes)
     {
         checkIsModifiable();
@@ -1486,12 +1523,40 @@ public class NetPlan extends NetworkElement
             srgId = nextElementId.longValue();
             nextElementId.increment();
         }
-
-        SharedRiskGroup srg = new SharedRiskGroup(this, srgId, srgs.size(), new HashSet<Node>(), new HashSet<Link>(), mttfInHours, mttrInHours, new AttributeMap(attributes));
-
+        SharedRiskGroup srg = new SharedRiskGroup(this, srgId, srgs.size(), new TreeSet<Node>(), new TreeSet<Link>(), mttfInHours, mttrInHours, new AttributeMap(attributes));
         srgs.add(srg);
         cache_id2srgMap.put(srgId, srg);
-
+        if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
+        return srg;
+    }
+    /**
+     * <p>Adds a new dynamic SRG. This is a SRG for which the set of links and nodes affected are dynamically 
+     * computed everytime the get methods asking for them are called.</p>
+     * @param mttfInHours Mean Time To Fail (in hours). Must be greater than zero
+     * @param mttrInHours Mean Time To Repair (in hours). Must be greater than zero
+     * @param className the name of the class implementing the dynamic SRG functionality
+     * @param dynamicInitializationString the initialization string to be consumed by the dynami SRG implementation 
+     * @param attributes  SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
+     * @return see above
+     */
+    public SharedRiskGroup addSRGDynamic(double mttfInHours, double mttrInHours, String className , String dynamicInitializationString , Map<String, String> attributes)
+    {
+        return addSRGDynamic(null, mttfInHours, mttrInHours, className , dynamicInitializationString , attributes);
+    }
+    SharedRiskGroup addSRGDynamic(Long srgId, double mttfInHours, double mttrInHours, String className , String dynamicInitializationString , Map<String, String> attributes)
+    {
+        checkIsModifiable();
+        if (mttfInHours <= 0) throw new Net2PlanException("Mean Time To Fail must be a positive value");
+        if (mttrInHours <= 0) throw new Net2PlanException("Mean Time To Repair must be a positive value");
+        if (srgId == null)
+        {
+            srgId = nextElementId.longValue();
+            nextElementId.increment();
+        }
+        SharedRiskGroup srg = new SharedRiskGroup(this , srgId , srgs.size () , className , dynamicInitializationString , mttfInHours ,  mttrInHours , new AttributeMap(attributes));
+        srgs.add(srg);
+        cache_dynamicSrgs.add(srg);
+        cache_id2srgMap.put(srgId, srg);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
         return srg;
     }
@@ -1512,8 +1577,10 @@ public class NetPlan extends NetworkElement
 
         this.DEFAULT_ROUTING_TYPE = netPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = netPlan.isModifiable;
-        this.networkDescription = netPlan.networkDescription;
-        this.networkName = netPlan.networkName;
+        this.description = netPlan.description;
+        this.name = netPlan.name;
+        this.currentPlotNodeLayout = netPlan.currentPlotNodeLayout;
+        this.cache_definedPlotNodeLayouts = netPlan.cache_definedPlotNodeLayouts;
         this.defaultLayer = netPlan.defaultLayer;
         this.nextElementId = netPlan.nextElementId;
         this.layers = netPlan.layers;
@@ -1521,6 +1588,7 @@ public class NetPlan extends NetworkElement
         this.srgs = netPlan.srgs;
         this.resources = netPlan.resources;
         this.cache_nodesDown = netPlan.cache_nodesDown;
+        this.cache_dynamicSrgs = netPlan.cache_dynamicSrgs;
         this.cache_type2Resources = netPlan.cache_type2Resources;
         this.cache_id2LayerMap = netPlan.cache_id2LayerMap;
         this.cache_id2NodeMap = netPlan.cache_id2NodeMap;
@@ -1752,6 +1820,7 @@ public class NetPlan extends NetworkElement
     void checkInThisNetPlanAndLayer(NetworkElement e, NetworkLayer layer)
     {
         if (e == null) throw new Net2PlanException("Network element is null");
+        if (e.netPlan == null) throw new Net2PlanException("Element " + e + " was removed");
         if (e.netPlan != this) throw new Net2PlanException("Element " + e + " is not attached to this NetPlan object.");
         if (e instanceof Node)
         {
@@ -1817,34 +1886,34 @@ public class NetPlan extends NetworkElement
      *
      * @param linkSet Sequence of links
      * @param demand  Multicast demand
-     * @return Map where the keys are nodes and the values are sequences of links (see description)
+     * @return SortedMap where the keys are nodes and the values are sequences of links (see description)
      * @see com.net2plan.interfaces.networkDesign.Node
      * @see com.net2plan.interfaces.networkDesign.Link
      * @see com.net2plan.interfaces.networkDesign.MulticastDemand
      */
-    Pair<Map<Node, List<Link>>, Set<Node>> checkMulticastTreeValidityForDemand(Set<Link> linkSet, MulticastDemand demand)
+    Pair<SortedMap<Node, List<Link>>, SortedSet<Node>> checkMulticastTreeValidityForDemand(Set<Link> linkSet, MulticastDemand demand)
     {
-        if (linkSet.isEmpty()) throw new Net2PlanException("The multicast tree is empty");
         checkInThisNetPlan(demand);
-        final NetworkLayer layer = demand.layer;
         checkInThisNetPlanAndLayer(linkSet, demand.layer);
+        if (linkSet.isEmpty()) return Pair.of(new TreeMap<> (), new TreeSet<> ());
 
-        Map<Node, List<Link>> pathToEgressNode = new HashMap<Node, List<Link>>();
-        Map<Link, Double> linkCost = new HashMap<Link, Double>();
-        for (Link link : layer.links) linkCost.put(link, (linkSet.contains(link)) ? 1 : Double.MAX_VALUE);
-        Set<Link> actuallyTraversedLinks = new HashSet<Link>();
+        SortedMap<Node, List<Link>> pathToEgressNode = new TreeMap<Node, List<Link>>();
+//        SortedMap<Link, Double> linkCost = new TreeMap<Link, Double>();
+//        for (Link link : layer.links) linkCost.put(link, (linkSet.contains(link)) ? 1 : Double.MAX_VALUE);
+        SortedSet<Link> actuallyTraversedLinks = new TreeSet<Link>();
+        
         for (Node egressNode : demand.egressNodes)
         {
-            final List<Link> seqLinks = GraphUtils.getShortestPath(nodes, layer.links, demand.ingressNode, egressNode, linkCost);
-            if (seqLinks == null) throw new Net2PlanException("No path to an end node");
+            final List<Link> seqLinks = GraphUtils.getShortestPath(nodes, linkSet, demand.ingressNode, egressNode, null);
+            if (seqLinks.isEmpty()) continue; // not reachable egress node // throw new Net2PlanException("No path to an end node");
             pathToEgressNode.put(egressNode, seqLinks);
             actuallyTraversedLinks.addAll(seqLinks);
         }
 
         if (!linkSet.equals(actuallyTraversedLinks))
-            throw new Net2PlanException("Some links in the link set provided are not traversed. The structure may not be a tree");
+            throw new Net2PlanException("Some links in the link set provided are not traversed. The structure may not be a tree. Link set: " + linkSet + ". Traversed links: " + actuallyTraversedLinks + ". Demand ingress: " + demand.getIngressNode() + ", demand egress nodes: " + demand.getEgressNodes());
 
-        Set<Node> traversedNodes = new HashSet<Node>();
+        SortedSet<Node> traversedNodes = new TreeSet<Node>();
         for (Link e : linkSet)
         {
             traversedNodes.add(e.originNode);
@@ -1875,10 +1944,11 @@ public class NetPlan extends NetworkElement
             if (e instanceof Link) links.add((Link) e);
             else if (e instanceof Resource)
             {
+            	if (!((Resource) e).iAttachedToANode()) throw new Net2PlanException ("The resource is not attached to a node");
                 resources.add((Resource) e);
-                if (links.isEmpty() && !((Resource) e).hostNode.equals(d.ingressNode))
+                if (links.isEmpty() && !((Resource) e).hostNode.get().equals(d.ingressNode))
                     throw new Net2PlanException("Wrong resource node in the service chain");
-                if (!links.isEmpty() && !((Resource) e).hostNode.equals(links.getLast().destinationNode))
+                if (!links.isEmpty() && !((Resource) e).hostNode.get().equals(links.getLast().destinationNode))
                     throw new Net2PlanException("Wrong resource node in the service chain");
             } else throw new Net2PlanException("A list of links and/or resources is expected");
         }
@@ -1916,16 +1986,16 @@ public class NetPlan extends NetworkElement
      * This operation is idempotent: merging x with x is x, merging x with y and again with y, is 
      * the same as merging x with y just once
      *
-     * @param otherDesign design to merge to
+     * @param otherDesign The design to merge with
      * @return this (for convenience only)
      */
     public NetPlan mergeIntoThisDesign (NetPlan otherDesign)
     {
-    	final Map<NetworkElement,NetworkElement> thatToThisTranslation = new HashMap<>();
+    	final SortedMap<NetworkElement,NetworkElement> thatToThisTranslation = new TreeMap<>();
 
     	/* All the elements in current design have the same id in the other */
-    	final Set<Node> nodesThis_thisAndOther = new HashSet<> ();
-    	final Set<Node> nodesThis_otherNotThis = new HashSet<> ();
+    	final SortedSet<Node> nodesThis_thisAndOther = new TreeSet<> ();
+    	final SortedSet<Node> nodesThis_otherNotThis = new TreeSet<> ();
     	for (Node other : otherDesign.getNodes())
     	{
     		Node e = this.getNodeFromId(other.getId());
@@ -1949,7 +2019,7 @@ public class NetPlan extends NetworkElement
     	for (Resource other : otherDesign.getResources())
     	{
     		Resource e = this.getResourceFromId(other.getId());
-			final Map<Resource,Double> thisOccupMap = new HashMap<> ();
+			final SortedMap<Resource,Double> thisOccupMap = new TreeMap<> ();
 			for (Entry<Resource,Double> entry : other.getCapacityOccupiedInBaseResourcesMap().entrySet())
 			{
 				final Resource thisIdBaseResource = (Resource) thatToThisTranslation.get(entry.getKey()); 
@@ -1958,7 +2028,7 @@ public class NetPlan extends NetworkElement
 			}
     		if (e == null)
     		{
-    			final Node thisHostNode = (Node)thatToThisTranslation.get(other.getHostNode());
+    			final Optional<Node> thisHostNode = other.iAttachedToANode ()? Optional.of((Node)thatToThisTranslation.get(other.getHostNode().get())) : Optional.empty();
     			if (thisHostNode == null) throw new RuntimeException ();
     			e = this.addResource(other.getType(), other.getName(), thisHostNode, 0 , "" , thisOccupMap , 0 , null);
     		}
@@ -2000,7 +2070,6 @@ public class NetPlan extends NetworkElement
     		this.setLinkCapacityUnitsName(otherLayer.linkCapacityUnitsName , thisLayer);
     		thisLayer.setDescription(otherLayer.getDescription());
     		thisLayer.setName(otherLayer.getName());
-    		this.setRoutingType(otherDesign.getRoutingType(otherLayer), thisLayer);
     		thisLayer.setDefaultNodeIconURL(otherLayer.getDefaultNodeIconURL());
     		thisLayer.setAttributeMap(otherLayer.getAttributes()); // previous attributes are not removed, just new added or existing updated
     		for (String tag : otherLayer.getTags()) thisLayer.addTag(tag);
@@ -2024,13 +2093,14 @@ public class NetPlan extends NetworkElement
         		if (this.getDemandFromId(otherDemand.getId()) != null) throw new RuntimeException();
         		final Node this_ae = (Node)thatToThisTranslation.get(otherDemand.getIngressNode());
         		final Node this_be = (Node)thatToThisTranslation.get(otherDemand.getEgressNode());
-        		final Demand thisDemand = this.addDemand(this_ae, this_be, 0, null, thisLayer);
+        		final Demand thisDemand = this.addDemand(this_ae, this_be, 0, otherDemand.getRoutingType() , null, thisLayer);
         		thatToThisTranslation.put(otherDemand,thisDemand);
         		thisDemand.setOfferedTraffic(otherDemand.getOfferedTraffic());
+        		thisDemand.setRoutingType(otherDemand.getRoutingType());
         		thisDemand.setIntendedRecoveryType(otherDemand.getIntendedRecoveryType());
         		thisDemand.setAttributeMap(otherDemand.getAttributes()); // previous attributes are not removed, just new added or existing updated
         		for (String tag : otherDemand.getTags()) thisDemand.addTag(tag);
-        		if (thisLayer.isSourceRouting())
+        		if (thisDemand.isSourceRouting())
         		{
         			thisDemand.setServiceChainSequenceOfTraversedResourceTypes(otherDemand.getServiceChainSequenceOfTraversedResourceTypes());
                 	for (Route other : otherDemand.getRoutes())
@@ -2070,7 +2140,7 @@ public class NetPlan extends NetworkElement
         		else
         		{
         			thisDemand.removeAllForwardingRules();
-            		final Map<Pair<Demand,Link>,Double> otherFrs = otherDemand.getForwardingRules();
+            		final SortedMap<Pair<Demand,Link>,Double> otherFrs = otherDemand.getForwardingRules();
             		final List<Demand> frDemands = new ArrayList<> (otherFrs.size());
             		final List<Link> frLinks = new ArrayList<> (otherFrs.size());
             		final List<Double> frSplits = new ArrayList<> (otherFrs.size());
@@ -2088,7 +2158,7 @@ public class NetPlan extends NetworkElement
         	{
        			if (this.getMulticastDemandFromId(otherDemand.getId()) != null) throw new RuntimeException();
         		final Node this_ae = (Node)thatToThisTranslation.get(otherDemand.getIngressNode());
-        		final Set<Node> this_be = otherDemand.getEgressNodes().stream().map(x->(Node)thatToThisTranslation.get(x)).collect(Collectors.toSet());
+        		final SortedSet<Node> this_be = otherDemand.getEgressNodes().stream().map(x->(Node)thatToThisTranslation.get(x)).collect(Collectors.toCollection(TreeSet::new));
        			final MulticastDemand thisDemand = this.addMulticastDemand(this_ae, this_be, 0, null, thisLayer);
         		thisDemand.setOfferedTraffic(otherDemand.getOfferedTraffic());
         		thisDemand.setAttributeMap(otherDemand.getAttributes()); // previous attributes are not removed, just new added or existing updated
@@ -2105,12 +2175,12 @@ public class NetPlan extends NetworkElement
             		MulticastTree t = null;
             		if (!initialLinkSet.contains(null))
             		{
-                		t = this.addMulticastTree(thisDemand, 0, 0, initialLinkSet, null);
-                		t.setLinks(currentLinkSet);
+                		t = this.addMulticastTree(thisDemand, 0, 0, new TreeSet<> (initialLinkSet), null);
+                		t.setLinks(new TreeSet<> (currentLinkSet));
             		}
             		else
             		{
-                		t = this.addMulticastTree(thisDemand, 0, 0, currentLinkSet, null);
+                		t = this.addMulticastTree(thisDemand, 0, 0, new TreeSet<> (currentLinkSet), null);
             		}
             		t.setCarriedTraffic(other.getCarriedTrafficInNoFailureState(), other.getOccupiedLinkCapacityInNoFailureState());
             		t.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
@@ -2128,14 +2198,14 @@ public class NetPlan extends NetworkElement
         		final Demand thisDemand = (Demand) thatToThisTranslation.get(otherDemand);
         		final Link otherUpperLink = otherDemand.getCoupledLink();
         		final Link thisUpperLink = (Link) thatToThisTranslation.get(otherUpperLink);
-    			thisDemand.coupleToUpperLayerLink(thisUpperLink);
+    			thisDemand.coupleToUpperOrSameLayerLink(thisUpperLink);
     		}
     		for (MulticastDemand otherDemand : otherDesign.getMulticastDemands(otherLayer))
     		{
     			if (!otherDemand.isCoupled()) continue;
         		final MulticastDemand thisDemand = (MulticastDemand) thatToThisTranslation.get(otherDemand);
-        		final Set<Link> otherUpperLinks = otherDemand.getCoupledLinks();
-        		final Set<Link> thisUpperLinks = otherUpperLinks.stream().map(x->(Link) thatToThisTranslation.get(x)).collect(Collectors.toSet());
+        		final SortedSet<Link> otherUpperLinks = otherDemand.getCoupledLinks();
+        		final SortedSet<Link> thisUpperLinks = otherUpperLinks.stream().map(x->(Link) thatToThisTranslation.get(x)).collect(Collectors.toCollection(TreeSet::new));
     			thisDemand.couple(thisUpperLinks);
     		}
     	}
@@ -2143,10 +2213,11 @@ public class NetPlan extends NetworkElement
     	for (SharedRiskGroup other : otherDesign.getSRGs())
     	{
     		SharedRiskGroup thisSrg = this.getSRGFromId(other.getId());
-    		final Set<Node> thisNodes = other.getNodes().stream().map(x->(Node) thatToThisTranslation.get(x)).collect(Collectors.toSet());
-    		final Set<Link> thisLinks = other.getLinksAllLayers().stream().map(x->(Link) thatToThisTranslation.get(x)).collect(Collectors.toSet());
-    		if (thisSrg == null)
-    			thisSrg = this.addSRG(other.getMeanTimeToFailInHours(), other.getMeanTimeToRepairInHours(), null);
+            if (thisSrg == null)
+                thisSrg = this.addSRG(other.getMeanTimeToFailInHours(), other.getMeanTimeToRepairInHours(), null);
+            else if (thisSrg.isDynamicSrg()) continue; // dynamic SRGs are not merged
+    		final SortedSet<Node> thisNodes = other.getNodes().stream().map(x->(Node) thatToThisTranslation.get(x)).collect(Collectors.toCollection(TreeSet::new));
+    		final SortedSet<Link> thisLinks = other.getLinksAllLayers().stream().map(x->(Link) thatToThisTranslation.get(x)).collect(Collectors.toCollection(TreeSet::new));
     		for (Node n :  thisNodes) thisSrg.addNode(n);
     		for (Link e :  thisLinks) thisSrg.addLink(e);
     		thisSrg.setAttributeMap(other.getAttributes()); // previous attributes are not removed, just new added or existing updated
@@ -2170,22 +2241,24 @@ public class NetPlan extends NetworkElement
      *
      * @return this
      */
-    public NetPlan restrictDesign (Set<Node> selectedNodes)
+    public NetPlan restrictDesign (SortedSet<Node> selectedNodes)
     {
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-    	if (selectedNodes.equals(new HashSet<> (this.getNodes ()))) return this;
-    	Set<Node> nodesToKeep = new HashSet<>(selectedNodes);
+    	if (selectedNodes.equals(new TreeSet<> (this.getNodes ()))) return this;
+    	SortedSet<Node> nodesToKeep = new TreeSet<>(selectedNodes);
     	
     	while (true)
     	{
-    		final Set<Node> nodesThisIteration = new HashSet<> (nodesToKeep);
+    		final SortedSet<Node> nodesThisIteration = new TreeSet<> (nodesToKeep);
     		for (NetworkLayer layer : layers)
     		{
     			for (Demand d : getDemands (layer))
     			{
     				if (!nodesToKeep.contains(d.getIngressNode()) || !nodesToKeep.contains(d.getEgressNode())) continue;
-    				if (layer.isSourceRouting()) d.getRoutes().stream().forEach(r->nodesThisIteration.addAll(r.getSeqNodes()));
-    				if (!layer.isSourceRouting()) d.getForwardingRules().keySet().stream().map(p->p.getSecond()).forEach(e->nodesThisIteration.addAll(Sets.newHashSet(e.getOriginNode() , e.getDestinationNode())));
+    				if (d.isSourceRouting())
+    					d.getRoutes().stream().forEach(r->nodesThisIteration.addAll(r.getSeqNodes()));
+    				else
+    					d.getForwardingRules().keySet().stream().map(p->p.getSecond()).forEach(e->nodesThisIteration.addAll(new TreeSet<> (Arrays.asList(e.getOriginNode() , e.getDestinationNode()))));
     			}
     			for (MulticastDemand d : getMulticastDemands (layer))
     			{
@@ -2195,8 +2268,8 @@ public class NetPlan extends NetworkElement
     			for (Link e : getLinks (layer))
     			{
     				if (!nodesToKeep.contains(e.getOriginNode()) || !nodesToKeep.contains(e.getDestinationNode())) continue;
-    				if (layer.isSourceRouting()) e.getTraversingRoutes().stream().forEach(r->nodesThisIteration.addAll(r.getSeqNodes()));
-    				if (!layer.isSourceRouting()) e.getForwardingRules().keySet().stream().map(p->p.getFirst()).forEach(d->nodesThisIteration.addAll(Sets.newHashSet(d.getIngressNode() , d.getEgressNode())));
+    				e.getTraversingRoutes().stream().forEach(r->nodesThisIteration.addAll(r.getSeqNodes()));
+    				e.getForwardingRules().keySet().stream().map(p->p.getFirst()).forEach(d->nodesThisIteration.addAll(new TreeSet<> (Arrays.asList(d.getIngressNode() , d.getEgressNode()))));
     				e.getTraversingTrees().stream().forEach(t->nodesThisIteration.addAll(t.getNodeSet()));
     			}
     		}
@@ -2227,25 +2300,28 @@ public class NetPlan extends NetworkElement
         this.nodes = new ArrayList<Node>();
         this.srgs = new ArrayList<SharedRiskGroup>();
         this.resources = new ArrayList<Resource>();
-        this.cache_nodesDown = new HashSet<Node>();
-        this.cache_type2Resources = new HashMap<String, Set<Resource>>();
-        this.cache_id2NodeMap = new HashMap<Long, Node>();
-        this.cache_id2ResourceMap = new HashMap<Long, Resource>();
-        this.cache_id2LayerMap = new HashMap<Long, NetworkLayer>();
-        this.cache_id2srgMap = new HashMap<Long, SharedRiskGroup>();
-        this.cache_id2LinkMap = new HashMap<Long, Link>();
-        this.cache_id2DemandMap = new HashMap<Long, Demand>();
-        this.cache_id2MulticastDemandMap = new HashMap<Long, MulticastDemand>();
-        this.cache_id2RouteMap = new HashMap<Long, Route>();
-        this.cache_id2MulticastTreeMap = new HashMap<Long, MulticastTree>();
-        this.cache_taggedElements = new HashMap<> ();
-        this.cache_nodesPerSiteName = new HashMap<> ();
-        this.cache_planningDomain2nodes = new HashMap<> (); 
-        for (String pd : originNetPlan.cache_planningDomain2nodes.keySet()) this.cache_planningDomain2nodes.put(pd, new HashSet<> ());
+        this.cache_nodesDown = new TreeSet<Node>();
+        this.cache_dynamicSrgs = new TreeSet<> ();
+        this.cache_type2Resources = new TreeMap<>();
+        this.cache_id2NodeMap = new TreeMap<Long, Node>();
+        this.cache_id2ResourceMap = new TreeMap<Long, Resource>();
+        this.cache_id2LayerMap = new TreeMap<Long, NetworkLayer>();
+        this.cache_id2srgMap = new TreeMap<Long, SharedRiskGroup>();
+        this.cache_id2LinkMap = new TreeMap<Long, Link>();
+        this.cache_id2DemandMap = new TreeMap<Long, Demand>();
+        this.cache_id2MulticastDemandMap = new TreeMap<Long, MulticastDemand>();
+        this.cache_id2RouteMap = new TreeMap<Long, Route>();
+        this.cache_id2MulticastTreeMap = new TreeMap<Long, MulticastTree>();
+        this.cache_taggedElements = new TreeMap<> ();
+        this.cache_nodesPerSiteName = new TreeMap<> ();
+        this.cache_planningDomain2nodes = new TreeMap<> (); 
+        for (String pd : originNetPlan.cache_planningDomain2nodes.keySet()) this.cache_planningDomain2nodes.put(pd, new TreeSet<> ());
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = true;
-        this.networkDescription = originNetPlan.networkDescription;
-        this.networkName = originNetPlan.networkName;
+        this.description = originNetPlan.description;
+        this.name = originNetPlan.name;
+        this.currentPlotNodeLayout = originNetPlan.currentPlotNodeLayout;
+        this.cache_definedPlotNodeLayouts = new TreeSet<> (originNetPlan.cache_definedPlotNodeLayouts);
         this.nextElementId = originNetPlan.nextElementId;
         this.interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
         this.tags.clear(); for (String tag : originNetPlan.tags) this.addTag (tag);
@@ -2254,7 +2330,7 @@ public class NetPlan extends NetworkElement
 		/* Create the new network elements, not all the fields filled */
         for (Node originNode : originNetPlan.nodes)
         {
-            Node newElement = new Node(this, originNode.id, originNode.index, originNode.nodeXYPositionMap.getX(), originNode.nodeXYPositionMap.getY(), 
+            Node newElement = new Node(this, originNode.id, originNode.index, originNode.getXYPositionMap().getX(), originNode.getXYPositionMap().getY(), 
             		originNode.name, originNode.attributes);
             for (String pd : originNode.getPlanningDomains ()) newElement.addToPlanningDomain(pd);
             for (String tag : originNode.getTags ()) newElement.addTag (tag);
@@ -2267,27 +2343,21 @@ public class NetPlan extends NetworkElement
         }
         for (Resource originResource : originNetPlan.resources)
         {
+        	final Optional<Node> hostNode = originResource.iAttachedToANode()? Optional.of(this.cache_id2NodeMap.get(originResource.hostNode.get().id)) : Optional.empty();
             Resource newElement = new Resource(this, originResource.id, originResource.index, originResource.type,
-                    originResource.name, this.cache_id2NodeMap.get(originResource.hostNode.id),
+                    originResource.name, hostNode,
                     originResource.capacity, originResource.capacityMeasurementUnits, null, 
                     originResource.processingTimeToTraversingTrafficInMs, originResource.attributes);
             for (String tag : originResource.getTags ()) newElement.addTag (tag);
             cache_id2ResourceMap.put(originResource.id, newElement);
-            Set<Resource> resOfThisType = cache_type2Resources.get(originResource.type);
+            SortedSet<Resource> resOfThisType = cache_type2Resources.get(originResource.type);
             if (resOfThisType == null)
             {
-                resOfThisType = new HashSet<Resource>();
+                resOfThisType = new TreeSet<Resource>();
                 cache_type2Resources.put(originResource.type, resOfThisType);
             }
             resOfThisType.add(newElement);
             resources.add(newElement);
-        }
-        for (SharedRiskGroup originSrg : originNetPlan.srgs)
-        {
-            SharedRiskGroup newElement = new SharedRiskGroup(this, originSrg.id, originSrg.index, null, null, originSrg.meanTimeToFailInHours, originSrg.meanTimeToRepairInHours, originSrg.attributes);
-            for (String tag : originSrg.getTags ()) newElement.addTag (tag);
-            cache_id2srgMap.put(originSrg.id, newElement);
-            srgs.add(newElement);
         }
         for (NetworkLayer originLayer : originNetPlan.layers)
         {
@@ -2300,7 +2370,7 @@ public class NetPlan extends NetworkElement
 
             for (Demand originDemand : originLayer.demands)
             {
-                Demand newElement = new Demand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), this.cache_id2NodeMap.get(originDemand.egressNode.id), originDemand.offeredTraffic, originDemand.attributes);
+                Demand newElement = new Demand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), this.cache_id2NodeMap.get(originDemand.egressNode.id), originDemand.offeredTraffic, originDemand.getRoutingType() , originDemand.attributes);
                 for (String tag : originDemand.getTags ()) newElement.addTag (tag);
                 newElement.mandatorySequenceOfTraversedResourceTypes = new LinkedList<String>(originDemand.mandatorySequenceOfTraversedResourceTypes);
                 cache_id2DemandMap.put(originDemand.id, newElement);
@@ -2308,7 +2378,7 @@ public class NetPlan extends NetworkElement
             }
             for (MulticastDemand originDemand : originLayer.multicastDemands)
             {
-                Set<Node> newEgressNodes = new HashSet<Node>();
+            	SortedSet<Node> newEgressNodes = new TreeSet<Node>();
                 for (Node oldEgressNode : originDemand.egressNodes)
                     newEgressNodes.add(this.cache_id2NodeMap.get(oldEgressNode.id));
                 MulticastDemand newElement = new MulticastDemand(this, originDemand.id, originDemand.index, newLayer, this.cache_id2NodeMap.get(originDemand.ingressNode.id), newEgressNodes, originDemand.offeredTraffic, originDemand.attributes);
@@ -2336,7 +2406,7 @@ public class NetPlan extends NetworkElement
             }
             for (MulticastTree originTree : originLayer.multicastTrees)
             {
-                Set<Link> newSetLinks = new HashSet<Link>();
+            	SortedSet<Link> newSetLinks = new TreeSet<Link>();
                 for (Link oldLink : originTree.linkSet) newSetLinks.add(this.cache_id2LinkMap.get(oldLink.id));
                 MulticastTree newElement = new MulticastTree(this, originTree.id, originTree.index, cache_id2MulticastDemandMap.get(originTree.demand.id), newSetLinks, originTree.attributes);
                 for (String tag : originTree.getTags ()) newElement.addTag (tag);
@@ -2344,6 +2414,27 @@ public class NetPlan extends NetworkElement
                 newLayer.multicastTrees.add(newElement);
                 newElement.carriedTrafficIfNotFailing = originTree.carriedTrafficIfNotFailing;
                 newElement.occupiedLinkCapacityIfNotFailing = originTree.occupiedLinkCapacityIfNotFailing;
+            }
+        }
+        for (SharedRiskGroup originSrg : originNetPlan.srgs)
+        {
+            if (originSrg.isDynamicSrg())
+            {
+                SharedRiskGroup newElement = new SharedRiskGroup(this, originSrg.id, originSrg.index, 
+                        originSrg.getDynamicSrgImplementation().getClass().getName() , 
+                        originSrg.getDynamicSrgImplementation().getInitializationString() , 
+                        originSrg.meanTimeToFailInHours, originSrg.meanTimeToRepairInHours, originSrg.attributes);
+                for (String tag : originSrg.getTags ()) newElement.addTag (tag);
+                cache_id2srgMap.put(originSrg.id, newElement);
+                srgs.add(newElement);
+                cache_dynamicSrgs.add(newElement);
+            }
+            else
+            {
+                SharedRiskGroup newElement = new SharedRiskGroup(this, originSrg.id, originSrg.index, new TreeSet<> (), new TreeSet<> (), originSrg.meanTimeToFailInHours, originSrg.meanTimeToRepairInHours, originSrg.attributes);
+                for (String tag : originSrg.getTags ()) newElement.addTag (tag);
+                cache_id2srgMap.put(originSrg.id, newElement);
+                srgs.add(newElement);
             }
         }
 
@@ -2363,9 +2454,9 @@ public class NetPlan extends NetworkElement
             DemandLinkMapping newMapping = new DemandLinkMapping();
             for (Entry<Demand, Link> originEntry : mapping.getDemandMap().entrySet())
                 newMapping.put(this.netPlan.getDemandFromId(originEntry.getKey().id), this.netPlan.getLinkFromId(originEntry.getValue().id));
-            for (Entry<MulticastDemand, Set<Link>> originEntry : mapping.getMulticastDemandMap().entrySet())
+            for (Entry<MulticastDemand, SortedSet<Link>> originEntry : mapping.getMulticastDemandMap().entrySet())
             {
-                Set<Link> newSetLink = new HashSet<Link>();
+            	SortedSet<Link> newSetLink = new TreeSet<Link>();
                 for (Link originLink : originEntry.getValue())
                     newSetLink.add(this.netPlan.getLinkFromId(originLink.id));
                 newMapping.put(this.netPlan.getMulticastDemandFromId(originEntry.getKey().id), newSetLink);
@@ -2387,12 +2478,12 @@ public class NetPlan extends NetworkElement
      *
      * @param collection Collection of network elements
      * @param attribute  Attribute name
-     * @return Map with the value of each attribute per network element (value may be {@code null} if not defined
+     * @return SortedMap with the value of each attribute per network element (value may be {@code null} if not defined
      * @see com.net2plan.interfaces.networkDesign.NetworkElement
      */
-    public static Map<NetworkElement, String> getAttributes(Collection<? extends NetworkElement> collection, String attribute)
+    public static SortedMap<NetworkElement, String> getAttributes(Collection<? extends NetworkElement> collection, String attribute)
     {
-        Map<NetworkElement, String> attributes = new HashMap<NetworkElement, String>();
+        SortedMap<NetworkElement, String> attributes = new TreeMap<NetworkElement, String>();
         for (NetworkElement e : collection)
             attributes.put(e, e.getAttribute(attribute));
         return attributes;
@@ -2479,7 +2570,31 @@ public class NetPlan extends NetworkElement
     public List<Demand> getDemands(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return (List<Demand>) Collections.unmodifiableList(layer.demands);
+        return Collections.unmodifiableList(layer.demands);
+    }
+
+    /**
+     * <p>Returns the array of demands in the given layer that are source routed, ordered by its index.</p>
+     *
+     * @param optionalLayerParameter Network layer (optional)
+     * @return see above
+     */
+    public List<Demand> getDemandsSourceRouted (NetworkLayer... optionalLayerParameter)
+    {
+        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        return layer.demands.stream().filter(d->d.isSourceRouting()).collect(Collectors.toList());
+    }
+
+    /**
+     * <p>Returns the array of demands in the given layer that are hop-by-hop routed, ordered by its index.</p>
+     *
+     * @param optionalLayerParameter Network layer (optional)
+     * @return see above
+     */
+    public List<Demand> getDemandsHopByHopRouted (NetworkLayer... optionalLayerParameter)
+    {
+        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        return layer.demands.stream().filter(d->!d.isSourceRouting()).collect(Collectors.toList());
     }
 
     /**
@@ -2501,13 +2616,13 @@ public class NetPlan extends NetworkElement
      * <p>Returns the set of unicast demands that are coupled.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return {@code Set} of unicast demands that have blocked traffic for the given layer (or the defaukt layer if no input was provided)
+     * @return {@code SortedSet} of unicast demands that have blocked traffic for the given layer (or the defaukt layer if no input was provided)
      */
-    public Set<Demand> getDemandsCoupled(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Demand> getDemandsCoupled(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Set<Demand> res = new HashSet<Demand>();
-        for (Demand demand : layer.demands) if (demand.coupledUpperLayerLink != null) res.add(demand);
+        SortedSet<Demand> res = new TreeSet<Demand>();
+        for (Demand demand : layer.demands) if (demand.coupledUpperOrSameLayerLink != null) res.add(demand);
         return res;
     }
 
@@ -2535,7 +2650,7 @@ public class NetPlan extends NetworkElement
     {
         checkInThisNetPlan(demand);
         checkInThisNetPlanAndLayer(link, demand.layer);
-        demand.layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+        demand.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
         final Pair<Double,Double> traff = demand.cacheHbH_normCarriedOccupiedPerLinkCurrentState.get(link);
         return traff == null? 0 : traff.getSecond();
     }
@@ -2548,13 +2663,11 @@ public class NetPlan extends NetworkElement
      * @return The forwarding rules as a map of splitting factor (value) per demand and link (key)
      * @see com.net2plan.utils.Pair
      */
-    public Map<Pair<Demand, Link>, Double> getForwardingRules(NetworkLayer... optionalLayerParameter)
+    public SortedMap<Pair<Demand, Link>, Double> getForwardingRules(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-
-        Map<Pair<Demand, Link>, Double> res = new HashMap<Pair<Demand, Link>, Double>();
-        for (Demand d : netPlan.getDemands())
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        SortedMap<Pair<Demand, Link>, Double> res = new TreeMap<Pair<Demand, Link>, Double>();
+        for (Demand d : netPlan.getDemands(layer))
         	for (Entry<Link,Double> fr : d.cacheHbH_frs.entrySet())
         		res.put(Pair.of(d, fr.getKey()), fr.getValue());
         return res;
@@ -2569,10 +2682,10 @@ public class NetPlan extends NetworkElement
      */
     public double getForwardingRuleSplittingFactor(Demand demand, Link link)
     {
-        NetworkLayer layer = demand.layer;
+        final NetworkLayer layer = demand.layer;
         checkInThisNetPlanAndLayer(demand, layer);
         checkInThisNetPlanAndLayer(link, layer);
-        layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+        demand.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
         final Double fr = demand.cacheHbH_frs.get(link);
         return fr == null? 0 : fr;
     }
@@ -2675,7 +2788,7 @@ public class NetPlan extends NetworkElement
     public List<Link> getLinks(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return (List<Link>) Collections.unmodifiableList(layer.links);
+        return Collections.unmodifiableList(layer.links);
     }
 
     /**
@@ -2683,23 +2796,26 @@ public class NetPlan extends NetworkElement
      * is highest. If no layer is provided, the default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return The {@code Set} of bottleneck links
+     * @return The {@code SortedSet} of bottleneck links
      */
-    public Set<Link> getLinksAreBottleneck(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getLinksAreBottleneck(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         double maxRho = 0;
         final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
-        Set<Link> res = new HashSet<Link>();
+        SortedSet<Link> res = new TreeSet<Link>();
         for (Link e : layer.links)
-            if (Math.abs(e.cache_occupiedCapacity / e.capacity - maxRho) < PRECISION_FACTOR)
+        {
+        	final double occup_e = e.getOccupiedCapacity();
+            if (Math.abs(occup_e / e.capacity - maxRho) < PRECISION_FACTOR)
                 res.add(e);
-            else if (e.cache_occupiedCapacity / e.capacity > maxRho)
+            else if (occup_e / e.capacity > maxRho)
             {
-                maxRho = e.cache_occupiedCapacity / e.capacity;
+                maxRho = occup_e / e.capacity;
                 res.clear();
                 res.add(e);
             }
+        }
         return res;
     }
 
@@ -2707,25 +2823,25 @@ public class NetPlan extends NetworkElement
      * <p>Returns the set of links that have zero capacity in the given layer. If no layer is provided, the default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return The {@code Set} of links with zero capacity
+     * @return The {@code SortedSet} of links with zero capacity
      */
-    public Set<Link> getLinksWithZeroCapacity(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getLinksWithZeroCapacity(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return Collections.unmodifiableSet(layer.cache_linksZeroCap);
+        return Collections.unmodifiableSortedSet(layer.cache_linksZeroCap);
     }
 
     /**
      * <p>Returns the set of links that are coupled to a multicast demand in the given layer. If no layer is provided, the default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return The {@code Set} of links coupled to a multicast demand
+     * @return The {@code SortedSet} of links coupled to a multicast demand
      * @see com.net2plan.interfaces.networkDesign.MulticastDemand
      */
-    public Set<Link> getLinksCoupledToMulticastDemands(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getLinksCoupledToMulticastDemands(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Set<Link> res = new HashSet<Link>();
+        SortedSet<Link> res = new TreeSet<Link>();
         for (Link link : layer.links) if (link.coupledLowerLayerMulticastDemand != null) res.add(link);
         return res;
     }
@@ -2734,14 +2850,14 @@ public class NetPlan extends NetworkElement
      * <p>Returns the set of links that are couple to a unicast demand in the given layer. If no layer is provided, the default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return The {@code Set} of links coupled to a unicast demand
+     * @return The {@code SortedSet} of links coupled to a unicast demand
      * @see com.net2plan.interfaces.networkDesign.Demand
      */
-    public Set<Link> getLinksCoupledToUnicastDemands(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getLinksCoupledToUnicastDemands(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Set<Link> res = new HashSet<Link>();
-        for (Link link : layer.links) if (link.coupledLowerLayerDemand != null) res.add(link);
+        SortedSet<Link> res = new TreeSet<Link>();
+        for (Link link : layer.links) if (link.coupledLowerOrThisLayerDemand != null) res.add(link);
         return res;
     }
 
@@ -2749,22 +2865,22 @@ public class NetPlan extends NetworkElement
      * <p>Returns the set of links that are down in the given layer. If no layer is provided, the default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return The {@code Set} of links that are down
+     * @return The {@code SortedSet} of links that are down
      */
-    public Set<Link> getLinksDown(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getLinksDown(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return Collections.unmodifiableSet(layer.cache_linksDown);
+        return Collections.unmodifiableSortedSet(layer.cache_linksDown);
     }
 
     /**
      * <p>Returns the set of links that are down in all layers.</p>
      *
-     * @return The {@code Set} of links down
+     * @return The {@code SortedSet} of links down
      */
-    public Set<Link> getLinksDownAllLayers()
+    public SortedSet<Link> getLinksDownAllLayers()
     {
-        Set<Link> res = new HashSet<Link>();
+        SortedSet<Link> res = new TreeSet<Link>();
         for (NetworkLayer layer : layers) res.addAll(layer.cache_linksDown);
         return res;
     }
@@ -2773,12 +2889,12 @@ public class NetPlan extends NetworkElement
      * <p>Returns the set of links that are up in the given layer. If no layer is provided, the default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer )optional)
-     * @return The {@code Set} of links that are up
+     * @return The {@code SortedSet} of links that are up
      */
-    public Set<Link> getLinksUp(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getLinksUp(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Set<Link> res = new HashSet<Link>(layer.links);
+        SortedSet<Link> res = new TreeSet<Link>(layer.links);
         res.removeAll(layer.cache_linksDown);
         return res;
     }
@@ -2786,11 +2902,11 @@ public class NetPlan extends NetworkElement
     /**
      * <p>Returns the set of links that are up in all layers.</p>
      *
-     * @return The {@code Set} of links that are up
+     * @return The {@code SortedSet} of links that are up
      */
-    public Set<Link> getLinksUpAllLayers()
+    public SortedSet<Link> getLinksUpAllLayers()
     {
-        Set<Link> res = new HashSet<Link>();
+        SortedSet<Link> res = new TreeSet<Link>();
         for (NetworkLayer layer : layers) res.addAll(getLinksUp(layer));
         return res;
     }
@@ -2800,13 +2916,13 @@ public class NetPlan extends NetworkElement
      * If no layer is provided, the default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return The {@code Set} of oversubscribed links
+     * @return The {@code SortedSet} of oversubscribed links
      */
-    public Set<Link> getLinksOversubscribed(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getLinksOversubscribed(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        Set<Link> res = new HashSet<Link>();
-        for (Link e : layer.links) if (e.capacity < e.cache_occupiedCapacity) res.add(e);
+        SortedSet<Link> res = new TreeSet<Link>();
+        for (Link e : layer.links) if (e.capacity < e.getOccupiedCapacity()) res.add(e);
         return res;
     }
 
@@ -2831,7 +2947,7 @@ public class NetPlan extends NetworkElement
     /**
      * <p>Returns the demand-resource incidence matrix, with as many rows as demands of the given layer, and
      * a many colmns as resources, coordinate (d,r) equals the number of times that
-     * traffic routes of the demand d, traverse resource r.
+     * traffic routes of the demand d, traverse resource r. Demands that are hop-by-hop routed have zeros
      * If no layer is provided, the default layer is assumed.</p>
      *
      * @param optionalLayerParameter Network layer (optional)
@@ -2840,7 +2956,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixDemand2ResourceAssignment(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix2D delta_dr = getMatrixDemand2RouteAssignment(layer);
         DoubleMatrix2D delta_er = getMatrixResource2RouteAssignment();
 
@@ -2860,11 +2975,11 @@ public class NetPlan extends NetworkElement
         DoubleMatrix2D A_rs = DoubleFactory2D.sparse.make(layer.routes.size(), srgs.size());
         for (Route r : layer.routes)
         {
-            for (SharedRiskGroup srg : r.ingressNode.cache_nodeSRGs) A_rs.set(r.index, srg.index, 1.0);
+            for (SharedRiskGroup srg : r.ingressNode.getSRGs()) A_rs.set(r.index, srg.index, 1.0);
             for (Link e : r.cache_seqLinksRealPath)
             {
-                for (SharedRiskGroup srg : e.destinationNode.cache_nodeSRGs) A_rs.set(r.index, srg.index, 1.0);
-                for (SharedRiskGroup srg : e.cache_srgs) A_rs.set(r.index, srg.index, 1.0);
+                for (SharedRiskGroup srg : e.destinationNode.getSRGs()) A_rs.set(r.index, srg.index, 1.0);
+                for (SharedRiskGroup srg : e.getSRGs()) A_rs.set(r.index, srg.index, 1.0);
             }
         }
         return A_rs;
@@ -2886,11 +3001,11 @@ public class NetPlan extends NetworkElement
         {
             if (!r.hasBackupRoutes()) throw new Net2PlanException("A route has no backup path");
             final List<Link> path = r.getBackupRoutes().get(0).getSeqLinks();
-            for (SharedRiskGroup srg : r.ingressNode.cache_nodeSRGs) A_rs.set(r.index, srg.index, 1.0);
+            for (SharedRiskGroup srg : r.ingressNode.getSRGs ()) A_rs.set(r.index, srg.index, 1.0);
             for (Link e : path)
             {
-                for (SharedRiskGroup srg : e.destinationNode.cache_nodeSRGs) A_rs.set(r.index, srg.index, 1.0);
-                for (SharedRiskGroup srg : e.cache_srgs) A_rs.set(r.index, srg.index, 1.0);
+                for (SharedRiskGroup srg : e.destinationNode.getSRGs ()) A_rs.set(r.index, srg.index, 1.0);
+                for (SharedRiskGroup srg : e.getSRGs ()) A_rs.set(r.index, srg.index, 1.0);
             }
         }
         return A_rs;
@@ -2909,11 +3024,11 @@ public class NetPlan extends NetworkElement
         DoubleMatrix2D A_rs = DoubleFactory2D.sparse.make(layer.multicastTrees.size(), srgs.size());
         for (MulticastTree r : layer.multicastTrees)
         {
-            for (SharedRiskGroup srg : r.demand.ingressNode.cache_nodeSRGs) A_rs.set(r.index, srg.index, 1.0);
+            for (SharedRiskGroup srg : r.demand.ingressNode.getSRGs ()) A_rs.set(r.index, srg.index, 1.0);
             for (Link e : r.linkSet)
             {
-                for (SharedRiskGroup srg : e.destinationNode.cache_nodeSRGs) A_rs.set(r.index, srg.index, 1.0);
-                for (SharedRiskGroup srg : e.cache_srgs) A_rs.set(r.index, srg.index, 1.0);
+                for (SharedRiskGroup srg : e.destinationNode.getSRGs ()) A_rs.set(r.index, srg.index, 1.0);
+                for (SharedRiskGroup srg : e.getSRGs ()) A_rs.set(r.index, srg.index, 1.0);
             }
         }
         return A_rs;
@@ -2942,25 +3057,27 @@ public class NetPlan extends NetworkElement
      * and columns are in increasing order of demand and link identifiers, respectively. If no layer is provided, the default layer is assumed</p>
      * <p><b>Important</b>: Routing type must be {@link com.net2plan.utils.Constants.RoutingType#HOP_BY_HOP_ROUTING HOP_BY_HOP_ROUTING}.</p>
      *
+     * @param demandsOfInterest List of demands
      * @param optionalLayerParameter Network layer (optional)
      * @return Splitting ratio matrix
      */
-    public DoubleMatrix2D getMatrixDemand2LinkTrafficCarried(NetworkLayer... optionalLayerParameter)
+    public DoubleMatrix2D getMatrixDemand2LinkTrafficCarried(SortedSet<Demand> demandsOfInterest , NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+    	if (demandsOfInterest == null) demandsOfInterest = new TreeSet<> (layer.demands);
         DoubleMatrix2D x_de = DoubleFactory2D.sparse.make(layer.demands.size(), layer.links.size());
-        if (layer.isSourceRouting())
-        {
-            for (Route r : layer.routes)
-                for (Link e : r.cache_seqLinksRealPath)
-                    x_de.set(r.demand.index, e.index, x_de.get(r.demand.index, e.index) + r.getCarriedTraffic());
-        }
-        else
-        {
-        	for (Demand d : layer.demands)
+    	for (Demand d : demandsOfInterest)
+    		if (d.isSourceRouting())
+    		{
+                for (Route r : d.getRoutes())
+                    for (Link e : r.cache_seqLinksRealPath)
+                        x_de.set(d.index, e.index, x_de.get(d.index, e.index) + r.getCarriedTraffic());
+    		}
+    		else
+    		{
         		for (Entry<Link,Pair<Double,Double>> xde : d.cacheHbH_normCarriedOccupiedPerLinkCurrentState.entrySet())
         			x_de.set(d.index, xde.getKey().index, xde.getValue().getSecond());
-        }
+    		}
         return x_de;
     }
 
@@ -2975,7 +3092,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixDemand2ResourceOccupiedCapacity(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix2D x_dr = DoubleFactory2D.sparse.make(layer.demands.size(), resources.size());
         for (Route r : layer.routes)
             if (!r.isDown())
@@ -2987,7 +3103,7 @@ public class NetPlan extends NetworkElement
 
     public DoubleMatrix2D getMatrixDestination2LinkTrafficCarried(NetworkLayer... optionalLayerParameter)
     {
-        DoubleMatrix2D x_de = getMatrixDemand2LinkTrafficCarried(optionalLayerParameter);
+        DoubleMatrix2D x_de = getMatrixDemand2LinkTrafficCarried(null , optionalLayerParameter);
         return this.getMatrixNodeDemandIncomingIncidence().zMult(x_de, null);
     }
 
@@ -3002,7 +3118,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixDemand2RouteAssignment(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         int D = layer.demands.size();
         int R = layer.routes.size();
         DoubleMatrix2D delta_dr = DoubleFactory2D.sparse.make(D, R);
@@ -3033,7 +3148,7 @@ public class NetPlan extends NetworkElement
      * <p>Returns the splitting ratio matrix (fractions of traffic entering a node from
      * demand 'd', leaving that node through link 'e'). Rows and columns are in
      * increasing order of demand and link identifiers, respectively.
-     * If no layer is provided, the default layer is assumed. If the layer routing mode is SOURCE ROUTING,
+     * If no layer is provided, the default layer is assumed. For the demands that are SOURCE ROUTING,
      * the routes are internally converted into forwarding rules, using the carried traffic of the routes (the
      * link occupation information is not used)</p>
      *
@@ -3042,17 +3157,14 @@ public class NetPlan extends NetworkElement
      */
     public DoubleMatrix2D getMatrixDemandBasedForwardingRules(NetworkLayer... optionalLayerParameter)
     {
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-        {
-        	final DoubleMatrix2D f_de = DoubleFactory2D.sparse.make(layer.demands.size() , layer.links.size());
-        	for (Demand d : layer.demands)
-        		for (Entry<Link,Double> fde : d.cacheHbH_frs.entrySet())
-        			f_de.set(d.index, fde.getKey().index, fde.getValue());
-        	return f_de;
-        }
-        else
-            return GraphUtils.convert_xde2fde(nodes, layer.links, layer.demands, GraphUtils.convert_xp2xde(layer.links, layer.demands, layer.routes));
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        /* First source routing */
+        final DoubleMatrix2D f_de_sr = GraphUtils.convert_xde2fde(layer.links, GraphUtils.convert_xp2xde(layer.demands.size(), layer.links.size(), layer.routes));
+        /* Now the others */
+        for (Demand d : getDemandsHopByHopRouted(layer))
+    		for (Entry<Link,Double> fde : d.cacheHbH_frs.entrySet())
+    			f_de_sr.set(d.index, fde.getKey().index, fde.getValue());
+       	return f_de_sr;
     }
 
     /**
@@ -3066,10 +3178,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayer);
         DoubleMatrix2D x_te = null;
-        if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-            x_te = GraphUtils.convert_xde2xte(nodes, layer.links, layer.demands, getMatrixDemandBasedForwardingRules(layer));
-        else
-            x_te = GraphUtils.convert_xp2xte(nodes, layer.links, layer.demands, layer.routes);
+        x_te = GraphUtils.convert_xde2xte(nodes.size(), new TreeSet<> (layer.demands), getMatrixDemandBasedForwardingRules(layer));
         return GraphUtils.convert_xte2fte(nodes, layer.links, x_te);
     }
 
@@ -3084,7 +3193,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixLink2RouteFirstBackupRouteAssignment(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(layer.links.size(), layer.routes.size());
         for (Route r : layer.routes)
         {
@@ -3106,7 +3214,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixLink2RouteAssignment(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         int E = layer.links.size();
         int R = layer.routes.size();
         DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(E, R);
@@ -3146,8 +3253,8 @@ public class NetPlan extends NetworkElement
         DoubleMatrix2D delta_es = DoubleFactory2D.sparse.make(layer.links.size(), srgs.size());
         for (SharedRiskGroup s : srgs)
         {
-            for (Link e : s.links) if (e.layer.equals(layer)) delta_es.set(e.index, s.index, 1);
-            for (Node n : s.nodes)
+            for (Link e : s.getLinksAllLayers()) if (e.layer.equals(layer)) delta_es.set(e.index, s.index, 1);
+            for (Node n : s.getNodes ())
             {
                 for (Link e : n.cache_nodeIncomingLinks) if (e.layer.equals(layer)) delta_es.set(e.index, s.index, 1);
                 for (Link e : n.cache_nodeOutgoingLinks) if (e.layer.equals(layer)) delta_es.set(e.index, s.index, 1);
@@ -3262,7 +3369,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixResource2RouteAssignment(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         final int RES = resources.size();
         final int ROU = layer.routes.size();
         DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(RES, ROU);
@@ -3285,7 +3391,6 @@ public class NetPlan extends NetworkElement
     public Pair<List<Resource>, DoubleMatrix2D> getMatrixResource2RouteAssignment(String type, NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         List<Resource> listRes = new ArrayList<Resource>(netPlan.getResources(type));
         final int RES = listRes.size();
         final int ROU = layer.routes.size();
@@ -3311,7 +3416,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix2D getMatrixResource2RouteOccupation(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         final int RES = resources.size();
         final int ROU = layer.routes.size();
         DoubleMatrix2D delta_er = DoubleFactory2D.sparse.make(RES, ROU);
@@ -3331,7 +3435,7 @@ public class NetPlan extends NetworkElement
     {
         DoubleMatrix2D delta_es = DoubleFactory2D.sparse.make(resources.size(), srgs.size());
         for (SharedRiskGroup srg : srgs)
-            for (Node n : srg.nodes)
+            for (Node n : srg.getNodes())
                 for (Resource res : n.cache_nodeResources)
                     delta_es.set(res.index, srg.index, 1.0);
         return delta_es;
@@ -3346,7 +3450,8 @@ public class NetPlan extends NetworkElement
     {
         DoubleMatrix2D delta_en = DoubleFactory2D.sparse.make(resources.size(), nodes.size());
         for (Resource res : resources)
-            delta_en.set(res.index, res.hostNode.index, 1.0);
+        	if (res.iAttachedToANode())
+        		delta_en.set(res.index, res.hostNode.get().index, 1.0);
         return delta_en;
     }
 
@@ -3361,7 +3466,7 @@ public class NetPlan extends NetworkElement
      */
     public DoubleMatrix2D getMatrixResource2ResourceType(String type)
     {
-        Set<Resource> resType = netPlan.getResources(type);
+        SortedSet<Resource> resType = netPlan.getResources(type);
         DoubleMatrix2D delta_rr = DoubleFactory2D.sparse.make(resType.size(), resources.size());
         int contResType = 0;
         for (Resource rThisType : resType)
@@ -3685,7 +3790,7 @@ public class NetPlan extends NetworkElement
     public List<MulticastDemand> getMulticastDemands(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return (List<MulticastDemand>) Collections.unmodifiableList(layer.multicastDemands);
+        return Collections.unmodifiableList(layer.multicastDemands);
     }
 
     /**
@@ -3751,41 +3856,31 @@ public class NetPlan extends NetworkElement
     public List<MulticastTree> getMulticastTrees(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return (List<MulticastTree>) Collections.unmodifiableList(layer.multicastTrees);
+        return Collections.unmodifiableList(layer.multicastTrees);
     }
 
     /**
      * <p>Returns the set of multicast trees that are down (i.e. that traverse a link or node that has failed).</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return the {@code Set} of multicast trees that are down
+     * @return the {@code SortedSet} of multicast trees that are down
      */
-    public Set<MulticastTree> getMulticastTreesDown(NetworkLayer... optionalLayerParameter)
+    public SortedSet<MulticastTree> getMulticastTreesDown(NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return Collections.unmodifiableSet(layer.cache_multicastTreesDown);
+        return Collections.unmodifiableSortedSet(layer.cache_multicastTreesDown);
     }
 
     /**
      * <p>Returns the set of multicast trees that are down (i.e. that traverse a link or node that has failed).</p>
      *
      * @param optionalLayerParameter Network layer (optional)
-     * @return the {@code Set} of multicast trees that are down
+     * @return the {@code SortedSet} of multicast trees that are down
      */
-    public Set<MulticastTree> getMulticastTreesTraversingZeroCapLinks (NetworkLayer... optionalLayerParameter)
+    public SortedSet<MulticastTree> getMulticastTreesTraversingZeroCapLinks (NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return Collections.unmodifiableSet(layer.cache_multicastTreesTravLinkZeroCap);
-    }
-
-    /**
-     * <p>Returns the description associated to the {@code NetPlan} object</p>
-     *
-     * @return The network description as a {@code String}
-     */
-    public String getNetworkDescription()
-    {
-        return this.networkDescription;
+        return Collections.unmodifiableSortedSet(layer.cache_multicastTreesTravLinkZeroCap);
     }
 
     /**
@@ -3913,7 +4008,7 @@ public class NetPlan extends NetworkElement
      * lower layers to the upper layers following coupling relationships. For layers
      * at the same hierarchical level, no order is guaranteed.</p>
      *
-     * @return The {@code Set} of network layers in topological order
+     * @return The {@code SortedSet} of network layers in topological order
      * @since 0.3.0
      */
     public List<NetworkLayer> getNetworkLayerInTopologicalOrder()
@@ -3931,19 +4026,65 @@ public class NetPlan extends NetworkElement
      */
     public List<NetworkLayer> getNetworkLayers()
     {
-        return (List<NetworkLayer>) Collections.unmodifiableList(layers);
+        return Collections.unmodifiableList(layers);
     }
 
-    /**
-     * <p>Returns the name associated to the netPlan object</p>
-     *
-     * @return The network name
+    /** Returns the name (identifier) of the current node layout
+     * @return see above
      */
-    public String getNetworkName()
-    {
-        return this.networkName;
+    public String getPlotNodeLayoutCurrentlyActive () { return this.currentPlotNodeLayout; }
+    
+    /** Returns all the names (identifiers) of the current node layout
+     * @param newCurrentPlotNodeLayout see above
+     */
+    public void setPlotNodeLayoutCurrentlyActive (String newCurrentPlotNodeLayout) 
+    {  
+        if (!this.cache_definedPlotNodeLayouts.contains(newCurrentPlotNodeLayout)) throw new Net2PlanException ("The layout has not been defined");
+        this.currentPlotNodeLayout = newCurrentPlotNodeLayout;
     }
 
+    /** Returns all the names (identifiers) of the current node layout
+     * @return see above
+     */
+    public SortedSet<String> getAllPlotNodeLayoutsDefined () { return Collections.unmodifiableSortedSet(this.cache_definedPlotNodeLayouts); }
+    
+    /** Adds a new layout. The positions in the new layout for all the nodes, are their positions at the currently active layout
+     * @param newPlotNodeLayoutName the new layout id
+     */
+    public void addPlotNodeLayout (String newPlotNodeLayoutName)
+    {
+        if (this.cache_definedPlotNodeLayouts.contains(newPlotNodeLayoutName)) throw new Net2PlanException ("The layout name already exists");
+        for (Node n : nodes)
+        {
+            assert !n.mapLayout2NodeXYPositionMap.containsKey(newPlotNodeLayoutName);
+            final Point2D currentPos = n.mapLayout2NodeXYPositionMap.get(this.currentPlotNodeLayout);
+            assert currentPos != null;
+            n.mapLayout2NodeXYPositionMap.put(newPlotNodeLayoutName, new UnmodifiablePoint2D(currentPos.getX(), currentPos.getY()));
+        }
+        this.cache_definedPlotNodeLayouts.add (newPlotNodeLayoutName);
+    }
+
+    /** Returns the name of the default node layout (this is a constant). This is different to the currenlty active layout
+     * @return see above
+     */
+    public String getPlotNodeLayoutDefaultLayoutName () { return NetPlan.PLOTLAYTOUT_DEFAULTNODELAYOUTNAME; }
+    
+    /** Removes the indicated layout, that cannot be the currently active layout, nor the default layout 
+     * @param plotLayoutToRemove  see above
+     */
+    public void removePlotNodeLayout (String plotLayoutToRemove)
+    {
+        if (this.currentPlotNodeLayout.equals(plotLayoutToRemove)) throw new Net2PlanException ("The currently active layout cannot be removed");
+        if (plotLayoutToRemove.equals(NetPlan.PLOTLAYTOUT_DEFAULTNODELAYOUTNAME)) throw new Net2PlanException ("The default layout cannot be removed");
+        if (!this.cache_definedPlotNodeLayouts.contains(plotLayoutToRemove)) throw new Net2PlanException ("The layout name does not exist");
+        for (Node n : nodes)
+        {
+            assert n.mapLayout2NodeXYPositionMap.containsKey(plotLayoutToRemove);
+            n.mapLayout2NodeXYPositionMap.remove(plotLayoutToRemove);
+        }
+        this.cache_definedPlotNodeLayouts.remove (plotLayoutToRemove);
+    }
+    
     /**
      * <p>Returns the node with the given unique identifier.</p>
      *
@@ -3968,6 +4109,18 @@ public class NetPlan extends NetworkElement
     }
 
     /**
+     * <p>Returns a list with all the nodes with the given name, or an empty list if none.</p>
+     *
+     * @param name Node name
+     * @return see above
+     */
+    public List<Node> getNodeByNameAllNodes (String name)
+    {
+        return nodes.stream().filter(n->n.getName().equals(name)).collect(Collectors.toList());
+    }
+
+
+    /**
      * <p>Returns the array of node ids (i-th position, corresponds to index i)</p>
      *
      * @return The {@code ArrayList} of nodes
@@ -3986,19 +4139,19 @@ public class NetPlan extends NetworkElement
      * @param destinationNode               Destination node
      * @param returnDemandsInBothDirections Assume both directions
      * @param optionalLayerParameter        network layer (optional)
-     * @return the {@code Set} of demands that have the origin and destination for the given input
+     * @return the {@code SortedSet} of demands that have the origin and destination for the given input
      */
-    public Set<Demand> getNodePairDemands(Node originNode, Node destinationNode, boolean returnDemandsInBothDirections, NetworkLayer... optionalLayerParameter)
+    public SortedSet<Demand> getNodePairDemands(Node originNode, Node destinationNode, boolean returnDemandsInBothDirections, NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         checkInThisNetPlan(originNode);
         checkInThisNetPlan(destinationNode);
-        final Set<Demand> res = new HashSet<> ();
-        final Set<Demand> res12 = layer.cache_nodePairDemandsThisLayer.get(Pair.of(originNode, destinationNode));
+        final SortedSet<Demand> res = new TreeSet<> ();
+        final SortedSet<Demand> res12 = layer.cache_nodePairDemandsThisLayer.get(Pair.of(originNode, destinationNode));
         if (res12 != null) res.addAll(res12);
         if (returnDemandsInBothDirections)
         {
-            final Set<Demand> res21 = layer.cache_nodePairDemandsThisLayer.get(Pair.of(destinationNode , originNode));
+            final SortedSet<Demand> res21 = layer.cache_nodePairDemandsThisLayer.get(Pair.of(destinationNode , originNode));
             if (res21 != null) res.addAll(res21);
         }
         return res;
@@ -4015,7 +4168,7 @@ public class NetPlan extends NetworkElement
     {
         checkInThisNetPlan(originNode);
         checkInThisNetPlan(destinationNode);
-        return Math.sqrt(Math.pow(originNode.nodeXYPositionMap.getX() - destinationNode.nodeXYPositionMap.getX(), 2) + Math.pow(originNode.nodeXYPositionMap.getY() - destinationNode.nodeXYPositionMap.getY(), 2));
+        return Math.sqrt(Math.pow(originNode.getXYPositionMap().getX() - destinationNode.getXYPositionMap().getX(), 2) + Math.pow(originNode.getXYPositionMap().getY() - destinationNode.getXYPositionMap().getY(), 2));
     }
 
     /**
@@ -4030,7 +4183,7 @@ public class NetPlan extends NetworkElement
     {
         checkInThisNetPlan(originNode);
         checkInThisNetPlan(destinationNode);
-        return GraphUtils.computeHaversineDistanceInKm(originNode.nodeXYPositionMap, destinationNode.nodeXYPositionMap);
+        return GraphUtils.computeHaversineDistanceInKm(originNode.getXYPositionMap(), destinationNode.getXYPositionMap());
     }
 
     /**
@@ -4040,19 +4193,19 @@ public class NetPlan extends NetworkElement
      * @param destinationNode             Destination node
      * @param returnLinksInBothDirections Include links in both direction
      * @param optionalLayerParameter      Network layer (optional)
-     * @return the {@code Set} of links between a pair of nodes
+     * @return the {@code SortedSet} of links between a pair of nodes
      */
-    public Set<Link> getNodePairLinks(Node originNode, Node destinationNode, boolean returnLinksInBothDirections, NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getNodePairLinks(Node originNode, Node destinationNode, boolean returnLinksInBothDirections, NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         checkInThisNetPlan(originNode);
         checkInThisNetPlan(destinationNode);
-        final Set<Link> res = new HashSet<> ();
-        final Set<Link> res12 = layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode));
+        final SortedSet<Link> res = new TreeSet<> ();
+        final SortedSet<Link> res12 = layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode));
         if (res12 != null) res.addAll(res12);
         if (returnLinksInBothDirections)
         {
-            final Set<Link> res21 = layer.cache_nodePairLinksThisLayer.get(Pair.of(destinationNode , originNode));
+            final SortedSet<Link> res21 = layer.cache_nodePairLinksThisLayer.get(Pair.of(destinationNode , originNode));
             if (res21 != null) res.addAll(res21);
         }
         return res;
@@ -4066,12 +4219,12 @@ public class NetPlan extends NetworkElement
      * @param destinationNode              Destination node
      * @param returnRoutesInBothDirections Include routes in both directions
      * @param optionalLayerParameter       Network layer (optional)
-     * @return The {@code Set} of routes between a pair of nodes
+     * @return The {@code SortedSet} of routes between a pair of nodes
      */
-    public Set<Route> getNodePairRoutes(Node originNode, Node destinationNode, boolean returnRoutesInBothDirections, NetworkLayer... optionalLayerParameter)
+    public SortedSet<Route> getNodePairRoutes(Node originNode, Node destinationNode, boolean returnRoutesInBothDirections, NetworkLayer... optionalLayerParameter)
     {
-        final Set<Demand> demands = getNodePairDemands(originNode, destinationNode, returnRoutesInBothDirections, optionalLayerParameter);
-        return demands.stream().map(d->d.getRoutes()).flatMap(e->e.stream()).collect(Collectors.toSet());
+        final SortedSet<Demand> demands = getNodePairDemands(originNode, destinationNode, returnRoutesInBothDirections, optionalLayerParameter);
+        return demands.stream().map(d->d.getRoutes()).flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
     }
 
     /**
@@ -4081,27 +4234,32 @@ public class NetPlan extends NetworkElement
      */
     public List<Node> getNodes()
     {
-        return (List<Node>) Collections.unmodifiableList(nodes);
+        return Collections.unmodifiableList(nodes);
     }
 
+    /** Returns the set of Srgs that are dynamically calculated
+     * @return see above
+     */
+    public SortedSet<SharedRiskGroup> getSrgsDynamic () { return Collections.unmodifiableSortedSet(cache_dynamicSrgs);  }
+    
     /**
      * <p>Returns the set of nodes that are down (iteration order corresponds to ascending order of indexes).</p>
      *
-     * @return The {@code Set} of nodes that are down
+     * @return The {@code SortedSet} of nodes that are down
      */
-    public Set<Node> getNodesDown()
+    public SortedSet<Node> getNodesDown()
     {
-        return Collections.unmodifiableSet(cache_nodesDown);
+        return Collections.unmodifiableSortedSet(cache_nodesDown);
     }
 
     /**
      * <p>Returns the set of nodes that are up (iteration order correspond to ascending order of indexes).</p>
      *
-     * @return The {@code Set} of nodes that are up
+     * @return The {@code SortedSet} of nodes that are up
      */
-    public Set<Node> getNodesUp()
+    public SortedSet<Node> getNodesUp()
     {
-        Set<Node> res = new HashSet<Node>(nodes);
+        SortedSet<Node> res = new TreeSet<Node>(nodes);
         res.removeAll(cache_nodesDown);
         return res;
     }
@@ -4127,7 +4285,6 @@ public class NetPlan extends NetworkElement
     public int getNumberOfForwardingRules(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
         return layer.demands.stream().mapToInt(d->d.cacheHbH_frs.size()).sum();
     }
 
@@ -4206,7 +4363,6 @@ public class NetPlan extends NetworkElement
     public int getNumberOfRoutes(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         return layer.routes.size();
     }
 
@@ -4240,8 +4396,6 @@ public class NetPlan extends NetworkElement
     public Route getRoute(int index, NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         if ((index < 0) || (index > layer.routes.size() - 1)) return null;
         else return layer.routes.get(index);
     }
@@ -4266,7 +4420,6 @@ public class NetPlan extends NetworkElement
     public ArrayList<Long> getRouteIds(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         ArrayList<Long> res = new ArrayList<Long>();
         for (Route e : layer.routes) res.add(e.id);
         return res;
@@ -4281,8 +4434,7 @@ public class NetPlan extends NetworkElement
     public List<Route> getRoutes(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-        return (List<Route>) Collections.unmodifiableList(layer.routes);
+        return Collections.unmodifiableList(layer.routes);
     }
 
     /**
@@ -4311,13 +4463,12 @@ public class NetPlan extends NetworkElement
      * <p>Returns the set of routes that are down (traverse a link or node that is failed). If no layer is provided, default layer is assumed</p>
      *
      * @param optionalLayerParameter network layer (optional)
-     * @return The {@code Set} of routes that are down
+     * @return The {@code SortedSet} of routes that are down
      */
-    public Set<Route> getRoutesDown(NetworkLayer... optionalLayerParameter)
+    public SortedSet<Route> getRoutesDown(NetworkLayer... optionalLayerParameter)
     {
     	final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-        return Collections.unmodifiableSet(layer.cache_routesDown);
+        return Collections.unmodifiableSortedSet(layer.cache_routesDown);
     }
 
     /**
@@ -4326,25 +4477,12 @@ public class NetPlan extends NetworkElement
      * @param optionalLayerParameter network layer (optional)
      * @return see above
      */
-    public Set<Route> getRoutesTraversingZeroCapacityLinks (NetworkLayer... optionalLayerParameter)
+    public SortedSet<Route> getRoutesTraversingZeroCapacityLinks (NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-        return Collections.unmodifiableSet(layer.cache_routesTravLinkZeroCap);
+        return Collections.unmodifiableSortedSet(layer.cache_routesTravLinkZeroCap);
     }
 
-    /**
-     * <p>Returns the routing type of the given layer. If no layer is provided, the default layer is assumed.</p>
-     *
-     * @param optionalLayerParameter Network layer (optional)
-     * @return The routing type of the given layer
-     * @see com.net2plan.utils.Constants.RoutingType
-     */
-    public RoutingType getRoutingType(NetworkLayer... optionalLayerParameter)
-    {
-    	final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        return layer.routingType;
-    }
 
     /**
      * <p>Returns the shared risk group with the given unique identifier.</p>
@@ -4423,7 +4561,7 @@ public class NetPlan extends NetworkElement
      */
     public List<SharedRiskGroup> getSRGs()
     {
-        return (List<SharedRiskGroup>) Collections.unmodifiableList(srgs);
+        return Collections.unmodifiableList(srgs);
     }
 
     /**
@@ -4433,19 +4571,37 @@ public class NetPlan extends NetworkElement
      */
     public List<Resource> getResources()
     {
-        return (List<Resource>) Collections.unmodifiableList(resources);
+        return Collections.unmodifiableList(resources);
     }
 
+    /**
+     * <p>Returns the set of resources which are not attached to any node
+     * @return see above
+     */
+    public SortedSet<Resource> getUnattachedResources()
+    {
+        return resources.stream().filter(t->!t.iAttachedToANode()).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    /**
+     * <p>Returns the set of resources which are attached to any node (that is, not unattached)
+     * @return see above
+     */
+    public SortedSet<Resource> getResourcesAttachedToAnyNode ()
+    {
+        return resources.stream().filter(t->t.iAttachedToANode()).collect(Collectors.toCollection(TreeSet::new));
+    }
+    
     /**
      * Returns the set of resources in the network for the given type. If none resource exists for that type, an empty set is returned
      *
      * @param type the type
      * @return the set of resources
      */
-    public Set<Resource> getResources(String type)
+    public SortedSet<Resource> getResources(String type)
     {
-        final Set<Resource> res = cache_type2Resources.get(type);
-        return (res == null) ? new HashSet<Resource>() : res;
+        final SortedSet<Resource> res = cache_type2Resources.get(type);
+        return (res == null) ? new TreeSet<Resource>() : res;
     }
 
     /**
@@ -4617,7 +4773,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-        for (Link e : layer.links) res.set(e.index, Math.max(0, e.capacity - e.cache_occupiedCapacity));
+        for (Link e : layer.links) res.set(e.index, Math.max(0, e.capacity - e.getOccupiedCapacity()));
         return res;
     }
 
@@ -4674,7 +4830,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-        for (Link e : layer.links) res.set(e.index, e.cache_carriedTraffic);
+        for (Link e : layer.links) res.set(e.index, e.getCarriedTraffic());
         return res;
     }
 
@@ -4689,7 +4845,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-        for (Link e : layer.links) res.set(e.index, e.cache_occupiedCapacity);
+        for (Link e : layer.links) res.set(e.index, e.getOccupiedCapacity());
         return res;
     }
 
@@ -4735,7 +4891,7 @@ public class NetPlan extends NetworkElement
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.links.size());
-        for (Link e : layer.links) res.set(e.index, Math.max(0, e.cache_occupiedCapacity - e.capacity));
+        for (Link e : layer.links) res.set(e.index, Math.max(0, e.getOccupiedCapacity() - e.capacity));
         return res;
     }
 
@@ -4909,7 +5065,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorRouteFirstBackupRouteLengthInKm(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
         for (Route r : layer.routes)
         {
@@ -4931,7 +5086,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorRouteFirstBackupRouteNumberOfLinks(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
         for (Route r : layer.routes)
         {
@@ -4987,7 +5141,7 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorResourceIsOfType(String type)
     {
         DoubleMatrix1D res = DoubleFactory1D.dense.make(resources.size());
-        Set<Resource> resourcesThisType = cache_type2Resources.get(type);
+        SortedSet<Resource> resourcesThisType = cache_type2Resources.get(type);
         if (resourcesThisType == null) return res;
         for (Resource e : resourcesThisType) res.set(e.index, 1.0);
         return res;
@@ -5002,7 +5156,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorRouteCarriedTraffic(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
         for (Route e : layer.routes) res.set(e.index, e.getCarriedTraffic());
         return res;
@@ -5017,7 +5170,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorRouteOfferedTrafficOfAssociatedDemand(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
         for (Route e : layer.routes) res.set(e.index, e.demand.offeredTraffic);
         return res;
@@ -5046,7 +5198,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorRouteLengthInKm(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
         for (Route e : layer.routes) res.set(e.index, e.getLengthInKm());
         return res;
@@ -5061,7 +5212,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorRoutePropagationDelayInMiliseconds(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
         for (Route e : layer.routes) res.set(e.index, e.getPropagationDelayInMiliseconds());
         return res;
@@ -5077,7 +5227,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorRouteNumberOfLinks(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
         for (Route e : layer.routes) res.set(e.index, e.cache_seqLinksRealPath.size());
         return res;
@@ -5096,7 +5245,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D computeRouteCostVector(double[] costs, NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         if (costs == null) costs = DoubleUtils.ones(layer.links.size());
         else if (costs.length != layer.links.size())
             throw new Net2PlanException("The array of costs must have the same length as the number of links in the layer");
@@ -5110,10 +5258,10 @@ public class NetPlan extends NetworkElement
      * @param siteName the name
      * @return see above
      */
-    public Set<Node> getSiteNodes (String siteName)
+    public SortedSet<Node> getSiteNodes (String siteName)
     {
-    	final Set<Node> res = this.cache_nodesPerSiteName.get(siteName);
-    	if (res == null) return new HashSet<> (); else return res;
+    	final SortedSet<Node> res = this.cache_nodesPerSiteName.get(siteName);
+    	if (res == null) return new TreeSet<> (); else return res;
     }
 
 //    /** Sets the default planning domain, to the one specified (it should exist). 
@@ -5128,31 +5276,33 @@ public class NetPlan extends NetworkElement
     /** Returns the set of defined planning domains in this network design 
      * @return see above
      */
-    public Set<String> getGlobalPlanningDomains ()
+    public SortedSet<String> getGlobalPlanningDomains ()
     {
-    	return this.cache_planningDomain2nodes.keySet();
+    	return new TreeSet<> (this.cache_planningDomain2nodes.keySet());
     }
 
     /** Returns the network elements associated to the given planning domain, or null if the planning domain was not defined
      * @param planningDomain the planning domain
      * @return see above
      */
-    public Set<Node> getGlobalPlanningDomainNodes (String planningDomain)
+    public SortedSet<Node> getGlobalPlanningDomainNodes (String planningDomain)
     {
     	return this.cache_planningDomain2nodes.get(planningDomain);
     }
 
     /** Adds a new planning domain to which elements can be assigned in the design. If the planning domain already exists, an exception is raised
+     *
      * @param planningDomain the name of the planning domain
      */
     public void addGlobalPlanningDomain (String planningDomain)
     {
     	if (this.cache_planningDomain2nodes.containsKey(planningDomain)) throw new Net2PlanException ("Planning domain " + planningDomain + " already exists");
-    	this.cache_planningDomain2nodes.put(planningDomain, new HashSet <> ());
+    	this.cache_planningDomain2nodes.put(planningDomain, new TreeSet <> ());
     }
     
     /** Removes a global planning domain, if no elements have it assigned, and there is left at least one planning domain
-     * @param planningDomain planning domain to remove 
+     *
+     * @param planningDomain The name of the planning domain
      */
     public void removeGlobalPlanningDomain (String planningDomain)
     {
@@ -5169,7 +5319,7 @@ public class NetPlan extends NetworkElement
     {
     	if (!this.cache_planningDomain2nodes.containsKey(oldName)) throw new Net2PlanException ("Planning domain " + oldName + " does not exist");
     	if (this.cache_planningDomain2nodes.containsKey(newName)) throw new Net2PlanException ("Planning domain " + newName + " already exists");
-    	final Set<Node> eToChangePd = this.cache_planningDomain2nodes.get(oldName);
+    	final SortedSet<Node> eToChangePd = this.cache_planningDomain2nodes.get(oldName);
     	for (Node e : eToChangePd)
     	{
     		if (e.planningDomains.contains(oldName)) throw new RuntimeException ();
@@ -5180,7 +5330,7 @@ public class NetPlan extends NetworkElement
     	this.cache_planningDomain2nodes.put (newName , eToChangePd);
     }
     
-//	Set<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
+//	SortedSet<NetworkElement> getNetworkElementsDirConnectedForcedToHaveCommonPlanningDomain ()
 //	{
 //		throw new Net2PlanException ("NetPlan objects do not have associated planning domains");
 //	}
@@ -5188,9 +5338,9 @@ public class NetPlan extends NetworkElement
     /** Returns the set of all site names defined in the network
      * @return see above
      */
-    public Set<String> getSiteNames ()
+    public SortedSet<String> getSiteNames ()
     {
-    	return this.cache_nodesPerSiteName.keySet();
+    	return new TreeSet<> (this.cache_nodesPerSiteName.keySet());
     }
     
     /** Returns the set of demands in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
@@ -5198,82 +5348,82 @@ public class NetPlan extends NetworkElement
      * @param optionalLayerParameter the layer (optional)
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<Demand> getTaggedDemands (String tag , NetworkLayer... optionalLayerParameter)
+    public SortedSet<Demand> getTaggedDemands (String tag , NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Demand).map(e->(Demand) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof Demand).map(e->(Demand) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toCollection(TreeSet::new));
     }
     /** Returns the set of links in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
      * @param tag the tag
      * @param optionalLayerParameter the layer (optional)
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<Link> getTaggedLinks (String tag , NetworkLayer... optionalLayerParameter)
+    public SortedSet<Link> getTaggedLinks (String tag , NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Link).map(e->(Link) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof Link).map(e->(Link) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toCollection(TreeSet::new));
     }
     /** Returns the set of multicast demands in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
      * @param tag the tag
      * @param optionalLayerParameter the layer (optional)
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<MulticastDemand> getTaggedMulticastDemands (String tag , NetworkLayer... optionalLayerParameter)
+    public SortedSet<MulticastDemand> getTaggedMulticastDemands (String tag , NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof MulticastDemand).map(e->(MulticastDemand) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof MulticastDemand).map(e->(MulticastDemand) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toCollection(TreeSet::new));
     }
     /** Returns the set of multicast trees in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
      * @param tag the tag
      * @param optionalLayerParameter the layer (optional)
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<MulticastTree> getTaggedMulticastTrees (String tag , NetworkLayer... optionalLayerParameter)
+    public SortedSet<MulticastTree> getTaggedMulticastTrees (String tag , NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof MulticastTree).map(e->(MulticastTree) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof MulticastTree).map(e->(MulticastTree) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toCollection(TreeSet::new));
     }
     /** Returns the set of layers with the given tag. 
      * @param tag the tag
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<NetworkLayer> getTaggedLayers (String tag) 
+    public SortedSet<NetworkLayer> getTaggedLayers (String tag) 
     {
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof NetworkLayer).map(e->(NetworkLayer) e).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof NetworkLayer).map(e->(NetworkLayer) e).collect (Collectors.toCollection(TreeSet::new));
     }
     /** Returns the set of nodes with the given tag. 
      * @param tag the tag
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<Node> getTaggedNodes (String tag) 
+    public SortedSet<Node> getTaggedNodes (String tag) 
     {
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Node).map(e->(Node) e).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof Node).map(e->(Node) e).collect (Collectors.toCollection(TreeSet::new));
     }
     /** Returns the set of resources with the given tag. 
      * @param tag the tag
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<Resource> getTaggedResources (String tag) 
+    public SortedSet<Resource> getTaggedResources (String tag) 
     {
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Resource).map(e->(Resource) e).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof Resource).map(e->(Resource) e).collect (Collectors.toCollection(TreeSet::new));
     }
     /** Returns the set of routes in the given layer with the given tag. If no layer is provided, the defaulf layer is assumed.
      * @param tag the tag
      * @param optionalLayerParameter the layer (optional)
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<Route> getTaggedRoutes (String tag , NetworkLayer... optionalLayerParameter)
+    public SortedSet<Route> getTaggedRoutes (String tag , NetworkLayer... optionalLayerParameter)
     {
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof Route).map(e->(Route) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof Route).map(e->(Route) e).filter(e->e.getLayer().equals(layer)).collect (Collectors.toCollection(TreeSet::new));
     }
     /** Returns the set of SRGs with the given tag. 
      * @param tag the tag
      * @return the set (or an empty set if there are no elements to return)
      */
-    public Set<SharedRiskGroup> getTaggedSrgs (String tag) 
+    public SortedSet<SharedRiskGroup> getTaggedSrgs (String tag) 
     {
-    	final Set<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new HashSet<> (); return el.stream ().filter (e->e instanceof SharedRiskGroup).map(e->(SharedRiskGroup) e).collect (Collectors.toSet());
+    	final SortedSet<NetworkElement> el = cache_taggedElements.get (tag); if (el == null) return new TreeSet<> (); return el.stream ().filter (e->e instanceof SharedRiskGroup).map(e->(SharedRiskGroup) e).collect (Collectors.toCollection(TreeSet::new));
     }
 
 
@@ -5313,7 +5463,6 @@ public class NetPlan extends NetworkElement
     public DoubleMatrix1D getVectorRouteOccupiedCapacity(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         DoubleMatrix1D res = DoubleFactory1D.dense.make(layer.routes.size());
         for (Route e : layer.routes) res.set(e.index, e.getOccupiedCapacity());
         return res;
@@ -5340,7 +5489,6 @@ public class NetPlan extends NetworkElement
     public boolean hasForwardingRules(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
         return getNumberOfForwardingRules(layer) > 0;
     }
 
@@ -5399,7 +5547,6 @@ public class NetPlan extends NetworkElement
     public boolean hasRoutes(NetworkLayer... optionalLayerParameter)
     {
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         return layer.routes.size() > 0;
     }
 
@@ -5534,7 +5681,7 @@ public class NetPlan extends NetworkElement
             {
                 final Resource ee = (Resource) e;
                 if (ee.netPlan != this) return false;
-                if (!ee.hostNode.isUp) return false;
+                if (ee.iAttachedToANode()) if (!ee.hostNode.get().isUp) return false;
             } else if (e instanceof Link)
             {
                 final Link ee = (Link) e;
@@ -5577,8 +5724,8 @@ public class NetPlan extends NetworkElement
         netPlan.cache_id2LayerMap.remove(layer.id);
         NetPlan.removeNetworkElementAndShiftIndexes(netPlan.layers, layer.index);
         if (netPlan.defaultLayer.equals(layer)) netPlan.defaultLayer = netPlan.layers.get(0);
-        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         layer.removeId();
+        if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
     }
 
     /**
@@ -5603,10 +5750,10 @@ public class NetPlan extends NetworkElement
     {
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 
         for (Demand d : layer.demands)
         {
+        	if (d.isSourceRouting()) continue;
         	d.cacheHbH_frs.clear();
         	d.cacheHbH_linksPerNodeWithNonZeroFr.clear();
         	d.cacheHbH_normCarriedOccupiedPerLinkCurrentState.clear();
@@ -5614,19 +5761,32 @@ public class NetPlan extends NetworkElement
         	d.cache_worstCasePropagationTimeMs = Double.MAX_VALUE;
             d.routingCycleType = RoutingCycleType.LOOPLESS;
             d.carriedTraffic = 0;
-            if (d.coupledUpperLayerLink != null)
-            	d.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(d.carriedTraffic);
+            if (d.coupledUpperOrSameLayerLink != null)
+            	d.coupledUpperOrSameLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(d.carriedTraffic);
         }
         for (Link e : layer.links)
         {
         	e.cacheHbH_frs.clear();
         	e.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.clear();
-            e.cache_carriedTraffic = e.getMulticastCarriedTraffic();
-            e.cache_occupiedCapacity = e.getMulticastOccupiedLinkCapacity();
+            e.updateLinkTrafficAndOccupation();
         }
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
+    /** For each link in the given layer, returns a map, with key the QoS types traversing it, and two 
+     * associated values: (i) the total traffic occupied of such Qos type, (ii) the amount out of that traffic that is violating the QoS
+     * @param optionalLayerParameter  see above
+     * @return  see above
+     */
+    public SortedMap<Link,SortedMap<String,Pair<Double,Double>>> getAllLinksPerQosOccupationAndQosViolationMap (NetworkLayer... optionalLayerParameter)
+    {
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        final SortedMap<Link,SortedMap<String,Pair<Double,Double>>> res = new TreeMap<>();
+        for (Link e : layer.links)
+        	res.put(e, e.getPerQoSOccupationAndQosViolationMap());
+        return res;
+    }
+    
     /**
      * <p>Removes all the links defined in the given layer. If no layer is provided, default layer is assumed.</p>
      *
@@ -5717,10 +5877,10 @@ public class NetPlan extends NetworkElement
 		ErrorHandling.DEBUG = false;
         checkIsModifiable();
         for (NetworkLayer layer : layers)
-            if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-                removeAllForwardingRules(layer); // to speed up things
-            else
-            	removeAllRoutes(layer); // to speed up things
+        {
+            removeAllForwardingRules(layer); // to speed up things
+        	removeAllRoutes(layer); // to speed up things
+        }
         for (Node n : new ArrayList<Node>(nodes)) n.remove();
 		ErrorHandling.DEBUG = previousErrorHandling;
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -5736,8 +5896,6 @@ public class NetPlan extends NetworkElement
 		checkAttachedToNetPlanObject();
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
-//        for (Route r : new ArrayList<> (netPlan.getRoutes(layer))) r.remove();
         
         for (Route r : netPlan.getRoutes(layer))
         {
@@ -5750,12 +5908,12 @@ public class NetPlan extends NetworkElement
             for (String tag : r.tags) netPlan.cache_taggedElements.get(tag).remove(r);
             r.removeId();
         }
-        for (Demand d : netPlan.getDemands(layer))
+        for (Demand d : netPlan.getDemandsSourceRouted(layer))
         {
         	d.carriedTraffic = 0;
         	d.routingCycleType = RoutingCycleType.LOOPLESS;
-        	if (d.coupledUpperLayerLink != null)
-        		d.coupledUpperLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(0);
+        	if (d.coupledUpperOrSameLayerLink != null)
+        		d.coupledUpperOrSameLayerLink.updateCapacityAndZeroCapacityLinksAndRoutesCaches(0);
     		d.cache_routes.clear ();
     		d.cache_worstCasePropagationTimeMs = 0;        
     		d.cache_worstCaseLengthInKm = 0;
@@ -5781,7 +5939,6 @@ public class NetPlan extends NetworkElement
     {
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         for (Route r : new ArrayList<Route>(layer.routes))
         {
             if (r.currentCarriedTrafficIfNotFailing >= toleranceTrafficAndCapacityValueToConsiderUnusedRoute) continue;
@@ -5823,18 +5980,8 @@ public class NetPlan extends NetworkElement
     {
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        switch (layer.routingType)
-        {
-            case SOURCE_ROUTING:
-                removeAllRoutes(layer);
-                break;
-
-            case HOP_BY_HOP_ROUTING:
-                removeAllForwardingRules(layer);
-                break;
-            default:
-                throw new RuntimeException("Bad");
-        }
+        removeAllRoutes(layer);
+        removeAllForwardingRules(layer);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -5919,8 +6066,10 @@ public class NetPlan extends NetworkElement
 
             XMLUtils.indent(writer, 0);
             writer.writeStartElement("network");
-            writer.writeAttribute("description", getNetworkDescription());
-            writer.writeAttribute("name", getNetworkName());
+            writer.writeAttribute("description", getDescription());
+            writer.writeAttribute("name", getName());
+            writer.writeAttribute("currentPlotNodeLayout", this.currentPlotNodeLayout);
+            writer.writeAttribute("cache_definedPlotNodeLayouts", StringUtils.createEscapedString_asStringList(this.cache_definedPlotNodeLayouts));
             writer.writeAttribute("version", Version.getFileFormatVersion());
             writer.writeAttribute("nextElementId", nextElementId.toString());
             int counter = 0; 
@@ -5936,30 +6085,39 @@ public class NetPlan extends NetworkElement
 //                writer.writeAttribute("value", planningDomain);
 //            }
 
-            //Set<Long> nodeIds_thisNetPlan = new HashSet<Long> (getNodeIds());
+            //SortedSet<Long> nodeIds_thisNetPlan = new TreeSet<Long> (getNodeIds());
             for (Node node : nodes)
             {
                 XMLUtils.indent(writer, 1);
                 writer.writeStartElement("node");
 
-                Point2D position = node.nodeXYPositionMap;
+                final Point2D position = node.getXYPositionMap();
                 writer.writeAttribute("id", Long.toString(node.id));
+                writer.writeAttribute("description", node.getDescription());
+                writer.writeAttribute("name", node.getName());
                 writer.writeAttribute("xCoord", Double.toString(position.getX()));
                 writer.writeAttribute("yCoord", Double.toString(position.getY()));
-                writer.writeAttribute("name", node.name);
+                final List<String> mapLayoutPositionsStream = node.mapLayout2NodeXYPositionMap.entrySet().stream().
+                        map(e->Arrays.asList(e.getKey() , "" + e.getValue().getX() , "" + e.getValue().getY())).
+                        flatMap(e->e.stream()).
+                        collect(Collectors.toList());
+                writer.writeAttribute("mapLayout2NodeXYPositionMap", StringUtils.createEscapedString_asStringList(mapLayoutPositionsStream));
+                
                 writer.writeAttribute("population", Double.toString(node.population));
                 if (node.siteName != null) writer.writeAttribute("siteName", node.siteName);
                 writer.writeAttribute("isUp", Boolean.toString(node.isUp));
                 int pdCounter = 0; for (String pd : node.getPlanningDomains()) 
                 	writer.writeAttribute("planningDomain_" + (pdCounter++), pd); 
                 
-                final Set<NetworkLayer> layersWithIcons = layers.stream().filter(l -> node.getUrlNodeIcon(l) != null).collect(Collectors.toSet());
+                final SortedSet<NetworkLayer> layersWithIcons = layers.stream().filter(l -> node.getUrlNodeIcon(l) != null).collect(Collectors.toCollection(TreeSet::new));
                 final List<Long> idsLayersWithIcons = layersWithIcons.stream().map(l -> l.getId()).collect(Collectors.toList());
                 writer.writeAttribute("layersWithIconsDefined", CollectionUtils.join(idsLayersWithIcons, " "));
                 for (NetworkLayer layer : layersWithIcons)
                     if (node.getUrlNodeIcon(layer) != null)
+                    {
                         writer.writeAttribute("nodeIconURLLayer_" + layer.getId(), node.getUrlNodeIcon(layer).toString());
-
+                        writer.writeAttribute("nodeIconRelativeSizeLayer_" + layer.getId(), "" + node.getNodeIconRelativeSize(layer));
+                    }
                 for (String tag : node.tags) { XMLUtils.indent(writer, 2); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
                 for (Entry<String, String> entry : node.attributes.entrySet())
@@ -5980,9 +6138,10 @@ public class NetPlan extends NetworkElement
                 writer.writeStartElement("resource");
 
                 writer.writeAttribute("id", Long.toString(res.id));
-                writer.writeAttribute("hostNodeId", Long.toString(res.hostNode.id));
+                writer.writeAttribute("description", res.getDescription());
+                writer.writeAttribute("name", res.getName());
+                writer.writeAttribute("hostNodeId", Long.toString(res.iAttachedToANode()? res.hostNode.get().id : -1));
                 writer.writeAttribute("type", res.type);
-                writer.writeAttribute("name", res.name);
                 writer.writeAttribute("capacityMeasurementUnits", res.capacityMeasurementUnits);
                 writer.writeAttribute("processingTimeToTraversingTrafficInMs", Double.toString(res.processingTimeToTraversingTrafficInMs));
                 writer.writeAttribute("capacity", Double.toString(res.capacity));
@@ -6016,8 +6175,8 @@ public class NetPlan extends NetworkElement
                 writer.writeStartElement("layer");
 
                 writer.writeAttribute("id", Long.toString(layer.id));
-                writer.writeAttribute("name", layer.name);
-                writer.writeAttribute("description", layer.description);
+                writer.writeAttribute("description", layer.getDescription());
+                writer.writeAttribute("name", layer.getName());
                 writer.writeAttribute("isDefaultLayer", Boolean.toString(defaultLayer == layer));
                 writer.writeAttribute("linkCapacityUnitsName", layer.linkCapacityUnitsName);
                 writer.writeAttribute("demandTrafficUnitsName", layer.demandTrafficUnitsName);
@@ -6030,6 +6189,8 @@ public class NetPlan extends NetworkElement
                     writer.writeStartElement("link");
 
                     writer.writeAttribute("id", Long.toString(link.id));
+                    writer.writeAttribute("description", link.getDescription());
+                    writer.writeAttribute("name", link.getName());
                     writer.writeAttribute("originNodeId", Long.toString(link.originNode.id));
                     writer.writeAttribute("destinationNodeId", Long.toString(link.destinationNode.id));
                     writer.writeAttribute("capacity", Double.toString(link.capacity));
@@ -6037,6 +6198,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("bidirectionalPairId", Long.toString(link.bidirectionalPair == null? -1 : link.bidirectionalPair.id));
                     writer.writeAttribute("propagationSpeedInKmPerSecond", Double.toString(link.propagationSpeedInKmPerSecond));
                     writer.writeAttribute("isUp", Boolean.toString(link.isUp));
+                    writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(link.getMonitoredOrForecastedCarriedTraffic().toStringList()));
 
                     for (String tag : link.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
@@ -6058,12 +6220,19 @@ public class NetPlan extends NetworkElement
                     writer.writeStartElement("demand");
 
                     writer.writeAttribute("id", Long.toString(demand.id));
+                    writer.writeAttribute("description", demand.getDescription());
+                    writer.writeAttribute("name", demand.getName());
                     writer.writeAttribute("ingressNodeId", Long.toString(demand.ingressNode.id));
                     writer.writeAttribute("egressNodeId", Long.toString(demand.egressNode.id));
                     writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
                     writer.writeAttribute("intendedRecoveryType", demand.recoveryType.toString());
+                    writer.writeAttribute("routingType", demand.routingType.name());
                     writer.writeAttribute("bidirectionalPairId", Long.toString(demand.bidirectionalPair == null? -1 : demand.bidirectionalPair.id));
-
+                    writer.writeAttribute("maximumAcceptableE2EWorstCaseLatencyInMs", Double.toString(demand.maximumAcceptableE2EWorstCaseLatencyInMs));
+                    writer.writeAttribute("offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth", Double.toString(demand.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth));
+                    writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(demand.getMonitoredOrForecastedOfferedTraffic().toStringList()));
+                    writer.writeAttribute("qosType", demand.qosType);
+                    
                     for (String type : demand.mandatorySequenceOfTraversedResourceTypes)
                     {
                         XMLUtils.indent(writer, 2);
@@ -6089,13 +6258,18 @@ public class NetPlan extends NetworkElement
                 {
                     XMLUtils.indent(writer, 2);
                     writer.writeStartElement("multicastDemand");
-
                     writer.writeAttribute("id", Long.toString(demand.id));
+                    writer.writeAttribute("description", demand.getDescription());
+                    writer.writeAttribute("name", demand.getName());
                     writer.writeAttribute("ingressNodeId", Long.toString(demand.ingressNode.id));
                     List<Long> egressNodeIds = new LinkedList<Long>();
                     for (Node n : demand.egressNodes) egressNodeIds.add(n.id);
                     writer.writeAttribute("egressNodeIds", CollectionUtils.join(egressNodeIds, " "));
                     writer.writeAttribute("offeredTraffic", Double.toString(demand.offeredTraffic));
+                    writer.writeAttribute("maximumAcceptableE2EWorstCaseLatencyInMs", Double.toString(demand.maximumAcceptableE2EWorstCaseLatencyInMs));
+                    writer.writeAttribute("offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth", Double.toString(demand.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth));
+                    writer.writeAttribute("qosType", demand.qosType);
+                    writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(demand.getMonitoredOrForecastedOfferedTraffic().toStringList()));
 
                     for (String tag : demand.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
@@ -6117,6 +6291,8 @@ public class NetPlan extends NetworkElement
                     writer.writeStartElement("multicastTree");
 
                     writer.writeAttribute("id", Long.toString(tree.id));
+                    writer.writeAttribute("description", tree.getDescription());
+                    writer.writeAttribute("name", tree.getName());
                     writer.writeAttribute("demandId", Long.toString(tree.demand.id));
                     writer.writeAttribute("carriedTrafficIfNotFailing", Double.toString(tree.carriedTrafficIfNotFailing));
                     writer.writeAttribute("occupiedLinkCapacityIfNotFailing", Double.toString(tree.occupiedLinkCapacityIfNotFailing));
@@ -6152,7 +6328,8 @@ public class NetPlan extends NetworkElement
                 }
 
 
-                if (layer.routingType == RoutingType.SOURCE_ROUTING)
+//                if (layer.routingType == RoutingType.SOURCE_ROUTING)
+                /* source routing information */
                 {
                     XMLUtils.indent(writer, 2);
                     writer.writeStartElement("sourceRouting");
@@ -6163,11 +6340,14 @@ public class NetPlan extends NetworkElement
                         writer.writeStartElement("route");
 
                         writer.writeAttribute("id", Long.toString(route.id));
+                        writer.writeAttribute("description", route.getDescription());
+                        writer.writeAttribute("name", route.getName());
                         writer.writeAttribute("demandId", Long.toString(route.demand.id));
 
                         writer.writeAttribute("currentCarriedTrafficIfNotFailing", Double.toString(route.currentCarriedTrafficIfNotFailing));
                         writer.writeAttribute("currentLinksAndResourcesOccupationIfNotFailing", CollectionUtils.join(route.currentLinksAndResourcesOccupationIfNotFailing, " "));
                         writer.writeAttribute("currentPath", CollectionUtils.join(NetPlan.getIds(route.currentPath), " "));
+                        writer.writeAttribute("bidirectionalPairId", Long.toString(route.bidirectionalPair == null? -1 : route.bidirectionalPair.id));
 
                         writer.writeAttribute("initialStateCarriedTrafficIfNotFailing", Double.toString(route.initialStateCarriedTrafficIfNotFailing));
                         writer.writeAttribute("initialStateOccupationIfNotFailing", CollectionUtils.join(route.initialStateOccupationIfNotFailing, " "));
@@ -6191,7 +6371,8 @@ public class NetPlan extends NetworkElement
 
                     XMLUtils.indent(writer, 2);
                     writer.writeEndElement();
-                } else
+                } 
+                /* hop-by-hop information */
                 {
                     XMLUtils.indent(writer, 2);
                     writer.writeStartElement("hopByHopRouting");
@@ -6231,10 +6412,22 @@ public class NetPlan extends NetworkElement
                 writer.writeStartElement("srg");
 
                 writer.writeAttribute("id", Long.toString(srg.id));
+                writer.writeAttribute("description", srg.getDescription());
+                writer.writeAttribute("name", srg.getName());
                 writer.writeAttribute("meanTimeToFailInHours", Double.toString(srg.meanTimeToFailInHours));
                 writer.writeAttribute("meanTimeToRepairInHours", Double.toString(srg.meanTimeToRepairInHours));
-                writer.writeAttribute("nodes", CollectionUtils.join(NetPlan.getIds(srg.nodes), " "));
-                writer.writeAttribute("links", CollectionUtils.join(NetPlan.getIds(srg.links), " "));
+                writer.writeAttribute("isDynamic", Boolean.toString(srg.isDynamicSrg()));
+                if (srg.isDynamicSrg())
+                {
+                    writer.writeAttribute("dynamicSrgClassName", srg.getDynamicSrgImplementation().getClass().getName());
+                    writer.writeAttribute("dynamicSrgConfigString", srg.getDynamicSrgImplementation().getInitializationString());
+                }
+                else
+                {
+                    writer.writeAttribute("nodes", CollectionUtils.join(NetPlan.getIds(srg.getNodes()), " "));
+                    writer.writeAttribute("links", CollectionUtils.join(NetPlan.getIds(srg.getLinksAllLayers()), " "));
+                }
+                
 
                 for (String tag : srg.tags) { XMLUtils.indent(writer, 2); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
@@ -6250,7 +6443,6 @@ public class NetPlan extends NetworkElement
                 writer.writeEndElement();
             }
 
-
             for (DemandLinkMapping d_e : interLayerCoupling.edgeSet())
             {
                 for (Entry<Demand, Link> coupling : d_e.demandLinkMapping.entrySet())
@@ -6260,7 +6452,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("lowerLayerDemandId", "" + coupling.getKey().id);
                     writer.writeAttribute("upperLayerLinkId", "" + coupling.getValue().id);
                 }
-                for (Entry<MulticastDemand, Set<Link>> coupling : d_e.multicastDemandLinkMapping.entrySet())
+                for (Entry<MulticastDemand, SortedSet<Link>> coupling : d_e.multicastDemandLinkMapping.entrySet())
                 {
                     XMLUtils.indent(writer, 1);
                     writer.writeEmptyElement("layerCouplingMulticastDemand");
@@ -6270,7 +6462,20 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("upperLayerLinkIds", CollectionUtils.join(linkIds, " "));
                 }
             }
-
+            
+            for (NetworkLayer layer : this.layers)
+            {
+                for (Demand coupling : getDemandsCoupled(layer))
+                {
+                    if (coupling.isCoupledInSameLayer())
+                    {
+                        XMLUtils.indent(writer, 1);
+                        writer.writeEmptyElement("sameLayerCouplingDemand");
+                        writer.writeAttribute("layerDemandId", "" + coupling.id);
+                        writer.writeAttribute("layerLinkId", "" + coupling.coupledUpperOrSameLayerLink.id);
+                    }
+                }
+            }
             
             
             for (String tag : this.tags) { XMLUtils.indent(writer, 1); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
@@ -6349,13 +6554,14 @@ public class NetPlan extends NetworkElement
         if (linksToSetAsDown != null) checkInThisNetPlan(linksToSetAsDown);
         if (nodesToSetAsUp != null) checkInThisNetPlan(nodesToSetAsUp);
         if (nodesToSetAsDown != null) checkInThisNetPlan(nodesToSetAsDown);
-        Set<Link> affectedLinks = new HashSet<Link>();
+        SortedSet<Link> affectedLinks = new TreeSet<Link>();
+        SortedSet<Node> affectedNodes = new TreeSet<> ();
 
         if (linksToSetAsDown != null && linksToSetAsUp != null)
-            if (!Sets.intersection(new HashSet<>(linksToSetAsDown), new HashSet<>(linksToSetAsUp)).isEmpty())
+            if (!Sets.intersection(new TreeSet<>(linksToSetAsDown), new TreeSet<>(linksToSetAsUp)).isEmpty())
                 throw new Net2PlanException("A link is changed to up and to down state in the same call");
         if (nodesToSetAsDown != null && nodesToSetAsUp != null)
-            if (!Sets.intersection(new HashSet<>(nodesToSetAsDown), new HashSet<>(nodesToSetAsUp)).isEmpty())
+            if (!Sets.intersection(new TreeSet<>(nodesToSetAsDown), new TreeSet<>(nodesToSetAsUp)).isEmpty())
                 throw new Net2PlanException("A node is changed to up and to down state in the same call");
 
 //		System.out.println ("setLinksAndNodesFailureState : links to up: " + linksToSetAsUp + ", links to down: " + linksToSetAsDown + ", nodes up: " + nodesToSetAsUp + ", nodes down: " + nodesToSetAsDown);
@@ -6383,6 +6589,7 @@ public class NetPlan extends NetworkElement
                     cache_nodesDown.remove(node);
                     affectedLinks.addAll(node.cache_nodeOutgoingLinks);
                     affectedLinks.addAll(node.cache_nodeIncomingLinks);
+                    affectedNodes.add(node);
                 }
         if (nodesToSetAsDown != null)
             for (Node node : nodesToSetAsDown)
@@ -6392,25 +6599,24 @@ public class NetPlan extends NetworkElement
                     cache_nodesDown.add(node);
                     affectedLinks.addAll(node.cache_nodeOutgoingLinks);
                     affectedLinks.addAll(node.cache_nodeIncomingLinks);
+                    affectedNodes.add(node);
                 }
 
-        Set<Demand> affectedDemandsHopByHopRouting = new HashSet<>();
-        Set<Route> affectedRoutesSourceRouting = new HashSet<Route>();
-        Set<MulticastTree> affectedTrees = new HashSet<MulticastTree>();
+        SortedSet<Demand> affectedDemandsHopByHopRouting = new TreeSet<>();
+        SortedSet<Route> affectedRoutesSourceRouting = new TreeSet<Route>();
+        SortedSet<MulticastTree> affectedTrees = new TreeSet<MulticastTree>();
 
         for (Link link : affectedLinks)
         {
-            if (link.layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-            {
-            	affectedDemandsHopByHopRouting.addAll(link.cacheHbH_frs.keySet());
-            } else
-            {
-                affectedRoutesSourceRouting.addAll(link.cache_traversingRoutes.keySet());
-            }
+        	affectedDemandsHopByHopRouting.addAll(link.cacheHbH_frs.keySet());
+        	affectedRoutesSourceRouting.addAll(link.cache_traversingRoutes.keySet());
             affectedTrees.addAll(link.cache_traversingTrees);
         }
+        for (Node n : affectedNodes)
+            for (NetworkLayer layer : layers)
+                affectedTrees.addAll(n.getOutgoingMulticastTrees(layer)); // for trees without links, only ingress node
 
-//		System.out.println ("affected routes: " + affectedRoutesSourceRouting);
+        //		System.out.println ("affected routes: " + affectedRoutesSourceRouting);
         for (Demand d : affectedDemandsHopByHopRouting) d.updateHopByHopRoutingToGivenFrs(d.cacheHbH_frs);
         netPlan.updateFailureStateRoutesAndTrees(affectedRoutesSourceRouting);
         netPlan.updateFailureStateRoutesAndTrees(affectedTrees);
@@ -6431,7 +6637,7 @@ public class NetPlan extends NetworkElement
         try
         {
             for (Demand d : layer.demands)
-                if (d.coupledUpperLayerLink != null)
+                if (d.coupledUpperOrSameLayerLink != null)
                     if (!demandTrafficUnitsName.equals(layer.demandTrafficUnitsName))
                         throw new Net2PlanException("Demand traffic units name cannot be modified since there is some coupling with other layers");
         } catch (Exception e)
@@ -6455,16 +6661,23 @@ public class NetPlan extends NetworkElement
     {
         checkIsModifiable();
         checkInThisNetPlan(demand);
-        final NetworkLayer layer = demand.layer;
         checkInThisNetPlanAndLayer(link, demand.layer);
-        layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+        demand.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
         if (splittingRatio < 0) throw new Net2PlanException("Splitting ratio must be greater or equal than zero");
         if (splittingRatio > 1) throw new Net2PlanException("Splitting ratio must be lower or equal than one");
         final double sumOutFde = demand.cacheHbH_frs.entrySet().stream().filter(e->e.getKey().getOriginNode().equals(link.getOriginNode())).mapToDouble(e->e.getValue()).sum();
         Double previousValueFr = demand.cacheHbH_frs.get(link); if (previousValueFr == null) previousValueFr = 0.0;
         if (sumOutFde + splittingRatio - previousValueFr > 1 + Configuration.precisionFactor)
             throw new Net2PlanException("The sum of splitting factors for outgoing links cannot exceed one");
-        Map<Link,Double> newFrs = new HashMap<> (demand.cacheHbH_frs);
+        if (demand.isCoupledInSameLayer())
+        {
+			final SortedSet<Link> intraLayerUpPropagation = demand.coupledUpperOrSameLayerLink.getIntraLayerUpPropagationIncludingMe();
+			final SortedSet<Link> downProp = link.getIntraLayerDownPropagationIncludingMe();
+			if (!Sets.intersection(downProp, intraLayerUpPropagation).isEmpty())
+				throw new Net2PlanException ("The sequence of links produces a loop in the intra-layer coupling");
+        }
+        
+        SortedMap<Link,Double> newFrs = new TreeMap<> (demand.cacheHbH_frs);
         if (splittingRatio == 0)
         	newFrs.remove(link);
         else
@@ -6490,37 +6703,57 @@ public class NetPlan extends NetworkElement
         if ((demands.size() != links.size()) || (demands.size() != splittingFactors.size()))
             throw new Net2PlanException("The number of demands, links and aplitting factors must be the same");
         if (demands.isEmpty()) return;
+        if (demands.stream().anyMatch(d->d.isSourceRouting())) throw new Net2PlanException ("All demands must be hop-by-hop routed");
         final NetworkLayer layer = demands.iterator().next().layer;
+
         checkInThisNetPlanAndLayer(demands, layer);
         checkInThisNetPlanAndLayer(links, layer);
-
+        Iterator<Demand> it_d = demands.iterator();
+        Iterator<Link> it_e = links.iterator();
+        final SortedSet<Pair<Demand,Link>> check_differentPairs = new TreeSet<> ();
+        while (it_d.hasNext())
+        {
+            final Demand demand = it_d.next();
+            final Link link = it_e.next();
+            check_differentPairs.add(Pair.of(demand, link));
+            if (demand.isCoupledInSameLayer())
+            {
+    			final SortedSet<Link> intraLayerUpPropagation = demand.coupledUpperOrSameLayerLink.getIntraLayerUpPropagationIncludingMe();
+    			final SortedSet<Link> downProp = link.getIntraLayerDownPropagationIncludingMe();
+    			if (!Sets.intersection(downProp, intraLayerUpPropagation).isEmpty())
+    				throw new Net2PlanException ("The sequence of links produces a loop in the intra-layer coupling");
+            }
+        }
+        if (check_differentPairs.size() != demands.size())
+            throw new Net2PlanException ("Two forwarding rules have the same demand-link pair");
+        
         /* If asked, remove previous forwarding rules of the affected demands */
-    	final Set<Demand> affectedDemands = new HashSet<> (demands);
+    	final SortedSet<Demand> affectedDemands = new TreeSet<> (demands);
         if (removePreviousRulesAffectedDemands)
         	for (Demand d : affectedDemands) d.removeAllForwardingRules();
 
         /* Initialize the map with existing demands */
-        Map<Demand,Map<Link,Double>> newForwardingRules = new HashMap<> ();
-        for (Demand d : affectedDemands) newForwardingRules.put(d, d.cacheHbH_frs);
+        SortedMap<Demand,SortedMap<Link,Double>> newForwardingRules = new TreeMap<> ();
+        for (Demand d : affectedDemands) newForwardingRules.put(d, new TreeMap<> (d.cacheHbH_frs));
         
         /* Update with new demands */
-        Iterator<Demand> it_d = demands.iterator();
-        Iterator<Link> it_e = links.iterator();
+        it_d = demands.iterator();
+        it_e = links.iterator();
         Iterator<Double> it_sf = splittingFactors.iterator();
         while (it_d.hasNext())
         {
             final Demand demand = it_d.next();
             final Link link = it_e.next();
             final double splittingFactor = it_sf.next();
-            if (splittingFactor < Configuration.precisionFactor) continue;
+            //if (splittingFactor < Configuration.precisionFactor) { continue; }
             if (splittingFactor > 1 || splittingFactor < 0) throw new Net2PlanException ("Split factors must be between 0 and 1");
-            Map<Link,Double> frMap = newForwardingRules.get(demand);
-            if (frMap == null) { frMap = new HashMap <> (); newForwardingRules.put(demand, frMap); }
-            frMap.put(link, splittingFactor);
+            SortedMap<Link,Double> frMap = newForwardingRules.get(demand);
+            if (frMap == null) { frMap = new TreeMap <> (); newForwardingRules.put(demand, frMap); }
+            if (splittingFactor > 0) frMap.put(link, splittingFactor); else frMap.remove(link); 
         }
 
         /* Check if the update rules are valid */
-        final Map<Pair<Node,Demand>,Double> sumOutFrs = new HashMap<> ();
+        final SortedMap<Pair<Node,Demand>,Double> sumOutFrs = new TreeMap<> ();
         for (Demand d : newForwardingRules.keySet())
         {
         	for (Entry<Link,Double> fr : newForwardingRules.get(d).entrySet())
@@ -6533,27 +6766,28 @@ public class NetPlan extends NetworkElement
         }
         for (double val : sumOutFrs.values()) if (val > 1 + Configuration.precisionFactor)
         	throw new Net2PlanException ();
-        
+
         for (Demand d : newForwardingRules.keySet())
         	d.updateHopByHopRoutingToGivenFrs(newForwardingRules.get(d));
-        
+
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
     /**
-     * <p>Sets the forwarding rules for the given design. Any previous routing
-     * information (either source routing or hop-by-hop routing) will be removed.</p>
+     * <p>Sets the forwarding rules for the given design, only for the demands that are hop-by-hop. Source routed demands are untouched.</p>
      *
      * @param f_de                   For each demand <i>d</i> (<i>d = 0</i> refers to the first demand in {@code demandIds}, <i>d = 1</i>
      *                               refers to the second one, and so on), and each link <i>e</i> (<i>e = 0</i> refers to the first link in {@code NetPlan} object, <i>e = 1</i>
      *                               refers to the second one, and so on), {@code f_de[d][e]} sets the fraction of the traffic from demand <i>d</i> that arrives (or is generated in) node <i>a(e)</i> (the origin node of link <i>e</i>), that is forwarded through link <i>e</i>. It must hold that for every node <i>n</i> different of <i>b(d)</i>, the sum of the fractions <i>f<sub>te</sub></i> along its outgoing links must be lower or equal than 1
+     * @param demandsToUpdate        Demands to update
      * @param optionalLayerParameter Network layer (optional)
      */
-    public void setForwardingRules(DoubleMatrix2D f_de, NetworkLayer... optionalLayerParameter)
+    public void setForwardingRules(DoubleMatrix2D f_de, Set<Demand> demandsToUpdate , NetworkLayer... optionalLayerParameter)
     {
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        layer.checkRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+        if (demandsToUpdate == null) demandsToUpdate = new TreeSet<> (layer.demands);
+        demandsToUpdate.forEach(d->d.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING));
         int D = layer.demands.size();
         int E = layer.links.size();
         if (f_de.rows() != D || f_de.columns() != E)
@@ -6568,26 +6802,41 @@ public class NetPlan extends NetworkElement
         final DoubleMatrix2D A_dn = f_de.zMult(Aout_ne, null, 1, 0, false, true); // traffic of demand d that leaves node n
         if (A_dn.size() > 0) if (A_dn.getMaxLocation()[0] > 1 + Configuration.precisionFactor)
             throw new Net2PlanException("The sum of the splitting factors of the output links of a node cannot exceed one");
-
         IntArrayList ds = new IntArrayList();
         IntArrayList es = new IntArrayList();
         DoubleArrayList splits = new DoubleArrayList();
         f_de.getNonZeros(ds, es, splits);
-        Map<Demand,Map<Link,Double>> newFrs = new HashMap<> ();
         for (int cont = 0; cont < ds.size() ; cont ++)
         {
             final Demand demand = layer.demands.get(ds.get(cont));
+            if (!demandsToUpdate.contains(demand)) continue;
+            final Link link = layer.links.get(es.get(cont));
+            if (demand.isCoupledInSameLayer())
+            {
+    			final SortedSet<Link> intraLayerUpPropagation = demand.coupledUpperOrSameLayerLink.getIntraLayerUpPropagationIncludingMe();
+    			final SortedSet<Link> downProp = link.getIntraLayerDownPropagationIncludingMe();
+    			if (!Sets.intersection(downProp, intraLayerUpPropagation).isEmpty())
+    				throw new Net2PlanException ("The sequence of links produces a loop in the intra-layer coupling");
+            }
+        }
+
+        SortedMap<Demand,SortedMap<Link,Double>> newFrs = new TreeMap<> ();
+        for (int cont = 0; cont < ds.size() ; cont ++)
+        {
+            final Demand demand = layer.demands.get(ds.get(cont));
+            if (!demandsToUpdate.contains(demand)) continue;
             final Link link = layer.links.get(es.get(cont));
             final double splittingFactor = splits.get(cont);
             if (splittingFactor < Configuration.precisionFactor) continue;
             if (splittingFactor > 1 || splittingFactor < 0) throw new Net2PlanException ("Split factors must be between 0 and 1");
-            Map<Link,Double> frMap = newFrs.get(demand);
-            if (frMap == null) { frMap = new HashMap <> (); newFrs.put(demand, frMap); }
+            SortedMap<Link,Double> frMap = newFrs.get(demand);
+            if (frMap == null) { frMap = new TreeMap <> (); newFrs.put(demand, frMap); }
             frMap.put(link, splittingFactor);
         }
 
-        for (Demand d : layer.demands)
-        	d.updateHopByHopRoutingToGivenFrs(newFrs.containsKey(d)? newFrs.get(d) : new HashMap<> ());
+        for (Demand d : demandsToUpdate)
+        	if (!d.isSourceRouting()) 
+        		d.updateHopByHopRoutingToGivenFrs(newFrs.containsKey(d)? newFrs.get(d) : new TreeMap<> ());
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -6604,7 +6853,7 @@ public class NetPlan extends NetworkElement
         try
         {
             for (Link e : layer.links)
-                if ((e.coupledLowerLayerDemand != null) || (e.coupledLowerLayerMulticastDemand != null))
+                if ((e.coupledLowerOrThisLayerDemand != null) || (e.coupledLowerLayerMulticastDemand != null))
                     if (!name.equals(layer.linkCapacityUnitsName))
                     {
                         throw new Net2PlanException("Link capacity units name cannot be modified since there is some coupling with other layers");
@@ -6617,18 +6866,6 @@ public class NetPlan extends NetworkElement
     }
 
     /**
-     * <p>Sets the network description.</p>
-     *
-     * @param description Description (when {@code null}, it will be set to empty)
-     * @since 0.2.3
-     */
-    public void setNetworkDescription(String description)
-    {
-        checkIsModifiable();
-        networkDescription = description == null ? "" : description;
-    }
-
-    /**
      * <p>Sets the default network layer.</p>
      *
      * @param layer The default network layer
@@ -6637,18 +6874,6 @@ public class NetPlan extends NetworkElement
     {
         checkInThisNetPlan(layer);
         this.defaultLayer = layer;
-    }
-
-    /**
-     * <p>Sets the network name.</p>
-     *
-     * @param name Name
-     * @since 0.2.3
-     */
-    public void setNetworkName(String name)
-    {
-        checkIsModifiable();
-        networkName = name == null ? "" : name;
     }
 
     /**
@@ -6743,27 +6968,47 @@ public class NetPlan extends NetworkElement
      *                                                         routing uses the same or less traffic in the links for each destination than the original routing. For removing the cycles,
      *                                                         the method calls to {@code removeCyclesFrom_xte} using the default ILP solver defined in Net2Plan, and no limit in the maximum solver running time.
      * @param optionalLayerParameter                           Network layer (optional)
+     * @param demandsToSetRouting                              Demands to set routing
      */
-    public void setRoutingFromDemandLinkCarriedTraffic(DoubleMatrix2D x_de, boolean xdeValueAsFractionsRespectToDemandOfferedTraffic, boolean removeCycles, NetworkLayer... optionalLayerParameter)
+    public void setRoutingFromDemandLinkCarriedTraffic(DoubleMatrix2D x_de, boolean xdeValueAsFractionsRespectToDemandOfferedTraffic, boolean removeCycles, Set<Demand> demandsToSetRouting , NetworkLayer... optionalLayerParameter)
     {
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        if (demandsToSetRouting == null) demandsToSetRouting = new TreeSet<> (layer.demands);
         final DoubleMatrix2D trafficBased_xde = xdeValueAsFractionsRespectToDemandOfferedTraffic ? DoubleFactory2D.sparse.diagonal(getVectorDemandOfferedTraffic(layer)).zMult(x_de, null) : x_de;
         checkMatrixDemandLinkCarriedTrafficFlowConservationConstraints(trafficBased_xde, false, layer);
         if (x_de.rows() == 0) return;
         
         if (removeCycles)
-            x_de = GraphUtils.removeCyclesFrom_xde(nodes, layer.links, layer.demands, x_de, xdeValueAsFractionsRespectToDemandOfferedTraffic, Configuration.getOption("defaultILPSolver"), null, -1);
+            x_de = GraphUtils.removeCyclesFrom_xde(nodes.size(), layer.links, demandsToSetRouting, x_de, xdeValueAsFractionsRespectToDemandOfferedTraffic, Configuration.getOption("defaultILPSolver"), null, -1);
 
-        if (layer.routingType == RoutingType.SOURCE_ROUTING)
+        /* Remove existing routing */
+        if (demandsToSetRouting.size() == layer.demands.size()) 
         {
-            removeAllRoutes(layer);
-
+        	removeAllUnicastRoutingInformation(layer);
+        }
+        else
+        {
+            for (Demand d : demandsToSetRouting)
+            	if (d.isSourceRouting())
+            	{
+            		for (Route r : d.getRoutes())
+            			r.remove();
+            	}
+            	else
+            	{
+            		d.removeAllForwardingRules();
+            	}
+        }
+        
+        /* Source routing part */ 
+        {
 			/* Convert the x_de variables into a set of routes for each demand */
             List<Demand> demands = new LinkedList<Demand>();
             List<Double> x_p = new LinkedList<Double>();
             List<List<Link>> seqLinks = new LinkedList<List<Link>>();
-            GraphUtils.convert_xde2xp(nodes, layer.links, layer.demands, trafficBased_xde, demands, x_p, seqLinks);
+            final SortedSet<Demand> srDemandsToConsider = demandsToSetRouting.stream().filter(d->d.isSourceRouting()).collect(Collectors.toCollection(TreeSet::new));
+            GraphUtils.convert_xde2xp(nodes, layer.links, srDemandsToConsider, trafficBased_xde, demands, x_p, seqLinks);
 
 			/* Update netPlan object adding the calculated routes */
             Iterator<Demand> demands_it = demands.iterator();
@@ -6776,11 +7021,13 @@ public class NetPlan extends NetworkElement
                 double x_p_thisPath = x_p_it.next();
                 addRoute(demand, x_p_thisPath, x_p_thisPath, seqLinks_thisPath, null);
             }
-        } else if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+        } 
+        /* HBH part */
         {
-            DoubleMatrix2D f_de = GraphUtils.convert_xde2fde(nodes, layer.links, layer.demands, trafficBased_xde);
-            setForwardingRules(f_de, layer);
-        } else throw new RuntimeException("Bad");
+            final SortedSet<Demand> hbhDemandsToConsider = demandsToSetRouting.stream().filter(d->!d.isSourceRouting()).collect(Collectors.toCollection(TreeSet::new));
+            DoubleMatrix2D f_de = GraphUtils.convert_xde2fde(layer.links, trafficBased_xde);
+            setForwardingRules(f_de, hbhDemandsToConsider , layer); // aplies only the ones
+        } 
 
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
@@ -6801,42 +7048,17 @@ public class NetPlan extends NetworkElement
     public void setRoutingFromDestinationLinkCarriedTraffic(DoubleMatrix2D x_te, boolean removeCycles, NetworkLayer... optionalLayerParameter)
     {
         checkIsModifiable();
-        NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
+        final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         checkMatrixDestinationLinkCarriedTrafficFlowConservationConstraints(x_te, layer);
         
 
         if (removeCycles)
             x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver"), null, -1);
 
-        if (layer.routingType == RoutingType.SOURCE_ROUTING)
-        {
-            removeAllRoutes(layer);
-
-			/* Convert the x_te variables into a set of routes for each demand */
-            DoubleMatrix2D f_te = GraphUtils.convert_xte2fte(nodes, layer.links, x_te);
-            List<Demand> demands_p = new LinkedList<Demand>();
-            List<Double> x_p = new LinkedList<Double>();
-            List<List<Link>> seqLinks_p = new LinkedList<List<Link>>();
-            GraphUtils.convert_fte2xp(nodes, layer.links, layer.demands, getVectorDemandOfferedTraffic(layer), f_te, demands_p, x_p, seqLinks_p);
-
-			/* Update netPlan object adding the calculated routes */
-            Iterator<Demand> demands_it = demands_p.iterator();
-            Iterator<Double> x_p_it = x_p.iterator();
-            Iterator<List<Link>> seqLinks_it = seqLinks_p.iterator();
-            while (x_p_it.hasNext())
-            {
-                Demand demand = demands_it.next();
-                List<Link> seqLinks_thisPath = seqLinks_it.next();
-                double x_p_thisPath = x_p_it.next();
-                addRoute(demand, x_p_thisPath, x_p_thisPath, seqLinks_thisPath, null);
-            }
-        } else if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
-        {
-            DoubleMatrix2D f_te = GraphUtils.convert_xte2fte(nodes, layer.links, x_te);
-            DoubleMatrix2D f_de = GraphUtils.convert_fte2fde(layer.demands, f_te);
-            setForwardingRules(f_de, layer);
-        } else throw new RuntimeException("Bad");
-
+        final DoubleMatrix2D f_te = GraphUtils.convert_xte2fte(nodes, layer.links, x_te);
+        final Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> xdeInfo = GraphUtils.convert_fte2xde(nodes.size(), layer.demands.size() , layer.links, new TreeSet<> (layer.demands) , f_te);
+        final DoubleMatrix2D x_de = xdeInfo.getFirst();
+        setRoutingFromDemandLinkCarriedTraffic(x_de, false , false , new TreeSet<> (layer.demands) , layer);        
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
 
@@ -6857,58 +7079,55 @@ public class NetPlan extends NetworkElement
      * @param optionalLayerParameter Network layer (optional)
      * @param newRoutingType         {@link com.net2plan.utils.Constants.RoutingType RoutingType}
      */
-    public void setRoutingType(RoutingType newRoutingType, NetworkLayer... optionalLayerParameter)
+    public void setRoutingTypeAllDemands (RoutingType newRoutingType, NetworkLayer... optionalLayerParameter)
     {
         checkIsModifiable();
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
-        if (layer.routingType == newRoutingType) return;
-        if (newRoutingType == RoutingType.HOP_BY_HOP_ROUTING) for (Demand d : layer.demands)
-            if (d.isServiceChainRequest())
-                throw new Net2PlanException("Cannot perform this operation with service chain demands, since the resource traversing information is lost");
-        final int D = layer.demands.size();
+        if (newRoutingType == RoutingType.HOP_BY_HOP_ROUTING) 
+        	for (Demand d : layer.demands)
+        		if (d.isServiceChainRequest())
+        			throw new Net2PlanException("Cannot perform this operation with service chain demands, since the resource traversing information is lost");
         switch (newRoutingType)
         {
             case HOP_BY_HOP_ROUTING:
             {
-            	Map<Demand,Map<Link,Double>> newFrs = GraphUtils.convert_xp2fdeMap(layer.demands, layer.routes);
+            	SortedMap<Demand,SortedMap<Link,Double>> newFrs = GraphUtils.convert_xp2fdeMap(layer.routes);
                 removeAllRoutes(layer);
-                layer.routingType = RoutingType.HOP_BY_HOP_ROUTING;
                 for (Demand d : layer.demands)
-                	d.updateHopByHopRoutingToGivenFrs(newFrs.get(d));
+                {
+                	d.routingType = RoutingType.HOP_BY_HOP_ROUTING;
+                	if (newFrs.containsKey(d)) d.updateHopByHopRoutingToGivenFrs(newFrs.get(d));
+                }
                 break;
             }
 
             case SOURCE_ROUTING:
             {
-            	ProfileUtils.printTime("Start setRoutingType -- to SR");
-                if (!layer.routes.isEmpty()) throw new RuntimeException ();
-                final DoubleMatrix2D trafficInLinks_xde = getMatrixDemand2LinkTrafficCarried(layer);
-            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 1");
-                layer.routingType = RoutingType.SOURCE_ROUTING;
-                for (Link e : layer.links)
-                {
-                    e.cache_carriedTraffic = e.getMulticastCarriedTraffic();
-                    e.cache_occupiedCapacity = e.getMulticastOccupiedLinkCapacity();
-                	e.cacheHbH_frs.clear();
-                	e.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.clear ();
-                }
-                for (Demand d : layer.demands)
-                {
-                	d.carriedTraffic = 0;
-                	d.cacheHbH_frs.clear();
-                	d.cacheHbH_linksPerNodeWithNonZeroFr.clear();
-                	d.cacheHbH_normCarriedOccupiedPerLinkCurrentState.clear();
-                }
+//            	ProfileUtils.printTime("Start setRoutingType -- to SR");
+            	final SortedSet<Demand> originalDemandsHbhRouted = new TreeSet<> (getDemandsHopByHopRouted(layer));
+                final DoubleMatrix2D trafficInLinks_xde = getMatrixDemand2LinkTrafficCarried(originalDemandsHbhRouted , layer);
+//            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 1");
+//                for (Link e : layer.links)
+//                {
+//                    e.cache_carriedTraffic = e.getMulticastCarriedTraffic();
+//                    e.cache_occupiedCapacity = e.getMulticastOccupiedLinkCapacity();
+//                	e.cacheHbH_frs.clear();
+//                	e.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.clear ();
+//                }
+                netPlan.removeAllForwardingRules(layer);
 
-            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 2");
+            	for (Demand d : originalDemandsHbhRouted)
+                    d.routingType = RoutingType.SOURCE_ROUTING;
+
+//            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 2");
                 List<Demand> d_p = new LinkedList<Demand>();
                 List<Double> x_p = new LinkedList<Double>();
                 List<List<Link>> pathList = new LinkedList<List<Link>>();
-                GraphUtils.convert_xde2xp(nodes, layer.links, layer.demands, trafficInLinks_xde , d_p, x_p, pathList);
+                GraphUtils.convert_xde2xp(nodes, layer.links, originalDemandsHbhRouted, trafficInLinks_xde , d_p, x_p, pathList);
                 Iterator<Demand> it_demand = d_p.iterator();
                 Iterator<Double> it_xp = x_p.iterator();
                 Iterator<List<Link>> it_pathList = pathList.iterator();
-            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 3");
+//            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 3");
                 while (it_demand.hasNext())
                 {
                     final Demand d = it_demand.next();
@@ -6916,7 +7135,7 @@ public class NetPlan extends NetworkElement
                     final List<Link> seqLinks = it_pathList.next();
                     addRoute(d, trafficInPath, trafficInPath, seqLinks, null);
                 }
-            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 4");
+//            	ProfileUtils.printTime("Start setRoutingType -- to SR -- 4");
                 break;
             }
 
@@ -6931,11 +7150,12 @@ public class NetPlan extends NetworkElement
      * demand. If no layer is provided, default layer is assumed.</p>
      * <p><b>Important</b>: Matrix values must be strictly non-negative and matrix size have to be <i>N</i>x<i>N</i> (where <i>N</i> is the number of nodes)
      *
+     * @param routingTypeDemands     Routing type
      * @param optionalLayerParameter Network layer (optional
      * @param trafficMatrix          Traffic matrix
      * @since 0.3.1
      */
-    public void setTrafficMatrix(DoubleMatrix2D trafficMatrix, NetworkLayer... optionalLayerParameter)
+    public void setTrafficMatrix(DoubleMatrix2D trafficMatrix, RoutingType routingTypeDemands , NetworkLayer... optionalLayerParameter)
     {
         trafficMatrix = NetPlan.adjustToTolerance(trafficMatrix);
         checkIsModifiable();
@@ -6950,7 +7170,7 @@ public class NetPlan extends NetworkElement
             for (int n2 = 0; n2 < N; n2++)
             {
                 if (n1 == n2) continue;
-                addDemand(nodes.get(n1), nodes.get(n2), trafficMatrix.getQuick(n1, n2), null, layer);
+                addDemand(nodes.get(n1), nodes.get(n2), trafficMatrix.getQuick(n1, n2), routingTypeDemands , null, layer);
             }
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
@@ -6973,7 +7193,7 @@ public class NetPlan extends NetworkElement
         for (Demand d : layer.demands)
         {
             d.offeredTraffic = offeredTrafficVector.get(d.index);
-            if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING) d.updateHopByHopRoutingToGivenFrs(d.cacheHbH_frs);
+            if (d.routingType == RoutingType.HOP_BY_HOP_ROUTING) d.updateHopByHopRoutingToGivenFrs(d.cacheHbH_frs);
         }
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
     }
@@ -6993,7 +7213,7 @@ public class NetPlan extends NetworkElement
         if (linkCapacities.size() > 0) if (linkCapacities.getMinLocation()[0] < 0)
             throw new Net2PlanException("Link capacities must be greater or equal than zero");
         for (Link e : layer.links)
-            if ((e.coupledLowerLayerDemand != null) || (e.coupledLowerLayerMulticastDemand != null))
+            if ((e.coupledLowerOrThisLayerDemand != null) || (e.coupledLowerLayerMulticastDemand != null))
                 throw new Net2PlanException("Coupled links cannot change its capacity");
         for (Link e : layer.links)
             e.updateCapacityAndZeroCapacityLinksAndRoutesCaches(linkCapacities.get(e.index));
@@ -7068,7 +7288,6 @@ public class NetPlan extends NetworkElement
             throw new Net2PlanException("Carried traffics must be greater or equal than zero");
         if (occupiedLinkCapacity.size() > 0) if (occupiedLinkCapacity.getMinLocation()[0] < 0)
             throw new Net2PlanException("Occupied link capacities must be greater or equal than zero");
-        layer.checkRoutingType(RoutingType.SOURCE_ROUTING);
         for (Route r : layer.routes)
             r.setCarriedTraffic(carriedTraffic.get(r.index), occupiedLinkCapacity.get(r.index));
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
@@ -7112,9 +7331,9 @@ public class NetPlan extends NetworkElement
         netPlanInformation.append(NEWLINE);
         netPlanInformation.append("--------------------------------");
         netPlanInformation.append(NEWLINE).append(NEWLINE);
-        netPlanInformation.append("Name: ").append(this.networkName).append(NEWLINE);
-        netPlanInformation.append("Description: ").append(networkDescription).append(NEWLINE);
-        Map<String, String> networkAttributes_thisNetPlan = this.attributes;
+        netPlanInformation.append("Name: ").append(this.name).append(NEWLINE);
+        netPlanInformation.append("Description: ").append(description).append(NEWLINE);
+        SortedMap<String, String> networkAttributes_thisNetPlan = this.attributes;
         netPlanInformation.append("Attributes: ");
         netPlanInformation.append(networkAttributes_thisNetPlan.isEmpty() ? "none" : StringUtils.mapToString(networkAttributes_thisNetPlan, "=", ", "));
         netPlanInformation.append(NEWLINE);
@@ -7132,7 +7351,7 @@ public class NetPlan extends NetworkElement
 
         for (Node node : nodes)
         {
-            String nodeInformation = String.format("n%d (id %d), state: %s, position: (%.3g, %.3g), name: %s, attributes: %s", node.index, node.id, !node.isUp ? "down" : "up", node.nodeXYPositionMap.getX(), node.nodeXYPositionMap.getY(), node.name, node.attributes.isEmpty() ? "none" : node.attributes);
+            String nodeInformation = String.format("n%d (id %d), state: %s, position: (%.3g, %.3g), name: %s, attributes: %s", node.index, node.id, !node.isUp ? "down" : "up", node.getXYPositionMap().getX(), node.getXYPositionMap().getY(), node.name, node.attributes.isEmpty() ? "none" : node.attributes);
             netPlanInformation.append(nodeInformation);
             netPlanInformation.append(NEWLINE);
         }
@@ -7161,7 +7380,6 @@ public class NetPlan extends NetworkElement
             netPlanInformation.append("Description: ").append(layer.description).append(NEWLINE);
             netPlanInformation.append("Link capacity units: ").append(layer.linkCapacityUnitsName).append(NEWLINE);
             netPlanInformation.append("Demand traffic units: ").append(layer.demandTrafficUnitsName).append(NEWLINE);
-            netPlanInformation.append("Routing type: ").append(layer.routingType).append(NEWLINE);
 
             if (!layer.attributes.isEmpty())
             {
@@ -7174,10 +7392,7 @@ public class NetPlan extends NetworkElement
             netPlanInformation.append("Number of demands: ").append(layer.demands.size()).append(NEWLINE);
             netPlanInformation.append("Number of multicast demands: ").append(layer.multicastDemands.size()).append(NEWLINE);
             netPlanInformation.append("Number of multicast trees: ").append(layer.multicastTrees.size()).append(NEWLINE);
-            if (layer.routingType == RoutingType.SOURCE_ROUTING)
-            {
-                netPlanInformation.append("Number of routes: ").append(layer.routes.size()).append(NEWLINE);
-            }
+            netPlanInformation.append("Number of routes: ").append(layer.routes.size()).append(NEWLINE);
 
             if (!layer.links.isEmpty())
             {
@@ -7189,11 +7404,11 @@ public class NetPlan extends NetworkElement
 
                 for (Link link : layer.links)
                 {
-                    String linkInformation = String.format("e%d (id %d), n%d (%s) -> n%d (%s), state: %s, capacity: %.3g, length: %.3g km, propagation speed: %.3g km/s, carried traffic: %.3g , occupied capacity: %.3g, attributes: %s", link.index, link.id, link.originNode.id, link.originNode.name, link.destinationNode.id, link.destinationNode.name, !link.isUp ? "down" : "up", link.capacity, link.lengthInKm, link.propagationSpeedInKmPerSecond, link.cache_carriedTraffic, link.cache_occupiedCapacity, link.attributes.isEmpty() ? "none" : link.attributes);
+                    String linkInformation = String.format("e%d (id %d), n%d (%s) -> n%d (%s), state: %s, capacity: %.3g, length: %.3g km, propagation speed: %.3g km/s, carried traffic: %.3g , occupied capacity: %.3g, attributes: %s", link.index, link.id, link.originNode.id, link.originNode.name, link.destinationNode.id, link.destinationNode.name, !link.isUp ? "down" : "up", link.capacity, link.lengthInKm, link.propagationSpeedInKmPerSecond, link.getCarriedTraffic(), link.getOccupiedCapacity(), link.attributes.isEmpty() ? "none" : link.attributes);
                     netPlanInformation.append(linkInformation);
 
-                    if (link.coupledLowerLayerDemand != null)
-                        netPlanInformation.append(String.format(", associated to demand %d (id %d) at layer %d (id %d)", link.coupledLowerLayerDemand.index, link.coupledLowerLayerDemand.id, link.coupledLowerLayerDemand.layer.index, link.coupledLowerLayerDemand.layer.id));
+                    if (link.coupledLowerOrThisLayerDemand != null)
+                        netPlanInformation.append(String.format(", associated to demand %d (id %d) at layer %d (id %d)", link.coupledLowerOrThisLayerDemand.index, link.coupledLowerOrThisLayerDemand.id, link.coupledLowerOrThisLayerDemand.layer.index, link.coupledLowerOrThisLayerDemand.layer.id));
                     if (link.coupledLowerLayerMulticastDemand != null)
                         netPlanInformation.append(String.format(", associated to multicast demand %d (id %d) at layer %d (id %d)", link.coupledLowerLayerMulticastDemand.index, link.coupledLowerLayerMulticastDemand.id, link.coupledLowerLayerMulticastDemand.layer.index, link.coupledLowerLayerMulticastDemand.layer.id));
 
@@ -7214,8 +7429,8 @@ public class NetPlan extends NetworkElement
                     String demandInformation = String.format("d%d (id %d), n%d (%s) -> n%d (%s), offered traffic: %.3g, carried: %.3g, attributes: %s", demand.index, demand.id, demand.ingressNode.id, demand.ingressNode.name, demand.egressNode.id, demand.egressNode.name, demand.offeredTraffic, demand.carriedTraffic, demand.attributes.isEmpty() ? "none" : demand.attributes);
                     netPlanInformation.append(demandInformation);
 
-                    if (demand.coupledUpperLayerLink != null)
-                        netPlanInformation.append(String.format(", associated to link %d (id %d) in layer %d (id %d)", demand.coupledUpperLayerLink.index, demand.coupledUpperLayerLink.id, demand.coupledUpperLayerLink.layer.index, demand.coupledUpperLayerLink.layer.id));
+                    if (demand.coupledUpperOrSameLayerLink != null)
+                        netPlanInformation.append(String.format(", associated to link %d (id %d) in layer %d (id %d)", demand.coupledUpperOrSameLayerLink.index, demand.coupledUpperOrSameLayerLink.id, demand.coupledUpperOrSameLayerLink.layer.index, demand.coupledUpperOrSameLayerLink.layer.id));
 
                     netPlanInformation.append(NEWLINE);
                 }
@@ -7248,57 +7463,52 @@ public class NetPlan extends NetworkElement
                 }
             }
 
-            if (layer.routingType == RoutingType.SOURCE_ROUTING)
-            {
-                if (!layer.routes.isEmpty())
-                {
-                    netPlanInformation.append(NEWLINE);
-                    netPlanInformation.append("Routing information");
-                    netPlanInformation.append(NEWLINE);
-                    netPlanInformation.append("--------------------------------");
-                    netPlanInformation.append(NEWLINE).append(NEWLINE);
-
-                    for (Route route : layer.routes)
-                    {
-                        String str_seqNodes = CollectionUtils.join(route.cache_seqNodesRealPath, " => ");
-                        String str_seqLinks = CollectionUtils.join(route.cache_seqLinksRealPath, " => ");
-                        String numBackupPaths = route.hasBackupRoutes() ? "none" : "" + route.backupRoutes.size();
-                        String routeInformation = String.format("r%d (id %d), demand: d%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, seq. links: %s, seq. nodes: %s, number of backup paths: %s, attributes: %s", route.index, route.id, route.demand.index, route.demand.id, route.getCarriedTraffic(), route.getOccupiedCapacity(), str_seqLinks, str_seqNodes, numBackupPaths, route.attributes.isEmpty() ? "none" : route.attributes);
-                        netPlanInformation.append(routeInformation);
-                        netPlanInformation.append(NEWLINE);
-                    }
-                }
-
-                if (!layer.multicastTrees.isEmpty())
-                {
-                    netPlanInformation.append(NEWLINE);
-                    netPlanInformation.append("Multicast trees information");
-                    netPlanInformation.append(NEWLINE);
-                    netPlanInformation.append("--------------------------------");
-                    netPlanInformation.append(NEWLINE).append(NEWLINE);
-
-                    for (MulticastTree tree : layer.multicastTrees)
-                    {
-                        String str_seqNodes = CollectionUtils.join(tree.cache_traversedNodes, " , ");
-                        String str_seqLinks = CollectionUtils.join(tree.linkSet, " , ");
-
-                        String treeInformation = String.format("mt%d (id %d), multicast demand: md%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, links: %s, nodes: %s, attributes: %s", tree.index, tree.id, tree.demand.index, tree.demand.id, tree.getCarriedTraffic(), tree.getOccupiedLinkCapacity(), str_seqLinks, str_seqNodes, tree.attributes.isEmpty() ? "none" : tree.attributes);
-                        netPlanInformation.append(treeInformation);
-                        netPlanInformation.append(NEWLINE);
-                    }
-                }
-            } else
+            if (!layer.routes.isEmpty())
             {
                 netPlanInformation.append(NEWLINE);
-                netPlanInformation.append("Forwarding information");
+                netPlanInformation.append("Routing information");
                 netPlanInformation.append(NEWLINE);
                 netPlanInformation.append("--------------------------------");
                 netPlanInformation.append(NEWLINE).append(NEWLINE);
-                netPlanInformation.append("f_de: ").append(NEWLINE);
-                netPlanInformation.append(DoubleFactory2D.dense.make(getMatrixDemandBasedForwardingRules(layer).toArray())).append(NEWLINE);
-                netPlanInformation.append("x_de: ").append(NEWLINE);
-                netPlanInformation.append(DoubleFactory2D.dense.make(getMatrixDemand2LinkTrafficCarried(layer).toArray())).append(NEWLINE);
+
+                for (Route route : layer.routes)
+                {
+                    String str_seqNodes = CollectionUtils.join(route.cache_seqNodesRealPath, " => ");
+                    String str_seqLinks = CollectionUtils.join(route.cache_seqLinksRealPath, " => ");
+                    String numBackupPaths = route.hasBackupRoutes() ? "none" : "" + route.backupRoutes.size();
+                    String routeInformation = String.format("r%d (id %d), demand: d%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, seq. links: %s, seq. nodes: %s, number of backup paths: %s, attributes: %s", route.index, route.id, route.demand.index, route.demand.id, route.getCarriedTraffic(), route.getOccupiedCapacity(), str_seqLinks, str_seqNodes, numBackupPaths, route.attributes.isEmpty() ? "none" : route.attributes);
+                    netPlanInformation.append(routeInformation);
+                    netPlanInformation.append(NEWLINE);
+                }
             }
+
+            if (!layer.multicastTrees.isEmpty())
+            {
+                netPlanInformation.append(NEWLINE);
+                netPlanInformation.append("Multicast trees information");
+                netPlanInformation.append(NEWLINE);
+                netPlanInformation.append("--------------------------------");
+                netPlanInformation.append(NEWLINE).append(NEWLINE);
+
+                for (MulticastTree tree : layer.multicastTrees)
+                {
+                    String str_seqNodes = CollectionUtils.join(tree.cache_traversedNodes, " , ");
+                    String str_seqLinks = CollectionUtils.join(tree.linkSet, " , ");
+
+                    String treeInformation = String.format("mt%d (id %d), multicast demand: md%d (id %d), carried traffic: %.3g, occupied capacity: %.3g, links: %s, nodes: %s, attributes: %s", tree.index, tree.id, tree.demand.index, tree.demand.id, tree.getCarriedTraffic(), tree.getOccupiedLinkCapacity(), str_seqLinks, str_seqNodes, tree.attributes.isEmpty() ? "none" : tree.attributes);
+                    netPlanInformation.append(treeInformation);
+                    netPlanInformation.append(NEWLINE);
+                }
+            }
+            netPlanInformation.append(NEWLINE);
+            netPlanInformation.append("Forwarding information");
+            netPlanInformation.append(NEWLINE);
+            netPlanInformation.append("--------------------------------");
+            netPlanInformation.append(NEWLINE).append(NEWLINE);
+            netPlanInformation.append("f_de: ").append(NEWLINE);
+            netPlanInformation.append(DoubleFactory2D.dense.make(getMatrixDemandBasedForwardingRules(layer).toArray())).append(NEWLINE);
+            netPlanInformation.append("x_de: ").append(NEWLINE);
+            netPlanInformation.append(DoubleFactory2D.dense.make(getMatrixDemand2LinkTrafficCarried(null , layer).toArray())).append(NEWLINE);
         }
 
         if (!srgs.isEmpty())
@@ -7311,8 +7521,8 @@ public class NetPlan extends NetworkElement
 
             for (SharedRiskGroup srg : srgs)
             {
-                String aux_nodes = srg.nodes.isEmpty() ? "none" : CollectionUtils.join(srg.nodes, " ");
-                String aux_links = srg.links.isEmpty() ? "none" : CollectionUtils.join(srg.links, " ");
+                String aux_nodes = srg.getNodes ().isEmpty() ? "none" : CollectionUtils.join(srg.getNodes (), " ");
+                String aux_links = srg.getLinksAllLayers().isEmpty() ? "none" : CollectionUtils.join(srg.getLinksAllLayers(), " ");
 
                 String aux_mttf = StringUtils.secondsToYearsDaysHoursMinutesSeconds(srg.meanTimeToFailInHours * 3600);
                 String aux_mttr = StringUtils.secondsToYearsDaysHoursMinutesSeconds(srg.meanTimeToRepairInHours * 3600);
@@ -7421,11 +7631,6 @@ public class NetPlan extends NetworkElement
                     isUp = false;
                     break;
                 }
-//			System.out.println ("Route :" + route + ", previously up:" + previouslyUp + ", isUp: " + isUp);
-//			for (Link e : route.seqLinksRealPath)
-//				System.out.println ("Link " + e + ", isUp: " + e.isUp);
-//			for (Node n : route.seqNodesRealPath)
-//				System.out.println ("Node " + n + ", isUp: " + n.isUp);
             if (isUp == previouslyUp) return;
             if (isUp) // from down to up
             {
@@ -7448,7 +7653,7 @@ public class NetPlan extends NetworkElement
         {
             MulticastTree tree = (MulticastTree) thisElement;
             boolean previouslyUp = !tree.layer.cache_multicastTreesDown.contains(tree);
-            boolean isUp = true;
+            boolean isUp = tree.demand.ingressNode.isUp;
             for (Link e : tree.linkSet)
                 if (!e.isUp)
                 {
@@ -7482,14 +7687,14 @@ public class NetPlan extends NetworkElement
     }
 
 //
-//	private Map<String,String> copyAttributeMap (Map<String,String> map)
+//	private SortedMap<String,String> copyAttributeMap (SortedMap<String,String> map)
 //	{
-//		Map<String,String> m = new HashMap<String,String> ();
+//		SortedMap<String,String> m = new TreeMap<String,String> ();
 //		for (Entry<String,String> e : map.entrySet ()) m.put(e.getKey(),e.getValue());
 //		return m;
 //	}
 
-    void checkCachesConsistency(List<? extends NetworkElement> list, Map<Long, ? extends NetworkElement> cache, boolean mustBeSameSize)
+    void checkCachesConsistency(List<? extends NetworkElement> list, SortedMap<Long, ? extends NetworkElement> cache, boolean mustBeSameSize)
     {
         if (mustBeSameSize)
             if (cache.size() != list.size()) throw new RuntimeException("Bad: cache: " + cache + ", list: " + list);
@@ -7497,7 +7702,7 @@ public class NetPlan extends NetworkElement
         {
             NetworkElement e = list.get(cont);
             if (e.index != cont) throw new RuntimeException("Bad");
-            if (cache.get(e.id) == null) throw new RuntimeException("Bad");
+            if (cache.get(e.id) == null) throw new RuntimeException("Bad. Element e " + e + ", has ID: " + e.id + "not found in the cache: " + cache);
             if (!e.equals(cache.get(e.id)))
                 throw new RuntimeException("Bad: list: " + list + ", cache: " + cache + ", e: " + e + ", cache.get(e.id): " + cache.get(e.id));
             if (e != cache.get(e.id)) throw new RuntimeException("Bad");
@@ -7508,6 +7713,7 @@ public class NetPlan extends NetworkElement
      * <p>For debug purposes: Checks the consistency of the internal cache (nodes, srgs, resources, layers, links, demands, multicast demands, multicast trees, routes). If any
      * inconsistency is found an exception is thrown.</p>
      */
+    @Override
     public void checkCachesConsistency()
     {
 		super.checkCachesConsistency ();
@@ -7531,6 +7737,9 @@ public class NetPlan extends NetworkElement
         this.checkInThisNetPlan(srgs);
         this.checkInThisNetPlan(layers);
         this.checkInThisNetPlan(defaultLayer);
+        
+        assert this.cache_dynamicSrgs.equals (srgs.stream().filter(s->s.isDynamicSrg()).collect(Collectors.toCollection(TreeSet::new)));
+        assert srgs.stream().allMatch(s->!s.wasRemoved());
         
         /* Check tags caches: all tags in the caches are reflected in the elements (the other way around is not checked here, it is checked in each element) */
         for (String tag : cache_taggedElements.keySet ())
@@ -7563,44 +7772,43 @@ public class NetPlan extends NetworkElement
             for (Route route : layer.routes) route.checkCachesConsistency();
             for (MulticastTree tree : layer.multicastTrees) tree.checkCachesConsistency();
 
-            if (layer.routingType == RoutingType.HOP_BY_HOP_ROUTING)
+            for (int d = 0; d < layer.demands.size(); d++)
             {
-                for (int d = 0; d < layer.demands.size(); d++)
+                final Demand demand = layer.demands.get(d);
+                if (demand.isSourceRouting()) continue;
+                for (int e = 0; e < layer.links.size(); e++)
                 {
-                    final Demand demand = layer.demands.get(d);
-                    for (int e = 0; e < layer.links.size(); e++)
+                    final Link link = layer.links.get(e);
+                    final double f_de = getForwardingRuleSplittingFactor(demand, link);
+                    final double x_de = getForwardingRuleCarriedTraffic(demand, link);
+                    if (f_de < 0) throw new RuntimeException("Bad");
+                    if (f_de > 1) throw new RuntimeException("Bad");
+                    final Node a_e = layer.links.get(e).originNode;
+                    double linkInitialNodeOutTraffic = 0;
+                    double linkInitialNodeOutRules = 0;
+                    for (Link outLink : a_e.getOutgoingLinks(layer))
                     {
-                        final Link link = layer.links.get(e);
-                        final double f_de = getForwardingRuleSplittingFactor(demand, link);
-                        final double x_de = getForwardingRuleCarriedTraffic(demand, link);
-                        if (f_de < 0) throw new RuntimeException("Bad");
-                        if (f_de > 1) throw new RuntimeException("Bad");
-                        final Node a_e = layer.links.get(e).originNode;
-                        double linkInitialNodeOutTraffic = 0;
-                        double linkInitialNodeOutRules = 0;
-                        for (Link outLink : a_e.getOutgoingLinks(layer))
-                        {
-                            linkInitialNodeOutTraffic += getForwardingRuleCarriedTraffic(demand, outLink); 
-                            linkInitialNodeOutRules += getForwardingRuleSplittingFactor(demand, outLink); 
-                        }
-                        final boolean linkUp = link.isUp && link.originNode.isUp && link.destinationNode.isUp;
-                        double linkInitialNodeInTraffic = (link.originNode == demand.ingressNode) ? demand.offeredTraffic : 0;
-                        for (Link inLink : a_e.getIncomingLinks(layer))
-                            linkInitialNodeInTraffic += getForwardingRuleCarriedTraffic (demand, inLink);
-                        if (linkInitialNodeOutRules > 1 + 1E-3) throw new RuntimeException("Bad");
-                        if (!linkUp && (x_de > 1E-3))
-                            throw new RuntimeException("Bad. outTraffic: " + linkInitialNodeOutTraffic + " and link " + link + " is down. NetPlan: " + this);
-                        if (linkUp && (linkInitialNodeInTraffic > 1e-3))
-                            if (Math.abs(f_de - x_de / linkInitialNodeInTraffic) > 1e-4)
-                                throw new RuntimeException("Bad. demand index: " + d + ", link : " + link + " (isUp? )" + link.isUp + ", nodeInTraffic: " + linkInitialNodeInTraffic + ", x_de: " + x_de + ", f_de: " + f_de + ", f_de - x_de/nodeInTraffic: " + (f_de - x_de / linkInitialNodeInTraffic));
-                        if (linkInitialNodeOutTraffic < 1e-3) if (x_de > 1e-3) throw new RuntimeException("Bad");
+                        linkInitialNodeOutTraffic += getForwardingRuleCarriedTraffic(demand, outLink); 
+                        linkInitialNodeOutRules += getForwardingRuleSplittingFactor(demand, outLink); 
                     }
+                    final boolean linkUp = link.isUp && link.originNode.isUp && link.destinationNode.isUp;
+                    double linkInitialNodeInTraffic = (link.originNode == demand.ingressNode) ? demand.offeredTraffic : 0;
+                    for (Link inLink : a_e.getIncomingLinks(layer))
+                        linkInitialNodeInTraffic += getForwardingRuleCarriedTraffic (demand, inLink);
+                    if (linkInitialNodeOutRules > 1 + 1E-3) throw new RuntimeException("Bad");
+                    if (!linkUp && (x_de > 1E-3))
+                        throw new RuntimeException("Bad. outTraffic: " + linkInitialNodeOutTraffic + " and link " + link + " is down. NetPlan: " + this);
+                    if (linkUp && (linkInitialNodeInTraffic > 1e-3))
+                        if (Math.abs(f_de - x_de / linkInitialNodeInTraffic) > 1e-4)
+                            throw new RuntimeException("Bad. demand index: " + d + ", link : " + link + " (isUp? )" + link.isUp + ", nodeInTraffic: " + linkInitialNodeInTraffic + ", x_de: " + x_de + ", f_de: " + f_de + ", f_de - x_de/nodeInTraffic: " + (f_de - x_de / linkInitialNodeInTraffic));
+                    if (linkInitialNodeOutTraffic < 1e-3) if (x_de > 1e-3) throw new RuntimeException("Bad");
                 }
             }
+
         }
 
 		/* Check the interlayer object */
-        Set<NetworkLayer> layersAccordingToInterLayer = interLayerCoupling.vertexSet();
+        SortedSet<NetworkLayer> layersAccordingToInterLayer = new TreeSet<> (interLayerCoupling.vertexSet());
         if (!layersAccordingToInterLayer.containsAll(layers)) throw new RuntimeException("Bad");
         if (layersAccordingToInterLayer.size() != layers.size()) throw new RuntimeException("Bad");
         for (DemandLinkMapping mapping : interLayerCoupling.edgeSet())
@@ -7617,7 +7825,7 @@ public class NetPlan extends NetworkElement
         }
 
         /* Check the planning domains consistency */
-        final Set<String> globalPlanningDomains = this.cache_planningDomain2nodes.keySet();
+        final SortedSet<String> globalPlanningDomains = new TreeSet<> (this.cache_planningDomain2nodes.keySet());
         if (!nodes.stream().allMatch(n->globalPlanningDomains.containsAll(n.getPlanningDomains()))) throw new RuntimeException();
         for (Node n : netPlan.getNodes()) for (String pd : n.getPlanningDomains()) if (!this.cache_planningDomain2nodes.get(pd).contains(n)) throw new RuntimeException();
         for (String pd : globalPlanningDomains)
@@ -7643,6 +7851,7 @@ public class NetPlan extends NetworkElement
         final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
         return vals.copy().assign(new DoubleFunction()
         {
+            @Override
             public double apply(double x)
             {
                 return Math.abs(x) < PRECISION_FACTOR ? 0 : x;
@@ -7655,6 +7864,7 @@ public class NetPlan extends NetworkElement
         final double PRECISION_FACTOR = Double.parseDouble(Configuration.getOption("precisionFactor"));
         return vals.copy().assign(new DoubleFunction()
         {
+            @Override
             public double apply(double x)
             {
                 return Math.abs(x) < PRECISION_FACTOR ? 0 : x;
@@ -7665,7 +7875,7 @@ public class NetPlan extends NetworkElement
     Collection<NetworkElement> translateCollectionToThisNetPlan(Collection<? extends NetworkElement> collection)
     {
         Collection<NetworkElement> res = null;
-        if (collection instanceof Set<?>) res = new HashSet<NetworkElement>();
+        if (collection instanceof SortedSet<?>) res = new TreeSet<NetworkElement>();
         else if (collection instanceof ArrayList<?>) res = new ArrayList<NetworkElement>();
         else if (collection instanceof List<?>) res = new LinkedList<NetworkElement>();
         else throw new RuntimeException("Unknown list type");
@@ -7690,9 +7900,9 @@ public class NetPlan extends NetworkElement
         return res;
     }
 
-    Map<? extends NetworkElement, ?> translateCollectionToThisNetPlan(Map<? extends NetworkElement, ?> map)
+    SortedMap<? extends NetworkElement, ?> translateCollectionToThisNetPlan(SortedMap<? extends NetworkElement, ?> map)
     {
-        Map<NetworkElement, Object> res = new HashMap<NetworkElement, Object>();
+        SortedMap<NetworkElement, Object> res = new TreeMap<NetworkElement, Object>();
         for (Entry<? extends NetworkElement, ?> entry : map.entrySet())
         {
             final NetworkElement e = entry.getKey();
@@ -7793,9 +8003,9 @@ public class NetPlan extends NetworkElement
         return null;
     }
     
-    Set<Long> getAllIds () 
+    SortedSet<Long> getAllIds () 
     { 
-    	final Set<Long> res = new HashSet<>();
+    	final SortedSet<Long> res = new TreeSet<>();
     	res.add(this.id);
     	res.addAll(getNodeIds());
     	res.addAll(getSRGIds());

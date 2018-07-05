@@ -224,7 +224,7 @@ public class TopologyPanel extends JPanel
     {
         final TopologyPanel topologyPanel = TopologyPanel.this;
 
-        callback.addKeyCombinationAction("Load design", new AbstractAction()
+        callback.addKeyCombinationAction(JComponent.WHEN_IN_FOCUSED_WINDOW , "Load design", new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -233,7 +233,7 @@ public class TopologyPanel extends JPanel
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
 
-        callback.addKeyCombinationAction("Save design", new AbstractAction()
+        callback.addKeyCombinationAction(JComponent.WHEN_IN_FOCUSED_WINDOW , "Save design", new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -242,7 +242,7 @@ public class TopologyPanel extends JPanel
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 
-        callback.addKeyCombinationAction("Zoom in", new AbstractAction()
+        callback.addKeyCombinationAction(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT , "Zoom in", new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -252,7 +252,7 @@ public class TopologyPanel extends JPanel
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK));
 
-        callback.addKeyCombinationAction("Zoom out", new AbstractAction()
+        callback.addKeyCombinationAction(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT , "Zoom out", new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -262,7 +262,7 @@ public class TopologyPanel extends JPanel
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK));
 
-        callback.addKeyCombinationAction("Zoom all", new AbstractAction()
+        callback.addKeyCombinationAction(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT , "Zoom all", new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -272,7 +272,7 @@ public class TopologyPanel extends JPanel
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_MULTIPLY, InputEvent.CTRL_DOWN_MASK));
 
-        callback.addKeyCombinationAction("Take snapshot", new AbstractAction()
+        callback.addKeyCombinationAction(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT , "Take snapshot", new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -281,7 +281,7 @@ public class TopologyPanel extends JPanel
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK));
 
-        callback.addKeyCombinationAction("Load traffic demands", new AbstractAction()
+        callback.addKeyCombinationAction(JComponent.WHEN_IN_FOCUSED_WINDOW , "Load traffic demands", new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -298,7 +298,7 @@ public class TopologyPanel extends JPanel
 
     public final void updateMultilayerPanel()
     {
-        sideBar.refresh();
+        sideBar.updateLayersPanel();
     }
 
     public JPanel getCanvasPanel()
@@ -422,7 +422,7 @@ public class TopologyPanel extends JPanel
             {
                 netPlan.removeAllDemands();
                 for (Demand demand : demands.getDemands())
-                    netPlan.addDemand(netPlan.getNode(demand.getIngressNode().getIndex()), netPlan.getNode(demand.getEgressNode().getIndex()), demand.getOfferedTraffic(), demand.getAttributes());
+                    netPlan.addDemand(netPlan.getNode(demand.getIngressNode().getIndex()), netPlan.getNode(demand.getEgressNode().getIndex()), demand.getOfferedTraffic(), demand.getRoutingType() , demand.getAttributes());
 
                 netPlan.removeAllMulticastDemands();
                 for (MulticastDemand demand : demands.getMulticastDemands())
@@ -431,8 +431,8 @@ public class TopologyPanel extends JPanel
                     for (Node n : demand.getEgressNodes()) egressNodesThisNetPlan.add(netPlan.getNode(n.getIndex()));
                     netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
                 }
-                callback.getVisualizationState().resetPickedState();
-                callback.updateVisualizationAfterChanges(Sets.newHashSet(NetworkElementType.DEMAND, NetworkElementType.MULTICAST_DEMAND));
+                callback.getPickManager().reset();
+                callback.updateVisualizationAfterChanges();
                 callback.addNetPlanChange();
             } catch (Throwable ex)
             {

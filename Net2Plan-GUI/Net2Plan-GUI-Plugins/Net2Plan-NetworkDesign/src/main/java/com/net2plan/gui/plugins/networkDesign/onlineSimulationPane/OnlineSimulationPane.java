@@ -55,10 +55,10 @@ import org.apache.commons.collections15.BidiMap;
 
 import com.jom.JOMException;
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.CellRenderers;
 import com.net2plan.gui.plugins.networkDesign.ReportBrowser;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.CellRenderers;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnFitAdapter;
 import com.net2plan.gui.utils.ParameterValueDescriptionPanel;

@@ -10,20 +10,22 @@
  *******************************************************************************/
 package com.net2plan.interfaces.networkDesign;
 
-import com.google.common.collect.Sets;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 import org.jgrapht.experimental.dag.DirectedAcyclicGraph.CycleFoundException;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.google.common.collect.Sets;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 
 public class InterLayerPropagationGraph
 {
-	public class IPGNode
+	public class IPGNode implements Comparable<IPGNode>
 	{
 		final Demand d;
 		final Link e;
@@ -42,24 +44,73 @@ public class InterLayerPropagationGraph
 		Link getLink () { return e;}
 		Pair<MulticastDemand,Node> getMulticastDemandAndNode () { return mdn; }
 		public String toString () { return "d: " + d  + ", e: " + e + ", MD: " + mdn; }
+
+		
+		
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + ((d == null) ? 0 : d.hashCode());
+			result = prime * result + ((e == null) ? 0 : e.hashCode());
+			result = prime * result + ((mdn == null) ? 0 : mdn.hashCode());
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			IPGNode other = (IPGNode) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (d == null) {
+				if (other.d != null)
+					return false;
+			} else if (!d.equals(other.d))
+				return false;
+			if (e == null) {
+				if (other.e != null)
+					return false;
+			} else if (!e.equals(other.e))
+				return false;
+			if (mdn == null) {
+				if (other.mdn != null)
+					return false;
+			} else if (!mdn.equals(other.mdn))
+				return false;
+			return true;
+		}
+		@Override
+		public int compareTo(IPGNode o) 
+		{
+			return 0;
+		}
+		private InterLayerPropagationGraph getOuterType() {
+			return InterLayerPropagationGraph.this;
+		}
 	}
 
-	private final Set<IPGNode> initialIPGVertices;
-	private Map<Demand,IPGNode> demand2IGPVertexMap;
+	private final SortedSet<IPGNode> initialIPGVertices;
+	private SortedMap<Demand,IPGNode> demand2IGPVertexMap;
 	
-	public Set<IPGNode> getInitialIPGVertices() 
+	public SortedSet<IPGNode> getInitialIPGVertices() 
 	{
 		return this.initialIPGVertices;
 	}
-	public Map<Demand, IPGNode> getDemand2IGPVertexMap() 
+	public SortedMap<Demand, IPGNode> getDemand2IGPVertexMap() 
 	{
 		return this.demand2IGPVertexMap;
 	}
-	public Map<Link, IPGNode> getLink2IGPVertexMap() 
+	public SortedMap<Link, IPGNode> getLink2IGPVertexMap() 
 	{
 		return this.link2IGPVertexMap;
 	}
-	public Map<Pair<MulticastDemand, Node>, IPGNode> getmDemandAndNode2VertexMap() 
+	public SortedMap<Pair<MulticastDemand, Node>, IPGNode> getmDemandAndNode2VertexMap() 
 	{
 		return this.mDemandAndNode2VertexMap;
 	}
@@ -70,18 +121,18 @@ public class InterLayerPropagationGraph
 	public DirectedAcyclicGraph<IPGNode, Object> getInterLayerPropagationGraph () { return this.interLayerPropagationGraph; }
 
 
-	private Map<Link,IPGNode> link2IGPVertexMap;
-	private Map<Pair<MulticastDemand,Node>,IPGNode> mDemandAndNode2VertexMap;
+	private SortedMap<Link,IPGNode> link2IGPVertexMap;
+	private SortedMap<Pair<MulticastDemand,Node>,IPGNode> mDemandAndNode2VertexMap;
 	private final boolean upWardsTrueDownwardsFalse;
 	private final DirectedAcyclicGraph<IPGNode, Object> interLayerPropagationGraph;
-	public InterLayerPropagationGraph (Set<Demand> initialDemands , Set<Link> initialLinks ,
-			Set<Pair<MulticastDemand,Node>> initialMDemands , boolean upWards)
+	public InterLayerPropagationGraph (SortedSet<Demand> initialDemands , SortedSet<Link> initialLinks ,
+			SortedSet<Pair<MulticastDemand,Node>> initialMDemands , boolean upWards)
 	{
 		this.interLayerPropagationGraph  = new DirectedAcyclicGraph<IPGNode, Object>(Object.class);
-		this.demand2IGPVertexMap = new HashMap<> ();
-		this.link2IGPVertexMap = new HashMap<> ();
-		this.mDemandAndNode2VertexMap = new HashMap<> ();
-		this.initialIPGVertices = Sets.newHashSet();
+		this.demand2IGPVertexMap = new TreeMap<> ();
+		this.link2IGPVertexMap = new TreeMap<> ();
+		this.mDemandAndNode2VertexMap = new TreeMap<> ();
+		this.initialIPGVertices = new TreeSet<> ();
 		if (initialDemands != null)
 			for (Demand d : initialDemands)
 			{
@@ -129,14 +180,14 @@ public class InterLayerPropagationGraph
 		else if (initialNode.isDemand())
 		{
 			final Demand d = initialNode.getDemand();
-			Pair<Set<Link>,Set<Link>> thisLayerLinksTraversingSameTrafficInfo = d.getLinksThisLayerPotentiallyCarryingTraffic();
+			Pair<SortedSet<Link>,SortedSet<Link>> thisLayerLinksTraversingSameTrafficInfo = d.getLinksNoDownPropagationPotentiallyCarryingTraffic();
 			for (Link downGraphNodeLink : Sets.union(thisLayerLinksTraversingSameTrafficInfo.getFirst(), thisLayerLinksTraversingSameTrafficInfo.getSecond()))
 				addEdgeAddingNewVertexAndPropagatingIfNeeded(downGraphNodeLink, initialNode, this.upWardsTrueDownwardsFalse);
 		}
 		else if (initialNode.isMulticastFlow())
 		{
 			final Pair<MulticastDemand,Node> mPair = initialNode.getMulticastDemandAndNode();
-			final Set<Link> downGraphNodeLinks = mPair.getFirst().getLinksThisLayerPotentiallyCarryingTraffic(mPair.getSecond());
+			final SortedSet<Link> downGraphNodeLinks = mPair.getFirst().getLinksNoDownPropagationPotentiallyCarryingTraffic(mPair.getSecond());
 			for (Link e : downGraphNodeLinks)
 				addEdgeAddingNewVertexAndPropagatingIfNeeded(e, initialNode, this.upWardsTrueDownwardsFalse);
 		}
@@ -154,10 +205,10 @@ public class InterLayerPropagationGraph
 		else if (initialNode.isLink())
 		{
 			final Link e = initialNode.getLink();
-			Triple<Map<Demand,Set<Link>>,Map<Demand,Set<Link>>,Map<Pair<MulticastDemand,Node>,Set<Link>>> thisLayerLinksTraversingSameTrafficInfo = 
+			Triple<SortedMap<Demand,SortedSet<Link>>,SortedMap<Demand,SortedSet<Link>>,SortedMap<Pair<MulticastDemand,Node>,SortedSet<Link>>> thisLayerLinksTraversingSameTrafficInfo = 
 					e.getLinksThisLayerPotentiallyCarryingTrafficTraversingThisLink  ();
-			final Set<Demand> demandsPuttingPrimaryOrBackupTraffic = Sets.union(thisLayerLinksTraversingSameTrafficInfo.getFirst().keySet() , thisLayerLinksTraversingSameTrafficInfo.getSecond().keySet());
-			final Set<Pair<MulticastDemand,Node>> mDemandsAndNodesPuttingTraffic = thisLayerLinksTraversingSameTrafficInfo.getThird().keySet();
+			final SortedSet<Demand> demandsPuttingPrimaryOrBackupTraffic = new TreeSet<> (Sets.union(thisLayerLinksTraversingSameTrafficInfo.getFirst().keySet() , thisLayerLinksTraversingSameTrafficInfo.getSecond().keySet()));
+			final SortedSet<Pair<MulticastDemand,Node>> mDemandsAndNodesPuttingTraffic = new TreeSet<> (thisLayerLinksTraversingSameTrafficInfo.getThird().keySet());
 			for (Demand upGraphNodeDemand : demandsPuttingPrimaryOrBackupTraffic)
 				addEdgeAddingNewVertexAndPropagatingIfNeeded(upGraphNodeDemand, initialNode, this.upWardsTrueDownwardsFalse);
 			for (Pair<MulticastDemand,Node> upGraphNodeMulticastDemand : mDemandsAndNodesPuttingTraffic)
@@ -227,17 +278,17 @@ public class InterLayerPropagationGraph
 				addVertexAndEdgesToGraphFromInitialIPGDownwards(ipgNode);
 	}
 
-	public Set<Link> getLinksInGraph ()
+	public SortedSet<Link> getLinksInGraph ()
 	{
-		return interLayerPropagationGraph.vertexSet().stream().filter(e->e.isLink()).map(e->e.getLink()).collect(Collectors.toSet());
+		return interLayerPropagationGraph.vertexSet().stream().filter(e->e.isLink()).map(e->e.getLink()).collect(Collectors.toCollection(TreeSet::new));
 	}
-	public Set<Demand> getDemandsInGraph ()
+	public SortedSet<Demand> getDemandsInGraph ()
 	{
-		return interLayerPropagationGraph.vertexSet().stream().filter(e->e.isDemand()).map(e->e.getDemand()).collect(Collectors.toSet());
+		return interLayerPropagationGraph.vertexSet().stream().filter(e->e.isDemand()).map(e->e.getDemand()).collect(Collectors.toCollection(TreeSet::new));
 	}
-	public Set<Pair<MulticastDemand,Node>> getMulticastDemandFlowsInGraph ()
+	public SortedSet<Pair<MulticastDemand,Node>> getMulticastDemandFlowsInGraph ()
 	{
-		return interLayerPropagationGraph.vertexSet().stream().filter(e->e.isMulticastFlow()).map(e->e.getMulticastDemandAndNode()).collect(Collectors.toSet());
+		return interLayerPropagationGraph.vertexSet().stream().filter(e->e.isMulticastFlow()).map(e->e.getMulticastDemandAndNode()).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 }

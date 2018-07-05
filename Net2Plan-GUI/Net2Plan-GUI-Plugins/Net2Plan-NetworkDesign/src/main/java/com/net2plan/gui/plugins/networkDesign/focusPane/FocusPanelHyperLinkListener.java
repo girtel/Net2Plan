@@ -10,17 +10,20 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.focusPane;
 
+import java.util.Optional;
+
+import javax.swing.JEditorPane;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.utils.Pair;
-
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 
 public class FocusPanelHyperLinkListener implements HyperlinkListener
 {
@@ -51,6 +54,7 @@ public class FocusPanelHyperLinkListener implements HyperlinkListener
     {
     	final NetPlan np = callback.getDesign();
     	final VisualizationState vs = callback.getVisualizationState();
+    	final PickManager pickManager = callback.getPickManager();
 
     	/* When clicked */
         if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
@@ -66,32 +70,32 @@ public class FocusPanelHyperLinkListener implements HyperlinkListener
         		ep.scrollToReference(hlInfo);
         	}
         	else if (hlType.equals(PREFIXNODE))
-        		vs.pickElement (np.getNodeFromId(Long.parseLong(hlInfo)));
+        		pickManager.pickElements(pickManager.new PickStateInfo(np.getNodeFromId(Long.parseLong(hlInfo)), Optional.empty()));
         	else if (hlType.equals(PREFIXLINK))
-        		vs.pickElement(np.getLinkFromId(Long.parseLong(hlInfo)));
+        		pickManager.pickElements(pickManager.new PickStateInfo(np.getLinkFromId(Long.parseLong(hlInfo)), Optional.empty()));
         	else if (hlType.equals(PREFIXDEMAND))
-        		vs.pickElement(np.getDemandFromId(Long.parseLong(hlInfo)));
+        		pickManager.pickElements(pickManager.new PickStateInfo(np.getDemandFromId(Long.parseLong(hlInfo)), Optional.empty()));
         	else if (hlType.equals(PREFIXMULTICASTDEMAND))
-        		vs.pickElement(np.getMulticastDemandFromId(Long.parseLong(hlInfo)));
+        		pickManager.pickElements(pickManager.new PickStateInfo(np.getMulticastDemandFromId(Long.parseLong(hlInfo)), Optional.empty()));
         	else if (hlType.equals(PREFIXROUTE))
-        		vs.pickElement(np.getRouteFromId(Long.parseLong(hlInfo)));
+        		pickManager.pickElements(pickManager.new PickStateInfo(np.getRouteFromId(Long.parseLong(hlInfo)), Optional.empty()));
         	else if (hlType.equals(PREFIXFR))
         	{
         		final Demand demand = np.getDemandFromId(Long.parseLong(hlInfo.substring(0 , hlInfo.indexOf(SEPARATOR))));
         		final Link link = np.getLinkFromId(Long.parseLong(hlInfo.substring(hlInfo.indexOf(SEPARATOR) + 1)));
-        		vs.pickForwardingRule(Pair.of(demand,link));
+        		pickManager.pickElements(pickManager.new PickStateInfo(Pair.of(demand,link), Optional.empty()));
         	}
         	else if (hlType.equals(PREFIXMULTICASTTREE))
-        		vs.pickElement(np.getMulticastTreeFromId(Long.parseLong(hlInfo)));
+        		pickManager.pickElements(pickManager.new PickStateInfo(np.getMulticastTreeFromId(Long.parseLong(hlInfo)), Optional.empty()));
         	else if (hlType.equals(PREFIXRESOURCE))
-        		vs.pickElement(np.getResourceFromId(Long.parseLong(hlInfo)));
+        		pickManager.pickElements(pickManager.new PickStateInfo(np.getResourceFromId(Long.parseLong(hlInfo)), Optional.empty()));
         	else if (hlType.equals(PREFIXSRG))
-        		vs.pickElement(np.getSRGFromId(Long.parseLong(hlInfo)));
+        		pickManager.pickElements(pickManager.new PickStateInfo(np.getSRGFromId(Long.parseLong(hlInfo)), Optional.empty()));
         	else if (hlType.equals(PREFIXLAYER))
         	{
         		final NetworkLayer layer = np.getNetworkLayerFromId(Long.parseLong(hlInfo));
         		np.setNetworkLayerDefault(layer);
-        		vs.pickElement(layer);
+        		pickManager.pickElements(pickManager.new PickStateInfo(layer, Optional.empty()));
         	} else if (hlType.equals(PREFIXRESOURCETYPE))
         	{
         	}

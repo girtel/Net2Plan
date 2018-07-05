@@ -65,15 +65,15 @@ public class Offline_tcfa_generalMultilayer implements IAlgorithm
 			this.lowerLayer = netPlan.getNetworkLayerDefault();
 			this.upperLayer = netPlan.addLayer("UP LAYER" , "Upper layer of the design" , "Gbps" , "Gbps" , null , null);
 			/* Save the demands in the upper layer, and remove them from the lower layer */
-			for (Demand d : netPlan.getDemands (lowerLayer)) netPlan.addDemand(d.getIngressNode() , d.getEgressNode() , d.getOfferedTraffic() , null , upperLayer);
+			for (Demand d : netPlan.getDemands (lowerLayer)) netPlan.addDemand(d.getIngressNode() , d.getEgressNode() , d.getOfferedTraffic() , RoutingType.HOP_BY_HOP_ROUTING , null , upperLayer);
 		}
 		else
 		{
 			this.lowerLayer = netPlan.getNetworkLayer(0);
 			this.upperLayer = netPlan.getNetworkLayer(1);
 		}
-		netPlan.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING, upperLayer);
-		netPlan.setRoutingType(RoutingType.SOURCE_ROUTING, lowerLayer);
+		netPlan.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING, upperLayer);
+		netPlan.setRoutingTypeAllDemands (RoutingType.SOURCE_ROUTING, lowerLayer);
 
 		/* Initialize some variables */
 		final double PRECISION_FACTOR = 0.05; //Double.parseDouble(net2planParameters.get("precisionFactor"));
@@ -96,7 +96,7 @@ public class Offline_tcfa_generalMultilayer implements IAlgorithm
 		{
 			if ((i.getIndex() == 0) && (j.getIndex() == 1)) continue;
 			final Link link = netPlan.addLink (i, j,0 , netPlan.getNodePairEuclideanDistance(i, j), 200000 , null , upperLayer);
-			final Demand demand = netPlan.addDemand(i, j, 0, null, lowerLayer);
+			final Demand demand = netPlan.addDemand(i, j, 0,  RoutingType.HOP_BY_HOP_ROUTING , null,lowerLayer);
 			if (link.getIndex() != demand.getIndex()) throw new RuntimeException ("Bad");
 			link.coupleToLowerLayerDemand(demand);
 		}
@@ -146,7 +146,7 @@ public class Offline_tcfa_generalMultilayer implements IAlgorithm
 		final DoubleMatrix2D x_ce = op.getPrimalSolution("x_ce").view2D();
 
 		/* Sets the routing in both layers, which also establish the capacity in the upper layer links */
-		netPlan.setRoutingFromDemandLinkCarriedTraffic(x_ce.copy ().assign(DoubleFunctions.mult(ciurcuitCapacityGbps.getDouble())) , false , true , lowerLayer);
+		netPlan.setRoutingFromDemandLinkCarriedTraffic(x_ce.copy ().assign(DoubleFunctions.mult(ciurcuitCapacityGbps.getDouble())) , false , true , null , lowerLayer);
 		netPlan.setRoutingFromDestinationLinkCarriedTraffic(x_tc , true , upperLayer); // remove the cycles if any
 
 		for (Link eHi : netPlan.getLinks (upperLayer))

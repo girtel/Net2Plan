@@ -11,19 +11,32 @@
 
 package com.net2plan.utils;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.StringTokenizer;
+import java.util.concurrent.TimeUnit;
+
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tint.IntFactory2D;
 import cern.colt.matrix.tint.IntMatrix1D;
 import cern.colt.matrix.tint.IntMatrix2D;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <p>Provides extra functionality for String objects.</p>
@@ -34,6 +47,13 @@ import java.util.concurrent.TimeUnit;
 public class StringUtils
 {
 	private final static String lineSeparator;
+
+	private final static String STRINGESCAPECHARACTER = ">";
+    private final static String AFTERSCAPE_COLSEP = "A";
+    private final static String AFTERSCAPE_ROWSEP = "B";
+    private final static String AFTERSCAPE_ESCAPE = "E";
+    private final static String MATRIX_COLSEPARATOR = " ";
+    private final static String MATRIX_ROWSEPARATOR = ";";
 
 	static { lineSeparator = String.format("%n"); }
 	
@@ -291,23 +311,23 @@ public class StringUtils
 	}
 
 	/**
-	 * Outputs entries from a {@code Map} to a {@code String}. Default
+	 * Outputs entries from a {@code Collection} to a {@code String}. Default
 	 * separator between list entries is ', '.
 	 * @param list Input list
 	 * @return {@code String} representing the list.
 	 */
-	public static String listToString(List list)
+	public static String collectionToString(Collection list)
 	{
-		return listToString(list, ", ");
+		return collectionToString(list, ", ");
 	}
 
 	/**
-	 * Outputs entries from a {@code List} to a {@code String}.
+	 * Outputs entries from a {@code Collection} to a {@code String}.
 	 * @param list Input list
 	 * @param entrySeparator Separator between list entries.
 	 * @return {@code String} representing the list.
 	 */
-	public static String listToString(List list, String entrySeparator)
+	public static String collectionToString(Collection list, String entrySeparator)
 	{
 		StringBuilder string = new StringBuilder();
 
@@ -1146,5 +1166,52 @@ public class StringUtils
 		
 		return out;
 	}
+
+    public static String createEscapedString_asStringList (Collection<String> vals)
+    {
+        if (vals.isEmpty()) return "";
+        final StringBuffer st = new StringBuffer ();
+        boolean firstTime = true;
+        for (String val : vals)
+        {
+            if (firstTime) { firstTime = false; } else { st.append(MATRIX_COLSEPARATOR); }
+            st.append(escapedStringToWrite(val)); 
+        }
+        return st.toString();
+    }
+
+    
+    public static List<String> readEscapedString_asStringList (String val , List<String> defaultValue)
+    {
+        if (val == null) return defaultValue;  
+        if (val.equals("")) return new ArrayList<> ();
+        try 
+        {
+            final String [] parts = val.split(MATRIX_COLSEPARATOR,-1);
+            final List<String> res = new ArrayList<> (parts.length);
+            for (String part : parts)
+            {
+                //if (part.equals("")) continue;
+                res.add(unescapedStringRead(part));
+            }
+            return res;
+        } catch (Exception ee) { return defaultValue; }
+    }
+
+    public static String escapedStringToWrite (String s)
+    {
+        String res = s.replaceAll(STRINGESCAPECHARACTER , STRINGESCAPECHARACTER + AFTERSCAPE_ESCAPE);
+        res = res.replaceAll(MATRIX_COLSEPARATOR , STRINGESCAPECHARACTER + AFTERSCAPE_COLSEP);
+        res = res.replaceAll(MATRIX_ROWSEPARATOR , STRINGESCAPECHARACTER + AFTERSCAPE_ROWSEP);
+        return res;
+    }
+    public static String unescapedStringRead (String s)
+    {
+        String res = s.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_COLSEP, MATRIX_COLSEPARATOR);
+        res = res.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_ROWSEP, MATRIX_ROWSEPARATOR);
+        res = res.replaceAll(STRINGESCAPECHARACTER + AFTERSCAPE_ESCAPE, STRINGESCAPECHARACTER);
+        return res;
+    }
+
 
 }

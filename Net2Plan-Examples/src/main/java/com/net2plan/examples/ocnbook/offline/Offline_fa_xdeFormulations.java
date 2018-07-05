@@ -150,7 +150,7 @@ public class Offline_fa_xdeFormulations implements IAlgorithm
 		
 		/* Save the solution found in the netPlan object */
 		final DoubleMatrix2D xx_de = op.getPrimalSolution("xx_de").view2D();
-		netPlan.setRoutingFromDemandLinkCarriedTraffic(xx_de , true , true);
+		netPlan.setRoutingFromDemandLinkCarriedTraffic(xx_de , true , true , null);
 
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal();
 	}

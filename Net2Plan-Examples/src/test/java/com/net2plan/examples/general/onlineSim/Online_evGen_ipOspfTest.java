@@ -42,7 +42,7 @@ public class Online_evGen_ipOspfTest
 	{
 		this.np = new NetPlan (new File ("src/test/resources/data/networkTopologies/example7nodes_withTraffic.n2p"));
 		np.getNetworkLayerDefault().setName("IP");
-		np.setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		np.setRoutingTypeAllDemands(RoutingType.HOP_BY_HOP_ROUTING);
 		IPUtils.setLinkWeights(np , 1);
 		np.removeAllSRGs(); 
 		SRGUtils.configureSRGs(np, 1, 1, SharedRiskModel.PER_BIDIRECTIONAL_LINK_BUNDLE, true);

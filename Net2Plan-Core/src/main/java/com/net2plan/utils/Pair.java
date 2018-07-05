@@ -11,9 +11,9 @@
 
 package com.net2plan.utils;
 
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-
 import java.util.Objects;
+
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 
 /**
  * <p>A tuple consisting of two elements. There is no restriction on the type of the objects that may be stored.</p>
@@ -44,7 +44,7 @@ import java.util.Objects;
  * @see com.net2plan.utils.Quadruple
  * @see com.net2plan.utils.Quintuple
  */
-public class Pair<A, B>
+public class Pair<A, B> implements Comparable<Object>  
 {
 	private A a;
 	private B b;
@@ -136,7 +136,7 @@ public class Pair<A, B>
 	 * @return A pair formed from two parameters
 	 * 
 	 */
-	public static <A, B> Pair<A, B> of(A a, B b)
+	public static <A , B> Pair<A, B> of(A a, B b)
 	{
 		return new Pair<A, B>(a, b, true);
 	}
@@ -208,8 +208,38 @@ public class Pair<A, B>
 	 * @return An unmodifiable pair formed from two parameters
 	 * 
 	 */
-	public static <A, B> Pair<A, B> unmodifiableOf(A a, B b)
+	public static <A, B > Pair<A, B> unmodifiableOf(A a, B b)
 	{
 		return new Pair<A, B>(a, b, false);
 	}
+
+	@Override
+	public int compareTo(Object o) 
+	{
+		if (this.equals(o)) return 0;
+		if (!(o instanceof Pair)) return -1;
+		final Object oa = ((Pair)o).getFirst();
+		final Object ob = ((Pair)o).getSecond();
+		
+		/* Compare first */
+		try
+		{
+			if (oa == null && a != null) return -1;
+			if (a == null && oa != null) return 1;
+			if (a != null && oa != null)
+				if (a instanceof Comparable && oa instanceof Comparable)
+				{
+					final int c1 = ((Comparable) a).compareTo(oa);
+					if (c1 != 0) return c1;
+				}
+			if (ob == null && b != null) return -1;
+			if (b == null && ob != null) return 1;
+			if (b != null && ob != null)
+				if (b instanceof Comparable && ob instanceof Comparable)
+					return ((Comparable) b).compareTo(ob);
+			if (oa == null && a == null && ob == null && b == null) return 0;
+		} catch (Throwable e) { e.printStackTrace(); throw new Net2PlanException ("Not comparable"); }
+		throw new Net2PlanException ("Not comparable");
+	}
+
 }
