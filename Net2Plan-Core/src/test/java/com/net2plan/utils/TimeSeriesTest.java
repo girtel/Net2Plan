@@ -10,6 +10,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import com.net2plan.TestConstants;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -92,64 +93,86 @@ public class TimeSeriesTest
 		final NetworkLayer layer = np.getNetworkLayerDefault();
 		final SortedMap<Demand,Double> origGravityModel = TrafficMatrixForecastUtils.getGravityModelEstimationFromCurrentCarriedTraffic(layer);
 		TmEstimationResults tm;
-		
-		/* Minimize distance to true demand and link traffic --> should match it, unless demand info is disregarded */
-		tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, originalDemandOffered, originalMDemandOffered, 1.0);
-		tm.setOfferedTrafficsToTheOnesEstimated ();
-		for (Demand d : demands) assertEquals (originalDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
-		for (MulticastDemand d : mdemands) assertEquals (originalMDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
-		for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
-		
-		tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, originalDemandOffered, originalMDemandOffered, 0.5);
-		tm.setOfferedTrafficsToTheOnesEstimated ();
-		for (MulticastDemand d : mdemands) assertEquals (originalMDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
-		for (Demand d : demands) assertEquals (originalDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
-		for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
-	
-		tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalEvenLinkCarried, originalDemandOffered, originalMDemandOffered, 0.5);
-		tm.setOfferedTrafficsToTheOnesEstimated ();
-		for (Demand d : demands) assertEquals (originalDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
-		for (MulticastDemand d : mdemands) assertEquals (originalMDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
-		for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
-	
-		tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, null, originalDemandOffered, originalMDemandOffered, 0.5);
-		tm.setOfferedTrafficsToTheOnesEstimated ();
-		for (Demand d : demands) assertEquals (originalDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
-		for (MulticastDemand d : mdemands) assertEquals (originalMDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
-		for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
-	
-		tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, originalDemandOffered, originalMDemandOffered, 0.0);
-		tm.setOfferedTrafficsToTheOnesEstimated ();
-		for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
 
-		tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, originalEvenDemandOffered, originalEvenMDemandOffered, 0.0);
-		tm.setOfferedTrafficsToTheOnesEstimated ();
-		for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
-		
-		/* Look like gravity model if we force to */
-		if (np.getNumberOfMulticastDemands() == 0)
-		{
-			tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, origGravityModel, null, 1.0);
+		try{
+			/* Minimize distance to true demand and link traffic --> should match it, unless demand info is disregarded */
+			tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, originalDemandOffered, originalMDemandOffered, 1.0);
 			tm.setOfferedTrafficsToTheOnesEstimated ();
-			for (Demand d : demands) assertEquals (origGravityModel.get(d) , d.getOfferedTraffic() , 0.01);
+			for (Demand d : demands) assertEquals (originalDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
+			for (MulticastDemand d : mdemands) assertEquals (originalMDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
+			for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
+
+			tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, originalDemandOffered, originalMDemandOffered, 0.5);
+			tm.setOfferedTrafficsToTheOnesEstimated ();
+			for (MulticastDemand d : mdemands) assertEquals (originalMDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
+			for (Demand d : demands) assertEquals (originalDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
+			for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
+
+			tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalEvenLinkCarried, originalDemandOffered, originalMDemandOffered, 0.5);
+			tm.setOfferedTrafficsToTheOnesEstimated ();
+			for (Demand d : demands) assertEquals (originalDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
+			for (MulticastDemand d : mdemands) assertEquals (originalMDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
+			for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
+
+			tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, null, originalDemandOffered, originalMDemandOffered, 0.5);
+			tm.setOfferedTrafficsToTheOnesEstimated ();
+			for (Demand d : demands) assertEquals (originalDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
+			for (MulticastDemand d : mdemands) assertEquals (originalMDemandOffered.get(d) , d.getOfferedTraffic() , 0.01);
+			for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
+
+			tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, originalDemandOffered, originalMDemandOffered, 0.0);
+			tm.setOfferedTrafficsToTheOnesEstimated ();
+			for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
+
+			tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, originalEvenDemandOffered, originalEvenMDemandOffered, 0.0);
+			tm.setOfferedTrafficsToTheOnesEstimated ();
+			for (Link e : links) assertEquals (originalLinkCarried.get(e) , e.getCarriedTraffic() , 0.01);
+
+			/* Look like gravity model if we force to */
+			if (np.getNumberOfMulticastDemands() == 0)
+			{
+				tm = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, originalLinkCarried, origGravityModel, null, 1.0);
+				tm.setOfferedTrafficsToTheOnesEstimated ();
+				for (Demand d : demands) assertEquals (origGravityModel.get(d) , d.getOfferedTraffic() , 0.01);
+			}
 		}
+		catch (UnsatisfiedLinkError e)
+		{
+			System.out.println(TestConstants.IPOPT_NOT_FOUND_ERROR);
+		}
+		
+
 	}
 
 	@Test
 	public void testTrafficForecast_sourcerouting ()
 	{
 		np.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
-		this.testTrafficForecast_hopbyhop();
+		try{
+			this.testTrafficForecast_hopbyhop();
+		}
+		catch (UnsatisfiedLinkError e)
+		{
+			System.out.println(TestConstants.IPOPT_NOT_FOUND_ERROR);
+		}
+
 	}
 	
 	@Test
 	public void testTrafficForecast_withMulticastDemand ()
 	{
 		np.setRoutingTypeAllDemands(RoutingType.SOURCE_ROUTING);
-		final MulticastDemand md = np.addMulticastDemand(n1, Sets.newHashSet(n2,n4,n5), 2.0, null);
-		np.addMulticastTree(md, 1.5, 1.5, GraphUtils.getMinimumCostMulticastTree(null, null, null, null, n1, Sets.newHashSet(n2,n4,n5), -1, -1, -1.0, -1.0, null, null, -1.0), null);
-		np.addMulticastTree(md, 0.5, 0.5, GraphUtils.getMinimumCostMulticastTree(null, null, null, null, n1, Sets.newHashSet(n5), -1, -1, -1.0, -1.0, null, null, -1.0), null);
-		this.testTrafficForecast_hopbyhop();
+		try{
+			final MulticastDemand md = np.addMulticastDemand(n1, Sets.newHashSet(n2,n4,n5), 2.0, null);
+			np.addMulticastTree(md, 1.5, 1.5, GraphUtils.getMinimumCostMulticastTree(null, null, null, null, n1, Sets.newHashSet(n2,n4,n5), -1, -1, -1.0, -1.0, null, null, -1.0), null);
+			np.addMulticastTree(md, 0.5, 0.5, GraphUtils.getMinimumCostMulticastTree(null, null, null, null, n1, Sets.newHashSet(n5), -1, -1, -1.0, -1.0, null, null, -1.0), null);
+			this.testTrafficForecast_hopbyhop();
+		}
+		catch (UnsatisfiedLinkError e)
+		{
+			System.out.println(TestConstants.GLPK_NOT_FOUND_ERROR);
+		}
+
 	}
 
 	
