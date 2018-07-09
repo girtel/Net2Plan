@@ -523,6 +523,7 @@ public class Resource extends NetworkElement
 		assert capacityUpperResourcesOccupyInMe.isEmpty();
 		assert cache_traversingRoutesAndOccupiedCapacitiesIfNotFailingRoute.isEmpty();
 		hostNode.get().cache_nodeResources.remove(this);
+		this.hostNode = Optional.empty();
 	}
 	
 	/** Attaches this resource, now dettached of other node, to a new indicated node. The user can later use setCapacity method to add 
