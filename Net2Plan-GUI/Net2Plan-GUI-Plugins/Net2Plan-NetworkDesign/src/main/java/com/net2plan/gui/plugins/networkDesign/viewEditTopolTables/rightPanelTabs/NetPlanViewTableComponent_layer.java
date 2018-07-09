@@ -97,17 +97,21 @@ public class NetPlanViewTableComponent_layer extends JPanel
         this.layerThisTable = layerThisTable;
         
         txt_layerName = new JTextField();
+        txt_layerName.setEditable(false);
         txt_layerDescription = new JTextArea();
         txt_layerDescription.setFont(new JLabel().getFont());
         txt_layerDescription.setLineWrap(true);
         txt_layerDescription.setWrapStyleWord(true);
+        txt_layerDescription.setEditable(false);
         txt_layerDemandTrafficUnits = new JTextField();
+        txt_layerDemandTrafficUnits.setEditable(false);
         txt_layerLinkCapacityUnits = new JTextField();
+        txt_layerLinkCapacityUnits.setEditable(false);
 
-        txt_layerName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        /*txt_layerName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_layerDescription.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_layerDemandTrafficUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
-        txt_layerLinkCapacityUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_layerLinkCapacityUnits.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());*/
 
         // Tag table
         layerTagTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][tagTableHeader.length], tagTableHeader));
@@ -184,7 +188,6 @@ public class NetPlanViewTableComponent_layer extends JPanel
         layerPane.add(txt_layerLinkCapacityUnits, "grow, wrap");
         layerPane.add(new JLabel("Demand traffic units"));
         layerPane.add(txt_layerDemandTrafficUnits, "grow, wrap");
-        layerPane.add(new JLabel("Routing type"));
 
         layerPane.add(sp_tags, "grow, spanx");
 
@@ -443,9 +446,6 @@ public class NetPlanViewTableComponent_layer extends JPanel
         layerMetricsInfo.add(new JScrollPane(layerSummaryTables[2]), "growx, wrap");
         layerMetricsInfo.add(new JLabel("Resilience information"), "growx, wrap");
         layerMetricsInfo.add(new JScrollPane(layerSummaryTables[3]), "growx");
-
-        layerMetricsInfo.add(new JLabel("Routing"), "growx, wrap");
-        layerMetricsInfo.add(new JScrollPane(layerSummaryTables[2]), "growx, wrap");
 
         forceUpdate.setVisible(!applyHardComputations);
     }

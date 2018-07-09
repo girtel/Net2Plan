@@ -339,7 +339,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         	netPlanViewTable.get(layer).put(AJTableType.LAYERS, Pair.of(layerTable, null));
         	demandTabbedPaneListAndMatrix.put(layer, new JTabbedPane ());
         	highLevelTabComponent_layer.put(layer, new NetPlanViewTableComponent_layer(callback , layer));
-        	subpaneThisLayer.addTab("Layers", highLevelTabComponent_layer.get(layer));
+        	subpaneThisLayer.addTab("General", highLevelTabComponent_layer.get(layer));
             for (AJTableType ajType : AJTableType.values())
             {
             	if (ajType == ajType.LAYERS) continue;

@@ -44,8 +44,8 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement<NetworkL
       final List<AjtColumnInfo<NetworkLayer>> res = new LinkedList<> ();
       res.add(new AjtColumnInfo<NetworkLayer>(this , String.class, null , "Name", "Layer name", (d,val)->d.setName((String)val) , d->d.getName() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<NetworkLayer>(this , String.class, null , "Description", "Layer description", (d,val)->d.setDescription((String)val) , d->d.getDescription() , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<NetworkLayer>(this , String.class, null , "Demand traffic units", "Name of the traffic units of the demands", (d,val)->d.getNetPlan().setDemandTrafficUnitsName((String)val, d) , d->d.getDemandTrafficUnits() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<NetworkLayer>(this , String.class, null , "Link capacity units", "Name of the capacity units of the links", (d,val)->d.getNetPlan().setLinkCapacityUnitsName((String)val, d) , d->d.getLinkCapacityUnits() , AGTYPE.NOAGGREGATION , null));
+      res.add(new AjtColumnInfo<NetworkLayer>(this , String.class, null , "Demand traffic units", "Name of the traffic units of the demands", (d,val)->d.getNetPlan().setDemandTrafficUnitsName((String)val, d) , d->d.getDemandTrafficUnits() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<NetworkLayer>(this , Integer.class, null , "# links", "Number of links", null , d->d.getNetPlan().getNumberOfLinks(d) , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<NetworkLayer>(this , Integer.class, null , "# demands", "Number of demands", null , d->d.getNetPlan().getNumberOfDemands(d) , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<NetworkLayer>(this , Integer.class, null , "# multicast demands", "Number of multicast demands", null , d->d.getNetPlan().getNumberOfMulticastDemands(d) , AGTYPE.NOAGGREGATION , null));
