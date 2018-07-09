@@ -126,15 +126,15 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         {
             MtnDialogBuilder.launch(
             		"Set routing type", 
-                    "Please introduce the QoS type. Source routing or hop-by-hop routing.", 
+                    "Please introduce the routing type. Source routing or hop-by-hop routing.",
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfCombo ("Qos type", "Introduce the QoS type of the demands" , 10, RoutingType.SOURCE_ROUTING , 
+                    Arrays.asList(MtnInputForDialog.inputTfCombo ("Routing type", "Introduce the routing type of the demands" , 10, RoutingType.SOURCE_ROUTING ,
                     		Arrays.asList(RoutingType.SOURCE_ROUTING , RoutingType.HOP_BY_HOP_ROUTING) , Arrays.asList("Source routing" , "Hop by hop routing") , (Consumer<RoutingType>) null)),
                     (list)->
                     	{
-                    		final String qos = (String) list.get(0).get();
-                    		getSelectedElements().forEach(dd->dd.setQoSType(qos));
+                    		final RoutingType routingType = (RoutingType) list.get(0).get();
+                    		getSelectedElements().forEach(dd->dd.setRoutingType(routingType));
                     	}
                     );
         }, (a,b)->b>0, null));

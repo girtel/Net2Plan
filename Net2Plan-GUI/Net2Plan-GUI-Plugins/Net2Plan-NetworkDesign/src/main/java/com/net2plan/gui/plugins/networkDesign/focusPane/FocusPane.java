@@ -26,6 +26,7 @@ import java.util.Set;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.net2plan.utils.Constants;
 import org.apache.commons.lang3.StringUtils;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -383,10 +384,15 @@ public class FocusPane extends JPanel
 		if (d.isServiceChainRequest())
 			res.add(Triple.of("- Seq. resource types" , StringUtils.join(d.getServiceChainSequenceOfTraversedResourceTypes(),","), ""));
 		res.add(Triple.of("Has loops?" , isLoopless? "No" : cycleType.equals(RoutingCycleType.CLOSED_CYCLES)? "Yes (closed loops)" : "Yes (open loops)", ""));
-		res.add(Triple.of("Num. routes (total/backup)" , "" + d.getRoutes().size() + "/" + d.getRoutesAreBackup().size(), ""));
-		for (Route r : d.getRoutes())
-			res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")" + (r.isBackupRoute()? " [backup]" : ""), "route" + r.getId()));
-		res.add(Triple.of("Worst case e2e latency" , df.format(d.getWorstCasePropagationTimeInMs()) + " ms", ""));
+		if(d.getRoutingType() == Constants.RoutingType.SOURCE_ROUTING)
+		{
+			res.add(Triple.of("Num. routes (total/backup)" , "" + d.getRoutes().size() + "/" + d.getRoutesAreBackup().size(), ""));
+			for (Route r : d.getRoutes())
+				res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")" + (r.isBackupRoute()? " [backup]" : ""), "route" + r.getId()));
+		}
+
+		double latency_ms = (d.getWorstCasePropagationTimeInMs() == Double.MAX_VALUE) ? Double.POSITIVE_INFINITY : d.getWorstCasePropagationTimeInMs();
+		res.add(Triple.of("Worst case e2e latency (ms)" , df.format(latency_ms), ""));
 		return res;
 	}
 	private List<Triple<String,String,String>> getMulticastDemandInfoTables (MulticastDemand md)
