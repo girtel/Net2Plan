@@ -286,8 +286,10 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Capacity occupied / total", "" + df.format(e.getOccupiedCapacity()) + " / " + df.format(e.getCapacity()) + " " + capUnits , ""));
 		res.add(Triple.of("Utilization", "" + df.format(e.getUtilization()) , ""));
 		res.add(Triple.of("Is bottleneck?", "" + DoubleUtils.isEqualWithinRelativeTolerance(max_rho_e, e.getUtilization(), Configuration.precisionFactor) , ""));
-		res.add(Triple.of("Length (km)", "" + df.format(e.getLengthInKm()) + " km" , ""));
-		res.add(Triple.of("Length (ms)", "" + df.format(e.getPropagationDelayInMs()) + " ms" , ""));
+		double length_km = (e.getLengthInKm() == Double.MAX_VALUE) ? Double.POSITIVE_INFINITY : e.getLengthInKm();
+		res.add(Triple.of("Length (km)", "" + df.format(length_km), ""));
+		double delay_ms = (e.getPropagationDelayInMs() == Double.MAX_VALUE) ? Double.POSITIVE_INFINITY : e.getPropagationDelayInMs();
+		res.add(Triple.of("Delay (ms)", "" + df.format(delay_ms), ""));
 		res.add(Triple.of("# routes (total / backup)", "" + e.getTraversingRoutes().size() + " / " + e.getTraversingBackupRoutes().size(), ""));
 		res.add(Triple.of("# forw. rules", "" + e.getForwardingRules().size(), ""));
 		res.add(Triple.of("# multicast trees", "" + e.getTraversingTrees().size() , ""));

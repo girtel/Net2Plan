@@ -16,6 +16,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,9 +66,12 @@ class DrawLine
         this.labels = new ArrayList<>();
         this.urlsLabels = new ArrayList<>();
 
+        final DecimalFormat df = new DecimalFormat("###.##");
+        String length_km = df.format((e.getLengthInKm() == Double.MAX_VALUE) ? Double.POSITIVE_INFINITY : e.getLengthInKm());
+        String delay_ms = df.format((e.getPropagationDelayInMs() == Double.MAX_VALUE) ? Double.POSITIVE_INFINITY : e.getPropagationDelayInMs());
         this.labels.addAll(Arrays.asList(
                 "Link " + e.getIndex() ,
-                String.format("%.1f" , e.getLengthInKm()) + " km (" + String.format("%.2f" , e.getPropagationDelayInMs()) + " ms)" ,
+                 length_km + " km (" + delay_ms + " ms)" ,
                 "Occup: " + String.format("%.1f" , occupiedToShow) + " " + capUnits,
                 "Total: " + String.format("%.1f" , e.getOccupiedCapacity()) + "/" + String.format("%.1f" , e.getCapacity()) + " " + capUnits ));
         this.urlsLabels.addAll(Arrays.asList("link" + e.getId(), "", "", ""));
