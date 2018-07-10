@@ -192,6 +192,38 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
             capacityUnits = capUnitsField.getText();
             resType = typeSelector.getText();
             np.addResource(resType, "Resource " + np.getResources().size(), Optional.empty(),0, capacityUnits, null, 0, null);
+        } , (a,b)->true, null));
+
+        res.add(new AjtRcMenu("Attach selected resource to node", e->
+        {
+            Resource resource = getSelectedElements().first();
+            JComboBox<StringLabeller> hostNodeSelector = new WiderJComboBox();
+
+            for (Node n : np.getNodes())
+            {
+                final String nodeName = n.getName();
+                String nodeLabel = "Node " + n.getIndex();
+                if (!nodeName.isEmpty()) nodeLabel += " (" + nodeName + ")";
+                hostNodeSelector.addItem(StringLabeller.of(n.getId(), nodeLabel));
+            }
+            Node hostNode;
+            JPanel pane = new JPanel();
+            pane.add(new JLabel("Host Node"));
+            pane.add(hostNodeSelector);
+
+            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter new host node" , JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (result != JOptionPane.OK_OPTION) return;
+
+            hostNode = callback.getDesign().getNodeFromId((Long) ((StringLabeller)(hostNodeSelector.getSelectedItem())).getObject());
+            resource.attachToNode(hostNode);
+
+        } , (a,b)->b==1, null));
+
+        res.add(new AjtRcMenu("Dettach selected resource", e->
+        {
+            Resource resource = getSelectedElements().first();
+            resource.dettachFromNode();
+
         } , (a,b)->b==1, null));
 
         res.add(new AjtRcMenu("Remove selected resources", e->getSelectedElements().forEach(dd->((Resource)dd).remove()) , (a,b)->b>0, null));

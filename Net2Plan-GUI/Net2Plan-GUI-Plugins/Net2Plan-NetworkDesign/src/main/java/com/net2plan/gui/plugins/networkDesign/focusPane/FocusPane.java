@@ -26,6 +26,7 @@ import java.util.Set;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.net2plan.utils.Constants;
 import org.apache.commons.lang3.StringUtils;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -286,8 +287,10 @@ public class FocusPane extends JPanel
 		res.add(Triple.of("Capacity occupied / total", "" + df.format(e.getOccupiedCapacity()) + " / " + df.format(e.getCapacity()) + " " + capUnits , ""));
 		res.add(Triple.of("Utilization", "" + df.format(e.getUtilization()) , ""));
 		res.add(Triple.of("Is bottleneck?", "" + DoubleUtils.isEqualWithinRelativeTolerance(max_rho_e, e.getUtilization(), Configuration.precisionFactor) , ""));
-		res.add(Triple.of("Length (km)", "" + df.format(e.getLengthInKm()) + " km" , ""));
-		res.add(Triple.of("Length (ms)", "" + df.format(e.getPropagationDelayInMs()) + " ms" , ""));
+		double length_km = (e.getLengthInKm() == Double.MAX_VALUE) ? Double.POSITIVE_INFINITY : e.getLengthInKm();
+		res.add(Triple.of("Length (km)", "" + df.format(length_km), ""));
+		double delay_ms = (e.getPropagationDelayInMs() == Double.MAX_VALUE) ? Double.POSITIVE_INFINITY : e.getPropagationDelayInMs();
+		res.add(Triple.of("Delay (ms)", "" + df.format(delay_ms), ""));
 		res.add(Triple.of("# routes (total / backup)", "" + e.getTraversingRoutes().size() + " / " + e.getTraversingBackupRoutes().size(), ""));
 		res.add(Triple.of("# forw. rules", "" + e.getForwardingRules().size(), ""));
 		res.add(Triple.of("# multicast trees", "" + e.getTraversingTrees().size() , ""));
@@ -381,10 +384,15 @@ public class FocusPane extends JPanel
 		if (d.isServiceChainRequest())
 			res.add(Triple.of("- Seq. resource types" , StringUtils.join(d.getServiceChainSequenceOfTraversedResourceTypes(),","), ""));
 		res.add(Triple.of("Has loops?" , isLoopless? "No" : cycleType.equals(RoutingCycleType.CLOSED_CYCLES)? "Yes (closed loops)" : "Yes (open loops)", ""));
-		res.add(Triple.of("Num. routes (total/backup)" , "" + d.getRoutes().size() + "/" + d.getRoutesAreBackup().size(), ""));
-		for (Route r : d.getRoutes())
-			res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")" + (r.isBackupRoute()? " [backup]" : ""), "route" + r.getId()));
-		res.add(Triple.of("Worst case e2e latency" , df.format(d.getWorstCasePropagationTimeInMs()) + " ms", ""));
+		if(d.getRoutingType() == Constants.RoutingType.SOURCE_ROUTING)
+		{
+			res.add(Triple.of("Num. routes (total/backup)" , "" + d.getRoutes().size() + "/" + d.getRoutesAreBackup().size(), ""));
+			for (Route r : d.getRoutes())
+				res.add(Triple.of("Route index/id" , "Route " + r.getIndex() + " (id " + r.getId() + ")" + (r.isBackupRoute()? " [backup]" : ""), "route" + r.getId()));
+		}
+
+		double latency_ms = (d.getWorstCasePropagationTimeInMs() == Double.MAX_VALUE) ? Double.POSITIVE_INFINITY : d.getWorstCasePropagationTimeInMs();
+		res.add(Triple.of("Worst case e2e latency (ms)" , df.format(latency_ms), ""));
 		return res;
 	}
 	private List<Triple<String,String,String>> getMulticastDemandInfoTables (MulticastDemand md)

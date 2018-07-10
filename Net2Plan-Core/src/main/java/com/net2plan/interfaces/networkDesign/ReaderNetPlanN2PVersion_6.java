@@ -257,7 +257,7 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
         newDemand.setDescription(getStringOrDefault("description", ""));
         try
         {
-        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("monitoredOrForecastedOfferedTraffics") , new ArrayList<> ());
+        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("monitoredOrForecastedTraffics") , new ArrayList<> ());
         	final TrafficSeries readTimeSerie = TrafficSeries.createFromStringList(rows);
             newDemand.setMonitoredOrForecastedOfferedTraffic(readTimeSerie);
         } catch (Exception e) {}
@@ -435,7 +435,7 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
         newLink.setDescription(getStringOrDefault("description", ""));
         try
         {
-        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("monitoredOrForecastedOfferedTraffics") , new ArrayList<> ());
+        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("monitoredOrForecastedTraffics") , new ArrayList<> ());
         	final TrafficSeries readTimeSerie = TrafficSeries.createFromStringList(rows);
             newLink.setMonitoredOrForecastedCarriedTraffic(readTimeSerie);
         } catch (Exception e) {}
@@ -622,7 +622,7 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
         newDemand.setDescription(getStringOrDefault("description", ""));
         try
         {
-        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("monitoredOrForecastedOfferedTraffics") , new ArrayList<> ());
+        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("monitoredOrForecastedTraffics") , new ArrayList<> ());
         	final TrafficSeries readTimeSerie = TrafficSeries.createFromStringList(rows);
             newDemand.setMonitoredOrForecastedOfferedTraffic(readTimeSerie);
         } catch (Exception e) {}
