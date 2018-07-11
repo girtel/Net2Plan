@@ -5,6 +5,14 @@ All notable changes to Net2Plan will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+
+## [0.6.0.1] - 2018-07-11 
+
+### Fixed
+	- Some bug fixes.
+
+####
+
 ## [0.6.0] - 2018-07-05
 ### Added
 	- Possibility to attach monitoring traces of carried traffic (series of pairs date-traffic) to the links, and also traces of offered traffic to demands and multicast demands. Methods to synthetically create, import and export from Excel, and manipulate those traces are included in the GUI. 
