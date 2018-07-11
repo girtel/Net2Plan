@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Fixed
 	- Some bug fixes.
 
+####
 
 ## [0.6.0] - 2018-07-05
 ### Added
