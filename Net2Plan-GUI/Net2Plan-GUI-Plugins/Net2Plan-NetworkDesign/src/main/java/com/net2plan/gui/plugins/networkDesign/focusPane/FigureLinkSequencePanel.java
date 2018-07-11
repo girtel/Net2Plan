@@ -41,7 +41,7 @@ public class FigureLinkSequencePanel extends FigureSequencePanel
         {
             this.generalMessage = new ArrayList<>();
             this.generalMessage.addAll(Arrays.asList(titleMessage));
-            this.generalMessage.add("Carried trafffic: " + String.format("%.2f ", carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
+            this.generalMessage.add("  traffic: " + String.format("%.2f ", carriedTraffic) + " " + np.getDemandTrafficUnitsName(layer));
         } else
         {
             this.generalMessage = Arrays.asList(titleMessage);
