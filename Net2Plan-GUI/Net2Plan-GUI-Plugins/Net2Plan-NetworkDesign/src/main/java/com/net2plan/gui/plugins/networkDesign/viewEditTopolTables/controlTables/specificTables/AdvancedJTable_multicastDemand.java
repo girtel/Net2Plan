@@ -42,6 +42,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.utils.JSelectionTablePanel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -233,37 +234,35 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     private static void createMulticastDemandGUI(final NetworkElementType networkElementType, final NetworkLayer layer , final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
+        JComboBox<StringLabeller> originNodeComboBox = new WiderJComboBox();
+        JSelectionTablePanel selectionPanel = new JSelectionTablePanel(StringUtils.arrayOf("Node","Index","Id"));
+        LinkedList<Object[]> selectionPanelElements = new LinkedList<>();
+        netPlan.getNodes().stream().forEach(n -> originNodeComboBox.addItem(StringLabeller.of(n.getId(),n.toString())));
+        netPlan.getNodes().stream().forEach(n -> selectionPanelElements.add(new Object[]{n,n.getIndex(),n.getId()}));
+        selectionPanel.setCandidateElements(selectionPanelElements);
 
-        JTextField textFieldIngressNodeId = new JTextField(20);
-        JTextField textFieldEgressNodeIds = new JTextField(20);
 
         JPanel pane = new JPanel();
-        pane.add(new JLabel("Ingress node id: "));
-        pane.add(textFieldIngressNodeId);
-        pane.add(Box.createHorizontalStrut(15));
-        pane.add(new JLabel("Egress node ids (space separated): "));
-        pane.add(textFieldEgressNodeIds);
+        pane.add(new JLabel("Ingress node: "));
+        pane.add(originNodeComboBox);
+        pane.add(Box.createHorizontalStrut(50));
+        pane.add(new JLabel("Egress nodes: "));
+        pane.add(selectionPanel);
 
         while (true)
         {
-            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter multicast demand ingress node and set of egress nodes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            int result = JOptionPane.showConfirmDialog(null, pane, "Please select multicast demand ingress node and set of egress nodes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (result != JOptionPane.OK_OPTION) return;
-            if (textFieldIngressNodeId.getText().isEmpty())
-                throw new Net2PlanException("Please, insert the ingress node id");
-            if (textFieldEgressNodeIds.getText().isEmpty())
-                throw new Net2PlanException("Please, insert the set of egress node ids");
-            String ingressNodeId_st = textFieldIngressNodeId.getText();
-            String egressNodeId_st = textFieldEgressNodeIds.getText();
+            if (selectionPanel.getSelectedElements().size() <= 1)
+                throw new Net2PlanException("Please, select at least two egress nodes");
 
-            final long ingressNode = Long.parseLong(ingressNodeId_st);
-            if (netPlan.getNodeFromId(ingressNode) == null)
-                throw new Net2PlanException("Not a valid ingress node id: " + ingressNodeId_st);
+            Long ingressNode = (Long)((StringLabeller)originNodeComboBox.getSelectedItem()).getObject();
+            LinkedList<Object[]> egressNodes_selection = selectionPanel.getSelectedElements();
             Set<Node> egressNodes = new HashSet<Node>();
-            for (String egressNodeIdString : StringUtils.split(egressNodeId_st))
+            for (Object [] ob : egressNodes_selection)
             {
-                final long nodeId = Long.parseLong(egressNodeIdString);
+                final long nodeId = Long.parseLong(ob[2].toString());
                 final Node node = netPlan.getNodeFromId(nodeId);
-                if (node == null) throw new Net2PlanException("Not a valid egress node id: " + egressNodeIdString);
                 egressNodes.add(node);
             }
             netPlan.addMulticastDemand(netPlan.getNodeFromId(ingressNode), egressNodes, 0, null , layer);

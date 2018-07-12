@@ -141,8 +141,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
         final List<AjtRcMenu> res = new ArrayList<> ();
         res.add(new AjtRcMenu("Add link", e->AdvancedJTable_demand.createLinkDemandGUI(NetworkElementType.LINK, getTableNetworkLayer () , callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected links", e->getSelectedElements().forEach(dd->((Link)dd).remove()) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Generate full-mesh (link length as Euclidean distance)", e->new FullMeshTopologyActionListener(this , callback, true), (a,b)->true, null));
-        res.add(new AjtRcMenu("Generate full-mesh (link length as Haversine distance)", e->new FullMeshTopologyActionListener(this , callback, false), (a,b)->true, null));
+        res.add(new AjtRcMenu("Generate full-mesh (link length as Euclidean distance)", e->new FullMeshTopology(this , callback, true), (a, b)->true, null));
+        res.add(new AjtRcMenu("Generate full-mesh (link length as Haversine distance)", e->new FullMeshTopology(this , callback, false), (a, b)->true, null));
         res.add(new AjtRcMenu("Show selected links", e->getSelectedElements().forEach(ee->callback.getVisualizationState().showOnCanvas(ee)) , (a,b)->true, null));
         res.add(new AjtRcMenu("Hide selected links", e->getSelectedElements().forEach(ee->callback.getVisualizationState().hideOnCanvas(ee)) , (a,b)->true, null));
         res.add(new AjtRcMenu("Decouple selected links", e->getSelectedElements().forEach(dd->((Link)dd).decouple()) , (a,b)->b>0, null));
@@ -337,21 +337,21 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     }
     
     
-    static class FullMeshTopologyActionListener implements ActionListener
+    static class FullMeshTopology
     {
         private final GUINetworkDesign callback;
         private final boolean euclidean;
         private AdvancedJTable_networkElement table;
         
-        public FullMeshTopologyActionListener(AdvancedJTable_networkElement table , GUINetworkDesign callback, boolean euclidean)
+        public FullMeshTopology(AdvancedJTable_networkElement table , GUINetworkDesign callback, boolean euclidean)
         {
             this.callback = callback;
             this.euclidean = euclidean;
             this.table = table;
+            create();
         }
 
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void create()
         {
             assert callback != null;
 
