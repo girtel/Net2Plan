@@ -427,6 +427,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
     {
     	final boolean isDemand = networkElementType == NetworkElementType.DEMAND;
         final NetPlan netPlan = callback.getDesign();
+        if(netPlan.getNumberOfNodes() == 0)
+            throw new Net2PlanException("Adding links or demands to an empty topology is not allowed");
+        
         final JComboBox<StringLabeller<Node>> originNodeSelector = new WiderJComboBox();
         final JComboBox<StringLabeller<Node>> destinationNodeSelector = new WiderJComboBox();
         final JComboBox<StringLabeller<RoutingType>> routingTypeSelector = new WiderJComboBox();
