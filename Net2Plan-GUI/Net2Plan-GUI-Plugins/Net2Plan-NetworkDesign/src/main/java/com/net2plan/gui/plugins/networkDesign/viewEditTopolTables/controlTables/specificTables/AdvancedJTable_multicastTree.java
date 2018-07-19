@@ -92,10 +92,10 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement<
         res.add(new AjtRcMenu("Add multicast tree", e->createMulticastTreeGUI(callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected trees", e->getSelectedElements().forEach(dd->((MulticastTree)dd).remove()) , (a,b)->b>0, null));
 
-        res.add(new AjtRcMenu("Add one tree per demand, minimizing end-to-end average number of traversed links", e->new MulticastTreeMinE2EActionListener(true, false) , (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one tree per demand, minimizing end-to-end average traversed length in km", e->new MulticastTreeMinE2EActionListener(false, false) , (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one tree per demand, minimizing number of links in the tree (uses default ILP solver)", e->new MulticastTreeMinE2EActionListener(true, true) , (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one tree per demand, minimizing number of km of the links in the tree (uses default ILP solver)", e->new MulticastTreeMinE2EActionListener(false, true) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one tree per demand, minimizing end-to-end average number of traversed links", e->new MulticastTreeMinE2E(true, false) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one tree per demand, minimizing end-to-end average traversed length in km", e->new MulticastTreeMinE2E(false, false) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one tree per demand, minimizing number of links in the tree (uses default ILP solver)", e->new MulticastTreeMinE2E(true, true) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one tree per demand, minimizing number of km of the links in the tree (uses default ILP solver)", e->new MulticastTreeMinE2E(false, true) , (a,b)->true, null));
         
         
         return res;
@@ -149,19 +149,19 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement<
 
 
 
-    private class MulticastTreeMinE2EActionListener implements ActionListener
+    private class MulticastTreeMinE2E
     {
         final boolean isMinHops;
         final boolean minCost;
 
-        private MulticastTreeMinE2EActionListener(boolean isMinHops, boolean minCost)
+        private MulticastTreeMinE2E(boolean isMinHops, boolean minCost)
         {
             this.isMinHops = isMinHops;
             this.minCost = minCost;
+            create();
         }
 
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void create()
         {
             NetPlan netPlan = callback.getDesign();
             List<Link> links = netPlan.getLinks();
