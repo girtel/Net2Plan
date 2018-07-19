@@ -13,14 +13,10 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,20 +29,17 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.utils.JSelectionTablePanel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -71,7 +64,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
       final List<AjtColumnInfo<MulticastDemand>> res = new LinkedList<> ();
       res.add(new AjtColumnInfo<MulticastDemand>(this , Node.class, null , "A", "Ingress node", null , d->d.getIngressNode() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , String.class, null , "Bs", "Egress nodes", null , d->d.getEgressNodes().stream().map(n->n.getName().equals("")? "Node " + n.getIndex() : n.getName()).collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<MulticastDemand>(this , Collection.class, null , "Coupled links", "The links that this demnad is coupled to, if any", null , d->d.isCoupled()? d.getCoupledLinks() : "-" , AGTYPE.NOAGGREGATION , null));
+      res.add(new AjtColumnInfo<MulticastDemand>(this , Collection.class, null , "Coupled links", "The links that this demand is coupled to, if any", null , d->d.isCoupled()? d.getCoupledLinks() : "-" , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "Offered traffic (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Offered traffic by the demand", (d,val)->d.setOfferedTraffic((Double) val), d->d.getOfferedTraffic() , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "Carried traffic (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Carried traffic by the demand", null , d->d.getCarriedTraffic() , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->d.getOfferedTraffic() == 0? 0 : d.getBlockedTraffic() / d.getOfferedTraffic() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > 0? Color.RED : Color.GREEN));
@@ -93,16 +86,16 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         final List<AjtRcMenu> res = new ArrayList<> ();
         res.add(new AjtRcMenu("Add demand", e->createMulticastDemandGUI(NetworkElementType.MULTICAST_DEMAND, getTableNetworkLayer () , callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected demands", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).remove()) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Add one broadcast demand per node", e->new BroadcastDemandPerNodeActionListener() , (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one demand per ingress node, with random egress nodes", e->new MulticastDemandPerNodeActionListener() , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one broadcast demand per node", e->new BroadcastDemandPerNode().execute() , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one demand per ingress node, with random egress nodes", e->new MulticastDemandPerNode().execute() , (a,b)->true, null));
         res.add(new AjtRcMenu("Set QoS type to selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set selected demands QoS type", 
                     "Please introduce the QoS type.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
+                    Arrays.asList(InputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
                     (list)->
                     	{
                     		final String qos = (String) list.get(0).get();
@@ -113,12 +106,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
         res.add(new AjtRcMenu("Set maximum e2e limit to selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set maximum e2e limit to selected demands", 
                     "Please introduce the maximum end-to-end limit in ms, to set for the selected demands.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
                     (list)->
                     	{
                     		final double newLimit = (Double) list.get(0).get();
@@ -129,12 +122,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
         res.add(new AjtRcMenu("Set selected demands offered traffic", e ->
 		{
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Set selected demands offered traffic", 
                     "Please introduce the offered traffic. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
                     (list)->
                     	{
                     		final double newOfferedTraffic = (Double) list.get(0).get();
@@ -152,12 +145,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 		}, (a,b)->b>0, null));
         res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
 		{
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Scale selected demands offered traffic", 
                     "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
                     (list)->
                     	{
                     		final double neScalingFactor = (Double) list.get(0).get();
@@ -271,10 +264,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
 
-    private class BroadcastDemandPerNodeActionListener implements ActionListener
+    private class BroadcastDemandPerNode
     {
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void execute()
         {
             NetPlan netPlan = callback.getDesign();
 
@@ -296,10 +288,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         }
     }
 
-    private class MulticastDemandPerNodeActionListener implements ActionListener
+    private class MulticastDemandPerNode
     {
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void execute()
         {
             Random rng = new Random();
             NetPlan netPlan = callback.getDesign();

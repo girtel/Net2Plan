@@ -13,8 +13,6 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -51,8 +49,8 @@ import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -243,12 +241,12 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 
         res.add(new AjtRcMenu("Set selected links capacity", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Set selected links capacity" , 
                     "Please introduce the link capacity. Negative values are not allowed. The capacity will be assigned to not coupled links", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Link capacity (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Introduce the link capacity", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Link capacity (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Introduce the link capacity", 10, 0.0)),
                     (list)->
                     	{
                     		final double newLinkCapacity = (Double) list.get(0).get();
@@ -260,12 +258,12 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
         
         res.add(new AjtRcMenu("Set selected links capacity to match a given utilization", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Set selected links capacity to match utilization" , 
                     "Please introduce the link target utilization. Negative values are not allowed. The capacity will be assigned to not coupled links", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.5)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.5)),
                     (list)->
                     	{
                     		final double newLinkUtilization = (Double) list.get(0).get();
@@ -277,12 +275,12 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 
         res.add(new AjtRcMenu("Set selected links length", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Set selected links length (km)" , 
                     "Please introduce the link length. Negative values are not allowed. The length will be assigned to not coupled links", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
                     (list)->
                     	{
                     		final double newLinkLength = (Double) list.get(0).get();
@@ -293,12 +291,12 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 
         res.add(new AjtRcMenu("Scale selected links length", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Scale selected links length (km)" , 
                     "Please introduce the scaling factor for which the link lengths will be multiplied. Negative values are not allowed. The length will be assigned to not coupled links", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
                     (list)->
                     	{
                     		final double scalingFactor = (Double) list.get(0).get();
@@ -393,21 +391,21 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
         return new AjtRcMenu("Add synthetic monitoring trace to selected links", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Add monitoring trace to selected " + elementName , 
                     "This option permits creating in selected elements, a trace of monitored values", 
                     "", 
                     table, 
                     Arrays.asList(
-                    		MtnInputForDialog.inputTfString("Initial GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the initial date in the indicated format", 10, dateFormatGmt.format(new Date ())), 
-                    		MtnInputForDialog.inputTfDouble("Interval between samples (seconds)", "Introduce intreval (in seconds) between consecutive smaples", 10, 3600.0),
-                    		MtnInputForDialog.inputTfInt("Number of samples", "Introduce the number of monitoring samples to create", 10, 7*24),
-                    		MtnInputForDialog.inputCheckBox(isLinkTable? "Use current carried traffic as initial traffic?" : "Use current offered traffic as initial traffic?", "If selected, the current traffic value is used as initial traffic", true , null),
-                    		MtnInputForDialog.inputTfDouble("Starting traffic", "Introduce the initial traffic (in demand traffic units: '" + table.getTableNetworkLayer().getDemandTrafficUnits() + "')", 10, 1.0),
-                    		MtnInputForDialog.inputTfCombo("Growth type", "The growth traffic type. Exponential means that traffic at year T+1 is GF times the traffic at year T, where GF is the growth factor. If linear, traffic at year T+1 is the traffic at T plus GF", 20 , TrafficSeries.FITTINGTYPE.LINEAR , Arrays.asList(TrafficSeries.FITTINGTYPE.values()) , Arrays.asList(TrafficSeries.FITTINGTYPE.values()).stream().map(ee->ee.getName ()).collect (Collectors.toList()) , null),
-                    		MtnInputForDialog.inputTfDouble("Growth factor (per year)", "If exponential growth, this is the compound annual growth rate (CAGR) (adimensional value), if linear growth, this is the traffic growth per year in traffic units" + table.getTableNetworkLayer().getDemandTrafficUnits() + "')", 10, 1.0),
-                    		MtnInputForDialog.inputTfDouble("Noise coefficient of variation", "A normal traffic noise centered in 0 and typical deviation given by this value multiplied by the current traffic, is added to the estimation. Note that negative traffics are later truncated to zero", 10, 1.0),
-                    		MtnInputForDialog.inputCheckBox("Remove previous monitoring values?", "If selected, the current monitored values are removed", true , null)
+                    		InputForDialog.inputTfString("Initial GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the initial date in the indicated format", 10, dateFormatGmt.format(new Date ())),
+                    		InputForDialog.inputTfDouble("Interval between samples (seconds)", "Introduce intreval (in seconds) between consecutive smaples", 10, 3600.0),
+                    		InputForDialog.inputTfInt("Number of samples", "Introduce the number of monitoring samples to create", 10, 7*24),
+                    		InputForDialog.inputCheckBox(isLinkTable? "Use current carried traffic as initial traffic?" : "Use current offered traffic as initial traffic?", "If selected, the current traffic value is used as initial traffic", true , null),
+                    		InputForDialog.inputTfDouble("Starting traffic", "Introduce the initial traffic (in demand traffic units: '" + table.getTableNetworkLayer().getDemandTrafficUnits() + "')", 10, 1.0),
+                    		InputForDialog.inputTfCombo("Growth type", "The growth traffic type. Exponential means that traffic at year T+1 is GF times the traffic at year T, where GF is the growth factor. If linear, traffic at year T+1 is the traffic at T plus GF", 20 , TrafficSeries.FITTINGTYPE.LINEAR , Arrays.asList(TrafficSeries.FITTINGTYPE.values()) , Arrays.asList(TrafficSeries.FITTINGTYPE.values()).stream().map(ee->ee.getName ()).collect (Collectors.toList()) , null),
+                    		InputForDialog.inputTfDouble("Growth factor (per year)", "If exponential growth, this is the compound annual growth rate (CAGR) (adimensional value), if linear growth, this is the traffic growth per year in traffic units" + table.getTableNetworkLayer().getDemandTrafficUnits() + "')", 10, 1.0),
+                    		InputForDialog.inputTfDouble("Noise coefficient of variation", "A normal traffic noise centered in 0 and typical deviation given by this value multiplied by the current traffic, is added to the estimation. Note that negative traffics are later truncated to zero", 10, 1.0),
+                    		InputForDialog.inputCheckBox("Remove previous monitoring values?", "If selected, the current monitored values are removed", true , null)
                     		),
                     (list)->
                     	{
@@ -618,15 +616,15 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 		return new AjtRcMenu("Set monitored traffic for selected elements", e->
                 {
                 	final Calendar now = Calendar.getInstance();
-                    MtnDialogBuilder.launch(
+                    DialogBuilder.launch(
                             "Select the traffic value, and the target date of the monitoring", 
                             "Please introduce the traffic amount and the date in which the traffic will be stored as monitored traffic.", 
                             "", 
                             table, 
                             Arrays.asList(
-                            		MtnInputForDialog.inputTfString("Introducce the GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())), 
-                            		MtnInputForDialog.inputTfDouble("Traffic (" + table.getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the traffic in the indicated units", 10, 0.0),
-                            		MtnInputForDialog.inputCheckBox("Use element current traffic?", "If selected, the current element traffic value is used, instead of the traffic amount indicated by the user", true , null)
+                            		InputForDialog.inputTfString("Introducce the GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())),
+                            		InputForDialog.inputTfDouble("Traffic (" + table.getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the traffic in the indicated units", 10, 0.0),
+                            		InputForDialog.inputCheckBox("Use element current traffic?", "If selected, the current element traffic value is used, instead of the traffic amount indicated by the user", true , null)
                             		),
                             (list)->
                             	{
@@ -658,16 +656,16 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 {
                 	final Calendar now = Calendar.getInstance();
                 	
-                    MtnDialogBuilder.launch(
+                    DialogBuilder.launch(
                             "Select the traffic value, and the target date of the monitoring", 
                             "Please introduce the date to predict, and statistical parameters.", 
                             "", 
                             table, 
                             Arrays.asList(
-                            		MtnInputForDialog.inputTfString("Introducce the GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())), 
-                            		MtnInputForDialog.inputTfCombo("Fitting type", "The fitting type to use to predict the traffic growth evolution. Exponential means that traffic is fitted to an exponential function of time, linear to a linear function of time", 20 , TrafficSeries.FITTINGTYPE.LINEAR , Arrays.asList(TrafficSeries.FITTINGTYPE.values()) , Arrays.asList(TrafficSeries.FITTINGTYPE.values()).stream().map(ee->ee.getName ()).collect (Collectors.toList()) , null),
-                            		MtnInputForDialog.inputTfDouble("Probability of underestimation", "The predicted traffic will be such that the probability of the traffic to be higher that the prediction is the given probabilty. A value of 0.5 provides an unbiased (neither conservative nor optimistic) estimation", 10, 0.05),
-                            		MtnInputForDialog.inputTfCombo("Save in...", "Indicates where the prediction will be stored", 20 , "As new monitoring sample" , isLinkTable? Arrays.asList("As new monitoring sample") : Arrays.asList("As new monitoring sample" , "As current demand offered traffic") , isLinkTable? Arrays.asList("As new monitoring sample") : Arrays.asList("As new monitoring sample" , "As current demand offered traffic") , null)
+                            		InputForDialog.inputTfString("Introducce the GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())),
+                            		InputForDialog.inputTfCombo("Fitting type", "The fitting type to use to predict the traffic growth evolution. Exponential means that traffic is fitted to an exponential function of time, linear to a linear function of time", 20 , TrafficSeries.FITTINGTYPE.LINEAR , Arrays.asList(TrafficSeries.FITTINGTYPE.values()) , Arrays.asList(TrafficSeries.FITTINGTYPE.values()).stream().map(ee->ee.getName ()).collect (Collectors.toList()) , null),
+                            		InputForDialog.inputTfDouble("Probability of underestimation", "The predicted traffic will be such that the probability of the traffic to be higher that the prediction is the given probabilty. A value of 0.5 provides an unbiased (neither conservative nor optimistic) estimation", 10, 0.05),
+                            		InputForDialog.inputTfCombo("Save in...", "Indicates where the prediction will be stored", 20 , "As new monitoring sample" , isLinkTable? Arrays.asList("As new monitoring sample") : Arrays.asList("As new monitoring sample" , "As current demand offered traffic") , isLinkTable? Arrays.asList("As new monitoring sample") : Arrays.asList("As new monitoring sample" , "As current demand offered traffic") , null)
                             		),
                             (list)->
                             	{
@@ -725,13 +723,13 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 		return new AjtRcMenu(beforeTrueAfterFalse? "before date..." : "after date..." , e->
                 {
                 	final Calendar now = Calendar.getInstance();
-                    MtnDialogBuilder.launch(
+                    DialogBuilder.launch(
                             "Select the limit date for removing (including that date)", 
                             "Please introduce the limit date for removing the monitoring info (info at that specfic date will be also removed).", 
                             "", 
                             table, 
                             Arrays.asList(
-                            		MtnInputForDialog.inputTfString("Introducce the GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ()))
+                            		InputForDialog.inputTfString("Introducce the GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ()))
                             		),
                             (list)->
                             	{
@@ -782,7 +780,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 	if (demands.stream().map(d->d.getEgressNode()).anyMatch(n->n.getIncomingLinks(layer).isEmpty())) throw new Net2PlanException ("A demand end node has no input links");
                 	final SortedSet<Date> datesWithEnoughInformationFromGM = TrafficMatrixForecastUtils.getDatesWhereGravityModelCanBeApplied (layer);
                 	if (datesWithEnoughInformationFromGM.isEmpty()) throw new Net2PlanException ("No dates exist with enough monitoring information to apply the gravity model");
-                    MtnDialogBuilder.launch(
+                    DialogBuilder.launch(
                     		"Forecast demands traffic using gravity model",
                             "Please indicate the requested parameters. The demands offered traffic will be estimated according to link monitored carried "
                             + "traffic values of the given date, and stored in the same date. Only dates where enough monitoring information in the links exist are acceptable for this method. "
@@ -790,8 +788,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             "", 
                             table, 
                             Arrays.asList(
-                            		MtnInputForDialog.inputTfString("Introduce the initial GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(datesWithEnoughInformationFromGM.first())), 
-                            		MtnInputForDialog.inputTfString("Introduce the end GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(datesWithEnoughInformationFromGM.last())) 
+                            		InputForDialog.inputTfString("Introduce the initial GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(datesWithEnoughInformationFromGM.first())),
+                            		InputForDialog.inputTfString("Introduce the end GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(datesWithEnoughInformationFromGM.last()))
                             		),
                             (list)->
                             	{
@@ -853,18 +851,18 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 			"Use gravity model estimation from link monit." , 
                 			"Same date demand monitoring info" , 
                 			"Zero traffic");
-                    MtnDialogBuilder.launch(
+                    DialogBuilder.launch(
                     		"Forecast demands traffic from current link info",
                             "Please indicate the requested parameters. The demands and multicast demands offered traffic will be estimated according to current link monitored carried traffic values. "
                             + "Note that this may make the carried traffics to change", 
                             "", 
                             table, 
                             Arrays.asList(
-                            		MtnInputForDialog.inputTfString("Introduce the initial GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())), 
-                            		MtnInputForDialog.inputTfString("Introduce the end GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())), 
-                            		MtnInputForDialog.inputTfDouble("Balance between link monitoring vs. demands previous information", "The predicted traffic will be such that the probability of the traffic to be higher that the prediction is the given probabilty. A value of 0.5 provides an unbiased (neither conservative nor optimistic) estimation", 10, 0.5),
-                            		MtnInputForDialog.inputTfCombo("Input of demand monitoring", "Where the demand monitoring information will come from", 20 , null , optionsInputDemandMonit , null , null),
-                            		MtnInputForDialog.inputCheckBox("Apply only to dates with full link monitoring info", "If selected, the estimation will be applied only to those dates for which we have monitoring information for ALL the links", true , null)
+                            		InputForDialog.inputTfString("Introduce the initial GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())),
+                            		InputForDialog.inputTfString("Introduce the end GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())),
+                            		InputForDialog.inputTfDouble("Balance between link monitoring vs. demands previous information", "The predicted traffic will be such that the probability of the traffic to be higher that the prediction is the given probabilty. A value of 0.5 provides an unbiased (neither conservative nor optimistic) estimation", 10, 0.5),
+                            		InputForDialog.inputTfCombo("Input of demand monitoring", "Where the demand monitoring information will come from", 20 , null , optionsInputDemandMonit , null , null),
+                            		InputForDialog.inputCheckBox("Apply only to dates with full link monitoring info", "If selected, the estimation will be applied only to those dates for which we have monitoring information for ALL the links", true , null)
                             		),
                             (list)->
                             	{

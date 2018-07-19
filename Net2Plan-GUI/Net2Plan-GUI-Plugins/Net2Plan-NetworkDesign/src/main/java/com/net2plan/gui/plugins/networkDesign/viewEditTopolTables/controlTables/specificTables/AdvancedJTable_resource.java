@@ -46,8 +46,8 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
@@ -231,11 +231,11 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
         {
         	if (getSelectedElements().stream().anyMatch(r->r.isHavingMoreThanOneBaseResourceWithTheSameType ())) throw new Net2PlanException ("This option is not applicable if a resource has two base resources of the same type");
         	final List<String> baseResourcesTypes = new ArrayList<> (getSelectedElements().first().getBaseResources().stream().map(r->r.getType()).collect(Collectors.toCollection(TreeSet::new)));
-        	final List<MtnInputForDialog<?>> dialogsCapacityAndBaseResources = new ArrayList<> ();
-        	dialogsCapacityAndBaseResources.add(MtnInputForDialog.inputTfDouble("Resource capacity" , "Introduce the value to set as the resource capacity", 10, 0.0));
+        	final List<InputForDialog<?>> dialogsCapacityAndBaseResources = new ArrayList<> ();
+        	dialogsCapacityAndBaseResources.add(InputForDialog.inputTfDouble("Resource capacity" , "Introduce the value to set as the resource capacity", 10, 0.0));
         	for (String baseResourceType : baseResourcesTypes)
-            	dialogsCapacityAndBaseResources.add(MtnInputForDialog.inputTfDouble("Occupied capacity in resources of type '" + baseResourceType + "'" , "Introduce the value to set as the occupied capacity in the resource of the given type", 10, 0.0));
-            MtnDialogBuilder.launch(
+            	dialogsCapacityAndBaseResources.add(InputForDialog.inputTfDouble("Occupied capacity in resources of type '" + baseResourceType + "'" , "Introduce the value to set as the occupied capacity in the resource of the given type", 10, 0.0));
+            DialogBuilder.launch(
             		"Set capacity of selected resources", 
                     "Please introduce the capacity for the resources, and the base resources (if any).", 
                     "", 
@@ -265,11 +265,11 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
         {
         	final Resource resource = getSelectedElements().first();
         	final List<Resource> baseResources = new ArrayList<> (resource.getBaseResources());
-        	final List<MtnInputForDialog<?>> dialogsCapacityAndBaseResources = new ArrayList<> ();
-        	dialogsCapacityAndBaseResources.add(MtnInputForDialog.inputTfDouble("Resource capacity" , "Introduce the value to set as the resource capacity", 10, 0.0));
+        	final List<InputForDialog<?>> dialogsCapacityAndBaseResources = new ArrayList<> ();
+        	dialogsCapacityAndBaseResources.add(InputForDialog.inputTfDouble("Resource capacity" , "Introduce the value to set as the resource capacity", 10, 0.0));
         	for (Resource br : baseResources)
-            	dialogsCapacityAndBaseResources.add(MtnInputForDialog.inputTfDouble("Occupied capacity in resources " + br.getName () + " of type '" + br.getType() + "'" , "Introduce the value to set as the occupied capacity in the resource", 10, 0.0));
-            MtnDialogBuilder.launch(
+            	dialogsCapacityAndBaseResources.add(InputForDialog.inputTfDouble("Occupied capacity in resources " + br.getName () + " of type '" + br.getType() + "'" , "Introduce the value to set as the occupied capacity in the resource", 10, 0.0));
+            DialogBuilder.launch(
             		"Set capacity of selected resource", 
                     "Please introduce the capacity for the resource, and the base resources (if any).", 
                     "", 
@@ -292,12 +292,12 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
         
         res.add(new AjtRcMenu("Set selected resources processing time", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set processing time (ms) of selected resource", 
                     "Please introduce the processing time in miliseconds for the resources.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Processing time (ms)", "Introduce the processing time", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Processing time (ms)", "Introduce the processing time", 10, 0.0)),
                     (list)->
                     	{
                     		final double newProcTime = (Double) list.get(0).get();

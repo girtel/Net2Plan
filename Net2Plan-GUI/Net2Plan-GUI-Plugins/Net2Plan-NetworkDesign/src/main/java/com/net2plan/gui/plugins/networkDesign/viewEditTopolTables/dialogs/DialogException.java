@@ -1,15 +1,15 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs;
 
-public class MtnDialogException extends RuntimeException
+public class DialogException extends RuntimeException
 {
 	private static final long serialVersionUID = 1L;
 
-	public MtnDialogException()
+	public DialogException()
 	{
 		super();
 	}
 	
-	public MtnDialogException(String message)
+	public DialogException(String message)
 	{
 		super(message);
 	}

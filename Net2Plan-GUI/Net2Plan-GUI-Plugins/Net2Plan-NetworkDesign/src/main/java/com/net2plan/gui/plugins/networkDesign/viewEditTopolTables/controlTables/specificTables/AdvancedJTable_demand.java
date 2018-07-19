@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.function.Consumer;
@@ -43,11 +42,10 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -109,12 +107,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         res.add(new AjtRcMenu("Remove selected demands", e->getSelectedElements().forEach(dd->((Demand)dd).remove()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set QoS type to selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set selected demands QoS type", 
                     "Please introduce the QoS type.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
+                    Arrays.asList(InputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
                     (list)->
                     	{
                     		final String qos = (String) list.get(0).get();
@@ -124,12 +122,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         }, (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set routing type of selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set routing type", 
                     "Please introduce the routing type. Source routing or hop-by-hop routing.",
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfCombo ("Routing type", "Introduce the routing type of the demands" , 10, RoutingType.SOURCE_ROUTING ,
+                    Arrays.asList(InputForDialog.inputTfCombo ("Routing type", "Introduce the routing type of the demands" , 10, RoutingType.SOURCE_ROUTING ,
                     		Arrays.asList(RoutingType.SOURCE_ROUTING , RoutingType.HOP_BY_HOP_ROUTING) , Arrays.asList("Source routing" , "Hop by hop routing") , (Consumer<RoutingType>) null)),
                     (list)->
                     	{
@@ -140,12 +138,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         }, (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set maximum e2e limit to selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set maximum e2e limit to selected demands", 
                     "Please introduce the maximum end-to-end limit in ms, to set for the selected demands.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
                     (list)->
                     	{
                     		final double newLimit = (Double) list.get(0).get();
@@ -158,12 +156,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         res.add(new AjtRcMenu("Add one hop-by-hop routing demand per selected node pair (all if none selected)", e->rcMenuFullMeshTraffic(false), (a,b)->true, null));
         res.add(new AjtRcMenu("Set selected demands offered traffic", e ->
 		{
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Set selected demands offered traffic", 
                     "Please introduce the offered traffic. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
                     (list)->
                     	{
                     		final double newOfferedTraffic = (Double) list.get(0).get();
@@ -182,12 +180,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
 		, (a, b) -> b>0, null));
         res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
 		{
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Scale selected demands offered traffic", 
                     "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
                     (list)->
                     	{
                     		final double neScalingFactor = (Double) list.get(0).get();
