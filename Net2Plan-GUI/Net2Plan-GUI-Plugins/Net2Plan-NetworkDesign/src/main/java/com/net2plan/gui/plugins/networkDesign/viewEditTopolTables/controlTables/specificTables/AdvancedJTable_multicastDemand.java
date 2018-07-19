@@ -13,6 +13,8 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
 import java.awt.Color;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -84,7 +86,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     {
     	final NetPlan np = callback.getDesign();
         final List<AjtRcMenu> res = new ArrayList<> ();
-        res.add(new AjtRcMenu("Add demand", e->createMulticastDemandGUI(NetworkElementType.MULTICAST_DEMAND, getTableNetworkLayer () , callback), (a,b)->true, null));
+        res.add(new AjtRcMenu("Add demand", e->createMulticastDemandGUI(getTableNetworkLayer () , callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected demands", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).remove()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Add one broadcast demand per node", e->new BroadcastDemandPerNode().execute() , (a,b)->true, null));
         res.add(new AjtRcMenu("Add one demand per ingress node, with random egress nodes", e->new MulticastDemandPerNode().execute() , (a,b)->true, null));
@@ -224,16 +226,25 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
     }
     
-    private static void createMulticastDemandGUI(final NetworkElementType networkElementType, final NetworkLayer layer , final GUINetworkDesign callback)
+    private void createMulticastDemandGUI(final NetworkLayer layer , final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
         JComboBox<StringLabeller> originNodeComboBox = new WiderJComboBox();
-        JSelectionTablePanel selectionPanel = new JSelectionTablePanel(StringUtils.arrayOf("Node","Index","Id"));
+        JSelectionTablePanel selectionPanel = new JSelectionTablePanel(StringUtils.arrayOf("Node","Index","Id"), "Nodes");
         LinkedList<Object[]> selectionPanelElements = new LinkedList<>();
         netPlan.getNodes().stream().forEach(n -> originNodeComboBox.addItem(StringLabeller.of(n.getId(),n.toString())));
-        netPlan.getNodes().stream().forEach(n -> selectionPanelElements.add(new Object[]{n,n.getIndex(),n.getId()}));
+        netPlan.getNodes().stream().filter(n -> n != netPlan.getNode(0)).forEach(n -> selectionPanelElements.add(new Object[]{n,n.getIndex(),n.getId()}));
         selectionPanel.setCandidateElements(selectionPanelElements);
 
+        originNodeComboBox.addItemListener(e ->
+        {
+            StringLabeller newItem = (StringLabeller) originNodeComboBox.getSelectedItem();
+            Long newSelectedNodeId = (Long) newItem.getObject();
+            Node newSelectedNode = netPlan.getNodeFromId(newSelectedNodeId);
+            selectionPanelElements.clear();
+            netPlan.getNodes().stream().filter(n -> n != newSelectedNode).forEach(n -> selectionPanelElements.add(new Object[]{n,n.getIndex(),n.getId()}));
+            selectionPanel.setCandidateElements(selectionPanelElements);
+        });
 
         JPanel pane = new JPanel();
         pane.add(new JLabel("Ingress node: "));
@@ -247,7 +258,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
             int result = JOptionPane.showConfirmDialog(null, pane, "Please select multicast demand ingress node and set of egress nodes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (result != JOptionPane.OK_OPTION) return;
             if (selectionPanel.getSelectedElements().size() <= 1)
-                throw new Net2PlanException("Please, select at least two egress nodes");
+                throw new Net2PlanException("A multicast demand must have at least two egress nodes");
 
             Long ingressNode = (Long)((StringLabeller)originNodeComboBox.getSelectedItem()).getObject();
             LinkedList<Object[]> egressNodes_selection = selectionPanel.getSelectedElements();

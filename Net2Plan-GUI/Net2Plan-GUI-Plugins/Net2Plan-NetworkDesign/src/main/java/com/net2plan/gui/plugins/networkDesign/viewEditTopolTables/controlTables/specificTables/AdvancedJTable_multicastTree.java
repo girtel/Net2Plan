@@ -25,14 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.swing.Box;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -43,6 +36,9 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.utils.JScrollPopupMenu;
+import com.net2plan.gui.utils.JSelectionTablePanel;
+import com.net2plan.gui.utils.StringLabeller;
+import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
@@ -105,31 +101,47 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement<
         return res;
     }
 
-    private static void createMulticastTreeGUI(final GUINetworkDesign callback)
+    private void createMulticastTreeGUI(final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
+        final NetworkLayer layer = this.getTableNetworkLayer();
+        JComboBox<StringLabeller> multicastDemandComboBox = new WiderJComboBox();
+        JSelectionTablePanel selectionPanel = new JSelectionTablePanel(StringUtils.arrayOf("M. demand","Index","Id"), "M. Demands");
+        LinkedList<Object[]> selectionPanelElements = new LinkedList<>();
+        netPlan.getMulticastDemands(layer).stream().forEach(md -> multicastDemandComboBox.addItem(StringLabeller.of(md.getId(),md.toString())));
+        netPlan.getLinks(layer).stream().forEach(l -> selectionPanelElements.add(new Object[]{l,l.getIndex(),l.getId()}));
+        selectionPanel.setCandidateElements(selectionPanelElements);
 
-        JTextField textFieldDemandIndex = new JTextField(20);
-        JTextField textFieldLinkIndexes = new JTextField(20);
+        multicastDemandComboBox.addItemListener(e ->
+        {
+            StringLabeller newItem = (StringLabeller) multicastDemandComboBox.getSelectedItem();
+            Long newSelectedMulticasDemandId = (Long) newItem.getObject();
+            MulticastDemand newSelectedMulticastDemand = netPlan.getMulticastDemandFromId(newSelectedMulticasDemandId);
+            selectionPanelElements.clear();
+            netPlan.getLinks(layer).stream().forEach(l -> selectionPanelElements.add(new Object[]{l,l.getIndex(),l.getId()}));
+            selectionPanel.setCandidateElements(selectionPanelElements);
+        });
+
         JPanel pane = new JPanel();
-        pane.add(new JLabel("Multicast demand index: "));
-        pane.add(textFieldDemandIndex);
-        pane.add(Box.createHorizontalStrut(15));
-        pane.add(new JLabel("Link indexes (space separated): "));
-        pane.add(textFieldLinkIndexes);
+        pane.add(new JLabel("Multicast Demand: "));
+        pane.add(multicastDemandComboBox);
+        pane.add(Box.createHorizontalStrut(50));
+        pane.add(new JLabel("Links: "));
+        pane.add(selectionPanel);
 
         while (true)
         {
             int result = JOptionPane.showConfirmDialog(null, pane, "Please enter multicast tree demand index and link indexes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (result != JOptionPane.OK_OPTION) return;
 
-            if (textFieldDemandIndex.getText().isEmpty())
-                throw new Net2PlanException("Please, insert the multicast demand index");
-            if (textFieldLinkIndexes.getText().isEmpty()) throw new Net2PlanException("Please, insert the link indexes");
-            MulticastDemand demand = netPlan.getMulticastDemand(Integer.parseInt(textFieldDemandIndex.getText()));
+            Long multicastDemandId = (Long)((StringLabeller)(multicastDemandComboBox.getSelectedItem())).getObject();
+            MulticastDemand demand = netPlan.getMulticastDemandFromId(multicastDemandId);
             Set<Link> links = new HashSet<Link>();
-            for (String linkString : StringUtils.split(textFieldLinkIndexes.getText()))
-                links.add(netPlan.getLink(Integer.parseInt(linkString)));
+            LinkedList<Object[]> selectedLinks = selectionPanel.getSelectedElements();
+            for (Object [] ob : selectedLinks)
+            {
+                links.add(netPlan.getLinkFromId(Long.parseLong(ob[2].toString())));
+            }
             netPlan.addMulticastTree(demand, 0, 0, links, null);
             break;
         }

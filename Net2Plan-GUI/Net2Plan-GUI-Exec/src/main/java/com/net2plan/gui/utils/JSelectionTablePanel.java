@@ -1,6 +1,5 @@
 package com.net2plan.gui.utils;
 
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -22,17 +21,19 @@ public class JSelectionTablePanel extends JPanel implements ActionListener
 
     private JTable	candidateTable, selectedTable;
     private JButton	addButton, removeButton, removeAllButton;
+    private LinkedList<Object[]> candidateElements;
 
     /**
      * Constructor
      * @param header both table's header
      */
-    public JSelectionTablePanel(String [] header)
+    public JSelectionTablePanel(String [] header, String elementTitle)
     {
         super(new GridBagLayout());
 
+        candidateElements = new LinkedList<>();
         final JPanel sourceLabelPanel = new JPanel();
-        final JLabel sourceLabel = new JLabel("Candidate Elements");
+        final JLabel sourceLabel = new JLabel("Candidate "+elementTitle);
         sourceLabelPanel.add(sourceLabel);
 
         TableModel candidateModel = new NonEditableTableModel(header);
@@ -68,7 +69,7 @@ public class JSelectionTablePanel extends JPanel implements ActionListener
         removePanel.add(removeButton);
         removePanel.add(removeAllButton);
 
-        final JLabel destLabel = new JLabel("Selected Elements");
+        final JLabel destLabel = new JLabel("Selected "+elementTitle);
 
         this.add(sourceLabelPanel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
         this.add(candidateScroll, new GridBagConstraints(0, 1, 1, 5, .5, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -145,6 +146,14 @@ public class JSelectionTablePanel extends JPanel implements ActionListener
 
             candidateModel.addRow(element);
         }
+
+        candidateElements.clear();
+        candidateElements.addAll(elements);
+    }
+
+    public LinkedList<Object[]> getCandidateElements()
+    {
+        return candidateElements;
     }
 
     /**
@@ -194,5 +203,14 @@ public class JSelectionTablePanel extends JPanel implements ActionListener
             selectedModel.removeRow(0);
     }
 
+    public JTable getCandidateTable()
+    {
+        return candidateTable;
+    }
 
+    public JTable getSelectedTable()
+    {
+        return selectedTable;
+    }
 }
+
