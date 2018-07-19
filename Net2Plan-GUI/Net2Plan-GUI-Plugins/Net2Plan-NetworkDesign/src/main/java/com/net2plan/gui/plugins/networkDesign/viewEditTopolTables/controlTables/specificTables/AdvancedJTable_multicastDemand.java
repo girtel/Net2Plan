@@ -229,6 +229,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     private void createMulticastDemandGUI(final NetworkLayer layer , final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
+        if(netPlan.getNumberOfNodes() == 0)
+            throw new Net2PlanException("This topology doesn't have any node");
+
         JComboBox<StringLabeller> originNodeComboBox = new WiderJComboBox();
         JSelectionTablePanel selectionPanel = new JSelectionTablePanel(StringUtils.arrayOf("Node","Index","Id"), "Nodes");
         LinkedList<Object[]> selectionPanelElements = new LinkedList<>();

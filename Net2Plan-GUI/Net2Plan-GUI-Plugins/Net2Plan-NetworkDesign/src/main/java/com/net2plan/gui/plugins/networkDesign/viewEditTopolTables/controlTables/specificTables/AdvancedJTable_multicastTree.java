@@ -105,6 +105,13 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement<
     {
         final NetPlan netPlan = callback.getDesign();
         final NetworkLayer layer = this.getTableNetworkLayer();
+        if(netPlan.getNumberOfNodes() == 0)
+            throw new Net2PlanException("This topology doesn't have any node");
+        if(netPlan.getNumberOfLinks(layer) == 0)
+            throw new Net2PlanException("This topology doesn't have any link in layer "+layer);
+        if(netPlan.getNumberOfMulticastDemands(layer) == 0)
+            throw new Net2PlanException("This topology doesn't have any multicast demand in layer "+layer);
+        
         JComboBox<StringLabeller> multicastDemandComboBox = new WiderJComboBox();
         JSelectionTablePanel selectionPanel = new JSelectionTablePanel(StringUtils.arrayOf("M. demand","Index","Id"), "M. Demands");
         LinkedList<Object[]> selectionPanelElements = new LinkedList<>();
