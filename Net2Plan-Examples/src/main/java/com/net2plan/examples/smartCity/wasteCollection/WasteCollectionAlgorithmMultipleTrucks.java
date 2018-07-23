@@ -1,4 +1,4 @@
-package com.net2plan.examples.research.utn.wasteCollection;
+package com.net2plan.examples.smartCity.wasteCollection;
 
 import java.io.File;
 import java.io.FileWriter;
