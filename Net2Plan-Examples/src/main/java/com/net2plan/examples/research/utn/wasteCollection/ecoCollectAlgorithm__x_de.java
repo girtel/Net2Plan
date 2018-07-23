@@ -39,6 +39,9 @@ public class ecoCollectAlgorithm__x_de implements IAlgorithm
 	private InputParameter minPercentageToCollect = new InputParameter ("minPercentageToCollect", (double) 95.0 , "Minimum percentage for considering a full container to be collected" , 0.0 , true , 100.0 , true);
 	private InputParameter initializingCapacityOfEachContainer_kg = new InputParameter ("initializingCapacityOfEachContainer_kg", (double) 100.0 , "Value of capacity of each container in kg set when initializing" , 0.0 , true , Double.MAX_VALUE , false);
 	private InputParameter truckCollectingCapacity_kg = new InputParameter ("truckCollectingCapacity_kg", (double) 26000.0 , "Capacity of each truck to collect" , 0.0 , true , Double.MAX_VALUE , false);
+	private InputParameter solverName = new InputParameter ("solverName", "#select# cplex mipcl glpk xpress", "The solver name to be used by JOM. GLPK and IPOPT are free, XPRESS and CPLEX commercial. GLPK, XPRESS and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
+	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "" , "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
+	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
 	
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters) 
@@ -118,7 +121,11 @@ public class ecoCollectAlgorithm__x_de implements IAlgorithm
 		op.addConstraint("A_ne * (x_de') == A_nd"); /* the flow-conservation constraints (NxD constraints) */
 		op.addConstraint("x_de <= onesD' * x_e"); /* If the link is not in the path, cannot be traversed by the demands */
 
-		op.solve ("cplex");
+		op.solve(solverName.getString (), "solverLibraryName", solverLibraryName.getString () , "maxSolverTimeInSeconds" , maxSolverTimeInSeconds.getDouble ());
+
+		/* If no solution is found, quit */
+		if (op.feasibleSolutionDoesNotExist()) throw new Net2PlanException("The problem has no feasible solution");
+		if (!op.solutionIsFeasible()) throw new Net2PlanException("A feasible solution was not found");
 		
 		final double [] x_e = op.getPrimalSolution("x_e").to1DArray();
 		final DoubleMatrix2D x_de = op.getPrimalSolution("x_de").view2D();

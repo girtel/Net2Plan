@@ -27,7 +27,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tdouble.DoubleMatrix3D;
 
-public class ecoCollectAlgorithmMultipleTrcks__x_de implements IAlgorithm 
+public class ecoCollectAlgorithmMultipleTrucks__x_de implements IAlgorithm 
 {
 	public static String ATTNAME_ISCONTAINER = "Container";
 	public static String ATTNAME_CONTAINERCAPACITY_KG = "containerCapacity_kg";
@@ -44,6 +44,9 @@ public class ecoCollectAlgorithmMultipleTrcks__x_de implements IAlgorithm
 	private InputParameter maxNumberOfTrucks = new InputParameter ("maxNumberOfTrucks", (int) 10 , "Maximum number of trucks that can be used" , 1 , Integer.MAX_VALUE);
 	private InputParameter fixedCostPerUsingATruck = new InputParameter ("fixedCostPerUsingATruck", (double) 1000.0 , "Fixed cost of using a truck, whatever length it traverses" , 0.0 , true , Double.MAX_VALUE , false);
 	private InputParameter variableCostPerKmUsingATruck = new InputParameter ("variableCostPerKmUsingATruck", (double) 0.19 , "Cost per km of using a truck" , 00.0 , true , Double.MAX_VALUE , false);
+	private InputParameter solverName = new InputParameter ("solverName", "#select# cplex mipcl glpk xpress", "The solver name to be used by JOM. GLPK and IPOPT are free, XPRESS and CPLEX commercial. GLPK, XPRESS and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
+	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "" , "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
+	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
 	
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters) 
@@ -147,10 +150,12 @@ public class ecoCollectAlgorithmMultipleTrcks__x_de implements IAlgorithm
 		
 		op.addConstraint("w_te * u_e' <= y_t' * TRUCKCAP");
 		
-		
-		op.solve ("cplex");
-		if (!op.solutionIsFeasible()) throw new Net2PlanException ("A feasible solution was not found");
-		
+		op.solve(solverName.getString (), "solverLibraryName", solverLibraryName.getString () , "maxSolverTimeInSeconds" , maxSolverTimeInSeconds.getDouble ());
+
+		/* If no solution is found, quit */
+		if (op.feasibleSolutionDoesNotExist()) throw new Net2PlanException("The problem has no feasible solution");
+		if (!op.solutionIsFeasible()) throw new Net2PlanException("A feasible solution was not found");
+
 		final DoubleMatrix1D y_t = op.getPrimalSolution("y_t").view1D();
 		final DoubleMatrix2D x_te = op.getPrimalSolution("x_te").view2D();
 		final DoubleMatrix2D w_te = op.getPrimalSolution("w_te").view2D();
