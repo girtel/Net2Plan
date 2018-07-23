@@ -25,7 +25,7 @@ import com.net2plan.utils.Triple;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
-public class ecoCollectAlgorithm__x_de implements IAlgorithm 
+public class WasteCollectionAlgorithmSingleTrucks implements IAlgorithm 
 {
 	public static String ATTNAME_ISCONTAINER = "Container";
 	public static String ATTNAME_CONTAINERCAPACITY_KG = "containerCapacity_kg";
@@ -201,11 +201,9 @@ public class ecoCollectAlgorithm__x_de implements IAlgorithm
 	@Override
 	public String getDescription()
 	{
-		/* 
-		 * This algorithm check if a link has a container. In that case, the algorithm sets a percentage of garbage for each container."
-				+ "If percentage is higher or equal 80%, the atribbute isFull is set to true. Otherwise, is set to false. This will give us information"
-						+ "about what containers must be visited to collect garbage, trying to optimize the path*/
-		return "";
+		return "This algorithm computes the optimum route of a truck to minimize the total distance traversed, for collecting wastes in a city. "
+				+ "The city roads are links, and the city interconnections are nodes. Wastes are collected from containers that are placed in links, with a capacity and occupied capacity in kg of waste. "
+				+ "Trucks have a maximum capacity. Only containers with an occupied capacity over a threshold are selected for being collected. ";
 	}
 
 	@Override
