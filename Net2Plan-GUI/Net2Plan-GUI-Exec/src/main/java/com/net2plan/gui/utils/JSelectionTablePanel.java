@@ -13,7 +13,7 @@ import java.util.Vector;
  * <p>{@link JPanel} which contains two {@link JTable} to allow selecting elements.</p>
  *
  * @author Cesar San-Nicolas-Martinez, Elena Martin-Seoane
- * @since 1.7
+ * @since 0.6.1
  */
 
 public class JSelectionTablePanel extends JPanel implements ActionListener
@@ -151,11 +151,6 @@ public class JSelectionTablePanel extends JPanel implements ActionListener
         candidateElements.addAll(elements);
     }
 
-    public LinkedList<Object[]> getCandidateElements()
-    {
-        return candidateElements;
-    }
-
     /**
      * Obtains the list of selected elements
      * @return List of selected elements
@@ -203,14 +198,5 @@ public class JSelectionTablePanel extends JPanel implements ActionListener
             selectedModel.removeRow(0);
     }
 
-    public JTable getCandidateTable()
-    {
-        return candidateTable;
-    }
-
-    public JTable getSelectedTable()
-    {
-        return selectedTable;
-    }
 }
 
