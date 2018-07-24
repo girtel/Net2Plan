@@ -73,6 +73,7 @@ public class CreateHTMLKeywords
 		keywordDescriptionMap.put ("TCP" , Pair.of ("An example where the Transmission Control Protocol (TCP) is involved" , "tcp"));
 		keywordDescriptionMap.put ("Topology assignment (TA)" , Pair.of ("An example where the links and/or nodes in the network, are algorithm outputs." , "ta"));
 		keywordDescriptionMap.put ("Transmission power optimization" , Pair.of ("An example where the links are wireless links, and its transmission power is optimized." , "transmissionPower"));
+		keywordDescriptionMap.put ("SmartCity" , Pair.of ("An example where a problem in the context of Smart Cities is applied" , "SmartCity"));
 		keywordDescriptionMap.put ("Wireless" , Pair.of ("An example focused on the design of a wireless network" , "wireless"));
 		keywordDescriptionMap.put ("WDM" , Pair.of ("An example where Wavelength Division Multiplexing (WDM) technology is used" , "wdm"));
 		keywordDescriptionMap.put ("NFV" , Pair.of ("An example in the context of Network Function Virtualizatin (NFV)" , "nfv"));

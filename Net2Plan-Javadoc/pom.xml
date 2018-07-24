@@ -181,6 +181,7 @@
                                 <include>com/net2plan/examples/ocnbook/offline/**</include>
                                 <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
                                 <include>com/net2plan/examples/ocnbook/reports/**</include>
+                                <include>com/net2plan/examples/smartCity/**</include>
                             </sourceFileIncludes>
                             <sourceFileExcludes>
                                 <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>

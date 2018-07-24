@@ -28,83 +28,133 @@ import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
-// PABLO: If there is no penalization for using direct o->d links, or fixed cost for using link with > 0 traffic, 
+// PABLO: If there is no penalty for using direct o->d links, or fixed cost for using link with > 0 traffic, 
 // then there will be no gain in using distribution centers!!!! 
 
-/** This algorithm implements a waste collection scheme. More details in future versions
- *
+/** This algorithm implements a model for solving several variants of logistic problems, for a single commodity (a single type of goods). 
+ * <p>The nodes can be of the type of (i) candidate location of plants producing goods, (ii) candidate location of distribution centers receiving goods from plants 
+ * and delivering them to destination nodes, (iii) destination nodes.</p>
+ * <p>The algorithm should find the optimum placement of the plants and the distribution centers in the candidate locations, and the routes followed by the goods 
+ * from the plants (potentially via the distribution centers) to the destination nodes. </p>
+ * @net2plan.keywords SmartCity, JOM
+ * @net2plan.inputParameters 
+ * @author Pablo Pavon-Marino, Victoria Bueno-Delgado, Pilar Jimenez-Gomez 
  */
-public class LogisticVarious implements IAlgorithm 
+public class Offline_logisticPlacementAndAllocationAlgorithm implements IAlgorithm 
 {
-	public enum NODETYPE { PLANT , DISTRIBUTIONCENTER , DESTINATION  };
+	/** Valid types of a node (each node in the network must be of one and only one of these types
+	 */
+	public enum LOCATIONTYPE { 
+		/** A candidate location for placing factories or plants generating goods, the origin of the flows of commodities 
+		 */
+		CANDIDATELOCATION_PLANT , 
+		/** A candidate location for placing distribution centers, that can be traversed in the path from the origin (plant) to the destination locations
+		 */
+		CANDIDATELOCATION_DISTRIBUTIONCENTER , 
+		/** A location where the goods or the commodity should be delivered to, an end node of the flow of commodities. 
+		 */
+		DESTINATION  };
 	
-	private final static String ATTNAME_NODE_INPUTNODETYPE = "input_nodeType";
-	private static NODETYPE getNodeType (Node n , NODETYPE defalutValue) { try { return NODETYPE.valueOf(n.getAttribute(ATTNAME_NODE_INPUTNODETYPE)); } catch (Exception e) {return defalutValue;  } }
-	private static void setNodeType (Node n , NODETYPE type) { n.setAttribute(ATTNAME_NODE_INPUTNODETYPE , type.name()); }
+	/** Attribute of a node (input to the algorithm) indicating the location type that this node represents, valid values are those in LOCATIONTYPE enum
+	 */
+	public final static String ATTNAME_NODE_INPUT_LOCATIONTYPE = "input_locationType";
+	private static LOCATIONTYPE getNodeType (Node n , LOCATIONTYPE defalutValue) { try { return LOCATIONTYPE.valueOf(n.getAttribute(ATTNAME_NODE_INPUT_LOCATIONTYPE)); } catch (Exception e) {return defalutValue;  } }
+	private static void setNodeType (Node n , LOCATIONTYPE type) { n.setAttribute(ATTNAME_NODE_INPUT_LOCATIONTYPE , type.name()); }
 
-	private final static String ATTNAME_NODE_FIXEDSETTINGCOST = "input_fixedSettingCost";
-	private static Double getFixedSettingCost (Node n , Double defaultValue) { checkIsPlantOrStockCandidateLocation(n); return n.getAttributeAsDouble (ATTNAME_NODE_FIXEDSETTINGCOST , defaultValue); }
-	private static void setFixedSettingCost (Node n , Double value) { checkIsPlantOrStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_FIXEDSETTINGCOST , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_PLANT and CANDIDATELOCATION_DISTRIBUTIONCENTER indicating the fixed cost of placing 
+	 * in such candidate location, a plant or a distribution center (what applied, depending on the location type)
+	 */
+	public final static String ATTNAME_NODE_INPUT_FIXEDSETTINGCOST = "input_fixedSettingCost";
+	private static Double getFixedSettingCost (Node n , Double defaultValue) { checkIsPlantOrStockCandidateLocation(n); return n.getAttributeAsDouble (ATTNAME_NODE_INPUT_FIXEDSETTINGCOST , defaultValue); }
+	private static void setFixedSettingCost (Node n , Double value) { checkIsPlantOrStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_FIXEDSETTINGCOST , value); }
 	
-	private final static String ATTNAME_NODE_MINPRODUCTIONIFPLANTEXISTS = "input_minProductionPerPlantIfPlantExists";
-	private static Double getMinProductionPerPlantIfPlantExists (Node n , Double defaultValue) { checkIsPlantCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_MINPRODUCTIONIFPLANTEXISTS , defaultValue); }
-	private static void setMinProductionPerPlantIfPlantExists (Node n , Double value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MINPRODUCTIONIFPLANTEXISTS , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_PLANT indicating the minimum amount of goods that one plant in this location must generate, if placed in this location 
+	 */
+	public final static String ATTNAME_NODE_INPUT_MINPRODUCTIONIFPLANTEXISTS = "input_minProductionPerPlantIfPlantExists";
+	private static Double getMinProductionPerPlantIfPlantExists (Node n , Double defaultValue) { checkIsPlantCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MINPRODUCTIONIFPLANTEXISTS , defaultValue); }
+	private static void setMinProductionPerPlantIfPlantExists (Node n , Double value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MINPRODUCTIONIFPLANTEXISTS , value); }
 
-	private final static String ATTNAME_NODE_MAXPRODUCTIONIFPLANTEXISTS = "input_maxProductionPerPlantIfPlantExists";
-	private static Double getMaxProductionPerPlantIfPlantExists (Node n , Double defaultValue) { checkIsPlantCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_MAXPRODUCTIONIFPLANTEXISTS , defaultValue); }
-	private static void setMaxProductionPerPlantIfPlantExists (Node n , Double value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MAXPRODUCTIONIFPLANTEXISTS , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_PLANT indicating the maximum amount of goods that one plant in this location can generate, if placed in this location 
+	 */
+	public final static String ATTNAME_NODE_INPUT_MAXPRODUCTIONIFPLANTEXISTS = "input_maxProductionPerPlantIfPlantExists";
+	private static Double getMaxProductionPerPlantIfPlantExists (Node n , Double defaultValue) { checkIsPlantCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MAXPRODUCTIONIFPLANTEXISTS , defaultValue); }
+	private static void setMaxProductionPerPlantIfPlantExists (Node n , Double value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MAXPRODUCTIONIFPLANTEXISTS , value); }
 	
-	private final static String ATTNAME_NODE_MINNUMPLANINLOCATION  = "input_minNumPlantsInLocation";
-	private static int getMinNumPlantsInLocation (Node n , Integer defaultValue) { checkIsPlantCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_MINNUMPLANINLOCATION , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
-	private static void setMinNumPlantsInLocation (Node n , int value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MINNUMPLANINLOCATION , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_PLANT indicating the minimum number of plants that must be placed in this location. E.g. if equals to one, means that this location will have at least one plant 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_MINNUMPLANINLOCATION  = "input_minNumPlantsInLocation";
+	private static int getMinNumPlantsInLocation (Node n , Integer defaultValue) { checkIsPlantCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MINNUMPLANINLOCATION , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
+	private static void setMinNumPlantsInLocation (Node n , int value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MINNUMPLANINLOCATION , value); }
 	
-	private final static String ATTNAME_NODE_MAXNUMPLANINLOCATION  = "input_maxNumPlantsInLocation";
-	private static int getMaxNumPlantsInLocation (Node n , Integer defaultValue) { checkIsPlantCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_MAXNUMPLANINLOCATION , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
-	private static void setMaxNumPlantsInLocation (Node n , int value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MAXNUMPLANINLOCATION , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_PLANT indicating the maximum number of plants that can be placed in this location. E.g. if equals to zero, means that this location can have no plants placed 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_MAXNUMPLANINLOCATION  = "input_maxNumPlantsInLocation";
+	private static int getMaxNumPlantsInLocation (Node n , Integer defaultValue) { checkIsPlantCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MAXNUMPLANINLOCATION , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
+	private static void setMaxNumPlantsInLocation (Node n , int value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MAXNUMPLANINLOCATION , value); }
 
-	private final static String ATTNAME_NODE_MINNUMDISTRIBUTIONCENTERINLOCATION = "input_minNumDistributionCentersInLocation";
-	private static int getMinNumDistributionCentersInLocation (Node n , Integer defaultValue) { checkIsStockCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_MINNUMDISTRIBUTIONCENTERINLOCATION , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
-	private static void setMinNumDistributionCentersInLocation (Node n , int value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MINNUMDISTRIBUTIONCENTERINLOCATION , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_DISTRIBUTIONCENTER indicating the minimum number of distribution centers that must be placed in this location. E.g. if equals to one, means that this location will have at least one DC 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_MINNUMDISTRIBUTIONCENTERINLOCATION = "input_minNumDistributionCentersInLocation";
+	private static int getMinNumDistributionCentersInLocation (Node n , Integer defaultValue) { checkIsStockCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MINNUMDISTRIBUTIONCENTERINLOCATION , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
+	private static void setMinNumDistributionCentersInLocation (Node n , int value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MINNUMDISTRIBUTIONCENTERINLOCATION , value); }
 	
-	private final static String ATTNAME_NODE_MAXNUMDISTRIBUTIONCENTERINLOCATION = "input_maxNumDistributionCentersInLocation";
-	private static int getMaxNumDistributionCentersInLocation (Node n , Integer defaultValue) { checkIsStockCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_MAXNUMDISTRIBUTIONCENTERINLOCATION , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
-	private static void setMaxNumDistributionCentersInLocation (Node n , int value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MAXNUMDISTRIBUTIONCENTERINLOCATION , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_DISTRIBUTIONCENTER indicating the maximum number of distribution centers that can be placed in this location. E.g. if equals to zero, means that this location will have no DCs 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_MAXNUMDISTRIBUTIONCENTERINLOCATION = "input_maxNumDistributionCentersInLocation";
+	private static int getMaxNumDistributionCentersInLocation (Node n , Integer defaultValue) { checkIsStockCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MAXNUMDISTRIBUTIONCENTERINLOCATION , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
+	private static void setMaxNumDistributionCentersInLocation (Node n , int value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MAXNUMDISTRIBUTIONCENTERINLOCATION , value); }
 
-	private final static String ATTNAME_NODE_PENALIZATIONPERUNDELIVEREDUNIT  = "input_penalizationPerUndeliveredUnit";
-	private static Double getPenalizationPerUndeliveredUnit (Node n , Double defaultValue) { checkIsDestinationCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_PENALIZATIONPERUNDELIVEREDUNIT , defaultValue); }
-	private static void setPenalizationPerUndeliveredUnit (Node n , Double value) { checkIsDestinationCandidateLocation(n); n.setAttribute (ATTNAME_NODE_PENALIZATIONPERUNDELIVEREDUNIT , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type DESTINATION indicating the cost penalization per unit of good that this destination demands, but does not receive 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_PENALIZATIONPERUNDELIVEREDUNIT  = "input_penalizationPerUndeliveredUnit";
+	private static Double getPenalizationPerUndeliveredUnit (Node n , Double defaultValue) { checkIsDestinationCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_INPUT_PENALIZATIONPERUNDELIVEREDUNIT , defaultValue); }
+	private static void setPenalizationPerUndeliveredUnit (Node n , Double value) { checkIsDestinationCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_PENALIZATIONPERUNDELIVEREDUNIT , value); }
 	
-	private final static String ATTNAME_NODE_MAXBLOCKEDGOODS = "input_maxBlockedGoods";
-	private static Double getMaxBlockedGoods (Node n , Double defaultValue) { checkIsDestinationCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_MAXBLOCKEDGOODS , defaultValue); }
-	private static void setMaxBlockedGoods (Node n , Double value) { checkIsDestinationCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MAXBLOCKEDGOODS , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type DESTINATION indicating the maximum number of units of good blocked: the ones that this destination demands, but does not receive 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_MAXBLOCKEDGOODS = "input_maxBlockedGoods";
+	private static Double getMaxBlockedGoods (Node n , Double defaultValue) { checkIsDestinationCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MAXBLOCKEDGOODS , defaultValue); }
+	private static void setMaxBlockedGoods (Node n , Double value) { checkIsDestinationCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MAXBLOCKEDGOODS , value); }
 
-	private final static String ATTNAME_NODE_DEMANDSIZE = "input_demandSizeThisNode";
-	private static Double getDemandSize (Node n , Double defaultValue) { checkIsDestinationCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_DEMANDSIZE , defaultValue); }
-	private static void setDemandSize (Node n , Double value) { checkIsDestinationCandidateLocation(n); n.setAttribute (ATTNAME_NODE_DEMANDSIZE , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type DESTINATION indicating the number of units of good demanded by this destination node 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_DEMANDSIZE = "input_demandSizeThisNode";
+	private static Double getDemandSize (Node n , Double defaultValue) { checkIsDestinationCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_INPUT_DEMANDSIZE , defaultValue); }
+	private static void setDemandSize (Node n , Double value) { checkIsDestinationCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_DEMANDSIZE , value); }
 
-	private final static String ATTNAME_NODE_MAXSTOCKCAPACITY = "input_maxStorageCapacity";
-	private static Double getMaxStorageCapacity  (Node n , Double defaultValue) { checkIsStockCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_MAXSTOCKCAPACITY , defaultValue); }
-	private static void setMaxStorageCapacity (Node n , Double value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MAXSTOCKCAPACITY , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_DISTRIBUTIONCENTER indicating the maximum amount of units of good that can traverse each distribution center placed in this location 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_MAXSTOCKCAPACITY = "input_maxStorageCapacity";
+	private static Double getMaxStorageCapacity  (Node n , Double defaultValue) { checkIsStockCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MAXSTOCKCAPACITY , defaultValue); }
+	private static void setMaxStorageCapacity (Node n , Double value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MAXSTOCKCAPACITY , value); }
 
-	private final static String ATTNAME_NODE_MINSTOCKCAPACITY = "input_minStorageCapacity";
-	private static Double getMinStorageCapacity  (Node n , Double defaultValue) { checkIsStockCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_MINSTOCKCAPACITY , defaultValue); }
-	private static void setMinStorageCapacity (Node n , Double value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_MINSTOCKCAPACITY , value); }
+	/** Attribute of a node (input to the algorithm), valid for nodes of the type CANDIDATELOCATION_DISTRIBUTIONCENTER indicating the minimum amount of units of good that should traverse each distribution center placed in this location 
+	 */
+	public  final static String ATTNAME_NODE_INPUT_MINSTOCKCAPACITY = "input_minStorageCapacity";
+	private static Double getMinStorageCapacity  (Node n , Double defaultValue) { checkIsStockCandidateLocation(n);return n.getAttributeAsDouble (ATTNAME_NODE_INPUT_MINSTOCKCAPACITY , defaultValue); }
+	private static void setMinStorageCapacity (Node n , Double value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_INPUT_MINSTOCKCAPACITY , value); }
 
-	private final static String ATTNAME_LINK_COSTPERDEMANDUNIT = "input_costPerDemandUnit";
-	private static Double getCostPerDemandUnit (Link n , Double defaultValue) { return n.getAttributeAsDouble (ATTNAME_LINK_COSTPERDEMANDUNIT , defaultValue); }
-	private static void setCostPerDemandUnit (Link n , Double value) { n.setAttribute (ATTNAME_LINK_COSTPERDEMANDUNIT , value); }
+	/** Attribute of a link between two locations (input to the algorithm), indicating the cost per unit of good that traverses this link 
+	 */
+	public  final static String ATTNAME_LINK_INPUT_COSTPERDEMANDUNIT = "input_costPerDemandUnit";
+	private static Double getCostPerDemandUnit (Link n , Double defaultValue) { return n.getAttributeAsDouble (ATTNAME_LINK_INPUT_COSTPERDEMANDUNIT , defaultValue); }
+	private static void setCostPerDemandUnit (Link n , Double value) { n.setAttribute (ATTNAME_LINK_INPUT_COSTPERDEMANDUNIT , value); }
 
-	private final static String ATTNAME_NODE_NUMBEROFPLACEDPLANTS = "output_numberOfPlacedPlants";
-	private static int getNumberOfPlacedPlants (Node n , Integer defaultValue) { checkIsPlantCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_NUMBEROFPLACEDPLANTS , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
-	private static void setNumberOfPlacedPlants (Node n , int value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_NUMBEROFPLACEDPLANTS , value); }
+	/** Attribute of a location (output from the algorithm), valid for nodes of the type CANDIDATELOCATION_PLANT, indicating the number of plants finally placed in the given location (0,1,2,...) 
+	 */
+	public  final static String ATTNAME_NODE_OUTPUT_NUMBEROFPLACEDPLANTS = "output_numberOfPlacedPlants";
+	private static int getNumberOfPlacedPlants (Node n , Integer defaultValue) { checkIsPlantCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_OUTPUT_NUMBEROFPLACEDPLANTS , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
+	private static void setNumberOfPlacedPlants (Node n , int value) { checkIsPlantCandidateLocation(n); n.setAttribute (ATTNAME_NODE_OUTPUT_NUMBEROFPLACEDPLANTS , value); }
 	
-	private final static String ATTNAME_NODE_NUMBEROFDISTRIBUTIONCENTERS = "output_numberOfDistributionCenters";
-	private static int getNumberOfPlacedDistributionCenters (Node n , Integer defaultValue) { checkIsStockCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_NUMBEROFDISTRIBUTIONCENTERS , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
-	private static void setNumberOfPlacedDistributionCenters (Node n , int value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_NUMBEROFDISTRIBUTIONCENTERS , value); }
+	/** Attribute of a location (output from the algorithm), valid for nodes of the type CANDIDATELOCATION_DISTRIBUTIONCENTER, indicating the number of distribution centers finally placed in the given location (0,1,2,...) 
+	 */
+	public  final static String ATTNAME_NODE_OUTPUT_NUMBEROFDISTRIBUTIONCENTERS = "output_numberOfDistributionCenters";
+	private static int getNumberOfPlacedDistributionCenters (Node n , Integer defaultValue) { checkIsStockCandidateLocation(n); final Double res = n.getAttributeAsDouble (ATTNAME_NODE_OUTPUT_NUMBEROFDISTRIBUTIONCENTERS , defaultValue == null? (Double) null : defaultValue.doubleValue()); return res == null? null : res.intValue(); }
+	private static void setNumberOfPlacedDistributionCenters (Node n , int value) { checkIsStockCandidateLocation(n); n.setAttribute (ATTNAME_NODE_OUTPUT_NUMBEROFDISTRIBUTIONCENTERS , value); }
 	
-	private static SortedSet<Node> getCandidatePlants (NetPlan np) { return np.getNodes().stream().filter(n->getNodeType(n, null) == NODETYPE.PLANT).collect(Collectors.toCollection(TreeSet::new)); }  
-	private static SortedSet<Node> getCandidateDistributionCenters (NetPlan np) { return np.getNodes().stream().filter(n->getNodeType(n, null) == NODETYPE.DISTRIBUTIONCENTER).collect(Collectors.toCollection(TreeSet::new)); }  
-	private static SortedSet<Node> getCandidateDestinations (NetPlan np) { return np.getNodes().stream().filter(n->getNodeType(n, null) == NODETYPE.DESTINATION).collect(Collectors.toCollection(TreeSet::new)); }  
+	private static SortedSet<Node> getCandidatePlants (NetPlan np) { return np.getNodes().stream().filter(n->getNodeType(n, null) == LOCATIONTYPE.CANDIDATELOCATION_PLANT).collect(Collectors.toCollection(TreeSet::new)); }  
+	private static SortedSet<Node> getCandidateDistributionCenters (NetPlan np) { return np.getNodes().stream().filter(n->getNodeType(n, null) == LOCATIONTYPE.CANDIDATELOCATION_DISTRIBUTIONCENTER).collect(Collectors.toCollection(TreeSet::new)); }  
+	private static SortedSet<Node> getCandidateDestinations (NetPlan np) { return np.getNodes().stream().filter(n->getNodeType(n, null) == LOCATIONTYPE.DESTINATION).collect(Collectors.toCollection(TreeSet::new)); }  
 	
 	private static double getCapacity (Link n) { return n.getCapacity();  }
 	private static void setCapacity (Link n , double value) { n.setCapacity(value); }
@@ -113,20 +163,18 @@ public class LogisticVarious implements IAlgorithm
 	private InputParameter maxNumberOfPlants = new InputParameter ("maxNumberOfPlants", (int) 100 , "Maximum number of plants to be placed" , 0 , Integer.MAX_VALUE);
 	private InputParameter minNumberOfDistributionCenters = new InputParameter ("minNumberOfDistributionCenters", (int) 0 , "Minimum number of distribution centers to be placed" , 0 , Integer.MAX_VALUE);
 	private InputParameter maxNumberOfDistributionCenters = new InputParameter ("maxNumberOfDistributionCenters", (int) 100 , "Maximum number of distribution centers to be placed" , 0 , Integer.MAX_VALUE);
-	private InputParameter forbidRoutesNotTraversingADistributionCenter = new InputParameter ("forbidRoutesNotTraversingADistributionCenter", (boolean) true , "If true the direct connections between the origin and destinations, not traversing a distribution center, are not permited");
-	private InputParameter useGeographicalDistanceAsLinkCosts = new InputParameter ("useGeographicalDistanceAsLinkCosts", (boolean) true , "If true the link cost is made equal to the link lengths, if not, the cost attribute in the links is used");
+	private InputParameter forbidRoutesNotTraversingADistributionCenter = new InputParameter ("forbidRoutesNotTraversingADistributionCenter", (boolean) true , "If true the direct connections between the origin and destinations, not traversing a distribution center, are forbidden");
+	private InputParameter useGeographicalDistanceAsLinkCosts = new InputParameter ("useGeographicalDistanceAsLinkCosts", (boolean) true , "If true the link cost is made equal to the link lengths, if not, the cost attribute in the links is used as link cost");
 	private InputParameter maxDistanceOriginToDestinationInKm = new InputParameter ("maxDistanceOriginToDestinationInKm", (double) 1000.0 , "Maximum distance allowed in any route from the plant to the destination" , 0.0 , true , Double.MAX_VALUE , false);
 	private InputParameter solverName = new InputParameter ("solverName", "#select# cplex mipcl glpk xpress", "The solver name to be used by JOM. GLPK and IPOPT are free, XPRESS and CPLEX commercial. GLPK, XPRESS and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
 	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "" , "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
 	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
-	private InputParameter defaultLinkCapacityInTraversableGoods = new InputParameter ("defaultLinkCapacityInTraversableGoods", (double) 1e12 , "Maximum amount if goods that can traverse a link" , 0.0 , true , Double.MAX_VALUE , false);
-	private InputParameter aaa_createInitialTopologyNotApplyAlgorithm = new InputParameter ("aaa_createInitialTopologyNotApplyAlgorithm", true , "Creates an initial topology, and does not run the algorithm");
-	private InputParameter aaa_numOrigins = new InputParameter ("aaa_numOrigins", 5 , "Number of origin nodes" , 1 , Integer.MAX_VALUE);
-	private InputParameter aaa_numDcs = new InputParameter ("aaa_numDcs", 3 , "Number of origin nodes" , 0 , Integer.MAX_VALUE);
-	private InputParameter aaa_numDestinations = new InputParameter ("aaa_numDestinations", 5 , "Number of origin nodes" , 1 , Integer.MAX_VALUE);
+	private InputParameter defaultLinkCapacityInTraversableGoods = new InputParameter ("defaultLinkCapacityInTraversableGoods", (double) 1e12 , "Maximum amount of goods that can traverse a link" , 0.0 , true , Double.MAX_VALUE , false);
+	private InputParameter aaa_createInitialTopologyNotApplyAlgorithm = new InputParameter ("aaa_createInitialTopologyNotApplyAlgorithm", true , "Creates an initial example topology, and does not run the algorithm");
+	private InputParameter aaa_numOrigins = new InputParameter ("aaa_numOrigins", 5 , "Number of origin nodes in the initial example topology" , 1 , Integer.MAX_VALUE);
+	private InputParameter aaa_numDcs = new InputParameter ("aaa_numDcs", 3 , "Number of distribution centers in the initial example topology" , 0 , Integer.MAX_VALUE);
+	private InputParameter aaa_numDestinations = new InputParameter ("aaa_numDestinations", 5 , "Number of destination nodes in the initial example topology" , 1 , Integer.MAX_VALUE);
 
-	
-	
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters) 
 	{
@@ -134,19 +182,19 @@ public class LogisticVarious implements IAlgorithm
 
 		if (aaa_createInitialTopologyNotApplyAlgorithm.getBoolean()) { createInitialTopology(netPlan); return "Topology created."; }
 		
-		if (netPlan.getNodes().stream().anyMatch(n->getNodeType(n, null) == null)) throw new Net2PlanException ("Unknown node type. Valid types are: " + Arrays.toString(NODETYPE.values()));
+		if (netPlan.getNodes().stream().anyMatch(n->getNodeType(n, null) == null)) throw new Net2PlanException ("Unknown node type. Valid types are: " + Arrays.toString(LOCATIONTYPE.values()));
 		
 		/* Remove links that are between destinations, between origins, between stocks, or from destination to origin */
 		for (Link e : new ArrayList<> (netPlan.getLinks()))
 		{
-			if (getNodeType(e.getOriginNode(), null) == NODETYPE.PLANT && getNodeType(e.getDestinationNode(), null) == NODETYPE.PLANT) e.remove();
-			else if (getNodeType(e.getOriginNode(), null) == NODETYPE.DISTRIBUTIONCENTER && getNodeType(e.getDestinationNode(), null) == NODETYPE.DISTRIBUTIONCENTER) e.remove();
-			else if (getNodeType(e.getOriginNode(), null) == NODETYPE.DESTINATION && getNodeType(e.getDestinationNode(), null) == NODETYPE.DESTINATION) e.remove();
-			else if (getNodeType(e.getOriginNode(), null) == NODETYPE.DESTINATION && getNodeType(e.getDestinationNode(), null) == NODETYPE.PLANT) e.remove();
-			else if (getNodeType(e.getOriginNode(), null) == NODETYPE.DESTINATION && getNodeType(e.getDestinationNode(), null) == NODETYPE.DISTRIBUTIONCENTER) e.remove();
-			else if (getNodeType(e.getOriginNode(), null) == NODETYPE.DISTRIBUTIONCENTER && getNodeType(e.getDestinationNode(), null) == NODETYPE.PLANT) e.remove();
+			if (getNodeType(e.getOriginNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_PLANT && getNodeType(e.getDestinationNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_PLANT) e.remove();
+			else if (getNodeType(e.getOriginNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_DISTRIBUTIONCENTER && getNodeType(e.getDestinationNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_DISTRIBUTIONCENTER) e.remove();
+			else if (getNodeType(e.getOriginNode(), null) == LOCATIONTYPE.DESTINATION && getNodeType(e.getDestinationNode(), null) == LOCATIONTYPE.DESTINATION) e.remove();
+			else if (getNodeType(e.getOriginNode(), null) == LOCATIONTYPE.DESTINATION && getNodeType(e.getDestinationNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_PLANT) e.remove();
+			else if (getNodeType(e.getOriginNode(), null) == LOCATIONTYPE.DESTINATION && getNodeType(e.getDestinationNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_DISTRIBUTIONCENTER) e.remove();
+			else if (getNodeType(e.getOriginNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_DISTRIBUTIONCENTER && getNodeType(e.getDestinationNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_PLANT) e.remove();
 			if (forbidRoutesNotTraversingADistributionCenter.getBoolean())
-				if (getNodeType(e.getOriginNode(), null) == NODETYPE.PLANT && getNodeType(e.getDestinationNode(), null) == NODETYPE.DESTINATION) e.remove();
+				if (getNodeType(e.getOriginNode(), null) == LOCATIONTYPE.CANDIDATELOCATION_PLANT && getNodeType(e.getDestinationNode(), null) == LOCATIONTYPE.DESTINATION) e.remove();
 		}
 		/* Add links if they are not there. If added, put length as cost */
 		for (Node origin : getCandidatePlants(netPlan))
@@ -296,9 +344,10 @@ public class LogisticVarious implements IAlgorithm
 		}
 		
 		/* Remove unused routes and demands, and make offered traffic equal to carried traffic */
+		for (Route r : new ArrayList<> (netPlan.getRoutes())) if (r.getCarriedTraffic() <= 1e-3) r.remove();
 		for (Demand d : netPlan.getDemands()) d.setOfferedTraffic(d.getCarriedTraffic());
 		for (Demand d : new ArrayList<> (netPlan.getDemands()))
-			if (d.getCarriedTraffic() <= 1e-3)
+			if (d.getRoutes().isEmpty())
 				d.remove();
 		
 		for (Node n : list_cand_a)
@@ -337,7 +386,7 @@ public class LogisticVarious implements IAlgorithm
 				check (demandedTraffic - trafReceived <= maxBlockedTraffic + 1e-3);
 				break;
 			}
-			case DISTRIBUTIONCENTER:
+			case CANDIDATELOCATION_DISTRIBUTIONCENTER:
 			{
 				final int num = getNumberOfPlacedDistributionCenters(n, -1); check (num >= 0);
 				totalNumDcs += num;
@@ -351,7 +400,7 @@ public class LogisticVarious implements IAlgorithm
 				check (traf >= numStocks * getMinStorageCapacity(n, 0.0) - 1e-3);
 				break;
 			}
-			case PLANT:
+			case CANDIDATELOCATION_PLANT:
 			{
 				final int num = getNumberOfPlacedPlants(n, -1); check (num >= 0);
 				totalNumPlants += num;
@@ -391,10 +440,10 @@ public class LogisticVarious implements IAlgorithm
 		return InputParameter.getInformationAllInputParameterFieldsOfObject(this);
 	}
 	
-	private static void checkIsPlantOrStockCandidateLocation (Node n) { if (getNodeType(n , null) != NODETYPE.PLANT && getNodeType(n , null) != NODETYPE.DISTRIBUTIONCENTER) throw new Net2PlanException (); }
-	private static void checkIsPlantCandidateLocation (Node n) { if (getNodeType(n , null) != NODETYPE.PLANT) throw new Net2PlanException (); }
-	private static void checkIsStockCandidateLocation (Node n) { if (getNodeType(n , null) != NODETYPE.DISTRIBUTIONCENTER) throw new Net2PlanException (); }
-	private static void checkIsDestinationCandidateLocation (Node n) { if (getNodeType(n , null) != NODETYPE.DESTINATION) throw new Net2PlanException (); }
+	private static void checkIsPlantOrStockCandidateLocation (Node n) { if (getNodeType(n , null) != LOCATIONTYPE.CANDIDATELOCATION_PLANT && getNodeType(n , null) != LOCATIONTYPE.CANDIDATELOCATION_DISTRIBUTIONCENTER) throw new Net2PlanException (); }
+	private static void checkIsPlantCandidateLocation (Node n) { if (getNodeType(n , null) != LOCATIONTYPE.CANDIDATELOCATION_PLANT) throw new Net2PlanException (); }
+	private static void checkIsStockCandidateLocation (Node n) { if (getNodeType(n , null) != LOCATIONTYPE.CANDIDATELOCATION_DISTRIBUTIONCENTER) throw new Net2PlanException (); }
+	private static void checkIsDestinationCandidateLocation (Node n) { if (getNodeType(n , null) != LOCATIONTYPE.DESTINATION) throw new Net2PlanException (); }
 
 	private static <T> BidiMap<T,Integer> createBidiMap (Collection<T> col)
 	{
@@ -422,7 +471,7 @@ public class LogisticVarious implements IAlgorithm
 		for (int cont = 0; cont < num_o ; cont ++)
 		{
 			final Node n = netPlan.addNode(0, cont, "Origin-" + cont, null);
-			setNodeType (n , NODETYPE.PLANT);
+			setNodeType (n , LOCATIONTYPE.CANDIDATELOCATION_PLANT);
 			setFixedSettingCost(n, 100.0);
 			setMinProductionPerPlantIfPlantExists(n, 0.0);
 			setMaxProductionPerPlantIfPlantExists(n, Double.MAX_VALUE);
@@ -432,7 +481,7 @@ public class LogisticVarious implements IAlgorithm
 		for (int cont = 0; cont < num_a ; cont ++)
 		{
 			final Node n = netPlan.addNode(5, cont, "DistributionCenter-" + cont, null);
-			setNodeType (n , NODETYPE.DISTRIBUTIONCENTER);
+			setNodeType (n , LOCATIONTYPE.CANDIDATELOCATION_DISTRIBUTIONCENTER);
 			setFixedSettingCost(n, 100.0);
 			setMinStorageCapacity(n, 0.0);
 			setMaxStorageCapacity(n, Double.MAX_VALUE);
@@ -442,7 +491,7 @@ public class LogisticVarious implements IAlgorithm
 		for (int cont = 0; cont < num_d ; cont ++)
 		{
 			final Node n = netPlan.addNode(10, cont, "Destination-" + cont, null);
-			setNodeType (n , NODETYPE.DESTINATION);
+			setNodeType (n , LOCATIONTYPE.DESTINATION);
 			setPenalizationPerUndeliveredUnit(n, 100.0);
 			setMaxBlockedGoods(n, 0.0);
 			setDemandSize(n, 50.0);

@@ -461,12 +461,12 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
         	expandCollapseAttributesOption = new AjtRcMenu("Expand all attributes (one column per attribute)", e->
             {
             	setAttributesAreCollapsedInOneColumn(false);
-            }, (a,b)->b>0 && getSelectedNetworkElementsNorFr().stream().anyMatch(e->e.getAttributes().size()>0), null);
+            }, (a,b)->true, null);
         else
         	expandCollapseAttributesOption = new AjtRcMenu("Collapse all attributes in one column", e->
             {
                 this.setAttributesAreCollapsedInOneColumn(true);
-            }, (a,b)->b>0 && getSelectedNetworkElementsNorFr().stream().anyMatch(e->e.getAttributes().size()>0), null);
+            }, (a,b)->true, null);
 
         return new AjtRcMenu("Attributes...", null , (a,b)->true, Arrays.asList(
     		new AjtRcMenu("Add attributes to selected elements", e->

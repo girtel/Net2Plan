@@ -1,10 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2016 Pablo Pavon Mari�o.
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
+ * are made available under the terms of the 2-clause BSD License 
  * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- ******************************************************************************/
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 
 
@@ -29,24 +32,23 @@ import com.net2plan.utils.Triple;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
-public class UTNMetricsReport implements IReport
+/** This is a report for estimating some performances of the traffic in a city, where traffic flows, road capacityies etc. are modeled according to 
+ * BPR rules. E.g. this can be used to estimate the performances of the UE and SUE models applied in the example city, both provided in this package  
+ * 
+ * @net2plan.keywords SmartCity
+ * @net2plan.inputParameters 
+ * @author Pablo Pavon-Marino, Victoria Bueno-Delgado, Pilar Jimenez-Gomez 
+ */
+public class Report_urbanTransportationNetworkMetrics implements IReport
 {
 	private InputParameter alpha = new InputParameter ("alpha", (double) 1 , "Alpha parameter in the BPR model" , 0 , true , Double.MAX_VALUE , true);
 	private InputParameter beta = new InputParameter ("beta", (double) 4 , "Beta parameter in the BPR model" , 0 , true , Double.MAX_VALUE , true);
-
-	/* Input parameters */
-	private NetPlan netPlan;
-	private Map<String, String> reportParameters;
 
 	@Override
 	public String executeReport(NetPlan netPlan, Map<String, String> reportParameters, Map<String, String> net2planParameters)
 	{
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, reportParameters);
-
-		/* Input parameters */
-		this.netPlan = netPlan;
-		this.reportParameters = reportParameters;
 
 		/* Some initial statistics */
 		final int E = netPlan.getNumberOfLinks();
@@ -56,8 +58,8 @@ public class UTNMetricsReport implements IReport
 		{
 			final double Qa = a.getCapacity();
 			final double Va = a.getCarriedTraffic();
-			final double c0 = Double.parseDouble(a.getAttribute(UTNConstants.ATTRNAME_C0A));
-			final double Ca = UTNConstants.bprCaComputation(c0,alpha.getDouble(),Va,Qa,beta.getDouble());
+			final double c0 = Double.parseDouble(a.getAttribute(UtnConstants.ATTRNAME_C0A));
+			final double Ca = UtnConstants.bprCaComputation(c0,alpha.getDouble(),Va,Qa,beta.getDouble());
 			vector_Ca.set(a.getIndex() , Ca);
 			vector_C0a.set(a.getIndex() , c0);
 		}
@@ -106,10 +108,10 @@ public class UTNMetricsReport implements IReport
 		for (Link a : netPlan.getLinks())
 		{
 			out.append("<tr>");
-			final double c0 = Double.parseDouble(a.getAttribute(UTNConstants.ATTRNAME_C0A));
+			final double c0 = Double.parseDouble(a.getAttribute(UtnConstants.ATTRNAME_C0A));
 			final double Qa = a.getCapacity();
 			final double Va = a.getCarriedTraffic();
-			final double Ca = UTNConstants.bprCaComputation(c0,alpha.getDouble(),Va,Qa,beta.getDouble());
+			final double Ca = UtnConstants.bprCaComputation(c0,alpha.getDouble(),Va,Qa,beta.getDouble());
 			out.append("<td>" + a.getIndex() + "</td>");
 			out.append("<td>" + a.getOriginNode().getName() + "</td>");
 			out.append("<td>" + a.getDestinationNode().getName() + "</td>");

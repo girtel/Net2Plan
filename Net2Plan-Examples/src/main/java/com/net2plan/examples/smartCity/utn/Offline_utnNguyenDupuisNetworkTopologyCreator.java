@@ -1,10 +1,13 @@
-// 
-
-
-// PABLO: NEED TO PUT THE CAPACITIES IN THE LINKS, AND TO ADD THE VIRTUAL LINKS BEFORE I CAN SOLVE THIS. IT WILL TAKE TIME!!!
-// lA VELOCIDAD LIBRE ES EL CAMPO V0PRT
-// METER EL LINKPOLY
-
+/*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the 2-clause BSD License 
+ * which accompanies this distribution, and is available at
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 package com.net2plan.examples.smartCity.utn;
 
@@ -20,17 +23,14 @@ import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
-/** This is a template to be used in the lab work, a starting point for the students to develop their programs
- * 
+/** This is an algorithm for creating a test topology to be used in the UE and SUE models. 
+ * @net2plan.description 
+ * @net2plan.keywords SmartCity
+ * @net2plan.inputParameters 
+ * @author Pablo Pavon-Marino, Victoria Bueno-Delgado, Pilar Jimenez-Gomez 
  */
-public class UTNNguyenDupuisNetworkCreator implements IAlgorithm
+public class Offline_utnNguyenDupuisNetworkTopologyCreator implements IAlgorithm
 {
-	/** The method called by Net2Plan to run the algorithm (when the user presses the "Execute" button)
-	 * @param netPlan The input network design. The developed algorithm should modify it: it is the way the new design is returned
-	 * @param algorithmParameters Pair name-value for the current value of the input parameters
-	 * @param net2planParameters Pair name-value for some general parameters of Net2Plan
-	 * @return
-	 */
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
 	{
@@ -107,8 +107,8 @@ public class UTNNguyenDupuisNetworkCreator implements IAlgorithm
 			q_a [e] = linkInfo [3];
 			final Link link = netPlan.addLink(s , t , q_a [e] , netPlan.getNodePairEuclideanDistance(s,t) , 50 , null);
 			priorFlow_a [e] = linkInfo [4];
-			link.setAttribute(UTNConstants.ATTRNAME_C0A , "" + c_a [e]);
-			link.setAttribute(UTNConstants.ATTRNAME_MONITOREDVEHICUCLERATE , "" + priorFlow_a [e]);
+			link.setAttribute(UtnConstants.ATTRNAME_C0A , "" + c_a [e]);
+			link.setAttribute(UtnConstants.ATTRNAME_MONITOREDVEHICUCLERATE , "" + priorFlow_a [e]);
 		}
 		
 		/*  */
@@ -138,15 +138,13 @@ public class UTNNguyenDupuisNetworkCreator implements IAlgorithm
 			final Node s = netPlan.getNode((int) demandInfo [0]-1);
 			final Node t = netPlan.getNode((int) demandInfo [1]-1);
 			final Demand demand = netPlan.addDemand(s , t , demandInfo [2] , RoutingType.SOURCE_ROUTING ,  null);
-			demand.setAttribute(UTNConstants.ATTRNAME_MONITOREDVEHICUCLERATE , "" + demandInfo [3]);
+			demand.setAttribute(UtnConstants.ATTRNAME_MONITOREDVEHICUCLERATE , "" + demandInfo [3]);
 		}
 		
 		
 		return "Ok!"; // this is the message that will be shown in the screen at the end of the algorithm
 	}
 
-	/** Returns a description message that will be shown in the graphical user interface
-	 */
 	@Override
 	public String getDescription()
 	{
@@ -154,9 +152,6 @@ public class UTNNguyenDupuisNetworkCreator implements IAlgorithm
 	}
 
 	
-	/** Returns the list of input parameters of the algorithm. For each parameter, you shoudl return a Triple with its name, default value and a description
-	 * @return
-	 */
 	@Override
 	public List<Triple<String, String, String>> getParameters()
 	{

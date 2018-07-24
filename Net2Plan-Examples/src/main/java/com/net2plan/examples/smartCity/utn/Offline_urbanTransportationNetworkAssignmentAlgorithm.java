@@ -1,7 +1,13 @@
-// PABLO: NEED TO PUT THE CAPACITIES IN THE LINKS, AND TO ADD THE VIRTUAL LINKS BEFORE I CAN SOLVE THIS. IT WILL TAKE TIME!!!
-// lA VELOCIDAD LIBRE ES EL CAMPO V0PRT
-// METER EL LINKPOLY
-
+/*******************************************************************************
+ * Copyright (c) 2017 Pablo Pavon Marino and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the 2-clause BSD License 
+ * which accompanies this distribution, and is available at
+ * https://opensource.org/licenses/BSD-2-Clause
+ *
+ * Contributors:
+ *     Pablo Pavon Marino and others - initial API and implementation
+ *******************************************************************************/
 
 package com.net2plan.examples.smartCity.utn;
 
@@ -22,41 +28,36 @@ import com.net2plan.utils.Triple;
 
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
-/** This is a template to be used in the lab work, a starting point for the students to develop their programs
- * 
+/** This algorithm implements several methods for estimating the urban traffic in a city, according to two models: User Equilibrium (UE) and Stochastic User Equilibrium( SUE). 
+ * The city is modeled as links (streets) between nodes (interconnections of streets). 
+ * The models are solved by finding a numerical solution to the related convex formulations that model the equilibrium equations for 
+ * the traffic in the roads.
+ * @net2plan.description 
+ * @net2plan.keywords SmartCity, JOM
+ * @net2plan.inputParameters 
+ * @author Pablo Pavon-Marino, Victoria Bueno-Delgado, Pilar Jimenez-Gomez 
  */
-public class UTNAssignmentAlgorithm implements IAlgorithm
+public class Offline_urbanTransportationNetworkAssignmentAlgorithm implements IAlgorithm
 {
 	private InputParameter useExistingRoutes = new InputParameter ("useExistingRoutes", false , "If true, the input design should have routes assigned to the demands, and these will be used as the candidate routes for them.");
 	private InputParameter alpha = new InputParameter ("alpha", (double) 1 , "Alpha parameter in the BPR arc model" , 0 , true , Double.MAX_VALUE , true);
 	private InputParameter beta = new InputParameter ("beta", (double) 4 , "Beta parameter in the BPR arc model" , 0 , true , Double.MAX_VALUE , true);
-	private InputParameter defaultC0PRTLinkParameter = new InputParameter ("defaultC0PRTLinkParameter", (double) 30 , "The default value of the C0 parameter in the model (minimum possible traversing time for the link), for those links which do not have the appropriete attribute set." , 0 , false , Double.MAX_VALUE , true);
-	private InputParameter defaultQaLinkParameter = new InputParameter ("defaultQaLinkParameter", (double) 100 , "The default value of the Q_a parameter in the model, for those links which do not have the appropriete attribute set." , 0 , false , Double.MAX_VALUE , true);
-	private InputParameter numberOfRoutesPerDemand = new InputParameter ("numberOfRoutesPerDemand", (int) 10 , "Set the number of routes created per demand. The shortest path routes using V0PRT parameter." , 1 , Integer.MAX_VALUE);
+	private InputParameter defaultC0PRTLinkParameter = new InputParameter ("defaultC0PRTLinkParameter", (double) 30 , "The default value of the C0 parameter in the model (minimum possible traversing time for the link), for those links which do not have the appropriate attribute already set." , 0 , false , Double.MAX_VALUE , true);
+	private InputParameter numberOfRoutesPerDemand = new InputParameter ("numberOfRoutesPerDemand", (int) 10 , "Set the number of routes created per demand, if the user selects to override the routes of the input design. The shortest path routes are computed according to the V0PRT parameter." , 1 , Integer.MAX_VALUE);
 	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "", "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
 	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
-	private InputParameter optimizationModel = new InputParameter ("optimizationModel", "#select# User-Equilibrium(UE) Stochastic-User-Equilibrium(SUE) Blind-free-speed-only" , "The model used for predicting the user routes. User equilibrium (Wardrop), and its stochastic version. In the blind free speed, the cars take the shortest path taking as cost of a ");
+	private InputParameter optimizationModel = new InputParameter ("optimizationModel", "#select# User-Equilibrium(UE) Stochastic-User-Equilibrium(SUE) Blind-free-speed-only" , "The model used for predicting the user routes. User equilibrium (Wardrop), and its stochastic version. In the blind free speed, the cars take the shortest path taking as cost of a street the free speed, without considering the traffic in each street");
 	private InputParameter sueModel_theta = new InputParameter ("sueModel_theta", (double) 0.4 , "(only in SUE model) Parameter to model the exactitude in the perception from the user of the possible paths. Low values mean bad perception, which means more chances to use longer routes" , 0 , true , Double.MAX_VALUE , true);
 
-	/** The method called by Net2Plan to run the algorithm (when the user presses the "Execute" button)
-	 * @param netPlan The input network design. The developed algorithm should modify it: it is the way the new design is returned
-	 * @param algorithmParameters Pair name-value for the current value of the input parameters
-	 * @param net2planParameters Pair name-value for some general parameters of Net2Plan
-	 * @return
-	 */
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
 	{
-		
-		System.out.println("OS: " + System.getProperty("os.name"));
-		System.out.println("aRCH: " + System.getProperty("os.arch"));
-
 		/* Typically, you start reading the input parameters */
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 
 		final int E = netPlan.getNumberOfLinks();
-		double [] c0_a = NetPlan.getAttributeValues (netPlan.getLinks() , UTNConstants.ATTRNAME_C0A, defaultC0PRTLinkParameter.getDouble()).toArray();
+		double [] c0_a = NetPlan.getAttributeValues (netPlan.getLinks() , UtnConstants.ATTRNAME_C0A, defaultC0PRTLinkParameter.getDouble()).toArray();
 		double [] Q_a = netPlan.getVectorLinkCapacity().toArray();
 		
 		/* Create the set of candidate paths, or use the existing ones */
@@ -118,7 +119,7 @@ public class UTNAssignmentAlgorithm implements IAlgorithm
 		double [] c_a = new double [E];
 		for (Link e : netPlan.getLinks())
 		{
-			c_a [e.getIndex()] = UTNConstants.bprCaComputation (c0_a [e.getIndex()] , alpha.getDouble() , v_a.get(e.getIndex()) , e.getCapacity() , beta.getDouble());
+			c_a [e.getIndex()] = UtnConstants.bprCaComputation (c0_a [e.getIndex()] , alpha.getDouble() , v_a.get(e.getIndex()) , e.getCapacity() , beta.getDouble());
 			System.out.println ("Link " + e.getOriginNode().getIndex() + " -> " + e.getDestinationNode().getIndex() + ": " + c_a [e.getIndex()]);
 		}
 		
@@ -136,8 +137,6 @@ public class UTNAssignmentAlgorithm implements IAlgorithm
 		return "Ok! Optimum cost: " + op.getOptimalCost() + ", Number of routes carrying traffic: " + netPlan.getNumberOfRoutes(); // this is the message that will be shown in the screen at the end of the algorithm
 	}
 
-	/** Returns a description message that will be shown in the graphical user interface
-	 */
 	@Override
 	public String getDescription()
 	{
@@ -145,9 +144,6 @@ public class UTNAssignmentAlgorithm implements IAlgorithm
 	}
 
 	
-	/** Returns the list of input parameters of the algorithm. For each parameter, you shoudl return a Triple with its name, default value and a description
-	 * @return
-	 */
 	@Override
 	public List<Triple<String, String, String>> getParameters()
 	{

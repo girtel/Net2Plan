@@ -31,36 +31,54 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tdouble.DoubleMatrix3D;
 
-/** This algorithm implements a waste collection scheme. More details in future versions
- *
+/** This algorithm implements a waste collection scheme, in a city composed of streets (links) connected in interconnections (nodes), and with containers in some links which have waste collect.
+ *  Each truck will be represented by a route, and the sequence of links if the truck indicates the path in the city from the initial node, to the ending node. Given the input and output node 
+ *  of all the trucks, the maximum number of trucks to use, the set of containers to be collected and their capacity, the algorithm decides the number of trucks to use and their routes, so 
+ *  a cost estimation is minimized. The cost involves a fixed cost per used truck, and a cost per km of each truck.
+ * @net2plan.keywords SmartCity, JOM
+ * @net2plan.inputParameters 
+ * @author Pablo Pavon-Marino, Victoria Bueno-Delgado, Pilar Jimenez-Gomez 
  */
-public class WasteCollectionAlgorithmMultipleTrucks implements IAlgorithm 
+public class Offline_wasteCollectionAlgorithmMultipleTrucks implements IAlgorithm 
 {
+	/** Attribute name in nodes, indicating if the node has a container (value = "true") or not ("false")
+	 */
 	public final static String ATTNAME_ISCONTAINER = "Container";
+	/** Attribute name in nodes, used only for those nodes which are containers, indicating the capacity in kg of waste of the container
+	 */
 	public final static String ATTNAME_CONTAINERCAPACITY_KG = "containerCapacity_kg";
+	/** Attribute name in nodes, used only for those nodes which are containers, indicating the OCCUPIED capacity in kg of waste of the container
+	 */
 	public final static String ATTNAME_CONTAINEROCCUPATION_KG = "containerOccupation_kg";
+	/** Attribute name in nodes, used only for those nodes which are containers, indicating if the container is chosen to be collected, e.g. since its occupied capacity is close to its maximum capacity
+	 */
 	public final static String ATTNAME_CONTAINERISFULL = "IsFull";
+	/** Attribute name in routes, where a route represents a truck and its path in the city, used as an output of the algorithm to indicate the number of containers it collects
+	 */
 	public final static String ATTNAME_TRUCKNUMCONTAINERSCOLLECTED = "truck_numContainersCollected";
+	/** Attribute name in routes, where a route represents a truck and its path in the city, used as an output of the algorithm to indicate the space-separated indexes of the links in the route that have containers collected by this truck 
+	 */
+	public final static String ATTNAME_TRUCKLINKINDEXESCONTAINERSCOLLECTED = "truck_linkIndexesContainersCollected";
+	/** Attribute name in routes, where a route represents a truck and its path in the city, used as an output of the algorithm to indicate the sum of kgs of waste collected in the collected containers
+	 */
 	public final static String ATTNAME_TRUCKSUMCOLLECTEDWASTE_KG = "truck_sumCollectedWaste_kg";
 	
 	
-	private InputParameter indexStartingNode = new InputParameter ("indexStartingNode", (int) 23 , "Index of the node where the truck starts" , 0 , Integer.MAX_VALUE);
-	private InputParameter indexEndingNode = new InputParameter ("indexEndingNode", (int) 1 , "Index of the node where the truck ends" , 0 , Integer.MAX_VALUE);
-	private InputParameter initializeContainerInfo = new InputParameter ("initializeContainerInfo", true , "Initialize the container information");
+	private InputParameter indexStartingNode = new InputParameter ("indexStartingNode", (int) 23 , "Index of the node where all the trucks start" , 0 , Integer.MAX_VALUE);
+	private InputParameter indexEndingNode = new InputParameter ("indexEndingNode", (int) 1 , "Index of the node where all the trucks end" , 0 , Integer.MAX_VALUE);
+	private InputParameter initializeContainerInfo = new InputParameter ("initializeContainerInfo", true , "If true, the container information is randomly initialized, so the occupation of each container is uniformly chosen between zero and its maximum capacity");
 	private InputParameter randomNumberSeed = new InputParameter ("randomNumberSeed", (long) 1 , "Seed for the random number generator");
-	private InputParameter minPercentageToCollect = new InputParameter ("minPercentageToCollect", (double) 95.0 , "Minimum percentage for considering a full container to be collected" , 0.0 , true , 100.0 , true);
-	private InputParameter initializingCapacityOfEachContainer_kg = new InputParameter ("initializingCapacityOfEachContainer_kg", (double) 100.0 , "Value of capacity of each container in kg set when initializing" , 0.0 , true , Double.MAX_VALUE , false);
-	private InputParameter truckCollectingCapacity_kg = new InputParameter ("truckCollectingCapacity_kg", (double) 2600.0 , "Capacity of each truck to collect" , 0.0 , true , Double.MAX_VALUE , false);
-	private InputParameter maxNumberOfTrucks = new InputParameter ("maxNumberOfTrucks", (int) 10 , "Maximum number of trucks that can be used" , 1 , Integer.MAX_VALUE);
+	private InputParameter minPercentageToCollect = new InputParameter ("minPercentageToCollect", (double) 95.0 , "Minimum percentage of container occupation for considering it a full container to be collected" , 0.0 , true , 100.0 , true);
+	private InputParameter initializingCapacityOfEachContainer_kg = new InputParameter ("initializingCapacityOfEachContainer_kg", (double) 100.0 , "Value of capacity of each container in kg set if initialize container info is set ot true" , 0.0 , true , Double.MAX_VALUE , false);
+	private InputParameter truckCollectingCapacity_kg = new InputParameter ("truckCollectingCapacity_kg", (double) 2600.0 , "Maximum amount of kgs of waste that a truck can collect" , 0.0 , true , Double.MAX_VALUE , false);
+	private InputParameter maxNumberOfTrucks = new InputParameter ("maxNumberOfTrucks", (int) 10 , "Maximum number of trucks that can be used in the optimization" , 1 , Integer.MAX_VALUE);
 	private InputParameter fixedCostPerUsingATruck = new InputParameter ("fixedCostPerUsingATruck", (double) 1000.0 , "Fixed cost of using a truck, whatever length it traverses" , 0.0 , true , Double.MAX_VALUE , false);
-	private InputParameter variableCostPerKmUsingATruck = new InputParameter ("variableCostPerKmUsingATruck", (double) 0.19 , "Cost per km of using a truck" , 00.0 , true , Double.MAX_VALUE , false);
+	private InputParameter variableCostPerKmUsingATruck = new InputParameter ("variableCostPerKmUsingATruck", (double) 0.19 , "Cost per km traversed by a truck" , 0.0 , true , Double.MAX_VALUE , false);
 	private InputParameter solverName = new InputParameter ("solverName", "#select# cplex mipcl glpk xpress", "The solver name to be used by JOM. GLPK and IPOPT are free, XPRESS and CPLEX commercial. GLPK, XPRESS and CPLEX solve linear problems w/w.o integer contraints. IPOPT is can solve nonlinear problems (if convex, returns global optimum), but cannot handle integer constraints");
 	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "" , "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
 	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
-	private InputParameter numberOfRuns = new InputParameter ("numberOfRuns", (int) 1 , "The number of runs of this algorithm to be produced" , 1 , Integer.MAX_VALUE);
+	private InputParameter numberOfRuns = new InputParameter ("numberOfRuns", (int) 1 , "The algorithm can be run more than once in a script, the number of times is given in this parameter. The last run is the one returned in NetPlan object, but summary information of all the runs and the n2ps are stored in the output directory indicated" , 1 , Integer.MAX_VALUE);
 	private InputParameter nameOfOutputFolderWithResults = new InputParameter ("nameOfOutputFolderWithResults", "outputFolderWithResults" , "The full path of the folder where result files are stored. The files include 1) inputParameters.txt, 2) outputSummary.txt [row 1: #trucks, row 2: km per truck, row 3: max kg collected per truck, row 4: #containers collected per truck], 3) runN2p_xxx.n2p file are created with the output n2p of each run, where xxx is the run index 0,1,..."); 
-	
-	
 	
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters) 
@@ -322,6 +340,8 @@ public class WasteCollectionAlgorithmMultipleTrucks implements IAlgorithm
 			double wasteCollectedThisTruck = 0; for (int e = 0; e < E ; e ++) wasteCollectedThisTruck += w_te.get(t, e) * netPlan.getLink(e).getAttributeAsDouble(ATTNAME_CONTAINEROCCUPATION_KG, 0.0);
 			
 			truckRoute.setAttribute(ATTNAME_TRUCKNUMCONTAINERSCOLLECTED, (int) w_te.viewRow(t).zSum());
+			final List<Integer> linkIndexesContainers = new ArrayList<> (); for (int e = 0; e < E ; e ++) if (w_te.get (t,e) > 1e-3) linkIndexesContainers.add(e);  
+			truckRoute.setAttribute(ATTNAME_TRUCKLINKINDEXESCONTAINERSCOLLECTED, linkIndexesContainers.stream().map(i->""+i).collect(Collectors.joining(" ")));
 			truckRoute.setAttribute(ATTNAME_TRUCKSUMCOLLECTEDWASTE_KG,wasteCollectedThisTruck);
 		}
 		final double numUsedTrucks = y_t.zSum();
