@@ -40,7 +40,20 @@ public abstract class GUIWindow extends JFrame
     {
         if (component != null)
         {
-            this.setVisible(true);
+            int frameState = this.getState();
+            switch (frameState)
+            {
+                case NORMAL:
+                    if(!this.isVisible())
+                        this.setVisible(true);
+                    break;
+                case ICONIFIED:
+                    this.setState(JFrame.NORMAL);
+                    break;
+                default:
+                    break;
+            }
+
             if (doGainFocus) this.requestFocusInWindow();
         } else
         {
