@@ -138,7 +138,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement<
 
         while (true)
         {
-            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter multicast tree demand index and link indexes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter multicast tree demand and set of links", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (result != JOptionPane.OK_OPTION) return;
 
             Long multicastDemandId = (Long)((StringLabeller)(multicastDemandComboBox.getSelectedItem())).getObject();
