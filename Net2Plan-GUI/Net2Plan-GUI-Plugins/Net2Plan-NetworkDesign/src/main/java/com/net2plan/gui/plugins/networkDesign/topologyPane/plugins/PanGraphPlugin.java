@@ -17,8 +17,10 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 
 import java.awt.*;
@@ -85,7 +87,36 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseClicked(MouseEvent e)
     {
-        if (e.getClickCount() == 2)
+        if (e.getClickCount() == 1)
+        {
+            final GUINode gn = canvas.getVertex(e);
+            final GUILink gl = canvas.getEdge(e);
+
+            if(gn != null)
+            {
+                final Node node = gn.getAssociatedNode();
+                if(node != null)
+                {
+                    System.out.println("PICKING NODE "+node);
+                    callback.getPickManager().pickElements(node);
+                    callback.updateVisualizationAfterChanges();
+                }
+
+            }
+            else if(gl != null)
+            {
+                final Link link = gl.getAssociatedNetPlanLink();
+                if(link != null)
+                {
+                    callback.getPickManager().pickElements(link);
+                    callback.updateVisualizationAfterChanges();
+                }
+            }
+            else{
+                callback.resetPickedStateAndUpdateView();
+            }
+        }
+        else if (e.getClickCount() == 2)
         {
             final GUINode gn = canvas.getVertex(e);
 
@@ -106,10 +137,12 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (checkModifiers(e)) {
+        if (checkModifiers(e))
+        {
             GUINode gn = canvas.getVertex(e);
             GUILink gl = canvas.getEdge(e);
-            if (gn == null && gl == null) {
+            if (gn == null && gl == null)
+            {
                 down = e.getPoint();
                 initialPoint = e.getPoint();
                 canvas.getCanvasComponent().setCursor(cursor);

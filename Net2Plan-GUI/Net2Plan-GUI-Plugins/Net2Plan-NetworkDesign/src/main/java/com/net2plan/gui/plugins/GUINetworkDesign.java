@@ -515,6 +515,7 @@ public class GUINetworkDesign extends IGUIModule
         pickManager.reset();
         topologyPanel.getCanvas().cleanSelection();
         viewEditTopTables.resetPickedState();
+        focusPanel.reset();
     }
 
     /**

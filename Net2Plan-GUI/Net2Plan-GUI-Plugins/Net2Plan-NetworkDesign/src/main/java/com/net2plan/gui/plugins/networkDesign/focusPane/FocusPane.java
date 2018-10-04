@@ -69,6 +69,14 @@ public class FocusPane extends JPanel
         this.setLayout(new BorderLayout(0,0));
 	}
 
+	public void reset()
+	{
+		this.removeAll();
+		this.repaint();
+		this.revalidate();
+		this.repaint();
+	}
+
 	public void updateView ()
 	{
 		this.removeAll();
