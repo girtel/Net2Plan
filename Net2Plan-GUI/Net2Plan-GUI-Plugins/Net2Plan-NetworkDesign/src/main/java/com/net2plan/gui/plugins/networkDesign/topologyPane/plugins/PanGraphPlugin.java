@@ -17,6 +17,7 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
@@ -88,17 +89,31 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     {
         if (e.getClickCount() == 1)
         {
-            final  GUINode gn = canvas.getVertex(e);
+            final GUINode gn = canvas.getVertex(e);
+            final GUILink gl = canvas.getEdge(e);
 
             if(gn != null)
             {
                 final Node node = gn.getAssociatedNode();
                 if(node != null)
                 {
+                    System.out.println("PICKING NODE "+node);
                     callback.getPickManager().pickElements(node);
                     callback.updateVisualizationAfterChanges();
                 }
 
+            }
+            else if(gl != null)
+            {
+                final Link link = gl.getAssociatedNetPlanLink();
+                if(link != null)
+                {
+                    callback.getPickManager().pickElements(link);
+                    callback.updateVisualizationAfterChanges();
+                }
+            }
+            else{
+                callback.resetPickedStateAndUpdateView();
             }
         }
         else if (e.getClickCount() == 2)
@@ -132,19 +147,18 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
                 initialPoint = e.getPoint();
                 canvas.getCanvasComponent().setCursor(cursor);
                 e.consume();
-                callback.resetPickedStateAndUpdateView();
             }
         }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        //if (initialPoint != null && initialPoint.equals(e.getPoint()))
+        if (initialPoint != null && initialPoint.equals(e.getPoint()))
+            callback.resetPickedStateAndUpdateView();
 
         down = null;
         initialPoint = null;
         canvas.getCanvasComponent().setCursor(originalCursor);
-        callback.resetPickedStateAndUpdateView();
     }
 
     @Override
