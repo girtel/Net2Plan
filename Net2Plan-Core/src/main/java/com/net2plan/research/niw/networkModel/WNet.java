@@ -623,10 +623,8 @@ public class WNet extends WAbstractNetworkElement
 	 * @return see above
 	 */
 	public double getPropagationDelay(List<WFiber> fiberLinks) {
-		Iterator it = fiberLinks.iterator();
 		double propagationDelay = 0;
-		while (it.hasNext()) {
-			WFiber fiber = (WFiber) it.next();
+		for(WFiber fiber : fiberLinks) {
 			propagationDelay = propagationDelay + fiber.getNe().getPropagationDelayInMs();
 		}
 
