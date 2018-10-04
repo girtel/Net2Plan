@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -521,6 +522,29 @@ public class WNet extends WAbstractNetworkElement
 		}
 		return res;
 	}
+
+	/** Returns the k shortest paths between origin and destination, using only the IP links and Nodes passed
+	 * @param k number of paths (max)
+	 * @param nodes list of nodes
+	 * @param links list of links
+	 * @param a origin node
+	 * @param b destination node
+	 * @param optionalCostMapOrElseLatency optional map with the cost to assign to each IP link, tom compute the shortest pahts. If empty, cost is one per link
+	 * @return see above
+	 */
+	public List<List<WIpLink>> getKShortestIpUnicastPath (int k , Collection<WNode> nodes , Collection<WIpLink> links , WNode a , WNode b , Optional<Map<WIpLink,Double>> optionalCostMapOrElseLatency)
+	{
+		checkInThisWNet (a , b);
+		if (optionalCostMapOrElseLatency.isPresent()) checkInThisWNetCol(optionalCostMapOrElseLatency.get().keySet()); 
+		final List<Link> npLinks = links.stream().map(e->e.getNe()).collect(Collectors.toList ());
+		final List<Node> npNodes = nodes.stream().map(e->e.getNe()).collect(Collectors.toList());
+		final Node np_a = a.getNe();
+		final Node np_b = b.getNe();
+		final Map<Link,Double> linkCostMap = optionalCostMapOrElseLatency.isPresent()? optionalCostMapOrElseLatency.get().entrySet().stream().collect(Collectors.toMap(e->e.getKey().getNe(), e->e.getValue()))   : null;
+		final List<List<Link>> kNpPaths = GraphUtils.getKLooplessShortestPaths(npNodes, npLinks, np_a, np_b, linkCostMap, k, -1, -1, -1, -1, -1, -1);
+		return kNpPaths.stream().map(l->l.stream().map(e->new WIpLink(e)).collect(Collectors.toList())).collect(Collectors.toList());
+	}
+
 	
 	/** Returns a ranking with the k-shortest paths composed as a sequence of WFiber links in the network, given the origin and end nodes of the paths.
 	 * @param k the maximum number of paths to return in the ranking
@@ -592,6 +616,21 @@ public class WNet extends WAbstractNetworkElement
 		cpuRamHdOccupied.put(hostNode.getHdBaseResource(), type.getOccupHdGBytes());
 		final Resource resource = np.addResource(type.getVnfTypeName(), name, Optional.of(hostNode.getNe()), type.getMaxInputTrafficPerVnfInstance_Gbps(), "Gbps", cpuRamHdOccupied, type.getProcessingTime_ms(), null);
 		return new WVnfInstance(resource);
+	}
+	
+	/** Get the propagation delay given a list of Fibers to traverse.
+	 * @param fiberLinks see above
+	 * @return see above
+	 */
+	public double getPropagationDelay(List<WFiber> fiberLinks) {
+		Iterator it = fiberLinks.iterator();
+		double propagationDelay = 0;
+		while (it.hasNext()) {
+			WFiber fiber = (WFiber) it.next();
+			propagationDelay = propagationDelay + fiber.getNe().getPropagationDelayInMs();
+		}
+
+		return propagationDelay;
 	}
 	
 	public String toString () { return "WNet"; }
