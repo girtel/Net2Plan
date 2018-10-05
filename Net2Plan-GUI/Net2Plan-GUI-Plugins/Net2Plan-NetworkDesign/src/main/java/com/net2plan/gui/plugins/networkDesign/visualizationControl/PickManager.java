@@ -400,10 +400,25 @@ public class PickManager
         /* Picked link the last, so overrides the rest */
             if (isDemandLayerVisibleInTheCanvas)
             {
-                gnOrigin.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-                gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
-                gnDestination.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
-                gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
+                if(gnOrigin.getBorderPaint().equals(VisualizationConstants.DEFAULT_GUINODE_COLOR) && gnOrigin.getFillPaint().equals(VisualizationConstants.DEFAULT_GUINODE_COLOR))
+                {
+                    gnOrigin.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+                    gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINFLOW);
+                }
+                else{
+                    gnOrigin.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINANDENDFLOW);
+                    gnOrigin.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINANDENDFLOW);
+                }
+
+                if(gnDestination.getBorderPaint().equals(VisualizationConstants.DEFAULT_GUINODE_COLOR) && gnDestination.getFillPaint().equals(VisualizationConstants.DEFAULT_GUINODE_COLOR))
+                {
+                    gnDestination.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
+                    gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ENDFLOW);
+                }
+                else{
+                    gnDestination.setBorderPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINANDENDFLOW);
+                    gnDestination.setFillPaint(VisualizationConstants.DEFAULT_GUINODE_COLOR_ORIGINANDENDFLOW);
+                }
             }
         }
     }
