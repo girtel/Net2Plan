@@ -118,7 +118,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
         btn_linkStyle = new JButton();
-        btn_linkStyle.setToolTipText("Change link style");
+        btn_linkStyle.setToolTipText("Customize link visualization");
 
         btn_load.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDesign.png")));
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
