@@ -16,15 +16,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -44,6 +36,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
@@ -423,6 +416,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
     
     static void createLinkDemandGUI(final NetworkElementType networkElementType, final NetworkLayer layer , final GUINetworkDesign callback)
     {
+        final PickManager pickManager = callback.getPickManager();
     	final boolean isDemand = networkElementType == NetworkElementType.DEMAND;
         final NetPlan netPlan = callback.getDesign();
         if(netPlan.getNumberOfNodes() == 0)
@@ -483,7 +477,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                 final Link e = netPlan.addLink(originNode, destinationNode, 0, 0, 200000, null, layer);
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges();
-                callback.getPickManager().pickElements(e);
+                pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
                 callback.updateVisualizationAfterPick();
                 callback.addNetPlanChange();
 
@@ -492,7 +486,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
             	final RoutingType rt = (RoutingType) ((StringLabeller) routingTypeSelector.getSelectedItem()).getObject();
                 final Demand d = netPlan.addDemand(originNode, destinationNode, 0, rt , null , layer);
                 callback.updateVisualizationAfterChanges();
-                callback.getPickManager().pickElements(d);
+                pickManager.pickElements(pickManager.new PickStateInfo(d, Optional.empty()));
                 callback.updateVisualizationAfterPick();
                 callback.addNetPlanChange();
             }
