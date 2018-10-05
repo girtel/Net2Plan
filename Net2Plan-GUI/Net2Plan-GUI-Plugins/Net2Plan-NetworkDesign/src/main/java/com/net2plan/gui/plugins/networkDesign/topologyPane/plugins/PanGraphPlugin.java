@@ -102,7 +102,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
                 {
                     pickManager.pickElements(pickManager.new PickStateInfo (node , Optional.empty()));
                     e.consume();
-                    callback.updateVisualizationAfterChanges();
+                    callback.updateVisualizationAfterPick();
                 }
 
             }
@@ -113,7 +113,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
                 {
                     pickManager.pickElements(pickManager.new PickStateInfo(link, Optional.empty()));
                     e.consume();
-                    callback.updateVisualizationAfterChanges();
+                    callback.updateVisualizationAfterPick();
                 }
             }
             else{
