@@ -726,6 +726,11 @@ public class GUINetworkDesign extends IGUIModule
         topologyPanel.updateTopToolbar();
     }
 
+    public void clearFocusPanel()
+    {
+        focusPanel.reset();
+    }
+
     public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()
     {
         topologyPanel.getCanvas().refresh();
