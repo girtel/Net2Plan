@@ -479,7 +479,7 @@ public class WNet extends WAbstractNetworkElement
 	 * @param optionalVnfCostMapOrElseLatency an optional map of the cost to assign to traverse each VNF instance, if none, the cost is assumed to be the VNF instance processing time
 	 * @return a list of up to k paths, where each path is a sequence of WIpLink and WVnfInstance objects forming a service chain from a to b 
 	 */
-	public List<List<? extends WAbstractNetworkElement>> getKShortestServiceChainInIpLayer (int k , WNode a , WNode b , List<String> sequenceOfVnfTypesToTraverse ,
+	public List<List<WAbstractNetworkElement>> getKShortestServiceChainInIpLayer (int k , WNode a , WNode b , List<String> sequenceOfVnfTypesToTraverse ,
 			Optional<Map<WIpLink,Double>> optionalCostMapOrElseLatency , Optional<Map<WVnfInstance,Double>> optionalVnfCostMapOrElseLatency)
 	{
 		checkInThisWNet (a , b);
@@ -512,10 +512,10 @@ public class WNet extends WAbstractNetworkElement
 				originNode, destinationNode, sequenceOfResourceTypesToTraverse , linkCost, 
 				resourceCost , 
 				k, -1 , -1, -1, -1, null);
-		final List<List<? extends WAbstractNetworkElement>> res = new ArrayList<> (kShortest.size());
+		final List<List<WAbstractNetworkElement>> res = new ArrayList<> (kShortest.size());
 		for (Pair<List<NetworkElement>,Double> npPath : kShortest)
 		{
-			final List<? extends WAbstractNetworkElement> wpath = npPath.getFirst().stream().
+			final List<WAbstractNetworkElement> wpath = npPath.getFirst().stream().
 					map(e->e instanceof Link? new WIpLink((Link)e) : new WVnfInstance((Resource)e)).
 					collect(Collectors.toList());
 			res.add(wpath);
