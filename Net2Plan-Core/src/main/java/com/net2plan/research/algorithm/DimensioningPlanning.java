@@ -28,13 +28,12 @@ public class DimensioningPlanning implements IAlgorithm {
 
 		
 		final Double Lmax = Double.parseDouble(algorithmParameters.get("Lmax"));
-		final File folder = new File (Lmax.toString());
+		final File folder = new File ("Results");
 		if (folder.exists() && folder.isFile()) throw new Net2PlanException ("The folder is a file");
 		if (!folder.exists()) folder.mkdirs();
 
-		for (int i = 0; i < 1; i++) { //values and results will be equal in every iteration thanks to the seed established.
 			
-			WNet wNet = runAlgorithm(netPlan, algorithmParameters, i);
+			WNet wNet = runAlgorithm(netPlan, algorithmParameters);
 
 			/* Dimension the VNF instances, consuming the resources CPU, HD, RAM */
 			/*
@@ -61,7 +60,7 @@ public class DimensioningPlanning implements IAlgorithm {
 				summaryString.add(node.getOccupiedRamGB() + "");
 				summaryString.add(node.getOccupiedHdGB() + "");
 			}
-			writeFile (new File (folder , "sortedByName" + i  + ".txt") , summaryString);
+			writeFile (new File (folder , "sortedByName" + Lmax  + ".txt") , summaryString);
 			
 			//SORTED BY POPULATION
 			summaryString.clear();
@@ -83,15 +82,12 @@ public class DimensioningPlanning implements IAlgorithm {
 				summaryString.add(node.getOccupiedRamGB() + "");
 				summaryString.add(node.getOccupiedHdGB() + "");
 			}
-			writeFile (new File (folder , "sortedByPopulation" + i  + ".txt") , summaryString);
-			
-			
-		}
+			writeFile (new File (folder , "sortedByPopulation" + Lmax  + ".txt") , summaryString);
 
 		return "Ok";
 	}
 	
-	public WNet runAlgorithm (NetPlan netPlan, Map<String, String> algorithmParameters, int Iteration){
+	public WNet runAlgorithm (NetPlan netPlan, Map<String, String> algorithmParameters){
 		final long seed = Long.parseLong(algorithmParameters.get("randomSeed"));
 		final Random rng = new Random (seed);
 		final Double Lmax = Double.parseDouble(algorithmParameters.get("Lmax"));
@@ -530,15 +526,6 @@ public class DimensioningPlanning implements IAlgorithm {
 		return false;
 	}
 
-	public Optional<List<WIpLink>> getPathsIPwithoutAvailableCapacityForThisDemand (WNet wNet , WNode origin , WNode destination , double trafficInGbps)
-	{
-		if (origin.equals(destination)) return Optional.ofNullable(new ArrayList<> ());
-		final List<WIpLink> ipLinksWithoutEnoughCapacity = wNet.getIpLinks().stream().filter(e->e.getCurrentCapacityGbps() - e.getCarriedTrafficGbps() < trafficInGbps).collect(Collectors.toList());
-		final Map<WIpLink,Double> mapOfCost = ipLinksWithoutEnoughCapacity.stream().collect(Collectors.toMap(e->e , e->0.2 + e.getWorstCasePropagationDelayInMs()));
-		final List<List<WIpLink>> paths = wNet.getKShortestIpUnicastPath (1 , wNet.getNodes() , ipLinksWithoutEnoughCapacity , origin , destination , Optional.of(mapOfCost));
-		return paths.isEmpty()? Optional.empty() : Optional.ofNullable(paths.get(0));
-	}
-	
 	private static void writeFile (File file , List<String> rows)
 	{
 		PrintWriter of = null;
