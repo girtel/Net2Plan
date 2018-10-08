@@ -530,7 +530,7 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
             {
                 if (columnIndex >= C) return false;
                 if (hasAggregationRow && rowIndex == getRowCount() - 1) return false; // the last row is for the aggregated info
-                if (getValueAt(rowIndex, columnIndex) == null) return false;
+                //if (getValueAt(rowIndex, columnIndex) == null) return false;
                 return tableColumns.get(columnIndex).isEditable();
             }
 
