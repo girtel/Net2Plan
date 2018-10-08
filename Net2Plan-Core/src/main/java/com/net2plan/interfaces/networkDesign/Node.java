@@ -101,7 +101,7 @@ public class Node extends NetworkElement
 		this.mapLayer2URLSpecificIcon = new TreeMap <> ();
 		this.planningDomains = new TreeSet<> ();
 		this.population = 0;
-		this.siteName = "";
+		this.siteName = null;
 	}
 	
 	void copyFrom (Node origin)
@@ -152,7 +152,7 @@ public class Node extends NetworkElement
 		return true;
 	}
 	
-	/** Sets the name of the site this node is associated to, removing previous site name information. If site is null, the current site name es 
+	/** Sets the name of the site this node is associated to, removing previous site name information. If site is null, the current site name is
 	 * removed, and the node becomes not attached to any site name.
 	 * @param site te site name
 	 */
