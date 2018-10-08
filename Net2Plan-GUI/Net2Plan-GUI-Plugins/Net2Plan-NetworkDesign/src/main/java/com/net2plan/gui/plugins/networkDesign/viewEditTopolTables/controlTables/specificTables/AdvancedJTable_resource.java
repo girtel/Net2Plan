@@ -13,17 +13,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.Box;
@@ -129,35 +119,29 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
             resType = typeSelector.getText();
 
             JPanel panel = new JPanel();
-            Object[][] data = {null, null, null};
             String[] headers = StringUtils.arrayOf("Base Resource", "Is Base Resource", "Capacity");
-            TableModel tm = new ClassAwareTableModelImpl(data, headers, new HashSet<Integer>(Arrays.asList(1, 2)));
-            AdvancedJTable table = new AdvancedJTable(tm);
-            int baseResCounter = 0;
+            DefaultTableModel dtm = new ClassAwareTableModelImpl(new Object[0][headers.length], headers, new HashSet<Integer>(Arrays.asList(1, 2)));
+
             for (Resource r : np.getResources())
             {
-            	if (!r.iAttachedToANode()) continue;
-                if (r.getHostNode().toString().equals(hostNode.toString()))
-                    baseResCounter++;
-            }
-            Object[][] newData = new Object[baseResCounter][headers.length];
-            int counter = 0;
-            for (Resource r : np.getResources())
-            {
-                if (r.getHostNode().toString().equals(hostNode.toString()))
+                Vector row = new Vector();
+                if (r.getHostNode().get().equals(hostNode))
                 {
-                    newData[counter][0] = r.getName();
-                    newData[counter][1] = false;
-                    newData[counter][2] = 0;
-                    addCheckboxCellEditor(false, counter, 1, table);
-                    counter++;
+                    row.add(r.getName());
+                    row.add(false);
+                    row.add(0);
+                    dtm.addRow(row);
+
                 }
             }
+
+            AdvancedJTable table = new AdvancedJTable(dtm);
+            for(int r = 0; r < table.getRowCount();r++)
+                addCheckboxCellEditor(false, r, 1, table);
 
             panel.setLayout(new BorderLayout());
             panel.add(new JLabel("Set new resource base resources"), BorderLayout.NORTH);
             panel.add(new JScrollPane(table), BorderLayout.CENTER);
-            ((DefaultTableModel) table.getModel()).setDataVector(newData, headers);
             int option = JOptionPane.showConfirmDialog(null, panel, "Set base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (option != JOptionPane.OK_OPTION) return;
             Map<Resource, Double> newBaseResources = new HashMap<>();

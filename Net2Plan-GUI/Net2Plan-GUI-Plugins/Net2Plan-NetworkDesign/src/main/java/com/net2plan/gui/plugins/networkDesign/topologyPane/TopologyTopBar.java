@@ -14,7 +14,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.Box;
@@ -37,7 +36,6 @@ import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Pair;
 
 /**
@@ -54,7 +52,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
     private final JButton btn_increaseLinkSize, btn_decreaseLinkSize, btn_tableControlWindow;
-    private final JToggleButton btn_showNodeNames, btn_showLinkIds, btn_showNonConnectedNodes, btn_osmMap, btn_siteMode;
+    private final JToggleButton btn_showNodeNames, btn_showNodesSite, btn_showLinkIds, btn_showNonConnectedNodes, btn_osmMap, btn_siteMode;
     private final JButton btn_linkStyle;
 
     public TopologyTopBar(GUINetworkDesign callback, TopologyPanel topologyPanel, ITopologyCanvas canvas)
@@ -91,6 +89,8 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_takeSnapshot.setToolTipText("Take a snapshot of the canvas");
         btn_showNodeNames = new JToggleButton();
         btn_showNodeNames.setToolTipText("Show/hide node names");
+        btn_showNodesSite = new JToggleButton();
+        btn_showNodesSite.setToolTipText("Show/hide nodes site");
         btn_showLinkIds = new JToggleButton();
         btn_showLinkIds.setToolTipText("Show/hide link utilization, measured as the ratio between the total traffic in the link (including that in protection segments) and total link capacity (including that reserved by protection segments)");
         btn_showNonConnectedNodes = new JToggleButton();
@@ -124,6 +124,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_loadDemand.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/loadDemand.png")));
         btn_save.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/saveDesign.png")));
         btn_showNodeNames.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNodeName.png")));
+        btn_showNodesSite.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNodeSite.png")));
         btn_showLinkIds.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showLinkUtilization.png")));
         btn_showNonConnectedNodes.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNonConnectedNodes.png")));
         //btn_whatIfActivated.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showNonConnectedNodes.png")));
@@ -145,6 +146,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_loadDemand.addActionListener(this);
         btn_save.addActionListener(this);
         btn_showNodeNames.addActionListener(this);
+        btn_showNodesSite.addActionListener(this);
         btn_showLinkIds.addActionListener(this);
         btn_showNonConnectedNodes.addActionListener(this);
         btn_zoomIn.addActionListener(this);
@@ -173,6 +175,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         this.add(btn_takeSnapshot);
         this.add(new JToolBar.Separator());
         this.add(btn_showNodeNames);
+        this.add(btn_showNodesSite);
         this.add(btn_showLinkIds);
         this.add(btn_showNonConnectedNodes);
         this.add(new JToolBar.Separator());
@@ -191,6 +194,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         this.add(btn_reset);
 
         btn_showNodeNames.setSelected(callback.getVisualizationState().isCanvasShowNodeNames());
+        btn_showNodesSite.setSelected(callback.getVisualizationState().isCanvasShowNodeSites());
         btn_showLinkIds.setSelected(callback.getVisualizationState().isCanvasShowLinkLabels());
         btn_showNonConnectedNodes.setSelected(callback.getVisualizationState().isCanvasShowNonConnectedNodes());
     }
@@ -213,6 +217,10 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         } else if (src == btn_showNodeNames)
         {
             vs.setCanvasShowNodeNames(btn_showNodeNames.isSelected());
+            canvas.refresh();
+        } else if (src == btn_showNodesSite)
+        {
+            vs.setCanvasShowNodeSites(btn_showNodesSite.isSelected());
             canvas.refresh();
         } else if (src == btn_showLinkIds)
         {

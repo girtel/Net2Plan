@@ -20,6 +20,7 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.plugins.GraphMou
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasOption;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state.CanvasStateController;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.CommandLineParser;
@@ -435,18 +436,53 @@ public final class JUNGCanvas implements ITopologyCanvas
         public void labelVertex(RenderContext<GUINode, GUILink> rc, Layout<GUINode, GUILink> layout, GUINode v, String label)
         {
             if (!callback.getVisualizationState().isVisibleInCanvas(v)) return;
-            if (callback.getVisualizationState().isCanvasShowNodeNames() && v.getLayer().isDefaultLayer())
+            VisualizationState vs = callback.getVisualizationState();
+
+            if(v.getLayer().isDefaultLayer())
             {
-                Point2D vertexPositionInPixels = layout.transform(v);
-                vertexPositionInPixels = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, vertexPositionInPixels);
-                final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + v.getLabel() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
-                final GraphicsDecorator g = rc.getGraphicsContext();
-                final Dimension dimensionMessage = component.getPreferredSize();
-                final Icon vertexIcon = v.getIcon();
-                final Rectangle2D boundsVertex = new Rectangle2D.Double(vertexPositionInPixels.getX() - vertexIcon.getIconWidth() / 2, vertexPositionInPixels.getY() - vertexIcon.getIconHeight() / 2, vertexIcon.getIconWidth(), vertexIcon.getIconHeight());
-                final Point anchorPointInPixels = getAnchorPoint(boundsVertex, dimensionMessage, Renderer.VertexLabel.Position.NE);
-                g.draw(component, rc.getRendererPane(), anchorPointInPixels.x, anchorPointInPixels.y, dimensionMessage.width, dimensionMessage.height, true);
+                if(!vs.isCanvasShowNodeNames() && !vs.isCanvasShowNodeSites())
+                {
+                    return;
+                }
+                else if(!vs.isCanvasShowNodeNames() && vs.isCanvasShowNodeSites())
+                {
+                    Point2D vertexPositionInPixels = layout.transform(v);
+                    vertexPositionInPixels = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, vertexPositionInPixels);
+                    final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + ((v.getAssociatedNode().getSiteName() != null) ? v.getAssociatedNode().getSiteName() : "undefined")
+                            + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
+                    final GraphicsDecorator g = rc.getGraphicsContext();
+                    final Dimension dimensionMessage = component.getPreferredSize();
+                    final Icon vertexIcon = v.getIcon();
+                    final Rectangle2D boundsVertex = new Rectangle2D.Double(vertexPositionInPixels.getX() - vertexIcon.getIconWidth() / 2, vertexPositionInPixels.getY() - vertexIcon.getIconHeight() / 2, vertexIcon.getIconWidth(), vertexIcon.getIconHeight());
+                    final Point anchorPointInPixels = getAnchorPoint(boundsVertex, dimensionMessage, Renderer.VertexLabel.Position.NE);
+                    g.draw(component, rc.getRendererPane(), anchorPointInPixels.x, anchorPointInPixels.y, dimensionMessage.width, dimensionMessage.height, true);
+                }
+                else if (vs.isCanvasShowNodeNames() && !vs.isCanvasShowNodeSites())
+                {
+                    Point2D vertexPositionInPixels = layout.transform(v);
+                    vertexPositionInPixels = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, vertexPositionInPixels);
+                    final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + v.getLabel() + "</font></html>", rc.getPickedVertexState().isPicked(v), v);
+                    final GraphicsDecorator g = rc.getGraphicsContext();
+                    final Dimension dimensionMessage = component.getPreferredSize();
+                    final Icon vertexIcon = v.getIcon();
+                    final Rectangle2D boundsVertex = new Rectangle2D.Double(vertexPositionInPixels.getX() - vertexIcon.getIconWidth() / 2, vertexPositionInPixels.getY() - vertexIcon.getIconHeight() / 2, vertexIcon.getIconWidth(), vertexIcon.getIconHeight());
+                    final Point anchorPointInPixels = getAnchorPoint(boundsVertex, dimensionMessage, Renderer.VertexLabel.Position.NE);
+                    g.draw(component, rc.getRendererPane(), anchorPointInPixels.x, anchorPointInPixels.y, dimensionMessage.width, dimensionMessage.height, true);
+                }
+                else if(vs.isCanvasShowNodeNames() && vs.isCanvasShowNodeSites())
+                {
+                    Point2D vertexPositionInPixels = layout.transform(v);
+                    vertexPositionInPixels = rc.getMultiLayerTransformer().transform(Layer.LAYOUT, vertexPositionInPixels);
+                    final Component component = prepareRenderer(rc, rc.getVertexLabelRenderer(), "<html><font color='black'>" + v.getLabel() + "<br><br>"+ ((v.getAssociatedNode().getSiteName() != null) ? v.getAssociatedNode().getSiteName() : "undefined") +"</font></html>", rc.getPickedVertexState().isPicked(v), v);
+                    final GraphicsDecorator g = rc.getGraphicsContext();
+                    final Dimension dimensionMessage = component.getPreferredSize();
+                    final Icon vertexIcon = v.getIcon();
+                    final Rectangle2D boundsVertex = new Rectangle2D.Double(vertexPositionInPixels.getX() - vertexIcon.getIconWidth() / 2, vertexPositionInPixels.getY() - vertexIcon.getIconHeight() / 2, vertexIcon.getIconWidth(), vertexIcon.getIconHeight());
+                    final Point anchorPointInPixels = getAnchorPoint(boundsVertex, dimensionMessage, Renderer.VertexLabel.Position.NE);
+                    g.draw(component, rc.getRendererPane(), anchorPointInPixels.x, anchorPointInPixels.y, dimensionMessage.width, dimensionMessage.height, true);
+                }
             }
+
         }
 
         @Override
