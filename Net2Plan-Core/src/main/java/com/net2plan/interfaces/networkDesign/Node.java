@@ -101,7 +101,7 @@ public class Node extends NetworkElement
 		this.mapLayer2URLSpecificIcon = new TreeMap <> ();
 		this.planningDomains = new TreeSet<> ();
 		this.population = 0;
-		this.siteName = null;
+		this.siteName = "";
 	}
 	
 	void copyFrom (Node origin)
