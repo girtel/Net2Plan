@@ -179,7 +179,11 @@ public class Node extends NetworkElement
 				if (nodesOldSiteNames.isEmpty()) netPlan.cache_nodesPerSiteName.remove(this.siteName);
 			}
 			SortedSet<Node> nodesThisNewSiteName = netPlan.cache_nodesPerSiteName.get(site);
-			if (nodesThisNewSiteName == null) { nodesThisNewSiteName = new TreeSet<> (); netPlan.cache_nodesPerSiteName.put(site, nodesThisNewSiteName); } 
+			if (nodesThisNewSiteName == null)
+			{
+				nodesThisNewSiteName = new TreeSet<> ();
+				netPlan.cache_nodesPerSiteName.put(site, nodesThisNewSiteName);
+			}
 			nodesThisNewSiteName.add(this);
 			this.siteName = site;
 		}

@@ -39,6 +39,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
 import com.net2plan.gui.utils.JSelectionTablePanel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
@@ -208,17 +209,17 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
 
         res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
-                AdvancedJTable_link.getMenuAddSyntheticMonitoringInfo (this),
-                AdvancedJTable_link.getMenuExportMonitoringInfo(this),
-                AdvancedJTable_link.getMenuImportMonitoringInfo (this),
-                AdvancedJTable_link.getMenuSetMonitoredTraffic(this),                
-                AdvancedJTable_link.getMenuPredictTrafficFromSameElementMonitorInfo (this),
-                AdvancedJTable_link.getMenuForecastDemandTrafficUsingGravityModel (this),
-                AdvancedJTable_link.getMenuForecastDemandTrafficFromLinkInfo (this),
+                MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
+                MonitoringUtils.getMenuExportMonitoringInfo(this),
+                MonitoringUtils.getMenuImportMonitoringInfo (this),
+                MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                MonitoringUtils.getMenuPredictTrafficFromSameElementMonitorInfo (this),
+                MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
+                MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
                 new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
-                		AdvancedJTable_link.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) , 
-                		AdvancedJTable_link.getMenuRemoveMonitorInfoBeforeAfterDate (this , false) 
+                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
+                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
                 		))
         		)));
         
