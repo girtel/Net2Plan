@@ -57,6 +57,7 @@ public class VisualizationState
     private final GUINetworkDesign callback;
 
     private boolean showInCanvasNodeNames;
+    private boolean showInCanvasNodeSites;
     private boolean showInCanvasLinkLabels;
     private boolean showInCanvasLinksInNonActiveLayer;
     private boolean showInCanvasInterLayerLinks;
@@ -90,6 +91,7 @@ public class VisualizationState
     private Map<Node, Map<Pair<Integer, Integer>, GUILink>> cache_mapNode2IntraNodeCanvasGUILinkMap; // integers are orders of REAL VISIBLE LAYERS
     private Map<Node, List<GUINode>> cache_mapNode2ListVerticallyStackedGUINodes;
 
+
     public NetPlan getNetPlan()
     {
         return visualizationSnapshot.getNetPlan();
@@ -99,6 +101,7 @@ public class VisualizationState
     {
         this.visualizationSnapshot = new VisualizationSnapshot(callback.getDesign());
         this.showInCanvasNodeNames = false;
+        this.showInCanvasNodeSites = false;
         this.showInCanvasLinkLabels = false;
         this.showInCanvasLinksInNonActiveLayer = true;
         this.showInCanvasInterLayerLinks = true;
@@ -572,9 +575,18 @@ public class VisualizationState
     /**
      * @param showNodeNames the showNodeNames to set
      */
-    public void setCanvasShowNodeNames(boolean showNodeNames)
-    {
+    public void setCanvasShowNodeNames(boolean showNodeNames) {
         this.showInCanvasNodeNames = showNodeNames;
+    }
+
+    public boolean isCanvasShowNodeSites()
+    {
+        return showInCanvasNodeSites;
+    }
+
+    public void setCanvasShowNodeSites(boolean showNodeSites)
+    {
+        this.showInCanvasNodeSites = showNodeSites;
     }
 
     /**

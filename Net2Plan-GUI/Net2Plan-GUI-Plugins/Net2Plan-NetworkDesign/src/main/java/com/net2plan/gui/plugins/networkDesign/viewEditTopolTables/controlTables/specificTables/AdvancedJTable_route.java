@@ -117,10 +117,10 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement<Route>
         final List<AjtRcMenu> res = new ArrayList<> ();
         res.add(new AjtRcMenu("Add route", e->createRouteGUI(callback , layer), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected routes", e->getSelectedElements().forEach(dd->((Route)dd).remove()) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Add one route per demand, shortest path (Service chain) in hops", e->new RouteSPFActionListener(true, false) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Add one route per demand, shortest path (Service chain) in km", e->new RouteSPFActionListener(false, false) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Add one route and 1+1 link disjoint protection per demand (minimize total num hops)", e->new RouteSPFActionListener(true, true) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Add one route and 1+1 link disjoint protection per demand (minimize total km)", e->new RouteSPFActionListener(false, true) , (a,b)->b>0, null));
+        res.add(new AjtRcMenu("Add one route per demand, shortest path (Service chain) in hops", e->new RouteSPF(true, false) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one route per demand, shortest path (Service chain) in km", e->new RouteSPF(false, false) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one route and 1+1 link disjoint protection per demand (minimize total num hops)", e->new RouteSPF(true, true) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one route and 1+1 link disjoint protection per demand (minimize total km)", e->new RouteSPF(false, true) , (a,b)->true, null));
         res.add(new AjtRcMenu("View/edit backup routes", e->viewEditBackupRoutesGUI(callback, getSelectedElements().first()) , (a,b)->b==1, null));
 
         return res;
@@ -395,19 +395,19 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement<Route>
     }
 
 
-    private class RouteSPFActionListener implements ActionListener
+    private class RouteSPF
     {
         final boolean isMinHops;
         final boolean add11LinkDisjointSegment;
 
-        private RouteSPFActionListener(boolean isMinHops, boolean minCost)
+        private RouteSPF(boolean isMinHops, boolean minCost)
         {
             this.isMinHops = isMinHops;
             this.add11LinkDisjointSegment = minCost;
+            create();
         }
 
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void create()
         {
             NetPlan netPlan = callback.getDesign();
             List<Link> links = netPlan.getLinks();
