@@ -353,6 +353,8 @@ public class TopologyPanel extends JPanel
 
             // Reactivating the OSM Support
             if (isOSMRunning) canvas.setState(CanvasOption.OSMState);
+
+            ErrorHandling.showInformationDialog("Design loaded succesfully", "Load design");
         } catch (Net2PlanException ex)
         {
             if (ErrorHandling.isDebugEnabled()) ErrorHandling.addErrorOrException(ex, TopologyPanel.class);

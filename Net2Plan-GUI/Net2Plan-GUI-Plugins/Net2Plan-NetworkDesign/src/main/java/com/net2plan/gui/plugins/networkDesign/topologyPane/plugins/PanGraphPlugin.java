@@ -17,6 +17,7 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -27,6 +28,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.Optional;
 
 /**
  * This plugin allows to pan the graph along the canvas.
@@ -87,6 +89,7 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseClicked(MouseEvent e)
     {
+        PickManager pickManager = callback.getPickManager();
         if (e.getClickCount() == 1)
         {
             final GUINode gn = canvas.getVertex(e);
@@ -97,9 +100,9 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
                 final Node node = gn.getAssociatedNode();
                 if(node != null)
                 {
-                    System.out.println("PICKING NODE "+node);
-                    callback.getPickManager().pickElements(node);
-                    callback.updateVisualizationAfterChanges();
+                    pickManager.pickElements(pickManager.new PickStateInfo (node , Optional.empty()));
+                    e.consume();
+                    callback.updateVisualizationAfterPick();
                 }
 
             }
@@ -108,11 +111,13 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
                 final Link link = gl.getAssociatedNetPlanLink();
                 if(link != null)
                 {
-                    callback.getPickManager().pickElements(link);
-                    callback.updateVisualizationAfterChanges();
+                    pickManager.pickElements(pickManager.new PickStateInfo(link, Optional.empty()));
+                    e.consume();
+                    callback.updateVisualizationAfterPick();
                 }
             }
             else{
+                e.consume();
                 callback.resetPickedStateAndUpdateView();
             }
         }

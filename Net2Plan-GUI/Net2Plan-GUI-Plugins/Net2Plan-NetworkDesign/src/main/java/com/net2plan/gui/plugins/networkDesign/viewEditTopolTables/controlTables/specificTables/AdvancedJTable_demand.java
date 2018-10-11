@@ -16,15 +16,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -44,6 +36,8 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
@@ -403,17 +397,17 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
 		, (a, b) -> b>0, null));
     
         res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
-                AdvancedJTable_link.getMenuAddSyntheticMonitoringInfo (this),
-                AdvancedJTable_link.getMenuExportMonitoringInfo(this),
-                AdvancedJTable_link.getMenuImportMonitoringInfo (this),
-                AdvancedJTable_link.getMenuSetMonitoredTraffic(this),                
-                AdvancedJTable_link.getMenuPredictTrafficFromSameElementMonitorInfo (this),
-                AdvancedJTable_link.getMenuForecastDemandTrafficUsingGravityModel (this),
-                AdvancedJTable_link.getMenuForecastDemandTrafficFromLinkInfo (this),
+                MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
+                MonitoringUtils.getMenuExportMonitoringInfo(this),
+                MonitoringUtils.getMenuImportMonitoringInfo (this),
+                MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                MonitoringUtils.getMenuPredictTrafficFromSameElementMonitorInfo (this),
+                MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
+                MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
                 new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((Demand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
-                		AdvancedJTable_link.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) , 
-                		AdvancedJTable_link.getMenuRemoveMonitorInfoBeforeAfterDate (this , false) 
+                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
+                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
                 		))
         		)));
 
@@ -423,6 +417,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
     
     static void createLinkDemandGUI(final NetworkElementType networkElementType, final NetworkLayer layer , final GUINetworkDesign callback)
     {
+        final PickManager pickManager = callback.getPickManager();
     	final boolean isDemand = networkElementType == NetworkElementType.DEMAND;
         final NetPlan netPlan = callback.getDesign();
         if(netPlan.getNumberOfNodes() == 0)
@@ -483,7 +478,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                 final Link e = netPlan.addLink(originNode, destinationNode, 0, 0, 200000, null, layer);
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges();
-                callback.getPickManager().pickElements(e);
+                pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
                 callback.updateVisualizationAfterPick();
                 callback.addNetPlanChange();
 
@@ -492,7 +487,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
             	final RoutingType rt = (RoutingType) ((StringLabeller) routingTypeSelector.getSelectedItem()).getObject();
                 final Demand d = netPlan.addDemand(originNode, destinationNode, 0, rt , null , layer);
                 callback.updateVisualizationAfterChanges();
-                callback.getPickManager().pickElements(d);
+                pickManager.pickElements(pickManager.new PickStateInfo(d, Optional.empty()));
                 callback.updateVisualizationAfterPick();
                 callback.addNetPlanChange();
             }

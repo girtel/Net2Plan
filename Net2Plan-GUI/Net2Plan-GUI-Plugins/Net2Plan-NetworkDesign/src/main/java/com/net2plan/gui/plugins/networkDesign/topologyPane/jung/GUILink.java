@@ -88,7 +88,7 @@ public class GUILink
     }
 
     public boolean getHasArrow() {
-        return this.hasArrow;
+        return true;
     }
 
     public void setHasArrow(boolean hasArrow) {

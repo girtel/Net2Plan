@@ -203,6 +203,7 @@ public class FocusPane extends JPanel
 		final String trafUnits = np.getDemandTrafficUnitsName(layer);
 		res.add(Triple.of("Node index/id" , "Node " + n.getIndex() + " (id " + n.getId() + ")", "node" + n.getId()));
 		res.add(Triple.of("Name" , n.getName().equals("")? "No name" : n.getName(), ""));
+		res.add(Triple.of("Site", (n.getSiteName() != null) ? n.getSiteName() : "undefined",""));
 		res.add(Triple.of("Coordinates (x,y)" , "(" + n.getXYPositionMap().getX() + "," + n.getXYPositionMap().getY() + ")" , ""));
 		res.add(Triple.of("Is up?", "" + n.isUp() , ""));
 		res.add(Triple.of("# Resources" , n.getResources().isEmpty() ? "none" : ""+n.getResources().size()  , ""));
