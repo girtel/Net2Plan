@@ -44,27 +44,22 @@ public class DimensioningPlanning implements IAlgorithm {
 			// HDD 	0.0425€/GB	(85€ 	-> 		2000GB)
 			// CPU	35€/Core	(70€	->		2 Cores)
 			// RAM 	12.5€/GB	(50€	->		4GB)
-			double finalCost = 0;
-			
-			//COMPUTE FINAL COST
-			for(WNode node : wNet.getNodes()) {
-				finalCost = finalCost + Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
-			}
+
 			
 			//SORTED BY NAME
+			double finalCost = 0;
 			final List<String> summaryString = new ArrayList<> ();
-			summaryString.add(finalCost + "");
-			for(WNode node : wNet.getNodes()) {		
+			for(WNode node : wNet.getNodes()) {
 				summaryString.add(node.getName() + "");
-				summaryString.add(node.getOccupiedCpus() + "");
-				summaryString.add(node.getOccupiedRamGB() + "");
-				summaryString.add(node.getOccupiedHdGB() + "");
+				finalCost = finalCost + Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
+				summaryString.add(Double.toString(finalCost));
 			}
 			writeFile (new File (folder , "sortedByName" + Lmax  + ".txt") , summaryString);
+
 			
 			//SORTED BY POPULATION
 			summaryString.clear();
-			summaryString.add(finalCost + "");
+			finalCost = 0;
 
 			Comparator<WNode> comparator = new Comparator<WNode>() {
 			    @Override
@@ -78,9 +73,8 @@ public class DimensioningPlanning implements IAlgorithm {
 			
 			for(WNode node : nodesSortedByPopulation) {
 				summaryString.add(node.getName() + "");
-				summaryString.add(node.getOccupiedCpus() + "");
-				summaryString.add(node.getOccupiedRamGB() + "");
-				summaryString.add(node.getOccupiedHdGB() + "");
+				finalCost = finalCost + Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
+				summaryString.add(Double.toString(finalCost));
 			}
 			writeFile (new File (folder , "sortedByPopulation" + Lmax  + ".txt") , summaryString);
 
