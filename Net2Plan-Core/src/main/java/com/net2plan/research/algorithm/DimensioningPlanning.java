@@ -27,6 +27,8 @@ public class DimensioningPlanning implements IAlgorithm {
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters,Map<String, String> net2planParameters) {
 
 		
+
+		
 		final Double Lmax = Double.parseDouble(algorithmParameters.get("Lmax"));
 		final File folder = new File ("Results");
 		if (folder.exists() && folder.isFile()) throw new Net2PlanException ("The folder is a file");
@@ -48,16 +50,22 @@ public class DimensioningPlanning implements IAlgorithm {
 			
 			//SORTED BY NAME
 			double finalCost = 0;
+			
+			final List<String> namesString =  new ArrayList<>();
 			final List<String> summaryString = new ArrayList<> ();
+			
 			for(WNode node : wNet.getNodes()) {
-				summaryString.add(node.getName() + "");
-				finalCost = finalCost + Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
+				namesString.add("'"+node.getName()+"' ");
+				finalCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
 				summaryString.add(Double.toString(finalCost));
 			}
+	
+			writeFileInOneLine (new File (folder , "names_sortedByName"+ ".txt") , namesString);
 			writeFile (new File (folder , "sortedByName" + Lmax  + ".txt") , summaryString);
 
 			
 			//SORTED BY POPULATION
+			namesString.clear();
 			summaryString.clear();
 			finalCost = 0;
 
@@ -72,10 +80,12 @@ public class DimensioningPlanning implements IAlgorithm {
 			Collections.sort(nodesSortedByPopulation, comparator); 
 			
 			for(WNode node : nodesSortedByPopulation) {
-				summaryString.add(node.getName() + "");
-				finalCost = finalCost + Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
+				namesString.add("'"+node.getName()+"' ");
+				finalCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
 				summaryString.add(Double.toString(finalCost));
 			}
+			
+			writeFileInOneLine (new File (folder , "names_sortedByPopulation"+ ".txt") , namesString);
 			writeFile (new File (folder , "sortedByPopulation" + Lmax  + ".txt") , summaryString);
 
 		return "Ok";
@@ -148,6 +158,32 @@ public class DimensioningPlanning implements IAlgorithm {
 			userService.setArbitraryParamString(trafficPerUserInGbps + "");
 			wNet.addOrUpdateUserService(userService);
 		}
+		
+		
+		
+		/* Adding lightpaths */
+		for (WNode origin : wNet.getNodes()) {
+			for (WNode destination : wNet.getNodes()) {
+				if (!origin.equals(destination)) {	
+					
+					List<List<WFiber>> cpl = wNet.getKShortestWdmPath(K, origin, destination,Optional.empty());
+					if(cpl.get(0).size() == 1) { // adjacent nodes
+						List<WFiber> uniqueFiber = cpl.get(0);
+						//if (wNet.getLightpaths().stream().filter(l->l.getA() == destination && l.getB() == origin).count() > 0) continue;
+						WLightpathRequest lpr = wNet.addLightpathRequest(origin, destination, linerate_Gbps,false);
+						Optional<SortedSet<Integer>> wl = osm.spectrumAssignment_firstFit(uniqueFiber,slotsPerLightpath, Optional.empty());
+						if (wl.isPresent()) {
+							WLightpathUnregenerated lp = lpr.addLightpathUnregenerated(uniqueFiber, wl.get(), false);
+							osm.allocateOccupation(lp, uniqueFiber, wl.get());
+							Pair<WIpLink,WIpLink> ipLink = wNet.addIpLink(origin, destination, linerate_Gbps, false);
+							lpr.coupleToIpLink(ipLink.getFirst());
+						}
+					}
+
+				}
+			}
+		}
+		
 
 		/* ############################# ALGORITHM ############################# */
 		System.out.println("####################### STARTING ALGORITHM #######################");
@@ -528,6 +564,19 @@ public class DimensioningPlanning implements IAlgorithm {
 			of = new PrintWriter (new FileWriter (file));
 			for (String row : rows)
 				of.println(row);
+			of.close();
+		} catch (Exception e) { e.printStackTrace(); if (of != null) of.close(); throw new Net2PlanException ("File error"); }
+		
+	}
+	
+	private static void writeFileInOneLine (File file , List<String> rows)
+	{
+		PrintWriter of = null;
+		try 
+		{ 
+			of = new PrintWriter (new FileWriter (file));
+			for (String row : rows)
+				of.print(row);
 			of.close();
 		} catch (Exception e) { e.printStackTrace(); if (of != null) of.close(); throw new Net2PlanException ("File error"); }
 		
