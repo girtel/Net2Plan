@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Added
 	- New GUI to add multicast demands and multicast trees.
 	- Dialog confirmation when loading a design in a right way.
+	- Waste collection algorithms.
+	- NIW library to design NFV algorithms.
 ### Fixed
 	- Some bug fixes.
 
