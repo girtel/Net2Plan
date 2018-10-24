@@ -13,14 +13,12 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,19 +31,18 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
+import com.net2plan.gui.utils.JSelectionTablePanel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -70,7 +67,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
       final List<AjtColumnInfo<MulticastDemand>> res = new LinkedList<> ();
       res.add(new AjtColumnInfo<MulticastDemand>(this , Node.class, null , "A", "Ingress node", null , d->d.getIngressNode() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , String.class, null , "Bs", "Egress nodes", null , d->d.getEgressNodes().stream().map(n->n.getName().equals("")? "Node " + n.getIndex() : n.getName()).collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<MulticastDemand>(this , Collection.class, null , "Coupled links", "The links that this demnad is coupled to, if any", null , d->d.isCoupled()? d.getCoupledLinks() : "-" , AGTYPE.NOAGGREGATION , null));
+      res.add(new AjtColumnInfo<MulticastDemand>(this , Collection.class, null , "Coupled links", "The links that this demand is coupled to, if any", null , d->d.isCoupled()? d.getCoupledLinks() : "-" , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "Offered traffic (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Offered traffic by the demand", (d,val)->d.setOfferedTraffic((Double) val), d->d.getOfferedTraffic() , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "Carried traffic (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Carried traffic by the demand", null , d->d.getCarriedTraffic() , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->d.getOfferedTraffic() == 0? 0 : d.getBlockedTraffic() / d.getOfferedTraffic() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > 0? Color.RED : Color.GREEN));
@@ -90,18 +87,18 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     {
     	final NetPlan np = callback.getDesign();
         final List<AjtRcMenu> res = new ArrayList<> ();
-        res.add(new AjtRcMenu("Add demand", e->createMulticastDemandGUI(NetworkElementType.MULTICAST_DEMAND, getTableNetworkLayer () , callback), (a,b)->true, null));
+        res.add(new AjtRcMenu("Add demand", e->createMulticastDemandGUI(getTableNetworkLayer () , callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected demands", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).remove()) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Add one broadcast demand per node", e->new BroadcastDemandPerNodeActionListener() , (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one demand per ingress node, with random egress nodes", e->new MulticastDemandPerNodeActionListener() , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one broadcast demand per node", e->new BroadcastDemandPerNode().execute() , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one demand per ingress node, with random egress nodes", e->new MulticastDemandPerNode().execute() , (a,b)->true, null));
         res.add(new AjtRcMenu("Set QoS type to selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set selected demands QoS type", 
                     "Please introduce the QoS type.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
+                    Arrays.asList(InputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
                     (list)->
                     	{
                     		final String qos = (String) list.get(0).get();
@@ -112,12 +109,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
         res.add(new AjtRcMenu("Set maximum e2e limit to selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set maximum e2e limit to selected demands", 
                     "Please introduce the maximum end-to-end limit in ms, to set for the selected demands.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
                     (list)->
                     	{
                     		final double newLimit = (Double) list.get(0).get();
@@ -128,12 +125,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
         res.add(new AjtRcMenu("Set selected demands offered traffic", e ->
 		{
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Set selected demands offered traffic", 
                     "Please introduce the offered traffic. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
                     (list)->
                     	{
                     		final double newOfferedTraffic = (Double) list.get(0).get();
@@ -151,12 +148,12 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 		}, (a,b)->b>0, null));
         res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
 		{
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Scale selected demands offered traffic", 
                     "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
                     (list)->
                     	{
                     		final double neScalingFactor = (Double) list.get(0).get();
@@ -212,17 +209,17 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
 
         res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
-                AdvancedJTable_link.getMenuAddSyntheticMonitoringInfo (this),
-                AdvancedJTable_link.getMenuExportMonitoringInfo(this),
-                AdvancedJTable_link.getMenuImportMonitoringInfo (this),
-                AdvancedJTable_link.getMenuSetMonitoredTraffic(this),                
-                AdvancedJTable_link.getMenuPredictTrafficFromSameElementMonitorInfo (this),
-                AdvancedJTable_link.getMenuForecastDemandTrafficUsingGravityModel (this),
-                AdvancedJTable_link.getMenuForecastDemandTrafficFromLinkInfo (this),
+                MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
+                MonitoringUtils.getMenuExportMonitoringInfo(this),
+                MonitoringUtils.getMenuImportMonitoringInfo (this),
+                MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                MonitoringUtils.getMenuPredictTrafficFromSameElementMonitorInfo (this),
+                MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
+                MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
                 new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
-                		AdvancedJTable_link.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) , 
-                		AdvancedJTable_link.getMenuRemoveMonitorInfoBeforeAfterDate (this , false) 
+                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
+                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
                 		))
         		)));
         
@@ -230,40 +227,50 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 
     }
     
-    private static void createMulticastDemandGUI(final NetworkElementType networkElementType, final NetworkLayer layer , final GUINetworkDesign callback)
+    private void createMulticastDemandGUI(final NetworkLayer layer , final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
+        if(netPlan.getNumberOfNodes() == 0)
+            throw new Net2PlanException("This topology doesn't have any node");
 
-        JTextField textFieldIngressNodeId = new JTextField(20);
-        JTextField textFieldEgressNodeIds = new JTextField(20);
+        JComboBox<StringLabeller> originNodeComboBox = new WiderJComboBox();
+        JSelectionTablePanel selectionPanel = new JSelectionTablePanel(StringUtils.arrayOf("Node","Index","Id"), "Nodes");
+        LinkedList<Object[]> selectionPanelElements = new LinkedList<>();
+        netPlan.getNodes().stream().forEach(n -> originNodeComboBox.addItem(StringLabeller.of(n.getId(),n.toString())));
+        netPlan.getNodes().stream().filter(n -> n != netPlan.getNode(0)).forEach(n -> selectionPanelElements.add(new Object[]{n,n.getIndex(),n.getId()}));
+        selectionPanel.setCandidateElements(selectionPanelElements);
+
+        originNodeComboBox.addItemListener(e ->
+        {
+            StringLabeller newItem = (StringLabeller) originNodeComboBox.getSelectedItem();
+            Long newSelectedNodeId = (Long) newItem.getObject();
+            Node newSelectedNode = netPlan.getNodeFromId(newSelectedNodeId);
+            selectionPanelElements.clear();
+            netPlan.getNodes().stream().filter(n -> n != newSelectedNode).forEach(n -> selectionPanelElements.add(new Object[]{n,n.getIndex(),n.getId()}));
+            selectionPanel.setCandidateElements(selectionPanelElements);
+        });
 
         JPanel pane = new JPanel();
-        pane.add(new JLabel("Ingress node id: "));
-        pane.add(textFieldIngressNodeId);
-        pane.add(Box.createHorizontalStrut(15));
-        pane.add(new JLabel("Egress node ids (space separated): "));
-        pane.add(textFieldEgressNodeIds);
+        pane.add(new JLabel("Ingress node: "));
+        pane.add(originNodeComboBox);
+        pane.add(Box.createHorizontalStrut(50));
+        pane.add(new JLabel("Egress nodes: "));
+        pane.add(selectionPanel);
 
         while (true)
         {
-            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter multicast demand ingress node and set of egress nodes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            int result = JOptionPane.showConfirmDialog(null, pane, "Please select multicast demand ingress node and set of egress nodes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (result != JOptionPane.OK_OPTION) return;
-            if (textFieldIngressNodeId.getText().isEmpty())
-                throw new Net2PlanException("Please, insert the ingress node id");
-            if (textFieldEgressNodeIds.getText().isEmpty())
-                throw new Net2PlanException("Please, insert the set of egress node ids");
-            String ingressNodeId_st = textFieldIngressNodeId.getText();
-            String egressNodeId_st = textFieldEgressNodeIds.getText();
+            if (selectionPanel.getSelectedElements().size() <= 1)
+                throw new Net2PlanException("A multicast demand must have at least two egress nodes");
 
-            final long ingressNode = Long.parseLong(ingressNodeId_st);
-            if (netPlan.getNodeFromId(ingressNode) == null)
-                throw new Net2PlanException("Not a valid ingress node id: " + ingressNodeId_st);
+            Long ingressNode = (Long)((StringLabeller)originNodeComboBox.getSelectedItem()).getObject();
+            LinkedList<Object[]> egressNodes_selection = selectionPanel.getSelectedElements();
             Set<Node> egressNodes = new HashSet<Node>();
-            for (String egressNodeIdString : StringUtils.split(egressNodeId_st))
+            for (Object [] ob : egressNodes_selection)
             {
-                final long nodeId = Long.parseLong(egressNodeIdString);
+                final long nodeId = Long.parseLong(ob[2].toString());
                 final Node node = netPlan.getNodeFromId(nodeId);
-                if (node == null) throw new Net2PlanException("Not a valid egress node id: " + egressNodeIdString);
                 egressNodes.add(node);
             }
             netPlan.addMulticastDemand(netPlan.getNodeFromId(ingressNode), egressNodes, 0, null , layer);
@@ -272,10 +279,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     }
 
 
-    private class BroadcastDemandPerNodeActionListener implements ActionListener
+    private class BroadcastDemandPerNode
     {
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void execute()
         {
             NetPlan netPlan = callback.getDesign();
 
@@ -297,10 +303,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
         }
     }
 
-    private class MulticastDemandPerNodeActionListener implements ActionListener
+    private class MulticastDemandPerNode
     {
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void execute()
         {
             Random rng = new Random();
             NetPlan netPlan = callback.getDesign();

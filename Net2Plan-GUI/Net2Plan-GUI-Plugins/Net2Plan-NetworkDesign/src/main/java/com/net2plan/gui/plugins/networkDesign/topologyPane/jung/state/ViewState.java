@@ -196,10 +196,12 @@ class ViewState implements ICanvasState
         FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG files", "png");
         fc.setFileFilter(pngFilter);
 
+        Color previousColor = canvas.getCanvasComponent().getBackground();
         canvas.getCanvasComponent().setBackground(Color.WHITE);
         JComponent component = canvas.getCanvasComponent();
         BufferedImage bi = ImageUtils.trim(ImageUtils.takeSnapshot(component));
-        canvas.getCanvasComponent().setBackground(new Color(212, 208, 200));
+        //canvas.getCanvasComponent().setBackground(new Color(212, 208, 200));
+        canvas.getCanvasComponent().setBackground(previousColor);
 
         int s = fc.showSaveDialog(null);
         if (s == JFileChooser.APPROVE_OPTION)

@@ -662,8 +662,7 @@ public class NetPlan extends NetworkElement
      * @param originNode                    Link origin node
      * @param destinationNode               Link destination node
      * @param capacity                      Link capacity. It must be greather or equal to zero
-     * @param lengthInKm                    Link length. It must be greater or equal than zero. Physical distance between node pais can be otainer through the {@link #getNodePairEuclideanDistance(Node, Node) getNodePairEuclideanDistance}
-     *                                      (for Euclidean distance) or {@link #getNodePairHaversineDistanceInKm(Node, Node) getNodePairHaversineDistanceInKm} (for airlinea distance) methods.
+     * @param lengthInKm                    Link length. If negative, the node pair euclidean distance is used as the link length
      * @param propagationSpeedInKmPerSecond Link propagation speed in km/s. It must be greater than zero ({@code Double.MAX_VALUE} means no propagation delay, a non-positive value is changed into
      *                                      200000 km/seg, a typical speed of light in the wires)
      * @param attributes                    SortedMap for user-defined attributes ({@code null} means 'no attribute'). Each key represents the attribute name, whereas value represents the attribute value
@@ -686,7 +685,7 @@ public class NetPlan extends NetworkElement
         checkInThisNetPlan(destinationNode);
         if (originNode.equals(destinationNode)) throw new Net2PlanException("Self-links are not allowed");
         if (capacity < 0) throw new Net2PlanException("Link capacity must be non-negative");
-        if (lengthInKm < 0) throw new Net2PlanException("Link length must be non-negative");
+        if (lengthInKm < 0) lengthInKm = getNodePairEuclideanDistance(originNode, destinationNode);
         if (propagationSpeedInKmPerSecond <= 0) throw new Net2PlanException("Propagation speed must be positive");
         
         if (linkId == null)

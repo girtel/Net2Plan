@@ -515,6 +515,7 @@ public class GUINetworkDesign extends IGUIModule
         pickManager.reset();
         topologyPanel.getCanvas().cleanSelection();
         viewEditTopTables.resetPickedState();
+        focusPanel.reset();
     }
 
     /**
@@ -723,6 +724,11 @@ public class GUINetworkDesign extends IGUIModule
     public void updateVisualizationAfterCanvasState()
     {
         topologyPanel.updateTopToolbar();
+    }
+
+    public void clearFocusPanel()
+    {
+        focusPanel.reset();
     }
 
     public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()

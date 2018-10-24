@@ -107,6 +107,13 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        PickManager pickManager = callback.getPickManager();
+        Node node = (startVertex != null) ? startVertex.getAssociatedNode() : null;
+        if(node != null)
+        {
+            pickManager.pickElements(pickManager.new PickStateInfo(node,Optional.empty()));
+            callback.updateVisualizationAfterPick();
+        }
         startVertex = null;
     }
 
@@ -117,6 +124,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
     private void moveNodeTo(final GUINode guiNode, final Point2D toPoint)
     {
+        callback.clearFocusPanel();
         final VisualizationState vs = callback.getVisualizationState();
         if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("NetPlan is not editable");
 

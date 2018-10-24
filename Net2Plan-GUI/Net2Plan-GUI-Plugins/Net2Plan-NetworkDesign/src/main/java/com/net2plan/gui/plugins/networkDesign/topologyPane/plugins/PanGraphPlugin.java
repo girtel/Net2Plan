@@ -17,14 +17,18 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
+import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.Optional;
 
 /**
  * This plugin allows to pan the graph along the canvas.
@@ -85,7 +89,39 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
     @Override
     public void mouseClicked(MouseEvent e)
     {
-        if (e.getClickCount() == 2)
+        PickManager pickManager = callback.getPickManager();
+        if (e.getClickCount() == 1)
+        {
+            final GUINode gn = canvas.getVertex(e);
+            final GUILink gl = canvas.getEdge(e);
+
+            if(gn != null)
+            {
+                final Node node = gn.getAssociatedNode();
+                if(node != null)
+                {
+                    pickManager.pickElements(pickManager.new PickStateInfo (node , Optional.empty()));
+                    e.consume();
+                    callback.updateVisualizationAfterPick();
+                }
+
+            }
+            else if(gl != null)
+            {
+                final Link link = gl.getAssociatedNetPlanLink();
+                if(link != null)
+                {
+                    pickManager.pickElements(pickManager.new PickStateInfo(link, Optional.empty()));
+                    e.consume();
+                    callback.updateVisualizationAfterPick();
+                }
+            }
+            else{
+                e.consume();
+                callback.resetPickedStateAndUpdateView();
+            }
+        }
+        else if (e.getClickCount() == 2)
         {
             final GUINode gn = canvas.getVertex(e);
 
@@ -106,10 +142,12 @@ public class PanGraphPlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (checkModifiers(e)) {
+        if (checkModifiers(e))
+        {
             GUINode gn = canvas.getVertex(e);
             GUILink gl = canvas.getEdge(e);
-            if (gn == null && gl == null) {
+            if (gn == null && gl == null)
+            {
                 down = e.getPoint();
                 initialPoint = e.getPoint();
                 canvas.getCanvasComponent().setCursor(cursor);

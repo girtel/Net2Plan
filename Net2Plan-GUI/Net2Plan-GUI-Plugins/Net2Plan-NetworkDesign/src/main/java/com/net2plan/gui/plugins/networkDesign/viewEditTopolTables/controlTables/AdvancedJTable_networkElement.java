@@ -34,8 +34,8 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFTagBased;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFToFromCarriedTraffic;
@@ -461,20 +461,20 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
         	expandCollapseAttributesOption = new AjtRcMenu("Expand all attributes (one column per attribute)", e->
             {
             	setAttributesAreCollapsedInOneColumn(false);
-            }, (a,b)->b>0 && getSelectedNetworkElementsNorFr().stream().anyMatch(e->e.getAttributes().size()>0), null);
+            }, (a,b)->true, null);
         else
         	expandCollapseAttributesOption = new AjtRcMenu("Collapse all attributes in one column", e->
             {
                 this.setAttributesAreCollapsedInOneColumn(true);
-            }, (a,b)->b>0 && getSelectedNetworkElementsNorFr().stream().anyMatch(e->e.getAttributes().size()>0), null);
+            }, (a,b)->true, null);
 
         return new AjtRcMenu("Attributes...", null , (a,b)->true, Arrays.asList(
     		new AjtRcMenu("Add attributes to selected elements", e->
     		{
-    			MtnDialogBuilder.launch("Add attributes","","",this, 
+    			DialogBuilder.launch("Add attributes","","",this,
                     Arrays.asList(
-                    		MtnInputForDialog.inputTfString("Attribute name", "The attribute name to be added to selected elements", 10, ""),
-                    		MtnInputForDialog.inputTfString("Attribute value", "The attribute value to be added to selected elements", 10, "")),
+                    		InputForDialog.inputTfString("Attribute name", "The attribute name to be added to selected elements", 10, ""),
+                    		InputForDialog.inputTfString("Attribute value", "The attribute value to be added to selected elements", 10, "")),
                     (list)->
                     {
                     	final String key = (String) list.get(0).get();
@@ -487,11 +487,11 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
         
     		new AjtRcMenu("Edit attribute of selected element", e->
     		{
-    			MtnDialogBuilder.launch("Edit attribute","","",this, 
+    			DialogBuilder.launch("Edit attribute","","",this,
                     Arrays.asList(
-                            MtnInputForDialog.inputTfCombo("Attribute name to edit", "The attribute to be edited from selected element", 10, getSelectedNetworkElementsNorFr().iterator().next().getAttributes().keySet().stream().collect(Collectors.toList()).get(0), 
+                            InputForDialog.inputTfCombo("Attribute name to edit", "The attribute to be edited from selected element", 10, getSelectedNetworkElementsNorFr().iterator().next().getAttributes().keySet().stream().collect(Collectors.toList()).get(0),
                             		getSelectedNetworkElementsNorFr().iterator().next().getAttributes().keySet().stream().collect(Collectors.toList()) , getSelectedNetworkElementsNorFr().iterator().next().getAttributes().keySet().stream().collect(Collectors.toList()) , null),
-                    		MtnInputForDialog.inputTfString("New attribute value", "The attribute value to be changed in selected element", 10, "")),
+                    		InputForDialog.inputTfString("New attribute value", "The attribute value to be changed in selected element", 10, "")),
                     (list)->
                     {
                     	final String key = (String) list.get(0).get();
@@ -504,9 +504,9 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     		
     		new AjtRcMenu("Remove attribute of selected elements", e -> 
     		{
-    			MtnDialogBuilder.launch("Remove attribute","","",this, 
+    			DialogBuilder.launch("Remove attribute","","",this,
                     Arrays.asList(
-                            MtnInputForDialog.inputTfCombo("Attribute to remove", "The attribute to be removed from selected elements", 10, allAttributesList.get(0) , allAttributesList , allAttributesList , null)),
+                            InputForDialog.inputTfCombo("Attribute to remove", "The attribute to be removed from selected elements", 10, allAttributesList.get(0) , allAttributesList , allAttributesList , null)),
                     (list)->
                     {
                         for (NetworkElement ne : getSelectedNetworkElementsNorFr())
@@ -530,8 +530,8 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 		return new AjtRcMenu("Tags...", null , (a,b)->true, Arrays.asList(
 				new AjtRcMenu("Add tags to selected elements", e->
 	            {
-	            	MtnDialogBuilder.launch("Add tags","","",this, 
-	                        Arrays.asList(MtnInputForDialog.inputTfString("Tag", "The tag to be added to selected elements", 10, "")),
+	            	DialogBuilder.launch("Add tags","","",this,
+	                        Arrays.asList(InputForDialog.inputTfString("Tag", "The tag to be added to selected elements", 10, "")),
 	                        (list)->
 	                        {
 	                        	final String tag = (String) list.get(0).get();
@@ -542,9 +542,9 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 	            }, (a,b)->b>0, null),
 	            new AjtRcMenu("Remove tags of selected elements", e -> 
 	            {
-	                MtnDialogBuilder.launch("Remove tags","","",this, 
+	                DialogBuilder.launch("Remove tags","","",this,
 	                        Arrays.asList(
-	                                MtnInputForDialog.inputTfCombo("Tag to remove", "The tag to be removed from selected elements", 10, allTagsList.get(0) , allTagsList , allTagsList , null)),
+	                                InputForDialog.inputTfCombo("Tag to remove", "The tag to be removed from selected elements", 10, allTagsList.get(0) , allTagsList , allTagsList , null)),
 	                        (list)->
 	                        {
 	                            for (NetworkElement ne : getSelectedNetworkElementsNorFr())

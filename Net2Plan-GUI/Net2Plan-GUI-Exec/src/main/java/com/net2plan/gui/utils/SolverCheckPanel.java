@@ -120,16 +120,21 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
             // Check for JOM version
             final String jomVersion = SolverTester.class.getPackage().getImplementationVersion();
-
+            final String minVersion = "0.2.0.2";
+            
             if (jomVersion != null)
             {
-                final List<String> splitVersion = Lists.newArrayList(Splitter.on(".").split(jomVersion));
-
-                if (Integer.parseInt(splitVersion.get(1)) < 2 || Integer.parseInt(splitVersion.get(3)) < 2)
-                {
-                    txt_info.append(ERROR_HEADER + "JOM library version is below 0.2.0.2." + NEW_LINE + "Please update your library to continue, current version is: " + jomVersion + NEW_LINE);
-                    return;
-                }
+            	try
+            	{
+            		if(versionCompare(jomVersion, minVersion) < 0) 
+            		{
+						txt_info.append(ERROR_HEADER + "JOM library version is below 0.2.0.2." + NEW_LINE
+								+ "Please update your library to continue, current version is: " + jomVersion
+								+ NEW_LINE);
+						return;
+					}
+            	} catch (NumberFormatException ex) {txt_info.append("JOM version '" + jomVersion + "' is incorrect."); return;}
+            	
             } else
             {
                 txt_info.append(WARNING_HEADER + "JOM library version could not be detected. Correct functioning is not guaranteed." + NEW_LINE);
@@ -630,7 +635,7 @@ public class SolverCheckPanel extends JPanel implements ActionListener
 
         return null;
     }
-
+    
     private static Pair<OS, String> getOS()
     {
         final String osName = System.getProperty("os.name");
@@ -649,5 +654,24 @@ public class SolverCheckPanel extends JPanel implements ActionListener
         {
             return Pair.of(OS.unknown, "");
         }
+    }
+    
+    public int versionCompare(String str1, String str2) 
+    {
+        String[] vals1 = str1.split("\\.");
+        String[] vals2 = str2.split("\\.");
+        int i = 0;
+        // set index to first non-equal ordinal or length of shortest version string
+        while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
+          i++;
+        }
+        // compare first non-equal ordinal number
+        if (i < vals1.length && i < vals2.length) {
+            int diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]));
+            return Integer.signum(diff);
+        }
+        // the strings are equal or one string is a substring of the other
+        // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
+        return Integer.signum(vals1.length - vals2.length);
     }
 }

@@ -39,7 +39,7 @@ public final class LinkStyleSelector extends JDialog implements ActionListener
 
         _visualizationState = visualizationState;
 
-        this.setTitle("Link Style");
+        this.setTitle("Link Customization");
         this.setLayout(new BorderLayout());
 
         JTabbedPane tabbedPane = new JTabbedPane();

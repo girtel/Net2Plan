@@ -35,8 +35,8 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -84,16 +84,16 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement<SharedRisk
         res.add(new AjtRcMenu("Remove selected SRGs", e->getSelectedElements().forEach(dd->((SharedRiskGroup)dd).remove()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Add SRGs from model", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Add SRG from model", 
                     "Please introduce the information below.", 
                     "", 
                     this, 
                     Arrays.asList(
-                    		MtnInputForDialog.inputTfCombo ("SRG creation scheme" , "Please introduce the scheme to follow when generating the SRGs" , 20 , SRGUtils.SharedRiskModel.PER_NODE ,Arrays.asList (SRGUtils.SharedRiskModel.values()) , Arrays.asList (SRGUtils.SharedRiskModel.values()).stream().map(ee->ee.toString ()).collect (Collectors.toList ()) ,null),
-                    		MtnInputForDialog.inputTfDouble("MTTF (hours)", "Mean-Time-To-Fail in hours, to set for all the SRGs", 10, 365*24.0),
-                    		MtnInputForDialog.inputTfDouble("MTTR (hours)", "Mean-Time-To-Repair in hours, to set for all the SRGs", 10, 12.0),
-                    		MtnInputForDialog.inputCheckBox ("Remove existing SRGs?" , "Indicates if the existing SRGs should be removed before creating the new ones" , false , null)
+                    		InputForDialog.inputTfCombo ("SRG creation scheme" , "Please introduce the scheme to follow when generating the SRGs" , 20 , SRGUtils.SharedRiskModel.PER_NODE ,Arrays.asList (SRGUtils.SharedRiskModel.values()) , Arrays.asList (SRGUtils.SharedRiskModel.values()).stream().map(ee->ee.toString ()).collect (Collectors.toList ()) ,null),
+                    		InputForDialog.inputTfDouble("MTTF (hours)", "Mean-Time-To-Fail in hours, to set for all the SRGs", 10, 365*24.0),
+                    		InputForDialog.inputTfDouble("MTTR (hours)", "Mean-Time-To-Repair in hours, to set for all the SRGs", 10, 12.0),
+                    		InputForDialog.inputCheckBox ("Remove existing SRGs?" , "Indicates if the existing SRGs should be removed before creating the new ones" , false , null)
                     		),
                     (list)->
                     	{
@@ -109,13 +109,13 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement<SharedRisk
         res.add(new AjtRcMenu("View/edit SRG", e->viewEditSRGGUI(callback, getSelectedElements ().first()) , (a,b)->b==1, null));
         res.add(new AjtRcMenu("Set MTTF to selected SRGs", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set MTTF to selected SRGs", 
                     "Please introduce the MTTF value.", 
                     "", 
                     this, 
                     Arrays.asList(
-                    		MtnInputForDialog.inputTfDouble("MTTF (hours)", "Mean-Time-To-Fail in hours, to set for all the SRGs", 10, 365*24.0)
+                    		InputForDialog.inputTfDouble("MTTF (hours)", "Mean-Time-To-Fail in hours, to set for all the SRGs", 10, 365*24.0)
                     		),
                     (list)->
                     	{
@@ -126,13 +126,13 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement<SharedRisk
         }, (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set MTTR to selected SRGs", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set MTTR to selected SRGs", 
                     "Please introduce the MTTR value.", 
                     "", 
                     this, 
                     Arrays.asList(
-                    		MtnInputForDialog.inputTfDouble("MTTR (hours)", "Mean-Time-To-Repair in hours, to set for all the SRGs", 10, 12.0)
+                    		InputForDialog.inputTfDouble("MTTR (hours)", "Mean-Time-To-Repair in hours, to set for all the SRGs", 10, 12.0)
                     		),
                     (list)->
                     	{
