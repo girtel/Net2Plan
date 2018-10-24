@@ -62,10 +62,11 @@ public final class VisualizationConstants
     public final static float INCREASENODESIZEFACTORPICKED = 1.1f;
     public final static float INCREASELINKSTROKEFACTORACTIVE = 3f;
 
-    public final static Paint DEFAULT_GUINODE_COLOR_RESOURCE = java.awt.Color.DARK_GRAY;
-    public final static Paint DEFAULT_GUINODE_COLOR_ORIGINFLOW = java.awt.Color.GREEN;
-    public final static Paint DEFAULT_GUINODE_COLOR_FAILED = java.awt.Color.RED;
-    public final static Paint DEFAULT_GUINODE_COLOR_ENDFLOW = java.awt.Color.CYAN;
+    public final static Paint DEFAULT_GUINODE_COLOR_RESOURCE = Color.DARK_GRAY;
+    public final static Paint DEFAULT_GUINODE_COLOR_ORIGINFLOW = Color.GREEN;
+    public final static Paint DEFAULT_GUINODE_COLOR_FAILED = Color.RED;
+    public final static Paint DEFAULT_GUINODE_COLOR_ENDFLOW = Color.CYAN;
+    public final static Paint DEFAULT_GUINODE_COLOR_ORIGINANDENDFLOW = new Color(93,193,185);
     public final static Paint DEFAULT_GUINODE_COLOR_PICK = java.awt.Color.BLUE;
     public final static Paint DEFAULT_GUINODE_COLOR = java.awt.Color.BLACK;
     public final static Font DEFAULT_GUINODE_FONT = new Font("Helvetica", Font.BOLD, 11);

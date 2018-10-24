@@ -26,13 +26,13 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 
 import net.miginfocom.swing.MigLayout;
 
-public class MtnDialogBuilder
+public class DialogBuilder
 {   
-    public static MtnDialog launchBaseDialog (String dialogTitle , String headInfoMessage , String dialogHelpString , 
-            JPanel middleJPanel ,
-            JComponent parentComponent, Runnable doActionIfOk )
+    public static Dialog launchBaseDialog (String dialogTitle , String headInfoMessage , String dialogHelpString ,
+                                           JPanel middleJPanel ,
+                                           JComponent parentComponent, Runnable doActionIfOk )
     {
-        final MtnDialog dialog = new MtnDialog (dialogTitle);
+        final Dialog dialog = new Dialog(dialogTitle);
         final JButton btn_ok = new JButton("OK");
         final JButton btn_cancel = new JButton("Cancel");
         
@@ -50,7 +50,7 @@ public class MtnDialogBuilder
         		dialog.setVisible(false);
         		dialog.dispose();
         	}
-        	catch (MtnDialogException ex)
+        	catch (DialogException ex)
         	{
         		JOptionPane.showMessageDialog(null, ex.getMessage(), "Info", JOptionPane.INFORMATION_MESSAGE);
         	}
@@ -99,7 +99,7 @@ public class MtnDialogBuilder
             
             if (! dialogHelpString.isEmpty())
             {
-            	final JLabel helpIcon = new JLabel(new ImageIcon(MtnDialogBuilder.class.getResource("/resources/gui/question.png")));
+            	final JLabel helpIcon = new JLabel(new ImageIcon(DialogBuilder.class.getResource("/resources/gui/question.png")));
             	helpIcon.setToolTipText(dialogHelpString);
             	infoPanel.add(helpIcon, "al label");
             }
@@ -123,13 +123,13 @@ public class MtnDialogBuilder
             String dialogInitialMessage , 
             String dialogHelpString , 
             JComponent parentComponent , 
-            List<MtnInputForDialog<?>> inputs , 
-            Consumer<List<MtnInputForDialog<?>>> doActionIfOk)
+            List<InputForDialog<?>> inputs ,
+            Consumer<List<InputForDialog<?>>> doActionIfOk)
     {
         final JPanel middleJPanel = new JPanel(new MigLayout("fill, wrap 2"));
-        for (MtnInputForDialog<?> input : inputs)
+        for (InputForDialog<?> input : inputs)
         {       
-        	final JLabel leftLabel = MtnDialogBuilder.createJLabel(input.getLeftExplanationMessage(), input.getHelpMessage());
+        	final JLabel leftLabel = DialogBuilder.createJLabel(input.getLeftExplanationMessage(), input.getHelpMessage());
             middleJPanel.add(leftLabel, "align label");
             middleJPanel.add(input.getRightComponent(), "growx");
         }
@@ -139,7 +139,7 @@ public class MtnDialogBuilder
         	doActionIfOk.accept(inputs);
         };
         
-        MtnDialog dialog = launchBaseDialog (dialogTitle , dialogInitialMessage , dialogHelpString ,
+        Dialog dialog = launchBaseDialog (dialogTitle , dialogInitialMessage , dialogHelpString ,
                 middleJPanel ,
                 parentComponent , doActionIfOkComplete);  
         
@@ -159,12 +159,12 @@ public class MtnDialogBuilder
 
 
 
-	static class MtnDialog extends JDialog 
+	static class Dialog extends JDialog
 	{
 		private static final long serialVersionUID = 1L;
 		private Optional<? extends Exception> exception = Optional.empty();
     	
-    	public MtnDialog (String dialogTitle) {
+    	public Dialog(String dialogTitle) {
     		super();
     		
     		// Parent frame

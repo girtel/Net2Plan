@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -478,7 +479,7 @@ public class WNet extends WAbstractNetworkElement
 	 * @param optionalVnfCostMapOrElseLatency an optional map of the cost to assign to traverse each VNF instance, if none, the cost is assumed to be the VNF instance processing time
 	 * @return a list of up to k paths, where each path is a sequence of WIpLink and WVnfInstance objects forming a service chain from a to b 
 	 */
-	public List<List<? extends WAbstractNetworkElement>> getKShortestServiceChainInIpLayer (int k , WNode a , WNode b , List<String> sequenceOfVnfTypesToTraverse ,
+	public List<List<WAbstractNetworkElement>> getKShortestServiceChainInIpLayer (int k , WNode a , WNode b , List<String> sequenceOfVnfTypesToTraverse ,
 			Optional<Map<WIpLink,Double>> optionalCostMapOrElseLatency , Optional<Map<WVnfInstance,Double>> optionalVnfCostMapOrElseLatency)
 	{
 		checkInThisWNet (a , b);
@@ -511,16 +512,39 @@ public class WNet extends WAbstractNetworkElement
 				originNode, destinationNode, sequenceOfResourceTypesToTraverse , linkCost, 
 				resourceCost , 
 				k, -1 , -1, -1, -1, null);
-		final List<List<? extends WAbstractNetworkElement>> res = new ArrayList<> (kShortest.size());
+		final List<List<WAbstractNetworkElement>> res = new ArrayList<> (kShortest.size());
 		for (Pair<List<NetworkElement>,Double> npPath : kShortest)
 		{
-			final List<? extends WAbstractNetworkElement> wpath = npPath.getFirst().stream().
+			final List<WAbstractNetworkElement> wpath = npPath.getFirst().stream().
 					map(e->e instanceof Link? new WIpLink((Link)e) : new WVnfInstance((Resource)e)).
 					collect(Collectors.toList());
 			res.add(wpath);
 		}
 		return res;
 	}
+
+	/** Returns the k shortest paths between origin and destination, using only the IP links and Nodes passed
+	 * @param k number of paths (max)
+	 * @param nodes list of nodes
+	 * @param links list of links
+	 * @param a origin node
+	 * @param b destination node
+	 * @param optionalCostMapOrElseLatency optional map with the cost to assign to each IP link, tom compute the shortest pahts. If empty, cost is one per link
+	 * @return see above
+	 */
+	public List<List<WIpLink>> getKShortestIpUnicastPath (int k , Collection<WNode> nodes , Collection<WIpLink> links , WNode a , WNode b , Optional<Map<WIpLink,Double>> optionalCostMapOrElseLatency)
+	{
+		checkInThisWNet (a , b);
+		if (optionalCostMapOrElseLatency.isPresent()) checkInThisWNetCol(optionalCostMapOrElseLatency.get().keySet()); 
+		final List<Link> npLinks = links.stream().map(e->e.getNe()).collect(Collectors.toList ());
+		final List<Node> npNodes = nodes.stream().map(e->e.getNe()).collect(Collectors.toList());
+		final Node np_a = a.getNe();
+		final Node np_b = b.getNe();
+		final Map<Link,Double> linkCostMap = optionalCostMapOrElseLatency.isPresent()? optionalCostMapOrElseLatency.get().entrySet().stream().collect(Collectors.toMap(e->e.getKey().getNe(), e->e.getValue()))   : null;
+		final List<List<Link>> kNpPaths = GraphUtils.getKLooplessShortestPaths(npNodes, npLinks, np_a, np_b, linkCostMap, k, -1, -1, -1, -1, -1, -1);
+		return kNpPaths.stream().map(l->l.stream().map(e->new WIpLink(e)).collect(Collectors.toList())).collect(Collectors.toList());
+	}
+
 	
 	/** Returns a ranking with the k-shortest paths composed as a sequence of WFiber links in the network, given the origin and end nodes of the paths.
 	 * @param k the maximum number of paths to return in the ranking
@@ -592,6 +616,19 @@ public class WNet extends WAbstractNetworkElement
 		cpuRamHdOccupied.put(hostNode.getHdBaseResource(), type.getOccupHdGBytes());
 		final Resource resource = np.addResource(type.getVnfTypeName(), name, Optional.of(hostNode.getNe()), type.getMaxInputTrafficPerVnfInstance_Gbps(), "Gbps", cpuRamHdOccupied, type.getProcessingTime_ms(), null);
 		return new WVnfInstance(resource);
+	}
+	
+	/** Get the propagation delay given a list of Fibers to traverse.
+	 * @param fiberLinks see above
+	 * @return see above
+	 */
+	public double getPropagationDelay(List<WFiber> fiberLinks) {
+		double propagationDelay = 0;
+		for(WFiber fiber : fiberLinks) {
+			propagationDelay = propagationDelay + fiber.getNe().getPropagationDelayInMs();
+		}
+
+		return propagationDelay;
 	}
 	
 	public String toString () { return "WNet"; }

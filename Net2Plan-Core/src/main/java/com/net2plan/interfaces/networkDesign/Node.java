@@ -152,7 +152,7 @@ public class Node extends NetworkElement
 		return true;
 	}
 	
-	/** Sets the name of the site this node is associated to, removing previous site name information. If site is null, the current site name es 
+	/** Sets the name of the site this node is associated to, removing previous site name information. If site is null, the current site name is
 	 * removed, and the node becomes not attached to any site name.
 	 * @param site te site name
 	 */
@@ -179,7 +179,11 @@ public class Node extends NetworkElement
 				if (nodesOldSiteNames.isEmpty()) netPlan.cache_nodesPerSiteName.remove(this.siteName);
 			}
 			SortedSet<Node> nodesThisNewSiteName = netPlan.cache_nodesPerSiteName.get(site);
-			if (nodesThisNewSiteName == null) { nodesThisNewSiteName = new TreeSet<> (); netPlan.cache_nodesPerSiteName.put(site, nodesThisNewSiteName); } 
+			if (nodesThisNewSiteName == null)
+			{
+				nodesThisNewSiteName = new TreeSet<> ();
+				netPlan.cache_nodesPerSiteName.put(site, nodesThisNewSiteName);
+			}
 			nodesThisNewSiteName.add(this);
 			this.siteName = site;
 		}

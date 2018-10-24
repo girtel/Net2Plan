@@ -13,7 +13,7 @@ import javax.swing.JTextField;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 
-public class MtnInputForDialog<T>
+public class InputForDialog<T>
 {
     private final String helpMessage;
     private final String leftExplanationMessage;
@@ -23,8 +23,8 @@ public class MtnInputForDialog<T>
     private final Supplier<T> getValueFunction;
     private final Supplier<Boolean> isValidCastWhatInComponent;
     
-//    private MtnInputForDialog(String helpMessage, String leftExplanationMessage, Component rightComponent, Integer minimumLength, Function<T, Boolean> isValidRange, Supplier<T> getValueFunction, Supplier<Boolean> isValidWhatInComponent)
-    private MtnInputForDialog(String helpMessage, String leftExplanationMessage, Component rightComponent, Integer minimumLength, Supplier<T> getValueFunction , Supplier<Boolean> isValidCastWhatInComponent)
+//    private InputForDialog(String helpMessage, String leftExplanationMessage, Component rightComponent, Integer minimumLength, Function<T, Boolean> isValidRange, Supplier<T> getValueFunction, Supplier<Boolean> isValidWhatInComponent)
+    private InputForDialog(String helpMessage, String leftExplanationMessage, Component rightComponent, Integer minimumLength, Supplier<T> getValueFunction , Supplier<Boolean> isValidCastWhatInComponent)
     {
         super();
         this.helpMessage = helpMessage;
@@ -60,14 +60,14 @@ public class MtnInputForDialog<T>
         return minimumLength == null? 1 : minimumLength;
     }
 
-    public static MtnInputForDialog<Boolean> inputCheckBox (String leftExplanationMessage , String helpMessage , boolean defaultValue , Consumer<Boolean> actionIfSelected)
+    public static InputForDialog<Boolean> inputCheckBox (String leftExplanationMessage , String helpMessage , boolean defaultValue , Consumer<Boolean> actionIfSelected)
     {
         final JCheckBox c = new JCheckBox();
         c.setEnabled(true);
         c.setSelected(defaultValue);
         if (actionIfSelected != null)
             c.addActionListener(e->actionIfSelected.accept(c.isSelected()));
-        final MtnInputForDialog<Boolean> input = new MtnInputForDialog<Boolean>
+        final InputForDialog<Boolean> input = new InputForDialog<Boolean>
             (helpMessage, 
                     leftExplanationMessage, 
                     c, 
@@ -76,12 +76,12 @@ public class MtnInputForDialog<T>
                     ()-> true);
         return input;
     }
-    public static MtnInputForDialog<String> inputTfString (String leftExplanationMessage , String helpMessage , Integer minimumLength , String defaultValue)
+    public static InputForDialog<String> inputTfString (String leftExplanationMessage , String helpMessage , Integer minimumLength , String defaultValue)
     {
         final JTextField c = new JTextField(minimumLength);
         c.setEnabled(true);
         c.setText(defaultValue);
-        final MtnInputForDialog<String> input = new MtnInputForDialog<String>
+        final InputForDialog<String> input = new InputForDialog<String>
         (helpMessage, 
                 leftExplanationMessage, 
                 c, 
@@ -90,12 +90,12 @@ public class MtnInputForDialog<T>
                 ()-> true);
         return input;
     }
-    public static MtnInputForDialog<Integer> inputTfInt (String leftExplanationMessage , String helpMessage , Integer minimumLength , Integer defaultValue)
+    public static InputForDialog<Integer> inputTfInt (String leftExplanationMessage , String helpMessage , Integer minimumLength , Integer defaultValue)
     {
         final JTextField c = new JTextField(minimumLength);
         c.setEnabled(true);
         c.setText(defaultValue == null? "" : "" + defaultValue);
-        final MtnInputForDialog<Integer> input = new MtnInputForDialog<Integer>
+        final InputForDialog<Integer> input = new InputForDialog<Integer>
         (helpMessage, 
                 leftExplanationMessage, 
                 c, 
@@ -104,12 +104,12 @@ public class MtnInputForDialog<T>
                 ()-> { try { final int val = Integer.parseInt(c.getText()); return true; } catch (Exception e) { return false; }    } );
         return input;
     }
-    public static MtnInputForDialog<Double> inputTfDouble (String leftExplanationMessage , String helpMessage , Integer minimumLength , Double defaultValue)
+    public static InputForDialog<Double> inputTfDouble (String leftExplanationMessage , String helpMessage , Integer minimumLength , Double defaultValue)
     {
         final JTextField c = new JTextField(minimumLength);
         c.setEnabled(true);
         c.setText(defaultValue == null? "" : "" + defaultValue);
-        final MtnInputForDialog<Double> input = new MtnInputForDialog<Double>
+        final InputForDialog<Double> input = new InputForDialog<Double>
             (helpMessage, 
                 leftExplanationMessage, 
                 c, 
@@ -119,12 +119,12 @@ public class MtnInputForDialog<T>
         return input;
     }
 
-    public static <T> MtnInputForDialog<T> inputTfCombo (String leftExplanationMessage , String helpMessage , 
-            Integer minimumLength , 
-            T defaultValue , 
-            List<T> values , 
-            List<String> stringsPerValue , 
-            Consumer<T> actionsPerSelection)
+    public static <T> InputForDialog<T> inputTfCombo (String leftExplanationMessage , String helpMessage ,
+                                                      Integer minimumLength ,
+                                                      T defaultValue ,
+                                                      List<T> values ,
+                                                      List<String> stringsPerValue ,
+                                                      Consumer<T> actionsPerSelection)
     {
         if (values.isEmpty()) throw new Net2PlanException("Empty options list");
         if (stringsPerValue == null) stringsPerValue = values.stream().map(e->e.toString()).collect(Collectors.toList());
@@ -141,7 +141,7 @@ public class MtnInputForDialog<T>
         c.setSelectedIndex(initialSelectedIndex);
         if (actionsPerSelection != null)
             c.addActionListener(e-> actionsPerSelection.accept(values.get(c.getSelectedIndex())));
-        final MtnInputForDialog<T> input = new MtnInputForDialog<>
+        final InputForDialog<T> input = new InputForDialog<>
         (helpMessage, 
             leftExplanationMessage, 
             c, 

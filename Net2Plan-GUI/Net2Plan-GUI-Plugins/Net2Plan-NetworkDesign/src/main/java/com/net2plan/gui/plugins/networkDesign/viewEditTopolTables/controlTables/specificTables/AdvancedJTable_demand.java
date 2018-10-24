@@ -16,16 +16,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -43,11 +34,12 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -109,12 +101,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         res.add(new AjtRcMenu("Remove selected demands", e->getSelectedElements().forEach(dd->((Demand)dd).remove()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set QoS type to selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set selected demands QoS type", 
                     "Please introduce the QoS type.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
+                    Arrays.asList(InputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
                     (list)->
                     	{
                     		final String qos = (String) list.get(0).get();
@@ -124,12 +116,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         }, (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set routing type of selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set routing type", 
                     "Please introduce the routing type. Source routing or hop-by-hop routing.",
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfCombo ("Routing type", "Introduce the routing type of the demands" , 10, RoutingType.SOURCE_ROUTING ,
+                    Arrays.asList(InputForDialog.inputTfCombo ("Routing type", "Introduce the routing type of the demands" , 10, RoutingType.SOURCE_ROUTING ,
                     		Arrays.asList(RoutingType.SOURCE_ROUTING , RoutingType.HOP_BY_HOP_ROUTING) , Arrays.asList("Source routing" , "Hop by hop routing") , (Consumer<RoutingType>) null)),
                     (list)->
                     	{
@@ -140,12 +132,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         }, (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set maximum e2e limit to selected demands", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set maximum e2e limit to selected demands", 
                     "Please introduce the maximum end-to-end limit in ms, to set for the selected demands.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
                     (list)->
                     	{
                     		final double newLimit = (Double) list.get(0).get();
@@ -158,12 +150,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         res.add(new AjtRcMenu("Add one hop-by-hop routing demand per selected node pair (all if none selected)", e->rcMenuFullMeshTraffic(false), (a,b)->true, null));
         res.add(new AjtRcMenu("Set selected demands offered traffic", e ->
 		{
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Set selected demands offered traffic", 
                     "Please introduce the offered traffic. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
                     (list)->
                     	{
                     		final double newOfferedTraffic = (Double) list.get(0).get();
@@ -182,12 +174,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
 		, (a, b) -> b>0, null));
         res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
 		{
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
                     "Scale selected demands offered traffic", 
                     "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
                     (list)->
                     	{
                     		final double neScalingFactor = (Double) list.get(0).get();
@@ -405,17 +397,17 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
 		, (a, b) -> b>0, null));
     
         res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
-                AdvancedJTable_link.getMenuAddSyntheticMonitoringInfo (this),
-                AdvancedJTable_link.getMenuExportMonitoringInfo(this),
-                AdvancedJTable_link.getMenuImportMonitoringInfo (this),
-                AdvancedJTable_link.getMenuSetMonitoredTraffic(this),                
-                AdvancedJTable_link.getMenuPredictTrafficFromSameElementMonitorInfo (this),
-                AdvancedJTable_link.getMenuForecastDemandTrafficUsingGravityModel (this),
-                AdvancedJTable_link.getMenuForecastDemandTrafficFromLinkInfo (this),
+                MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
+                MonitoringUtils.getMenuExportMonitoringInfo(this),
+                MonitoringUtils.getMenuImportMonitoringInfo (this),
+                MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                MonitoringUtils.getMenuPredictTrafficFromSameElementMonitorInfo (this),
+                MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
+                MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
                 new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((Demand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
-                		AdvancedJTable_link.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) , 
-                		AdvancedJTable_link.getMenuRemoveMonitorInfoBeforeAfterDate (this , false) 
+                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
+                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
                 		))
         		)));
 
@@ -425,8 +417,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
     
     static void createLinkDemandGUI(final NetworkElementType networkElementType, final NetworkLayer layer , final GUINetworkDesign callback)
     {
+        final PickManager pickManager = callback.getPickManager();
     	final boolean isDemand = networkElementType == NetworkElementType.DEMAND;
         final NetPlan netPlan = callback.getDesign();
+        if(netPlan.getNumberOfNodes() == 0)
+            throw new Net2PlanException("Adding links or demands to an empty topology is not allowed");
+        
         final JComboBox<StringLabeller<Node>> originNodeSelector = new WiderJComboBox();
         final JComboBox<StringLabeller<Node>> destinationNodeSelector = new WiderJComboBox();
         final JComboBox<StringLabeller<RoutingType>> routingTypeSelector = new WiderJComboBox();
@@ -482,7 +478,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                 final Link e = netPlan.addLink(originNode, destinationNode, 0, 0, 200000, null, layer);
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges();
-                callback.getPickManager().pickElements(e);
+                pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
                 callback.updateVisualizationAfterPick();
                 callback.addNetPlanChange();
 
@@ -491,7 +487,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
             	final RoutingType rt = (RoutingType) ((StringLabeller) routingTypeSelector.getSelectedItem()).getObject();
                 final Demand d = netPlan.addDemand(originNode, destinationNode, 0, rt , null , layer);
                 callback.updateVisualizationAfterChanges();
-                callback.getPickManager().pickElements(d);
+                pickManager.pickElements(pickManager.new PickStateInfo(d, Optional.empty()));
                 callback.updateVisualizationAfterPick();
                 callback.addNetPlanChange();
             }

@@ -104,7 +104,7 @@ import net.miginfocom.swing.MigLayout;
  */
 public class GUINetworkDesign extends IGUIModule
 {
-    private final static String TITLE = "Offline network design & Online network simulation";
+    private static String TITLE = "Offline network design & Online network simulation";
     private final static int MAXSIZEUNDOLISTCHANGES = 0; // deactivate, not robust yet
     private final static int MAXSIZEUNDOLISTPICK = 10;
 
@@ -515,6 +515,7 @@ public class GUINetworkDesign extends IGUIModule
         pickManager.reset();
         topologyPanel.getCanvas().cleanSelection();
         viewEditTopTables.resetPickedState();
+        focusPanel.reset();
     }
 
     /**
@@ -723,6 +724,11 @@ public class GUINetworkDesign extends IGUIModule
     public void updateVisualizationAfterCanvasState()
     {
         topologyPanel.updateTopToolbar();
+    }
+
+    public void clearFocusPanel()
+    {
+        focusPanel.reset();
     }
 
     public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()

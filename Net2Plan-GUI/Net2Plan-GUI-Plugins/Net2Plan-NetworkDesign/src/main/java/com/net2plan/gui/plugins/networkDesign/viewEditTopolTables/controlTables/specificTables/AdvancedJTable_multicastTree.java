@@ -25,14 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.swing.Box;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -43,6 +36,9 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.utils.JScrollPopupMenu;
+import com.net2plan.gui.utils.JSelectionTablePanel;
+import com.net2plan.gui.utils.StringLabeller;
+import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
@@ -96,40 +92,63 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement<
         res.add(new AjtRcMenu("Add multicast tree", e->createMulticastTreeGUI(callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected trees", e->getSelectedElements().forEach(dd->((MulticastTree)dd).remove()) , (a,b)->b>0, null));
 
-        res.add(new AjtRcMenu("Add one tree per demand, minimizing end-to-end average number of traversed links", e->new MulticastTreeMinE2EActionListener(true, false) , (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one tree per demand, minimizing end-to-end average traversed length in km", e->new MulticastTreeMinE2EActionListener(false, false) , (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one tree per demand, minimizing number of links in the tree (uses default ILP solver)", e->new MulticastTreeMinE2EActionListener(true, true) , (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one tree per demand, minimizing number of km of the links in the tree (uses default ILP solver)", e->new MulticastTreeMinE2EActionListener(false, true) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one tree per demand, minimizing end-to-end average number of traversed links", e->new MulticastTreeMinE2E(true, false) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one tree per demand, minimizing end-to-end average traversed length in km", e->new MulticastTreeMinE2E(false, false) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one tree per demand, minimizing number of links in the tree (uses default ILP solver)", e->new MulticastTreeMinE2E(true, true) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one tree per demand, minimizing number of km of the links in the tree (uses default ILP solver)", e->new MulticastTreeMinE2E(false, true) , (a,b)->true, null));
         
         
         return res;
     }
 
-    private static void createMulticastTreeGUI(final GUINetworkDesign callback)
+    private void createMulticastTreeGUI(final GUINetworkDesign callback)
     {
         final NetPlan netPlan = callback.getDesign();
+        final NetworkLayer layer = this.getTableNetworkLayer();
+        if(netPlan.getNumberOfNodes() == 0)
+            throw new Net2PlanException("This topology doesn't have any node");
+        if(netPlan.getNumberOfLinks(layer) == 0)
+            throw new Net2PlanException("This topology doesn't have any link in layer "+layer);
+        if(netPlan.getNumberOfMulticastDemands(layer) == 0)
+            throw new Net2PlanException("This topology doesn't have any multicast demand in layer "+layer);
+        
+        JComboBox<StringLabeller> multicastDemandComboBox = new WiderJComboBox();
+        JSelectionTablePanel selectionPanel = new JSelectionTablePanel(StringUtils.arrayOf("Link","Index","Id"), "Links");
+        LinkedList<Object[]> selectionPanelElements = new LinkedList<>();
+        netPlan.getMulticastDemands(layer).stream().forEach(md -> multicastDemandComboBox.addItem(StringLabeller.of(md.getId(),md.toString())));
+        netPlan.getLinks(layer).stream().forEach(l -> selectionPanelElements.add(new Object[]{l,l.getIndex(),l.getId()}));
+        selectionPanel.setCandidateElements(selectionPanelElements);
 
-        JTextField textFieldDemandIndex = new JTextField(20);
-        JTextField textFieldLinkIndexes = new JTextField(20);
+        multicastDemandComboBox.addItemListener(e ->
+        {
+            StringLabeller newItem = (StringLabeller) multicastDemandComboBox.getSelectedItem();
+            Long newSelectedMulticasDemandId = (Long) newItem.getObject();
+            MulticastDemand newSelectedMulticastDemand = netPlan.getMulticastDemandFromId(newSelectedMulticasDemandId);
+            selectionPanelElements.clear();
+            netPlan.getLinks(layer).stream().forEach(l -> selectionPanelElements.add(new Object[]{l,l.getIndex(),l.getId()}));
+            selectionPanel.setCandidateElements(selectionPanelElements);
+        });
+
         JPanel pane = new JPanel();
-        pane.add(new JLabel("Multicast demand index: "));
-        pane.add(textFieldDemandIndex);
-        pane.add(Box.createHorizontalStrut(15));
-        pane.add(new JLabel("Link indexes (space separated): "));
-        pane.add(textFieldLinkIndexes);
+        pane.add(new JLabel("Multicast Demand: "));
+        pane.add(multicastDemandComboBox);
+        pane.add(Box.createHorizontalStrut(50));
+        pane.add(new JLabel("Links: "));
+        pane.add(selectionPanel);
 
         while (true)
         {
-            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter multicast tree demand index and link indexes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter multicast tree demand and set of links", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (result != JOptionPane.OK_OPTION) return;
 
-            if (textFieldDemandIndex.getText().isEmpty())
-                throw new Net2PlanException("Please, insert the multicast demand index");
-            if (textFieldLinkIndexes.getText().isEmpty()) throw new Net2PlanException("Please, insert the link indexes");
-            MulticastDemand demand = netPlan.getMulticastDemand(Integer.parseInt(textFieldDemandIndex.getText()));
+            Long multicastDemandId = (Long)((StringLabeller)(multicastDemandComboBox.getSelectedItem())).getObject();
+            MulticastDemand demand = netPlan.getMulticastDemandFromId(multicastDemandId);
             Set<Link> links = new HashSet<Link>();
-            for (String linkString : StringUtils.split(textFieldLinkIndexes.getText()))
-                links.add(netPlan.getLink(Integer.parseInt(linkString)));
+            LinkedList<Object[]> selectedLinks = selectionPanel.getSelectedElements();
+            for (Object [] ob : selectedLinks)
+            {
+                links.add(netPlan.getLinkFromId(Long.parseLong(ob[2].toString())));
+            }
             netPlan.addMulticastTree(demand, 0, 0, links, null);
             break;
         }
@@ -137,19 +156,19 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement<
 
 
 
-    private class MulticastTreeMinE2EActionListener implements ActionListener
+    private class MulticastTreeMinE2E
     {
         final boolean isMinHops;
         final boolean minCost;
 
-        private MulticastTreeMinE2EActionListener(boolean isMinHops, boolean minCost)
+        private MulticastTreeMinE2E(boolean isMinHops, boolean minCost)
         {
             this.isMinHops = isMinHops;
             this.minCost = minCost;
+            create();
         }
 
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void create()
         {
             NetPlan netPlan = callback.getDesign();
             List<Link> links = netPlan.getLinks();

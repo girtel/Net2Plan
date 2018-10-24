@@ -13,17 +13,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.Box;
@@ -46,8 +36,8 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnDialogBuilder;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.MtnInputForDialog;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
@@ -84,8 +74,8 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
 	      res.add(new AjtColumnInfo<Resource>(this , Double.class, null , "Occupied capacity", "The current occupied capacity of the resource", null , d->d.getOccupiedCapacity() , AGTYPE.NOAGGREGATION , null));
 	      res.add(new AjtColumnInfo<Resource>(this , Double.class, null , "Utilization", "The current utilization of the resource", null , d->d.getUtilization() , AGTYPE.NOAGGREGATION , d-> { final double u = d.getUtilization(); if (u == 1) return Color.YELLOW; return u > 1? Color.RED : null;  }  ));
 	      res.add(new AjtColumnInfo<Resource>(this , String.class, null , "Cap. Units", "The units in which the resource capacity is measured", (d,val)->d.setCapacityMeasurementUnits((String)val) , d->d.getCapacityMeasurementUnits() , AGTYPE.NOAGGREGATION , null));
-	      res.add(new AjtColumnInfo<Resource>(this , String.class, null , "Base resources", "The base resources that this resource relies on, and the amount of capacity consumed in each base resource", null , d->d.getCapacityOccupiedInBaseResourcesMap().entrySet().stream().map(ee->"(" + ee.getKey().getType() + "," + ee.getValue()).collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
-	      res.add(new AjtColumnInfo<Resource>(this , String.class, null , "Upper resources", "The upper resources that rely on me, and the amount of capacity each one is occupying in me", null , d->d.getCapacityOccupiedByUpperResourcesMap().entrySet().stream().map(ee->"(" + ee.getKey().getType() + "," + ee.getValue()).collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
+	      res.add(new AjtColumnInfo<Resource>(this , String.class, null , "Base resources", "The base resources that this resource relies on, and the amount of capacity consumed in each base resource", null , d->d.getCapacityOccupiedInBaseResourcesMap().entrySet().stream().map(ee->"(" + ee.getKey().getType() + "," + ee.getValue()+")").collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
+	      res.add(new AjtColumnInfo<Resource>(this , String.class, null , "Upper resources", "The upper resources that rely on me, and the amount of capacity each one is occupying in me", null , d->d.getCapacityOccupiedByUpperResourcesMap().entrySet().stream().map(ee->"(" + ee.getKey().getType() + "," + ee.getValue()+")").collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
 	      res.add(new AjtColumnInfo<Resource>(this , Collection.class, null , "Trav. routes", "The routes in this layer that traverse this resource", null , d->d.getTraversingRoutes().stream().filter(r->r.getLayer().equals(layer)).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
 	      res.add(new AjtColumnInfo<Resource>(this , Double.class, null , "Processing time (ms)", "The processing time associated to added as delay to all the traffic units traversing this resource", (d,val)->d.setProcessingTimeToTraversingTrafficInMs((Double) val) , d->d.getProcessingTimeToTraversingTrafficInMs() , AGTYPE.MAXDOUBLE , null));
 
@@ -129,35 +119,29 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
             resType = typeSelector.getText();
 
             JPanel panel = new JPanel();
-            Object[][] data = {null, null, null};
             String[] headers = StringUtils.arrayOf("Base Resource", "Is Base Resource", "Capacity");
-            TableModel tm = new ClassAwareTableModelImpl(data, headers, new HashSet<Integer>(Arrays.asList(1, 2)));
-            AdvancedJTable table = new AdvancedJTable(tm);
-            int baseResCounter = 0;
+            DefaultTableModel dtm = new ClassAwareTableModelImpl(new Object[0][headers.length], headers, new HashSet<Integer>(Arrays.asList(1, 2)));
+
             for (Resource r : np.getResources())
             {
-            	if (!r.iAttachedToANode()) continue;
-                if (r.getHostNode().toString().equals(hostNode.toString()))
-                    baseResCounter++;
-            }
-            Object[][] newData = new Object[baseResCounter][headers.length];
-            int counter = 0;
-            for (Resource r : np.getResources())
-            {
-                if (r.getHostNode().toString().equals(hostNode.toString()))
+                Vector row = new Vector();
+                if (r.getHostNode().get().equals(hostNode))
                 {
-                    newData[counter][0] = r.getName();
-                    newData[counter][1] = false;
-                    newData[counter][2] = 0;
-                    addCheckboxCellEditor(false, counter, 1, table);
-                    counter++;
+                    row.add(r.getName());
+                    row.add(false);
+                    row.add(0);
+                    dtm.addRow(row);
+
                 }
             }
+
+            AdvancedJTable table = new AdvancedJTable(dtm);
+            for(int r = 0; r < table.getRowCount();r++)
+                addCheckboxCellEditor(false, r, 1, table);
 
             panel.setLayout(new BorderLayout());
             panel.add(new JLabel("Set new resource base resources"), BorderLayout.NORTH);
             panel.add(new JScrollPane(table), BorderLayout.CENTER);
-            ((DefaultTableModel) table.getModel()).setDataVector(newData, headers);
             int option = JOptionPane.showConfirmDialog(null, panel, "Set base resources", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (option != JOptionPane.OK_OPTION) return;
             Map<Resource, Double> newBaseResources = new HashMap<>();
@@ -231,11 +215,11 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
         {
         	if (getSelectedElements().stream().anyMatch(r->r.isHavingMoreThanOneBaseResourceWithTheSameType ())) throw new Net2PlanException ("This option is not applicable if a resource has two base resources of the same type");
         	final List<String> baseResourcesTypes = new ArrayList<> (getSelectedElements().first().getBaseResources().stream().map(r->r.getType()).collect(Collectors.toCollection(TreeSet::new)));
-        	final List<MtnInputForDialog<?>> dialogsCapacityAndBaseResources = new ArrayList<> ();
-        	dialogsCapacityAndBaseResources.add(MtnInputForDialog.inputTfDouble("Resource capacity" , "Introduce the value to set as the resource capacity", 10, 0.0));
+        	final List<InputForDialog<?>> dialogsCapacityAndBaseResources = new ArrayList<> ();
+        	dialogsCapacityAndBaseResources.add(InputForDialog.inputTfDouble("Resource capacity" , "Introduce the value to set as the resource capacity", 10, 0.0));
         	for (String baseResourceType : baseResourcesTypes)
-            	dialogsCapacityAndBaseResources.add(MtnInputForDialog.inputTfDouble("Occupied capacity in resources of type '" + baseResourceType + "'" , "Introduce the value to set as the occupied capacity in the resource of the given type", 10, 0.0));
-            MtnDialogBuilder.launch(
+            	dialogsCapacityAndBaseResources.add(InputForDialog.inputTfDouble("Occupied capacity in resources of type '" + baseResourceType + "'" , "Introduce the value to set as the occupied capacity in the resource of the given type", 10, 0.0));
+            DialogBuilder.launch(
             		"Set capacity of selected resources", 
                     "Please introduce the capacity for the resources, and the base resources (if any).", 
                     "", 
@@ -265,11 +249,11 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
         {
         	final Resource resource = getSelectedElements().first();
         	final List<Resource> baseResources = new ArrayList<> (resource.getBaseResources());
-        	final List<MtnInputForDialog<?>> dialogsCapacityAndBaseResources = new ArrayList<> ();
-        	dialogsCapacityAndBaseResources.add(MtnInputForDialog.inputTfDouble("Resource capacity" , "Introduce the value to set as the resource capacity", 10, 0.0));
+        	final List<InputForDialog<?>> dialogsCapacityAndBaseResources = new ArrayList<> ();
+        	dialogsCapacityAndBaseResources.add(InputForDialog.inputTfDouble("Resource capacity" , "Introduce the value to set as the resource capacity", 10, 0.0));
         	for (Resource br : baseResources)
-            	dialogsCapacityAndBaseResources.add(MtnInputForDialog.inputTfDouble("Occupied capacity in resources " + br.getName () + " of type '" + br.getType() + "'" , "Introduce the value to set as the occupied capacity in the resource", 10, 0.0));
-            MtnDialogBuilder.launch(
+            	dialogsCapacityAndBaseResources.add(InputForDialog.inputTfDouble("Occupied capacity in resources " + br.getName () + " of type '" + br.getType() + "'" , "Introduce the value to set as the occupied capacity in the resource", 10, 0.0));
+            DialogBuilder.launch(
             		"Set capacity of selected resource", 
                     "Please introduce the capacity for the resource, and the base resources (if any).", 
                     "", 
@@ -292,12 +276,12 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
         
         res.add(new AjtRcMenu("Set selected resources processing time", e->
         {
-            MtnDialogBuilder.launch(
+            DialogBuilder.launch(
             		"Set processing time (ms) of selected resource", 
                     "Please introduce the processing time in miliseconds for the resources.", 
                     "", 
                     this, 
-                    Arrays.asList(MtnInputForDialog.inputTfDouble("Processing time (ms)", "Introduce the processing time", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Processing time (ms)", "Introduce the processing time", 10, 0.0)),
                     (list)->
                     	{
                     		final double newProcTime = (Double) list.get(0).get();

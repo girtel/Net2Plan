@@ -4,7 +4,20 @@ All notable changes to Net2Plan will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.6.1] - 2018-10-24
 
+### Added
+	- New GUI to add multicast demands and multicast trees.
+	- Dialog confirmation when loading a design in a right way.
+	- Waste collection algorithms.
+	- NIW library to design NFV algorithms.
+### Changed
+	- GUI improvements.
+### Fixed
+	- Some bug fixes.
+
+	
+####
 
 ## [0.6.0.1] - 2018-07-11 
 

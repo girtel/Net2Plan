@@ -110,7 +110,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
     @Override
     public void mouseClicked(MouseEvent e) 
     {
-    	final PickManager pickManager = callback.getPickManager();
+    	/*final PickManager pickManager = callback.getPickManager();
         if (checkModifiers(e)) {
             GUINode guiNode = canvas.getVertex(e);
             Node node = guiNode == null? null : guiNode.getAssociatedNode();
@@ -129,7 +129,7 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
                 }
             }
             callback.updateVisualizationAfterPick();
-        }
+        }*/
     }
 
     @Override

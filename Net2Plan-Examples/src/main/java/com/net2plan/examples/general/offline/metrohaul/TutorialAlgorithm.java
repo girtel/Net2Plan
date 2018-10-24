@@ -109,7 +109,7 @@ public class TutorialAlgorithm implements IAlgorithm
 			{
 				for(WNode destination : potentialDestinations)
 				{
-					final List<List<? extends WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K.getInt(), origin, destination, vnfsToTraverse, Optional.empty(), Optional.empty());
+					final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K.getInt(), origin, destination, vnfsToTraverse, Optional.empty(), Optional.empty());
 					if(paths.isEmpty()) continue;
 					isSCAllocated = true;
 					WServiceChain serviceChain = serviceChainRequest.addServiceChain(paths.get(0), ti.get());
