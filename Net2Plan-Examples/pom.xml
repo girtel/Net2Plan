@@ -16,7 +16,7 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan</artifactId>
-        <version>0.6.1-SNAPSHOT</version>
+        <version>0.6.1</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-core</artifactId>
-            <version>0.6.1-SNAPSHOT</version>
+            <version>0.6.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
