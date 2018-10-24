@@ -75,7 +75,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 	  final NetPlan np = callback.getDesign();
   	final NetworkLayer layer = this.getTableNetworkLayer();
       final List<AjtRcMenu> res = new ArrayList<> ();
-      res.add(new AjtRcMenu("Add forwarding rule", e->createForwardingRuleGUI(callback , layer), (a,b)->b>0, null));
+      res.add(new AjtRcMenu("Add forwarding rule", e->createForwardingRuleGUI(callback , layer), (a,b)->true, null));
       res.add(new AjtRcMenu("Remove selected rules", e->
       {
     	  final List<Demand> demands = getSelectedElements().stream().map(d->d.getFirst()).collect(Collectors.toList());
@@ -107,7 +107,8 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             {
                 JComboBox<StringLabeller> me = (JComboBox) e.getSource();
                 linkSelector.removeAllItems();
-                final Node node = (Node) ((StringLabeller) me.getSelectedItem()).getObject();
+                final long nodeId = (long) ((StringLabeller) me.getSelectedItem()).getObject();
+                final Node node = netPlan.getNodeFromId(nodeId);
                 for (Link link : node.getOutgoingLinks(layer))
                 {
                     String originNodeLabel = "Node " + link.getOriginNode().getId();
@@ -117,7 +118,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                     if (!link.getDestinationNode().getName().isEmpty())
                         destinationNodeLabel += " (" + link.getDestinationNode().getName() + ")";
                     String linkLabel = "e" + link.getId() + ": " + originNodeLabel + " -> " + destinationNodeLabel;
-                    linkSelector.addItem(StringLabeller.of(link, linkLabel));
+                    linkSelector.addItem(StringLabeller.of(link.getId(), linkLabel));
                 }
 
                 linkSelector.setSelectedIndex(0);
@@ -129,8 +130,10 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             @Override
             public void itemStateChanged(ItemEvent e)
             {
-                Demand demand = (Demand) ((StringLabeller) demandSelector.getSelectedItem()).getObject();
-                Link link = (Link) ((StringLabeller) linkSelector.getSelectedItem()).getObject();
+                final long demandId = (long) ((StringLabeller) demandSelector.getSelectedItem()).getObject();
+                Demand demand = netPlan.getDemandFromId(demandId);
+                final long linkId = (long) ((StringLabeller) linkSelector.getSelectedItem()).getObject();
+                Link link = netPlan.getLinkFromId(linkId);
                 double splittingRatio;
                 if (netPlan.getForwardingRuleSplittingFactor(demand, link) > 0)
                 {
@@ -159,7 +162,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             String nodeLabel = "Node " + node.getId();
             if (!nodeName.isEmpty()) nodeLabel += " (" + nodeName + ")";
 
-            nodeSelector.addItem(StringLabeller.of(node, nodeLabel));
+            nodeSelector.addItem(StringLabeller.of(node.getId(), nodeLabel));
         }
 
         linkSelector.addItemListener(linkDemandListener);
@@ -174,7 +177,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             if (!demand.getEgressNode().getName().isEmpty())
                 egressNodeLabel += " (" + demand.getEgressNode().getName() + ")";
             String demandLabel = "d" + demand.getId() + ": " + ingressNodeLabel + " -> " + egressNodeLabel;
-            demandSelector.addItem(StringLabeller.of(demand, demandLabel));
+            demandSelector.addItem(StringLabeller.of(demand.getId(), demandLabel));
         }
 
         nodeSelector.setSelectedIndex(0);
