@@ -123,7 +123,10 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                     linkSelector.addItem(StringLabeller.of(link.getId(), linkLabel));
                 }
 
-                linkSelector.setSelectedIndex(-1);
+                if(linkSelector.getItemCount() == 0)
+                    linkSelector.setSelectedIndex(-1);
+                else
+                    linkSelector.setSelectedIndex(0);
             }
         };
 
@@ -187,8 +190,15 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             demandSelector.addItem(StringLabeller.of(demand.getId(), demandLabel));
         }
 
-        nodeSelector.setSelectedIndex(-1);
-        demandSelector.setSelectedIndex(-1);
+        if(nodeSelector.getItemCount() == 0)
+            nodeSelector.setSelectedIndex(-1);
+        else
+            nodeSelector.setSelectedIndex(0);
+
+        if(demandSelector.getItemCount() == 0)
+            demandSelector.setSelectedIndex(-1);
+        else
+            demandSelector.setSelectedIndex(0);
 
         JPanel pane = new JPanel(new MigLayout("fill", "[][grow]", "[][][][][]"));
         pane.add(new JLabel("Node where to install the rule: "));
