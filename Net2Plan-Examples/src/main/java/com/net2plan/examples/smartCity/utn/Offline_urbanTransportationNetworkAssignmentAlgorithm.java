@@ -84,10 +84,12 @@ public class Offline_urbanTransportationNetworkAssignmentAlgorithm implements IA
 		
 		op.addDecisionVariable("f_k", false, new int [] {1 , K} , 0 , Double.MAX_VALUE);
 		op.addDecisionVariable("v_a", false, new int [] {1,E} , 0 , Double.MAX_VALUE);
-		
+
 		if (optimizationModel.getString().equals("User-Equilibrium(UE)"))
+		{
 			op.setObjectiveFunction("minimize", "c0_a * v_a' + alpha * sum (r_a .* v_a^(beta+1))");
-		else if (optimizationModel.getString().equals("Stochastic-User-Equilibrium"))
+		}
+		else if (optimizationModel.getString().equals("Stochastic-User-Equilibrium(SUE)"))
 		{
 			op.addDecisionVariable("C_a", false, new int [] {1,E} , 0 , Double.MAX_VALUE);
 			op.setInputParameter("theta", sueModel_theta.getDouble());
@@ -97,7 +99,6 @@ public class Offline_urbanTransportationNetworkAssignmentAlgorithm implements IA
 		else if (optimizationModel.getString().equals("Blind-free-speed-only"))
 		{
 			op.setObjectiveFunction("minimize", "c0_a * v_a'");
-			
 		}
 		
 		op.addConstraint("A_ak * f_k' == v_a'");

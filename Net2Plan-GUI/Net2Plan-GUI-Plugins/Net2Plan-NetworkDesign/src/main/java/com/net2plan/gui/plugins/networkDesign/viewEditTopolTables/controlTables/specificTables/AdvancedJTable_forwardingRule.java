@@ -105,9 +105,11 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             @Override
             public void itemStateChanged(ItemEvent e)
             {
-                JComboBox<StringLabeller> me = (JComboBox) e.getSource();
                 linkSelector.removeAllItems();
-                final long nodeId = (long) ((StringLabeller) me.getSelectedItem()).getObject();
+                Object selectedItem_Node = nodeSelector.getSelectedItem();
+                if(selectedItem_Node == null)
+                    return;
+                final long nodeId = (long) ((StringLabeller) selectedItem_Node).getObject();
                 final Node node = netPlan.getNodeFromId(nodeId);
                 for (Link link : node.getOutgoingLinks(layer))
                 {
@@ -121,7 +123,10 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
                     linkSelector.addItem(StringLabeller.of(link.getId(), linkLabel));
                 }
 
-                linkSelector.setSelectedIndex(0);
+                if(linkSelector.getItemCount() == 0)
+                    linkSelector.setSelectedIndex(-1);
+                else
+                    linkSelector.setSelectedIndex(0);
             }
         };
 
@@ -130,9 +135,14 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             @Override
             public void itemStateChanged(ItemEvent e)
             {
-                final long demandId = (long) ((StringLabeller) demandSelector.getSelectedItem()).getObject();
+                Object selectedItem_Link = linkSelector.getSelectedItem();
+                Object selectedItem_Demand = demandSelector.getSelectedItem();
+                if(selectedItem_Link == null || selectedItem_Demand == null)
+                    return;
+
+                final long demandId = (long) ((StringLabeller) selectedItem_Demand).getObject();
                 Demand demand = netPlan.getDemandFromId(demandId);
-                final long linkId = (long) ((StringLabeller) linkSelector.getSelectedItem()).getObject();
+                final long linkId = (long) ((StringLabeller) selectedItem_Link).getObject();
                 Link link = netPlan.getLinkFromId(linkId);
                 double splittingRatio;
                 if (netPlan.getForwardingRuleSplittingFactor(demand, link) > 0)
@@ -180,8 +190,15 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
             demandSelector.addItem(StringLabeller.of(demand.getId(), demandLabel));
         }
 
-        nodeSelector.setSelectedIndex(0);
-        demandSelector.setSelectedIndex(0);
+        if(nodeSelector.getItemCount() == 0)
+            nodeSelector.setSelectedIndex(-1);
+        else
+            nodeSelector.setSelectedIndex(0);
+
+        if(demandSelector.getItemCount() == 0)
+            demandSelector.setSelectedIndex(-1);
+        else
+            demandSelector.setSelectedIndex(0);
 
         JPanel pane = new JPanel(new MigLayout("fill", "[][grow]", "[][][][][]"));
         pane.add(new JLabel("Node where to install the rule: "));
