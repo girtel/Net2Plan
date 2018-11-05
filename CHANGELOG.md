@@ -4,6 +4,13 @@ All notable changes to Net2Plan will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.6.1.1] - 2018-11-05
+
+### Fixed
+	- Different bugs in Smart City algorithms.
+	
+####
+
 ## [0.6.1] - 2018-10-24
 
 ### Added
