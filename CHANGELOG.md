@@ -4,6 +4,13 @@ All notable changes to Net2Plan will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.6.1.2] - 2019-01-09
+
+### Fixed
+	- Bug in Report header when showed in navigator.
+	
+####
+
 ## [0.6.1.1] - 2018-11-05
 
 ### Fixed
