@@ -21,21 +21,22 @@ package com.net2plan.interfaces.networkDesign;
 
 import java.awt.geom.Point2D;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
-import java.util.SortedMap;
 import java.util.Map.Entry;
-import java.util.SortedSet;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.swing.JLabel;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 
@@ -95,6 +96,7 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
 		
 		netPlan.setDescription(getStringOrDefault("description", ""));
 		netPlan.setName(getStringOrDefault("name", ""));
+		try { final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); netPlan.setCurrentDate(df.parse(getStringOrDefault("currentDate", ""))); } catch (Exception e) { netPlan.setCurrentDate(new Date ()); } 
 		netPlan.nextElementId = new MutableLong(nexElementId_thisNetPlan);
 		if (netPlan.nextElementId.toLong() <= 0) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		while (true) { try { netPlan.addGlobalPlanningDomain(getString ("planningDomain_" + (netPlan.getGlobalPlanningDomains().size())));  } catch(Exception e) { break; }   } 

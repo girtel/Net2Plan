@@ -297,7 +297,48 @@ public class MonitoringUtils
 
     }
 
+    public static <T extends NetworkElement>  AjtRcMenu getMenuFilterMonitSamples (AdvancedJTable_networkElement<T> table)
+    {
+        final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;
+        final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
+        final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
+        final String elementName = isLinkTable? "link" : (isDemandTable? "demand" : "multicast demand");
 
+        if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
+        return new AjtRcMenu("Percentile-filtering of samples", e->
+        {
+            DialogBuilder.launch(
+                    "Filter-out samples according to the a percentile-indication for this " + elementName ,
+                    ". If e.g percentile 95 is chosen, and the time interval is set to \"day\", all the samples in each day, if any, are replaced "
+                    + "by a single sample with the value so that a 95% of the samples are below this value",
+                    "",
+                    table,
+                    Arrays.asList(
+                            InputForDialog.inputTfCombo("Interval type", "One sample is produced for each interval (if at least one sample already exists)", 20 , "day" , Arrays.asList("hour" , "day", "week", "year") , Arrays.asList("hour" , "day", "week", "year") , null),
+                            InputForDialog.inputTfDouble("Percentile (0 , 1)", "Introduce the percentile. 1 means peaking the maximum value in the interval", 10, 0.95)
+                    ),
+                    (list)->
+                    {
+                        final Date initialDate , endDate;
+                        final String intervalTimeType = (String) list.get(0).get();
+                        final double percentile = (Double) list.get(1).get();
+                        /* Add values */
+                        for (T ee: table.getSelectedElements())
+                        {
+                            TrafficSeries tm = null;
+                            if (isLinkTable) tm = ((Link) ee).getMonitoredOrForecastedCarriedTraffic();
+                            else if (isDemandTable) tm = ((Demand) ee).getMonitoredOrForecastedOfferedTraffic();
+                            else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
+                            assert tm != null;
+                            tm.applyPercentileFiltering(intervalTimeType, percentile);
+                        }
+
+                    }
+            );
+        } , (a,b)->b>0, null);
+    }
+
+    
     public static <T extends NetworkElement>  AjtRcMenu getMenuPredictTrafficFromSameElementMonitorInfo (AdvancedJTable_networkElement<T> table)
     {
         final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;

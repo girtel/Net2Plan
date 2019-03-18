@@ -1,9 +1,11 @@
 package com.net2plan.libraries;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -13,6 +15,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.commons.math3.stat.regression.RegressionResults;
@@ -123,6 +126,84 @@ public class TrafficSeries
 		return this;
 	}
 
+	public void applyPercentileFiltering (String intervalTimeType , double percentile)
+	{
+		if (percentile <= 0 || percentile > 1) throw new Net2PlanException("Percentil info must be between 0 (non-inclusive) and one (inclusive)");
+		final SortedMap<Date , Double> newMonitValues = new TreeMap<> ();
+		final Date initDate = getFirstDate();
+		final Date endDate = getLastDate();
+		final Calendar initDateCalendar = new GregorianCalendar ();
+		initDateCalendar.setTime(initDate);
+		Calendar currentDate = new GregorianCalendar ();
+		currentDate.clear();
+		final int fieldToAdd;
+		if (intervalTimeType.equalsIgnoreCase("hour"))
+		{
+			currentDate.set(initDateCalendar.get(Calendar.YEAR), 
+					initDateCalendar.get(Calendar.MONTH), 
+					initDateCalendar.get(Calendar.DAY_OF_MONTH), 
+					initDateCalendar.get(Calendar.HOUR_OF_DAY), 
+					0);
+			fieldToAdd = Calendar.HOUR_OF_DAY;
+		} else if (intervalTimeType.equalsIgnoreCase("day"))
+		{
+			currentDate.set(initDateCalendar.get(Calendar.YEAR), 
+					initDateCalendar.get(Calendar.MONTH), 
+					initDateCalendar.get(Calendar.DAY_OF_MONTH), 
+					0, 
+					0);
+			fieldToAdd = Calendar.DAY_OF_YEAR;
+		} else if (intervalTimeType.equalsIgnoreCase("month"))
+		{
+			currentDate.set(initDateCalendar.get(Calendar.YEAR), 
+					initDateCalendar.get(Calendar.MONTH), 
+					0, 
+					0, 
+					0);
+			fieldToAdd = Calendar.MONTH;
+		} else if (intervalTimeType.equalsIgnoreCase("year"))
+		{
+			currentDate.set(initDateCalendar.get(Calendar.YEAR), 
+					0, 
+					0, 
+					0, 
+					0);
+			fieldToAdd = Calendar.YEAR;
+		}
+		else throw new Net2PlanException ("Wrong percentile interval type: " + intervalTimeType);
+		while (!currentDate.toInstant().isAfter(endDate.toInstant()))
+		{
+			final Calendar endTimeThisInterval = (Calendar) currentDate.clone();
+			endTimeThisInterval.add(fieldToAdd, 1);
+			final List<Entry<Date,Double>> vals = monitValues.tailMap(currentDate.getTime()).entrySet ().stream().
+					filter(e->e.getKey().toInstant().isBefore(endTimeThisInterval.toInstant())).
+					sorted((e1,e2)->Double.compare(e1.getValue (), e2.getValue())).
+					collect (Collectors.toCollection(ArrayList::new));
+			currentDate = endTimeThisInterval;
+			
+			if (vals.isEmpty()) continue;
+			final double positionOfSample = vals.size() * percentile;
+			final double remainder = positionOfSample - Math.floor(positionOfSample);
+			final int prevIndex = (int) Math.max(0, Math.floor(positionOfSample) - 1);
+			final int nextIndex = (int) Math.min(Math.ceil(positionOfSample) - 1 , vals.size() - 1);
+			if (prevIndex == nextIndex) 
+			{
+				newMonitValues.put(vals.get(prevIndex).getKey(), vals.get(prevIndex).getValue());
+			} else
+			{
+				final Date d1 = vals.get(prevIndex).getKey();
+				final Date d2 = vals.get(nextIndex).getKey();
+				final double v1 = vals.get(prevIndex).getValue();
+				final double v2 = vals.get(nextIndex).getValue();
+				final Date midDate = new Date ((long) ((1-remainder)*d1.getTime() + remainder * d2.getTime()));
+				final double midVal = (1-remainder) * v1 + remainder * v2;
+				newMonitValues.put(midDate, midVal);
+			}
+		}
+		this.monitValues.clear();
+		this.monitValues.putAll(newMonitValues);
+	}
+	
 	public SortedSet<Date> getDatesWithValue () { return new TreeSet<>(monitValues.keySet()); }
 	public SortedMap<Date , Double> getValues () { return Collections.unmodifiableSortedMap(monitValues); }
 	public int getSize () { return monitValues.size(); }

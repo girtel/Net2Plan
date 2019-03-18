@@ -10,19 +10,32 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneLayout;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
-import com.net2plan.gui.utils.*;
+import com.net2plan.gui.utils.AdvancedJTable;
+import com.net2plan.gui.utils.ClassAwareTableModel;
+import com.net2plan.gui.utils.ColumnHeaderToolTips;
+import com.net2plan.gui.utils.FullScrollPaneLayout;
+import com.net2plan.gui.utils.TableCursorNavigation;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.StringUtils;
-import net.miginfocom.swing.MigLayout;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import java.util.Map;
-import java.util.Set;
+import net.miginfocom.swing.MigLayout;
 
 public class NetPlanViewTableComponent_network extends JPanel {
     private final static String[] attributeTableHeader = StringUtils.arrayOf("Attribute", "Value");
@@ -31,7 +44,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
     private final static String[] tagTableHeader = StringUtils.arrayOf("Tag");
     private final static String[] tagTableTip = StringUtils.arrayOf("Name of the tag");
 
-    private JTextField txt_networkName, txt_numLayers, txt_numNodes, txt_numSRGs;
+    private JTextField txt_networkName, txt_numLayers, txt_numNodes, txt_numSRGs , txt_currentDate;
     private JTextArea txt_networkDescription;
     private AdvancedJTable networkTagTable;
     private AdvancedJTable networkAttributeTable;
@@ -50,6 +63,8 @@ public class NetPlanViewTableComponent_network extends JPanel {
         txt_networkDescription.setWrapStyleWord(true);
         txt_networkName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_networkDescription.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
+        txt_currentDate = new JTextField();
+        txt_currentDate.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_numLayers = new JTextField();
         txt_numLayers.setEditable(false);
         txt_numNodes = new JTextField();
@@ -69,6 +84,18 @@ public class NetPlanViewTableComponent_network extends JPanel {
                 @Override
                 protected void updateInfo(String text) {
                     networkViewer.getDesign().setDescription(text);
+                }
+            });
+            txt_currentDate.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
+                @Override
+                protected void updateInfo(String text) 
+                {
+                	try
+                	{
+                		final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
+                		final Date date = df.parse(text);
+                        networkViewer.getDesign().setCurrentDate(date);
+                	} catch (Exception ee) {}
                 }
             });
         }
@@ -119,6 +146,8 @@ public class NetPlanViewTableComponent_network extends JPanel {
         this.add(new JScrollPane(txt_networkDescription), "grow, wrap, height 100::");
         this.add(sp_tags, "grow, spanx, wrap");
         this.add(scrollPane, "grow, spanx 2, wrap");
+        this.add(new JLabel("Current date (yyyy-MM-dd HH:mm:ss)"), "grow");
+        this.add(txt_currentDate, "grow, wrap");
         this.add(new JLabel("Number of layers"), "grow");
         this.add(txt_numLayers, "grow, wrap");
         this.add(new JLabel("Number of nodes"), "grow");
@@ -172,6 +201,8 @@ public class NetPlanViewTableComponent_network extends JPanel {
 
         this.layerTable.updateView();
         
+		final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
+        txt_currentDate.setText(df.format(currentState.getCurrentDate()));
         txt_networkName.setText(currentState.getName());
         txt_networkDescription.setText(currentState.getDescription());
         txt_networkDescription.setCaretPosition(0);

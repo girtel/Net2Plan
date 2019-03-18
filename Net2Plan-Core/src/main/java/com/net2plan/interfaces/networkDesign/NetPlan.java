@@ -20,10 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -139,6 +141,7 @@ public class NetPlan extends NetworkElement
 
     RoutingType DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
     boolean isModifiable;
+    Date currentDate = new Date ();
 //    String networkDescription;
 //    String networkName;
     NetworkLayer defaultLayer;
@@ -188,7 +191,8 @@ public class NetPlan extends NetworkElement
     {
         super(null, 0, 0, new AttributeMap());
 		this.setName ("NetPlan");
-
+		this.currentDate = new Date ();
+		
         this.netPlan = this;
         DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
         isModifiable = true;
@@ -1578,6 +1582,7 @@ public class NetPlan extends NetworkElement
         this.isModifiable = netPlan.isModifiable;
         this.description = netPlan.description;
         this.name = netPlan.name;
+        this.currentDate = netPlan.currentDate;
         this.currentPlotNodeLayout = netPlan.currentPlotNodeLayout;
         this.cache_definedPlotNodeLayouts = netPlan.cache_definedPlotNodeLayouts;
         this.defaultLayer = netPlan.defaultLayer;
@@ -5630,6 +5635,17 @@ public class NetPlan extends NetworkElement
         return false;
     }
 
+    
+    /** Returns the current date property of the design
+     * @return see above
+     */
+    public Date getCurrentDate () { return currentDate; }
+
+    /** Sets the current date property of the design
+     * @param date see above
+     */
+    public void setCurrentDate (Date date) { this.currentDate = date; }
+    
     /**
      * <p>Returns {@code true} if the network has more than one layer.</p>
      *
@@ -6067,6 +6083,8 @@ public class NetPlan extends NetworkElement
             writer.writeStartElement("network");
             writer.writeAttribute("description", getDescription());
             writer.writeAttribute("name", getName());
+    		final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
+    		writer.writeAttribute("currentDate", df.format(getCurrentDate()));
             writer.writeAttribute("currentPlotNodeLayout", this.currentPlotNodeLayout);
             writer.writeAttribute("cache_definedPlotNodeLayouts", StringUtils.createEscapedString_asStringList(this.cache_definedPlotNodeLayouts));
             writer.writeAttribute("version", Version.getFileFormatVersion());
