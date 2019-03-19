@@ -296,6 +296,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 MonitoringUtils.getMenuExportMonitoringInfo(this),
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
                 MonitoringUtils.getMenuPredictTrafficFromSameElementMonitorInfo (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
                 MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),

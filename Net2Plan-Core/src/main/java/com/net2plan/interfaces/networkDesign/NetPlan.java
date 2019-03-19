@@ -312,7 +312,7 @@ public class NetPlan extends NetworkElement
                                   break;
 
                                 case 6:
-//                                    System.out.println("Version 5");
+                                    System.out.println("Version 6");
                                     netPlanFormat = new ReaderNetPlanN2PVersion_6();
                                     break;
 
@@ -408,6 +408,7 @@ public class NetPlan extends NetworkElement
         if (this.DEFAULT_ROUTING_TYPE != np2.DEFAULT_ROUTING_TYPE) return false;
         if (this.isModifiable != np2.isModifiable) return false;
         if (!this.description.equals(np2.description)) return false;
+        if (!this.currentDate.equals(np2.currentDate)) return false;
         if (!this.name.equals(np2.name)) return false;
         if (!this.cache_definedPlotNodeLayouts.equals(np2.cache_definedPlotNodeLayouts)) return false;
         if (this.defaultLayer.id != np2.defaultLayer.id) return false;
@@ -2323,6 +2324,7 @@ public class NetPlan extends NetworkElement
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = true;
         this.description = originNetPlan.description;
+        this.currentDate = originNetPlan.currentDate;
         this.name = originNetPlan.name;
         this.currentPlotNodeLayout = originNetPlan.currentPlotNodeLayout;
         this.cache_definedPlotNodeLayouts = new TreeSet<> (originNetPlan.cache_definedPlotNodeLayouts);
@@ -6083,8 +6085,7 @@ public class NetPlan extends NetworkElement
             writer.writeStartElement("network");
             writer.writeAttribute("description", getDescription());
             writer.writeAttribute("name", getName());
-    		final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
-    		writer.writeAttribute("currentDate", df.format(getCurrentDate()));
+    		writer.writeAttribute("currentDate", new Long (getCurrentDate().getTime()).toString());
             writer.writeAttribute("currentPlotNodeLayout", this.currentPlotNodeLayout);
             writer.writeAttribute("cache_definedPlotNodeLayouts", StringUtils.createEscapedString_asStringList(this.cache_definedPlotNodeLayouts));
             writer.writeAttribute("version", Version.getFileFormatVersion());

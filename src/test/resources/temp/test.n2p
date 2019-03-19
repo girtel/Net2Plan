@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="" name="" currentDate="1553018548643" currentPlotNodeLayout="" cache_definedPlotNodeLayouts="" version="6" nextElementId="34" planningDomain_0="pd1" planningDomain_1="pd2">
+	<node id="3" description="" name="node1" xCoord="1.0" yCoord="2.0" mapLayout2NodeXYPositionMap=" 1.0 2.0" population="0.0" siteName="s12" isUp="true" planningDomain_0="pd1" layersWithIconsDefined="1" nodeIconURLLayer_1="file:/lowerIcon" nodeIconRelativeSizeLayer_1="0.5">
+		<tag value="t1"/>
+		<attribute key="att" value="1"/>
+	</node>
+	<node id="4" description="" name="node2" xCoord="0.0" yCoord="0.0" mapLayout2NodeXYPositionMap=" 0.0 0.0" population="200.0" siteName="s12" isUp="true" layersWithIconsDefined="">
+	</node>
+	<node id="5" description="" name="node3" xCoord="0.0" yCoord="0.0" mapLayout2NodeXYPositionMap=" 0.0 0.0" population="100.0" siteName="s3" isUp="true" layersWithIconsDefined="">
+	</node>
+	<node id="6" description="" name="node4" xCoord="0.0" yCoord="0.0" mapLayout2NodeXYPositionMap=" 0.0 0.0" population="100.0" isUp="true" layersWithIconsDefined="">
+	</node>
+	<resource id="11" description="" name="unaName" hostNodeId="-1" type="una" capacityMeasurementUnits="units" processingTimeToTraversingTrafficInMs="1.0" capacity="2.0" baseResourceAndOccupiedCapacitiesMap="">
+	</resource>
+	<resource id="19" description="" name="name" hostNodeId="4" type="type" capacityMeasurementUnits="Mbps" processingTimeToTraversingTrafficInMs="10.0" capacity="100.0" baseResourceAndOccupiedCapacitiesMap="">
+		<tag value="t1"/>
+	</resource>
+	<resource id="20" description="" name="name" hostNodeId="4" type="type" capacityMeasurementUnits="Mbps" processingTimeToTraversingTrafficInMs="10.0" capacity="100.0" baseResourceAndOccupiedCapacitiesMap="">
+	</resource>
+	<layer id="1" description="" name="Layer 0" isDefaultLayer="true" linkCapacityUnitsName="" demandTrafficUnitsName="Mbps">
+		<link id="7" description="" name="Link-0" originNodeId="3" destinationNodeId="4" capacity="100.0" lengthInKm="100.0" bidirectionalPairId="-1" propagationSpeedInKmPerSecond="1.0" isUp="true" monitoredOrForecastedTraffics="10>A10.0">
+			<tag value="t1"/>
+		</link>
+		<link id="8" description="" name="Link-1" originNodeId="4" destinationNodeId="5" capacity="100.0" lengthInKm="100.0" bidirectionalPairId="-1" propagationSpeedInKmPerSecond="1.0" isUp="true" monitoredOrForecastedTraffics="">
+		</link>
+		<link id="9" description="" name="Link-2" originNodeId="3" destinationNodeId="5" capacity="100.0" lengthInKm="100.0" bidirectionalPairId="-1" propagationSpeedInKmPerSecond="1.0" isUp="true" monitoredOrForecastedTraffics="">
+		</link>
+		<link id="10" description="" name="Link-3" originNodeId="5" destinationNodeId="6" capacity="100.0" lengthInKm="100.0" bidirectionalPairId="-1" propagationSpeedInKmPerSecond="1.0" isUp="true" monitoredOrForecastedTraffics="">
+		</link>
+		<demand id="12" description="" name="Demand-0" ingressNodeId="3" egressNodeId="5" offeredTraffic="3.0" intendedRecoveryType="NONE" routingType="SOURCE_ROUTING" bidirectionalPairId="-1" maximumAcceptableE2EWorstCaseLatencyInMs="-1.0" offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth="1.2" monitoredOrForecastedTraffics="3>A2.0" qosType="qosType1">
+			<tag value="t1"/>
+			<tag value="t2"/>
+		</demand>
+		<demand id="13" description="" name="Demand-1" ingressNodeId="4" egressNodeId="6" offeredTraffic="1.5" intendedRecoveryType="NOTSPECIFIED" routingType="HOP_BY_HOP_ROUTING" bidirectionalPairId="-1" maximumAcceptableE2EWorstCaseLatencyInMs="-1.0" offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth="0.0" monitoredOrForecastedTraffics="" qosType="">
+		</demand>
+		<demand id="14" description="" name="Demand-2" ingressNodeId="4" egressNodeId="6" offeredTraffic="1.5" intendedRecoveryType="NOTSPECIFIED" routingType="HOP_BY_HOP_ROUTING" bidirectionalPairId="-1" maximumAcceptableE2EWorstCaseLatencyInMs="-1.0" offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth="0.0" monitoredOrForecastedTraffics="" qosType="">
+		</demand>
+		<demand id="15" description="" name="Demand-3" ingressNodeId="3" egressNodeId="4" offeredTraffic="3.0" intendedRecoveryType="PROTECTION_NOREVERT" routingType="SOURCE_ROUTING" bidirectionalPairId="-1" maximumAcceptableE2EWorstCaseLatencyInMs="-1.0" offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth="0.0" monitoredOrForecastedTraffics="" qosType="">
+		</demand>
+		<demand id="21" description="" name="Demand-4" ingressNodeId="3" egressNodeId="5" offeredTraffic="3.0" intendedRecoveryType="NOTSPECIFIED" routingType="SOURCE_ROUTING" bidirectionalPairId="-1" maximumAcceptableE2EWorstCaseLatencyInMs="-1.0" offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth="0.0" monitoredOrForecastedTraffics="" qosType="">
+		<serviceChainResourceTypeOfSequence type="type"/>
+		</demand>
+		<multicastDemand id="25" description="" name="MulticastDemand-0" ingressNodeId="3" egressNodeIds="4 5" offeredTraffic="100.0" maximumAcceptableE2EWorstCaseLatencyInMs="-1.0" offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth="0.0" qosType="" monitoredOrForecastedTraffics="1>A1.0">
+			<tag value="t1"/>
+		</multicastDemand>
+			<multicastTree id="26" description="" name="MulticastTree-0" demandId="25" carriedTrafficIfNotFailing="10.0" occupiedLinkCapacityIfNotFailing="15.0" currentSetLinks="7 8" initialSetLinks="7 8">
+			<tag value="t1"/>
+			</multicastTree>
+			<multicastTree id="27" description="" name="MulticastTree-1" demandId="25" carriedTrafficIfNotFailing="10.0" occupiedLinkCapacityIfNotFailing="15.0" currentSetLinks="7 9" initialSetLinks="7 9">
+			</multicastTree>
+		<sourceRouting>
+			<route id="16" description="" name="Route-0" demandId="15" currentCarriedTrafficIfNotFailing="1.0" currentLinksAndResourcesOccupationIfNotFailing="1.5" currentPath="7" bidirectionalPairId="-1" initialStateCarriedTrafficIfNotFailing="1.0" initialStateOccupationIfNotFailing="1.5" initialStatePath="7" backupRoutes="">
+				<tag value="t1"/>
+				<tag value="t3"/>
+			</route>
+			<route id="17" description="" name="Route-1" demandId="12" currentCarriedTrafficIfNotFailing="1.0" currentLinksAndResourcesOccupationIfNotFailing="1.5 1.5" currentPath="7 8" bidirectionalPairId="-1" initialStateCarriedTrafficIfNotFailing="1.0" initialStateOccupationIfNotFailing="1.5 1.5" initialStatePath="7 8" backupRoutes="23">
+			</route>
+			<route id="18" description="" name="Route-2" demandId="12" currentCarriedTrafficIfNotFailing="1.0" currentLinksAndResourcesOccupationIfNotFailing="1.5 1.5" currentPath="7 8" bidirectionalPairId="-1" initialStateCarriedTrafficIfNotFailing="1.0" initialStateOccupationIfNotFailing="1.5 1.5" initialStatePath="7 8" backupRoutes="">
+			</route>
+			<route id="22" description="" name="Route-3" demandId="21" currentCarriedTrafficIfNotFailing="100.0" currentLinksAndResourcesOccupationIfNotFailing="300.0 50.0 302.0" currentPath="7 19 8" bidirectionalPairId="-1" initialStateCarriedTrafficIfNotFailing="100.0" initialStateOccupationIfNotFailing="300.0 50.0 302.0" initialStatePath="7 19 8" backupRoutes="">
+				<tag value="t1"/>
+			</route>
+			<route id="23" description="" name="Route-4" demandId="12" currentCarriedTrafficIfNotFailing="0.0" currentLinksAndResourcesOccupationIfNotFailing="50.0" currentPath="9" bidirectionalPairId="-1" initialStateCarriedTrafficIfNotFailing="0.0" initialStateOccupationIfNotFailing="50.0" initialStatePath="9" backupRoutes="">
+			</route>
+		</sourceRouting>
+		<hopByHopRouting>
+			<forwardingRule demandId="13" linkId="8" splittingRatio="1.0"/>
+			<forwardingRule demandId="13" linkId="10" splittingRatio="1.0"/>
+		</hopByHopRouting>
+		<tag value="t1"/>
+	</layer>
+	<layer id="2" description="description" name="upperLayer" isDefaultLayer="false" linkCapacityUnitsName="Mbps" demandTrafficUnitsName="upperTrafficUnits" defaultNodeIconURL="file:/upperIcon">
+		<link id="24" description="" name="Link-0" originNodeId="3" destinationNodeId="4" capacity="1.0" lengthInKm="100.0" bidirectionalPairId="-1" propagationSpeedInKmPerSecond="1.0" isUp="true" monitoredOrForecastedTraffics="">
+		</link>
+		<link id="28" description="" name="Link-1" originNodeId="3" destinationNodeId="4" capacity="20.0" lengthInKm="100.0" bidirectionalPairId="-1" propagationSpeedInKmPerSecond="1.0" isUp="true" monitoredOrForecastedTraffics="">
+		</link>
+		<link id="29" description="" name="Link-2" originNodeId="3" destinationNodeId="5" capacity="20.0" lengthInKm="100.0" bidirectionalPairId="-1" propagationSpeedInKmPerSecond="1.0" isUp="true" monitoredOrForecastedTraffics="">
+		</link>
+		<multicastDemand id="30" description="" name="MulticastDemand-0" ingressNodeId="3" egressNodeIds="4 5" offeredTraffic="100.0" maximumAcceptableE2EWorstCaseLatencyInMs="-1.0" offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth="1.3" qosType="qosType2" monitoredOrForecastedTraffics="">
+		</multicastDemand>
+			<multicastTree id="31" description="" name="MulticastTree-0" demandId="30" carriedTrafficIfNotFailing="10.0" occupiedLinkCapacityIfNotFailing="15.0" currentSetLinks="28 29" initialSetLinks="28 29">
+			</multicastTree>
+		<sourceRouting>
+		</sourceRouting>
+		<hopByHopRouting>
+		</hopByHopRouting>
+		<tag value="t1"/>
+	</layer>
+	<srg id="32" description="" name="Srg-0" meanTimeToFailInHours="1.0" meanTimeToRepairInHours="1.0" isDynamic="true" dynamicSrgClassName="com.net2plan.interfaces.networkDesign.dynamicSrgs.DynamicSrgAllBidiLinksTwoNodes" dynamicSrgConfigString="3 4 0">
+	</srg>
+	<srg id="33" description="" name="Srg-1" meanTimeToFailInHours="1.0" meanTimeToRepairInHours="1.0" isDynamic="false" nodes="3" links="">
+	</srg>
+	<layerCouplingDemand lowerLayerDemandId="15" upperLayerLinkId="24"/>
+	<layerCouplingMulticastDemand lowerLayerDemandId="25" upperLayerLinkIds="28 29"/>
+	<tag value="t1"/>
+</network>

@@ -98,7 +98,7 @@ public class TrafficSeries
 		public boolean isLinear () { return this == LINEAR; }
 		public boolean isExponential () { return this == EXPONENTIAL; }
 	};
-	final SortedMap<Date , Double> monitValues = new TreeMap<> ();
+	private SortedMap<Date , Double> monitValues = new TreeMap<> ();
 	public TrafficSeries () { }
 	public TrafficSeries (SortedMap<Date , Double> monitValues) { this.monitValues.putAll (monitValues);  }
 	
@@ -126,12 +126,10 @@ public class TrafficSeries
 		return this;
 	}
 
-	public void applyPercentileFiltering (String intervalTimeType , double percentile)
+	public void applyPercentileFiltering (Date initDate , Date endDate , String intervalTimeType , double percentile)
 	{
 		if (percentile <= 0 || percentile > 1) throw new Net2PlanException("Percentil info must be between 0 (non-inclusive) and one (inclusive)");
 		final SortedMap<Date , Double> newMonitValues = new TreeMap<> ();
-		final Date initDate = getFirstDate();
-		final Date endDate = getLastDate();
 		final Calendar initDateCalendar = new GregorianCalendar ();
 		initDateCalendar.setTime(initDate);
 		Calendar currentDate = new GregorianCalendar ();
@@ -200,8 +198,7 @@ public class TrafficSeries
 				newMonitValues.put(midDate, midVal);
 			}
 		}
-		this.monitValues.clear();
-		this.monitValues.putAll(newMonitValues);
+		this.monitValues = newMonitValues;
 	}
 	
 	public SortedSet<Date> getDatesWithValue () { return new TreeSet<>(monitValues.keySet()); }

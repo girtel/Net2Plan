@@ -96,7 +96,15 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
 		
 		netPlan.setDescription(getStringOrDefault("description", ""));
 		netPlan.setName(getStringOrDefault("name", ""));
-		try { final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); netPlan.setCurrentDate(df.parse(getStringOrDefault("currentDate", ""))); } catch (Exception e) { netPlan.setCurrentDate(new Date ()); } 
+		try 
+		{ 
+			final long longDate = getLong("currentDate"); 
+			netPlan.setCurrentDate(new Date (longDate)); 
+		} catch (Exception e) 
+		{ 
+			System.out.println("Error reading date"); 
+			netPlan.setCurrentDate(new Date ()); 
+		} 
 		netPlan.nextElementId = new MutableLong(nexElementId_thisNetPlan);
 		if (netPlan.nextElementId.toLong() <= 0) throw new Net2PlanException ("A network element has an id higher than the nextElementId");
 		while (true) { try { netPlan.addGlobalPlanningDomain(getString ("planningDomain_" + (netPlan.getGlobalPlanningDomains().size())));  } catch(Exception e) { break; }   } 

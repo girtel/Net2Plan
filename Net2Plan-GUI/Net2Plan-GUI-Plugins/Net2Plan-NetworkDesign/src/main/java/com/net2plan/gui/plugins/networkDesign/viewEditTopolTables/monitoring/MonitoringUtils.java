@@ -297,7 +297,7 @@ public class MonitoringUtils
 
     }
 
-    public static <T extends NetworkElement>  AjtRcMenu getMenuFilterMonitSamples (AdvancedJTable_networkElement<T> table)
+    public static <T extends NetworkElement>  AjtRcMenu getMenuPercentileFilterMonitSamples (AdvancedJTable_networkElement<T> table)
     {
         final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;
         final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
@@ -319,7 +319,6 @@ public class MonitoringUtils
                     ),
                     (list)->
                     {
-                        final Date initialDate , endDate;
                         final String intervalTimeType = (String) list.get(0).get();
                         final double percentile = (Double) list.get(1).get();
                         /* Add values */
@@ -330,9 +329,8 @@ public class MonitoringUtils
                             else if (isDemandTable) tm = ((Demand) ee).getMonitoredOrForecastedOfferedTraffic();
                             else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
                             assert tm != null;
-                            tm.applyPercentileFiltering(intervalTimeType, percentile);
+                            tm.applyPercentileFiltering(tm.getFirstDate() , tm.getLastDate() , intervalTimeType, percentile);
                         }
-
                     }
             );
         } , (a,b)->b>0, null);

@@ -262,6 +262,7 @@ public class NetPlanTest
         NetPlan readNp = new NetPlan (f);
         assertTrue(readNp.isDeepCopy(np));
         assertTrue(np.isDeepCopy(readNp));
+        assertEquals (readNp.getCurrentDate() , np.getCurrentDate());
         
         np.setPlotNodeLayoutCurrentlyActive(NetPlan.PLOTLAYTOUT_DEFAULTNODELAYOUTNAME);
         np.removePlotNodeLayout("New");
@@ -272,7 +273,13 @@ public class NetPlanTest
         assertTrue(np.isDeepCopy(readNp));
     }
 
-
+	@Test
+	public void testDate()
+	{
+		final Date d = new Date ();
+		np.setCurrentDate(d);
+		assertEquals (np.getCurrentDate() , d);
+	}
 	
 	@Test
 	public void testQosType_1()

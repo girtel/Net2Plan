@@ -52,7 +52,7 @@ public class IPUtils
 	 * Link attribute name for IP weight setting.
 	 * 
 	 */
-	public final static String IP_WEIGHT_ATTRIBUTE_NAME = "ospf-linkWeight";
+	public final static String IP_WEIGHT_ATTRIBUTE_NAME = "igp-linkWeight";
 	
 	/**
 	 * <p>Returns the cost of a routing scheme according to the carried traffic per 
