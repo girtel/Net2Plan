@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -27,6 +28,7 @@ import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.TrafficPredictor;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
@@ -51,7 +53,7 @@ import com.net2plan.utils.Triple;
  * @since 0.4.0
  */
 
-public class Link extends NetworkElement
+public class Link extends NetworkElement implements IMonitorizableElement
 {
 	
 	final NetworkLayer layer;
@@ -66,6 +68,7 @@ public class Link extends NetworkElement
 	Link bidirectionalPair;
 	private SortedMap<String,Pair<Integer,Double>> qos2PriorityMaxLinkCapPercentage;
 	private TrafficSeries monitoredOrForecastedTraffics;
+    private TrafficPredictor trafficPredictor;
 //	private SortedMap<String,Pair<Double,Double>> cache_perQoSOccupationAndQosViolationMap;
 
 	SortedSet<SharedRiskGroup> cache_nonDynamicSrgs;
@@ -139,6 +142,7 @@ public class Link extends NetworkElement
 		this.bidirectionalPair = null;
 		this.qos2PriorityMaxLinkCapPercentage = new TreeMap<> ();
 		this.monitoredOrForecastedTraffics = new TrafficSeries ();
+		this.trafficPredictor = null;
 		if (capacity < Configuration.precisionFactor) if (layer != null) layer.cache_linksZeroCap.add(this); // do not call here the regular updae function on purpose, there is no previous capacity info
 	}
 
@@ -171,6 +175,7 @@ public class Link extends NetworkElement
 			this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState.put(netPlan.getDemandFromId(fr.getKey().id), Pair.of(fr.getValue().getFirst(), fr.getValue().getSecond()));
 		this.bidirectionalPair = origin.bidirectionalPair == null? null : netPlan.getLinkFromId(origin.bidirectionalPair.getId());
 		this.monitoredOrForecastedTraffics = origin.monitoredOrForecastedTraffics;
+		this.trafficPredictor = origin.trafficPredictor;
 	}
 
 	boolean isDeepCopy (Link e2)
@@ -198,6 +203,8 @@ public class Link extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cacheHbH_frs , e2.cacheHbH_frs)) return false;
 		if (!NetPlan.isDeepCopy(this.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState , e2.cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState)) return false;
 		if (!this.monitoredOrForecastedTraffics.equals(e2.monitoredOrForecastedTraffics)) return false;
+		if ((this.trafficPredictor == null) != (e2.trafficPredictor == null)) return false;
+		if (trafficPredictor != null) if (!this.trafficPredictor.equals(e2.trafficPredictor)) return false;
 		return true;
 	}
 
@@ -1401,12 +1408,55 @@ public class Link extends NetworkElement
 	/** Returns the object contianing the monitored or forecasted time series information for the carried traffic
 	 * @return see above
 	 */
-	public TrafficSeries getMonitoredOrForecastedCarriedTraffic () { return this.monitoredOrForecastedTraffics; }
+	@Override
+	public TrafficSeries getMonitoredOrForecastedCarriedTraffic()
+	{
+        return this.monitoredOrForecastedTraffics;
+	}
 
-	
 	/** Sets the new time series for the monitored or forecasted offered traffic, eliminating any previous values 
 	 * @param newTimeSeries  see above
 	 */
-	public void setMonitoredOrForecastedCarriedTraffic (TrafficSeries newTimeSeries) { this.monitoredOrForecastedTraffics = new TrafficSeries (newTimeSeries.getValues()); }
+	@Override
+	public void setMonitoredOrForecastedCarriedTraffic(TrafficSeries newTimeSeries) 
+	{
+		this.monitoredOrForecastedTraffics = new TrafficSeries(newTimeSeries.getValues());
+	}
+
+	@Override
+	public double getCurrentTrafficToAddMonitSample() 
+	{
+		return getCarriedTraffic();
+	}
+
+	@Override
+	public boolean isPossibleToSetCurrentTrafficAsGivenMonitSample() 
+	{
+		return false;
+	}
+
+	@Override
+	public void setCurrentTrafficToGivenMonitSample(double traffic) 
+	{
+		throw new RuntimeException ();
+	}
+
+	@Override
+	public Optional<TrafficPredictor> getTrafficPredictor() 
+	{
+		return Optional.ofNullable(this.trafficPredictor);
+	}
+
+	@Override
+	public void setTrafficPredictor(TrafficPredictor tp) 
+	{
+		this.trafficPredictor = tp;
+	}
+
+	@Override
+	public void removeTrafficPredictor() 
+	{
+		this.trafficPredictor = null;
+	}
 
 }

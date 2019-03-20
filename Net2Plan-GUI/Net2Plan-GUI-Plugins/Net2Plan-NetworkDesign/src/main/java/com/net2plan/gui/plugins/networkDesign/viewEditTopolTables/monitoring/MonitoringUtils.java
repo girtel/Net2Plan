@@ -1,5 +1,30 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring;
 
+import java.io.File;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import com.net2plan.gui.plugins.GUINetworkDesignConstants;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelReader;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelWriter;
@@ -7,20 +32,21 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IMonitorizableElement;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.libraries.TrafficMatrixForecastUtils;
+import com.net2plan.libraries.TrafficPredictor;
+import com.net2plan.libraries.TrafficPredictor.TRAFFICPREDICTORTYPE;
+import com.net2plan.libraries.TrafficPredictor_manual_exponential;
+import com.net2plan.libraries.TrafficPredictor_manual_linear;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.SwingUtils;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import java.io.File;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class MonitoringUtils
 {
@@ -41,7 +67,7 @@ public class MonitoringUtils
         final String elementName = isLinkTable? "link" : (isDemandTable? "demand" : "multicast demand");
 
         if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
-        return new AjtRcMenu("Add synthetic monitoring trace to selected links", e->
+        return new AjtRcMenu("Add synthetic monitoring trace to selected elements", e->
         {
             DialogBuilder.launch(
                     "Add monitoring trace to selected " + elementName ,
@@ -54,24 +80,33 @@ public class MonitoringUtils
                             InputForDialog.inputTfInt("Number of samples", "Introduce the number of monitoring samples to create", 10, 7*24),
                             InputForDialog.inputCheckBox(isLinkTable? "Use current carried traffic as initial traffic?" : "Use current offered traffic as initial traffic?", "If selected, the current traffic value is used as initial traffic", true , null),
                             InputForDialog.inputTfDouble("Starting traffic", "Introduce the initial traffic (in demand traffic units: '" + table.getTableNetworkLayer().getDemandTrafficUnits() + "')", 10, 1.0),
-                            InputForDialog.inputTfCombo("Growth type", "The growth traffic type. Exponential means that traffic at year T+1 is GF times the traffic at year T, where GF is the growth factor. If linear, traffic at year T+1 is the traffic at T plus GF", 20 , TrafficSeries.FITTINGTYPE.LINEAR , Arrays.asList(TrafficSeries.FITTINGTYPE.values()) , Arrays.asList(TrafficSeries.FITTINGTYPE.values()).stream().map(ee->ee.getName ()).collect (Collectors.toList()) , null),
-                            InputForDialog.inputTfDouble("Growth factor (per year)", "If exponential growth, this is the compound annual growth rate (CAGR) (adimensional value), if linear growth, this is the traffic growth per year in traffic units" + table.getTableNetworkLayer().getDemandTrafficUnits() + "')", 10, 1.0),
+                            InputForDialog.inputTfCombo("Long-term growth type", "The growth traffic type. Exponential means that traffic at year T+1 is GF times the traffic at year T, where GF is the growth factor. If linear, traffic at year T+1 is the traffic at T plus GF", 20 , TrafficSeries.FITTINGTYPE.LINEAR , Arrays.asList(TrafficSeries.FITTINGTYPE.values()) , Arrays.asList(TrafficSeries.FITTINGTYPE.values()).stream().map(ee->ee.getName ()).collect (Collectors.toList()) , null),
+                            InputForDialog.inputTfDouble("Long-term growth factor (per year)", "If exponential growth, this is the compound annual growth rate (CAGR) (adimensional value), if linear growth, this is the traffic growth per year in traffic units" + table.getTableNetworkLayer().getDemandTrafficUnits() + "')", 10, 1.0),
+                            InputForDialog.inputTfDouble("Daily variation: busy-hour-to-valley factor (>= 1)", "In daily variations, the traffic outside the busy hours is shaped down. This is the ratio between the average traffic in the busy hour vs. the rest of the day. If < 1, no daily variation is applied", 10, 10.0),
+                            InputForDialog.inputTfDouble("Daily variation: hour of the start of busy-hour period (0..24)", "In daily variations, the hour (as a double in [0 , 24) when peak traffic interval (busy hours) start. If not in [0,24), no daily variation is applied", 10, 12.0),
+                            InputForDialog.inputTfDouble("Daily variation: duration in hours of the busy-hours period (0..24)", "In daily variations, the duration in hours (as a double in [0 , 24) of peak traffic interval (busy hours) start. If start time plus duration exceeds the hour 24, an error is raised", 10, 3.0),
                             InputForDialog.inputTfDouble("Noise coefficient of variation", "A normal traffic noise centered in 0 and typical deviation given by this value multiplied by the current traffic, is added to the estimation. Note that negative traffics are later truncated to zero", 10, 1.0),
                             InputForDialog.inputCheckBox("Remove previous monitoring values?", "If selected, the current monitored values are removed", true , null)
                     ),
                     (list)->
                     {
                         final Date initialDate;
-                        try { initialDate = dateFormatGmt.parse((String) list.get(0).get()); } catch (Exception exc) { throw new Net2PlanException("Wrong date format"); }
+                        try { initialDate = localDateTimeToDate(dateToLocalDateTime(dateFormatGmt.parse((String) list.get(0).get()))); } catch (Exception exc) { throw new Net2PlanException("Wrong date format"); }
                         final long intervalBetweenSamplesInSeconds = ((Double) list.get(1).get()).longValue();
                         final int numberOfSamples = (Integer) list.get(2).get();
                         final boolean useCarriedTrafficAsInitial = (Boolean) list.get(3).get();
                         final double initialTrafficIfNotCurrent = (Double) list.get(4).get();
                         final TrafficSeries.FITTINGTYPE growthType = (TrafficSeries.FITTINGTYPE) list.get(5).get();
                         final double growthFactorPerYear = (Double) list.get(6).get();
-                        final double noiseRelativeTypicalDeviationRespectToAverage = (Double) list.get(7).get();
-                        final boolean removePreviousMonitValues = (Boolean) list.get(8).get();
+                        final double dayVariation_peakFactor = (Double) list.get(7).get();
+                        final double dayVariation_startHour = (Double) list.get(8).get();
+                        final double dayVariation_durationHours = (Double) list.get(9).get();
+                        final double noiseRelativeTypicalDeviationRespectToAverage = (Double) list.get(10).get();
+                        final boolean removePreviousMonitValues = (Boolean) list.get(11).get();
 
+                        final boolean dayVariationApplied = dayVariation_peakFactor >= 1 && dayVariation_startHour >= 0 && dayVariation_startHour < 24;
+                        if (dayVariationApplied) if (dayVariation_startHour + dayVariation_durationHours >= 24) throw new Net2PlanException ("The busy hour start plus duration, exceeds the day limit");
+                        
                         /* Remove previous */
                         if (removePreviousMonitValues) table.getSelectedElements().forEach(ee->
                                 {
@@ -103,7 +138,7 @@ public class MonitoringUtils
                             tm.addSyntheticMonitoringTrace(growthType, initialDate, intervalBetweenSamplesInSeconds,
                                     numberOfSamples,
                                     initialTraffic,
-                                    growthFactorPerYear, noiseRelativeTypicalDeviationRespectToAverage);
+                                    growthFactorPerYear, dayVariation_peakFactor , dayVariation_startHour , dayVariation_durationHours , noiseRelativeTypicalDeviationRespectToAverage);
                         }
 
                     }
@@ -337,72 +372,212 @@ public class MonitoringUtils
     }
 
     
-    public static <T extends NetworkElement>  AjtRcMenu getMenuPredictTrafficFromSameElementMonitorInfo (AdvancedJTable_networkElement<T> table)
+    public static <TT extends NetworkElement>  AjtRcMenu getMenuCreatePredictorTraffic (AdvancedJTable_networkElement<TT> table)
     {
-        final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;
-        final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
-        final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
-        if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
-        return new AjtRcMenu("Forecast selected elements traffic from monitor info", e->
-        {
-            final Calendar now = Calendar.getInstance();
-
-            DialogBuilder.launch(
-                    "Select the traffic value, and the target date of the monitoring",
-                    "Please introduce the date to predict, and statistical parameters.",
-                    "",
-                    table,
-                    Arrays.asList(
-                            InputForDialog.inputTfString("Introducce the GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())),
-                            InputForDialog.inputTfCombo("Fitting type", "The fitting type to use to predict the traffic growth evolution. Exponential means that traffic is fitted to an exponential function of time, linear to a linear function of time", 20 , TrafficSeries.FITTINGTYPE.LINEAR , Arrays.asList(TrafficSeries.FITTINGTYPE.values()) , Arrays.asList(TrafficSeries.FITTINGTYPE.values()).stream().map(ee->ee.getName ()).collect (Collectors.toList()) , null),
-                            InputForDialog.inputTfDouble("Probability of underestimation", "The predicted traffic will be such that the probability of the traffic to be higher that the prediction is the given probabilty. A value of 0.5 provides an unbiased (neither conservative nor optimistic) estimation", 10, 0.05),
-                            InputForDialog.inputTfCombo("Save in...", "Indicates where the prediction will be stored", 20 , "As new monitoring sample" , isLinkTable? Arrays.asList("As new monitoring sample") : Arrays.asList("As new monitoring sample" , "As current demand offered traffic") , isLinkTable? Arrays.asList("As new monitoring sample") : Arrays.asList("As new monitoring sample" , "As current demand offered traffic") , null)
-                    ),
-                    (list)->
+        return new AjtRcMenu("Create traffic predictor for selected elements traffic", null, (a,b)->b>0, Arrays.asList(
+            	new AjtRcMenu("from monitored traffic, exponential fit", e->
+                {
+                    final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    final List<IMonitorizableElement> selElements = table.getSelectedElements().stream().map(ee->(IMonitorizableElement)ee).collect(Collectors.toList());
+                    if (selElements.isEmpty()) return;
+                    final SortedMap<TT, Double> varianceExplained = new TreeMap<> ();
+                    int numberOfIgnoredElements = 0;
+                    for (TT ee : table.getSelectedElements())
                     {
-                        final SortedMap<T, Double> varianceExplained = new TreeMap<> ();
-                        final Date date;
-                        try { date = dateFormatGmt.parse((String) list.get(0).get()); } catch (Exception exc) { throw new Net2PlanException ("Wrong date format"); }
-                        final TrafficSeries.FITTINGTYPE fittingType = (TrafficSeries.FITTINGTYPE) list.get(1).get();
-                        final double probSubestimation = (Double) list.get(2).get();
-                        final boolean storeAsNewSample = ((String) list.get(3).get()).equals("As new monitoring sample");
-                        if (probSubestimation <= 0 || probSubestimation >= 1) throw new Net2PlanException ("Wrong value of probability");
-                        for (T ee : table.getSelectedElements())
-                        {
-                            TrafficSeries tm = null;
-                            if (isLinkTable) tm = ((Link) ee).getMonitoredOrForecastedCarriedTraffic();
-                            else if (isDemandTable) tm = ((Demand) ee).getMonitoredOrForecastedOfferedTraffic();
-                            else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
-                            assert tm != null;
-                            if (tm.getSize() < 3) throw new Net2PlanException ("Not enough data to make the analysis for element of index: " + ee.getIndex());
-                        }
-                        for (T ee : table.getSelectedElements())
-                        {
-                            TrafficSeries tm = null;
-                            if (isLinkTable) tm = ((Link) ee).getMonitoredOrForecastedCarriedTraffic();
-                            else if (isDemandTable) tm = ((Demand) ee).getMonitoredOrForecastedOfferedTraffic();
-                            else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
-                            assert tm != null;
-                            final TrafficSeries.TrafficPredictor tp = tm.getFunctionPredictionSoProbSubestimationIsBounded(fittingType);
-                            final double val = tp.getPredictorFunction(probSubestimation).apply(date);
-                            varianceExplained.put(ee, tp.getRegResuls().getRSquared());
-                            if (storeAsNewSample) tm.addValue(date, val);
-                            else
-                            if (isDemandTable) ((Demand)ee).setOfferedTraffic(val); else ((MulticastDemand)ee).setOfferedTraffic(val);
-                        }
-                        final String RETURN = String.format("%n");
-                        final DecimalFormat df = new DecimalFormat("#.##");
-                        final double minR2 = varianceExplained.values().stream().mapToDouble(ee->ee).min().orElse(0);
-                        final double maxR2 = varianceExplained.values().stream().mapToDouble(ee->ee).max().orElse(0);
-                        final double avR2 = varianceExplained.isEmpty()? 0.0 : varianceExplained.values().stream().mapToDouble(ee->ee).sum() / ((double) varianceExplained.size());
-                        final String message = "Number of elements: " + table.getSelectedElements().size() + RETURN + "% of variance explained in each demand [MIN / AVG / MAX]" + (fittingType.isExponential()? " (applied to log(traffic))" : "") + ": [" + df.format(minR2) + " / " + df.format(avR2) + " / " + df.format(maxR2);
-                        JOptionPane.showMessageDialog(null, message , "Output info", JOptionPane.INFORMATION_MESSAGE);
+                        final TrafficSeries tm = ((IMonitorizableElement) ee).getMonitoredOrForecastedCarriedTraffic();
+                        assert tm != null;                                      
+                        if (tm.getSize() < 3) { numberOfIgnoredElements ++; continue; }
+                        final TrafficPredictor tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.EXPONENTIALFIT, tm.getValues()).orElse(null);
+                        if (tp == null) { numberOfIgnoredElements ++; continue; }
+                        varianceExplained.put(ee, tp.getStatistics().getRsquared());
+                        ((IMonitorizableElement) ee).setTrafficPredictor(tp);
                     }
-            );
-        }
-                , (a,b)->b>0, null);
+                    final String RETURN = String.format("%n");
+                    final DecimalFormat df = new DecimalFormat("#.##"); 
+                    final double minR2 = varianceExplained.values().stream().mapToDouble(ee->ee).min().orElse(0);
+                    final double maxR2 = varianceExplained.values().stream().mapToDouble(ee->ee).max().orElse(0);
+                    final double avR2 = varianceExplained.isEmpty()? 0.0 : varianceExplained.values().stream().mapToDouble(ee->ee).sum() / (varianceExplained.size());
+                    final String message = "Number of elements: " + table.getSelectedElements().size() + (numberOfIgnoredElements > 0? " [" + numberOfIgnoredElements +  " ignored]" : "") + RETURN + 
+                    		"% of variance explained in each demand [MIN / AVG / MAX]: [" + df.format(minR2) + " / " + df.format(avR2) + " / " + df.format(maxR2) + "]"; 
+                    JOptionPane.showMessageDialog(null, message , "Output info", JOptionPane.INFORMATION_MESSAGE);
+                } , (a,b)->b>0, null),
+            	
+            	new AjtRcMenu("from monitored traffic, linear fit", e->
+                {
+                    final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    final List<IMonitorizableElement> selElements = table.getSelectedElements().stream().map(ee->(IMonitorizableElement)ee).collect(Collectors.toList());
+                    if (selElements.isEmpty()) return;
+                    final SortedMap<TT, Double> varianceExplained = new TreeMap<> ();
+                    int numberOfIgnoredElements = 0;
+                    for (TT ee : table.getSelectedElements())
+                    {
+                        final TrafficSeries tm = ((IMonitorizableElement) ee).getMonitoredOrForecastedCarriedTraffic();
+                        assert tm != null;                                      
+                        if (tm.getSize() < 3) { numberOfIgnoredElements ++; continue; }
+                        final TrafficPredictor tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, tm.getValues()).orElse(null);
+                        if (tp == null) { numberOfIgnoredElements ++; continue; }
+                        varianceExplained.put(ee, tp.getStatistics().getRsquared());
+                        ((IMonitorizableElement) ee).setTrafficPredictor(tp);
+                    }
+                    final String RETURN = String.format("%n");
+                    final DecimalFormat df = new DecimalFormat("#.##"); 
+                    final double minR2 = varianceExplained.values().stream().mapToDouble(ee->ee).min().orElse(0);
+                    final double maxR2 = varianceExplained.values().stream().mapToDouble(ee->ee).max().orElse(0);
+                    final double avR2 = varianceExplained.isEmpty()? 0.0 : varianceExplained.values().stream().mapToDouble(ee->ee).sum() / (varianceExplained.size());
+                    final String message = "Number of elements: " + table.getSelectedElements().size() + (numberOfIgnoredElements > 0? " [" + numberOfIgnoredElements +  " ignored]" : "") + RETURN + 
+                    		"% of variance explained in each demand [MIN / AVG / MAX]: [" + df.format(minR2) + " / " + df.format(avR2) + " / " + df.format(maxR2) + "]"; 
+                    JOptionPane.showMessageDialog(null, message , "Output info", JOptionPane.INFORMATION_MESSAGE);
+                } , (a,b)->b>0, null),
 
+            	new AjtRcMenu("as manual exponential growth", e->
+                {
+                    final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    final List<IMonitorizableElement> selElements = table.getSelectedElements().stream().map(ee->(IMonitorizableElement)ee).collect(Collectors.toList());
+                    if (selElements.isEmpty()) return;
+                    DialogBuilder.launch(
+                            "Select traffic predictor manually", 
+                            "Please introduce the initial date, and the compound-annual-growth (CAGR). " +
+                            "E.g. a CAGR of 25% means that the traffic grows at the initial date is the current element traffic, and then grows a 25% every year.",
+                            "", 
+                            table, 
+                            Arrays.asList(
+                                    InputForDialog.inputTfDouble("CAGR (%)", "Introduce the compound-annual-growth-rate", 10, 0.25)
+                                    ),
+                            (list)->
+                                {
+                                    final double cagr = ((Double) list.get(0).get()) / 100.0;
+                                    for (TT ee : table.getSelectedElements())
+                                    {
+                                    	final IMonitorizableElement eee = (IMonitorizableElement) ee;
+                                        final Date initialDate = eee.getMonitoredOrForecastedCarriedTraffic().getFirstDate();
+                                        if (initialDate == null) continue;
+                                    	final TrafficPredictor tp = TrafficPredictor_manual_exponential.createFromData(initialDate.getTime (), eee.getCurrentTrafficToAddMonitSample() , cagr).orElse(null);
+                                    	if (tp == null) continue;
+                                        eee.setTrafficPredictor(tp);
+                                    }
+                                }
+                            );
+                } , (a,b)->b>0, null),
+            	
+            	new AjtRcMenu("as linear growth", e->
+                {
+                    final SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    final List<IMonitorizableElement> selElements = table.getSelectedElements().stream().map(ee->(IMonitorizableElement)ee).collect(Collectors.toList());
+                    if (selElements.isEmpty()) return;
+                    DialogBuilder.launch(
+                            "Select traffic predictor manually", 
+                            "Please introduce the initial date, and the lienar annual growth in Gbps. E.g. a linear growth of 10 Gbps, means "
+                            + "that the traffic grows linearly 10 Gbps every year. ",
+                            "", 
+                            table, 
+                            Arrays.asList(
+                                    InputForDialog.inputTfDouble("Growth per year (Gbps)", "Introduce the traffic growth per year", 10, 10.0)
+                                    ),
+                            (list)->
+                                {
+                                    final double annualGrowthGbps = ((Double) list.get(0).get());
+                                    for (TT ee : table.getSelectedElements())
+                                    {
+                                    	final IMonitorizableElement eee = (IMonitorizableElement) ee;
+                                        final Date initialDate = eee.getMonitoredOrForecastedCarriedTraffic().getFirstDate();
+                                        if (initialDate == null) continue;
+                                    	final TrafficPredictor tp = TrafficPredictor_manual_linear.createFromData(initialDate.getTime (), eee.getCurrentTrafficToAddMonitSample() , annualGrowthGbps).orElse(null);
+                                    	if (tp == null) continue;
+                                        eee.setTrafficPredictor(tp);
+                                    }
+                                }
+                            );
+                } , (a,b)->b>0, null)        		
+        		));
     }
+
+//    public static <T extends NetworkElement>  AjtRcMenu getMenuPredictTrafficFromSameElementMonitorInfo (AdvancedJTable_networkElement<T> table)
+//    {
+//        final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;
+//        final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
+//        final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
+//        if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
+//        return new AjtRcMenu("Forecast selected elements traffic from monitor info", e->
+//        {
+//            final Calendar now = Calendar.getInstance();
+//
+//            DialogBuilder.launch(
+//                    "Select the traffic value, and the target date of the monitoring",
+//                    "Please introduce the date to predict, and statistical parameters.",
+//                    "",
+//                    table,
+//                    Arrays.asList(
+//                            InputForDialog.inputTfString("Introducce the GMT date (format yyyy-MM-dd HH:mm:ss)", "Introduce the GMT date in the indicated format", 10, dateFormatGmt.format(new Date ())),
+//                            InputForDialog.inputTfCombo("Fitting type", "The fitting type to use to predict the traffic growth evolution. Exponential means that traffic is fitted to an exponential function of time, linear to a linear function of time", 20 , TrafficSeries.FITTINGTYPE.LINEAR , Arrays.asList(TrafficSeries.FITTINGTYPE.values()) , Arrays.asList(TrafficSeries.FITTINGTYPE.values()).stream().map(ee->ee.getName ()).collect (Collectors.toList()) , null),
+//                            InputForDialog.inputTfDouble("Probability of underestimation", "The predicted traffic will be such that the probability of the traffic to be higher that the prediction is the given probabilty. A value of 0.5 provides an unbiased (neither conservative nor optimistic) estimation", 10, 0.05),
+//                            InputForDialog.inputTfCombo("Save in...", "Indicates where the prediction will be stored", 20 , "As new monitoring sample" , isLinkTable? Arrays.asList("As new monitoring sample") : Arrays.asList("As new monitoring sample" , "As current demand offered traffic") , isLinkTable? Arrays.asList("As new monitoring sample") : Arrays.asList("As new monitoring sample" , "As current demand offered traffic") , null)
+//                    ),
+//                    (list)->
+//                    {
+//                        final SortedMap<T, Double> varianceExplained = new TreeMap<> ();
+//                        final Date date;
+//                        try { date = dateFormatGmt.parse((String) list.get(0).get()); } catch (Exception exc) { throw new Net2PlanException ("Wrong date format"); }
+//                        final TrafficSeries.FITTINGTYPE fittingType = (TrafficSeries.FITTINGTYPE) list.get(1).get();
+//                        final double probSubestimation = (Double) list.get(2).get();
+//                        final boolean storeAsNewSample = ((String) list.get(3).get()).equals("As new monitoring sample");
+//                        if (probSubestimation <= 0 || probSubestimation >= 1) throw new Net2PlanException ("Wrong value of probability");
+//                        for (T ee : table.getSelectedElements())
+//                        {
+//                            TrafficSeries tm = null;
+//                            if (isLinkTable) tm = ((Link) ee).getMonitoredOrForecastedCarriedTraffic();
+//                            else if (isDemandTable) tm = ((Demand) ee).getMonitoredOrForecastedOfferedTraffic();
+//                            else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
+//                            assert tm != null;
+//                            if (tm.getSize() < 3) throw new Net2PlanException ("Not enough data to make the analysis for element of index: " + ee.getIndex());
+//                        }
+//                        for (T ee : table.getSelectedElements())
+//                        {
+//                            TrafficSeries tm = null;
+//                            if (isLinkTable) tm = ((Link) ee).getMonitoredOrForecastedCarriedTraffic();
+//                            else if (isDemandTable) tm = ((Demand) ee).getMonitoredOrForecastedOfferedTraffic();
+//                            else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
+//                            assert tm != null;
+//                            
+//                            final MtnTrafficPredictor tpLinear = MtnTrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, values).orElse(null);
+//                            final MtnTrafficPredictor tpExp = MtnTrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.EXPONENTIALFIT, values).orElse(null);
+//                            if (tpLinear == null && tpExp == null) return Optional.empty();
+//                            if (tpLinear == null || tpExp == null) return Optional.of(tpLinear != null? tpLinear : tpExp);
+//                            final double r2Linear = tpLinear.getStatistics().getRsquared();
+//                            final double r2Exp = tpExp.getStatistics().getRsquared();
+//                            return r2Linear > r2Exp? Optional.of(tpLinear) : Optional.of(tpExp);
+//
+//                            final TrafficSeries.TrafficPredictor tp;
+//                            switch (fittingType)
+//                            {
+//							case EXPONENTIAL:
+//								tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, values).orElse(null);
+//								break;
+//							case LINEAR:
+//								break;
+//							default:
+//								break;
+//                            }
+//                            		
+//                            		tm.getFunctionPredictionSoProbSubestimationIsBounded(fittingType);
+//                            final double val = tp.getPredictorFunction(probSubestimation).apply(date);
+//                            varianceExplained.put(ee, tp.getRegResuls().getRSquared());
+//                            if (storeAsNewSample) tm.addValue(date, val);
+//                            else
+//                            if (isDemandTable) ((Demand)ee).setOfferedTraffic(val); else ((MulticastDemand)ee).setOfferedTraffic(val);
+//                        }
+//                        final String RETURN = String.format("%n");
+//                        final DecimalFormat df = new DecimalFormat("#.##");
+//                        final double minR2 = varianceExplained.values().stream().mapToDouble(ee->ee).min().orElse(0);
+//                        final double maxR2 = varianceExplained.values().stream().mapToDouble(ee->ee).max().orElse(0);
+//                        final double avR2 = varianceExplained.isEmpty()? 0.0 : varianceExplained.values().stream().mapToDouble(ee->ee).sum() / ((double) varianceExplained.size());
+//                        final String message = "Number of elements: " + table.getSelectedElements().size() + RETURN + "% of variance explained in each demand [MIN / AVG / MAX]" + (fittingType.isExponential()? " (applied to log(traffic))" : "") + ": [" + df.format(minR2) + " / " + df.format(avR2) + " / " + df.format(maxR2);
+//                        JOptionPane.showMessageDialog(null, message , "Output info", JOptionPane.INFORMATION_MESSAGE);
+//                    }
+//            );
+//        }
+//                , (a,b)->b>0, null);
+//
+//    }
 
     public static <T extends NetworkElement>  AjtRcMenu getMenuRemoveMonitorInfoBeforeAfterDate (AdvancedJTable_networkElement<T> table , boolean beforeTrueAfterFalse)
     {
@@ -613,5 +788,9 @@ public class MonitoringUtils
                 , (a,b)->b>0, null);
 
     }
+
+	private static LocalDateTime dateToLocalDateTime(Date date) { return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()); 	}
+
+	private static Date localDateTimeToDate(LocalDateTime localDateTime) { return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()); 	}
 
 }

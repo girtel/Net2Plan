@@ -6,7 +6,6 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.InputEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -18,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
@@ -55,7 +53,6 @@ import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
 import com.net2plan.gui.utils.FixedColumnDecorator;
 import com.net2plan.gui.utils.LastRowAggregatedValue;
-import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.gui.utils.TableColumnComparator;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -72,9 +69,11 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
 {
     public static enum AGTYPE 
     { 
-        NOAGGREGATION((v,a)->0.0) , MAXDOUBLE((v,a)->Math.max((Double)v, (Double)a)) , SUMDOUBLE ((v,a)->(Double)v+(Double)a) , 
+        NOAGGREGATION((v,a)->0.0) , 
+        MAXDOUBLE((v,a)-> v instanceof Number? Math.max(((Number)v).doubleValue (), (Double)a) : (Double) a) , 
+        SUMDOUBLE ((v,a)->v instanceof Number? ((Number)v).doubleValue ()+(Double)a : (Double) a) , 
         MAXINT((v,a)->Math.max((Integer)v, (Double)a)) , 
-        SUMINT ((v,a)->(Integer)v+(Double)a) ,
+        SUMINT ((v,a)->v instanceof Number? ((Number)v).intValue () +(Double)a : (Double) a) ,
         SUMPAIRFIRSTELEMENT((v,a)->((Pair<Number, ?>)v).getFirst().doubleValue()+(Double)a),
         MAXPAIRFIRSTELEMENT((v,a)->Math.max(((Pair<Number, ?>)v).getFirst().doubleValue(), (Double)a)),
         SUMCOLLECTIONCOUNT((v,a)->((Collection<?>)v).size()+(Double)a),

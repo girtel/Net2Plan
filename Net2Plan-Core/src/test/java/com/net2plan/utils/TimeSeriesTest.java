@@ -10,7 +10,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import com.net2plan.TestConstants;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -18,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.Sets;
+import com.net2plan.TestConstants;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
@@ -28,9 +28,10 @@ import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.libraries.TrafficMatrixForecastUtils;
 import com.net2plan.libraries.TrafficMatrixForecastUtils.TmEstimationResults;
+import com.net2plan.libraries.TrafficPredictor;
+import com.net2plan.libraries.TrafficPredictor.TRAFFICPREDICTORTYPE;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.libraries.TrafficSeries.FITTINGTYPE;
-import com.net2plan.libraries.TrafficSeries.TrafficPredictor;
 import com.net2plan.utils.Constants.RoutingType;
 
 public class TimeSeriesTest 
@@ -191,11 +192,11 @@ public class TimeSeriesTest
 		double growthFactorPerYear = 0.35;
 		double noiseMaxAmplitudeRespectToTraffic = 0.0;
 		tts = new TrafficSeries ().addSyntheticMonitoringTrace(fittingType, 
-				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, noiseMaxAmplitudeRespectToTraffic);
-		tp = tts.getFunctionPredictionSoProbSubestimationIsBounded(fittingType);
+				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic);
+		tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, tts.getValues()).get();
 		
 		System.out.println("First date: " + initialDate + ", one year after: " + oneYearAfterInitialDate);
-		System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getRegResuls().getParameterEstimates()));
+//		System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getStatistics().getRegResuls().getParameterEstimates()));
 		System.out.println("Prediction at initial date: " + tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate));
 		System.out.println("Prediction one year after: " + tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate));
 		System.out.println("Prediction two years after: " + tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate));
@@ -203,52 +204,52 @@ public class TimeSeriesTest
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate) , initialTraffic, 0.01);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate) , initialTraffic + growthFactorPerYear, 0.01);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate) , initialTraffic + 2 * growthFactorPerYear, 0.01);
-		assertEquals (tp.getAverageLinearGrowthFactorPerYearIfLinearPredictor() , growthFactorPerYear , 0.01);
+		assertEquals (tp.getAsLinear().getAverageLinearGrowthFactor_trafficPerYear() , growthFactorPerYear , 0.01);
 
 		/* Exponential */
 		fittingType = FITTINGTYPE.EXPONENTIAL;
 		tts = new TrafficSeries ().addSyntheticMonitoringTrace(fittingType, 
-				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, noiseMaxAmplitudeRespectToTraffic);
-		tp = tts.getFunctionPredictionSoProbSubestimationIsBounded(fittingType);
+				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic);
+		tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.EXPONENTIALFIT, tts.getValues()).get();
 
 		System.out.println("First date: " + initialDate + ", one year after: " + oneYearAfterInitialDate);
-		System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getRegResuls().getParameterEstimates()));
+//		System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getRegResuls().getParameterEstimates()));
 		System.out.println("Prediction at initial date: " + tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate));
 		System.out.println("Prediction one year after: " + tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate));
 		System.out.println("Prediction two years after: " + tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate) + ", should be: " + initialTraffic * Math.pow(1 + growthFactorPerYear , 2));
-		System.out.println("CAGR estimated: " + tp.getAverageCagrFactorIfExponentialPredictor() + ", should be: " + growthFactorPerYear);
+		System.out.println("CAGR estimated: " + tp.getAsExponential().getAverageCagrFactor() + ", should be: " + growthFactorPerYear);
 
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate) , initialTraffic, 0.01);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate) , initialTraffic * (1 + growthFactorPerYear), 0.01);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate) , initialTraffic * Math.pow(1 + growthFactorPerYear , 2), 0.01);
-		assertEquals (tp.getAverageCagrFactorIfExponentialPredictor() , growthFactorPerYear , 0.01);
+		assertEquals (tp.getAsExponential().getAverageCagrFactor() , growthFactorPerYear , 0.01);
 
 	
 		/* Exponential with noise */
 		fittingType = FITTINGTYPE.EXPONENTIAL;
 		noiseMaxAmplitudeRespectToTraffic = 0.05;
 		tts = new TrafficSeries ().addSyntheticMonitoringTrace(fittingType, 
-				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, noiseMaxAmplitudeRespectToTraffic);
-		tp = tts.getFunctionPredictionSoProbSubestimationIsBounded(fittingType);
+				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic);
+		tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.EXPONENTIALFIT, tts.getValues()).get();
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate) , initialTraffic, 0.1);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate) , initialTraffic * (1 + growthFactorPerYear), 0.1);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate) , initialTraffic * Math.pow(1 + growthFactorPerYear , 2), 0.1);
-		assertEquals (tp.getAverageCagrFactorIfExponentialPredictor() , growthFactorPerYear , 0.1);
+		assertEquals (tp.getAsExponential().getAverageCagrFactor() , growthFactorPerYear , 0.1);
 		System.out.println("First date: " + initialDate + ", one year after: " + oneYearAfterInitialDate);
-		System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getRegResuls().getParameterEstimates()));
+		//System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getRegResuls().getParameterEstimates()));
 		System.out.println("Prediction at initial date: " + tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate));
 		System.out.println("Prediction one year after: " + tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate));
 		System.out.println("Prediction two years after: " + tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate) + ", should be: " + initialTraffic * Math.pow(1 + growthFactorPerYear , 2));
-		System.out.println("CAGR estimated: " + tp.getAverageCagrFactorIfExponentialPredictor() + ", should be: " + growthFactorPerYear);
+		System.out.println("CAGR estimated: " + tp.getAsExponential().getAverageCagrFactor() + ", should be: " + growthFactorPerYear);
 
 		/* Linear with noise */
 		fittingType = FITTINGTYPE.LINEAR;
 		noiseMaxAmplitudeRespectToTraffic = 0.05;
 		tts = new TrafficSeries ().addSyntheticMonitoringTrace(fittingType, 
-				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, noiseMaxAmplitudeRespectToTraffic);
-		tp = tts.getFunctionPredictionSoProbSubestimationIsBounded(fittingType);
+				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic);
+		tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, tts.getValues()).get();
 		System.out.println("First date: " + initialDate + ", one year after: " + oneYearAfterInitialDate);
-		System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getRegResuls().getParameterEstimates()));
+		//System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getRegResuls().getParameterEstimates()));
 		System.out.println("Prediction at initial date: " + tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate));
 		System.out.println("Prediction one year after: " + tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate));
 		System.out.println("Prediction two years after: " + tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate));
@@ -256,7 +257,7 @@ public class TimeSeriesTest
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate) , initialTraffic, 0.1);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate) , initialTraffic + growthFactorPerYear, 0.1);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate) , initialTraffic + 2 * growthFactorPerYear, 0.1);
-		assertEquals (tp.getAverageLinearGrowthFactorPerYearIfLinearPredictor() , growthFactorPerYear , 0.1);
+		assertEquals (tp.getAsLinear().getAverageLinearGrowthFactor_trafficPerYear() , growthFactorPerYear , 0.1);
 
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate) , tp.getPredictorFunction(0.5).apply(twoYearsAfterInitialDate) , 0.1);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(twoYearsAfterInitialDate) , tp.getPredictorFunction(0.5).apply(twoYearsAfterInitialDate) , 0.1);

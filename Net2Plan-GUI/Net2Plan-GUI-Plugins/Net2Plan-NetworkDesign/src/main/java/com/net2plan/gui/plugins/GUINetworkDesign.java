@@ -127,6 +127,8 @@ public class GUINetworkDesign extends IGUIModule
     private WindowController windowController;
     private GUIWindow tableControlWindow;
 
+    
+    
     /**
      * Default constructor.
      *

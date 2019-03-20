@@ -14,6 +14,7 @@ package com.net2plan.interfaces.networkDesign;
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.libraries.TrafficPredictor;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
@@ -34,7 +35,7 @@ import java.util.*;
  * @author Pablo Pavon-Marino
  * @since 0.4.0 */
 
-public class MulticastDemand extends NetworkElement
+public class MulticastDemand extends NetworkElement implements IMonitorizableElement
 {
 	final NetworkLayer layer;
 	final Node ingressNode;
@@ -45,6 +46,7 @@ public class MulticastDemand extends NetworkElement
 	double offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth;
 	String qosType;
 	private TrafficSeries monitoredOrForecastedTraffics;
+    private TrafficPredictor trafficPredictor;
 	
 	SortedMap<Node,Link> coupledUpperLayerLinks;
 	SortedSet<MulticastTree> cache_multicastTrees;
@@ -72,6 +74,7 @@ public class MulticastDemand extends NetworkElement
 		this.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth = 0;
 		this.qosType = null;
 		this.monitoredOrForecastedTraffics = new TrafficSeries ();
+		this.trafficPredictor = null;
 		setQoSType("");
 	}
 
@@ -95,6 +98,7 @@ public class MulticastDemand extends NetworkElement
 				this.coupledUpperLayerLinks.put(this.netPlan.getNodeFromId (nOrigin.id) , this.netPlan.getLinkFromId (origin.coupledUpperLayerLinks.get(nOrigin).id));
 		}
 		this.monitoredOrForecastedTraffics = origin.monitoredOrForecastedTraffics;
+		this.trafficPredictor = origin.trafficPredictor;
 	}
 
 	/** Sets the maximum latency in ms acceptable for the demand. A non-positive value is equivalent to no limit 
@@ -187,6 +191,8 @@ public class MulticastDemand extends NetworkElement
 			}
 		}
 		if (!this.monitoredOrForecastedTraffics.equals(e2.monitoredOrForecastedTraffics)) return false;
+		if ((this.trafficPredictor == null) != (e2.trafficPredictor == null)) return false;
+		if (trafficPredictor != null) if (!this.trafficPredictor.equals(e2.trafficPredictor)) return false;
 		return true;
 	}
 
@@ -603,4 +609,54 @@ public class MulticastDemand extends NetworkElement
 	 * @param newTimeSeries  see above
 	 */
 	public void setMonitoredOrForecastedOfferedTraffic (TrafficSeries newTimeSeries) { this.monitoredOrForecastedTraffics = new TrafficSeries (newTimeSeries.getValues()); }
+
+	@Override
+	public TrafficSeries getMonitoredOrForecastedCarriedTraffic()
+	{
+        return this.monitoredOrForecastedTraffics;
+	}
+
+	@Override
+	public void setMonitoredOrForecastedCarriedTraffic(TrafficSeries newTimeSeries) 
+	{
+		this.monitoredOrForecastedTraffics = newTimeSeries;
+	}
+
+	@Override
+	public double getCurrentTrafficToAddMonitSample() 
+	{
+		return getOfferedTraffic();
+	}
+
+	@Override
+	public boolean isPossibleToSetCurrentTrafficAsGivenMonitSample() 
+	{
+		return true;
+	}
+
+	@Override
+	public void setCurrentTrafficToGivenMonitSample(double traffic) 
+	{
+		this.setOfferedTraffic(traffic);
+	}
+
+	@Override
+	public Optional<TrafficPredictor> getTrafficPredictor() 
+	{
+		return Optional.ofNullable(this.trafficPredictor);
+	}
+
+	@Override
+	public void setTrafficPredictor(TrafficPredictor tp) 
+	{
+		this.trafficPredictor = tp;
+	}
+
+	@Override
+	public void removeTrafficPredictor() 
+	{
+		this.trafficPredictor = null;
+	}
+
+
 }

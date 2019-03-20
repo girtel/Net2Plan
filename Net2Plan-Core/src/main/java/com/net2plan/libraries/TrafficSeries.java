@@ -1,11 +1,14 @@
 package com.net2plan.libraries;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -14,11 +17,9 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.distribution.TDistribution;
-import org.apache.commons.math3.stat.regression.RegressionResults;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -26,69 +27,6 @@ import com.net2plan.utils.Pair;
 
 public class TrafficSeries 
 {
-	public class TrafficPredictor
-	{
-		final private FITTINGTYPE fittingType;
-		final private RegressionResults regResuls;
-		final private double sumSquaresOfX; // needed for estimation confidence band
-		
-		public TrafficPredictor(FITTINGTYPE fittingType, RegressionResults regResuls , double sumSquaresOfX) {
-			super();
-			this.fittingType = fittingType;
-			this.regResuls = regResuls;
-			this.sumSquaresOfX = sumSquaresOfX;
-		}
-
-		public Function<Date,Double> getPredictorFunctionNoConfidenceInterval ()
-		{
-			final int n = (int) regResuls.getN();
-			final double estimIntercept = regResuls.getParameterEstimate(0);
-			final double estimSlope = regResuls.getParameterEstimate(1);
-			if (fittingType.isLinear())
-				return d ->estimIntercept + estimSlope * d.getTime();
-			else if (fittingType.isExponential())
-				return d ->Math.exp(estimIntercept + estimSlope * d.getTime());
-			throw new Net2PlanException ("Unknown");
-		}
-
-		
-		public Function<Date,Double> getPredictorFunction (double probSubestimation)
-		{
-			final int n = (int) regResuls.getN();
-			final double estimIntercept = regResuls.getParameterEstimate(0);
-			final double estimSlope = regResuls.getParameterEstimate(1);
-			final double tStudentNMinus2ThisConfidenceInter = new TDistribution(regResuls.getN() - 2).inverseCumulativeProbability(1-probSubestimation);
-			final double sy = Math.sqrt(regResuls.getTotalSumSquares() / (n-2));
-			final double sx2 = sumSquaresOfX; // getXSumSquares() in the regression original object, but not in RegressionResults
-			final double meanX = monitValues.values().stream().mapToDouble(e->e).sum() / monitValues.size();
-			if (fittingType.isLinear())
-				return d ->estimIntercept + estimSlope * d.getTime() + tStudentNMinus2ThisConfidenceInter * sy * Math.sqrt(1 + (1/n) + Math.pow(d.getTime() - meanX , 2) / ((n-1) * sx2));
-			else if (fittingType.isExponential())
-				return d ->Math.exp(estimIntercept + estimSlope * d.getTime() + tStudentNMinus2ThisConfidenceInter * sy * Math.sqrt(1 + (1/n) + Math.pow(d.getTime() - meanX , 2) / ((n-1) * sx2)));
-			throw new Net2PlanException ("Unknown");
-		}
-		public FITTINGTYPE getFittingType() 
-		{
-			return fittingType;
-		}
-
-		public RegressionResults getRegResuls() 
-		{
-			return regResuls;
-		}
-
-		public double getAverageLinearGrowthFactorPerYearIfLinearPredictor ()
-		{
-			if (!fittingType.isLinear()) throw new Net2PlanException ("Not valid option");
-			return regResuls.getParameterEstimate(1) * 365.0 * 24.0 * 3600.0 * 1000.0;
-		}
-		public double getAverageCagrFactorIfExponentialPredictor ()
-		{
-			if (!fittingType.isExponential()) throw new Net2PlanException ("Not valid option");
-			return Math.exp((365.0 * 24.0 * 3600.0 * 1000.0 * regResuls.getParameterEstimate(1))) - 1;
-		}
-	}
-	
 	public enum FITTINGTYPE 
 	{ 
 		LINEAR("Linear progression") , EXPONENTIAL ("Exponential progression"); 
@@ -130,54 +68,38 @@ public class TrafficSeries
 	{
 		if (percentile <= 0 || percentile > 1) throw new Net2PlanException("Percentil info must be between 0 (non-inclusive) and one (inclusive)");
 		final SortedMap<Date , Double> newMonitValues = new TreeMap<> ();
-		final Calendar initDateCalendar = new GregorianCalendar ();
-		initDateCalendar.setTime(initDate);
-		Calendar currentDate = new GregorianCalendar ();
-		currentDate.clear();
-		final int fieldToAdd;
+		LocalDateTime currentDateLt = null;
+		final LocalDateTime initDateLt = dateToLocalDateTime(initDate);
+		final LocalDateTime endDateLt = dateToLocalDateTime(endDate);
+		final TemporalUnit unitToAdd;;
 		if (intervalTimeType.equalsIgnoreCase("hour"))
 		{
-			currentDate.set(initDateCalendar.get(Calendar.YEAR), 
-					initDateCalendar.get(Calendar.MONTH), 
-					initDateCalendar.get(Calendar.DAY_OF_MONTH), 
-					initDateCalendar.get(Calendar.HOUR_OF_DAY), 
-					0);
-			fieldToAdd = Calendar.HOUR_OF_DAY;
+			unitToAdd = ChronoUnit.HOURS;
+			currentDateLt = initDateLt.with(LocalDateTime.of(initDateLt.getYear(), initDateLt.getMonthValue() , initDateLt.getDayOfMonth() , initDateLt.getHour(), 0));
 		} else if (intervalTimeType.equalsIgnoreCase("day"))
 		{
-			currentDate.set(initDateCalendar.get(Calendar.YEAR), 
-					initDateCalendar.get(Calendar.MONTH), 
-					initDateCalendar.get(Calendar.DAY_OF_MONTH), 
-					0, 
-					0);
-			fieldToAdd = Calendar.DAY_OF_YEAR;
+			unitToAdd = ChronoUnit.DAYS;
+			currentDateLt = initDateLt.with(LocalDateTime.of(initDateLt.getYear(), initDateLt.getMonthValue() , initDateLt.getDayOfMonth() , 0, 0));
 		} else if (intervalTimeType.equalsIgnoreCase("month"))
 		{
-			currentDate.set(initDateCalendar.get(Calendar.YEAR), 
-					initDateCalendar.get(Calendar.MONTH), 
-					0, 
-					0, 
-					0);
-			fieldToAdd = Calendar.MONTH;
+			unitToAdd = ChronoUnit.MONTHS;
+			currentDateLt = initDateLt.with(LocalDateTime.of(initDateLt.getYear(), initDateLt.getMonthValue() , 1 , 0, 0));
 		} else if (intervalTimeType.equalsIgnoreCase("year"))
 		{
-			currentDate.set(initDateCalendar.get(Calendar.YEAR), 
-					0, 
-					0, 
-					0, 
-					0);
-			fieldToAdd = Calendar.YEAR;
+			unitToAdd = ChronoUnit.YEARS;
+			currentDateLt = initDateLt.with(LocalDateTime.of(initDateLt.getYear(), 1 , 1 , 0, 0));
 		}
 		else throw new Net2PlanException ("Wrong percentile interval type: " + intervalTimeType);
-		while (!currentDate.toInstant().isAfter(endDate.toInstant()))
+		while (!currentDateLt.isAfter(endDateLt))
 		{
-			final Calendar endTimeThisInterval = (Calendar) currentDate.clone();
-			endTimeThisInterval.add(fieldToAdd, 1);
-			final List<Entry<Date,Double>> vals = monitValues.tailMap(currentDate.getTime()).entrySet ().stream().
-					filter(e->e.getKey().toInstant().isBefore(endTimeThisInterval.toInstant())).
+			final LocalDateTime endTimeThisIntervalLt = currentDateLt.plus(1, unitToAdd);
+			final Instant endTimeThisInterval = localDateTimeToDate(endTimeThisIntervalLt).toInstant();
+			final Date currentDate = localDateTimeToDate(currentDateLt);
+			final List<Entry<Date,Double>> vals = monitValues.tailMap(currentDate).entrySet ().stream().
+					filter(e->e.getKey().toInstant().isBefore(endTimeThisInterval)).
 					sorted((e1,e2)->Double.compare(e1.getValue (), e2.getValue())).
 					collect (Collectors.toCollection(ArrayList::new));
-			currentDate = endTimeThisInterval;
+			currentDateLt = endTimeThisIntervalLt;
 			
 			if (vals.isEmpty()) continue;
 			final double positionOfSample = vals.size() * percentile;
@@ -256,45 +178,6 @@ public class TrafficSeries
 		return firstVal + slope * (d.getTime() - firstDate.getTime());
 	}
 
-	public TrafficPredictor getFunctionPredictionSoProbSubestimationIsBounded (FITTINGTYPE fittingType)
-	{
-		if (getSize() < 3) throw new Net2PlanException ("Not enough significance for the test");
-		if (!fittingType.isLinear() && !fittingType.isExponential()) throw new Net2PlanException ("Unknown fitting type");
-		final SimpleRegression reg = new SimpleRegression(true);
-		final double [][] data = new double [this.getSize()][];
-		int cont = 0;
-		for (Entry<Date,Double> entry : this.monitValues.entrySet())
-		{
-			final double [] vals = new double [2];
-			vals [0] = (double) entry.getKey().getTime();
-			if (fittingType.isExponential() && entry.getValue() <= 0) continue; // 0 samples are removed in exponential fitting
-			vals [1] = fittingType.isLinear()? entry.getValue() : Math.log(entry.getValue());
-			data [cont ++] = vals;
-		}
-		reg.addData(data);
-		return new TrafficPredictor(fittingType, reg.regress(), reg.getXSumSquares());
-//		
-//		final int n = (int) reg.getN();
-//		final double confIntervalModifiedToSingleTail = 1 - (2 * probSubestimation); 
-//		final double estimIntercept = reg.getIntercept();
-//		final double estimSlope = reg.getSlope();
-//		final double tStudentNMinus2ThisConfidenceInter = new TDistribution(reg.getN() - 2).inverseCumulativeProbability(confIntervalModifiedToSingleTail);
-//		final double sy = Math.sqrt(reg.getTotalSumSquares() / (n-2));
-//		final double sx2 = reg.getXSumSquares();
-//		final double meanX = monitValues.values().stream().mapToDouble(e->e).sum() / monitValues.size();
-//		final Function<Date,Double> predFunction;
-//		if (isLinearFitting)
-//			predFunction = d ->estimIntercept + estimSlope * d.getTime() + tStudentNMinus2ThisConfidenceInter * sy * Math.sqrt(1 + (1/n) + Math.pow(d.getTime() - meanX , 2) / ((n-1) * sx2));
-//		else
-//			predFunction = d ->Math.exp(estimIntercept + estimSlope * d.getTime() + tStudentNMinus2ThisConfidenceInter * sy * Math.sqrt(1 + (1/n) + Math.pow(d.getTime() - meanX , 2) / ((n-1) * sx2)));
-//		return new TrafficPredictor(fittingType, regResuls)	
-	}
-	
-	public Double getPredictionSoProbSubestimationIsBounded (FITTINGTYPE fittingType , Date d , double probSubestimation)
-	{
-		return getFunctionPredictionSoProbSubestimationIsBounded(fittingType).getPredictorFunction(probSubestimation).apply(d);
-	}
-	
 	public static void main (String [] args)
 	{
 		final double [] x = new double [] {1.47 ,1.50,	1.52,1.55,1.57,1.60,1.63,1.65,1.68,1.70,1.73,1.75,1.78,1.80,1.83};
@@ -377,28 +260,47 @@ public class TrafficSeries
 			Date initialDate , 
 			double intervalBetweenSamplesInSeconds , 
 			int numberOfSamples ,
-			double initialTraffic , 
+			double initialTrafficOfPeak , 
 			double growthFactorPerYear , 
+			double dayVariation_peakFactor , 
+            double dayVariation_startHour ,
+            double dayVariation_durationHours ,
 			double noiseRelativeTypicalDeviationRespectToAverage)
 	{
 		assert type.isLinear() || type.isExponential();
 		final Random rng = new Random (1);
-		
+		final boolean applyDayShaping = dayVariation_peakFactor >= 1 && (dayVariation_startHour >= 0) && (dayVariation_startHour < 24) && (dayVariation_durationHours > 0) && (dayVariation_startHour + dayVariation_durationHours <=24);
 		/* Add values */
 		for (int cont = 0 ; cont < numberOfSamples ; cont ++)
 		{
 			final Date currentDate = new Date (initialDate.getTime() + (long) (1000 * cont * intervalBetweenSamplesInSeconds));
 			final double yearsSinceInitialDate =  cont * intervalBetweenSamplesInSeconds / (365.0*24.0*3600.0);
 			{
-    			final double currentTrafficNoNoise = type.isLinear()? initialTraffic + growthFactorPerYear * yearsSinceInitialDate : initialTraffic * Math.pow(1+growthFactorPerYear , yearsSinceInitialDate);
+    			final double currentTrafficNoNoise = type.isLinear()? initialTrafficOfPeak + growthFactorPerYear * yearsSinceInitialDate : initialTrafficOfPeak * Math.pow(1+growthFactorPerYear , yearsSinceInitialDate);
     			final double noise = rng.nextGaussian() * noiseRelativeTypicalDeviationRespectToAverage * currentTrafficNoNoise;
-    			addValue(currentDate, Math.max(0, currentTrafficNoNoise + noise));
+    			double traffic = Math.max(0, currentTrafficNoNoise + noise);
+    			if (applyDayShaping)
+    			{
+    				final LocalDateTime currentDateLt = dateToLocalDateTime(currentDate);
+    				final LocalDateTime startOfDayLt = currentDateLt.with(LocalDateTime.of(currentDateLt.getYear(), currentDateLt.getMonthValue() , currentDateLt.getDayOfMonth() , 0, 0));
+    				final long millisSinceStartDay = startOfDayLt.until(currentDateLt, ChronoUnit.MILLIS);
+    				final long millisInADay = 24L*3600L*1000L;
+    				if (millisSinceStartDay < 0 || millisSinceStartDay > millisInADay) 
+    					throw new RuntimeException ();
+    				final double fractionInsideDay = ((double) millisSinceStartDay) / ((double) millisInADay);
+    				final boolean inPeak = (fractionInsideDay >= dayVariation_startHour / 24.0) && (fractionInsideDay <= (dayVariation_startHour + dayVariation_durationHours) / 24.0);
+    				if (!inPeak) traffic /= dayVariation_peakFactor;
+    			}
+    			addValue(currentDate, traffic);
 			}
 		}
 		return this;
 	}
 	
-	
+
+	private static LocalDateTime dateToLocalDateTime(Date date) { return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()); 	}
+
+	private static Date localDateTimeToDate(LocalDateTime localDateTime) { return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()); 	}
 }
 
 

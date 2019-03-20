@@ -43,6 +43,8 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.Mon
 import com.net2plan.gui.utils.JSelectionTablePanel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -78,8 +80,9 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "Worst e2e lat (ms)", "Current worst case end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any), from the origin node, to destination nodes reached", null, d->d.getWorseCasePropagationTimeInMs() , AGTYPE.NOAGGREGATION , d->{ final double maxMs = d.getMaximumAcceptableE2EWorstCaseLatencyInMs(); return maxMs <= 0? null : (d.getWorseCasePropagationTimeInMs() > maxMs? Color.RED : null); }));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "Worst e2e length (km)", "Current worst case end-to-end propagation length in km (accumulating any lower layer propagation lengths if any)", null, d->d.getWorstCaseLengthInKm() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "Limit e2e lat (ms)", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", (d,val)-> d.setMaximumAcceptableE2EWorstCaseLatencyInMs((Double)val) , d->d.getMaximumAcceptableE2EWorstCaseLatencyInMs() , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "CAGR(%)" , "Compound annual growth factor for this demand", (d,val)->d.setOfferedTrafficPerPeriodGrowthFactor((Double) val), d->d.getOfferedTrafficPerPeriodGrowthFactor() , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<MulticastDemand>(this , Integer.class, null , "#Monit points" , "Number of samples of the offered traffic stored, coming from a monitoring or forecasting traffic process", null , d->d.getMonitoredOrForecastedOfferedTraffic().getSize() , AGTYPE.NOAGGREGATION , null));
+//      res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "CAGR(%)" , "Compound annual growth factor for this demand", (d,val)->d.setOfferedTrafficPerPeriodGrowthFactor((Double) val), d->d.getOfferedTrafficPerPeriodGrowthFactor() , AGTYPE.NOAGGREGATION , null));
+//      res.add(new AjtColumnInfo<MulticastDemand>(this , Integer.class, null , "#Monit points" , "Number of samples of the offered traffic stored, coming from a monitoring or forecasting traffic process", null , d->d.getMonitoredOrForecastedOfferedTraffic().getSize() , AGTYPE.NOAGGREGATION , null));
+      res.addAll(AdvancedJTable_demand.getMonitoringAndTrafficEstimationColumns(this).stream().map(c->(AjtColumnInfo<MulticastDemand>)(AjtColumnInfo<?>)c).collect(Collectors.toList()));
       return res;
   }
 
@@ -146,6 +149,20 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                     	}
                     );
 		}, (a,b)->b>0, null));
+        res.add(new AjtRcMenu("Set selected demands offered traffic randomly", e ->
+		{
+			final Random rng = new Random ();
+    		final List<MulticastDemand> changedDemands = getSelectedElements().stream().collect(Collectors.toList());
+    		try
+    		{
+                if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                    callback.getWhatIfAnalysisPane().whatIfMulticastDemandOfferedTrafficModified(changedDemands, changedDemands.stream().map(ee->rng.nextDouble()).collect(Collectors.toList()));
+                else
+                	changedDemands.forEach(d->d.setOfferedTraffic(rng.nextDouble()));
+    			
+    		} catch (Throwable ex) { ex.printStackTrace(); throw new Net2PlanException (ex.getMessage());  }
+		}
+		, (a, b) -> b>0, null));
         res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
 		{
             DialogBuilder.launch(
@@ -214,9 +231,10 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
                 MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
-                MonitoringUtils.getMenuPredictTrafficFromSameElementMonitorInfo (this),
+                MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
                 MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
+                new AjtRcMenu("Remove all traffic predictors", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
