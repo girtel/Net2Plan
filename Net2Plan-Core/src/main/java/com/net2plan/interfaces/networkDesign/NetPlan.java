@@ -6217,6 +6217,11 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("propagationSpeedInKmPerSecond", Double.toString(link.propagationSpeedInKmPerSecond));
                     writer.writeAttribute("isUp", Boolean.toString(link.isUp));
                     writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(link.getMonitoredOrForecastedCarriedTraffic().toStringList()));
+                    writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(link.getTrafficPredictor().isPresent()? Arrays.asList(
+                    		link.getTrafficPredictor().get().getTpType().toString() , 
+                    		link.getTrafficPredictor().get().computeInitializationString() , 
+                    		link.getTrafficPredictor().get().getTpType().isManual()? "" : link.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		)  : Arrays.asList()));
 
                     for (String tag : link.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
@@ -6249,6 +6254,11 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("maximumAcceptableE2EWorstCaseLatencyInMs", Double.toString(demand.maximumAcceptableE2EWorstCaseLatencyInMs));
                     writer.writeAttribute("offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth", Double.toString(demand.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth));
                     writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(demand.getMonitoredOrForecastedOfferedTraffic().toStringList()));
+                    writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(demand.getTrafficPredictor().isPresent()? Arrays.asList(
+                    		demand.getTrafficPredictor().get().getTpType().toString() , 
+                    		demand.getTrafficPredictor().get().computeInitializationString() , 
+                    		demand.getTrafficPredictor().get().getTpType().isManual()? "" : demand.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		)  : Arrays.asList()));
                     writer.writeAttribute("qosType", demand.qosType);
                     
                     for (String type : demand.mandatorySequenceOfTraversedResourceTypes)
@@ -6288,6 +6298,11 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth", Double.toString(demand.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth));
                     writer.writeAttribute("qosType", demand.qosType);
                     writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(demand.getMonitoredOrForecastedOfferedTraffic().toStringList()));
+                    writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(demand.getTrafficPredictor().isPresent()? Arrays.asList(
+                    		demand.getTrafficPredictor().get().getTpType().toString() , 
+                    		demand.getTrafficPredictor().get().computeInitializationString() , 
+                    		demand.getTrafficPredictor().get().getTpType().isManual()? "" : demand.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		)  : Arrays.asList()));
 
                     for (String tag : demand.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<network description="" name="" currentDate="1553018548643" currentPlotNodeLayout="" cache_definedPlotNodeLayouts="" version="6" nextElementId="34" planningDomain_0="pd1" planningDomain_1="pd2">
+<network description="" name="" currentDate="1553106059093" currentPlotNodeLayout="" cache_definedPlotNodeLayouts="" version="6" nextElementId="34" planningDomain_0="pd1" planningDomain_1="pd2">
 	<node id="3" description="" name="node1" xCoord="1.0" yCoord="2.0" mapLayout2NodeXYPositionMap=" 1.0 2.0" population="0.0" siteName="s12" isUp="true" planningDomain_0="pd1" layersWithIconsDefined="1" nodeIconURLLayer_1="file:/lowerIcon" nodeIconRelativeSizeLayer_1="0.5">
 		<tag value="t1"/>
 		<attribute key="att" value="1"/>

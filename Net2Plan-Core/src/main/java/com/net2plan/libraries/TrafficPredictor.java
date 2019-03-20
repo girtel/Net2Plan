@@ -21,6 +21,7 @@ public abstract class TrafficPredictor
 		public String getName () { return s; }
 		public boolean isLinear () { return this == LINEARFIT; }
 		public boolean isExponential () { return this == EXPONENTIALFIT; }
+		public boolean isManual () { return this == EXPONENTIALMANUAL || this == LINEARMANUAL; }
 	}	
 	
 	
@@ -155,7 +156,7 @@ public abstract class TrafficPredictor
             this.sum_resid = Double.parseDouble(vals [7]);
             this.sum_resid2 = Double.parseDouble(vals [8]);
 		}
-		String getInitializationString ()
+		public String getInitializationString ()
 		{
             final List<Number> vals = Arrays.asList(N , initialDate.getTime() , endDate.getTime() , sum_x , sum_x2 , sum_y , sum_y2 , sum_resid , sum_resid2);
             return vals.stream().map(v->v.toString()).collect(Collectors.joining(" "));

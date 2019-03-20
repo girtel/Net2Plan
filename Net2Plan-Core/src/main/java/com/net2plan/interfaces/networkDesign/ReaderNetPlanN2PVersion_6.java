@@ -46,6 +46,8 @@ import org.codehaus.stax2.XMLStreamReader2;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.UnmodifiablePoint2D;
 import com.net2plan.libraries.ProfileUtils;
+import com.net2plan.libraries.TrafficPredictor;
+import com.net2plan.libraries.TrafficPredictor.TRAFFICPREDICTORTYPE;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
@@ -271,7 +273,18 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
         	final TrafficSeries readTimeSerie = TrafficSeries.createFromStringList(rows);
             newDemand.setMonitoredOrForecastedOfferedTraffic(readTimeSerie);
         } catch (Exception e) {}
+        try
+        {
+        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("trafficPredictor") , new ArrayList<> ());
+        	if (rows.size() >= 2)
+        	{
+            	final TrafficPredictor readTp = TrafficPredictor.createFromInitStrings(TRAFFICPREDICTORTYPE.valueOf(rows.get(0)), rows.get(1), rows.size() >= 3? Optional.of(rows.get(2)) : Optional.empty()).orElse(null);
+                if (readTp != null) newDemand.setTrafficPredictor(readTp);
+        	}
+        } catch (Exception e) {}
 
+        
+        
 		if (routingType == null) newNpDemandsWithRoutingTypeNotDefined.add(newDemand);
 		final Demand bidirPairDemand = bidirectionalPairId == -1? null : netPlan.getDemandFromId(bidirectionalPairId); 
 		if (bidirPairDemand != null)
@@ -448,6 +461,15 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
         	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("monitoredOrForecastedTraffics") , new ArrayList<> ());
         	final TrafficSeries readTimeSerie = TrafficSeries.createFromStringList(rows);
             newLink.setMonitoredOrForecastedCarriedTraffic(readTimeSerie);
+        } catch (Exception e) {}
+        try
+        {
+        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("trafficPredictor") , new ArrayList<> ());
+        	if (rows.size() >= 2)
+        	{
+            	final TrafficPredictor readTp = TrafficPredictor.createFromInitStrings(TRAFFICPREDICTORTYPE.valueOf(rows.get(0)), rows.get(1), rows.size() >= 3? Optional.of(rows.get(2)) : Optional.empty()).orElse(null);
+                if (readTp != null) newLink.setTrafficPredictor(readTp);
+        	}
         } catch (Exception e) {}
 		final Link bidirPairLink = bidirectionalPairId == -1? null : netPlan.getLinkFromId(bidirectionalPairId); 
 		if (bidirPairLink != null)
@@ -635,6 +657,15 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
         	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("monitoredOrForecastedTraffics") , new ArrayList<> ());
         	final TrafficSeries readTimeSerie = TrafficSeries.createFromStringList(rows);
             newDemand.setMonitoredOrForecastedOfferedTraffic(readTimeSerie);
+        } catch (Exception e) {}
+        try
+        {
+        	final List<String> rows = StringUtils.readEscapedString_asStringList (getString("trafficPredictor") , new ArrayList<> ());
+        	if (rows.size() >= 2)
+        	{
+            	final TrafficPredictor readTp = TrafficPredictor.createFromInitStrings(TRAFFICPREDICTORTYPE.valueOf(rows.get(0)), rows.get(1), rows.size() >= 3? Optional.of(rows.get(2)) : Optional.empty()).orElse(null);
+                if (readTp != null) newDemand.setTrafficPredictor(readTp);
+        	}
         } catch (Exception e) {}
 		readAndAddAttributesToEndAndPdForNodes(newDemand, "multicastDemand");
 	}

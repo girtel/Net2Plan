@@ -332,6 +332,29 @@ public class MonitoringUtils
 
     }
 
+    public static <T extends NetworkElement>  AjtRcMenu getMenuSetOfferedTrafficAsForecasted (AdvancedJTable_networkElement<T> table)
+    {
+        final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
+        final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
+        if (!isDemandTable && !isMDemandTable) throw new RuntimeException ();
+        return new AjtRcMenu("Set offered traffic as forecasted traffic for selected elements", e->
+        {
+        	final Date date = table.getTableNetworkLayer().getNetPlan().getCurrentDate();
+        	if (isDemandTable)
+        		table.getSelectedElements().stream().map(d->(Demand)d).
+        			filter(d->d.getTrafficPredictor ().isPresent ()).
+        			forEach (d->d.setOfferedTraffic(d.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply(date)));
+        	else 
+        		table.getSelectedElements().stream().map(d->(MulticastDemand)d).
+    			filter(d->d.getTrafficPredictor ().isPresent ()).
+    			forEach (d->d.setOfferedTraffic(d.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply(date)));
+
+        }
+        , (a,b)->b>0, null);
+
+    }
+
+    
     public static <T extends NetworkElement>  AjtRcMenu getMenuPercentileFilterMonitSamples (AdvancedJTable_networkElement<T> table)
     {
         final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;

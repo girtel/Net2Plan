@@ -240,12 +240,15 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                     "Please introduce the link target utilization. Negative values are not allowed. The capacity will be assigned to not coupled links", 
                     "", 
                     this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.5)),
+                    Arrays.asList(
+                    		InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.5),
+                    		InputForDialog.inputTfDouble("Capacity module (capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 0.5)),
                     (list)->
                     	{
                     		final double newLinkUtilization = (Double) list.get(0).get();
+                    		final double capacityModule = (Double) list.get(1).get();
                     		if (newLinkUtilization <= 0) throw new Net2PlanException ("Link utilization must be positive");
-                    		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setCapacity(ee.getOccupiedCapacity() /  newLinkUtilization));
+                    		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setCapacity(capacityModule > 0? capacityModule * Math.ceil((ee.getOccupiedCapacity() /  newLinkUtilization) / capacityModule) : ee.getOccupiedCapacity() /  newLinkUtilization));
                     	}
                     );
         } , (a,b)->b>0, null));

@@ -430,6 +430,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                 MonitoringUtils.getMenuExportMonitoringInfo(this),
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                MonitoringUtils.getMenuSetOfferedTrafficAsForecasted (this),
                 MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
                 MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),

@@ -231,6 +231,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
                 MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
+                MonitoringUtils.getMenuSetOfferedTrafficAsForecasted (this),
                 MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
                 MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
