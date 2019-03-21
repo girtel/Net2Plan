@@ -110,8 +110,6 @@ public class GUINetworkDesign extends IGUIModule
 
     private TopologyPanel topologyPanel;
 
-    private FocusPane focusPanel;
-
     private ViewEditTopologyTablesPane viewEditTopTables;
     private ViewReportPane reportPane;
     private OfflineExecutionPanel executionPane;
@@ -200,21 +198,21 @@ public class GUINetworkDesign extends IGUIModule
         topologyPanel = new TopologyPanel(this, JUNGCanvas.class);
 
         JPanel leftPane = new JPanel(new BorderLayout());
-        JPanel logSection = configureLeftBottomPanel();
-        if (logSection == null)
+        //JPanel logSection = configureLeftBottomPanel();
+        /*if (logSection == null)
         {
             leftPane.add(topologyPanel, BorderLayout.CENTER);
         } else
-        {
+        {*/
             JSplitPane splitPaneTopology = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
             splitPaneTopology.setTopComponent(topologyPanel);
-            splitPaneTopology.setBottomComponent(logSection);
+            //splitPaneTopology.setBottomComponent(logSection);
             splitPaneTopology.addPropertyChangeListener(new ProportionalResizeJSplitPaneListener());
             splitPaneTopology.setBorder(new LineBorder(contentPane.getBackground()));
             splitPaneTopology.setOneTouchExpandable(true);
             splitPaneTopology.setDividerSize(7);
             leftPane.add(splitPaneTopology, BorderLayout.CENTER);
-        }
+       // }
         contentPane.add(leftPane, "grow");
 
         viewEditTopTables = new ViewEditTopologyTablesPane(GUINetworkDesign.this);
@@ -342,7 +340,7 @@ public class GUINetworkDesign extends IGUIModule
 
     public PickManager getPickManager () { return this.pickManager; }
     
-    private JPanel configureLeftBottomPanel()
+    /*private JPanel configureLeftBottomPanel()
     {
         this.focusPanel = new FocusPane(this);
         final JPanel focusPanelContainer = new JPanel(new BorderLayout());
@@ -372,7 +370,7 @@ public class GUINetworkDesign extends IGUIModule
 
         pane.add(focusPanelContainer, "grow");
         return pane;
-    }
+    }*/
 
     @Override
     public String getDescription()
@@ -517,7 +515,6 @@ public class GUINetworkDesign extends IGUIModule
         pickManager.reset();
         topologyPanel.getCanvas().cleanSelection();
         viewEditTopTables.resetPickedState();
-        focusPanel.reset();
     }
 
     /**
@@ -690,8 +687,10 @@ public class GUINetworkDesign extends IGUIModule
     public void updateVisualizationAfterPick()
     {
         final PickStateInfo pick = pickManager.getCurrentPick(getDesign ()).orElse(null);
-        if (pick == null) 
-        	pickManager.reset(); 
+        if (pick == null)
+        {
+            pickManager.reset();
+        }
         else
         {
         	pick.applyVisualizationInCurrentDesign();
@@ -701,7 +700,7 @@ public class GUINetworkDesign extends IGUIModule
         }
         topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
         topologyPanel.updateTopToolbar();
-        focusPanel.updateView();
+        viewEditTopTables.updateView();
     }
 
     public void updateVisualizationAfterChanges()
@@ -709,7 +708,6 @@ public class GUINetworkDesign extends IGUIModule
         topologyPanel.updateMultilayerPanel();
         topologyPanel.getCanvas().rebuildGraph();
         viewEditTopTables.updateView();
-        focusPanel.updateView();
     }
 
     public void updateVisualizationAfterNewTopology()
@@ -720,7 +718,6 @@ public class GUINetworkDesign extends IGUIModule
         topologyPanel.getCanvas().rebuildGraph();
         topologyPanel.getCanvas().zoomAll();
         viewEditTopTables.updateView();
-        focusPanel.updateView();
     }
 
     public void updateVisualizationAfterCanvasState()
@@ -728,10 +725,6 @@ public class GUINetworkDesign extends IGUIModule
         topologyPanel.updateTopToolbar();
     }
 
-    public void clearFocusPanel()
-    {
-        focusPanel.reset();
-    }
 
     public void updateVisualizationJustCanvasLinkNodeVisibilityOrColor()
     {
