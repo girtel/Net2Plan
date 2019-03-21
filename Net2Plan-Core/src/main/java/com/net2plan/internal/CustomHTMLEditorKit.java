@@ -56,7 +56,7 @@ public class CustomHTMLEditorKit extends HTMLEditorKit
 
 	public final static StringBuilder style = new StringBuilder("<style> \n body {font-family: Open Sans, Verdana, Tahoma, sans-serif; font-style: normal; font-variant: normal; font-size: 12px; padding: 0px 30px 15px 10px; text-align: justify;} \n "
 			+ "h1, h2, h3 {font-weight: 500;} \n h1 {font-size: 24px; line-height: 26.4px;} \n h2 {font-size: 18px; line-height: 20.4px;} \n"
-			+ "h3 {font-size: 14px; line-height: 15.4px; color:" + Color.YELLOW +"} \n "
+			+ "h3 {font-size: 14px; line-height: 15.4px; color:" + Color.BLUE +"} \n "
 			+ "table, td {font-size: 11px; text-align: justify;} \n table, tr, th {border: 0px;} \n"
 			+ "td {border: 2px solid " + Color.GRAY +";} \n th {background-color: " + Color.GREEN +"; color: " + Color.WHITE + ";text-align: center; height: 20px; padding: 10px; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;} \n"
 			+ "caption {caption-side: bottom; padding-bottom: 10px; font-weight: bold;} \n </style>");

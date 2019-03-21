@@ -14,6 +14,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
+import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.Constants;
 import com.net2plan.internal.CustomHTMLEditorKit;
@@ -107,7 +108,7 @@ public class MonitoringGraphPane extends JPanel
 		}
 
 		final GUINetworkDesignConstants.AJTableType elementType = GUINetworkDesignConstants.AJTableType.getTypeOfElement(d.get().getFirst());
-		final List<?> pickedElement = pickStateInfo.getStateOnlyNeFr();
+		final List<NetworkElementOrFr> pickedElement = pickStateInfo.getStateOnlyNeFr();
 
 		assert pickedElement != null && !pickedElement.isEmpty();
 		assert elementType != null;
@@ -120,21 +121,22 @@ public class MonitoringGraphPane extends JPanel
 			return;
 		}
 
-		if (!(pickedElement.get(0) instanceof IMonitorizableElement))
+		NetworkElementOrFr nefr = pickedElement.get(0);
+
+		if (nefr.getNe() != null && !(nefr.getNe() instanceof IMonitorizableElement))
 		{
 			resetView();
 			return;
 		}
 
-		final IMonitorizableElement monitE = (IMonitorizableElement) pickedElement.get(0);
-		if (monitE.getMonitoredOrForecastedCarriedTraffic().getSize() == 0 && !monitE.getTrafficPredictor().isPresent())
+		final IMonitorizableElement monitElement = (IMonitorizableElement) nefr.getNe();
+		if (monitElement.getMonitoredOrForecastedCarriedTraffic().getSize() == 0 && !monitElement.getTrafficPredictor().isPresent())
 		{
 			resetView();
 			return;
 		}
 
 
-		final IMonitorizableElement monitElement = (IMonitorizableElement) pickedElement.get(0);
 		this.add(createPanelInfo(monitElement), "al center");
 
 		this.revalidate();
@@ -201,9 +203,9 @@ public class MonitoringGraphPane extends JPanel
 		String descriptionString_e = "No element information";
 		switch (NetworkElement.getNetworkElementType(eAsNe))
 		{
-			case MULTICAST_DEMAND: descriptionString_e = "Ip Multicast Flow #" + eAsNe.getIndex(); break;
-			case DEMAND: descriptionString_e = "Ip Demand #" + eAsNe.getIndex(); break;
-			case LINK: descriptionString_e = "Ip Link #" + eAsNe.getIndex(); break;
+			case MULTICAST_DEMAND: descriptionString_e = "Multicast Demand #" + eAsNe.getIndex(); break;
+			case DEMAND: descriptionString_e = "Demand #" + eAsNe.getIndex(); break;
+			case LINK: descriptionString_e = "Link #" + eAsNe.getIndex(); break;
 			default:
 				break;
 		}
@@ -228,7 +230,7 @@ public class MonitoringGraphPane extends JPanel
 			{
 				final Link ee = (Link)e;
 				Marker currentEnd = new ValueMarker(ee.getCapacity());
-				currentEnd.setPaint(Color.YELLOW);
+				currentEnd.setPaint(Color.RED);
 				currentEnd.setLabel("Nominal capacity");
 				currentEnd.setLabelAnchor(RectangleAnchor.TOP_LEFT);
 				currentEnd.setLabelTextAnchor(TextAnchor.BOTTOM_LEFT);
