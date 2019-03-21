@@ -265,10 +265,10 @@ public class TrafficSeries
 			double dayVariation_peakFactor , 
             double dayVariation_startHour ,
             double dayVariation_durationHours ,
-			double noiseRelativeTypicalDeviationRespectToAverage)
+			double noiseRelativeTypicalDeviationRespectToAverage , 
+			Random rng)
 	{
 		assert type.isLinear() || type.isExponential();
-		final Random rng = new Random (1);
 		final boolean applyDayShaping = dayVariation_peakFactor >= 1 && (dayVariation_startHour >= 0) && (dayVariation_startHour < 24) && (dayVariation_durationHours > 0) && (dayVariation_startHour + dayVariation_durationHours <=24);
 		/* Add values */
 		for (int cont = 0 ; cont < numberOfSamples ; cont ++)

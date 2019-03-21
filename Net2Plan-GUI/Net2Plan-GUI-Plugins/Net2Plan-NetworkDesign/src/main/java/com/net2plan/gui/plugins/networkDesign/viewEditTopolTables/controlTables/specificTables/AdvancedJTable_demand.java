@@ -431,12 +431,14 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
                 MonitoringUtils.getMenuSetOfferedTrafficAsForecasted (this),
+                MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (this),
                 MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
                 MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
                 MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
-                new AjtRcMenu("Remove all traffic predictors", e->getSelectedElements().forEach(dd->((Demand)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
-                new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((Demand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
+                MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
+                new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Demand)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
+                new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Demand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
@@ -572,7 +574,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         res.add(new AjtColumnInfo<IMonitorizableElement>(table , Date.class, null , "First date", "The date of the earliest monitored sample available", null , d->d.getMonitoredOrForecastedCarriedTraffic().getFirstDate() , AGTYPE.NOAGGREGATION , null));
         res.add(new AjtColumnInfo<IMonitorizableElement>(table , Date.class, null , "Last date", "The date of the more recent monitored sample available", null , d->d.getMonitoredOrForecastedCarriedTraffic().getLastDate() , AGTYPE.NOAGGREGATION , null));
         res.add(new AjtColumnInfo<IMonitorizableElement>(table , String.class, null , "Forecast (Gbps)", "Indicates the forecasted traffic in the target date, according to current predictor", null , d->d.getTrafficPredictor().isPresent()? d.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval ().apply(table.getTableNetworkLayer().getNetPlan().getCurrentDate()) : "--" , AGTYPE.SUMDOUBLE , null));
-        res.add(new AjtColumnInfo<IMonitorizableElement>(table , String.class, null , "Rel. mismatch", "Indicates the relative mismatch between the forecasted value and the current value in this element", null , d-> { final Double f = d.getTrafficPredictor().isPresent()? d.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval ().apply(table.getTableNetworkLayer().getNetPlan().getCurrentDate()) : null; if (f == null) return "--"; final double v = d.getCurrentTrafficToAddMonitSample(); return v < Configuration.precisionFactor? (f < Configuration.precisionFactor? 0 : Double.MAX_VALUE ) : Math.abs((f-v)/v);   }  , AGTYPE.SUMDOUBLE , null));
+        res.add(new AjtColumnInfo<IMonitorizableElement>(table , String.class, null , "Abs. mismatch", "Indicates the absolute value in traffic units of the mismatch between the forecasted value and the current value in this element", null , d-> { final Double f = d.getTrafficPredictor().isPresent()? d.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval ().apply(table.getTableNetworkLayer().getNetPlan().getCurrentDate()) : null; if (f == null) return "--"; final double v = d.getCurrentTrafficToAddMonitSample(); return Math.abs(f-v) < Configuration.precisionFactor? 0 : Math.abs(f-v);   }  , AGTYPE.SUMDOUBLE , null));
         res.add(new AjtColumnInfo<IMonitorizableElement>(table , String.class, null , "Forecast type", "Indicates the type of forecast information applied, if any", null , d->d.getTrafficPredictor().isPresent()? d.getTrafficPredictor().get().getTpType ().getName () : "None" , AGTYPE.NOAGGREGATION , null));
         res.add(new AjtColumnInfo<IMonitorizableElement>(table , Double.class, null , "Variance explained", "Indicates the fraction of the variance explained by the predictor (1 means perfectly accurate predictor, 0 means as good as picking the average)", null , d->d.getTrafficPredictor().isPresent()? (d.getTrafficPredictor().get().getStatistics() == null? "--" : d.getTrafficPredictor().get().getStatistics().getRsquared()) : "--" , AGTYPE.NOAGGREGATION , null));
     	return res;

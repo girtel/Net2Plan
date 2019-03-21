@@ -6220,7 +6220,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(link.getTrafficPredictor().isPresent()? Arrays.asList(
                     		link.getTrafficPredictor().get().getTpType().toString() , 
                     		link.getTrafficPredictor().get().computeInitializationString() , 
-                    		link.getTrafficPredictor().get().getTpType().isManual()? "" : link.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		link.getTrafficPredictor().get().getTpType().isManual() || link.getTrafficPredictor().get().getStatistics() == null? "" : link.getTrafficPredictor().get().getStatistics().getInitializationString() 
                     		)  : Arrays.asList()));
 
                     for (String tag : link.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
@@ -6257,7 +6257,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(demand.getTrafficPredictor().isPresent()? Arrays.asList(
                     		demand.getTrafficPredictor().get().getTpType().toString() , 
                     		demand.getTrafficPredictor().get().computeInitializationString() , 
-                    		demand.getTrafficPredictor().get().getTpType().isManual()? "" : demand.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		demand.getTrafficPredictor().get().getTpType().isManual() || demand.getTrafficPredictor().get().getStatistics() == null? "" : demand.getTrafficPredictor().get().getStatistics().getInitializationString() 
                     		)  : Arrays.asList()));
                     writer.writeAttribute("qosType", demand.qosType);
                     
@@ -6301,7 +6301,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(demand.getTrafficPredictor().isPresent()? Arrays.asList(
                     		demand.getTrafficPredictor().get().getTpType().toString() , 
                     		demand.getTrafficPredictor().get().computeInitializationString() , 
-                    		demand.getTrafficPredictor().get().getTpType().isManual()? "" : demand.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		demand.getTrafficPredictor().get().getTpType().isManual() || demand.getTrafficPredictor().get().getStatistics() == null? "" : demand.getTrafficPredictor().get().getStatistics().getInitializationString() 
                     		)  : Arrays.asList()));
 
                     for (String tag : demand.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }

@@ -12,6 +12,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TimeZone;
@@ -23,8 +24,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
-import org.apache.poi.ss.formula.functions.T;
 
 import com.net2plan.gui.plugins.GUINetworkDesignConstants;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelReader;
@@ -90,7 +89,8 @@ public class MonitoringUtils
                             InputForDialog.inputTfDouble("Daily variation: hour of the start of busy-hour period (0..24)", "In daily variations, the hour (as a double in [0 , 24) when peak traffic interval (busy hours) start. If not in [0,24), no daily variation is applied", 10, 12.0),
                             InputForDialog.inputTfDouble("Daily variation: duration in hours of the busy-hours period (0..24)", "In daily variations, the duration in hours (as a double in [0 , 24) of peak traffic interval (busy hours) start. If start time plus duration exceeds the hour 24, an error is raised", 10, 3.0),
                             InputForDialog.inputTfDouble("Noise coefficient of variation", "A normal traffic noise centered in 0 and typical deviation given by this value multiplied by the current traffic, is added to the estimation. Note that negative traffics are later truncated to zero", 10, 1.0),
-                            InputForDialog.inputCheckBox("Remove previous monitoring values?", "If selected, the current monitored values are removed", true , null)
+                            InputForDialog.inputCheckBox("Remove previous monitoring values?", "If selected, the current monitored values are removed", true , null),
+                            InputForDialog.inputTfInt("Seed of random number generator", "Introduce the seed to used for the generator of random numbers, in noise cretion", 10, 1)
                     ),
                     (list)->
                     {
@@ -107,6 +107,7 @@ public class MonitoringUtils
                         final double dayVariation_durationHours = (Double) list.get(9).get();
                         final double noiseRelativeTypicalDeviationRespectToAverage = (Double) list.get(10).get();
                         final boolean removePreviousMonitValues = (Boolean) list.get(11).get();
+                        final long rngSeed = ((Integer) list.get(12).get()).longValue();
 
                         final boolean dayVariationApplied = dayVariation_peakFactor >= 1 && dayVariation_startHour >= 0 && dayVariation_startHour < 24;
                         if (dayVariationApplied) if (dayVariation_startHour + dayVariation_durationHours >= 24) throw new Net2PlanException ("The busy hour start plus duration, exceeds the day limit");
@@ -142,7 +143,8 @@ public class MonitoringUtils
                             tm.addSyntheticMonitoringTrace(growthType, initialDate, intervalBetweenSamplesInSeconds,
                                     numberOfSamples,
                                     initialTraffic,
-                                    growthFactorPerYear, dayVariation_peakFactor , dayVariation_startHour , dayVariation_durationHours , noiseRelativeTypicalDeviationRespectToAverage);
+                                    growthFactorPerYear, dayVariation_peakFactor , dayVariation_startHour , dayVariation_durationHours , noiseRelativeTypicalDeviationRespectToAverage , 
+                                    new Random (rngSeed));
                         }
 
                     }
@@ -416,6 +418,44 @@ public class MonitoringUtils
     			filter(d->d.getTrafficPredictor ().isPresent ()).
     			forEach (d->d.setOfferedTraffic(d.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply(date)));
 
+        }
+        , (a,b)->b>0, null);
+
+    }
+
+    public static <T extends NetworkElement>  AjtRcMenu getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (AdvancedJTable_networkElement<T> table)
+    {
+        final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
+        final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
+        final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;
+        if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
+        return new AjtRcMenu("Set forecasted traffic as constant = current traffic in selected elements", e->
+        {
+        	final Date date = table.getTableNetworkLayer().getNetPlan().getCurrentDate();
+        	if (isDemandTable)
+        		table.getSelectedElements().stream().map(d->(Demand)d).
+        			forEach (d->
+        			{
+        				final TrafficPredictor tp = TrafficPredictor_manual_linear.createFromData(date.getTime() , d.getOfferedTraffic() , 0.0).orElse(null);
+        				d.setTrafficPredictor(tp);
+        			}
+        			);
+        	else if (isMDemandTable)
+        		table.getSelectedElements().stream().map(d->(MulticastDemand)d).
+    			forEach (d->
+    			{
+    				final TrafficPredictor tp = TrafficPredictor_manual_linear.createFromData(date.getTime() , d.getOfferedTraffic() , 0.0).orElse(null);
+    				d.setTrafficPredictor(tp);
+    			}
+    			);
+        	else 
+        		table.getSelectedElements().stream().map(d->(Link)d).
+    			forEach (d->
+    			{
+    				final TrafficPredictor tp = TrafficPredictor_manual_linear.createFromData(date.getTime() , d.getCarriedTraffic() , 0.0).orElse(null);
+    				d.setTrafficPredictor(tp);
+    			}
+    			);
         }
         , (a,b)->b>0, null);
 
@@ -926,8 +966,7 @@ public class MonitoringUtils
                     {
                         final double coeff_preferFitRouting0PreferFitDemand1 = (Double) list.get(0).get();
                         if (coeff_preferFitRouting0PreferFitDemand1 < 0 || coeff_preferFitRouting0PreferFitDemand1 > 1) throw new Net2PlanException ("Wrong value of balance coefficient");
-                        final int indexSelectionInputDemandMonit = optionsInputDemandMonit.indexOf((String) list.get(3).get());
-                        final boolean applyOnlyForDatesWithFullLinkMonitInfo = (Boolean) list.get(1).get();
+                        final int indexSelectionInputDemandMonit = optionsInputDemandMonit.indexOf((String) list.get(1).get());
                         assert indexSelectionInputDemandMonit != -1;
                         final SortedMap<Link,Double> inputMonitInfo_someLinks = new TreeMap<> (np.getLinks(layer).stream().filter(ee->ee.getTrafficPredictor().isPresent()).collect(Collectors.toMap(ee->ee, ee->ee.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate ()))));
                         final TrafficMatrixForecastUtils.TmEstimationResults esimRes;

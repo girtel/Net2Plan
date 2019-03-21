@@ -241,7 +241,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             this, 
                             Arrays.asList(
                             		InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.5),
-                            		InputForDialog.inputTfDouble("Capacity module (capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 0.5)),
+                            		InputForDialog.inputTfDouble("Capacity module (capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 10.0)),
                             (list)->
                             	{
                             		final double newLinkUtilization = (Double) list.get(0).get();
@@ -301,13 +301,15 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 MonitoringUtils.getMenuExportMonitoringInfo(this),
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (this),
                 MonitoringUtils.getMenuAddLinkMonitoringInfoSimulatingTrafficVariations (this),
                 MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
                 MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
                 MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
-                new AjtRcMenu("Remove all traffic predictors", e->getSelectedElements().forEach(dd->((Link)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
-                new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((Link)dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()) , (a,b)->b>0, null),
+                MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
+                new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
+                new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)

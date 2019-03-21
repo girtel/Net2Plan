@@ -41,6 +41,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class TopologyPanel extends JPanel
@@ -422,17 +423,41 @@ public class TopologyPanel extends JPanel
             NetPlan aux_netPlan = netPlan.copy();
             try
             {
-                netPlan.removeAllDemands();
+            	final Set<Demand> originalDemandsToRemove = new HashSet<> (netPlan.getDemands());
                 for (Demand demand : demands.getDemands())
-                    netPlan.addDemand(netPlan.getNode(demand.getIngressNode().getIndex()), netPlan.getNode(demand.getEgressNode().getIndex()), demand.getOfferedTraffic(), demand.getRoutingType() , demand.getAttributes());
-
-                netPlan.removeAllMulticastDemands();
+                {
+                	final long loadedDemandId = demand.getId();
+                	final Demand originalDemand = netPlan.getDemandFromId(loadedDemandId); 
+                	if (originalDemand != null)
+                	{
+                		originalDemand.setOfferedTraffic(demand.getOfferedTraffic());
+                		originalDemandsToRemove.remove(originalDemand);
+                	}
+                	else
+                	{
+                		netPlan.addDemand(netPlan.getNode(demand.getIngressNode().getIndex()), netPlan.getNode(demand.getEgressNode().getIndex()), demand.getOfferedTraffic(), demand.getRoutingType() , demand.getAttributes());	
+                	}
+                }
+                originalDemandsToRemove.forEach(d->d.remove());
+                
+            	final Set<MulticastDemand> originalMDemandsToRemove = new HashSet<> (netPlan.getMulticastDemands());
                 for (MulticastDemand demand : demands.getMulticastDemands())
                 {
-                    Set<Node> egressNodesThisNetPlan = new HashSet<Node>();
-                    for (Node n : demand.getEgressNodes()) egressNodesThisNetPlan.add(netPlan.getNode(n.getIndex()));
-                    netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
+                	final long loadedDemandId = demand.getId();
+                	final Demand originalDemand = netPlan.getDemandFromId(loadedDemandId); 
+                	if (originalDemand != null)
+                	{
+                		originalDemand.setOfferedTraffic(demand.getOfferedTraffic());
+                		originalDemandsToRemove.remove(originalDemand);
+                	}
+                	else
+                	{
+                    	Set<Node> egressNodesThisNetPlan = new HashSet<Node>();
+                        for (Node n : demand.getEgressNodes()) egressNodesThisNetPlan.add(netPlan.getNode(n.getIndex()));
+                        netPlan.addMulticastDemand(netPlan.getNode(demand.getIngressNode().getIndex()), egressNodesThisNetPlan, demand.getOfferedTraffic(), demand.getAttributes());
+                	}
                 }
+                originalMDemandsToRemove.forEach(d->d.remove());
                 callback.getPickManager().reset();
                 callback.updateVisualizationAfterChanges();
                 callback.addNetPlanChange();

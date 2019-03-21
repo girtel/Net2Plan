@@ -192,7 +192,7 @@ public class TimeSeriesTest
 		double growthFactorPerYear = 0.35;
 		double noiseMaxAmplitudeRespectToTraffic = 0.0;
 		tts = new TrafficSeries ().addSyntheticMonitoringTrace(fittingType, 
-				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic);
+				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic , new Random (1L));
 		tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, tts.getValues()).get();
 		
 		System.out.println("First date: " + initialDate + ", one year after: " + oneYearAfterInitialDate);
@@ -209,7 +209,7 @@ public class TimeSeriesTest
 		/* Exponential */
 		fittingType = FITTINGTYPE.EXPONENTIAL;
 		tts = new TrafficSeries ().addSyntheticMonitoringTrace(fittingType, 
-				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic);
+				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic , new Random (1L));
 		tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.EXPONENTIALFIT, tts.getValues()).get();
 
 		System.out.println("First date: " + initialDate + ", one year after: " + oneYearAfterInitialDate);
@@ -229,7 +229,7 @@ public class TimeSeriesTest
 		fittingType = FITTINGTYPE.EXPONENTIAL;
 		noiseMaxAmplitudeRespectToTraffic = 0.05;
 		tts = new TrafficSeries ().addSyntheticMonitoringTrace(fittingType, 
-				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic);
+				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic , new Random (1L));
 		tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.EXPONENTIALFIT, tts.getValues()).get();
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(initialDate) , initialTraffic, 0.1);
 		assertEquals (tp.getPredictorFunctionNoConfidenceInterval().apply(oneYearAfterInitialDate) , initialTraffic * (1 + growthFactorPerYear), 0.1);
@@ -246,7 +246,7 @@ public class TimeSeriesTest
 		fittingType = FITTINGTYPE.LINEAR;
 		noiseMaxAmplitudeRespectToTraffic = 0.05;
 		tts = new TrafficSeries ().addSyntheticMonitoringTrace(fittingType, 
-				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic);
+				initialDate, intervalBetweenSamplesInSeconds, numberOfSamples, initialTraffic, growthFactorPerYear, -1 , -1 , -1 , noiseMaxAmplitudeRespectToTraffic , new Random (1L));
 		tp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, tts.getValues()).get();
 		System.out.println("First date: " + initialDate + ", one year after: " + oneYearAfterInitialDate);
 		//System.out.println("Reg results parameters estimate: " + Arrays.toString(tp.getRegResuls().getParameterEstimates()));

@@ -232,11 +232,13 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
                 MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
                 MonitoringUtils.getMenuSetOfferedTrafficAsForecasted (this),
+                MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (this),
                 MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
                 MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
-                new AjtRcMenu("Remove all traffic predictors", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
-                new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
+                MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
+                new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
+                new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((MulticastDemand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
