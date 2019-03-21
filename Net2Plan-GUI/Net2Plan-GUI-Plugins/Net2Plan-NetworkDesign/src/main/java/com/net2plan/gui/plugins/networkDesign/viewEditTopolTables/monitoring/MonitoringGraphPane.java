@@ -62,7 +62,7 @@ public class MonitoringGraphPane extends JPanel
 		this.setBackground(Color.WHITE);
 
 		StandardChartTheme theme = (StandardChartTheme) StandardChartTheme.createJFreeTheme();
-		theme.setPlotBackgroundPaint(GUINetworkDesignConstants.YELLOW_BRANCH_COLOR);
+		theme.setPlotBackgroundPaint(Color.WHITE);
 		theme.setDomainGridlinePaint(Color.LIGHT_GRAY);
 		theme.setRangeGridlinePaint(Color.LIGHT_GRAY);
 		theme.setExtraLargeFont(this.getFont().deriveFont(Font.BOLD, 20));
@@ -74,7 +74,7 @@ public class MonitoringGraphPane extends JPanel
 		Shape[] shapes = DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE;
 		if(paintSequence.length > 3 && shapes.length > 3)
 		{
-			paintSequence[0] = GUINetworkDesignConstants.YELLOW_BRANCH_COLOR;
+			paintSequence[0] = Color.BLUE;
 			paintSequence[1] = Color.DARK_GRAY;
 			paintSequence[2] = Color.GREEN;
 			shapes[0] = shapes[1]; shapes[2] = shapes[0];
