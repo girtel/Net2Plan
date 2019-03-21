@@ -628,8 +628,8 @@ public class MonitoringUtils
 //                            else if (isMDemandTable) tm = ((MulticastDemand) ee).getMonitoredOrForecastedOfferedTraffic();
 //                            assert tm != null;
 //                            
-//                            final MtnTrafficPredictor tpLinear = MtnTrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, values).orElse(null);
-//                            final MtnTrafficPredictor tpExp = MtnTrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.EXPONENTIALFIT, values).orElse(null);
+//                            final TrafficPredictor tpLinear = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.LINEARFIT, values).orElse(null);
+//                            final TrafficPredictor tpExp = TrafficPredictor.createFromMonitData(TRAFFICPREDICTORTYPE.EXPONENTIALFIT, values).orElse(null);
 //                            if (tpLinear == null && tpExp == null) return Optional.empty();
 //                            if (tpLinear == null || tpExp == null) return Optional.of(tpLinear != null? tpLinear : tpExp);
 //                            final double r2Linear = tpLinear.getStatistics().getRsquared();
