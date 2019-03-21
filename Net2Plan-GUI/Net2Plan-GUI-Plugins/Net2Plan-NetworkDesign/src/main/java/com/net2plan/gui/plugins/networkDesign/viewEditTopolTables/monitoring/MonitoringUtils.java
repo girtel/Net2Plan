@@ -12,7 +12,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TimeZone;
@@ -24,6 +23,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import org.apache.poi.ss.formula.functions.T;
 
 import com.net2plan.gui.plugins.GUINetworkDesignConstants;
 import com.net2plan.gui.plugins.networkDesign.io.excel.ExcelReader;
@@ -47,6 +48,9 @@ import com.net2plan.libraries.TrafficPredictor_manual_exponential;
 import com.net2plan.libraries.TrafficPredictor_manual_linear;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.SwingUtils;
+
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 public class MonitoringUtils
 {
@@ -146,6 +150,69 @@ public class MonitoringUtils
         } , (a,b)->b>0, null);
     }
 
+    public static AjtRcMenu getMenuAddLinkMonitoringInfoSimulatingTrafficVariations (AdvancedJTable_networkElement<Link> table)
+    {
+        return new AjtRcMenu("Add link monitoring traces simulating effect of demand traces", e->
+        {
+        	final NetworkLayer layer = table.getTableNetworkLayer();
+        	final NetPlan np = table.getTableNetworkLayer().getNetPlan();
+        	if (np.getDemands (layer).stream().anyMatch(d->d.getMonitoredOrForecastedCarriedTraffic().getDatesWithValue().isEmpty())) throw new Net2PlanException ("Some demands do not have monitored information");
+
+        	final SortedSet<Date> datesToApply = new TreeSet<> ();
+        	for (Demand d : np.getDemands(layer)) datesToApply.addAll(d.getMonitoredOrForecastedCarriedTraffic().getDatesWithValue()); 
+        	for (MulticastDemand d : np.getMulticastDemands(layer)) datesToApply.addAll(d.getMonitoredOrForecastedCarriedTraffic().getDatesWithValue()); 
+        	if (datesToApply.isEmpty()) throw new Net2PlanException ("No monitoring information in any demand or multicast demand");
+            DialogBuilder.launch(
+                    "Add link monitoring traces simulating effect of demand traces" ,
+                    "This option permits creates a trace of monitored values in the links. "
+                    + "A sample is added to all the links, for any date for which at least one demand as a sample. "
+                    + "Demands or multicast demands without monitoring information, are assumed to inject the offered traffic. " +
+                    "If a demand has no sample for a date, its value for that date is interpolated from other monitoring samples" ,
+                    "",
+                    table,
+                    Arrays.asList(
+                            InputForDialog.inputCheckBox("Remove previous monitoring values?", "If selected, the current monitored values in all the links are removed", true , null)
+                    ),
+                    (list)->
+                    {
+                        final boolean removePreviousMonitValues = (Boolean) list.get(0).get();
+                        
+                        /* Remove previous */
+                        if (removePreviousMonitValues) np.getLinks(layer).forEach(ee->ee.getMonitoredOrForecastedCarriedTraffic().removeAllValues());
+
+                        /* Save current offered traffic */
+                        final int D = np.getNumberOfDemands(layer);
+                        final int MD = np.getNumberOfMulticastDemands(layer);
+                        final DoubleMatrix1D current_hd = np.getVectorDemandOfferedTraffic(layer);
+                        final DoubleMatrix1D current_hmd = np.getVectorMulticastDemandOfferedTraffic(layer);
+                        
+                        /* Add values */
+                        for (Date date : datesToApply)
+                        {
+                        	final DoubleMatrix1D newTraf_d = DoubleFactory1D.dense.make(D);
+                        	final DoubleMatrix1D newTraf_md = DoubleFactory1D.dense.make(MD);
+                        	for (Demand d : np.getDemands(layer)) 
+                        	{
+                        		final Double newTraf = d.getMonitoredOrForecastedCarriedTraffic().getValueOrInterpolation(date);
+                        		newTraf_d.set(d.getIndex(), newTraf == null? current_hd.get(d.getIndex()) : newTraf);
+                        	}
+                        	for (MulticastDemand d : np.getMulticastDemands(layer)) 
+                        	{
+                        		final Double newTraf = d.getMonitoredOrForecastedCarriedTraffic().getValueOrInterpolation(date);
+                        		newTraf_md.set(d.getIndex(), newTraf == null? current_hmd.get(d.getIndex()) : newTraf);
+                        	}
+                    		np.setVectorDemandOfferedTraffic(newTraf_d, layer);
+                    		np.setVectorMulticastDemandOfferedTraffic(newTraf_md, layer);
+                    		for (Link link : np.getLinks(layer))
+                    			link.getMonitoredOrForecastedCarriedTraffic().addValue(date, link.getCarriedTraffic());
+                        }
+
+                    }
+            );
+        } , (a,b)->true, null);
+    }
+
+    
     public static <T extends NetworkElement>  AjtRcMenu getMenuExportMonitoringInfo (AdvancedJTable_networkElement<T> table)
     {
         final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;
@@ -712,7 +779,23 @@ public class MonitoringUtils
                     estimTrafficGm.entrySet().forEach(ee->ee.getKey().setOfferedTraffic(ee.getValue()));
                     JOptionPane.showMessageDialog(null, "Gravity model corretly applied", "Output info", JOptionPane.INFORMATION_MESSAGE);
                 }
-                        , (a,b)->true, null)
+                , (a,b)->true, null),
+                
+                new AjtRcMenu("from current date link carried traffic forecast", e->
+                {
+                    final NetworkLayer layer = table.getTableNetworkLayer();
+                    final NetPlan np = layer.getNetPlan();
+                    final List<Link> links = np.getLinks(layer);
+                    final List<Demand> demands = np.getDemands(layer);
+                    if (links.isEmpty()) throw new Net2PlanException("No links in this layer");
+                    if (np.hasMulticastDemands(layer)) throw new Net2PlanException("The link cannot have multicast demands");
+                    if (demands.stream().map(d->d.getIngressNode()).anyMatch(n->n.getOutgoingLinks(layer).isEmpty())) throw new Net2PlanException ("A demand origin node has no output links");
+                    if (demands.stream().map(d->d.getEgressNode()).anyMatch(n->n.getIncomingLinks(layer).isEmpty())) throw new Net2PlanException ("A demand end node has no input links");
+                    final SortedMap<Demand,Double> estimTrafficGm = TrafficMatrixForecastUtils.getGravityModelEstimationFromCurrentDateLinkCarriedForecast(layer);
+                    estimTrafficGm.entrySet().forEach(ee->ee.getKey().setOfferedTraffic(ee.getValue()));
+                    JOptionPane.showMessageDialog(null, "Gravity model corretly applied", "Output info", JOptionPane.INFORMATION_MESSAGE);
+                }
+                , (a,b)->true, null)
         ));
     }
 
@@ -732,7 +815,7 @@ public class MonitoringUtils
         datesWithDemandMDemandOrLinkInfo.addAll(datesWihtAtLeastOneLinkMonitInfo);
         datesWithDemandMDemandOrLinkInfo.addAll(datesWihtAtLeastOneDemandMonitInfo);
         datesWithDemandMDemandOrLinkInfo.addAll(datesWihtAtLeastOneMDemandMonitInfo);
-        return new AjtRcMenu("Forecast demands traffic from link monitor info", e->
+        return new AjtRcMenu("Forecast demands traffic using regression from link monitor info", e->
         {
             if (datesWithDemandMDemandOrLinkInfo.isEmpty()) throw new Net2PlanException ("No monitoring information available");
             final List<String> optionsInputDemandMonit = Arrays.asList(
@@ -742,7 +825,8 @@ public class MonitoringUtils
                     "Zero traffic");
             DialogBuilder.launch(
                     "Forecast demands traffic from current link info",
-                    "Please indicate the requested parameters. The demands and multicast demands offered traffic will be estimated according to current link monitored carried traffic values. "
+                    "Please indicate the requested parameters. The demands and multicast demands offered traffic will be estimated according to "
+                    + "current link monitored carried traffic values, and potentially demand and multicast demand monitored values. "
                             + "Note that this may make the carried traffics to change",
                     "",
                     table,
@@ -809,9 +893,81 @@ public class MonitoringUtils
             );
         }
                 , (a,b)->b>0, null);
+    }
+
+    public static <T extends NetworkElement>  AjtRcMenu getMenuForecastDemandTrafficFromLinkForecast (AdvancedJTable_networkElement<T> table)
+    {
+        final NetworkLayer layer = table.getTableNetworkLayer();
+        final NetPlan np = layer.getNetPlan();
+
+        final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;
+        final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
+        final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
+        if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
+        return new AjtRcMenu("Forecast demands traffic using regression from link forecast info", e->
+        {
+            final List<String> optionsInputDemandMonit = Arrays.asList(
+                    "No input demand information" ,
+                    "Use gravity model estimation from link forecast" ,
+                    "Current date demand forecast info" ,
+                    "Zero traffic");
+            DialogBuilder.launch(
+                    "Forecast demands traffic from current link info",
+                    "Please indicate the requested parameters. The demands and multicast demands offered traffic will be estimated according to "
+                    + "current link monitored carried traffic values, and potentially demand and multicast demand monitored values. "
+                            + "Note that this may make the carried traffics to change",
+                    "",
+                    table,
+                    Arrays.asList(
+                            InputForDialog.inputTfDouble("Balance between link monitoring vs. demands previous information", "The predicted traffic will be such that the probability of the traffic to be higher that the prediction is the given probabilty. A value of 0.5 provides an unbiased (neither conservative nor optimistic) estimation", 10, 0.5),
+                            InputForDialog.inputTfCombo("Input of demand monitoring", "Where the demand monitoring information will come from", 20 , null , optionsInputDemandMonit , null , null)
+                    ),
+                    (list)->
+                    {
+                        final double coeff_preferFitRouting0PreferFitDemand1 = (Double) list.get(0).get();
+                        if (coeff_preferFitRouting0PreferFitDemand1 < 0 || coeff_preferFitRouting0PreferFitDemand1 > 1) throw new Net2PlanException ("Wrong value of balance coefficient");
+                        final int indexSelectionInputDemandMonit = optionsInputDemandMonit.indexOf((String) list.get(3).get());
+                        final boolean applyOnlyForDatesWithFullLinkMonitInfo = (Boolean) list.get(1).get();
+                        assert indexSelectionInputDemandMonit != -1;
+                        final SortedMap<Link,Double> inputMonitInfo_someLinks = new TreeMap<> (np.getLinks(layer).stream().filter(ee->ee.getTrafficPredictor().isPresent()).collect(Collectors.toMap(ee->ee, ee->ee.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate ()))));
+                        final TrafficMatrixForecastUtils.TmEstimationResults esimRes;
+                        if (indexSelectionInputDemandMonit == 0)
+                        {
+                            /* No demand information is used */
+                            esimRes = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, inputMonitInfo_someLinks, null, null, coeff_preferFitRouting0PreferFitDemand1);
+                        } else if (indexSelectionInputDemandMonit == 1)
+                        {
+                            /* Use gravity model */
+                            final SortedMap<Demand,Double> gravityModelEstim = TrafficMatrixForecastUtils.getGravityModelEstimationFromCurrentDateLinkCarriedForecast(layer);
+                            esimRes = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, inputMonitInfo_someLinks, gravityModelEstim, null, coeff_preferFitRouting0PreferFitDemand1);
+                        } else if (indexSelectionInputDemandMonit == 2)
+                        {
+                            /* Same date demand monitoring info */
+                            final Map<Demand,Double> demandEstim = np.getDemands(layer).stream().filter(ee->ee.getTrafficPredictor().isPresent()).collect(Collectors.toMap(ee->ee, ee->ee.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate ())));
+                            final Map<MulticastDemand,Double> mdemandEstim = np.getMulticastDemands(layer).stream().filter(ee->ee.getTrafficPredictor().isPresent()).collect(Collectors.toMap(ee->ee, ee->ee.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate ())));
+                            esimRes = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, inputMonitInfo_someLinks, demandEstim, mdemandEstim, coeff_preferFitRouting0PreferFitDemand1);
+                        } else if (indexSelectionInputDemandMonit == 3)
+                        {
+                            /* Demand is zero traffic */
+                            final Map<Demand,Double> demandEstim = np.getDemands(layer).stream().collect(Collectors.toMap(ee->ee, ee->0.0));
+                            final Map<MulticastDemand,Double> mdemandEstim = np.getMulticastDemands(layer).stream().collect(Collectors.toMap(ee->ee, ee->0.0));
+                            esimRes = TrafficMatrixForecastUtils.getTmEstimation_minErrorSquares(layer, inputMonitInfo_someLinks, demandEstim, mdemandEstim, coeff_preferFitRouting0PreferFitDemand1);
+                        } else throw new RuntimeException ();
+
+                        /* Store the information */
+                        for (Demand d : np.getDemands(layer))
+                            d.setOfferedTraffic(esimRes.getEstimationDemand(d));
+                        for (MulticastDemand d : np.getMulticastDemands(layer))
+                            d.setOfferedTraffic(esimRes.getEstimationMDemand(d));
+                        JOptionPane.showMessageDialog(null, "Estimation saved as offered traffic of the demands", "Output info", JOptionPane.INFORMATION_MESSAGE);
+                    }
+            );
+        }
+                , (a,b)->b>0, null);
 
     }
 
+    
 	private static LocalDateTime dateToLocalDateTime(Date date) { return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()); 	}
 
 	private static Date localDateTimeToDate(LocalDateTime localDateTime) { return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()); 	}

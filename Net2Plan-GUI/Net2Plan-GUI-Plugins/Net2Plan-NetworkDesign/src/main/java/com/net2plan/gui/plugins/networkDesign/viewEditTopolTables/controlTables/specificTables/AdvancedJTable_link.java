@@ -120,8 +120,6 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
         		new AjtRcMenu("Link length as Euclidean distance", e->new FullMeshTopology(this , callback, true), (a, b)->true, null),
         		new AjtRcMenu("Link length as Haversine distance", e->new FullMeshTopology(this , callback, false), (a, b)->true, null)
         		)));
-        res.add(new AjtRcMenu("Show selected links", e->getSelectedElements().forEach(ee->callback.getVisualizationState().showOnCanvas(ee)) , (a,b)->true, null));
-        res.add(new AjtRcMenu("Hide selected links", e->getSelectedElements().forEach(ee->callback.getVisualizationState().hideOnCanvas(ee)) , (a,b)->true, null));
         res.add(new AjtRcMenu("Decouple selected links", e->getSelectedElements().forEach(dd->((Link)dd).decouple()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Create lower layer coupled demand from uncoupled links in selection", e->
         {
@@ -303,6 +301,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 MonitoringUtils.getMenuExportMonitoringInfo(this),
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                MonitoringUtils.getMenuAddLinkMonitoringInfoSimulatingTrafficVariations (this),
                 MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
                 MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),

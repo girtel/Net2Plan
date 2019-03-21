@@ -341,6 +341,34 @@ public class TrafficMatrixForecastUtils
 		return res;
     }
 
+    public static SortedMap<Demand,Double> getGravityModelEstimationFromCurrentDateLinkCarriedForecast (NetworkLayer layer)
+    {
+    	final NetPlan np = layer.getNetPlan();
+		final int N = np.getNumberOfNodes();
+		final double [] ingressTrafficPerNode = new double [N];
+		final double [] egressTrafficPerNode = new double [N];
+		if (!np.getMulticastDemands(layer).isEmpty()) 
+			throw new Net2PlanException ("Gravity model cannot be applied to networks with multicast demands");
+		for (Node n : np.getNodes())
+		{
+			if (n.getIncomingDemands(layer).isEmpty() && n.getOutgoingDemands(layer).isEmpty()) continue;
+			if (n.getIncomingLinks(layer).stream().anyMatch(e->!e.getTrafficPredictor().isPresent())) throw new Net2PlanException ("No predictor information is available for some links");
+			if (n.getOutgoingLinks(layer).stream().anyMatch(e->!e.getTrafficPredictor().isPresent())) throw new Net2PlanException ("No predictor information is available for some links");
+			ingressTrafficPerNode [n.getIndex()] = n.getIncomingLinks(layer).stream().mapToDouble(e->e.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate())).sum();
+			egressTrafficPerNode [n.getIndex()] = n.getOutgoingLinks(layer).stream().mapToDouble(e->e.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate())).sum();
+		}
+		final DoubleMatrix2D tm = TrafficMatrixGenerationModels.gravityModel(ingressTrafficPerNode, egressTrafficPerNode);
+		final SortedMap<Demand,Double> res = new TreeMap<> ();
+		for (Node n1 : np.getNodes())
+			for (Node n2 : np.getNodes())
+			{
+				if (n1 == n2) continue;
+				final SortedSet<Demand> nodePairDemands = np.getNodePairDemands(n1, n2, false, layer);
+				final double traf = tm.get(n1.getIndex(), n2.getIndex());
+				nodePairDemands.forEach(d->res.put(d, traf / nodePairDemands.size()));
+			}
+		return res;
+    }
     
     
 }
