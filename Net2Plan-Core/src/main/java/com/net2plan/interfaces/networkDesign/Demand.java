@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -38,6 +39,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
+import com.net2plan.libraries.TrafficPredictor;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
@@ -61,7 +63,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  * @see com.net2plan.interfaces.networkDesign.Link
  * @author Pablo Pavon-Marino
  */
-public class Demand extends NetworkElement
+public class Demand extends NetworkElement implements IMonitorizableElement
 {
 	final NetworkLayer layer;
 	final Node ingressNode;
@@ -75,6 +77,8 @@ public class Demand extends NetworkElement
 	double offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth;
 	String qosType;
 	private TrafficSeries monitoredOrForecastedTraffics;
+    private TrafficPredictor trafficPredictor;
+
 	
 	SortedSet<Route> cache_routes;
 	Link coupledUpperOrSameLayerLink;
@@ -146,6 +150,7 @@ public class Demand extends NetworkElement
 		ErrorHandling.DEBUG = false;
 		this.setQoSType("");
 		this.monitoredOrForecastedTraffics = new TrafficSeries ();
+		this.trafficPredictor = null;
 		ErrorHandling.DEBUG = previousDebug;
 //		Pair<SortedSet<Demand>,SortedSet<MulticastDemand>> demandsEmptyType = layer.cache_qosTypes2DemandMap.get("");
 //		if (demandsEmptyType == null) { demandsEmptyType = Pair.of(new TreeSet<>(),new TreeSet<>()); layer.cache_qosTypes2DemandMap.put("", demandsEmptyType); }
@@ -185,6 +190,7 @@ public class Demand extends NetworkElement
 		this.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth = origin.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth;
 		this.qosType = origin.qosType;
 		this.monitoredOrForecastedTraffics = origin.monitoredOrForecastedTraffics;
+		this.trafficPredictor = origin.trafficPredictor;
 	}
 
 	/** Returns a non-modifiable set of two elements, with the demand end nodes
@@ -216,6 +222,8 @@ public class Demand extends NetworkElement
 		if (!NetPlan.isDeepCopy(this.cacheHbH_frs , e2.cacheHbH_frs)) return false;
 		if (!NetPlan.isDeepCopy(this.cacheHbH_normCarriedOccupiedPerLinkCurrentState , e2.cacheHbH_normCarriedOccupiedPerLinkCurrentState)) return false;
 		if (!this.monitoredOrForecastedTraffics.equals(e2.monitoredOrForecastedTraffics)) return false;
+		if ((this.trafficPredictor == null) != (e2.trafficPredictor == null)) return false;
+		if (trafficPredictor != null) if (!this.trafficPredictor.equals(e2.trafficPredictor)) return false;
 		return true;
 	}
 
@@ -1326,5 +1334,53 @@ public class Demand extends NetworkElement
 	 * @param newTimeSeries  see above
 	 */
 	public void setMonitoredOrForecastedOfferedTraffic (TrafficSeries newTimeSeries) { this.monitoredOrForecastedTraffics = new TrafficSeries (newTimeSeries.getValues()); }
+
+	@Override
+	public TrafficSeries getMonitoredOrForecastedCarriedTraffic()
+	{
+        return this.monitoredOrForecastedTraffics;
+	}
+
+	@Override
+	public void setMonitoredOrForecastedCarriedTraffic(TrafficSeries newTimeSeries) 
+	{
+		this.monitoredOrForecastedTraffics = newTimeSeries;
+	}
+
+	@Override
+	public double getCurrentTrafficToAddMonitSample() 
+	{
+		return getOfferedTraffic();
+	}
+
+	@Override
+	public boolean isPossibleToSetCurrentTrafficAsGivenMonitSample() 
+	{
+		return true;
+	}
+
+	@Override
+	public void setCurrentTrafficToGivenMonitSample(double traffic) 
+	{
+		this.setOfferedTraffic(traffic);
+	}
+
+	@Override
+	public Optional<TrafficPredictor> getTrafficPredictor() 
+	{
+		return Optional.ofNullable(this.trafficPredictor);
+	}
+
+	@Override
+	public void setTrafficPredictor(TrafficPredictor tp) 
+	{
+		this.trafficPredictor = tp;
+	}
+
+	@Override
+	public void removeTrafficPredictor() 
+	{
+		this.trafficPredictor = null;
+	}
 
 }

@@ -20,10 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -139,6 +141,7 @@ public class NetPlan extends NetworkElement
 
     RoutingType DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
     boolean isModifiable;
+    Date currentDate = new Date ();
 //    String networkDescription;
 //    String networkName;
     NetworkLayer defaultLayer;
@@ -188,7 +191,8 @@ public class NetPlan extends NetworkElement
     {
         super(null, 0, 0, new AttributeMap());
 		this.setName ("NetPlan");
-
+		this.currentDate = new Date ();
+		
         this.netPlan = this;
         DEFAULT_ROUTING_TYPE = RoutingType.SOURCE_ROUTING;
         isModifiable = true;
@@ -308,7 +312,7 @@ public class NetPlan extends NetworkElement
                                   break;
 
                                 case 6:
-//                                    System.out.println("Version 5");
+                                    System.out.println("Version 6");
                                     netPlanFormat = new ReaderNetPlanN2PVersion_6();
                                     break;
 
@@ -404,6 +408,7 @@ public class NetPlan extends NetworkElement
         if (this.DEFAULT_ROUTING_TYPE != np2.DEFAULT_ROUTING_TYPE) return false;
         if (this.isModifiable != np2.isModifiable) return false;
         if (!this.description.equals(np2.description)) return false;
+        if (!this.currentDate.equals(np2.currentDate)) return false;
         if (!this.name.equals(np2.name)) return false;
         if (!this.cache_definedPlotNodeLayouts.equals(np2.cache_definedPlotNodeLayouts)) return false;
         if (this.defaultLayer.id != np2.defaultLayer.id) return false;
@@ -1578,6 +1583,7 @@ public class NetPlan extends NetworkElement
         this.isModifiable = netPlan.isModifiable;
         this.description = netPlan.description;
         this.name = netPlan.name;
+        this.currentDate = netPlan.currentDate;
         this.currentPlotNodeLayout = netPlan.currentPlotNodeLayout;
         this.cache_definedPlotNodeLayouts = netPlan.cache_definedPlotNodeLayouts;
         this.defaultLayer = netPlan.defaultLayer;
@@ -2318,6 +2324,7 @@ public class NetPlan extends NetworkElement
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
         this.isModifiable = true;
         this.description = originNetPlan.description;
+        this.currentDate = originNetPlan.currentDate;
         this.name = originNetPlan.name;
         this.currentPlotNodeLayout = originNetPlan.currentPlotNodeLayout;
         this.cache_definedPlotNodeLayouts = new TreeSet<> (originNetPlan.cache_definedPlotNodeLayouts);
@@ -5630,6 +5637,17 @@ public class NetPlan extends NetworkElement
         return false;
     }
 
+    
+    /** Returns the current date property of the design
+     * @return see above
+     */
+    public Date getCurrentDate () { return currentDate; }
+
+    /** Sets the current date property of the design
+     * @param date see above
+     */
+    public void setCurrentDate (Date date) { this.currentDate = date; }
+    
     /**
      * <p>Returns {@code true} if the network has more than one layer.</p>
      *
@@ -6067,6 +6085,7 @@ public class NetPlan extends NetworkElement
             writer.writeStartElement("network");
             writer.writeAttribute("description", getDescription());
             writer.writeAttribute("name", getName());
+    		writer.writeAttribute("currentDate", new Long (getCurrentDate().getTime()).toString());
             writer.writeAttribute("currentPlotNodeLayout", this.currentPlotNodeLayout);
             writer.writeAttribute("cache_definedPlotNodeLayouts", StringUtils.createEscapedString_asStringList(this.cache_definedPlotNodeLayouts));
             writer.writeAttribute("version", Version.getFileFormatVersion());
@@ -6198,6 +6217,11 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("propagationSpeedInKmPerSecond", Double.toString(link.propagationSpeedInKmPerSecond));
                     writer.writeAttribute("isUp", Boolean.toString(link.isUp));
                     writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(link.getMonitoredOrForecastedCarriedTraffic().toStringList()));
+                    writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(link.getTrafficPredictor().isPresent()? Arrays.asList(
+                    		link.getTrafficPredictor().get().getTpType().toString() , 
+                    		link.getTrafficPredictor().get().computeInitializationString() , 
+                    		link.getTrafficPredictor().get().getTpType().isManual()? "" : link.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		)  : Arrays.asList()));
 
                     for (String tag : link.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 
@@ -6230,6 +6254,11 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("maximumAcceptableE2EWorstCaseLatencyInMs", Double.toString(demand.maximumAcceptableE2EWorstCaseLatencyInMs));
                     writer.writeAttribute("offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth", Double.toString(demand.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth));
                     writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(demand.getMonitoredOrForecastedOfferedTraffic().toStringList()));
+                    writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(demand.getTrafficPredictor().isPresent()? Arrays.asList(
+                    		demand.getTrafficPredictor().get().getTpType().toString() , 
+                    		demand.getTrafficPredictor().get().computeInitializationString() , 
+                    		demand.getTrafficPredictor().get().getTpType().isManual()? "" : demand.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		)  : Arrays.asList()));
                     writer.writeAttribute("qosType", demand.qosType);
                     
                     for (String type : demand.mandatorySequenceOfTraversedResourceTypes)
@@ -6269,6 +6298,11 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth", Double.toString(demand.offeredTrafficGrowthFactorPerPeriodZeroIsNoGrowth));
                     writer.writeAttribute("qosType", demand.qosType);
                     writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(demand.getMonitoredOrForecastedOfferedTraffic().toStringList()));
+                    writer.writeAttribute("trafficPredictor", StringUtils.createEscapedString_asStringList(demand.getTrafficPredictor().isPresent()? Arrays.asList(
+                    		demand.getTrafficPredictor().get().getTpType().toString() , 
+                    		demand.getTrafficPredictor().get().computeInitializationString() , 
+                    		demand.getTrafficPredictor().get().getTpType().isManual()? "" : demand.getTrafficPredictor().get().getStatistics().getInitializationString() 
+                    		)  : Arrays.asList()));
 
                     for (String tag : demand.tags) { XMLUtils.indent(writer, 3); writer.writeEmptyElement("tag"); writer.writeAttribute("value", tag); }
 

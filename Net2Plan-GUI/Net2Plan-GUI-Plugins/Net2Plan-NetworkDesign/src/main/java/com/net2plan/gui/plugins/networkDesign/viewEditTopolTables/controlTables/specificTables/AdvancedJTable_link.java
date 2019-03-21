@@ -104,7 +104,8 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
       res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Forw. rules", "Forwarding rules defined for this link", null , d->d.getForwardingRules().keySet() , AGTYPE.NOAGGREGATION, null));
       res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trees", "Traversing multicast trees", null , d->d.getTraversingTrees() , AGTYPE.NOAGGREGATION, null));
       res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "SRGs", "The SRGs that this link belongs to", null , d->d.getSRGs() , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<Link>(this , Integer.class, null , "#Monit points" , "Number of samples of the carried traffic stored, coming from a monitoring or forecasting traffic process", null , d->d.getMonitoredOrForecastedCarriedTraffic().getSize() , AGTYPE.NOAGGREGATION , null));
+//      res.add(new AjtColumnInfo<Link>(this , Integer.class, null , "#Monit points" , "Number of samples of the carried traffic stored, coming from a monitoring or forecasting traffic process", null , d->d.getMonitoredOrForecastedCarriedTraffic().getSize() , AGTYPE.NOAGGREGATION , null));
+      res.addAll(AdvancedJTable_demand.getMonitoringAndTrafficEstimationColumns(this).stream().map(c->(AjtColumnInfo<Link>)(AjtColumnInfo<?>)c).collect(Collectors.toList()));
       return res;
   }
 
@@ -115,10 +116,10 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
         final List<AjtRcMenu> res = new ArrayList<> ();
         res.add(new AjtRcMenu("Add link", e->AdvancedJTable_demand.createLinkDemandGUI(NetworkElementType.LINK, getTableNetworkLayer () , callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected links", e->getSelectedElements().forEach(dd->((Link)dd).remove()) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Generate full-mesh (link length as Euclidean distance)", e->new FullMeshTopology(this , callback, true), (a, b)->true, null));
-        res.add(new AjtRcMenu("Generate full-mesh (link length as Haversine distance)", e->new FullMeshTopology(this , callback, false), (a, b)->true, null));
-        res.add(new AjtRcMenu("Show selected links", e->getSelectedElements().forEach(ee->callback.getVisualizationState().showOnCanvas(ee)) , (a,b)->true, null));
-        res.add(new AjtRcMenu("Hide selected links", e->getSelectedElements().forEach(ee->callback.getVisualizationState().hideOnCanvas(ee)) , (a,b)->true, null));
+        res.add(new AjtRcMenu("Generate full-mesh", null , (a, b)->true, Arrays.asList( 
+        		new AjtRcMenu("Link length as Euclidean distance", e->new FullMeshTopology(this , callback, true), (a, b)->true, null),
+        		new AjtRcMenu("Link length as Haversine distance", e->new FullMeshTopology(this , callback, false), (a, b)->true, null)
+        		)));
         res.add(new AjtRcMenu("Decouple selected links", e->getSelectedElements().forEach(dd->((Link)dd).decouple()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Create lower layer coupled demand from uncoupled links in selection", e->
         {
@@ -215,90 +216,97 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
             }
         } , (a,b)->b>0, null));
 
-        res.add(new AjtRcMenu("Set selected links capacity", e->
-        {
-            DialogBuilder.launch(
-                    "Set selected links capacity" , 
-                    "Please introduce the link capacity. Negative values are not allowed. The capacity will be assigned to not coupled links", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Link capacity (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Introduce the link capacity", 10, 0.0)),
-                    (list)->
-                    	{
-                    		final double newLinkCapacity = (Double) list.get(0).get();
-                    		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setCapacity(newLinkCapacity));
-                    	}
-                    );
-        } , (a,b)->b>0, null));
+        res.add(new AjtRcMenu("Set selected links capacity", null , (a,b)->b>0, Arrays.asList(
+        		new AjtRcMenu("As constant value", e->
+                {
+                    DialogBuilder.launch(
+                            "Set selected links capacity" , 
+                            "Please introduce the link capacity. Negative values are not allowed. The capacity will be assigned to not coupled links", 
+                            "", 
+                            this, 
+                            Arrays.asList(InputForDialog.inputTfDouble("Link capacity (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Introduce the link capacity", 10, 0.0)),
+                            (list)->
+                            	{
+                            		final double newLinkCapacity = (Double) list.get(0).get();
+                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setCapacity(newLinkCapacity));
+                            	}
+                            );
+                } , (a,b)->b>0, null),
+        		new AjtRcMenu("To match a given utilization", e->
+                {
+                    DialogBuilder.launch(
+                            "Set selected links capacity to match utilization" , 
+                            "Please introduce the link target utilization. Negative values are not allowed. The capacity will be assigned to not coupled links", 
+                            "", 
+                            this, 
+                            Arrays.asList(
+                            		InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.5),
+                            		InputForDialog.inputTfDouble("Capacity module (capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 0.5)),
+                            (list)->
+                            	{
+                            		final double newLinkUtilization = (Double) list.get(0).get();
+                            		final double capacityModule = (Double) list.get(1).get();
+                            		if (newLinkUtilization <= 0) throw new Net2PlanException ("Link utilization must be positive");
+                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setCapacity(capacityModule > 0? capacityModule * Math.ceil((ee.getOccupiedCapacity() /  newLinkUtilization) / capacityModule) : ee.getOccupiedCapacity() /  newLinkUtilization));
+                            	}
+                            );
+                } , (a,b)->b>0, null)
+        		)));
 
-        
-        res.add(new AjtRcMenu("Set selected links capacity to match a given utilization", e->
-        {
-            DialogBuilder.launch(
-                    "Set selected links capacity to match utilization" , 
-                    "Please introduce the link target utilization. Negative values are not allowed. The capacity will be assigned to not coupled links", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.5)),
-                    (list)->
-                    	{
-                    		final double newLinkUtilization = (Double) list.get(0).get();
-                    		if (newLinkUtilization <= 0) throw new Net2PlanException ("Link utilization must be positive");
-                    		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setCapacity(ee.getOccupiedCapacity() /  newLinkUtilization));
-                    	}
-                    );
-        } , (a,b)->b>0, null));
+        res.add(new AjtRcMenu("Set selected links length as", null , (a,b)->b>0, Arrays.asList(
+        		new AjtRcMenu("Constant value", e->
+                {
+                    DialogBuilder.launch(
+                            "Set selected links length (km)" , 
+                            "Please introduce the link length. Negative values are not allowed. The length will be assigned to not coupled links", 
+                            "", 
+                            this, 
+                            Arrays.asList(InputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
+                            (list)->
+                            	{
+                            		final double newLinkLength = (Double) list.get(0).get();
+                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(newLinkLength));
+                            	}
+                            );
+                } , (a,b)->b>0, null) , 
+        		
+        		new AjtRcMenu("Scaled version of current lengths", e->
+                {
+                    DialogBuilder.launch(
+                            "Scale selected links length (km)" , 
+                            "Please introduce the scaling factor for which the link lengths will be multiplied. Negative values are not allowed. The length will be assigned to not coupled links", 
+                            "", 
+                            this, 
+                            Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
+                            (list)->
+                            	{
+                            		final double scalingFactor = (Double) list.get(0).get();
+                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(scalingFactor * ee.getLengthInKm()));
+                            	}
+                            );
+                } , (a,b)->b>0, null) ,         		
+        		new AjtRcMenu("As the euclidean node pair distance", e->
+                {
+            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(np.getNodePairEuclideanDistance(ee.getOriginNode(), ee.getDestinationNode())));
+                } , (a,b)->b>0, null) ,
+        		
+        		new AjtRcMenu("As the harversine node pair distance", e->
+                {
+            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(np.getNodePairHaversineDistanceInKm(ee.getOriginNode(), ee.getDestinationNode())));
+                } , (a,b)->b>0, null)
+        		)));
 
-        res.add(new AjtRcMenu("Set selected links length", e->
-        {
-            DialogBuilder.launch(
-                    "Set selected links length (km)" , 
-                    "Please introduce the link length. Negative values are not allowed. The length will be assigned to not coupled links", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
-                    (list)->
-                    	{
-                    		final double newLinkLength = (Double) list.get(0).get();
-                    		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(newLinkLength));
-                    	}
-                    );
-        } , (a,b)->b>0, null));
-
-        res.add(new AjtRcMenu("Scale selected links length", e->
-        {
-            DialogBuilder.launch(
-                    "Scale selected links length (km)" , 
-                    "Please introduce the scaling factor for which the link lengths will be multiplied. Negative values are not allowed. The length will be assigned to not coupled links", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
-                    (list)->
-                    	{
-                    		final double scalingFactor = (Double) list.get(0).get();
-                    		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(scalingFactor * ee.getLengthInKm()));
-                    	}
-                    );
-        } , (a,b)->b>0, null));
-
-        res.add(new AjtRcMenu("Set selected links length as the euclidean node pair distance", e->
-        {
-    		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(np.getNodePairEuclideanDistance(ee.getOriginNode(), ee.getDestinationNode())));
-        } , (a,b)->b>0, null));
-
-        res.add(new AjtRcMenu("Set selected links length as the harversine node pair distance", e->
-        {
-    		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(np.getNodePairHaversineDistanceInKm(ee.getOriginNode(), ee.getDestinationNode())));
-        } , (a,b)->b>0, null));
-        
         res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
                 MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
                 MonitoringUtils.getMenuExportMonitoringInfo(this),
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
-                MonitoringUtils.getMenuPredictTrafficFromSameElementMonitorInfo (this),
+                MonitoringUtils.getMenuAddLinkMonitoringInfoSimulatingTrafficVariations (this),
+                MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
+                MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
                 MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
+                new AjtRcMenu("Remove all traffic predictors", e->getSelectedElements().forEach(dd->((Link)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((Link)dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,

@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.GUINetworkDesignConstants;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.utils.NetworkElementOrFr;

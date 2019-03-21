@@ -16,7 +16,18 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -42,10 +53,13 @@ import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IMonitorizableElement;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
@@ -87,8 +101,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
       res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Worst e2e lat (ms)", "Current worst case end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", null, d->d.getWorstCasePropagationTimeInMs() , AGTYPE.NOAGGREGATION , d->{ final double maxMs = d.getMaximumAcceptableE2EWorstCaseLatencyInMs(); return maxMs <= 0? null : (d.getWorstCasePropagationTimeInMs() > maxMs? Color.RED : null); }));
       res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Worst e2e length (km)", "Current worst case end-to-end propagation length in km (accumulating any lower layer propagation lengths if any)", null, d->d.getWorstCaseLengthInKm() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Limit e2e lat (ms)", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", (d,val)-> d.setMaximumAcceptableE2EWorstCaseLatencyInMs((Double)val) , d->d.getMaximumAcceptableE2EWorstCaseLatencyInMs() , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "CAGR(%)" , "Compound annual growth factor for this demand", (d,val)->d.setOfferedTrafficPerPeriodGrowthFactor((Double) val), d->d.getOfferedTrafficPerPeriodGrowthFactor() , AGTYPE.NOAGGREGATION , null));
-      res.add(new AjtColumnInfo<Demand>(this , Integer.class, null , "#Monit points" , "Number of samples of the offered traffic stored, coming from a monitoring or forecasting traffic process", null , d->d.getMonitoredOrForecastedOfferedTraffic().getSize() , AGTYPE.NOAGGREGATION , null));
+//      res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "CAGR(%)" , "Compound annual growth factor for this demand", (d,val)->d.setOfferedTrafficPerPeriodGrowthFactor((Double) val), d->d.getOfferedTrafficPerPeriodGrowthFactor() , AGTYPE.NOAGGREGATION , null));
+//      res.add(new AjtColumnInfo<Demand>(this , Integer.class, null , "#Monit points" , "Number of samples of the offered traffic stored, coming from a monitoring or forecasting traffic process", null , d->d.getMonitoredOrForecastedOfferedTraffic().getSize() , AGTYPE.NOAGGREGATION , null));
+      res.addAll(AdvancedJTable_demand.getMonitoringAndTrafficEstimationColumns(this).stream().map(c->(AjtColumnInfo<Demand>)(AjtColumnInfo<?>)c).collect(Collectors.toList()));
       return res;
   }
 
@@ -170,6 +185,20 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                     		} catch (Throwable ex) { ex.printStackTrace(); throw new Net2PlanException (ex.getMessage());  }
                     	}
                     );
+		}
+		, (a, b) -> b>0, null));
+        res.add(new AjtRcMenu("Set selected demands offered traffic randomly", e ->
+		{
+			final Random rng = new Random ();
+    		final List<Demand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).collect(Collectors.toList());
+    		try
+    		{
+                if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                    callback.getWhatIfAnalysisPane().whatIfDemandOfferedTrafficModified(changedDemands, changedDemands.stream().map(ee->rng.nextDouble()).collect(Collectors.toList()));
+                else
+                	changedDemands.forEach(d->d.setOfferedTraffic(rng.nextDouble()));
+    			
+    		} catch (Throwable ex) { ex.printStackTrace(); throw new Net2PlanException (ex.getMessage());  }
 		}
 		, (a, b) -> b>0, null));
         res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
@@ -401,9 +430,12 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                 MonitoringUtils.getMenuExportMonitoringInfo(this),
                 MonitoringUtils.getMenuImportMonitoringInfo (this),
                 MonitoringUtils.getMenuSetMonitoredTraffic(this),
-                MonitoringUtils.getMenuPredictTrafficFromSameElementMonitorInfo (this),
+                MonitoringUtils.getMenuSetOfferedTrafficAsForecasted (this),
+                MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
+                MonitoringUtils.getMenuCreatePredictorTraffic (this),
                 MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
                 MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
+                new AjtRcMenu("Remove all traffic predictors", e->getSelectedElements().forEach(dd->((Demand)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove all monitored/forecast stored information", e->getSelectedElements().forEach(dd->((Demand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
                 new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
                         MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
@@ -531,6 +563,19 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
 
         }
 
+    }
+
+    public static <TT extends NetworkElement>  List<AjtColumnInfo<IMonitorizableElement>> getMonitoringAndTrafficEstimationColumns (AdvancedJTable_networkElement<TT> table)
+    {
+    	final List<AjtColumnInfo<IMonitorizableElement>> res = new LinkedList<> ();
+        res.add(new AjtColumnInfo<IMonitorizableElement>(table , Integer.class, null , "#Monit points" , "Number of samples of the offered traffic stored, coming from a monitoring or forecasting traffic process", null , d->d.getMonitoredOrForecastedCarriedTraffic().getSize() , AGTYPE.NOAGGREGATION , null));
+        res.add(new AjtColumnInfo<IMonitorizableElement>(table , Date.class, null , "First date", "The date of the earliest monitored sample available", null , d->d.getMonitoredOrForecastedCarriedTraffic().getFirstDate() , AGTYPE.NOAGGREGATION , null));
+        res.add(new AjtColumnInfo<IMonitorizableElement>(table , Date.class, null , "Last date", "The date of the more recent monitored sample available", null , d->d.getMonitoredOrForecastedCarriedTraffic().getLastDate() , AGTYPE.NOAGGREGATION , null));
+        res.add(new AjtColumnInfo<IMonitorizableElement>(table , String.class, null , "Forecast (Gbps)", "Indicates the forecasted traffic in the target date, according to current predictor", null , d->d.getTrafficPredictor().isPresent()? d.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval ().apply(table.getTableNetworkLayer().getNetPlan().getCurrentDate()) : "--" , AGTYPE.SUMDOUBLE , null));
+        res.add(new AjtColumnInfo<IMonitorizableElement>(table , String.class, null , "Rel. mismatch", "Indicates the relative mismatch between the forecasted value and the current value in this element", null , d-> { final Double f = d.getTrafficPredictor().isPresent()? d.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval ().apply(table.getTableNetworkLayer().getNetPlan().getCurrentDate()) : null; if (f == null) return "--"; final double v = d.getCurrentTrafficToAddMonitSample(); return v < Configuration.precisionFactor? (f < Configuration.precisionFactor? 0 : Double.MAX_VALUE ) : Math.abs((f-v)/v);   }  , AGTYPE.SUMDOUBLE , null));
+        res.add(new AjtColumnInfo<IMonitorizableElement>(table , String.class, null , "Forecast type", "Indicates the type of forecast information applied, if any", null , d->d.getTrafficPredictor().isPresent()? d.getTrafficPredictor().get().getTpType ().getName () : "None" , AGTYPE.NOAGGREGATION , null));
+        res.add(new AjtColumnInfo<IMonitorizableElement>(table , Double.class, null , "Variance explained", "Indicates the fraction of the variance explained by the predictor (1 means perfectly accurate predictor, 0 means as good as picking the average)", null , d->d.getTrafficPredictor().isPresent()? (d.getTrafficPredictor().get().getStatistics() == null? "--" : d.getTrafficPredictor().get().getStatistics().getRsquared()) : "--" , AGTYPE.NOAGGREGATION , null));
+    	return res;
     }
 
     

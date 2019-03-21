@@ -50,6 +50,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafficMatrix;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.treeView.TreePanel;
 import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
@@ -63,7 +64,8 @@ public class ViewEditTopologyTablesPane extends JPanel
 {
     private final GUINetworkDesign callback;
     private final JTabbedPane netPlanView;
-    private final Map<NetworkLayer,Map<AJTableType, Pair<AdvancedJTable_abstractElement, FilteredTablePanel>>> netPlanViewTable = new HashMap<> (); //new EnumMap<>(AJTableType.class);
+    private final TreePanel treePanel;
+    private final Map<NetworkLayer,Map<AJTableType, Pair<AdvancedJTable_abstractElement, FilteredTablePanel>>> netPlanViewTable = new HashMap<> ();
     private final Map<NetworkLayer,JTabbedPane> demandTabbedPaneListAndMatrix = new HashMap<> (); //JTabbedPane ();
     private final Map<NetworkLayer, JTabbedPane> layerSubTabbedPaneMap = new HashMap<>();
     private Map<NetworkLayer,NetPlanViewTableComponent_trafficMatrix> trafficMatrixComponent;
@@ -78,10 +80,11 @@ public class ViewEditTopologyTablesPane extends JPanel
         super(new BorderLayout());
         this.callback = callback;
         this.netPlanView = new JTabbedPane();
+        this.treePanel = new TreePanel(callback);
         
         final JSplitPane splitPane = new JSplitPane();
         splitPane.setLeftComponent(netPlanView);
-        splitPane.setRightComponent(new JPanel ());
+        splitPane.setRightComponent(treePanel);
 
         splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
         splitPane.setResizeWeight(0.3);
@@ -90,10 +93,6 @@ public class ViewEditTopologyTablesPane extends JPanel
         splitPane.setDividerLocation(0.4);
 
         this.add(splitPane, BorderLayout.CENTER);
-
-        this.recomputNetPlanView ();
-        
-        this.add(netPlanView, BorderLayout.CENTER);
 
         final JMenuItem writeToExcel = new JMenuItem("To excel");
         writeToExcel.addActionListener((ActionEvent ev) ->
@@ -185,6 +184,8 @@ public class ViewEditTopologyTablesPane extends JPanel
             		netPlanViewTable.get(layer).get(type).getSecond().updateHeader();
         }
 
+        treePanel.updateView();
+
 
         if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
     }
@@ -194,7 +195,7 @@ public class ViewEditTopologyTablesPane extends JPanel
      * Shows the tab corresponding associated to a network element.
      *
      * @param type   Network element type
-     * @param itemId Item identifier (if null, it will just show the tab)
+     * @param layer  Network layer
      */
     public void selectItemTab(NetworkElementType type , NetworkLayer layer)
     {
@@ -278,6 +279,8 @@ public class ViewEditTopologyTablesPane extends JPanel
     {
     	for (NetworkLayer layer : callback.getDesign().getNetworkLayers())
     		netPlanViewTable.get(layer).values().stream().filter(q -> q.getFirst() != null).forEach(q -> q.getFirst().clearSelection());
+
+    	treePanel.restoreView();
     }
 
     

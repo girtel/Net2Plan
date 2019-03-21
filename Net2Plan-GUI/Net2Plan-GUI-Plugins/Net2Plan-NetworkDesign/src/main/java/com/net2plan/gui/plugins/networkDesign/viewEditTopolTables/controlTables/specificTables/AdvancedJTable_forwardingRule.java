@@ -87,7 +87,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
       {
           DoubleMatrix1D linkWeightMap = IPUtils.getLinkWeightVector(np);
           IPUtils.setECMPForwardingRulesFromLinkWeights(np, linkWeightMap);
-      }, (a,b)->b>0, null));
+      }, (a,b)->true, null));
 
       return res;
   }

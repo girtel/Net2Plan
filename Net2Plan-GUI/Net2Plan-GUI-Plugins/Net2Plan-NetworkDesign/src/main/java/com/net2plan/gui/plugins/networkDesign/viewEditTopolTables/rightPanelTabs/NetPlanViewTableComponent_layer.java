@@ -361,9 +361,10 @@ public class NetPlanViewTableComponent_layer extends JPanel
         boolean isUnicastRoutingBifurcated = netPlan.isUnicastRoutingBifurcated(layerThisTable);
         boolean hasUnicastRoutingLoops = netPlan.hasUnicastRoutingLoops(layerThisTable);
 
-        double averageRouteLength_hops = TrafficComputationEngine.getRouteAverageLength(netPlan.getRoutes(layerThisTable), null);
-        double averageRouteLength_km = TrafficComputationEngine.getRouteAverageLength(netPlan.getRoutes(layerThisTable), netPlan.getVectorLinkLengthInKm(layerThisTable));
-        double averageRouteLength_ms = TrafficComputationEngine.getRouteAverageLength(netPlan.getRoutes(layerThisTable), netPlan.getVectorLinkPropagationDelayInMiliseconds(layerThisTable));
+        final double sumCarriedHd = netPlan.getDemands(layerThisTable).stream().mapToDouble(d->d.getCarriedTraffic()).sum();
+        double averageRouteLength_hops = netPlan.getLinks(layerThisTable).stream().mapToDouble(e->e.getCarriedTraffic()).sum() / sumCarriedHd;   
+        double averageRouteLength_km = netPlan.getLinks(layerThisTable).stream().mapToDouble(e->e.getCarriedTraffic() * e.getLengthInKm()).sum() / sumCarriedHd; 
+        double averageRouteLength_ms = netPlan.getLinks(layerThisTable).stream().mapToDouble(e->e.getCarriedTraffic() * e.getPropagationDelayInMs()).sum() / sumCarriedHd;
 
         Map<String, Object> routingData = new LinkedHashMap<String, Object>();
         routingData.put("Number of routes", R);

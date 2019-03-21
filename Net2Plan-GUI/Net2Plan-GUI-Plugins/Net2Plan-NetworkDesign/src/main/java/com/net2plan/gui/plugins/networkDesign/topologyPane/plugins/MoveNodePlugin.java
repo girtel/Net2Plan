@@ -124,7 +124,7 @@ public class MoveNodePlugin extends MouseAdapter implements ITopologyCanvasPlugi
 
     private void moveNodeTo(final GUINode guiNode, final Point2D toPoint)
     {
-        callback.clearFocusPanel();
+        //callback.clearFocusPanel();
         final VisualizationState vs = callback.getVisualizationState();
         if (!vs.isNetPlanEditable()) throw new UnsupportedOperationException("NetPlan is not editable");
 
