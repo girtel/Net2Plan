@@ -588,7 +588,7 @@ public abstract class NetworkElement implements Comparable<NetworkElement>
 		for (String tag : tags) if (!netPlan.cache_taggedElements.get(tag).contains (this)) throw new RuntimeException ("tag: " + tag);
 	}
 
-    private static NetworkElementType getNetworkElementType(NetworkElement e)
+    public static NetworkElementType getNetworkElementType(NetworkElement e)
     {
         if (e instanceof Node) return NetworkElementType.NODE;
         if (e instanceof Link) return NetworkElementType.LINK;

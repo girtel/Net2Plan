@@ -35,8 +35,8 @@ public class TreePanel extends JPanel
         focusPanel.add(focusToolBar, BorderLayout.NORTH);
 
     	final JPanel monitGraphPanel = new JPanel(new BorderLayout());
-    	//monitGraphPanel.add(new JScrollPane(monitGraphView), BorderLayout.CENTER);
-    	//monitGraphPanel.add(monitGraphToolBar, BorderLayout.NORTH);
+    	monitGraphPanel.add(new JScrollPane(monitGraphView), BorderLayout.CENTER);
+    	monitGraphPanel.add(monitGraphToolBar, BorderLayout.NORTH);
 
         this.tabbedPane = new JTabbedPane();
         this.tabbedPane.addTab("Focus panel", focusPanel);
@@ -48,13 +48,13 @@ public class TreePanel extends JPanel
     public void updateView()
     {
         this.focusView.updateView();
-        //this.monitGraphView.updateView();
+        this.monitGraphView.updateView();
     }
 
     public void restoreView()
     {
         this.focusView.reset();
-        //this.monitGraphView.resetView();
+        this.monitGraphView.resetView();
 
         this.updateView();
 
