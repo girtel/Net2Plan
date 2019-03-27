@@ -4,6 +4,18 @@ All notable changes to Net2Plan will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.6.2] - 2019-03-27
+
+### Added
+	- Monitoring Panel to show traffic monitoring of links, demands and multicast demands.
+
+### Changed
+	- Focus Panel is now placed inside the tables panel, next to Monitoring Panel.
+	- Several columns names have been renamed.
+
+
+####
+
 ## [0.6.1.2] - 2019-01-09
 
 ### Fixed
