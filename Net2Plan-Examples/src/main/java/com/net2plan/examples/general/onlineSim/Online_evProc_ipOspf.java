@@ -47,7 +47,7 @@ import java.util.Map;
  */
 public class Online_evProc_ipOspf extends IEventProcessor
 {
-	private InputParameter ipMaximumE2ELatencyMs = new InputParameter ("ipMaximumE2ELatencyMs", (double) -1 , "Maximum end-to-end latency of the traffic of an IP demand to consider it as lost traffic (a non-positive value means no limit)");
+//	private InputParameter ipMaximumE2ELatencyMs = new InputParameter ("ipMaximumE2ELatencyMs", (double) -1 , "Maximum end-to-end latency of the traffic of an IP demand to consider it as lost traffic (a non-positive value means no limit)");
 	private NetworkLayer ipLayer;
 	private double stat_trafficOffered , stat_trafficCarried , stat_trafficOversubscribed , stat_trafficOutOfLatencyLimit , stat_trafficOfDemandsTraversingOversubscribedLink;
 	private double stat_transitoryInitTime , stat_timeLastChangeInNetwork;
@@ -90,7 +90,7 @@ public class Online_evProc_ipOspf extends IEventProcessor
 		stat_trafficCarried += timeSinceLastChange * currentNetPlan.getVectorDemandCarriedTraffic(this.ipLayer).zSum();
 		stat_trafficOversubscribed += timeSinceLastChange * currentNetPlan.getVectorLinkOversubscribedTraffic(this.ipLayer).zSum();
 		stat_trafficOfDemandsTraversingOversubscribedLink += timeSinceLastChange * currentNetPlan.getVectorDemandOfferedTraffic(this.ipLayer).zDotProduct(currentNetPlan.getVectorDemandTraversesOversubscribedLink(this.ipLayer));
-		if (ipMaximumE2ELatencyMs.getDouble () > 0) for (Demand d : currentNetPlan.getDemands (ipLayer)) if (d.getWorstCasePropagationTimeInMs() > ipMaximumE2ELatencyMs.getDouble ()) stat_trafficOutOfLatencyLimit += timeSinceLastChange * d.getOfferedTraffic();
+		for (Demand d : currentNetPlan.getDemands (ipLayer)) if (d.getWorstCasePropagationTimeInMs() > d.getBlockedTraffic()) stat_trafficOutOfLatencyLimit += timeSinceLastChange * d.getOfferedTraffic();
 		
 		stat_timeLastChangeInNetwork = event.getEventTime();
 

@@ -14,26 +14,44 @@
 
 package com.net2plan.examples.ocnbook.reports;
 
-import cern.colt.function.tdouble.DoubleDoubleFunction;
-import cern.colt.function.tdouble.DoubleFunction;
-import cern.colt.list.tdouble.DoubleArrayList;
-import cern.colt.list.tint.IntArrayList;
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import com.net2plan.interfaces.networkDesign.*;
+import java.io.Closeable;
+import java.io.File;
+import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.function.Function;
+
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IReport;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.SRGUtils;
 import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.Triple;
 
-import java.io.Closeable;
-import java.io.File;
-import java.text.DecimalFormat;
-import java.util.*;
+import cern.colt.function.tdouble.DoubleDoubleFunction;
+import cern.colt.function.tdouble.DoubleFunction;
+import cern.colt.list.tdouble.DoubleArrayList;
+import cern.colt.list.tint.IntArrayList;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * This report receives as an input a network design, the network recovery scheme algorithm, and the network risks (SRGs), and estimates the availability of the 
@@ -51,14 +69,18 @@ public class Report_availability implements IReport
 	private InputParameter defaultMTTFInHours = new InputParameter ("defaultMTTFInHours" , (double) 8748 , "Default value for Mean Time To Fail (hours)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter defaultMTTRInHours = new InputParameter ("defaultMTTRInHours" , (double) 12 , "Default value for Mean Time To Repair (hours)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter failureModel = new InputParameter ("failureModel" , "#select# perBidirectionalLinkBundle SRGfromNetPlan perNode perLink perDirectionalLinkBundle" , "Failure model selection: SRGfromNetPlan, perNode, perLink, perDirectionalLinkBundle, perBidirectionalLinkBundle");
-	private InputParameter considerTrafficInOversubscribedLinksAsLost = new InputParameter ("considerTrafficInOversubscribedLinksAsLost" , true , "If true, all the demands whose traffic (even only a fraction of it) traverses an oversubscribed link, are considered that all its treaffic is blocked, as they are supposed to fail to satisfy QoS agreements");
-	private InputParameter maximumE2ELatencyMs = new InputParameter ("maximumE2ELatencyMs", (double) -1 , "Maximum end-to-end latency of the traffic of any demand (a non-positive value means no limit). All the traffic of demands where a fraction of its traffic can exceed this value, are considered as lost, as they are supposed to fail to satisfy QoS agreements");
 	
-	private ArrayList<DoubleMatrix1D> availabilityClassicNoFailure_ld, availabilityWeightedNoFailure_ld, availabilityClassicNoFailure_lmd, availabilityWeightedNoFailure_lmd;
-	private ArrayList<DoubleMatrix1D> availabilityClassicTotal_ld, availabilityWeightedTotal_ld, availabilityClassicTotal_lmd, availabilityWeightedTotal_lmd;
+	
+	private Map<Demand , PerDemandInfo> info_d = new HashMap<> ();
+	private Map<MulticastDemand , PerDemandInfo> info_md = new HashMap<> ();
+	
+//	private ArrayList<DoubleMatrix1D> availabilityClassicNoFailure_ld, availabilityWeightedNoFailure_ld, availabilityClassicNoFailure_lmd, availabilityWeightedNoFailure_lmd;
+//	private ArrayList<DoubleMatrix1D> availabilityClassicTotal_ld, availabilityWeightedTotal_ld, availabilityClassicTotal_lmd, availabilityWeightedTotal_lmd;
 	private double pi_excess;
 
 	private IEventProcessor algorithm;
+	final static DecimalFormat dfAv = new DecimalFormat("#.#######");
+	
 	
 	@Override
 	public String executeReport(NetPlan netPlan, Map<String, String> reportParameters, Map<String, String> net2planParameters)
@@ -115,25 +137,25 @@ public class Report_availability implements IReport
 		pi_excess = 1 - sum_pi_s;
 
 		/* Initialize statistics variables */
-		availabilityClassicNoFailure_ld = new ArrayList<DoubleMatrix1D> ();
-		availabilityWeightedNoFailure_ld = new ArrayList<DoubleMatrix1D> ();
-		availabilityClassicNoFailure_lmd = new ArrayList<DoubleMatrix1D> ();
-		availabilityWeightedNoFailure_lmd = new ArrayList<DoubleMatrix1D> ();
-		availabilityClassicTotal_ld = new ArrayList<DoubleMatrix1D> (); 
-		availabilityWeightedTotal_ld = new ArrayList<DoubleMatrix1D> ();
-		availabilityClassicTotal_lmd = new ArrayList<DoubleMatrix1D> ();
-		availabilityWeightedTotal_lmd = new ArrayList<DoubleMatrix1D> ();
-		for(int indexLayer = 0 ; indexLayer < netPlan.getNumberOfLayers() ; indexLayer ++)
-		{
-			final NetworkLayer layer = netPlan.getNetworkLayer (indexLayer);
-			final int D = netPlan.getNumberOfDemands(layer);
-			final int MD = netPlan.getNumberOfMulticastDemands(layer);
-			availabilityClassicTotal_ld.add (DoubleFactory1D.dense.make (D,0.0));
-			availabilityWeightedTotal_ld.add (DoubleFactory1D.dense.make (D,0.0));
-			availabilityClassicTotal_lmd.add (DoubleFactory1D.dense.make (MD,0.0));
-			availabilityWeightedTotal_lmd.add (DoubleFactory1D.dense.make (MD,0.0));
-		}
-
+//		availabilityClassicNoFailure_ld = new ArrayList<DoubleMatrix1D> ();
+//		availabilityWeightedNoFailure_ld = new ArrayList<DoubleMatrix1D> ();
+//		availabilityClassicNoFailure_lmd = new ArrayList<DoubleMatrix1D> ();
+//		availabilityWeightedNoFailure_lmd = new ArrayList<DoubleMatrix1D> ();
+//		availabilityClassicTotal_ld = new ArrayList<DoubleMatrix1D> (); 
+//		availabilityWeightedTotal_ld = new ArrayList<DoubleMatrix1D> ();
+//		availabilityClassicTotal_lmd = new ArrayList<DoubleMatrix1D> ();
+//		availabilityWeightedTotal_lmd = new ArrayList<DoubleMatrix1D> ();
+//		for(int indexLayer = 0 ; indexLayer < netPlan.getNumberOfLayers() ; indexLayer ++)
+//		{
+//			final NetworkLayer layer = netPlan.getNetworkLayer (indexLayer);
+//			final int D = netPlan.getNumberOfDemands(layer);
+//			final int MD = netPlan.getNumberOfMulticastDemands(layer);
+//			availabilityClassicTotal_ld.add (DoubleFactory1D.dense.make (D,0.0));
+//			availabilityWeightedTotal_ld.add (DoubleFactory1D.dense.make (D,0.0));
+//			availabilityClassicTotal_lmd.add (DoubleFactory1D.dense.make (MD,0.0));
+//			availabilityWeightedTotal_lmd.add (DoubleFactory1D.dense.make (MD,0.0));
+//		}
+//
 //		List<Link> upAndOversubscribedLinksSetToDown = new LinkedList<Link> ();
 //		if (considerTrafficInOversubscribedLinksAsLost.getBoolean())
 //		{
@@ -153,32 +175,11 @@ public class Report_availability implements IReport
 		for(int indexLayer = 0 ; indexLayer < netPlan.getNumberOfLayers() ; indexLayer ++)
 		{
 			final NetworkLayer layer = netPlan.getNetworkLayer (indexLayer);
-
-			final DoubleMatrix1D h_d = netPlan.getVectorDemandOfferedTraffic(layer);
-			final DoubleMatrix1D blocked_d = netPlan.getVectorDemandBlockedTraffic(layer);
-			if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (Demand d : netPlan.getDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
-			if (maximumE2ELatencyMs.getDouble () > 0) for (Demand d : netPlan.getDemands (layer)) if (d.getWorstCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
-			
-			final DoubleMatrix1D h_md = netPlan.getVectorMulticastDemandOfferedTraffic(layer);
-			final DoubleMatrix1D blocked_md = netPlan.getVectorMulticastDemandBlockedTraffic(layer);
-			if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (MulticastDemand d : netPlan.getMulticastDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_md.set (d.getIndex () , d.getOfferedTraffic());
-			if (maximumE2ELatencyMs.getDouble () > 0) for (MulticastDemand d : netPlan.getMulticastDemands(layer)) if (d.getWorseCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_md.set (d.getIndex () , d.getOfferedTraffic());
-
-			//			System.out.println ("****** No failure Layer  " + layer + ", blocked_d: " + blocked_d);
-			final DoubleMatrix1D availabilityClassic_d = blocked_d.copy ().assign (new DoubleFunction () { public double apply (double x) { return x > PRECISION_FACTOR_blocking? 0 : 1;  }  } );
-			final DoubleMatrix1D availabilityWeighted_d = blocked_d.copy ().assign (h_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return y < PRECISION_FACTOR_hd? 1 : 1 - x/y; }  } );
-			final DoubleMatrix1D availabilityClassic_md = blocked_md.copy ().assign (new DoubleFunction () { public double apply (double x) { return x > PRECISION_FACTOR_blocking ? 0 : 1;  }  } );
-			final DoubleMatrix1D availabilityWeighted_md = blocked_md.copy ().assign (h_md , new DoubleDoubleFunction () { public double apply (double x , double y) { return y < PRECISION_FACTOR_hd ? 1 : 1 - x/y; }  } );
-
-			availabilityClassicTotal_ld.get(layer.getIndex ()).assign (availabilityClassic_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s0 * y; } } );
-			availabilityWeightedTotal_ld.get(layer.getIndex ()).assign (availabilityWeighted_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s0 * y; } } );
-			availabilityClassicTotal_lmd.get(layer.getIndex ()).assign (availabilityClassic_md , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s0 * y; } } );
-			availabilityWeightedTotal_lmd.get(layer.getIndex ()).assign (availabilityWeighted_md , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s0 * y; } } );
-
-			availabilityClassicNoFailure_ld.add(availabilityClassic_d);
-			availabilityWeightedNoFailure_ld.add(availabilityWeighted_d);
-			availabilityClassicNoFailure_lmd.add(availabilityClassic_md);
-			availabilityWeightedNoFailure_lmd.add(availabilityWeighted_md);
+	    	final SortedMap<Link,SortedMap<String,Pair<Double,Double>>> perLink_qos2occupationAndViolationMap = netPlan.getAllLinksPerQosOccupationAndQosViolationMap(layer);
+	    	for (Demand d : netPlan.getDemands(layer))
+	    		info_d.get(d).update(d, pi_s0, new HashSet<> (), perLink_qos2occupationAndViolationMap);
+	    	for (MulticastDemand d : netPlan.getMulticastDemands(layer))
+	    		info_md.get(d).update(d, pi_s0, new HashSet<> (), perLink_qos2occupationAndViolationMap);
 		}
 //		System.out.println ("Before any failure state: availabilityClassicTotal_ld: " + availabilityClassicTotal_ld);
 
@@ -233,32 +234,16 @@ public class Report_availability implements IReport
 				try { ((Closeable) algorithm.getClass().getClassLoader()).close();	} catch (Throwable e1) { }					
 			}
 			
-			for(NetworkLayer layer : auxNetPlan.getNetworkLayers ())
+			for(int indexLayer = 0 ; indexLayer < netPlan.getNumberOfLayers() ; indexLayer ++)
 			{
-				final DoubleMatrix1D h_d = auxNetPlan.getVectorDemandOfferedTraffic(layer);
-				final DoubleMatrix1D blocked_d = auxNetPlan.getVectorDemandBlockedTraffic(layer);
-				if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (Demand d : auxNetPlan.getDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
-
-				if (maximumE2ELatencyMs.getDouble () > 0) for (Demand d : auxNetPlan.getDemands (layer)) if (d.getWorstCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_d.set (d.getIndex () , d.getOfferedTraffic());
-				final DoubleMatrix1D h_md = auxNetPlan.getVectorMulticastDemandOfferedTraffic(layer);
-				final DoubleMatrix1D blocked_md = auxNetPlan.getVectorMulticastDemandBlockedTraffic(layer);
-				if (considerTrafficInOversubscribedLinksAsLost.getBoolean()) for (MulticastDemand d : auxNetPlan.getMulticastDemands (layer)) if (d.isTraversingOversubscribedLinks()) blocked_md.set (d.getIndex () , d.getOfferedTraffic());
-
-				if (maximumE2ELatencyMs.getDouble () > 0) for (MulticastDemand d : auxNetPlan.getMulticastDemands(layer)) if (d.getWorseCasePropagationTimeInMs() > maximumE2ELatencyMs.getDouble ()) blocked_md.set (d.getIndex () , d.getOfferedTraffic());
-
-				final DoubleMatrix1D availabilityClassic_d = blocked_d.copy ().assign (new DoubleFunction () { public double apply (double x) { return x > PRECISION_FACTOR_blocking? 0 : 1;  }  } );
-				final DoubleMatrix1D availabilityWeighted_d = blocked_d.copy ().assign (h_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return y < PRECISION_FACTOR_hd? 1 : 1 - x/y; }  } );
-				final DoubleMatrix1D availabilityClassic_md = blocked_md.copy ().assign (new DoubleFunction () { public double apply (double x) { return x > PRECISION_FACTOR_blocking? 0 : 1;  }  } );
-				final DoubleMatrix1D availabilityWeighted_md = blocked_md.copy ().assign (h_md , new DoubleDoubleFunction () { public double apply (double x , double y) { return y < PRECISION_FACTOR_hd? 1 : 1 - x/y; }  } );
-
-				availabilityClassicTotal_ld.get(layer.getIndex ()).assign (availabilityClassic_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s_thisState * y; } } );
-				availabilityWeightedTotal_ld.get(layer.getIndex ()).assign (availabilityWeighted_d , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s_thisState * y; } } );
-				availabilityClassicTotal_lmd.get(layer.getIndex ()).assign (availabilityClassic_md , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s_thisState * y; } } );
-				availabilityWeightedTotal_lmd.get(layer.getIndex ()).assign (availabilityWeighted_md , new DoubleDoubleFunction () { public double apply (double x , double y) { return x + pi_s_thisState * y; } } );
-				
-//				System.out.println ("Failure " + failureState + ", availabilityClassicTotal_ld: " + availabilityClassicTotal_ld);
+				final NetworkLayer layer = netPlan.getNetworkLayer (indexLayer);
+		    	final SortedMap<Link,SortedMap<String,Pair<Double,Double>>> perLink_qos2occupationAndViolationMap = netPlan.getAllLinksPerQosOccupationAndQosViolationMap(layer);
+		    	for (Demand d : netPlan.getDemands(layer))
+		    		info_d.get(d).update(d, pi_s_thisState, new HashSet<> (), perLink_qos2occupationAndViolationMap);
+		    	for (MulticastDemand d : netPlan.getMulticastDemands(layer))
+		    		info_md.get(d).update(d, pi_s_thisState, new HashSet<> (), perLink_qos2occupationAndViolationMap);
 			}
-			
+
 			failureInfo = new SimEvent.NodesAndLinksChangeFailureState(auxNetPlan.getNodes() , null , linksAllLayers , null);
 			algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , failureInfo));
 		}
@@ -316,7 +301,7 @@ public class Report_availability implements IReport
 				"failure states, all the traffic is lost. In the optimistic case, we assume that in such cases, all the traffic is carried. </p>");
 		
 		out.append("<p>For more information of this method:</p>");
-		out.append("<p>P. Pav�n Mariño, \"Optimization of computer networks. Modeling and algorithms. A hands-on approach\", Wiley 2016</p>");
+		out.append("<p>P. Pavon Mariño, \"Optimization of computer networks. Modeling and algorithms. A hands-on approach\", Wiley 2016</p>");
 		out.append("<h1>Global information</h1>");
 		out.append("<h2>Input Parameters</h2>");
 		out.append("<table border='1'>");
@@ -334,44 +319,59 @@ public class Report_availability implements IReport
 		out.append("<h1>PER LAYER INFORMATION SUMMARY</h1>");
 		for (NetworkLayer layer : np.getNetworkLayers ())
 		{
-			double val;
-
 			out.append("<h2>Layer " + layer.getName () + ", index = " + layer.getIndex () + ", id = " + layer.getId () + "</h2>");
-			final DoubleMatrix1D h_d = np.getVectorDemandOfferedTraffic(layer);
-			final DoubleMatrix1D h_md = np.getVectorMulticastDemandOfferedTraffic(layer);
-			final DoubleMatrix1D avNoFailure_d = this.availabilityClassicNoFailure_ld.get(layer.getIndex ());
-			final DoubleMatrix1D survNoFailure_d = this.availabilityWeightedNoFailure_ld.get(layer.getIndex ());
-			final DoubleMatrix1D avNoFailure_md = this.availabilityClassicNoFailure_lmd.get(layer.getIndex ());
-			final DoubleMatrix1D survNoFailure_md = this.availabilityWeightedNoFailure_lmd.get(layer.getIndex ());
-			final DoubleMatrix1D avTotal_d = this.availabilityClassicTotal_ld.get(layer.getIndex ());
-			final DoubleMatrix1D survTotal_d = this.availabilityWeightedTotal_ld.get(layer.getIndex ());
-			final DoubleMatrix1D avTotal_md = this.availabilityClassicTotal_lmd.get(layer.getIndex ());
-			final DoubleMatrix1D survTotal_md = this.availabilityWeightedTotal_lmd.get(layer.getIndex ());
+			final double totalOffered_d = np.getDemands(layer).stream().mapToDouble(d->d.getOfferedTraffic()).sum();
+			final double totalOffered_md = np.getMulticastDemands(layer).stream().mapToDouble(d->d.getOfferedTraffic()).sum();
+			final double weightedFractionOfOfTrafficNoFailureAv_d =  totalOffered_d == 0? 0.0 : np.getDemands(layer).stream().mapToDouble(d->(d.getOfferedTraffic() / totalOffered_d) * info_d.get(d).getFractionOkTrafficNoFailure()).sum();
+			final double weightedFractionOfOfTrafficNoFailureAv_md =  totalOffered_md == 0? 0.0 : np.getMulticastDemands(layer).stream().mapToDouble(d->(d.getOfferedTraffic() / totalOffered_d) * info_d.get(d).getFractionOkTrafficNoFailure()).sum();
+			final double weightedAv_d =  totalOffered_d == 0? 0.0 : np.getDemands(layer).stream().mapToDouble(d->(d.getOfferedTraffic() / totalOffered_d) * info_d.get(d).getAvailability()).sum();
+			final double weightedAv_md =  totalOffered_md == 0? 0.0 : np.getMulticastDemands(layer).stream().mapToDouble(d->(d.getOfferedTraffic() / totalOffered_d) * info_d.get(d).getAvailability()).sum();
+			final double weightedSurv_d =  totalOffered_d == 0? 0.0 : np.getDemands(layer).stream().mapToDouble(d->(d.getOfferedTraffic() / totalOffered_d) * info_d.get(d).getSurvivability()).sum();
+			final double weightedSurv_md =  totalOffered_md == 0? 0.0 : np.getMulticastDemands(layer).stream().mapToDouble(d->(d.getOfferedTraffic() / totalOffered_d) * info_d.get(d).getSurvivability()).sum();
+
+			final double worstAv_d =  totalOffered_d == 0? 0.0 : np.getDemands(layer).stream().mapToDouble(d->info_d.get(d).getAvailability()).min().orElse(0.0);
+			final double worstAv_md =  totalOffered_md == 0? 0.0 : np.getMulticastDemands(layer).stream().mapToDouble(d->info_d.get(d).getAvailability()).min().orElse(0.0);
+			final double worstSurv_d =  totalOffered_d == 0? 0.0 : np.getDemands(layer).stream().mapToDouble(d->info_d.get(d).getSurvivability()).min().orElse(0.0);
+			final double worstSurv_md =  totalOffered_md == 0? 0.0 : np.getMulticastDemands(layer).stream().mapToDouble(d->info_d.get(d).getSurvivability()).min().orElse(0.0);
+
+			
+//			final DoubleMatrix1D h_d = np.getVectorDemandOfferedTraffic(layer);
+//			final DoubleMatrix1D h_md = np.getVectorMulticastDemandOfferedTraffic(layer);
+//			
+//			
+//			
+//			final DoubleMatrix1D avNoFailure_d = np.getDemands(layer).stream().mapToDouble (); 
+//					
+//					this.availabilityClassicNoFailure_ld.get(layer.getIndex ());
+//			final DoubleMatrix1D survNoFailure_d = this.availabilityWeightedNoFailure_ld.get(layer.getIndex ());
+//			final DoubleMatrix1D avNoFailure_md = this.availabilityClassicNoFailure_lmd.get(layer.getIndex ());
+//			final DoubleMatrix1D survNoFailure_md = this.availabilityWeightedNoFailure_lmd.get(layer.getIndex ());
+//			final DoubleMatrix1D avTotal_d = this.availabilityClassicTotal_ld.get(layer.getIndex ());
+//			final DoubleMatrix1D survTotal_d = this.availabilityWeightedTotal_ld.get(layer.getIndex ());
+//			final DoubleMatrix1D avTotal_md = this.availabilityClassicTotal_lmd.get(layer.getIndex ());
+//			final DoubleMatrix1D survTotal_md = this.availabilityWeightedTotal_lmd.get(layer.getIndex ());
 
 			out.append ("<ul>");
-			final double H = h_d.zSum();
-			val = h_d.size () == 0? 0 : H; out.append ("<li>UNICAST TRAFFIC: (Deterministic) Total offered traffic: " + df_6.format (val) + "</li>");
+			out.append ("<li>UNICAST TRAFFIC: (Deterministic) Total offered traffic: " + df_6.format (totalOffered_d) + "</li>");
 			if (np.getNumberOfDemands (layer) != 0)
 			{
-				val = survNoFailure_d.size () == 0? 0 : 1 - (survNoFailure_d.zDotProduct(h_d) / H); out.append ("<li>UNICAST TRAFFIC: (Deterministic) Blocked traffic when no failure occurs: " + df_6.format (val) + "</li>");
-				val = avTotal_d.size () == 0? 0 : avTotal_d.zDotProduct(h_d) / H; out.append ("<li>UNICAST TRAFFIC: (Estimated) Network availability: " + df_6.format(val) + " - " + df_6.format(val + pi_excess)  + "</li>");
-				val = survTotal_d.size () == 0? 0 : survTotal_d.zDotProduct(h_d) / H; out.append ("<li>UNICAST TRAFFIC: (Estimated) Network traffic survivability: " + df_6.format(val) + " - " + df_6.format(val + pi_excess) + "</li>");
-				val = avTotal_d.size () == 0? 0 : avTotal_d.getMinLocation() [0]; out.append ("<li>UNICAST TRAFFIC: (Estimated) Worse availability among demands: " + df_6.format(val) + " - " + df_6.format(val + pi_excess)  + "</li>");
-				val = survTotal_d.size () == 0? 0 : survTotal_d.getMinLocation() [0]; out.append ("<li>UNICAST TRAFFIC: (Estimated) Worse traffic survivability among demands: " + df_6.format(val) + " - " + df_6.format(val + pi_excess)  + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Deterministic) Blocked traffic when no failure occurs: " + df_6.format (weightedFractionOfOfTrafficNoFailureAv_d) + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Weighted average of demand availabilities : " + printAvailability(weightedAv_d, pi_excess) + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Weighted average of demands survivabilities: " + printAvailability(weightedSurv_d, pi_excess)  + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand availabilities: " + printAvailability(worstAv_d, pi_excess)   + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand survivabilities: " + printAvailability(worstSurv_d, pi_excess)   + "</li>");
 			}			
-			final double MH = h_md.zSum();
-			val = h_md.size () == 0? 0 : MH; out.append ("<li>MULTICAST TRAFFIC: (Deterministic) Total offered traffic: " + df_6.format (val) + "</li>");
+			out.append ("<li>MULTICAST TRAFFIC: (Deterministic) Total offered traffic: " + df_6.format (totalOffered_md) + "</li>");
 			if (np.getNumberOfMulticastDemands(layer) != 0)
 			{
-				val = survNoFailure_md.size () == 0? 0 : 1-(survNoFailure_md.zDotProduct(h_md) / MH); out.append ("<li>MULTICAST TRAFFIC: (Deterministic) Blocked traffic when no failure occurs: " + df_6.format (val) + "</li>");
-				val = avTotal_md.size () == 0? 0 : avTotal_md.zDotProduct(h_md) / MH; out.append ("<li>MULTICAST TRAFFIC: (Estimated) Network availability: " + df_6.format(val) + " - " + df_6.format(val + pi_excess)  + "</li>");
-				val = survTotal_md.size () == 0? 0 : survTotal_md.zDotProduct(h_md) /MH; out.append ("<li>MULTICAST TRAFFIC: (Estimated) Network traffic survivability: " + df_6.format(val) + " - " + df_6.format(val + pi_excess) + "</li>");
-				val = avTotal_md.size () == 0? 0 : avTotal_md.getMinLocation() [0]; out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worse availability among demands: " + df_6.format(val) + " - " + df_6.format(val + pi_excess)  + "</li>");
-				val = survTotal_md.size () == 0? 0 : survTotal_md.getMinLocation() [0]; out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worse traffic survivability among demands: " + df_6.format(val) + " - " + df_6.format(val + pi_excess)  + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Deterministic) Blocked traffic when no failure occurs: " + df_6.format (weightedFractionOfOfTrafficNoFailureAv_md) + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Weighted average of demand availabilities : " + printAvailability(weightedAv_md, pi_excess) + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Weighted average of demands survivabilities: " + printAvailability(weightedSurv_md, pi_excess)  + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand availabilities: " + printAvailability(worstAv_md, pi_excess)   + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand survivabilities: " + printAvailability(worstSurv_md, pi_excess)   + "</li>");
 			}
 		}
 
-		
 		out.append("<h1>PER LAYER INFORMATION DETAILED INFORMATION</h1>");
 		for (NetworkLayer layer : np.getNetworkLayers ())
 		{
@@ -384,9 +384,24 @@ public class Report_availability implements IReport
 			if (np.getNumberOfDemands(layer) != 0)
 			{
 				out.append("<table border='1'>");
-				out.append("<tr><th><b>Demand</b></th><th><b>Origin node</b></th><th><b>Destination node</b></th><th><b>Availability</b></th><th><b>Traffic survivability</b></th></tr>");
+				final List<String> headers = Arrays.asList("Demand" , "Origin node" , "Destination node" , 
+						"Availability" , "Survivability" , 
+						"WC latency (ms) / involved SRGs" , 
+						"WC blocking / involved SRGs" , 
+						"WC oversubscription / involved SRGs");
+				final List<Function<Demand , String>> vals_d = Arrays.asList(
+						d->d.getIndex () + "" ,
+						d->d.getIngressNode().getIndex() + "(" + d.getIngressNode().getName() + ")",
+						d->d.getEgressNode().getIndex() + "(" + d.getEgressNode().getName() + ")",
+						d->printAvailability(avTotal_d.get(d.getIndex()) , pi_excess)) ,
+						d->printAvailability(survTotal_d.get(d.getIndex()) , pi_excess)) ,
+						
+						);
+				out.append("<tr>"); for (String h : headers) out.append("<th><b>" + h + "</b></th>"); out.append("</tr>"); 
 				for (Demand d : np.getDemands (layer))
-					out.append("<tr><td> " + d.getIndex () + " id (" + d.getId () + ")" + "</td><td>" + d.getIngressNode ().getIndex () + " (" + d.getIngressNode ().getName () + ") </td><td> " + d.getEgressNode().getIndex () + " (" + d.getEgressNode().getName () + ")</td><td>" + avTotal_d.get(d.getIndex()) +" ... " + (avTotal_d.get(d.getIndex()) + pi_excess) + "</td><td>" +  survTotal_d.get(d.getIndex()) + " ... " + (survTotal_d.get(d.getIndex()) + pi_excess) + "</td></tr>");
+					out.append("<tr><td> " + d.getIndex () + "</td><td>" + d.getIngressNode ().getIndex () + " (" + d.getIngressNode ().getName () + ") </td><td> " + d.getEgressNode().getIndex () + " (" + d.getEgressNode().getName () + ")</td><td>" + 
+				avTotal_d.get(d.getIndex()) +" ... " + (avTotal_d.get(d.getIndex()) + pi_excess) + "</td><td>" +  
+							survTotal_d.get(d.getIndex()) + " ... " + (survTotal_d.get(d.getIndex()) + pi_excess) + "</td></tr>");
 				out.append("</table>");
 	
 				out.append("<p></p><p></p>");
@@ -407,6 +422,51 @@ public class Report_availability implements IReport
 		return out.toString();
 	}
 
+
+	private static String printAvailability (double val , double pi_ne)
+	{
+		return dfAv.format(val) +" ... " + dfAv.format(Math.min(val + pi_ne, 1.0));
+	}
 	
+
+	private static class PerDemandInfo
+	{
+		private double fractionOkTrafficNoFailure = 0;
+		private double av = 0, surv = 0, wcLatMs = 0.0, wcOversubsGbps = 0.0 , wcBlockingGbps = 0.0;
+		private Set<Set<SharedRiskGroup>> failureStates_wcLat = new HashSet<> () , failureStates_wcOversubs  = new HashSet<> (), failureStates_wcBlocking  = new HashSet<> ();
+		public void update (NetworkElement element ,  double prob , Set<SharedRiskGroup> srgs , SortedMap<Link,SortedMap<String,Pair<Double,Double>>> perLink_qos2occupationAndViolationMap)
+		{
+			if (!((element instanceof Demand) || (element instanceof MulticastDemand))) throw new RuntimeException ();
+			final boolean isDemand = element instanceof Demand;
+			final Demand d = isDemand? (Demand) element : null;
+			final MulticastDemand md = isDemand? null : (MulticastDemand) element;
+			final String qosType = isDemand? d.getQosType() : md.getQosType();
+			final double latMs = isDemand? d.getWorstCasePropagationTimeInMs() : md.getWorseCasePropagationTimeInMs();
+			final double oversubsGbps = (isDemand? d.getTraversedLinksAndCarriedTraffic(false).keySet() : md.getTraversedLinksAndCarriedTraffic(false).keySet()).stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(qosType).getFirst()).max().orElse(0.0);
+			final double blockGbps = isDemand? d.getBlockedTraffic() : md.getBlockedTraffic();
+			final boolean okLatency = isDemand? d.getMaximumAcceptableE2EWorstCaseLatencyInMs() + Configuration.precisionFactor > latMs : md.getMaximumAcceptableE2EWorstCaseLatencyInMs() + Configuration.precisionFactor > latMs; 
+			final double trafFullyOkGbps = Math.max(0.0 ,  !okLatency? 0.0 : (isDemand? d.getCarriedTraffic() : md.getCarriedTraffic()) - oversubsGbps);
+			final double fractionTrafficOk = (isDemand? d.getOfferedTraffic() : md.getOfferedTraffic()) < Configuration.precisionFactor? 0.0 : Math.max (1.0 , trafFullyOkGbps /  (isDemand? d.getOfferedTraffic() : md.getOfferedTraffic()));
+			final boolean allTrafficOk = trafFullyOkGbps + Configuration.precisionFactor >= (isDemand? d.getOfferedTraffic(): md.getOfferedTraffic());
+			if (allTrafficOk) av += prob;
+			surv += prob * fractionTrafficOk; 
+			if (latMs > wcLatMs) { wcLatMs = latMs; failureStates_wcLat = new HashSet<> (Arrays.asList(srgs)); }
+			else if (latMs == wcLatMs) { wcLatMs = latMs; failureStates_wcLat.add(srgs); }
+			if (oversubsGbps > wcOversubsGbps) { wcOversubsGbps = oversubsGbps; failureStates_wcOversubs = new HashSet<> (Arrays.asList(srgs)); }
+			else if (oversubsGbps == wcOversubsGbps) { wcOversubsGbps = oversubsGbps; failureStates_wcOversubs.add(srgs); }
+			if (blockGbps > wcBlockingGbps) { wcBlockingGbps = blockGbps; failureStates_wcBlocking = new HashSet<> (Arrays.asList(srgs)); }
+			else if (blockGbps == wcBlockingGbps) { wcBlockingGbps = blockGbps; failureStates_wcBlocking.add(srgs); }
+			if (srgs.isEmpty()) { fractionOkTrafficNoFailure = fractionTrafficOk; } 
+		}
+		public double getAvailability () { return av; }
+		public double getSurvivability () { return surv; }
+		public double getWcLatencyMs () { return wcLatMs; }
+		public double getWcBlockingGbps () { return wcBlockingGbps; }
+		public double getWcQoSViolationGbps () { return wcOversubsGbps; }
+		public Set<Set<SharedRiskGroup>> getFailureStates_wcLat () { return failureStates_wcLat; }
+		public Set<Set<SharedRiskGroup>> getFailureStates_wcQosViolation () { return failureStates_wcOversubs; }
+		public Set<Set<SharedRiskGroup>> getFailureStates_wcBlocking () { return failureStates_wcBlocking; }
+		public double getFractionOkTrafficNoFailure () { return fractionOkTrafficNoFailure; }
+	}
 	
 }

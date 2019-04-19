@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -66,6 +67,7 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 import net.miginfocom.swing.MigLayout;
@@ -83,6 +85,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
     @Override
   public List<AjtColumnInfo<Demand>> getNonBasicUserDefinedColumnsVisibleOrNot()
   {
+    	final SortedMap<Link,SortedMap<String,Pair<Double,Double>>> perLink_qos2occupationAndViolationMap = callback.getDesign().getAllLinksPerQosOccupationAndQosViolationMap(layerThisTable);
       final List<AjtColumnInfo<Demand>> res = new LinkedList<> ();
       res.add(new AjtColumnInfo<Demand>(this , Node.class, null , "A", "Ingress node", null , d->d.getIngressNode() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Demand>(this , Node.class, null , "B", "Egress node", null , d->d.getEgressNode() , AGTYPE.NOAGGREGATION , null));
@@ -92,6 +95,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
       res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Carried traffic (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Carried traffic by the demand", null , d->d.getCarriedTraffic() , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->d.getOfferedTraffic() == 0? 0 : d.getBlockedTraffic() / d.getOfferedTraffic() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > 0? Color.RED : Color.GREEN));
       res.add(new AjtColumnInfo<Demand>(this , String.class, null , "QoS type", "A used-defined string identifying the type of traffic of the demand", (d,val)-> d.setQoSType((String)val) , d->d.getQosType(), AGTYPE.NOAGGREGATION , null));
+      res.add(new AjtColumnInfo<Demand>(this , String.class, null , "WC Oversubscription", "The worst case, among all the traversed links, of the amount of traffic of this demand that is oversubscribed", null , d->d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getFirst()).max().orElse(0.0), AGTYPE.NOAGGREGATION , d-> d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getFirst()).max().orElse(0.0) > Configuration.precisionFactor? Color.red : Color.green));
       res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "Source routing?", "", (d,val)->d.setRoutingType((Boolean) val? RoutingType.SOURCE_ROUTING : RoutingType.HOP_BY_HOP_ROUTING), d->d.isSourceRouting() , AGTYPE.COUNTTRUE , null));
       res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "Is service chain?", "", null, d->d.isServiceChainRequest() , AGTYPE.COUNTTRUE , null));
       res.add(new AjtColumnInfo<Demand>(this , String.class, null , "Resource types", "The sequence of resource types that has to be traversed by the routes of the demand, if it is a service chain", null, d->d.isSourceRouting()? d.getServiceChainSequenceOfTraversedResourceTypes().stream().collect(Collectors.joining(",")) : "" , AGTYPE.COUNTTRUE , null));

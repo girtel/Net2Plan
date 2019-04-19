@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.stream.Collectors;
 
 import javax.swing.Box;
@@ -37,12 +38,14 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement.AGTYPE;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
 import com.net2plan.gui.utils.JSelectionTablePanel;
 import com.net2plan.gui.utils.StringLabeller;
 import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
@@ -51,6 +54,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
 
 /**
@@ -66,6 +70,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
     @Override
   public List<AjtColumnInfo<MulticastDemand>> getNonBasicUserDefinedColumnsVisibleOrNot()
   {
+    	final SortedMap<Link,SortedMap<String,Pair<Double,Double>>> perLink_qos2occupationAndViolationMap = callback.getDesign().getAllLinksPerQosOccupationAndQosViolationMap(layerThisTable);
       final List<AjtColumnInfo<MulticastDemand>> res = new LinkedList<> ();
       res.add(new AjtColumnInfo<MulticastDemand>(this , Node.class, null , "A", "Ingress node", null , d->d.getIngressNode() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , String.class, null , "Bs", "Egress nodes", null , d->d.getEgressNodes().stream().map(n->n.getName().equals("")? "Node " + n.getIndex() : n.getName()).collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
@@ -74,6 +79,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "Carried traffic (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Carried traffic by the demand", null , d->d.getCarriedTraffic() , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->d.getOfferedTraffic() == 0? 0 : d.getBlockedTraffic() / d.getOfferedTraffic() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > 0? Color.RED : Color.GREEN));
       res.add(new AjtColumnInfo<MulticastDemand>(this , String.class, null , "QoS type", "A used-defined string identifying the type of traffic of the demand", (d,val)-> d.setQoSType((String)val) , d->d.getQosType(), AGTYPE.NOAGGREGATION , null));
+      res.add(new AjtColumnInfo<MulticastDemand>(this , String.class, null , "WC Oversubscription", "The worst case, among all the traversed links, of the amount of traffic of this demand that is oversubscribed", null , d->d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getFirst()).max().orElse(0.0), AGTYPE.NOAGGREGATION , d-> d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getFirst()).max().orElse(0.0) > Configuration.precisionFactor? Color.red : Color.green));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Boolean.class, null , "All nodes reached?", "True if all the multicast trees of the demand reach all the demand egress nodes", null, d->d.isAllTreesReachingAllEgressNodes() , AGTYPE.COUNTTRUE , d->d.isAllTreesReachingAllEgressNodes()? Color.GREEN : Color.RED));
       res.add(new AjtColumnInfo<MulticastDemand>(this , String.class, null , "Bifurcated?", "Indicates whether the demand is satisfied by more than one multicast tree", null, d->d.isBifurcated() , AGTYPE.COUNTTRUE , null));
       res.add(new AjtColumnInfo<MulticastDemand>(this , Integer.class, null , "# trees", "Number of associated multicast trees", null, d->d.getMulticastTrees().size() , AGTYPE.SUMINT , null));
