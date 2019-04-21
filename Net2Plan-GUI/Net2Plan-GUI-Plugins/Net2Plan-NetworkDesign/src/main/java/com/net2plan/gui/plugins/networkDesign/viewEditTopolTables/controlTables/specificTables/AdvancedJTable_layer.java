@@ -60,7 +60,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement<NetworkL
     public List<AjtRcMenu> getNonBasicRightClickMenusInfo()
     {
     	final NetPlan np = callback.getDesign();
-    	;
+    	
         final List<AjtRcMenu> res = new ArrayList<> ();
         res.add(new AjtRcMenu("Add layer", e-> { np.addLayer("Layer " + np.getNumberOfLayers(), null, null, null, null, null); } , (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected layers", e->getSelectedElements().forEach(dd->np.removeNetworkLayer((NetworkLayer) dd)) , (a,b)->b>0, null));

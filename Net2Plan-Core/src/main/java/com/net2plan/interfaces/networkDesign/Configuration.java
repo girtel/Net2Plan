@@ -86,7 +86,7 @@ public class Configuration
 		optionsFile = new File(SystemUtils.getCurrentDir() + SystemUtils.getDirectorySeparator() + "options.ini");
 		currentOptionsFile = optionsFile;
 		precisionFactor = Double.parseDouble (getOption("precisionFactor"));
-	};
+	}
 
 	/**
 	 * Checks value of current options.

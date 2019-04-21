@@ -49,7 +49,7 @@ public class Constants
 		 * 
 		 */
 		NO_REPEAT_LINK
-	};
+	}
 	
 	/**
 	 * Constants for choosing the ordering type.
@@ -68,7 +68,7 @@ public class Constants
 		 * 
 		 */
 		DESCENDING
-	};
+	}
 	
 	/**
 	 * Types of routing cycles. In case of {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, 
@@ -159,5 +159,5 @@ public class Constants
 		 *
 		 */
 		LAST
-	};
+	}
 }

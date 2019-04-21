@@ -54,7 +54,7 @@ public class ImageUtils
 		 * 
 		 */
 		PNG
-	};
+	}
 	
 	private static boolean hasAlpha(Image image)
 	{

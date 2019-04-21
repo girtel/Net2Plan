@@ -58,7 +58,7 @@ public class SRGUtils
 		 * Defines a SRG containing all links between a node pair. Nodes are not associated to any SRG.
 		 */
 		PER_BIDIRECTIONAL_LINK_BUNDLE
-	};
+	}
 	
 	
 	/**

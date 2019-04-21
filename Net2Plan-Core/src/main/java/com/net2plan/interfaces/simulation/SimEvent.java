@@ -58,7 +58,7 @@ public class SimEvent implements Comparable<SimEvent>
 		
 		@Override
 		public String toString() { return label; }
-	};
+	}
 
 	/**
 	 * This class represents the request to add a new Demand.
@@ -87,7 +87,7 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [ingressNode=" + ingressNode + ", egressNode=" + egressNode + ", layer=" + layer + ", offeredTraffic=" + offeredTraffic + "]";
 		}
-	};
+	}
 
 	/**
 	 * This class represents the request to remove an existing Demand.
@@ -107,7 +107,7 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [demand=" + demand + "]";
 		} 
-	};
+	}
 
 	/**
 	 * This class represents the request to modify an existing Demand.
@@ -131,7 +131,7 @@ public class SimEvent implements Comparable<SimEvent>
 			return this.getClass ().getSimpleName() + " [demand=" + demand + ", offeredTraffic=" + offeredTraffic + ", modificationIsRelativeToCurrentOfferedTraffic=" + modificationIsRelativeToCurrentOfferedTraffic + "]";
 		} 
 		
-	};
+	}
 
 	/**
 	 * This class represents the request to modify an existing Demand.
@@ -155,7 +155,7 @@ public class SimEvent implements Comparable<SimEvent>
 			return this.getClass ().getSimpleName() + " [Multicast demand=" + demand + ", offeredTraffic=" + offeredTraffic + ", modificationIsRelativeToCurrentOfferedTraffic=" + modificationIsRelativeToCurrentOfferedTraffic + "]";
 		} 
 		
-	};
+	}
 
 	/**
 	 * This class represents the request to add a new Route.
@@ -180,7 +180,7 @@ public class SimEvent implements Comparable<SimEvent>
 			return this.getClass ().getSimpleName() + " [demand=" + demand + ", seqLinks=" + seqLinks + ", carriedTraffic=" + carriedTraffic + ", occupiedLinkCapacity=" + occupiedLinkCapacity + "]";
 		}  
 		
-	};
+	}
 
 	/**
 	 * This class represents the request to remove and existing Route.
@@ -199,7 +199,7 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [route=" + route + "]";
 		} 
-	};
+	}
 
 	/**
 	 * This class represents the request to modify an existing Route.
@@ -222,7 +222,7 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [route=" + route + ", seqLinks=" + seqLinks + ", carriedTraffic=" + carriedTraffic + ", occupiedLinkCapacity=" + occupiedLinkCapacity + "]";
 		}  
-	};
+	}
 
 	/**
 	 * This class represents the request to modify the failure state of multiple links and nodes.
@@ -245,7 +245,7 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [nodesToUp=" + nodesToUp + ", nodesToDown=" + nodesToDown + ", linksToUp=" + linksToUp + ", linksToDown=" + linksToDown + "]";
 		} 
-	};
+	}
 
 	/**
 	 * This class represents the request to add a new Link.
@@ -270,7 +270,7 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [originNode=" + originNode + ", destinationNode=" + destinationNode + ", layer=" + layer + ", capacity=" + capacity + ", lengthInKm=" + lengthInKm + ", propagationSpeedInKmPerSecond=" + propagationSpeedInKmPerSecond + "]";
 		}  
-	};
+	}
 
 	/**
 	 * This class represents the request to remove an existing Link.
@@ -289,7 +289,7 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [link=" + link + "]";
 		} 
-	};
+	}
 
 	/**
 	 * This class represents the request to modify an existing Link
@@ -309,7 +309,7 @@ public class SimEvent implements Comparable<SimEvent>
 		{
 			return this.getClass ().getSimpleName() + " [link=" + link + ", newCapacity=" + newCapacity + "]";
 		} 
-	};
+	}
 
 	
 	/**

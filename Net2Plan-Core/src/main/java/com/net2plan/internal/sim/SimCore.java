@@ -87,7 +87,7 @@ public final class SimCore implements Runnable
 		      default: throw new RuntimeException ();
 		    }
 		}
-	};
+	}
 	
 	private final IEventCallback callback;
 	private final FutureEventList futureEventList;

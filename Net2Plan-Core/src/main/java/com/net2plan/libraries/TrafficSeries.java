@@ -35,7 +35,7 @@ public class TrafficSeries
 		public String getName () { return s; }
 		public boolean isLinear () { return this == LINEAR; }
 		public boolean isExponential () { return this == EXPONENTIAL; }
-	};
+	}
 	private SortedMap<Date , Double> monitValues = new TreeMap<> ();
 	public TrafficSeries () { }
 	public TrafficSeries (SortedMap<Date , Double> monitValues) { this.monitValues.putAll (monitValues);  }
@@ -71,7 +71,7 @@ public class TrafficSeries
 		LocalDateTime currentDateLt = null;
 		final LocalDateTime initDateLt = dateToLocalDateTime(initDate);
 		final LocalDateTime endDateLt = dateToLocalDateTime(endDate);
-		final TemporalUnit unitToAdd;;
+		final TemporalUnit unitToAdd;
 		if (intervalTimeType.equalsIgnoreCase("hour"))
 		{
 			unitToAdd = ChronoUnit.HOURS;

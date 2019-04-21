@@ -82,7 +82,7 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
         private AGTYPE (BiFunction<Object,Object,Number> aggregationFunction) { this.aggregationFunction = aggregationFunction; }
         public final boolean isToAggregate () { return this != NOAGGREGATION; }
         public final Number agg (Object value , Number previousAggregate) { if (value instanceof Number) return aggregationFunction.apply(value, previousAggregate); else return previousAggregate; }
-    };
+    }
     
 //    protected final NetworkElementType networkElementType;
     protected final GUINetworkDesign callback;

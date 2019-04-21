@@ -312,7 +312,6 @@ public class IPUtils
 				final SortedSet<Link> minCostLinks = new TreeSet<> (); 
 				for (Node intermediateNode : graph.getNeighbors(sourceNode))
 				{
-					if (nodes.equals (intermediateNode)) continue;
 					final Pair<SortedSet<Link>,Double> nodePairLinks = linksPerNodeSameMinimumCost.get(Pair.of(sourceNode, intermediateNode));
 					if (nodePairLinks == null) continue;
 					if (nodePairLinks.getFirst().isEmpty()) continue;
@@ -383,7 +382,6 @@ public class IPUtils
 				final SortedSet<Link> minCostLinks = new TreeSet<> (); 
 				for (Node intermediateNode : graph.getNeighbors(sourceNode))
 				{
-					if (nodes.equals (intermediateNode)) continue;
 					final Pair<SortedSet<Link>,Double> nodePairLinks = linksPerNodeSameMinimumCost.get(Pair.of(sourceNode, intermediateNode));
 					if (nodePairLinks == null) continue;
 					if (nodePairLinks.getFirst().isEmpty()) continue;

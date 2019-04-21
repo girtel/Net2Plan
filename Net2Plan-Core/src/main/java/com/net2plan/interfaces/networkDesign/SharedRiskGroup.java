@@ -263,7 +263,8 @@ public class SharedRiskGroup extends NetworkElement
 			else if (e instanceof Resource)
 			{
 				final Resource ee = (Resource) e;
-				if (nodesThisSrg.contains(ee.hostNode)) return true;
+				if (ee.hostNode.isPresent())
+					if (nodesThisSrg.contains(ee.hostNode.get())) return true;
 			}
 			else if (e instanceof Node)
 			{

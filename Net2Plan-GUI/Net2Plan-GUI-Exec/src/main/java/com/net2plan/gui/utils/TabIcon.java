@@ -46,7 +46,7 @@ public class TabIcon implements Icon {
         TIMES_SIGN
     }
 
-    ;
+    
 
     private final IconType iconType;
     private int x_pos;

@@ -597,7 +597,7 @@ public class WDMUtils
 			if (primaryRSA.ingressNode != backupRSA.ingressNode) throw new WDMException ("primary and backup RSAs must hava common end nodes"); 
 			if (primaryRSA.egressNode != backupRSA.egressNode) throw new WDMException ("primary and backup RSAs must hava common end nodes"); 
 		}
-	}; 
+	} 
 
 	/**
 	 * This class represents the request to remove an existing lightpath. It is used in online algorithms related to WDM networks, inside {@code SimEvent} objects.
@@ -614,7 +614,7 @@ public class WDMUtils
 		 * @param lp Route
 		 */
 		public LightpathRemove (Route lp) { this.lp = lp; } 
-	};
+	}
 
 	/**
 	 * This class represents the request to modify an existing lightpath. It is used in online algorithms related to WDM networks, inside {@code SimEvent} objects.
@@ -641,7 +641,7 @@ public class WDMUtils
 		 * @param carriedTraffic new carried traffic
 		 */
 		public LightpathModify (Route lp , RSA rsa , double carriedTraffic) { this.lp = lp; this.rsa = rsa; this.carriedTraffic = carriedTraffic; }  
-	};
+	}
 	
 	/**
 	 * Route/protection segment attribute name for sequence of regenerators.

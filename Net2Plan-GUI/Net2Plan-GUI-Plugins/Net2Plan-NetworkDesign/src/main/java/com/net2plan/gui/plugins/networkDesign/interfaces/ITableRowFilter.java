@@ -34,7 +34,7 @@ public abstract class ITableRowFilter
 	protected final NetPlan netPlan;
 	protected List<String> chainOfDescriptionsPreviousFiltersComposingThis;
 
-	public enum FilterCombinationType { INCLUDEIF_AND, INCLUDEIF_OR };
+	public enum FilterCombinationType { INCLUDEIF_AND, INCLUDEIF_OR }
 	
 	/* Baseline constructor: everything is filtered out */
 	public ITableRowFilter (NetPlan netPlan)

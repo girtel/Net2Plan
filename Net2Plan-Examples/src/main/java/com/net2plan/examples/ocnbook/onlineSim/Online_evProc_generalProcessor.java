@@ -137,7 +137,7 @@ public class Online_evProc_generalProcessor extends IEventProcessor
 		final int E = initialNetPlan.getNumberOfLinks(layer);
 		final DoubleMatrix1D linkCostVector = isShortestPathNumHops? DoubleFactory1D.dense.make (E , 1.0) : initialNetPlan.getVectorLinkLengthInKm();
 		this.cpl = initialNetPlan.computeUnicastCandidatePathList(linkCostVector , k.getInt(), maxLengthInKm.getDouble(), maxNumHops.getInt(), -1, -1, -1, -1 , null);
-		final int protectionTypeCode = protectionTypeToNewRoutes.equals("srg-disjoint") ? 0 : protectionTypeToNewRoutes.equals("1+1-node-disjoint")? 1 : 2;
+		final int protectionTypeCode = protectionTypeToNewRoutes.getString().equals("srg-disjoint") ? 0 : protectionTypeToNewRoutes.getString().equals("1+1-node-disjoint")? 1 : 2;
 		this.cpl11 = !newRoutesHave11Protection? null : NetPlan.computeUnicastCandidate11PathList(cpl, protectionTypeCode); 
 		
 		

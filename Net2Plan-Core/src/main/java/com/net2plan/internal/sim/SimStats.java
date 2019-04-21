@@ -767,7 +767,7 @@ public class SimStats
 		
 		computeNextState(simTime);
 		transitoryTime = simTime;
-	};
+	}
 
 	/**
 	 * Returns a HTML {@code String} with statistics.

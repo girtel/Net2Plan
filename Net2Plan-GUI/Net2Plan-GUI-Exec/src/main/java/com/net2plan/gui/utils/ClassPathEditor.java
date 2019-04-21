@@ -92,7 +92,7 @@ public class ClassPathEditor {
                 }
             }
 
-            ;
+            
         });
 
         REMOVE_SELECTED = new JButton("Remove selected");
