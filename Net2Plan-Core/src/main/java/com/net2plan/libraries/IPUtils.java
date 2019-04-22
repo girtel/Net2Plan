@@ -528,7 +528,7 @@ public class IPUtils
 	 */
 	public static double getLinkWeight(Link link)
 	{
-		if (link.isDown()) return Double.MAX_VALUE;
+		if (link.isDown() || link.getOriginNode().isDown() || link.getDestinationNode().isDown()) return Double.MAX_VALUE;
 		double linkWeight = 1;
 		String str_linkWeight = link.getAttribute(IP_WEIGHT_ATTRIBUTE_NAME);
 		try	{ linkWeight = Double.parseDouble(str_linkWeight); }

@@ -126,7 +126,7 @@ class PickTimeLineManager
                 final NetworkElement networkElement = (NetworkElement) o;
                 if (netPlan.getNetworkElement(networkElement.getId()) == null)
                 {
-                    newTimeLine.remove(networkElement);
+//                    newTimeLine.remove(networkElement);
                     timelineCursor--;
                     continue;
                 }
@@ -138,7 +138,7 @@ class PickTimeLineManager
 
                 if (netPlan.getDemandFromId(forwardingRule.getFirst().getId()) == null || netPlan.getLinkFromId(forwardingRule.getSecond().getId()) == null)
                 {
-                    newTimeLine.remove(forwardingRule);
+ //                   newTimeLine.remove(forwardingRule);
                     timelineCursor--;
                     continue;
                 }

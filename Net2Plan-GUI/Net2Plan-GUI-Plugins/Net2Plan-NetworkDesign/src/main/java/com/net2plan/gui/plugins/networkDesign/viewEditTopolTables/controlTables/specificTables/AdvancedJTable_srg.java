@@ -62,7 +62,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement<SharedRisk
     @Override
   public List<AjtColumnInfo<SharedRiskGroup>> getNonBasicUserDefinedColumnsVisibleOrNot()
   {
-    	final NetPlan np = callback.getDesign();
+    final NetPlan np = callback.getDesign();
     	final NetworkLayer layer = this.getTableNetworkLayer();
       final List<AjtColumnInfo<SharedRiskGroup>> res = new LinkedList<> ();
       res.add(new AjtColumnInfo<SharedRiskGroup>(this , Collection.class, null , "Nodes", "The nodes belonging to this SRG", null , d->d.getNodes() , AGTYPE.SUMCOLLECTIONCOUNT , null));
@@ -70,7 +70,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement<SharedRisk
       res.add(new AjtColumnInfo<SharedRiskGroup>(this , Collection.class, null , "Links all layers", "The links in this layer or other layers belonging to this SRG", null , d->d.getLinksAllLayers() , AGTYPE.SUMCOLLECTIONCOUNT , null));
       res.add(new AjtColumnInfo<SharedRiskGroup>(this , Double.class, null , "MTTF (hours)" , "The average Mean-Time-To-Fail value measued in hours (the time since the element is repaired until it fails again)", (d,val)->d.setMeanTimeToFailInHours((Double) val), d->d.getMeanTimeToFailInHours() , AGTYPE.MAXDOUBLE , null));
       res.add(new AjtColumnInfo<SharedRiskGroup>(this , Double.class, null , "MTTR (hours)" , "The average Mean-Time-To-Repair value measued in hours (the time betweem the element fails, and is up again since it is repaired)", (d,val)->d.setMeanTimeToRepairInHours((Double) val), d->d.getMeanTimeToRepairInHours() , AGTYPE.MAXDOUBLE , null));
-      res.add(new AjtColumnInfo<SharedRiskGroup>(this , Double.class, null , "Availability" , "The probability of findig the element not failed (MTTF / (MTTF + MTTR)) ", (d,val)->d.setMeanTimeToRepairInHours((Double) val), d->d.getMeanTimeToRepairInHours() , AGTYPE.MAXDOUBLE , null));
+      res.add(new AjtColumnInfo<SharedRiskGroup>(this , Double.class, null , "Availability" , "The probability of findig the element not failed (MTTF / (MTTF + MTTR)) ", null , d->d.getAvailability() , AGTYPE.MAXDOUBLE , null));
       res.add(new AjtColumnInfo<SharedRiskGroup>(this , Boolean.class, null , "Is dynamic SRG?" , "Indicates if the SRG is dnyamic (and then its belonging nodes and links may change)", null , d->d.isDynamicSrg() , AGTYPE.NOAGGREGATION , null));
       return res;
   }

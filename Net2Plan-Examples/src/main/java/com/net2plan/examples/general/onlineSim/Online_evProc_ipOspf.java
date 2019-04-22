@@ -11,18 +11,22 @@ package com.net2plan.examples.general.onlineSim;
  *******************************************************************************/
 
 
-import cern.colt.function.tdouble.DoubleDoubleFunction;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import com.net2plan.interfaces.networkDesign.*;
+import java.util.List;
+import java.util.Map;
+
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
 import com.net2plan.libraries.IPUtils;
-import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
-import java.util.List;
-import java.util.Map;
+import cern.colt.function.tdouble.DoubleDoubleFunction;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 /** 
  * Implements the reactions of an IP network governed by the OSPF/ECMP forwarding policies, for given link weigths
@@ -71,7 +75,8 @@ public class Online_evProc_ipOspf extends IEventProcessor
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 
-		this.ipLayer = initialNetPlan.getNetworkLayer("IP"); if (ipLayer == null) throw new Net2PlanException ("IP layer not found");
+		this.ipLayer = initialNetPlan.getNetworkLayer("IP"); 
+		if (ipLayer == null) ipLayer = initialNetPlan.getNetworkLayerDefault(); 
 		
 		DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(initialNetPlan , ipLayer);
 		linkIGPWeightSetting.assign (initialNetPlan.getVectorLinkUpState(ipLayer) , new DoubleDoubleFunction () { public double apply (double x , double y) { return y == 1? x : Double.MAX_VALUE; }  } );
@@ -107,7 +112,6 @@ public class Online_evProc_ipOspf extends IEventProcessor
 		{
 			SimEvent.DemandModify ev = (SimEvent.DemandModify) event.getEventObject ();
 			Demand d = ev.demand; 
-//			System.out.print ("IPOSPF DemandModify: demand " + d + ", " + (ev.modificationIsRelativeToCurrentOfferedTraffic? "RELATIVE" : "ABSOLUTE") + " , old demand offered: " + d.getOfferedTraffic() + " ");
 			if (ev.modificationIsRelativeToCurrentOfferedTraffic) 
 				d.setOfferedTraffic(d.getOfferedTraffic() + ev.offeredTraffic);
 			else
@@ -136,7 +140,7 @@ public class Online_evProc_ipOspf extends IEventProcessor
 		DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(currentNetPlan , ipLayer);
 		linkIGPWeightSetting.assign (currentNetPlan.getVectorLinkUpState(ipLayer) , new DoubleDoubleFunction () { public double apply (double x , double y) { return y == 1? x : Double.MAX_VALUE; }  } );
 		IPUtils.setECMPForwardingRulesFromLinkWeights(currentNetPlan , linkIGPWeightSetting , ipLayer);
-//		System.out.println ("-- CHANGE OSPF ROUTING: linkIGPWeightSetting: "  + linkIGPWeightSetting);
+//		System.out.println ("-- process CHANGE OSPF ROUTING: linkIGPWeightSetting: "  + linkIGPWeightSetting);
 	}
 
 	@Override
@@ -161,4 +165,5 @@ public class Online_evProc_ipOspf extends IEventProcessor
 		output.append (String.format("<p>Time average traffic of demands which traverse an oversubscribed link (summing all the demand offered traffic, even if only a fraction of traffic traverses oversubscribed links): %f</p>", stat_trafficOfDemandsTraversingOversubscribedLink / dataTime));
 		return "";
 	}
+
 }

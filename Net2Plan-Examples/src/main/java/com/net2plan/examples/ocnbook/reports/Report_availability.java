@@ -97,6 +97,7 @@ public class Report_availability implements IReport
 		switch (failureModel.getString ())
 		{
 			case "SRGfromNetPlan":
+				if (netPlan.getSRGs().isEmpty()) throw new Net2PlanException ("No SRGs are defined, and SRGfromNetPlan option was selected");
 				break;
 
 			case "perNode":
@@ -140,24 +141,7 @@ public class Report_availability implements IReport
 	    	for (Link d : netPlan.getLinks(layer)) info_e.put(d.getId() , new PerLinkInfo());
 		}
 
-		/* Statistics for the no-failure state */
-		for(NetworkLayer layer : netPlan.getNetworkLayers())
-		{
-	    	final SortedMap<Link,SortedMap<String,Pair<Double,Double>>> perLink_qos2occupationAndViolationMap = netPlan.getAllLinksPerQosOccupationAndQosViolationMap(layer);
-	    	for (Demand d : netPlan.getDemands(layer))
-	    		info_d.get(d.getId()).update(d, pi_s0, new HashSet<> (), perLink_qos2occupationAndViolationMap);
-	    	for (MulticastDemand d : netPlan.getMulticastDemands(layer))
-	    		info_md.get(d.getId()).update(d, pi_s0, new HashSet<> (), perLink_qos2occupationAndViolationMap);
-	    	for (Link d : netPlan.getLinks(layer))
-	    		info_e.get(d.getId()).update(d, new HashSet<> ());
-		}
-//		System.out.println ("Before any failure state: availabilityClassicTotal_ld: " + availabilityClassicTotal_ld);
-
-		
 		/* the up and oversubscribed links that were set as down, are set to up again */
-//		if (considerTrafficInOversubscribedLinksAsLost.getBoolean())
-//			netPlan.setLinksAndNodesFailureState(upAndOversubscribedLinksSetToDown , null , null , null);
-
 		if (!netPlan.getLinksDownAllLayers().isEmpty() || !netPlan.getNodesDown().isEmpty()) throw new RuntimeException ("Bad");
 
 		final NetPlan auxNetPlan = netPlan.copy ();
@@ -165,46 +149,17 @@ public class Report_availability implements IReport
 		this.algorithm.initialize(auxNetPlan , algorithmParameters , reportParameters , net2planParameters);
 		Set<Link> initialLinksDownAllLayers = auxNetPlan.getLinksDownAllLayers();
 		Set<Node> initialNodesDown = auxNetPlan.getNodesDown();
-		Set<Link> linksAllLayers = new HashSet<Link> (); for (NetworkLayer layer : auxNetPlan.getNetworkLayers()) linksAllLayers.addAll (auxNetPlan.getLinks (layer));
 
-		for (int failureState = 1 ; failureState < F_s.rows () ; failureState ++) // first failure state (no failure) was already considered
+		for (int failureState = 0 ; failureState < F_s.rows () ; failureState ++) // first failure state (no failure) was already considered
 		{
 			if (!auxNetPlan.getLinksDownAllLayers().equals (initialLinksDownAllLayers) || !auxNetPlan.getNodesDown().equals(initialNodesDown)) throw new RuntimeException ("Bad");
 
 			final IntArrayList srgs_thisState = new IntArrayList (); 
 			F_s.viewRow (failureState).getNonZeros (srgs_thisState , new DoubleArrayList ());
 			final Set<SharedRiskGroup> srgsThisFs_copyNp = ((ArrayList<Integer>) srgs_thisState.toList()).stream().map(i->auxNetPlan.getSRG(i)).collect(Collectors.toSet ());
-			final double pi_s_thisState = pi_s.get (failureState);
+			final double pi_s_thisState = failureState == 0? pi_s0 : pi_s.get (failureState);
 
-			final Set<Link> linksToSetAsDown = new HashSet<Link> ();
-			final Set<Node> nodesToSetAsDown = new HashSet<Node> ();
-			for (SharedRiskGroup srg : srgsThisFs_copyNp)
-			{
-				assert F_s.get(failureState , srg.getIndex ()) == 1.0;
-				nodesToSetAsDown.addAll (srg.getNodes ());
-				linksToSetAsDown.addAll (srg.getLinksAllLayers ());
-			}
-
-			/* Make the algorithm process the event of nodes and links down */
-			SimEvent.NodesAndLinksChangeFailureState failureInfo = new SimEvent.NodesAndLinksChangeFailureState(null , nodesToSetAsDown , null , linksToSetAsDown);
-			try
-			{
-				/* Apply the reaction algorithm */
-				algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , failureInfo));
-			}
-			catch (Throwable e)
-			{
-				try { ((Closeable) algorithm.getClass().getClassLoader()).close();  }
-				catch (Throwable e1) { e.printStackTrace();}					
-
-				throw (e);
-			}
-			
-			/* Only close the class loader if it is a different one than this class. If problems: just do not close the class loader, and wait for garbage collection*/
-			if (!this.getClass().getClassLoader().equals(algorithm.getClass().getClassLoader()))
-			{
-				try { ((Closeable) algorithm.getClass().getClassLoader()).close();	} catch (Throwable e1) { }					
-			}
+			setFailureStateAndRunProvisioningAlgorithm(auxNetPlan , srgsThisFs_copyNp);
 			
 			for(int indexLayer = 0 ; indexLayer < auxNetPlan.getNumberOfLayers() ; indexLayer ++)
 			{
@@ -218,8 +173,7 @@ public class Report_availability implements IReport
 		    		info_e.get(d.getId()).update(d, srgsThisFs_copyNp);
 			}
 
-			failureInfo = new SimEvent.NodesAndLinksChangeFailureState(auxNetPlan.getNodes() , null , linksAllLayers , null);
-			algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , failureInfo));
+			setNonFailureStateAndRunProvisioningAlgorithm (auxNetPlan);
 		}
 
 		return printReport(netPlan , reportParameters);
@@ -341,21 +295,21 @@ public class Report_availability implements IReport
 						"WC blocking / involved SRGs" , 
 						"WC oversubscription / involved SRGs");
 				final List<Function<Demand , String>> vals_d = Arrays.asList(
-						d->d.getIndex () + "" ,
-						d->d.getIngressNode().getIndex() + " (" + d.getIngressNode().getName() + ")",
-						d->d.getEgressNode().getIndex() + " (" + d.getEgressNode().getName() + ")",
-						d->df_6.format(d.getOfferedTraffic()),
+						d->"<td>" + d.getIndex () + "</td>"  ,
+						d->"<td>" + d.getIngressNode().getIndex() + " (" + d.getIngressNode().getName() + ")"+ "</td>",
+						d->"<td>" + d.getEgressNode().getIndex() + " (" + d.getEgressNode().getName() + ")"+ "</td>",
+						d->"<td>" + df_6.format(d.getOfferedTraffic())+ "</td>",
 						d->printAvailability(info_d.get(d.getId()).getAvailability() , pi_excess) ,
 						d->printAvailability(info_d.get(d.getId()).getSurvivability() , pi_excess) ,
-						d->printWcAndSrgs(info_d.get(d.getId()).getWcLatencyMs() , info_d.get(d.getId()).getFailureStates_wcLat()) ,
-						d->printWcAndSrgs(info_d.get(d.getId()).getWcBlockingGbps() , info_d.get(d.getId()).getFailureStates_wcBlocking()) ,
-						d->printWcAndSrgs(info_d.get(d.getId()).getWcQoSViolationGbps() , info_d.get(d.getId()).getFailureStates_wcQosViolation())
+						d->printWcAndSrgs(info_d.get(d.getId()).getWcLatencyMs() , info_d.get(d.getId()).getFailureStates_wcLat() , info_d.get(d.getId()).getWcLatencyMs() + Configuration.precisionFactor > d.getMaximumAcceptableE2EWorstCaseLatencyInMs()) ,
+						d->printWcAndSrgs(info_d.get(d.getId()).getWcBlockingGbps() , info_d.get(d.getId()).getFailureStates_wcBlocking() , info_d.get(d.getId()).getWcBlockingGbps() > Configuration.precisionFactor) ,
+						d->printWcAndSrgs(info_d.get(d.getId()).getWcQoSViolationGbps() , info_d.get(d.getId()).getFailureStates_wcQosViolation() , info_d.get(d.getId()).getWcQoSViolationGbps() > Configuration.precisionFactor)
 						);
 				out.append("<tr>"); for (String h : headers) out.append("<th><b>" + h + "</b></th>"); out.append("</tr>"); 
 				for (Demand d : np.getDemands (layer))
 				{
 					out.append("<tr>");
-					for (Function<Demand,String> f : vals_d) out.append("<td>" + f.apply(d) + "</td>");
+					for (Function<Demand,String> f : vals_d) out.append(f.apply(d));
 					out.append("</tr>");
 				}
 				out.append("</table>");
@@ -371,21 +325,21 @@ public class Report_availability implements IReport
 						"WC blocking / involved SRGs" , 
 						"WC oversubscription / involved SRGs");
 				final List<Function<MulticastDemand , String>> vals_md = Arrays.asList(
-						d->d.getIndex () + "" ,
-						d->d.getIngressNode().getIndex() + " (" + d.getIngressNode().getName() + ")",
-						d->d.getEgressNodes().size() + " nodes",
-						d->df_6.format(d.getOfferedTraffic()),
+						d->"<td>" + d.getIndex () + "</td>" ,
+						d->"<td>" + d.getIngressNode().getIndex() + " (" + d.getIngressNode().getName() + ")"+ "</td>",
+						d->"<td>" + d.getEgressNodes().size() + " nodes"+ "</td>",
+						d->"<td>" + df_6.format(d.getOfferedTraffic())+ "</td>",
 						d->printAvailability(info_md.get(d.getId()).getAvailability() , pi_excess) ,
 						d->printAvailability(info_md.get(d.getId()).getSurvivability() , pi_excess) ,
-						d->printWcAndSrgs(info_md.get(d.getId()).getWcLatencyMs() , info_md.get(d.getId()).getFailureStates_wcLat()) ,
-						d->printWcAndSrgs(info_md.get(d.getId()).getWcBlockingGbps() , info_md.get(d.getId()).getFailureStates_wcBlocking()) ,
-						d->printWcAndSrgs(info_md.get(d.getId()).getWcQoSViolationGbps() , info_md.get(d.getId()).getFailureStates_wcQosViolation())
+						d->printWcAndSrgs(info_md.get(d.getId()).getWcLatencyMs() , info_md.get(d.getId()).getFailureStates_wcLat() , info_md.get(d.getId()).getWcLatencyMs() + Configuration.precisionFactor > d.getMaximumAcceptableE2EWorstCaseLatencyInMs()) ,
+						d->printWcAndSrgs(info_md.get(d.getId()).getWcBlockingGbps() , info_md.get(d.getId()).getFailureStates_wcBlocking() , info_md.get(d.getId()).getWcBlockingGbps() > Configuration.precisionFactor) ,
+						d->printWcAndSrgs(info_md.get(d.getId()).getWcQoSViolationGbps() , info_md.get(d.getId()).getFailureStates_wcQosViolation() , info_md.get(d.getId()).getWcQoSViolationGbps() > Configuration.precisionFactor)
 						);
 				out.append("<tr>"); for (String h : headers) out.append("<th><b>" + h + "</b></th>"); out.append("</tr>"); 
 				for (MulticastDemand d : np.getMulticastDemands (layer))
 				{
 					out.append("<tr>");
-					for (Function<MulticastDemand,String> f : vals_md) out.append("<td>" + f.apply(d) + "</td>");
+					for (Function<MulticastDemand,String> f : vals_md) out.append(f.apply(d));
 					out.append("</tr>");
 				}
 				out.append("</table>");
@@ -397,17 +351,17 @@ public class Report_availability implements IReport
 				final List<String> headers = Arrays.asList("Link" , "Origin node" , "Destination node" , "Capacity",
 						"WC Carried traffic / involved SRGs");
 				final List<Function<Link , String>> vals_e = Arrays.asList(
-						d->d.getIndex () + "" ,
-						d->d.getOriginNode().getIndex() + "(" + d.getOriginNode().getName() + ")",
-						d->d.getDestinationNode().getIndex() + "(" + d.getDestinationNode().getName() + ")",
-						d->df_6.format(d.getCapacity()),
-						d->printWcAndSrgs(info_e.get(d.getId()).getWcCarriedTrafficGbps() , info_e.get(d.getId()).getFailureStates_wcCarriedTraffic())
+						d->"<td>" + d.getIndex () + "</td>" ,
+						d->"<td>" + d.getOriginNode().getIndex() + "(" + d.getOriginNode().getName() + ")" + "</td>",
+						d->"<td>" + d.getDestinationNode().getIndex() + "(" + d.getDestinationNode().getName() + ")" + "</td>",
+						d->"<td>" + df_6.format(d.getCapacity()) + "</td>",
+						d->printWcAndSrgs(info_e.get(d.getId()).getWcCarriedTrafficGbps() , info_e.get(d.getId()).getFailureStates_wcCarriedTraffic() , info_e.get(d.getId()).getWcCarriedTrafficGbps() + Configuration.precisionFactor > d.getCapacity())
 						);
 				out.append("<tr>"); for (String h : headers) out.append("<th><b>" + h + "</b></th>"); out.append("</tr>"); 
 				for (Link d : np.getLinks (layer))
 				{
 					out.append("<tr>");
-					for (Function<Link,String> f : vals_e) out.append("<td>" + f.apply(d) + "</td>");
+					for (Function<Link,String> f : vals_e) out.append(f.apply(d));
 					out.append("</tr>");
 				}
 				out.append("</table>");
@@ -421,15 +375,16 @@ public class Report_availability implements IReport
 
 	private static String printAvailability (double val , double pi_ne)
 	{
-		return dfAv.format(val) +" ... " + dfAv.format(Math.min(val + pi_ne, 1.0));
+		return "<td>" + dfAv.format(val) +" ... " + dfAv.format(Math.min(val + pi_ne, 1.0)) + "</td>";
 	}
-	private static String printWcAndSrgs (double val , Set<Set<SharedRiskGroup>> srgs)
+	private static String printWcAndSrgs (double val , Set<Set<SharedRiskGroup>> srgs , boolean highlight)
 	{
 		final StringBuffer st = new StringBuffer ();
 		if (val == Double.MAX_VALUE) st.append("Inf"); else st.append(df_6.format(val));
-		if (srgs.isEmpty()) return st.toString() + " (No Srg Info)";
-		if (srgs.contains(new HashSet<> ())) return st.toString() + " (" + srgs.size() + " states. E.g. no failure)";
-		return  st.toString()  + " (" + srgs.size() + " states. E.g. [" + srgs.iterator().next().stream().map(s->"Srg" + s.getIndex()).collect (Collectors.joining(","))+ "])";
+		if (srgs.isEmpty()) st.append (" (No Srg Info)");
+		else if (srgs.contains(new HashSet<> ())) st.append (" (" + srgs.size() + " states. E.g. no failure)");
+		else st.append (" (" + srgs.size() + " states. E.g. [" + srgs.iterator().next().stream().map(s->"Srg" + s.getIndex()).collect (Collectors.joining(","))+ "])");
+		if (highlight) return "<td bgcolor=\"Yellow\">" + st.toString() + "</td>"; else return "<td>" + st.toString() + "</td>";  
 	}
 
 	private static class PerDemandInfo
@@ -483,6 +438,46 @@ public class Report_availability implements IReport
 		}
 		public double getWcCarriedTrafficGbps  () { return wcCarriedTrafficGbps; }
 		public Set<Set<SharedRiskGroup>> getFailureStates_wcCarriedTraffic () { return failureStates_wcCarried; }
+	}
+
+	private void setFailureStateAndRunProvisioningAlgorithm (NetPlan auxNetPlan , Set<SharedRiskGroup> srgsThisFs_copyNp)
+	{
+		final Set<Link> linksToSetAsDown = new HashSet<Link> ();
+		final Set<Node> nodesToSetAsDown = new HashSet<Node> ();
+		for (SharedRiskGroup srg : srgsThisFs_copyNp)
+		{
+			nodesToSetAsDown.addAll (srg.getNodes ());
+			linksToSetAsDown.addAll (srg.getLinksAllLayers ());
+		}
+
+		/* Make the algorithm process the event of nodes and links down */
+		SimEvent.NodesAndLinksChangeFailureState failureInfo = new SimEvent.NodesAndLinksChangeFailureState(null , nodesToSetAsDown , null , linksToSetAsDown);
+		try
+		{
+			/* Apply the reaction algorithm */
+			algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , failureInfo));
+		}
+		catch (Throwable e)
+		{
+			try { ((Closeable) algorithm.getClass().getClassLoader()).close();  }
+			catch (Throwable e1) { e.printStackTrace();}					
+
+			throw (e);
+		}
+		
+		/* Only close the class loader if it is a different one than this class. If problems: just do not close the class loader, and wait for garbage collection*/
+		if (!this.getClass().getClassLoader().equals(algorithm.getClass().getClassLoader()))
+		{
+			try { ((Closeable) algorithm.getClass().getClassLoader()).close();	} catch (Throwable e1) { }					
+		}
+	}
+
+	private void setNonFailureStateAndRunProvisioningAlgorithm (NetPlan auxNetPlan)
+	{
+		final Set<Link> linksAllLayers = new HashSet<Link> (); for (NetworkLayer layer : auxNetPlan.getNetworkLayers()) linksAllLayers.addAll (auxNetPlan.getLinks (layer));
+		SimEvent.NodesAndLinksChangeFailureState failureInfo = new SimEvent.NodesAndLinksChangeFailureState(auxNetPlan.getNodes() , null , linksAllLayers , null);
+		algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , failureInfo));
+		
 	}
 
 	

@@ -196,7 +196,7 @@ public class IOVisum extends IOFilter
 			
 			
 			
-		} catch (Exception e) { e.printStackTrace(); new RuntimeException(e); } 
+		} catch (Exception e) { e.printStackTrace(); throw new RuntimeException(e); } 
 		
 //		try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)))
 // 		{
