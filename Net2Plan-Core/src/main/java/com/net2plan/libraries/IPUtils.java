@@ -12,11 +12,12 @@
 package com.net2plan.libraries;
 
 import java.util.ArrayList;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.Transformer;
@@ -657,6 +658,27 @@ public class IPUtils
 		final DoubleMatrix2D f_de = q.getFirst ();
 		netPlan.setForwardingRules(f_de , null , layer);
 	}
+	
+	/**
+	 * Sets the OSPF/ECMP forwarding rules in the given design, according to the 
+	 * given IGP weight setting. Any previous routing information (either source 
+	 * routing or hop-by-hop routing) will be removed. This method calls 
+	 * sequentually to {@code computeECMPForwardingRules} and {@code setForwardingRules} methods.
+	 * 
+	 * @param netPlan Network design
+	 * @param demandsToUpdate the demands to update. If null, all the layer demands
+	 * @param optionalLayer Network layer (optional)
+	 * @param linkWeightMap Cost per link vector
+	 */
+	public static void setECMPForwardingRulesFromLinkWeights(NetPlan netPlan, DoubleMatrix1D linkWeightMap , Set<Demand> demandsToUpdate , NetworkLayer ... optionalLayer)
+	{
+		final NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter(optionalLayer);
+		final Quadruple<DoubleMatrix2D, DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D> q = 
+				computeCarriedTrafficFromIGPWeights(netPlan, linkWeightMap , layer);
+		final DoubleMatrix2D f_de = q.getFirst ();
+		netPlan.setForwardingRules(f_de , demandsToUpdate , layer);
+	}
+
 	
 	/**
 	 * Sets the weight associated to the link.

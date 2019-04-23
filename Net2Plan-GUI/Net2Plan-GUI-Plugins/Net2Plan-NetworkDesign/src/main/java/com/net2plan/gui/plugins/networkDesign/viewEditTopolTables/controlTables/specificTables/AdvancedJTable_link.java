@@ -16,11 +16,14 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.swing.JComboBox;
@@ -47,6 +50,7 @@ import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.libraries.IPUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
@@ -120,6 +124,28 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
         		new AjtRcMenu("Link length as Euclidean distance", e->new FullMeshTopology(this , callback, true), (a, b)->true, null),
         		new AjtRcMenu("Link length as Haversine distance", e->new FullMeshTopology(this , callback, false), (a, b)->true, null)
         		)));
+        
+        res.add(new AjtRcMenu("Arrange selected links in bidirectional pairs", e->
+        {
+        	final SortedSet<Link> nonBidiLinks = getSelectedElements().stream().filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
+        	final Map<Pair<Node,Node> , Link> nodePair2link = new HashMap<>();
+        	for (Link ee : nonBidiLinks)
+        	{
+        		final Pair<Node,Node> pair = Pair.of(ee.getOriginNode() , ee.getDestinationNode());
+        		if (nodePair2link.containsKey(pair)) throw new Net2PlanException ("At most one link per node pair is allowed");
+        		nodePair2link.put(pair, ee);
+        	}
+        	for (Link ee : nonBidiLinks)
+        	{
+        		if (ee.isBidirectional()) continue;
+        		final Link opposite = nodePair2link.get(Pair.of(ee.getDestinationNode(), ee.getOriginNode()));
+        		if (opposite == null) continue;
+        		if (opposite.isBidirectional()) continue;
+        		ee.setBidirectionalPair(opposite);
+        	}
+        }
+        , (a,b)->b>0, null));
+
         res.add(new AjtRcMenu("Decouple selected links", e->getSelectedElements().forEach(dd->((Link)dd).decouple()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Create lower layer coupled demand from uncoupled links in selection", e->
         {
@@ -294,6 +320,86 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 {
             		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(np.getNodePairHaversineDistanceInKm(ee.getOriginNode(), ee.getDestinationNode())));
                 } , (a,b)->b>0, null)
+        		)));
+
+        res.add(new AjtRcMenu("Set IGP link weights of selected links", null , (a, b)->true, Arrays.asList( 
+        		new AjtRcMenu("as constant value", e->
+                {
+                    DialogBuilder.launch(
+                            "Set IGP weight as constant value" , 
+                            "Please introduce the IGP weight for the selected links. Non-positive values are not allowed.", 
+                            "", 
+                            this, 
+                            Arrays.asList(InputForDialog.inputTfDouble("IGP weight", "Introduce the IGP weight for selected links", 10, 1.0)),
+                            (list)->
+                            	{
+                            		final double newLinWeight = (Double) list.get(0).get();
+                            		if (newLinWeight <= 0) throw new Net2PlanException ("IGP weights must be strictly positive");
+                            		getSelectedElements().stream().forEach(ee->IPUtils.setLinkWeight(ee, newLinWeight));
+                            		IPUtils.setECMPForwardingRulesFromLinkWeights(np, null);
+                            	}
+                            );
+                } , (a,b)->b>0, null) , 
+        		new AjtRcMenu("proportional to link latency", e->
+                {
+                    DialogBuilder.launch(
+                            "Set IGP weight proportional to latency" , 
+                            "Please introduce the information required for computing the IGP weight.", 
+                            "", 
+                            this, 
+                            Arrays.asList(
+                            		InputForDialog.inputTfDouble("IGP weight to links of minimum latency", "Introduce the IGP weight to assign to the links of the minimum latency among the selected ones. IGP weight must be strictly positive.", 10, 1.0),
+                            		InputForDialog.inputTfDouble("IGP weight to links of maximum latency", "Introduce the IGP weight to assign to the links of the maximum latency among the selected ones, IGP weight must be strictly positive.", 10, 10.0),
+                            		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
+                            		),
+                            (list)->
+                            	{
+                                	final double minLatency = getSelectedElements().stream().mapToDouble(ee->ee.getPropagationDelayInMs()).min().orElse(0.0);
+                                	final double maxLatency = getSelectedElements().stream().mapToDouble(ee->ee.getPropagationDelayInMs()).max().orElse(0.0);
+                                	final double difLatency = maxLatency - minLatency;
+                            		final double minLatencyWeight = (Double) list.get(0).get();
+                            		final double maxLatencyWeight = (Double) list.get(1).get();
+                            		final boolean roundToInteger = (Boolean) list.get(2).get();
+                            		final double difWeight = maxLatencyWeight - minLatencyWeight;
+                            		if (minLatencyWeight <= 0 || maxLatencyWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                        			for (Link ee : getSelectedElements())
+                        			{
+                        				double linkWeight = difLatency == 0? minLatencyWeight : minLatencyWeight + difWeight * (ee.getPropagationDelayInMs() - minLatency) / difLatency;  
+                        				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
+                        				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                        				IPUtils.setLinkWeight(ee, linkWeight);
+                        			}
+                            		IPUtils.setECMPForwardingRulesFromLinkWeights(np, null);
+                            	}
+                            );
+                } , (a,b)->b>0, null) ,
+        		new AjtRcMenu("inversely proportional to capacity", e->
+                {
+                    DialogBuilder.launch(
+                            "Set IGP weight inversely proportional to link capacity" , 
+                            "Please introduce the information required for computing the IGP weight.", 
+                            "", 
+                            this, 
+                            Arrays.asList(
+                            		InputForDialog.inputTfDouble("Reference bandwidth (to assign IGP weight one)", "Introduce the reference bandwidth (REFBW), measured in the same units as the traffic. IGP weight of link of capacity c is REFBW/c. REFBW must be positive", 10, 0.1),
+                            		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
+                            		),
+                            (list)->
+                            	{
+                            		final double refBw = (Double) list.get(0).get();
+                            		final boolean roundToInteger = (Boolean) list.get(1).get();
+                            		if (refBw <= 0) throw new Net2PlanException ("The reference bandwidth must be positive");
+                        			for (Link ee : getSelectedElements())
+                        			{
+                        				double linkWeight = ee.getCapacity() == 0? Double.MAX_VALUE : refBw / ee.getCapacity();  
+                        				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
+                        				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                        				IPUtils.setLinkWeight(ee, linkWeight);
+                        			}
+                            		IPUtils.setECMPForwardingRulesFromLinkWeights(np, null);
+                            	}
+                            );
+                } , (a,b)->b>0, null) 
         		)));
 
         res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(

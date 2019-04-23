@@ -40,6 +40,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
@@ -1276,32 +1277,53 @@ public class GraphUtils
 	 * @param egressNode egress node
 	 * @return see above
 	 */
-	public static Pair<Double,Double> computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess (SortedMap<Link,Double> frs , SortedMap<Node,SortedSet<Link>> outFrs , Node ingressNode , Node egressNode)
+	public static double computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess (int typeOfMetric_0Latemcy_1Length_2Hops , SortedMap<Link,Double> frs , SortedMap<Node,SortedSet<Link>> outFrs , Node ingressNode , Node egressNode)
 	{
-		final SortedMap<Node,Pair<Double,Double>> inNodes = new TreeMap<> ();
-		final SortedSet<Node> nonEgressNodesReceivingLinks = new TreeSet<> (); 
-		inNodes.put(ingressNode, Pair.of(0.0, 0.0));
+		final SortedMap<Node,Link> inNodesAndPrevLinkInLongestPath_latLengthHops = new TreeMap<> ();
+		final BiFunction<Node , Integer , Double> longestPathSoFarIngressToNode = (n,type012) -> 
+		{
+			double accumCost = 0;
+			int numHops = 0;
+			Node currentNode = n; 
+			while (true)
+			{
+				final Link prevLink = inNodesAndPrevLinkInLongestPath_latLengthHops.get(currentNode);
+				if (prevLink == null) return Double.MAX_VALUE;
+				if (type012 == 0)
+					accumCost += prevLink.getPropagationDelayInMs ();
+				else if (type012 == 1) 
+					accumCost += prevLink.getLengthInKm();
+				else  
+					accumCost += 1;
+				numHops ++;
+				currentNode = prevLink.getOriginNode();
+				if (currentNode.equals(ingressNode)) break;
+				if (numHops > inNodesAndPrevLinkInLongestPath_latLengthHops.size() + 2) throw new RuntimeException();
+			}
+			return accumCost;
+		};
+
+		final SortedSet<Node> currentNodes = new TreeSet<> ();
+		currentNodes.add(ingressNode);
 		do
 		{
-			for (Node n : new ArrayList<> (inNodes.keySet()))
+			for (Node n : new ArrayList<> (currentNodes))
 			{
-				if (n == egressNode)
+				if (n.equals(egressNode))
 				{
 					final SortedSet<Link> outFrsEgressNode = outFrs.get(n);
 					if (outFrsEgressNode == null) continue;
 					/* check if there are outgoing links of the egress node carrying traffic => cycle */
 					for (Link e : outFrsEgressNode) 
 					    if (frs.get(e) > 0) 
-					        return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
+					        return Double.MAX_VALUE;
+					currentNodes.remove(egressNode);
+					if (currentNodes.isEmpty()) return longestPathSoFarIngressToNode.apply(egressNode, typeOfMetric_0Latemcy_1Length_2Hops);
 					continue;
 				}
 				
-				/* If the node already received an input link (or is the ingress for the second time) => cycle */
-				if (nonEgressNodesReceivingLinks.add(n) == false) 
-				    return Pair.of(Double.MAX_VALUE,Double.MAX_VALUE);
-				
 				/* Usual loop */
-				final Pair<Double,Double> wcSoFar = inNodes.get(n);
+				final Link wcSoFarToCurrentNode = inNodesAndPrevLinkInLongestPath_latLengthHops.get(n);
 				final SortedSet<Link> outgoingFrsThisNode = outFrs == null? new TreeSet<> (frs.keySet()) : outFrs.get(n);
 				if (outgoingFrsThisNode != null) 
 					for (Link e : outgoingFrsThisNode)
@@ -1309,24 +1331,38 @@ public class GraphUtils
 						final Double splitFactor = frs.get(e);
 						if (splitFactor == null) continue;
 						if (splitFactor == 0) continue;
-						final double thisPathCost_wc = wcSoFar.getFirst() + e.getPropagationDelayInMs();
-						final double thisPathCost_length = wcSoFar.getSecond() + e.getLengthInKm();
-						if (inNodes.containsKey(e.getDestinationNode()))
-							inNodes.put(e.getDestinationNode(), Pair.of(Math.max(inNodes.get(e.getDestinationNode()).getFirst() , thisPathCost_wc) , 
-											Math.max(inNodes.get(e.getDestinationNode()).getSecond() , thisPathCost_length)));
+						final double thisPathCost;
+						if (typeOfMetric_0Latemcy_1Length_2Hops == 0) thisPathCost = (wcSoFarToCurrentNode == null? 0 : longestPathSoFarIngressToNode.apply(n, typeOfMetric_0Latemcy_1Length_2Hops)) + e.getPropagationDelayInMs();
+						else if (typeOfMetric_0Latemcy_1Length_2Hops == 1) thisPathCost = (wcSoFarToCurrentNode == null? 0 : longestPathSoFarIngressToNode.apply(n, typeOfMetric_0Latemcy_1Length_2Hops)) + e.getLengthInKm();
+						else 
+						{
+							final int numHopsThisLink = 1;
+							thisPathCost = (wcSoFarToCurrentNode == null? 0 : longestPathSoFarIngressToNode.apply(n, typeOfMetric_0Latemcy_1Length_2Hops)) + numHopsThisLink;
+						}
+						final Node nextNode = e.getDestinationNode();
+						if (inNodesAndPrevLinkInLongestPath_latLengthHops.containsKey(nextNode))
+						{
+							if (thisPathCost > longestPathSoFarIngressToNode.apply(nextNode , typeOfMetric_0Latemcy_1Length_2Hops))
+								inNodesAndPrevLinkInLongestPath_latLengthHops.put(nextNode, e);	
+						}
 						else
-							inNodes.put(e.getDestinationNode(), Pair.of(thisPathCost_wc , thisPathCost_length));
+							inNodesAndPrevLinkInLongestPath_latLengthHops.put(nextNode, e);
+						currentNodes.add(e.getDestinationNode());
 					}
-				
-				inNodes.remove(n);
+				currentNodes.remove(n);
 			}
 			
-			if (inNodes.isEmpty()) 
-			    return Pair.of(Double.MAX_VALUE , Double.MAX_VALUE); // PABLO: here it appears
-			if ((inNodes.size() == 1) && (inNodes.keySet().iterator().next() == egressNode)) return inNodes.get(egressNode);
+			if (currentNodes.isEmpty()) 
+			    return longestPathSoFarIngressToNode.apply(egressNode , typeOfMetric_0Latemcy_1Length_2Hops);
+			if ((currentNodes.size() == 1) && (currentNodes.iterator().next().equals(egressNode))) 
+				return longestPathSoFarIngressToNode.apply(egressNode , typeOfMetric_0Latemcy_1Length_2Hops);
 		} while (true);
 	}
 
+	
+	
+	
+	
 	
 	
 	/**
@@ -1365,9 +1401,10 @@ public class GraphUtils
 		}
 		catch(IllegalArgumentException e) { return Quintuple.of (null , RoutingCycleType.CLOSED_CYCLES , s_n , Double.MAX_VALUE , Double.MAX_VALUE) ; }
 		
-		Pair<Double,Double> wcPropAndLength = computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(frs, outFrs, ingressNode, egressNode);
-		final RoutingCycleType routingCycleType = wcPropAndLength.getFirst() == Double.MAX_VALUE? RoutingCycleType.OPEN_CYCLES : RoutingCycleType.LOOPLESS;
-		return Quintuple.of(Mv, routingCycleType , s_n , wcPropAndLength.getFirst() , wcPropAndLength.getSecond());
+		final double wcProp = computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(0, frs, outFrs, ingressNode, egressNode);
+		final double wcLength = computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(1, frs, outFrs, ingressNode, egressNode);
+		final RoutingCycleType routingCycleType = wcProp == Double.MAX_VALUE? RoutingCycleType.OPEN_CYCLES : RoutingCycleType.LOOPLESS;
+		return Quintuple.of(Mv, routingCycleType , s_n , wcProp , wcLength);
 	}
 
 	

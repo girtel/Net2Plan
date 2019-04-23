@@ -112,6 +112,7 @@ public class Offline_fa_ospfWeightOptimization_GRASP implements IAlgorithm
 		stat_objFunction.printToFile(new File (algorithm_outputFileNameRoot.getString () + "_D" + grasp_differenceInWeightToBeNeighbors.getInt () + "_cong.txt"));
 
 		IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, bestSol);
+		for (Link e : netPlan.getLinks()) IPUtils.setLinkWeight(e, bestSol.get(e.getIndex()));
 
 		System.out.println("Ok! Best solution OF: " + bestObjFunction);
 		return "Ok! Best OF: " + bestObjFunction;

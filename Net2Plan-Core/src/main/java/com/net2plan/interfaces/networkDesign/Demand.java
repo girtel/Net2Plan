@@ -448,9 +448,11 @@ public class Demand extends NetworkElement implements IMonitorizableElement
 	 */
 	public double getWorstCaseLengthInKm ()
 	{
+		if (this.isSourceRouting())
+			return getRoutes().stream().mapToDouble(r->r.getLengthInKm()).max().orElse(Double.MAX_VALUE);
 		return cache_worstCaseLengthInKm;
 	}
-	
+
 	/**
 	 * <p>Returns the worse case end-to-end propagation time of the demand traffic. If the routing is source routing, this is the worse propagation time
 	 * (summing the link latencies) for all the routes carrying traffic. If the routing is hop-by-hop and loopless, the paths followed are computed and 
@@ -461,6 +463,8 @@ public class Demand extends NetworkElement implements IMonitorizableElement
 	 * */
 	public double getWorstCasePropagationTimeInMs ()
 	{
+		if (this.isSourceRouting())
+			return getRoutes().stream().mapToDouble(r->r.getPropagationDelayInMiliseconds()).max().orElse(Double.MAX_VALUE);
 		return cache_worstCasePropagationTimeMs;
 	}
 

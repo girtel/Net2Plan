@@ -1,60 +1,149 @@
-<?xml version="1.0" encoding="utf-8"?><network description="National Science Foundation (NSF) Network with 14 nodes and 42 unidirectional links, including a demand set. Shortest-path routing (measured in hops) is used. Then, with 1+1 link-disjoint dedicated protection is computed&#10;&#10;Source: R. Ramaswami, K.N. Sivarajan, &quot;Design of Logical Topologies for Wavelength-routed Optical Networks,&quot; IEEE Journal on Selected Areas in Communications, vol. 14, no. 5, pp. 840-851, June 1996" name="NSFNet">
-    <physicalTopology>
-        <node name="Seattle (WA)" population="620778" timezone="-8" xCoord="-122.2916667" yCoord="47.6583333"/>
-        <node name="Palo Alto (CA)" population="65412" timezone="-8" xCoord="-122.1633333" yCoord="37.4416667"/>
-        <node name="San Diego (CA)" population="1326000" timezone="-8" xCoord="-117.2388889" yCoord="32.8852778"/>
-        <node name="Salt Lake City (UT)" population="189899" timezone="-7" xCoord="-111.8427778" yCoord="40.7683333"/>
-        <node name="Boulder (CO)" population="98889" timezone="-7" xCoord="-105.2747222" yCoord="39.9775000"/>
-        <node name="Houston (TX)" population="2145000" timezone="-6" xCoord="-95.3602778" yCoord="29.7572222"/>
-        <node name="Lincoln (NE)" population="262341" timezone="-6" xCoord="-96.6969444" yCoord="40.8230556"/>
-        <node name="Urbana-Champaign (IL)" population="81291" timezone="-6" xCoord="-88.2266667" yCoord="40.1130556"/>
-        <node name="Pittsburgh (PA)" population="307484" timezone="-5" xCoord="-80" yCoord="40.4386111"/>
-        <node name="Atlanta (GA)" population="432427" timezone="-5" xCoord="-84.383300" yCoord="33.750000"/>
-        <node name="Ann Arbor (MI)" population="114925" timezone="-5" xCoord="-83.7144444" yCoord="42.2888889"/>
-        <node name="Ithaca (NY)" population="30054" timezone="-5" xCoord="-76.4766667" yCoord="42.4436111"/>
-        <node name="Princeton (NJ)" population="28572" timezone="-5" xCoord="-74.6516667" yCoord="40.3500000"/>
-        <node name="College Park (MD)" population="30587" timezone="-5" xCoord="-76.9416667" yCoord="38.9902778"/>
-        <link destinationNodeId="1" linkCapacityInErlangs="500.0" linkLengthInKm="1100.0" originNodeId="0"/>
-        <link destinationNodeId="2" linkCapacityInErlangs="500.0" linkLengthInKm="1600.0" originNodeId="0"/>
-        <link destinationNodeId="7" linkCapacityInErlangs="500.0" linkLengthInKm="2800.0" originNodeId="0"/>
-        <link destinationNodeId="0" linkCapacityInErlangs="500.0" linkLengthInKm="1100.0" originNodeId="1"/>
-        <link destinationNodeId="2" linkCapacityInErlangs="500.0" linkLengthInKm="600.0" originNodeId="1"/>
-        <link destinationNodeId="3" linkCapacityInErlangs="500.0" linkLengthInKm="1000.0" originNodeId="1"/>
-        <link destinationNodeId="0" linkCapacityInErlangs="500.0" linkLengthInKm="1600.0" originNodeId="2"/>
-        <link destinationNodeId="1" linkCapacityInErlangs="500.0" linkLengthInKm="600.0" originNodeId="2"/>
-        <link destinationNodeId="5" linkCapacityInErlangs="500.0" linkLengthInKm="2000.0" originNodeId="2"/>
-        <link destinationNodeId="1" linkCapacityInErlangs="500.0" linkLengthInKm="1000.0" originNodeId="3"/>
-        <link destinationNodeId="4" linkCapacityInErlangs="500.0" linkLengthInKm="600.0" originNodeId="3"/>
-        <link destinationNodeId="10" linkCapacityInErlangs="500.0" linkLengthInKm="2400.0" originNodeId="3"/>
-        <link destinationNodeId="3" linkCapacityInErlangs="500.0" linkLengthInKm="600.0" originNodeId="4"/>
-        <link destinationNodeId="5" linkCapacityInErlangs="500.0" linkLengthInKm="1100.0" originNodeId="4"/>
-        <link destinationNodeId="6" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="4"/>
-        <link destinationNodeId="2" linkCapacityInErlangs="500.0" linkLengthInKm="2000.0" originNodeId="5"/>
-        <link destinationNodeId="4" linkCapacityInErlangs="500.0" linkLengthInKm="1100.0" originNodeId="5"/>
-        <link destinationNodeId="9" linkCapacityInErlangs="500.0" linkLengthInKm="1200.0" originNodeId="5"/>
-        <link destinationNodeId="13" linkCapacityInErlangs="500.0" linkLengthInKm="2000.0" originNodeId="5"/>
-        <link destinationNodeId="4" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="6"/>
-        <link destinationNodeId="7" linkCapacityInErlangs="500.0" linkLengthInKm="700.0" originNodeId="6"/>
-        <link destinationNodeId="0" linkCapacityInErlangs="500.0" linkLengthInKm="2800.0" originNodeId="7"/>
-        <link destinationNodeId="6" linkCapacityInErlangs="500.0" linkLengthInKm="700.0" originNodeId="7"/>
-        <link destinationNodeId="8" linkCapacityInErlangs="500.0" linkLengthInKm="700.0" originNodeId="7"/>
-        <link destinationNodeId="7" linkCapacityInErlangs="500.0" linkLengthInKm="700.0" originNodeId="8"/>
-        <link destinationNodeId="9" linkCapacityInErlangs="500.0" linkLengthInKm="900.0" originNodeId="8"/>
-        <link destinationNodeId="11" linkCapacityInErlangs="500.0" linkLengthInKm="500.0" originNodeId="8"/>
-        <link destinationNodeId="12" linkCapacityInErlangs="500.0" linkLengthInKm="500.0" originNodeId="8"/>
-        <link destinationNodeId="5" linkCapacityInErlangs="500.0" linkLengthInKm="1200.0" originNodeId="9"/>
-        <link destinationNodeId="8" linkCapacityInErlangs="500.0" linkLengthInKm="900.0" originNodeId="9"/>
-        <link destinationNodeId="3" linkCapacityInErlangs="500.0" linkLengthInKm="2400.0" originNodeId="10"/>
-        <link destinationNodeId="11" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="10"/>
-        <link destinationNodeId="12" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="10"/>
-        <link destinationNodeId="8" linkCapacityInErlangs="500.0" linkLengthInKm="500.0" originNodeId="11"/>
-        <link destinationNodeId="10" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="11"/>
-        <link destinationNodeId="13" linkCapacityInErlangs="500.0" linkLengthInKm="300.0" originNodeId="11"/>
-        <link destinationNodeId="8" linkCapacityInErlangs="500.0" linkLengthInKm="500.0" originNodeId="12"/>
-        <link destinationNodeId="10" linkCapacityInErlangs="500.0" linkLengthInKm="800.0" originNodeId="12"/>
-        <link destinationNodeId="13" linkCapacityInErlangs="500.0" linkLengthInKm="300.0" originNodeId="12"/>
-        <link destinationNodeId="5" linkCapacityInErlangs="500.0" linkLengthInKm="2000.0" originNodeId="13"/>
-        <link destinationNodeId="11" linkCapacityInErlangs="500.0" linkLengthInKm="300.0" originNodeId="13"/>
-        <link destinationNodeId="12" linkCapacityInErlangs="500.0" linkLengthInKm="300.0" originNodeId="13"/>
-    </physicalTopology>
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="National Science Foundation (NSF) Network with 14 nodes and 42 unidirectional links, including a demand set. Shortest-path routing (measured in hops) is used. Then, with 1+1 link-disjoint dedicated protection is computed&#xa;&#xa;Source: R. Ramaswami, K.N. Sivarajan, &quot;Design of Logical Topologies for Wavelength-routed Optical Networks,&quot; IEEE Journal on Selected Areas in Communications, vol. 14, no. 5, pp. 840-851, June 1996" name="NSFNet" currentDate="1556011645127" currentPlotNodeLayout="" cache_definedPlotNodeLayouts="" version="6" nextElementId="58">
+	<node id="2" description="" name="Seattle (WA)" xCoord="-122.2916667" yCoord="47.6583333" mapLayout2NodeXYPositionMap=" -122.2916667 47.6583333" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="620778"/>
+		<attribute key="timezone" value="-8"/>
+	</node>
+	<node id="3" description="" name="Palo Alto (CA)" xCoord="-122.1633333" yCoord="37.4416667" mapLayout2NodeXYPositionMap=" -122.1633333 37.4416667" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="65412"/>
+		<attribute key="timezone" value="-8"/>
+	</node>
+	<node id="4" description="" name="San Diego (CA)" xCoord="-117.2388889" yCoord="32.8852778" mapLayout2NodeXYPositionMap=" -117.2388889 32.8852778" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="1326000"/>
+		<attribute key="timezone" value="-8"/>
+	</node>
+	<node id="5" description="" name="Salt Lake City (UT)" xCoord="-111.8427778" yCoord="40.7683333" mapLayout2NodeXYPositionMap=" -111.8427778 40.7683333" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="189899"/>
+		<attribute key="timezone" value="-7"/>
+	</node>
+	<node id="6" description="" name="Boulder (CO)" xCoord="-105.2747222" yCoord="39.9775" mapLayout2NodeXYPositionMap=" -105.2747222 39.9775" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="98889"/>
+		<attribute key="timezone" value="-7"/>
+	</node>
+	<node id="7" description="" name="Houston (TX)" xCoord="-95.3602778" yCoord="29.7572222" mapLayout2NodeXYPositionMap=" -95.3602778 29.7572222" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="2145000"/>
+		<attribute key="timezone" value="-6"/>
+	</node>
+	<node id="8" description="" name="Lincoln (NE)" xCoord="-96.6969444" yCoord="40.8230556" mapLayout2NodeXYPositionMap=" -96.6969444 40.8230556" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="262341"/>
+		<attribute key="timezone" value="-6"/>
+	</node>
+	<node id="9" description="" name="Urbana-Champaign (IL)" xCoord="-88.2266667" yCoord="40.1130556" mapLayout2NodeXYPositionMap=" -88.2266667 40.1130556" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="81291"/>
+		<attribute key="timezone" value="-6"/>
+	</node>
+	<node id="10" description="" name="Pittsburgh (PA)" xCoord="-80.0" yCoord="40.4386111" mapLayout2NodeXYPositionMap=" -80.0 40.4386111" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="307484"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<node id="11" description="" name="Atlanta (GA)" xCoord="-84.3833" yCoord="33.75" mapLayout2NodeXYPositionMap=" -84.3833 33.75" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="432427"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<node id="12" description="" name="Ann Arbor (MI)" xCoord="-83.7144444" yCoord="42.2888889" mapLayout2NodeXYPositionMap=" -83.7144444 42.2888889" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="114925"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<node id="13" description="" name="Ithaca (NY)" xCoord="-76.4766667" yCoord="42.4436111" mapLayout2NodeXYPositionMap=" -76.4766667 42.4436111" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="30054"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<node id="14" description="" name="Princeton (NJ)" xCoord="-74.6516667" yCoord="40.35" mapLayout2NodeXYPositionMap=" -74.6516667 40.35" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="28572"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<node id="15" description="" name="College Park (MD)" xCoord="-76.9416667" yCoord="38.9902778" mapLayout2NodeXYPositionMap=" -76.9416667 38.9902778" population="0.0" isUp="true" layersWithIconsDefined="">
+		<attribute key="population" value="30587"/>
+		<attribute key="timezone" value="-5"/>
+	</node>
+	<layer id="1" description="" name="Layer 0" isDefaultLayer="true" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<link id="16" description="" name="Link-0" originNodeId="2" destinationNodeId="3" capacity="500.0" lengthInKm="1100.0" bidirectionalPairId="19" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="17" description="" name="Link-1" originNodeId="2" destinationNodeId="4" capacity="500.0" lengthInKm="1600.0" bidirectionalPairId="22" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="18" description="" name="Link-2" originNodeId="2" destinationNodeId="9" capacity="500.0" lengthInKm="2800.0" bidirectionalPairId="37" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="19" description="" name="Link-3" originNodeId="3" destinationNodeId="2" capacity="500.0" lengthInKm="1100.0" bidirectionalPairId="16" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="20" description="" name="Link-4" originNodeId="3" destinationNodeId="4" capacity="500.0" lengthInKm="600.0" bidirectionalPairId="23" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="21" description="" name="Link-5" originNodeId="3" destinationNodeId="5" capacity="500.0" lengthInKm="1000.0" bidirectionalPairId="25" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="22" description="" name="Link-6" originNodeId="4" destinationNodeId="2" capacity="500.0" lengthInKm="1600.0" bidirectionalPairId="17" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="23" description="" name="Link-7" originNodeId="4" destinationNodeId="3" capacity="500.0" lengthInKm="600.0" bidirectionalPairId="20" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="24" description="" name="Link-8" originNodeId="4" destinationNodeId="7" capacity="500.0" lengthInKm="2000.0" bidirectionalPairId="31" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="25" description="" name="Link-9" originNodeId="5" destinationNodeId="3" capacity="500.0" lengthInKm="1000.0" bidirectionalPairId="21" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="26" description="" name="Link-10" originNodeId="5" destinationNodeId="6" capacity="500.0" lengthInKm="600.0" bidirectionalPairId="28" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="27" description="" name="Link-11" originNodeId="5" destinationNodeId="12" capacity="500.0" lengthInKm="2400.0" bidirectionalPairId="46" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="28" description="" name="Link-12" originNodeId="6" destinationNodeId="5" capacity="500.0" lengthInKm="600.0" bidirectionalPairId="26" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="29" description="" name="Link-13" originNodeId="6" destinationNodeId="7" capacity="500.0" lengthInKm="1100.0" bidirectionalPairId="32" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="30" description="" name="Link-14" originNodeId="6" destinationNodeId="8" capacity="500.0" lengthInKm="800.0" bidirectionalPairId="35" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="31" description="" name="Link-15" originNodeId="7" destinationNodeId="4" capacity="500.0" lengthInKm="2000.0" bidirectionalPairId="24" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="32" description="" name="Link-16" originNodeId="7" destinationNodeId="6" capacity="500.0" lengthInKm="1100.0" bidirectionalPairId="29" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="33" description="" name="Link-17" originNodeId="7" destinationNodeId="11" capacity="500.0" lengthInKm="1200.0" bidirectionalPairId="44" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="34" description="" name="Link-18" originNodeId="7" destinationNodeId="15" capacity="500.0" lengthInKm="2000.0" bidirectionalPairId="55" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="35" description="" name="Link-19" originNodeId="8" destinationNodeId="6" capacity="500.0" lengthInKm="800.0" bidirectionalPairId="30" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="36" description="" name="Link-20" originNodeId="8" destinationNodeId="9" capacity="500.0" lengthInKm="700.0" bidirectionalPairId="38" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="37" description="" name="Link-21" originNodeId="9" destinationNodeId="2" capacity="500.0" lengthInKm="2800.0" bidirectionalPairId="18" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="38" description="" name="Link-22" originNodeId="9" destinationNodeId="8" capacity="500.0" lengthInKm="700.0" bidirectionalPairId="36" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="39" description="" name="Link-23" originNodeId="9" destinationNodeId="10" capacity="500.0" lengthInKm="700.0" bidirectionalPairId="40" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="40" description="" name="Link-24" originNodeId="10" destinationNodeId="9" capacity="500.0" lengthInKm="700.0" bidirectionalPairId="39" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="41" description="" name="Link-25" originNodeId="10" destinationNodeId="11" capacity="500.0" lengthInKm="900.0" bidirectionalPairId="45" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="42" description="" name="Link-26" originNodeId="10" destinationNodeId="13" capacity="500.0" lengthInKm="500.0" bidirectionalPairId="49" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="43" description="" name="Link-27" originNodeId="10" destinationNodeId="14" capacity="500.0" lengthInKm="500.0" bidirectionalPairId="52" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="44" description="" name="Link-28" originNodeId="11" destinationNodeId="7" capacity="500.0" lengthInKm="1200.0" bidirectionalPairId="33" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="45" description="" name="Link-29" originNodeId="11" destinationNodeId="10" capacity="500.0" lengthInKm="900.0" bidirectionalPairId="41" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="46" description="" name="Link-30" originNodeId="12" destinationNodeId="5" capacity="500.0" lengthInKm="2400.0" bidirectionalPairId="27" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="47" description="" name="Link-31" originNodeId="12" destinationNodeId="13" capacity="500.0" lengthInKm="800.0" bidirectionalPairId="50" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="48" description="" name="Link-32" originNodeId="12" destinationNodeId="14" capacity="500.0" lengthInKm="800.0" bidirectionalPairId="53" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="49" description="" name="Link-33" originNodeId="13" destinationNodeId="10" capacity="500.0" lengthInKm="500.0" bidirectionalPairId="42" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="50" description="" name="Link-34" originNodeId="13" destinationNodeId="12" capacity="500.0" lengthInKm="800.0" bidirectionalPairId="47" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="51" description="" name="Link-35" originNodeId="13" destinationNodeId="15" capacity="500.0" lengthInKm="300.0" bidirectionalPairId="56" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="52" description="" name="Link-36" originNodeId="14" destinationNodeId="10" capacity="500.0" lengthInKm="500.0" bidirectionalPairId="43" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="53" description="" name="Link-37" originNodeId="14" destinationNodeId="12" capacity="500.0" lengthInKm="800.0" bidirectionalPairId="48" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="54" description="" name="Link-38" originNodeId="14" destinationNodeId="15" capacity="500.0" lengthInKm="300.0" bidirectionalPairId="57" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="55" description="" name="Link-39" originNodeId="15" destinationNodeId="7" capacity="500.0" lengthInKm="2000.0" bidirectionalPairId="34" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="56" description="" name="Link-40" originNodeId="15" destinationNodeId="13" capacity="500.0" lengthInKm="300.0" bidirectionalPairId="51" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<link id="57" description="" name="Link-41" originNodeId="15" destinationNodeId="14" capacity="500.0" lengthInKm="300.0" bidirectionalPairId="54" propagationSpeedInKmPerSecond="200000.0" isUp="true" monitoredOrForecastedTraffics="" trafficPredictor="">
+		</link>
+		<sourceRouting>
+		</sourceRouting>
+		<hopByHopRouting>
+		</hopByHopRouting>
+	</layer>
 </network>

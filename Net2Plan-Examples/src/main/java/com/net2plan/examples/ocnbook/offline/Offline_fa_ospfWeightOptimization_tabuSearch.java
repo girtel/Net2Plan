@@ -185,6 +185,7 @@ public class Offline_fa_ospfWeightOptimization_tabuSearch implements IAlgorithm
 		} 
 
 		IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, bestSol);
+		for (Link e : netPlan.getLinks()) IPUtils.setLinkWeight(e, bestSol.get(e.getIndex()));
 
 		final String completeFileName = algorithm_outputFileNameRoot.getString () + "_0" + ((int) (10*ts_tabuListSizeAsFractionOfLinks.getDouble())) + ((ts_aspirationCriterion.getBoolean())? "_asp" : "_noasp"); 
 		stat_objFunction.printToFile(new File (completeFileName + "_cong.txt"));

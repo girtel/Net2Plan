@@ -69,7 +69,8 @@ public class Report_availability implements IReport
 	private InputParameter defaultMTTFInHours = new InputParameter ("defaultMTTFInHours" , (double) 8748 , "Default value for Mean Time To Fail (hours)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter defaultMTTRInHours = new InputParameter ("defaultMTTRInHours" , (double) 12 , "Default value for Mean Time To Repair (hours)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter failureModel = new InputParameter ("failureModel" , "#select# perBidirectionalLinkBundle SRGfromNetPlan perNode perLink perDirectionalLinkBundle" , "Failure model selection: SRGfromNetPlan, perNode, perLink, perDirectionalLinkBundle, perBidirectionalLinkBundle");
-	
+	private InputParameter capacityAnalysys_maximumLinkUtilization = new InputParameter ("capacityAnalysys_maximumLinkUtilization" , (double) 0.9 , "Maximum accepted link utilization, this value is used for reporting the minimum capacity requirements" , 0 , false , Double.MAX_VALUE , true);
+	private InputParameter capacityAnalysys_bidrectionalLinksRequisite = new InputParameter ("capacityAnalysys_bidrectionalLinksRequisite" , true , "If true, the capacity requisite of bidirectional links, is the maximum between both directions");
 	
 	private Map<Long , PerDemandInfo> info_d = new HashMap<> ();
 	private Map<Long , PerDemandInfo> info_md = new HashMap<> ();
@@ -270,6 +271,7 @@ public class Report_availability implements IReport
 				out.append ("<li>UNICAST TRAFFIC: (Estimated) Weighted average of demands survivabilities: " + printAvailability(weightedSurv_d, pi_excess)  + "</li>");
 				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand availabilities: " + printAvailability(worstAv_d, pi_excess)   + "</li>");
 				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand survivabilities: " + printAvailability(worstSurv_d, pi_excess)   + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand latencies (ms): " + df_6.format(np.getDemands(layer).stream().mapToDouble(d->info_d.get(d.getId()).getWcLatencyMs()).max().orElse(0.0))  + "</li>");
 			}			
 			out.append ("<li>MULTICAST TRAFFIC: (Deterministic) Total offered traffic: " + df_6.format (totalOffered_md) + "</li>");
 			if (np.getNumberOfMulticastDemands(layer) != 0)
@@ -279,6 +281,7 @@ public class Report_availability implements IReport
 				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Weighted average of demands survivabilities: " + printAvailability(weightedSurv_md, pi_excess)  + "</li>");
 				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand availabilities: " + printAvailability(worstAv_md, pi_excess)   + "</li>");
 				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand survivabilities: " + printAvailability(worstSurv_md, pi_excess)   + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand latencies (ms): " + df_6.format(np.getDemands(layer).stream().mapToDouble(d->info_md.get(d.getId()).getWcLatencyMs()).max().orElse(0.0))  + "</li>");
 			}
 		}
 
@@ -349,13 +352,14 @@ public class Report_availability implements IReport
 			{
 				out.append("<table border='1'>");
 				final List<String> headers = Arrays.asList("Link" , "Origin node" , "Destination node" , "Capacity",
-						"WC Carried traffic / involved SRGs");
+						"WC Occupied capacity / involved SRGs" , "Capacity requirements");
 				final List<Function<Link , String>> vals_e = Arrays.asList(
 						d->"<td>" + d.getIndex () + "</td>" ,
 						d->"<td>" + d.getOriginNode().getIndex() + "(" + d.getOriginNode().getName() + ")" + "</td>",
 						d->"<td>" + d.getDestinationNode().getIndex() + "(" + d.getDestinationNode().getName() + ")" + "</td>",
 						d->"<td>" + df_6.format(d.getCapacity()) + "</td>",
-						d->printWcAndSrgs(info_e.get(d.getId()).getWcCarriedTrafficGbps() , info_e.get(d.getId()).getFailureStates_wcCarriedTraffic() , info_e.get(d.getId()).getWcCarriedTrafficGbps() + Configuration.precisionFactor > d.getCapacity())
+						d->printWcAndSrgs(info_e.get(d.getId()).getWcOccupiedCapacityGbps() , info_e.get(d.getId()).getFailureStates_wcOccupiedCapacity() , info_e.get(d.getId()).getWcOccupiedCapacityGbps() + Configuration.precisionFactor > d.getCapacity()),
+						d->"<td>" + df_6.format(getWcOccupiedCapacity(d)) + "</td>"
 						);
 				out.append("<tr>"); for (String h : headers) out.append("<th><b>" + h + "</b></th>"); out.append("</tr>"); 
 				for (Link d : np.getLinks (layer))
@@ -368,11 +372,19 @@ public class Report_availability implements IReport
 				out.append("<p></p><p></p>");
 			}			
 		}
-		
 		return out.toString();
 	}
 
+	private double getWcOccupiedCapacity (Link e) 
+	{ 
+		if (e.isBidirectional() && capacityAnalysys_bidrectionalLinksRequisite.getBoolean())
+			return info_e.get(e.getId()).getWcOccupiedCapacityGbps() / capacityAnalysys_maximumLinkUtilization.getDouble(); 
+		else
+			return Math.max(info_e.get(e.getId()).getWcOccupiedCapacityGbps(), info_e.get(e.getBidirectionalPair().getId()).getWcOccupiedCapacityGbps()) / capacityAnalysys_maximumLinkUtilization.getDouble();
+	}
 
+
+	
 	private static String printAvailability (double val , double pi_ne)
 	{
 		return "<td>" + dfAv.format(val) +" ... " + dfAv.format(Math.min(val + pi_ne, 1.0)) + "</td>";
@@ -387,7 +399,7 @@ public class Report_availability implements IReport
 		if (highlight) return "<td bgcolor=\"Yellow\">" + st.toString() + "</td>"; else return "<td>" + st.toString() + "</td>";  
 	}
 
-	private static class PerDemandInfo
+	private class PerDemandInfo
 	{
 		private double fractionOkTrafficNoFailure = 0;
 		private double av = 0, surv = 0, wcLatMs = 0.0, wcOversubsGbps = 0.0 , wcBlockingGbps = 0.0;
@@ -426,18 +438,18 @@ public class Report_availability implements IReport
 		public Set<Set<SharedRiskGroup>> getFailureStates_wcBlocking () { return failureStates_wcBlocking; }
 		public double getFractionOkTrafficNoFailure () { return fractionOkTrafficNoFailure; }
 	}
-	private static class PerLinkInfo
+	private class PerLinkInfo
 	{
-		private double wcCarriedTrafficGbps = 0;
-		private Set<Set<SharedRiskGroup>> failureStates_wcCarried = new HashSet<> ();
+		private double wcOccupiedCapacityGbps = 0;
+		private Set<Set<SharedRiskGroup>> failureStates_wcOccupiedCapacity = new HashSet<> ();
 		public void update (Link e ,  Set<SharedRiskGroup> srgs)
 		{
-			final double carriedGbps = e.getCarriedTraffic();
-			if (carriedGbps > wcCarriedTrafficGbps) { wcCarriedTrafficGbps = carriedGbps; failureStates_wcCarried = new HashSet<> (Arrays.asList(srgs)); }
-			else if (carriedGbps == wcCarriedTrafficGbps) { failureStates_wcCarried.add(srgs); }
+			final double occupiedCapacityGbps = e.getOccupiedCapacity();
+			if (occupiedCapacityGbps > wcOccupiedCapacityGbps) { wcOccupiedCapacityGbps = occupiedCapacityGbps; failureStates_wcOccupiedCapacity = new HashSet<> (Arrays.asList(srgs)); }
+			else if (occupiedCapacityGbps == wcOccupiedCapacityGbps) { failureStates_wcOccupiedCapacity.add(srgs); }
 		}
-		public double getWcCarriedTrafficGbps  () { return wcCarriedTrafficGbps; }
-		public Set<Set<SharedRiskGroup>> getFailureStates_wcCarriedTraffic () { return failureStates_wcCarried; }
+		public double getWcOccupiedCapacityGbps  () { return wcOccupiedCapacityGbps; }
+		public Set<Set<SharedRiskGroup>> getFailureStates_wcOccupiedCapacity () { return failureStates_wcOccupiedCapacity; }
 	}
 
 	private void setFailureStateAndRunProvisioningAlgorithm (NetPlan auxNetPlan , Set<SharedRiskGroup> srgsThisFs_copyNp)

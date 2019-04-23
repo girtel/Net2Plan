@@ -1306,9 +1306,8 @@ public class Link extends NetworkElement implements IMonitorizableElement
 		for (Demand d : demandsToUpdate) 
 			if (d.routingCycleType == RoutingCycleType.LOOPLESS)
 			{
-				final Pair<Double,Double> p = GraphUtils.computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(d.cacheHbH_frs, d.cacheHbH_linksPerNodeWithNonZeroFr, d.ingressNode, d.egressNode);
-				d.cache_worstCasePropagationTimeMs = p.getFirst();
-				d.cache_worstCaseLengthInKm = p.getSecond();
+				d.cache_worstCasePropagationTimeMs = GraphUtils.computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(0 , d.cacheHbH_frs, d.cacheHbH_linksPerNodeWithNonZeroFr, d.ingressNode, d.egressNode);
+				d.cache_worstCaseLengthInKm = GraphUtils.computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess(1 , d.cacheHbH_frs, d.cacheHbH_linksPerNodeWithNonZeroFr, d.ingressNode, d.egressNode);
 				if (d.coupledUpperOrSameLayerLink != null)
 					d.coupledUpperOrSameLayerLink.updateWorstCasePropagationTraversingUnicastDemandsAndMaybeRoutes();
 			}

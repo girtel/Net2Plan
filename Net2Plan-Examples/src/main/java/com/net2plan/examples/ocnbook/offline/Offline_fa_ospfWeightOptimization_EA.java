@@ -122,6 +122,7 @@ public class Offline_fa_ospfWeightOptimization_EA implements IAlgorithm
 
 		/* Save the best solution found into the netPlan object */
 		IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, bestSol);
+		for (Link e : netPlan.getLinks()) IPUtils.setLinkWeight(e, bestSol.get(e.getIndex()));
 
 		stat_objFunction.printToFile(new File (algorithm_outputFileNameRoot.getString () + "_cong.txt"));
 		stat_avEntropy.printToFile(new File (algorithm_outputFileNameRoot.getString () + "_entropy.txt"));

@@ -22,13 +22,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -93,7 +96,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
       res.add(new AjtColumnInfo<Demand>(this , Link.class, null , "Link coupled", "The link that this demand is coupled to (in this or other layer)", null , d->d.getCoupledLink() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Offered traffic (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Offered traffic by the demand", (d,val)->d.setOfferedTraffic((Double) val), d->d.getOfferedTraffic() , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Carried traffic (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Carried traffic by the demand", null , d->d.getCarriedTraffic() , AGTYPE.SUMDOUBLE , null));
-      res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->d.getOfferedTraffic() == 0? 0 : d.getBlockedTraffic() / d.getOfferedTraffic() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > 0? Color.RED : Color.GREEN));
+      res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->d.getOfferedTraffic() == 0? 0 : d.getBlockedTraffic() / d.getOfferedTraffic() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > Configuration.precisionFactor? Color.RED : Color.GREEN));
       res.add(new AjtColumnInfo<Demand>(this , String.class, null , "QoS type", "A used-defined string identifying the type of traffic of the demand", (d,val)-> d.setQoSType((String)val) , d->d.getQosType(), AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Demand>(this , String.class, null , "WC Oversubscription", "The worst case, among all the traversed links, of the amount of traffic of this demand that is oversubscribed", null , d->d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getSecond()).max().orElse(0.0), AGTYPE.NOAGGREGATION , d-> d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getSecond()).max().orElse(0.0) > Configuration.precisionFactor? Color.red : Color.green));
       res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "Source routing?", "", (d,val)->d.setRoutingType((Boolean) val? RoutingType.SOURCE_ROUTING : RoutingType.HOP_BY_HOP_ROUTING), d->d.isSourceRouting() , AGTYPE.COUNTTRUE , null));
@@ -118,6 +121,26 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
         final List<AjtRcMenu> res = new ArrayList<> ();
         res.add(new AjtRcMenu("Add demand", e->createLinkDemandGUI(NetworkElementType.DEMAND, getTableNetworkLayer () , callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected demands", e->getSelectedElements().forEach(dd->((Demand)dd).remove()) , (a,b)->b>0, null));
+        res.add(new AjtRcMenu("Arrange selected demands in bidirectional pairs", e->
+        {
+        	final SortedSet<Demand> nonBidiDemands = getSelectedElements().stream().filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
+        	final Map<Pair<Node,Node> , Demand> nodePair2demand = new HashMap<>();
+        	for (Demand ee : nonBidiDemands)
+        	{
+        		final Pair<Node,Node> pair = Pair.of(ee.getIngressNode() , ee.getEgressNode());
+        		if (nodePair2demand.containsKey(pair)) throw new Net2PlanException ("At most one link per node pair is allowed");
+        		nodePair2demand.put(pair, ee);
+        	}
+        	for (Demand ee : nonBidiDemands)
+        	{
+        		if (ee.isBidirectional()) continue;
+        		final Demand opposite = nodePair2demand.get(Pair.of(ee.getEgressNode(), ee.getIngressNode()));
+        		if (opposite == null) continue;
+        		if (opposite.isBidirectional()) continue;
+        		ee.setBidirectionalPair(opposite);
+        	}
+        }
+        , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Set QoS type to selected demands", e->
         {
             DialogBuilder.launch(

@@ -148,6 +148,7 @@ public class Offline_fa_ospfWeightOptimization_SAN implements IAlgorithm
 		}
 		
 		IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, bestSol);
+		for (Link e : netPlan.getLinks()) IPUtils.setLinkWeight(e, bestSol.get(e.getIndex()));
 
 		stat_bestObjFunction.printToFile(new File (algorithm_outputFileNameRoot.getString () + "_bestObjFunc.txt"));
 		stat_objFunction.printToFile(new File (algorithm_outputFileNameRoot.getString () + "_objFunc.txt"));

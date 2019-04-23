@@ -147,7 +147,8 @@ public class Offline_fa_ospfWeightOptimization_ACO implements IAlgorithm
 		stat_pheromone_ew.printToFile(new File (baseFileName + "_pheromones_ew.txt"));
 
 		IPUtils.setECMPForwardingRulesFromLinkWeights(netPlan, bestSol);
-
+		for (Link e : netPlan.getLinks()) IPUtils.setLinkWeight(e, bestSol.get(e.getIndex()));
+		
 		System.out.println("Ok! Best solution OF: " + bestObjFunction);
 		return "Ok! Best OF: " + bestObjFunction;
 	}
