@@ -22,8 +22,10 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+import com.net2plan.examples.ocnbook.offline.Offline_fa_ospfWeightOptimization_ACO;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -74,9 +76,12 @@ public class Online_evProc_ipOspfAndMplsTe extends IEventProcessor
 {
 	private double stat_trafficOffered , stat_trafficCarried , stat_trafficOversubscribed , stat_trafficOutOfLatencyLimit , stat_trafficOfDemandsTraversingOversubscribedLink;
 	private double stat_transitoryInitTime , stat_timeLastChangeInNetwork;
+	private Map<String, String> net2planParameters;
 	
 	private InputParameter mplsTeTunnelType = new InputParameter ("mplsTeTunnelType", "#select# cspf-dynamic 1+1-FRR-link-disjoint" , "The type of path computation for MPLS-TE tunnels");
-	
+	private InputParameter ospfWeightSettingType = new InputParameter ("ospfWeightSettingType", "#select# static dynamic" , "If static, OSPF weights are not changed. If dynamic, they are recomputed using a built-in heuristic algorithm, ran during the user-defined number of seconds");
+	private InputParameter ospfWeightSetting_maxHeuristicTimeInSecs = new InputParameter ("ospfWeightSetting_maxHeuristicTimeInSecs",  (double) 5.0 , "Maximum running time of the OSPF weight setting algorithm" , 0 , false , Double.MAX_VALUE , true);
+
 	@Override
 	public String getDescription()
 	{
@@ -95,6 +100,8 @@ public class Online_evProc_ipOspfAndMplsTe extends IEventProcessor
 	{
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
+		
+		this.net2planParameters = new HashMap<> (net2planParameters);
 		
 		updateState(initialNetPlan);
 		
@@ -152,7 +159,7 @@ public class Online_evProc_ipOspfAndMplsTe extends IEventProcessor
 			SimEvent.NodesAndLinksChangeFailureState ev = (SimEvent.NodesAndLinksChangeFailureState) event.getEventObject ();
 			currentNetPlan.setLinksAndNodesFailureState(ev.linksToUp , ev.linksToDown , ev.nodesToUp , ev.nodesToDown);
 		}
-		else throw new Net2PlanException ("Unknown event type: " + event);
+		//else throw new Net2PlanException ("Unknown event type: " + event);
 
 		/* Link weights from netPlan, but the down links have Double.MAX_VALUE weight */
 		updateState(currentNetPlan);
@@ -166,6 +173,16 @@ public class Online_evProc_ipOspfAndMplsTe extends IEventProcessor
 		if (ipLayer == null) ipLayer = np.getNetworkLayerDefault(); 
 		
 		/* Routing of OSPF traffic */
+		if (ospfWeightSettingType.getString().equals("dynamic"))
+		{
+			final IAlgorithm ospfAlg = new Offline_fa_ospfWeightOptimization_ACO();
+			final Map<String,String> algParam = new HashMap<> ();
+			for (Triple<String,String,String> par : ospfAlg.getParameters())
+				algParam.put(par.getFirst(), par.getSecond());
+			algParam.put("algorithm_maxExecutionTimeInSeconds", new Double(this.ospfWeightSetting_maxHeuristicTimeInSecs.getDouble() > 0? this.ospfWeightSetting_maxHeuristicTimeInSecs.getDouble() : 5.0).toString());
+			algParam.put("aco_initializationType", "ones");
+			ospfAlg.executeAlgorithm(np, algParam, net2planParameters);
+		}
 		DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(np , ipLayer);
 		linkIGPWeightSetting.assign (np.getVectorLinkUpState(ipLayer) , new DoubleDoubleFunction () { public double apply (double x , double y) { return y == 1? x : Double.MAX_VALUE; }  } );
 		IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , np.getDemands(ipLayer).stream().filter(d->!d.isSourceRouting()).collect(Collectors.toSet()) , ipLayer);
@@ -203,12 +220,10 @@ public class Online_evProc_ipOspfAndMplsTe extends IEventProcessor
 				final List<Link> sp = GraphUtils.getShortestPath(np.getNodes(), linksValid, d.getIngressNode(), d.getEgressNode(), weightsValid);
 				if (sp.isEmpty())
 				{
-					System.out.println("No path for: " + d.getIngressNode() + " - " + d.getEgressNode() + ", link weights: " + weightsValid);
 					continue;
 				}
 				reserveBwInLinks.accept(sp, bwtoReserve);
 				np.addRoute(d, bwtoReserve, bwtoReserve, sp, null);
-				System.out.println("Path ok");
 			}
 			else if (is11FrrLinkDisjoint)
 			{

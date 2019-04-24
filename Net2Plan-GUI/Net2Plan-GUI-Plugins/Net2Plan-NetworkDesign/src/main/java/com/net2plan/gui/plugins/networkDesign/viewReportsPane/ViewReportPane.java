@@ -15,10 +15,14 @@ import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
 import com.net2plan.gui.plugins.networkDesign.ReportBrowser;
 import com.net2plan.gui.utils.RunnableSelector;
 import com.net2plan.gui.plugins.networkDesign.ThreadExecutionController;
+import com.net2plan.gui.plugins.networkDesign.offlineExecPane.OfflineExecutionPanel;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.*;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IReport;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
@@ -27,11 +31,16 @@ import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 import javax.swing.*;
+
+import org.apache.commons.collections15.BidiMap;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.Closeable;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class ViewReportPane extends JSplitPane implements ThreadExecutionController.IThreadExecutionHandler
@@ -133,6 +142,7 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
         Triple<File, String, Class> report = reportSelector.getRunnable();
         Map<String, String> reportParameters = reportSelector.getRunnableParameters();
         Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
+        final NetPlan netPlan = mainWindow.getDesign().copy();
         IReport instance = ClassLoaderUtils.getInstance(report.getFirst(), report.getSecond(), IReport.class , null);
         String title = null;
         try {
@@ -141,20 +151,35 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
         }
         if (title == null) title = "Untitled";
 
-        Pair<String, ? extends JPanel> aux = Pair.of(title, new ReportBrowser(instance.executeReport(mainWindow.getDesign().copy(), reportParameters, net2planParameters)));
+        Pair<String, ? extends JPanel> aux = Pair.of(title, new ReportBrowser(instance.executeReport(netPlan, reportParameters, net2planParameters)));
         try {
             ((Closeable) instance.getClass().getClassLoader()).close();
         } catch (Throwable e) {
         }
-
+        netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer((int) 0));
+        mainWindow.getDesign().assignFrom(netPlan); // do not update undo/redo here -> the visualization state should be updated before
         return aux;
 	}
 	@Override
 	public void executionFinished(ThreadExecutionController controller, Object out) 
 	{
-        Pair<String, ? extends JPanel> aux = (Pair<String, ? extends JPanel>) out;
-        reportContainer.addTab(aux.getFirst(), new TabIcon(TabIcon.IconType.TIMES_SIGN), aux.getSecond());
-        reportContainer.setSelectedIndex(reportContainer.getTabCount() - 1);
+        try 
+        {
+            final VisualizationState vs = mainWindow.getVisualizationState();
+            final NetPlan netPlan = mainWindow.getDesign();
+    		Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer,Boolean>> res = 
+    				vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<> (netPlan.getNetworkLayers()));
+    		vs.setCanvasLayerVisibilityAndOrder(netPlan, res.getFirst() , res.getSecond());
+            mainWindow.updateVisualizationAfterNewTopology();
+            mainWindow.addNetPlanChange();
+            Pair<String, ? extends JPanel> aux = (Pair<String, ? extends JPanel>) out;
+            reportContainer.addTab(aux.getFirst(), new TabIcon(TabIcon.IconType.TIMES_SIGN), aux.getSecond());
+            reportContainer.setSelectedIndex(reportContainer.getTabCount() - 1);
+        } catch (Throwable ex) 
+        {
+            ErrorHandling.addErrorOrException(ex, ViewReportPane.class);
+            ErrorHandling.showErrorDialog("Error executing report");
+        }
 	}
 	@Override
 	public void executionFailed(ThreadExecutionController controller) 

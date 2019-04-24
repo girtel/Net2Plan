@@ -24,6 +24,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.swing.JComboBox;
@@ -266,14 +267,23 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             "", 
                             this, 
                             Arrays.asList(
-                            		InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.5),
-                            		InputForDialog.inputTfDouble("Capacity module (capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 10.0)),
+                            		InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.9),
+                            		InputForDialog.inputTfDouble("Capacity module (if > 0, capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 100.0),
+                            		InputForDialog.inputCheckBox("Bidirectional modules", "If checked, if links are bidirectional, the module will have a capacity which is the largest between the traffic in both directions", true, null)
+                            		),
                             (list)->
                             	{
                             		final double newLinkUtilization = (Double) list.get(0).get();
                             		final double capacityModule = (Double) list.get(1).get();
+                            		final boolean isBidirectional = (Boolean) list.get(2).get();
                             		if (newLinkUtilization <= 0) throw new Net2PlanException ("Link utilization must be positive");
-                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setCapacity(capacityModule > 0? capacityModule * Math.ceil((ee.getOccupiedCapacity() /  newLinkUtilization) / capacityModule) : ee.getOccupiedCapacity() /  newLinkUtilization));
+                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->
+                            		{
+                            			double cap = isBidirectional && ee.isBidirectional ()? Math.max (ee.getCapacity () , ee.getBidirectionalPair ().getCapacity ()) : ee.getCapacity ();
+                            			if (newLinkUtilization > 0) cap /= newLinkUtilization;
+                            			if (capacityModule > 0) cap = capacityModule * Math.ceil(cap / capacityModule);
+                            			ee.setCapacity(cap);
+                            		});
                             	}
                             );
                 } , (a,b)->b>0, null)

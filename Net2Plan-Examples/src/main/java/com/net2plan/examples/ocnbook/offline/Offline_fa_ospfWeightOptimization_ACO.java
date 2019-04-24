@@ -42,7 +42,7 @@ public class Offline_fa_ospfWeightOptimization_ACO implements IAlgorithm
 	private TimeTrace stat_pheromone_ew;
 	private OSPFHeuristicUtils ospfEngine;
 
-	private InputParameter aco_initializationType = new InputParameter ("aco_initializationType", "#select# random" , "The type of initialization of the OSPF link weights");
+	private InputParameter aco_initializationType = new InputParameter ("aco_initializationType", "#select# random ones" , "The type of initialization of the OSPF link weights");
 	private InputParameter ospf_maxLinkWeight = new InputParameter ("ospf_maxLinkWeight", (int) 16 , "OSPF link weights are constrained to be integers between 1 and this parameter" , 1 , Integer.MAX_VALUE);
 	private InputParameter aco_differenceInWeightToBeNeighbors = new InputParameter ("aco_differenceInWeightToBeNeighbors", (int) 1 , "Two solutions where all the links have the same weight, but one link where the weight differs in the quantity given by this parameter, are considered neighbors");
 	private InputParameter algorithm_randomSeed = new InputParameter ("algorithm_randomSeed", (long) 1 , "Seed of the random number generator");

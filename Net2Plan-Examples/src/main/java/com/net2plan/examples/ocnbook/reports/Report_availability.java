@@ -69,8 +69,7 @@ public class Report_availability implements IReport
 	private InputParameter defaultMTTFInHours = new InputParameter ("defaultMTTFInHours" , (double) 8748 , "Default value for Mean Time To Fail (hours)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter defaultMTTRInHours = new InputParameter ("defaultMTTRInHours" , (double) 12 , "Default value for Mean Time To Repair (hours)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter failureModel = new InputParameter ("failureModel" , "#select# perBidirectionalLinkBundle SRGfromNetPlan perNode perLink perDirectionalLinkBundle" , "Failure model selection: SRGfromNetPlan, perNode, perLink, perDirectionalLinkBundle, perBidirectionalLinkBundle");
-	private InputParameter capacityAnalysys_maximumLinkUtilization = new InputParameter ("capacityAnalysys_maximumLinkUtilization" , (double) 0.9 , "Maximum accepted link utilization, this value is used for reporting the minimum capacity requirements" , 0 , false , Double.MAX_VALUE , true);
-	private InputParameter capacityAnalysys_bidrectionalLinksRequisite = new InputParameter ("capacityAnalysys_bidrectionalLinksRequisite" , true , "If true, the capacity requisite of bidirectional links, is the maximum between both directions");
+	private InputParameter capacityAnalysys_updateLinkCapacitiesInDesign = new InputParameter ("capacityAnalysys_updateLinkCapacitiesInDesign" , false , "If true, the link capacities are updated with the worst case occupied capacity in the links, removing any previous capacities");
 	
 	private Map<Long , PerDemandInfo> info_d = new HashMap<> ();
 	private Map<Long , PerDemandInfo> info_md = new HashMap<> ();
@@ -145,39 +144,42 @@ public class Report_availability implements IReport
 		/* the up and oversubscribed links that were set as down, are set to up again */
 		if (!netPlan.getLinksDownAllLayers().isEmpty() || !netPlan.getNodesDown().isEmpty()) throw new RuntimeException ("Bad");
 
-		final NetPlan auxNetPlan = netPlan.copy ();
 		this.algorithm = ClassLoaderUtils.getInstance(new File(algorithmFile), algorithmName, IEventProcessor.class , null);
-		this.algorithm.initialize(auxNetPlan , algorithmParameters , reportParameters , net2planParameters);
-		Set<Link> initialLinksDownAllLayers = auxNetPlan.getLinksDownAllLayers();
-		Set<Node> initialNodesDown = auxNetPlan.getNodesDown();
 
 		for (int failureState = 0 ; failureState < F_s.rows () ; failureState ++) // first failure state (no failure) was already considered
 		{
-			if (!auxNetPlan.getLinksDownAllLayers().equals (initialLinksDownAllLayers) || !auxNetPlan.getNodesDown().equals(initialNodesDown)) throw new RuntimeException ("Bad");
-
 			final IntArrayList srgs_thisState = new IntArrayList (); 
 			F_s.viewRow (failureState).getNonZeros (srgs_thisState , new DoubleArrayList ());
-			final Set<SharedRiskGroup> srgsThisFs_copyNp = ((ArrayList<Integer>) srgs_thisState.toList()).stream().map(i->auxNetPlan.getSRG(i)).collect(Collectors.toSet ());
+			final Set<SharedRiskGroup> srgsThisFs_thisNp = ((ArrayList<Integer>) srgs_thisState.toList()).stream().map(i->netPlan.getSRG(i)).collect(Collectors.toSet ());
 			final double pi_s_thisState = failureState == 0? pi_s0 : pi_s.get (failureState);
 
-			setFailureStateAndRunProvisioningAlgorithm(auxNetPlan , srgsThisFs_copyNp);
+			final NetPlan auxNetPlan = testFailureStateAndRunProvisioningAlgorithmAndReturnNpCopy(netPlan , srgsThisFs_thisNp  , algorithmParameters , reportParameters , net2planParameters);
 			
 			for(int indexLayer = 0 ; indexLayer < auxNetPlan.getNumberOfLayers() ; indexLayer ++)
 			{
 				final NetworkLayer layer = auxNetPlan.getNetworkLayer (indexLayer);
 		    	final SortedMap<Link,SortedMap<String,Pair<Double,Double>>> perLink_qos2occupationAndViolationMap = auxNetPlan.getAllLinksPerQosOccupationAndQosViolationMap(layer);
 		    	for (Demand d : auxNetPlan.getDemands(layer))
-		    		info_d.get(d.getId()).update(d, pi_s_thisState, srgsThisFs_copyNp, perLink_qos2occupationAndViolationMap);
+		    		info_d.get(d.getId()).update(d, pi_s_thisState, srgsThisFs_thisNp, perLink_qos2occupationAndViolationMap);
 		    	for (MulticastDemand d : auxNetPlan.getMulticastDemands(layer))
-		    		info_md.get(d.getId()).update(d, pi_s_thisState, srgsThisFs_copyNp, perLink_qos2occupationAndViolationMap);
+		    		info_md.get(d.getId()).update(d, pi_s_thisState, srgsThisFs_thisNp, perLink_qos2occupationAndViolationMap);
 		    	for (Link d : auxNetPlan.getLinks(layer))
-		    		info_e.get(d.getId()).update(d, srgsThisFs_copyNp);
+		    		info_e.get(d.getId()).update(d, srgsThisFs_thisNp);
 			}
-
-			setNonFailureStateAndRunProvisioningAlgorithm (auxNetPlan);
 		}
 
-		return printReport(netPlan , reportParameters);
+		final String report = printReport(netPlan , reportParameters);
+
+		/* At the end, optionally update the link capacities */
+		if (capacityAnalysys_updateLinkCapacitiesInDesign.getBoolean())
+		{
+			for (NetworkLayer layer : netPlan.getNetworkLayers())
+				for (Link e : netPlan.getLinks (layer))
+					if (!e.isCoupled())
+						e.setCapacity(info_e.get(e.getId()).getWcOccupiedCapacityGbps());
+		}			
+		
+		return report;
 	}
 
 	@Override
@@ -267,20 +269,20 @@ public class Report_availability implements IReport
 			if (np.getNumberOfDemands (layer) != 0)
 			{
 				out.append ("<li>UNICAST TRAFFIC: (Deterministic) Blocked traffic when no failure occurs: " + df_6.format (1-weightedFractionOfOfTrafficNoFailureAv_d) + "</li>");
-				out.append ("<li>UNICAST TRAFFIC: (Estimated) Weighted average of demand availabilities : " + printAvailability(weightedAv_d, pi_excess) + "</li>");
-				out.append ("<li>UNICAST TRAFFIC: (Estimated) Weighted average of demands survivabilities: " + printAvailability(weightedSurv_d, pi_excess)  + "</li>");
-				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand availabilities: " + printAvailability(worstAv_d, pi_excess)   + "</li>");
-				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand survivabilities: " + printAvailability(worstSurv_d, pi_excess)   + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Weighted average of demand availabilities : " + printAvailabilityNoTd(weightedAv_d, pi_excess) + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Weighted average of demands survivabilities: " + printAvailabilityNoTd(weightedSurv_d, pi_excess)  + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand availabilities: " + printAvailabilityNoTd(worstAv_d, pi_excess)   + "</li>");
+				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand survivabilities: " + printAvailabilityNoTd(worstSurv_d, pi_excess)   + "</li>");
 				out.append ("<li>UNICAST TRAFFIC: (Estimated) Worst among demand latencies (ms): " + df_6.format(np.getDemands(layer).stream().mapToDouble(d->info_d.get(d.getId()).getWcLatencyMs()).max().orElse(0.0))  + "</li>");
 			}			
 			out.append ("<li>MULTICAST TRAFFIC: (Deterministic) Total offered traffic: " + df_6.format (totalOffered_md) + "</li>");
 			if (np.getNumberOfMulticastDemands(layer) != 0)
 			{
 				out.append ("<li>MULTICAST TRAFFIC: (Deterministic) Blocked traffic when no failure occurs: " + df_6.format (1-weightedFractionOfOfTrafficNoFailureAv_md) + "</li>");
-				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Weighted average of demand availabilities : " + printAvailability(weightedAv_md, pi_excess) + "</li>");
-				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Weighted average of demands survivabilities: " + printAvailability(weightedSurv_md, pi_excess)  + "</li>");
-				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand availabilities: " + printAvailability(worstAv_md, pi_excess)   + "</li>");
-				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand survivabilities: " + printAvailability(worstSurv_md, pi_excess)   + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Weighted average of demand availabilities : " + printAvailabilityNoTd(weightedAv_md, pi_excess) + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Weighted average of demands survivabilities: " + printAvailabilityNoTd(weightedSurv_md, pi_excess)  + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand availabilities: " + printAvailabilityNoTd(worstAv_md, pi_excess)   + "</li>");
+				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand survivabilities: " + printAvailabilityNoTd(worstSurv_md, pi_excess)   + "</li>");
 				out.append ("<li>MULTICAST TRAFFIC: (Estimated) Worst among demand latencies (ms): " + df_6.format(np.getDemands(layer).stream().mapToDouble(d->info_md.get(d.getId()).getWcLatencyMs()).max().orElse(0.0))  + "</li>");
 			}
 		}
@@ -352,14 +354,13 @@ public class Report_availability implements IReport
 			{
 				out.append("<table border='1'>");
 				final List<String> headers = Arrays.asList("Link" , "Origin node" , "Destination node" , "Capacity",
-						"WC Occupied capacity / involved SRGs" , "Capacity requirements");
+						"WC Occupied capacity / involved SRGs");
 				final List<Function<Link , String>> vals_e = Arrays.asList(
 						d->"<td>" + d.getIndex () + "</td>" ,
 						d->"<td>" + d.getOriginNode().getIndex() + "(" + d.getOriginNode().getName() + ")" + "</td>",
 						d->"<td>" + d.getDestinationNode().getIndex() + "(" + d.getDestinationNode().getName() + ")" + "</td>",
 						d->"<td>" + df_6.format(d.getCapacity()) + "</td>",
-						d->printWcAndSrgs(info_e.get(d.getId()).getWcOccupiedCapacityGbps() , info_e.get(d.getId()).getFailureStates_wcOccupiedCapacity() , info_e.get(d.getId()).getWcOccupiedCapacityGbps() + Configuration.precisionFactor > d.getCapacity()),
-						d->"<td>" + df_6.format(getWcOccupiedCapacity(d)) + "</td>"
+						d->printWcAndSrgs(info_e.get(d.getId()).getWcOccupiedCapacityGbps() , info_e.get(d.getId()).getFailureStates_wcOccupiedCapacity() , info_e.get(d.getId()).getWcOccupiedCapacityGbps() + Configuration.precisionFactor > d.getCapacity())
 						);
 				out.append("<tr>"); for (String h : headers) out.append("<th><b>" + h + "</b></th>"); out.append("</tr>"); 
 				for (Link d : np.getLinks (layer))
@@ -375,16 +376,10 @@ public class Report_availability implements IReport
 		return out.toString();
 	}
 
-	private double getWcOccupiedCapacity (Link e) 
-	{ 
-		if (e.isBidirectional() && capacityAnalysys_bidrectionalLinksRequisite.getBoolean())
-			return info_e.get(e.getId()).getWcOccupiedCapacityGbps() / capacityAnalysys_maximumLinkUtilization.getDouble(); 
-		else
-			return Math.max(info_e.get(e.getId()).getWcOccupiedCapacityGbps(), info_e.get(e.getBidirectionalPair().getId()).getWcOccupiedCapacityGbps()) / capacityAnalysys_maximumLinkUtilization.getDouble();
+	private static String printAvailabilityNoTd (double val , double pi_ne)
+	{
+		return "" + dfAv.format(val) +" ... " + dfAv.format(Math.min(val + pi_ne, 1.0)) + "";
 	}
-
-
-	
 	private static String printAvailability (double val , double pi_ne)
 	{
 		return "<td>" + dfAv.format(val) +" ... " + dfAv.format(Math.min(val + pi_ne, 1.0)) + "</td>";
@@ -416,7 +411,7 @@ public class Report_availability implements IReport
 			final double blockGbps = isDemand? d.getBlockedTraffic() : md.getBlockedTraffic();
 			final boolean okLatency = isDemand? d.getMaximumAcceptableE2EWorstCaseLatencyInMs() + Configuration.precisionFactor > latMs : md.getMaximumAcceptableE2EWorstCaseLatencyInMs() + Configuration.precisionFactor > latMs; 
 			final double trafFullyOkGbps = Math.max(0.0 ,  !okLatency? 0.0 : (isDemand? d.getCarriedTraffic() : md.getCarriedTraffic()) - oversubsGbps);
-			final double fractionTrafficOk = (isDemand? d.getOfferedTraffic() : md.getOfferedTraffic()) < Configuration.precisionFactor? 0.0 : Math.max (1.0 , trafFullyOkGbps /  (isDemand? d.getOfferedTraffic() : md.getOfferedTraffic()));
+			final double fractionTrafficOk = (isDemand? d.getOfferedTraffic() : md.getOfferedTraffic()) < Configuration.precisionFactor? 0.0 : Math.min (1.0 , trafFullyOkGbps /  (isDemand? d.getOfferedTraffic() : md.getOfferedTraffic()));
 			final boolean allTrafficOk = trafFullyOkGbps + Configuration.precisionFactor >= (isDemand? d.getOfferedTraffic(): md.getOfferedTraffic());
 			if (allTrafficOk) av += prob;
 			surv += prob * fractionTrafficOk; 
@@ -452,28 +447,26 @@ public class Report_availability implements IReport
 		public Set<Set<SharedRiskGroup>> getFailureStates_wcOccupiedCapacity () { return failureStates_wcOccupiedCapacity; }
 	}
 
-	private void setFailureStateAndRunProvisioningAlgorithm (NetPlan auxNetPlan , Set<SharedRiskGroup> srgsThisFs_copyNp)
+	private NetPlan testFailureStateAndRunProvisioningAlgorithmAndReturnNpCopy (NetPlan thisNetPlan , Set<SharedRiskGroup> srgsThisFs_thisNp , Map<String,String> algorithmParameters , Map<String,String> reportParameters , Map<String,String> net2planParameters)
 	{
-		final Set<Link> linksToSetAsDown = new HashSet<Link> ();
-		final Set<Node> nodesToSetAsDown = new HashSet<Node> ();
-		for (SharedRiskGroup srg : srgsThisFs_copyNp)
+		final NetPlan auxNetPlan = thisNetPlan.getNetPlan().copy();
+		for (SharedRiskGroup srgThisNp : srgsThisFs_thisNp)
 		{
-			nodesToSetAsDown.addAll (srg.getNodes ());
-			linksToSetAsDown.addAll (srg.getLinksAllLayers ());
+			final SharedRiskGroup srgCopy = auxNetPlan.getSRGFromId(srgThisNp.getId());
+			srgCopy.setAsDown();
 		}
 
-		/* Make the algorithm process the event of nodes and links down */
-		SimEvent.NodesAndLinksChangeFailureState failureInfo = new SimEvent.NodesAndLinksChangeFailureState(null , nodesToSetAsDown , null , linksToSetAsDown);
+		this.algorithm.initialize(auxNetPlan , algorithmParameters , reportParameters , net2planParameters);
+
 		try
 		{
 			/* Apply the reaction algorithm */
-			algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , failureInfo));
+			algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , null));
 		}
 		catch (Throwable e)
 		{
 			try { ((Closeable) algorithm.getClass().getClassLoader()).close();  }
 			catch (Throwable e1) { e.printStackTrace();}					
-
 			throw (e);
 		}
 		
@@ -482,15 +475,7 @@ public class Report_availability implements IReport
 		{
 			try { ((Closeable) algorithm.getClass().getClassLoader()).close();	} catch (Throwable e1) { }					
 		}
+		return auxNetPlan;
 	}
-
-	private void setNonFailureStateAndRunProvisioningAlgorithm (NetPlan auxNetPlan)
-	{
-		final Set<Link> linksAllLayers = new HashSet<Link> (); for (NetworkLayer layer : auxNetPlan.getNetworkLayers()) linksAllLayers.addAll (auxNetPlan.getLinks (layer));
-		SimEvent.NodesAndLinksChangeFailureState failureInfo = new SimEvent.NodesAndLinksChangeFailureState(auxNetPlan.getNodes() , null , linksAllLayers , null);
-		algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , failureInfo));
-		
-	}
-
 	
 }
