@@ -199,21 +199,9 @@ public class Online_evProc_ipOspfAndMplsTe extends IEventProcessor
 		{
 			if (!d.isSourceRouting()) continue;
 			final double bwtoReserve = d.getOfferedTraffic();
+			d.removeAllRoutes();
 			if (isCspf)
 			{
-				if (d.getRoutes().size() == 1)
-				{
-					final Route r = d.getRoutes().iterator().next();
-					if (!r.isDown() && !r.isTraversingZeroCapLinks() && isEnoughNonReservedBwAvaialable.apply(r.getSeqLinks(), bwtoReserve))
-					{
-						reserveBwInLinks.accept(r.getSeqLinks(), bwtoReserve);
-						r.setCarriedTraffic(bwtoReserve, bwtoReserve);
-						continue;
-					}
-				}
-				
-				/* Recompute */
-				d.removeAllRoutes();
 				final List<Link> linksValid = new ArrayList<> (E);
 				final Map<Link,Double> weightsValid = new HashMap<> ();
 				for (Link e : np.getLinks(ipLayer)) if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor >= bwtoReserve) { linksValid.add(e); weightsValid.put(e, IPUtils.getLinkWeight(e)); }
@@ -227,34 +215,17 @@ public class Online_evProc_ipOspfAndMplsTe extends IEventProcessor
 			}
 			else if (is11FrrLinkDisjoint)
 			{
-				boolean recompute11Paths = d.getRoutes().size() != 2;
-				if (!recompute11Paths)
-				{
-					final List<Route> twoRoutes = new ArrayList<> (d.getRoutes());
-					final Route r1 = twoRoutes.get(0);
-					final Route r2 = twoRoutes.get(1);
-					recompute11Paths |= r1.isBackupRoute() || !r2.isBackupRoute();
-				}
-				if (recompute11Paths)
-				{
-					/* Make the tunnel paths. Fixed: does not matter the failed links */
-					d.removeAllRoutes();
-					final List<Link> linksValid = new ArrayList<> (E);
-					final SortedMap<Link,Double> weightsValid = new TreeMap<> ();
-					for (Link e : np.getLinks(ipLayer)) if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor >= bwtoReserve) { linksValid.add(e); weightsValid.put(e, IPUtils.getLinkWeight(e)); }
-					final List<List<Link>> sps = GraphUtils.getTwoMaximumLinkAndNodeDisjointPaths(np.getNodes(), linksValid, d.getIngressNode(), d.getEgressNode(), weightsValid);
-					if (sps.size() == 2)
-					{
-						final Route r1 = np.addRoute(d, bwtoReserve, bwtoReserve, sps.get(0), null);
-						final Route r2 = np.addRoute(d, 0, bwtoReserve, sps.get(1), null);
-						r1.addBackupRoute(r2);
-					}
-				}
-				if (d.getRoutes().size() != 2) { d.removeAllRoutes(); continue; }
+				/* Make the tunnel paths. Fixed: does not matter the failed links */
+				final List<Link> linksValidControlPlaneEvenIfDownDataPlane = new ArrayList<> (E);
+				final SortedMap<Link,Double> weightsValid = new TreeMap<> ();
+				for (Link e : np.getLinks(ipLayer)) if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor >= bwtoReserve) { linksValidControlPlaneEvenIfDownDataPlane.add(e); weightsValid.put(e, IPUtils.getLinkWeight(e)); }
+				final List<List<Link>> sps = GraphUtils.getTwoMaximumLinkAndNodeDisjointPaths(np.getNodes(), linksValidControlPlaneEvenIfDownDataPlane, d.getIngressNode(), d.getEgressNode(), weightsValid);
+				if (sps.size() != 2) continue; 
+
+				final Route r1 = np.addRoute(d, bwtoReserve, bwtoReserve, sps.get(0), null);
+				final Route r2 = np.addRoute(d, 0, bwtoReserve, sps.get(1), null);
+				r1.addBackupRoute(r2);
 				
-				final List<Route> twoRoutes = new ArrayList<> (d.getRoutes());
-				final Route r1 = twoRoutes.get(0);
-				final Route r2 = twoRoutes.get(1);
 				final boolean tunnelReserves = isEnoughNonReservedBwAvaialable.apply(r1.getSeqLinks(), bwtoReserve) && isEnoughNonReservedBwAvaialable.apply(r2.getSeqLinks(), bwtoReserve);
 				if (tunnelReserves)
 				{

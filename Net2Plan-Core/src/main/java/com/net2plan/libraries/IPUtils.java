@@ -135,6 +135,7 @@ public class IPUtils
 	{
 		final NetworkLayer layer = netPlan.checkInThisNetPlanOptionalLayerParameter (optionalLayer);
 		if (linkWeightVector == null) linkWeightVector = IPUtils.getLinkWeightVector (netPlan, layer);
+		for (int cont = 0; cont < linkWeightVector.size() ; cont ++) if (linkWeightVector.get(cont) >= 0) throw new Net2PlanException ("Link weights must be strictly possitive");
 		
 		final List<Node> nodes = netPlan.getNodes();
 		final List<Link> links = netPlan.getLinks(layer);
