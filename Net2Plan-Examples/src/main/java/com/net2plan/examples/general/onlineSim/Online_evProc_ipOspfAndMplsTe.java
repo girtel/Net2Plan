@@ -204,7 +204,13 @@ public class Online_evProc_ipOspfAndMplsTe extends IEventProcessor
 			{
 				final List<Link> linksValid = new ArrayList<> (E);
 				final Map<Link,Double> weightsValid = new HashMap<> ();
-				for (Link e : np.getLinks(ipLayer)) if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor >= bwtoReserve) { linksValid.add(e); weightsValid.put(e, IPUtils.getLinkWeight(e)); }
+				for (Link e : np.getLinks(ipLayer))
+				{
+					if (e.isDown() || e.getOriginNode().isDown() || e.getDestinationNode().isDown()) continue;
+					if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor < bwtoReserve) continue; 
+					linksValid.add(e); 
+					weightsValid.put(e, IPUtils.getLinkWeight(e)); 
+				}
 				final List<Link> sp = GraphUtils.getShortestPath(np.getNodes(), linksValid, d.getIngressNode(), d.getEgressNode(), weightsValid);
 				if (sp.isEmpty())
 				{

@@ -59,7 +59,7 @@ public class Report_trafficFluctuationAnalysis implements IReport
 {
 	private InputParameter provisioningAlgorithm = new InputParameter ("provisioningAlgorithm" , "#eventProcessor#" , "Algorithm to process failure events");
 	private InputParameter capacityAnalysys_updateLinkCapacitiesInDesign = new InputParameter ("capacityAnalysys_updateLinkCapacitiesInDesign" , false , "If true, the link capacities are updated with the worst case occupied capacity in the links, removing any previous capacities");
-	private InputParameter trafficPeakMultiplicativeFactor = new InputParameter ("trafficPeakMultiplicativeFactor" , (double) 3.0 , "The traffic of a demand is multiplied by this factor" , 0 , false , Double.MAX_VALUE , true);
+	private InputParameter trafficPeakMultiplicativeFactor = new InputParameter ("trafficPeakMultiplicativeFactor" , (double) 5.0 , "The traffic of a demand is multiplied by this factor" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter maxNumPeakyDemands = new InputParameter ("maxNumPeakyDemands" , (int) 5 , "The demands with higher traffic are tested for having peaks, up to this amount" , 0 , Integer.MAX_VALUE);
 	
 	private Map<Long , PerDemandInfo> info_d = new HashMap<> ();
