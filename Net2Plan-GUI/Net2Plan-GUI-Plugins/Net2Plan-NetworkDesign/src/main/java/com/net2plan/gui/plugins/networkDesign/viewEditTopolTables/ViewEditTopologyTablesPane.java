@@ -13,7 +13,6 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables;
 
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.HashMap;
@@ -165,7 +164,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         final NetPlan currentState = callback.getDesign();
         if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
         
-        this.recomputNetPlanView();
+        this.recomputeNetPlanView();
         
 //        final AdvancedJTable_abstractElement layerTable = this.netPlanViewTable.get(AJTableType.LAYERS).getFirst();
 //    	System.out.println(layerTable.getTableScrollPane().getViewport());
@@ -222,11 +221,11 @@ public class ViewEditTopologyTablesPane extends JPanel
 		table.clearSelection();
         final List<Integer> modelViewRows = elements.stream().map(ee->(Integer) table.getRowModelIndexOfElement(ee.getObject()).orElse(-1)).
         		filter(ee->ee != -1).
-        		collect(Collectors.toList()); 
+        		collect(Collectors.toList());
         for (int rowModelIndex : modelViewRows)
         {
             final int viewRow = table.convertRowIndexToView(rowModelIndex);
-            table.addRowSelectionInterval(viewRow, viewRow);
+            table.setRowSelectionInterval(viewRow, viewRow);
         }
         selectItemTab(type , layer);
     }
@@ -284,7 +283,7 @@ public class ViewEditTopologyTablesPane extends JPanel
     }
 
     
-    private void recomputNetPlanView ()
+    private void recomputeNetPlanView()
     {    	
     	/* Save current selected tab */
 		final int selectedIndexFirstLevel = netPlanView.getSelectedIndex() == -1 ? 0 : netPlanView.getSelectedIndex();
@@ -320,6 +319,9 @@ public class ViewEditTopologyTablesPane extends JPanel
     		columnDoubleFormatStatePerTable.put(layer, columnDoubleFormatStateThisTable);
     		attributeCollapsedStatePerTable.put(layer, attributeCollapsedStateThisTable);
     	}
+
+    	/* Save selected rows */
+        
     	
     	final NetPlan np = callback.getDesign();
     	netPlanViewTable.clear();

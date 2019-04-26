@@ -696,7 +696,12 @@ public class GUINetworkDesign extends IGUIModule
         	pick.applyVisualizationInCurrentDesign();
             final Pair<NetworkElementType,NetworkLayer> typeAndLayerInfo = pick.getElementTypeOfMainElement().orElse(null);
             if (typeAndLayerInfo != null)
-            	viewEditTopTables.selectTabAndGivenItems(typeAndLayerInfo.getFirst(), typeAndLayerInfo.getSecond() , pick.getStateOnlyNeFr());
+            {
+                NetworkElementType type = typeAndLayerInfo.getFirst();
+                NetworkLayer layer = typeAndLayerInfo.getSecond();
+                viewEditTopTables.selectTabAndGivenItems(type, layer , pick.getStateOnlyNeFr());
+            }
+
         }
         topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
         topologyPanel.updateTopToolbar();
