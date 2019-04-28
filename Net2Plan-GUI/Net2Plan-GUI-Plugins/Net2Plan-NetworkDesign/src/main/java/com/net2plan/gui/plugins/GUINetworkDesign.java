@@ -690,10 +690,17 @@ public class GUINetworkDesign extends IGUIModule
         if (pick == null)
         {
             pickManager.reset();
+            topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
+            topologyPanel.updateTopToolbar();
+            viewEditTopTables.updateView();
         }
         else
         {
         	pick.applyVisualizationInCurrentDesign();
+            topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
+            topologyPanel.updateTopToolbar();
+            viewEditTopTables.updateView();
+
             final Pair<NetworkElementType,NetworkLayer> typeAndLayerInfo = pick.getElementTypeOfMainElement().orElse(null);
             if (typeAndLayerInfo != null)
             {
@@ -703,9 +710,7 @@ public class GUINetworkDesign extends IGUIModule
             }
 
         }
-        topologyPanel.getCanvas().refresh(); // needed with or w.o. pick, since maybe you unpick with an undo
-        topologyPanel.updateTopToolbar();
-        viewEditTopTables.updateView();
+
     }
 
     public void updateVisualizationAfterChanges()
