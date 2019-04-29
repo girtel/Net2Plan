@@ -4,6 +4,17 @@ All notable changes to Net2Plan will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.6.3] - 2019-04-29
+
+### Added
+	- Several new examples (reports).
+
+### Fixed
+	- Several minor bugs.
+
+
+####
+
 ## [0.6.2] - 2019-03-27
 
 ### Added
