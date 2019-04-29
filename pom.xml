@@ -14,7 +14,7 @@
 
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
-    <version>0.6.2</version>
+    <version>0.6.3</version>
     <packaging>pom</packaging>
     <url>http://www.net2plan.com</url>
 
