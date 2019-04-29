@@ -167,10 +167,6 @@ public class ViewEditTopologyTablesPane extends JPanel
         if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
         
         this.recomputeNetPlanView();
-        
-//        final AdvancedJTable_abstractElement layerTable = this.netPlanViewTable.get(AJTableType.LAYERS).getFirst();
-//    	System.out.println(layerTable.getTableScrollPane().getViewport());
-//    	System.out.println("View is null? " + (layerTable.getTableScrollPane().getViewport().getView() == null));
 
         highLevelTabComponent_network.updateNetPlanView(currentState);
         for (NetworkLayer layer : currentState.getNetworkLayers())
@@ -185,10 +181,6 @@ public class ViewEditTopologyTablesPane extends JPanel
             		netPlanViewTable.get(layer).get(type).getSecond().updateHeader();
         }
 
-        /*for (NetworkLayer layer : callback.getDesign().getNetworkLayers())
-            netPlanViewTable.get(layer).values().stream().filter(q -> q.getFirst() != null).forEach(q -> q.getFirst().clearSelection());*/
-
-        // Ver los elementos pickados y pintarlos en la tabla
         treePanel.updateView();
 
         if (ErrorHandling.isDebugEnabled()) currentState.checkCachesConsistency();
