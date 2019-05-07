@@ -142,8 +142,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                                 {
                                     final double minX = ((Double) list.get(0).get());
                                     final double minY = ((Double) list.get(1).get());
-                        			final double avAbsErrorPerLink = GraphUtils.setNodePositionsToMatchLinkLengthInformation (np.getNodes() , np.getLinks() , minX , minY , Optional.empty());
-                        			System.out.println("Num links : " + np.getLinks().size() + ", num nodes: " + np.getNodes().size() + ", av error link: " + avAbsErrorPerLink);
+                                    throw new Net2PlanException ("The algorithm is not available");
                                 }
                             );
         		}
