@@ -28,12 +28,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.SortedMap;
@@ -41,6 +43,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
@@ -3302,6 +3305,51 @@ public class GraphUtils
 		{
 			super(message);
 		}
+	}
+
+	public static double setNodePositionsToMatchLinkLengthInformation (List<Node> nodes , List<Link> links , double minX , double minY , Optional<String> solverLibraryName)
+	{
+		if (nodes.isEmpty() || links.isEmpty()) throw new Net2PlanException ("No input data");
+		final NetPlan np = nodes.get(0).getNetPlan();
+		final OptimizationProblem op = new OptimizationProblem();
+		final int N = nodes.size();
+		final Map<Node,Integer> node2Index = new HashMap<> (); int cont = 0; for (Node n : nodes) node2Index.put(n, cont++);
+		final Function<Node,Integer> getNodeIndex = n -> node2Index.get (n);
+		final int E = links.size();
+		final Map<Link,Integer> link2Index = new HashMap<> (); cont = 0; for (Link e : links) link2Index.put(e, cont++);
+		final Function<Link,Integer> getLinkIndex = e -> link2Index.get (e);
+		op.addDecisionVariable("x_n", false, new int [] {1 , N} , minX , Double.MAX_VALUE);
+		op.addDecisionVariable("y_n", false, new int [] {1 , N} , minY , Double.MAX_VALUE);
+		final DoubleMatrix2D A_en = DoubleFactory2D.sparse.make(E,N);
+		final DoubleMatrix1D l2_e = DoubleFactory1D.dense.make(E);
+		for (Link e : links)
+		{
+			A_en.set(getLinkIndex.apply(e), getNodeIndex.apply(e.getOriginNode()), 1.0);
+			A_en.set(getLinkIndex.apply(e), getNodeIndex.apply(e.getDestinationNode()), -1.0);
+			l2_e.set(getLinkIndex.apply(e), Math.pow(e.getLengthInKm() , 2));
+		}
+		op.setInputParameter("A_en", A_en);
+		op.setInputParameter("l2_e", l2_e , "row");
+//		op.setObjectiveFunction("minimize", "sum ( ( sqrt ((A_en * x_n')^2 + (A_en * y_n')^2) - l_e' )^2 )  ");
+		op.setObjectiveFunction("minimize", "sum ( ( (A_en * x_n')^2 + (A_en * y_n')^2 - l2_e' )^2 )  ");
+		if (!solverLibraryName.isPresent ())
+			op.solve("ipopt", "solverLibraryName" , Configuration.getDefaultSolverLibraryName("ipopt"));
+		else
+			op.solve("ipopt", "solverLibraryName", solverLibraryName.get ());
+		if (!op.solutionIsFeasible()) throw new Net2PlanException ("A feasible solution was not found");
+		final double [] x_n = op.getPrimalSolution("x_n").to1DArray(); 
+		final double [] y_n = op.getPrimalSolution("y_n").to1DArray();
+		for (Node n : nodes)
+		{
+			final int index = getNodeIndex.apply(n);
+			final double x = x_n [index];
+			final double y = y_n [index];
+			n.setXYPositionMap(new Point2D.Double(x ,  y)); 
+		}
+		double accumAbsError = 0;
+		for (Link e : links)
+			accumAbsError += Math.abs(np.getNodePairEuclideanDistance(e.getOriginNode(), e.getDestinationNode()) - e.getLengthInKm());
+		return accumAbsError / links.size();
 	}
 	
 }

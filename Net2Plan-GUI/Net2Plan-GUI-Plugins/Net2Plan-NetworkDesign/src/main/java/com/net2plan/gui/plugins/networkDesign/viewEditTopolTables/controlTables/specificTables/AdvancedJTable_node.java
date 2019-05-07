@@ -15,9 +15,11 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
@@ -25,10 +27,13 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.libraries.GraphUtils;
 
 /**
  */
@@ -89,6 +94,63 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
         res.add(new AjtRcMenu("Hide selected nodes", e->getSelectedElements().forEach(ee->callback.getVisualizationState().hideOnCanvas(ee)) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Switch selected nodes' coordinates from (x,y) to (y,x)", e->getSelectedElements().forEach(node->node.setXYPositionMap(new Point2D.Double(node.getXYPositionMap().getY(), node.getXYPositionMap().getX()))) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Create planning domain restricted to selected nodes", e->np.restrictDesign(getSelectedElements()) , (a,b)->b>0, null));
+        res.add(new AjtRcMenu("Re-arrange selected nodes", null , (a,b)->b>0, Arrays.asList(
+        		new AjtRcMenu("Equispaced in a circunference", e-> 
+        		{
+                    DialogBuilder.launch(
+                            "Indicate the coordinates of the circle center, and the radius", 
+                            "Please introduce the requested data.",
+                            "", 
+                            this, 
+                            Arrays.asList(
+                                    InputForDialog.inputTfDouble("X position of the center", "Introduce the X position of the circle center", 10, 0.0),
+                                    InputForDialog.inputTfDouble("Y position of the center", "Introduce the Y position of the circle center", 10, 0.0),
+                                    InputForDialog.inputTfDouble("Radius", "Introduce the radius", 10, 100.0)
+                                    ),
+                            (list)->
+                                {
+                                    final double x = ((Double) list.get(0).get());
+                                    final double y = ((Double) list.get(1).get());
+                                    final double radius = ((Double) list.get(2).get());
+                                    if (radius <= 0) throw new Net2PlanException ("The circle radius must e strictly positive");
+                                    if (getSelectedElements().isEmpty()) throw new Net2PlanException ("No nodes are selected");
+                                    int contNode = 0;
+                                    final double radQuantum = 2 * Math.PI / getSelectedElements().size(); 
+                                    for (Node ee : getSelectedElements())
+                                    {
+                                    	final double newX = x + radius * Math.cos(contNode * radQuantum);
+                                    	final double newY = y + radius * Math.sin(contNode * radQuantum);
+                                    	contNode ++;
+                                    	ee.setXYPositionMap(new Point2D.Double(newX ,  newY));
+                                    }
+                                }
+                            );
+        		}
+        		, (a,b)->true, null),
+        		new AjtRcMenu("To match length information", e-> 
+        		{
+                    DialogBuilder.launch(
+                            "Indicate the coordinates of the circle center, and the radius", 
+                            "Please introduce the requested data.",
+                            "", 
+                            this, 
+                            Arrays.asList(
+                                    InputForDialog.inputTfDouble("Minimum X coordinate", "Introduce the minimum valu for the node X position", 10, -10.0),
+                                    InputForDialog.inputTfDouble("Minimum Y coordinate", "Introduce the minimum valu for the node Y position", 10, -10.0)
+                                    ),
+                            (list)->
+                                {
+                                    final double minX = ((Double) list.get(0).get());
+                                    final double minY = ((Double) list.get(1).get());
+                        			final double avAbsErrorPerLink = GraphUtils.setNodePositionsToMatchLinkLengthInformation (np.getNodes() , np.getLinks() , minX , minY , Optional.empty());
+                        			System.out.println("Num links : " + np.getLinks().size() + ", num nodes: " + np.getNodes().size() + ", av error link: " + avAbsErrorPerLink);
+                                }
+                            );
+        		}
+        		, (a,b)->true, null)
+        		
+        		
+        		)));
 
         return res;
     }
