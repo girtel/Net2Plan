@@ -11,13 +11,13 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -69,6 +69,7 @@ public class Link extends NetworkElement implements IMonitorizableElement
 	private SortedMap<String,Pair<Integer,Double>> qos2PriorityMaxLinkCapPercentage;
 	private TrafficSeries monitoredOrForecastedTraffics;
     private TrafficPredictor trafficPredictor;
+    private Color nominalColor = Color.BLACK;
 //	private SortedMap<String,Pair<Double,Double>> cache_perQoSOccupationAndQosViolationMap;
 
 	SortedSet<SharedRiskGroup> cache_nonDynamicSrgs;
@@ -79,6 +80,16 @@ public class Link extends NetworkElement implements IMonitorizableElement
 	
 	SortedMap<Demand,Double> cacheHbH_frs;
 	SortedMap<Demand,Pair<Double,Double>> cacheHbH_normCarriedOccupiedPerTraversingDemandCurrentState; // carried is normalized respect to demand total CARRIED traffic
+	
+	/** Returns the default Color that is assigned to this link for visualization
+	 * @return see above
+	 */
+	public Color getNominalColor () { return nominalColor; }
+
+	/** Sets the default Color that is assigned to this link for visualization
+	 * @param nominalColor
+	 */
+	public void setNominalColor (Color nominalColor) { this.nominalColor = nominalColor; }
 	
 	public double getOccupiedCapacityFromDemand (Demand d)
 	{
@@ -131,6 +142,7 @@ public class Link extends NetworkElement implements IMonitorizableElement
 		this.lengthInKm = lengthInKm;
 		this.propagationSpeedInKmPerSecond = propagationSpeedInKmPerSecond;
 		this.isUp = true;
+		this.nominalColor = Color.BLACK;
 		this.coupledLowerOrThisLayerDemand = null;
 		this.coupledLowerLayerMulticastDemand = null;
 		this.cache_nonDynamicSrgs = new TreeSet<SharedRiskGroup> ();
@@ -156,6 +168,7 @@ public class Link extends NetworkElement implements IMonitorizableElement
 		this.lengthInKm = origin.lengthInKm;
 		this.propagationSpeedInKmPerSecond = origin.propagationSpeedInKmPerSecond;
 		this.isUp = origin.isUp;
+		this.nominalColor = origin.nominalColor;
 		this.cache_nonDynamicSrgs = new TreeSet<SharedRiskGroup> ();
 		this.cache_traversingRoutes = new TreeMap<Route,Integer> ();
 		this.cache_traversingTrees = new TreeSet<MulticastTree> ();
@@ -193,6 +206,7 @@ public class Link extends NetworkElement implements IMonitorizableElement
 		if (this.propagationSpeedInKmPerSecond != e2.propagationSpeedInKmPerSecond) return false;
 		if (this.qos2PriorityMaxLinkCapPercentage.equals(e2.qos2PriorityMaxLinkCapPercentage)) return false;
 		if (this.isUp != e2.isUp) return false;
+		if (!this.nominalColor.equals(e2.nominalColor)) return false;
 		if ((this.coupledLowerOrThisLayerDemand == null) != (e2.coupledLowerOrThisLayerDemand == null)) return false; 
 		if ((this.coupledLowerOrThisLayerDemand != null) && (coupledLowerOrThisLayerDemand.id != e2.coupledLowerOrThisLayerDemand.id)) return false;
 		if ((this.coupledLowerLayerMulticastDemand == null) != (e2.coupledLowerLayerMulticastDemand == null)) return false; 

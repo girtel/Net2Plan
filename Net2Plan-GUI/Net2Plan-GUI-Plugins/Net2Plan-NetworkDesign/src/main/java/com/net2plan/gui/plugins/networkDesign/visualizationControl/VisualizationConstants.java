@@ -85,7 +85,6 @@ public final class VisualizationConstants
     public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_ACTIVE = new BasicStroke(3 * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
     public final static BasicStroke DEFAULT_REGGUILINK_EDGESTROKE_BACKUP_PICKED = new BasicStroke(3 * INCREASELINKSTROKEFACTORACTIVE * INCREASELINKSTROKEFACTORACTIVE, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[]{10}, 0.0f);
 
-    public final static Paint DEFAULT_REGGUILINK_EDGECOLOR = Color.BLACK;
     public final static Paint DEFAULT_REGGUILINK_EDGECOLOR_PICKED = Color.BLUE;
     public final static Paint DEFAULT_REGGUILINK_EDGECOLOR_BACKUP = Color.YELLOW;
     public final static Paint DEFAULT_REGGUILINK_EDGECOLOR_BACKUPANDPRIMARY = new Color(160f / 255, 82f / 255, 45f / 255); // brown

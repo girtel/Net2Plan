@@ -77,7 +77,7 @@ public class GUILink
         else
         {
             this.hasArrow = VisualizationConstants.DEFAULT_REGGUILINK_HASARROW;
-            this.edgeDrawPaint = VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
+            this.edgeDrawPaint = npLink.getNominalColor();
         }
         this.shownSeparated = false;
     }

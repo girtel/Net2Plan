@@ -764,7 +764,7 @@ public class PickManager
             e.setHasArrow(VisualizationConstants.DEFAULT_REGGUILINK_HASARROW);
             DrawUtils.setCurrentDefaultEdgeStroke(vs, e, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE_ACTIVELAYER, VisualizationConstants.DEFAULT_REGGUILINK_EDGESTROKE);
             final boolean isDown = e.getAssociatedNetPlanLink().isDown();
-            final Paint color = isDown ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR;
+            final Paint color = isDown ? VisualizationConstants.DEFAULT_REGGUILINK_EDGECOLOR_FAILED : e.getAssociatedNetPlanLink().getNominalColor();
             e.setEdgeDrawPaint(color);
             e.setShownSeparated(isDown);
         }

@@ -19,9 +19,9 @@
 
 package com.net2plan.interfaces.networkDesign;
 
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +36,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import javax.swing.JLabel;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 
@@ -451,8 +450,9 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
 		final double propagationSpeedInKmPerSecond = getDouble ("propagationSpeedInKmPerSecond");
 		long bidirectionalPairId = -1; try { bidirectionalPairId = getLong ("bidirectionalPairId"); } catch (Exception e) {}
 		boolean isUp = true; try { isUp = getBoolean ("isUp"); } catch (Exception e) {} 
-
+		Color nominalColor = Color.BLACK; try { nominalColor = new Color ((int) getLong ("nominalColor")); } catch (Exception e) {}
 		Link newLink = netPlan.addLink(linkId , netPlan.getNodeFromId(originNodeId), netPlan.getNodeFromId(destinationNodeId), capacity, lengthInKm, propagationSpeedInKmPerSecond, null , netPlan.getNetworkLayerFromId(layerId));
+		newLink.setNominalColor(nominalColor);
 		newLink.setFailureState(isUp);
         newLink.setName(getStringOrDefault("name", ""));
         newLink.setDescription(getStringOrDefault("description", ""));

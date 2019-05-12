@@ -6214,6 +6214,7 @@ public class NetPlan extends NetworkElement
                     writer.writeAttribute("capacity", Double.toString(link.capacity));
                     writer.writeAttribute("lengthInKm", Double.toString(link.lengthInKm));
                     writer.writeAttribute("bidirectionalPairId", Long.toString(link.bidirectionalPair == null? -1 : link.bidirectionalPair.id));
+                    writer.writeAttribute("nominalColor", Integer.toString(link.getNominalColor().getRGB()));
                     writer.writeAttribute("propagationSpeedInKmPerSecond", Double.toString(link.propagationSpeedInKmPerSecond));
                     writer.writeAttribute("isUp", Boolean.toString(link.isUp));
                     writer.writeAttribute("monitoredOrForecastedTraffics", StringUtils.createEscapedString_asStringList(link.getMonitoredOrForecastedCarriedTraffic().toStringList()));
