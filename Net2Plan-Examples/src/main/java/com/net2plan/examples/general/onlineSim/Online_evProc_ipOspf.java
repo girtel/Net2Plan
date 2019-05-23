@@ -134,7 +134,6 @@ public class Online_evProc_ipOspf extends IEventProcessor
 			SimEvent.NodesAndLinksChangeFailureState ev = (SimEvent.NodesAndLinksChangeFailureState) event.getEventObject ();
 			currentNetPlan.setLinksAndNodesFailureState(ev.linksToUp , ev.linksToDown , ev.nodesToUp , ev.nodesToDown);
 		}
-		else throw new Net2PlanException ("Unknown event type: " + event);
 
 		/* Link weights from netPlan, but the down links have Double.MAX_VALUE weight */
 		DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(currentNetPlan , ipLayer);
