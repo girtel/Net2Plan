@@ -279,10 +279,10 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             		if (newLinkUtilization <= 0) throw new Net2PlanException ("Link utilization must be positive");
                             		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->
                             		{
-                            			double cap = isBidirectional && ee.isBidirectional ()? Math.max (ee.getOccupiedCapacity() , ee.getBidirectionalPair ().getOccupiedCapacity ()) : ee.getCapacity ();
-                            			if (newLinkUtilization > 0) cap /= newLinkUtilization;
-                            			if (capacityModule > 0) cap = capacityModule * Math.ceil(cap / capacityModule);
-                            			ee.setCapacity(cap);
+                            			double occupiedCap = isBidirectional && ee.isBidirectional ()? Math.max (ee.getOccupiedCapacity() , ee.getBidirectionalPair ().getOccupiedCapacity ()) : ee.getCapacity ();
+                            			if (newLinkUtilization > 0) occupiedCap /= newLinkUtilization;
+                            			if (capacityModule > 0) occupiedCap = capacityModule * Math.ceil(occupiedCap / capacityModule);
+                            			ee.setCapacity(occupiedCap);
                             		});
                             	}
                             );
