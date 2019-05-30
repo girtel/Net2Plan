@@ -12,6 +12,7 @@
 package com.net2plan.libraries;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
@@ -657,7 +658,7 @@ public class IPUtils
 		final Quadruple<DoubleMatrix2D, DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D> q = 
 				computeCarriedTrafficFromIGPWeights(netPlan, linkWeightMap , layer);
 		final DoubleMatrix2D f_de = q.getFirst ();
-		netPlan.setForwardingRules(f_de , null , layer);
+		netPlan.setForwardingRules(f_de , new HashSet<> (netPlan.getDemandsHopByHopRouted(layer)) , layer);
 	}
 	
 	/**

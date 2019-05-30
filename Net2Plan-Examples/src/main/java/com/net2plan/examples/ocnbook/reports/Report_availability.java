@@ -354,13 +354,14 @@ public class Report_availability implements IReport
 			{
 				out.append("<table border='1'>");
 				final List<String> headers = Arrays.asList("Link" , "Origin node" , "Destination node" , "Capacity",
-						"WC Occupied capacity / involved SRGs");
+						"WC Occupied capacity / involved SRGs" , "WC utilization (0...1)");
 				final List<Function<Link , String>> vals_e = Arrays.asList(
 						d->"<td>" + d.getIndex () + "</td>" ,
 						d->"<td>" + d.getOriginNode().getIndex() + "(" + d.getOriginNode().getName() + ")" + "</td>",
 						d->"<td>" + d.getDestinationNode().getIndex() + "(" + d.getDestinationNode().getName() + ")" + "</td>",
 						d->"<td>" + df_6.format(d.getCapacity()) + "</td>",
-						d->printWcAndSrgs(info_e.get(d.getId()).getWcOccupiedCapacityGbps() , info_e.get(d.getId()).getFailureStates_wcOccupiedCapacity() , info_e.get(d.getId()).getWcOccupiedCapacityGbps() + Configuration.precisionFactor > d.getCapacity())
+						d->printWcAndSrgs(info_e.get(d.getId()).getWcOccupiedCapacityGbps() , info_e.get(d.getId()).getFailureStates_wcOccupiedCapacity() , info_e.get(d.getId()).getWcOccupiedCapacityGbps() + Configuration.precisionFactor > d.getCapacity()),
+						d-> { final double cap = d.getCapacity(); final double traf = info_e.get(d.getId()).getWcOccupiedCapacityGbps(); return "<td>" + df_6.format(cap == 0? (traf == 0? 0 : Double.MAX_VALUE) :  traf/cap) + "</td>"; }
 						);
 				out.append("<tr>"); for (String h : headers) out.append("<th><b>" + h + "</b></th>"); out.append("</tr>"); 
 				for (Link d : np.getLinks (layer))
