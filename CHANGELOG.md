@@ -4,6 +4,22 @@ All notable changes to Net2Plan will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.6.3.1] - 2019-05-31
+
+### Added
+	- SAN based algorithm for distance geometry problem.
+	- Property "Nominal Color" to link class.
+	
+### Removed
+	- NIW classes.
+
+### Fixed
+	- Several minor bugs associated to the tables.
+
+
+####
+
+
 ## [0.6.3] - 2019-04-29
 
 ### Added
