@@ -4,6 +4,15 @@ All notable changes to Net2Plan will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.6.3.2] - 2019-07-15
+
+### Fixed
+	- Upgraded JGraphT library to 1.3.1 version to fix several bugs.
+
+
+####
+
+
 ## [0.6.3.1] - 2019-05-31
 
 ### Added
