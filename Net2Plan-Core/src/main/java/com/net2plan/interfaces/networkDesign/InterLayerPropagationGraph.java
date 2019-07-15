@@ -10,18 +10,19 @@
  *******************************************************************************/
 package com.net2plan.interfaces.networkDesign;
 
+import com.google.common.collect.Sets;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
+import org.jgrapht.graph.DirectedAcyclicGraph;
+
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph.CycleFoundException;
-
-import com.google.common.collect.Sets;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
+//import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+//import org.jgrapht.experimental.dag.DirectedAcyclicGraph.CycleFoundException;
 
 public class InterLayerPropagationGraph
 {
@@ -236,7 +237,7 @@ public class InterLayerPropagationGraph
 			link2IGPVertexMap.put(e , ipgNode);
 			this.interLayerPropagationGraph.addVertex(ipgNode);
 		}
-		try { this.interLayerPropagationGraph.addDagEdge(edgeInitialNode , ipgNode , new Object ()); } catch (CycleFoundException ex) { throw new RuntimeException(ex.getMessage()); }
+		try { this.interLayerPropagationGraph.addEdge(edgeInitialNode , ipgNode , new Object ()); } catch (IllegalArgumentException ex) { throw new RuntimeException(ex.getMessage()); }
 		if (newlyCreatedIPG) 
 			if (propagateUpwards) 
 				addVertexAndEdgesToGraphFromInitialIPGUpwards(ipgNode);
@@ -253,7 +254,7 @@ public class InterLayerPropagationGraph
 			demand2IGPVertexMap.put(d , ipgNode);
 			this.interLayerPropagationGraph.addVertex(ipgNode);
 		}
-		try { this.interLayerPropagationGraph.addDagEdge(edgeInitialNode , ipgNode , new Object ()); } catch (CycleFoundException ex) { throw new RuntimeException(ex.getMessage()); }
+		try { this.interLayerPropagationGraph.addEdge(edgeInitialNode , ipgNode , new Object ()); } catch (IllegalArgumentException ex) { throw new RuntimeException(ex.getMessage()); }
 		if (newlyCreatedIPG) 
 			if (propagateUpwards) 
 				addVertexAndEdgesToGraphFromInitialIPGUpwards(ipgNode);
@@ -270,9 +271,9 @@ public class InterLayerPropagationGraph
 			mDemandAndNode2VertexMap.put(m , ipgNode);
 			this.interLayerPropagationGraph.addVertex(ipgNode);
 		}
-		try { this.interLayerPropagationGraph.addDagEdge(edgeInitialNode , ipgNode , new Object ()); } catch (CycleFoundException ex) { throw new RuntimeException(ex.getMessage()); }
-		if (newlyCreatedIPG) 
-			if (propagateUpwards) 
+		try { this.interLayerPropagationGraph.addEdge(edgeInitialNode , ipgNode , new Object ()); } catch (IllegalArgumentException ex) { throw new RuntimeException(ex.getMessage()); }
+		if (newlyCreatedIPG)
+			if (propagateUpwards)
 				addVertexAndEdgesToGraphFromInitialIPGUpwards(ipgNode);
 			else
 				addVertexAndEdgesToGraphFromInitialIPGDownwards(ipgNode);

@@ -26,13 +26,18 @@ import com.net2plan.utils.CollectionUtils;
 import com.net2plan.utils.Constants;
 import com.net2plan.utils.DoubleUtils;
 import edu.uci.ics.jung.algorithms.scoring.BetweennessCentrality;
+import edu.uci.ics.jung.graph.DirectedGraph;
 import edu.uci.ics.jung.graph.Graph;
 import org.apache.commons.collections15.Transformer;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.alg.EdmondsKarpMaximumFlow;
-import org.jgrapht.alg.StrongConnectivityInspector;
+import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector;
+import org.jgrapht.alg.flow.EdmondsKarpMFImpl;
+import org.jgrapht.graph.DefaultDirectedGraph;
 
 import java.util.*;
+
+//import org.jgrapht.DirectedGraph;
+//import org.jgrapht.alg.EdmondsKarpMaximumFlow;
+//import org.jgrapht.alg.StrongConnectivityInspector;
 
 /**
  * <p>Class to deal with graph-theory metrics computation.</p>
@@ -52,7 +57,7 @@ public class GraphTheoryMetrics
 	private DoubleMatrix2D adjacencyMatrix;
 	private double[] adjacencyMatrixEigenvalues;
 	private double averageSPLength, diameter, heterogeneity;
-	private DirectedGraph<Node, Link> graph_jgrapht;
+	private DefaultDirectedGraph<Node, Link> graph_jgrapht;
 	private Graph<Node, Link> graph_jung;
 	private DoubleMatrix2D incidenceMatrix;
 	private DoubleMatrix2D laplacianMatrix;
@@ -370,8 +375,8 @@ public class GraphTheoryMetrics
 	{
 		if (E == 0) return 0;
 
-		DirectedGraph<Node, Link> graph = getGraph_JGraphT();
-		StrongConnectivityInspector<Node, Link> ci = new StrongConnectivityInspector<Node, Link>(graph);
+		DefaultDirectedGraph<Node, Link> graph = getGraph_JGraphT();
+		GabowStrongConnectivityInspector<Node, Link> ci = new GabowStrongConnectivityInspector<Node, Link>(graph);
 		List<Set<Node>> connectedComponents = ci.stronglyConnectedSets();
 
 		double sum = 0;
@@ -464,9 +469,9 @@ public class GraphTheoryMetrics
 		return diameter;
 	}
 
-	private DirectedGraph<Node, Link> getGraph_JGraphT()
+	private DefaultDirectedGraph<Node, Link> getGraph_JGraphT()
 	{
-		if (graph_jgrapht == null) graph_jgrapht = (DirectedGraph<Node, Link>) JGraphTUtils.getGraphFromLinkMap(nodes , linkMap);
+		if (graph_jgrapht == null) graph_jgrapht = (DefaultDirectedGraph<Node, Link>) JGraphTUtils.getGraphFromLinkMap(nodes , linkMap);
 		return graph_jgrapht;
 	}
 
@@ -584,8 +589,8 @@ public class GraphTheoryMetrics
 	{
 		if (E == 0) return 0;
 
-		DirectedGraph<Node, Link> graph = getGraph_JGraphT();
-		EdmondsKarpMaximumFlow<Node, Node> ek = new EdmondsKarpMaximumFlow(graph);
+		DefaultDirectedGraph<Node, Link> graph = getGraph_JGraphT();
+        EdmondsKarpMFImpl<Node, Node> ek = new EdmondsKarpMFImpl(graph);
 		int k = Integer.MAX_VALUE;
 
 		for (Node originNode : nodes)
@@ -595,7 +600,7 @@ public class GraphTheoryMetrics
 				if (originNode.equals(destinationNode)) continue;
 
 				ek.calculateMaximumFlow(originNode, destinationNode);
-				k = Math.min(k, ek.getMaximumFlowValue().intValue());
+				k = Math.min(k, new Double(ek.getMaximumFlowValue()).intValue());
 
 				if (k == 0) break;
 			}
@@ -644,7 +649,7 @@ public class GraphTheoryMetrics
 	{
 		if (E == 0) return 0;
 		
-		DirectedGraph<Node, Link> graph = getGraph_JGraphT();
+		DefaultDirectedGraph<Node, Link> graph = getGraph_JGraphT();
 		int k = Integer.MAX_VALUE;
 
 		for (Node originNode : nodes)
@@ -653,10 +658,10 @@ public class GraphTheoryMetrics
 			{
 				if (originNode.equals(destinationNode)) continue;
 				
-				DirectedGraph<Node, Link> auxGraph = (DirectedGraph<Node, Link>) JGraphTUtils.buildAuxiliaryNodeDisjointGraph(graph, originNode, destinationNode);
-				EdmondsKarpMaximumFlow<Node, Node> ek = new EdmondsKarpMaximumFlow(auxGraph);
+				DefaultDirectedGraph<Node, Link> auxGraph = (DefaultDirectedGraph<Node, Link>) JGraphTUtils.buildAuxiliaryNodeDisjointGraph(graph, originNode, destinationNode);
+                EdmondsKarpMFImpl<Node, Node> ek = new EdmondsKarpMFImpl(auxGraph);
 				ek.calculateMaximumFlow(originNode, destinationNode);
-				k = Math.min(k, ek.getMaximumFlowValue().intValue());
+				k = Math.min(k, new Double(ek.getMaximumFlowValue()).intValue());
 
 				if (k == 0) break;
 			}

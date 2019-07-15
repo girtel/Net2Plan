@@ -17,38 +17,28 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-
+import cern.colt.matrix.tdouble.DoubleFactory2D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.libraries.GraphUtils.ClosedCycleRoutingException;
 import com.net2plan.libraries.TrafficPredictor;
+import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quintuple;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 
-import cern.colt.matrix.tdouble.DoubleFactory2D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+//import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
 /** <p>This class contains a representation of a unicast demand. Unicast demands are defined by its initial and end node, the network layer they belong to, 
  * and their offered traffic. When the routing in the network layer is the type {@link com.net2plan.utils.Constants.RoutingType#SOURCE_ROUTING SOURCE_ROUTING}, demands are carried
@@ -817,8 +807,8 @@ public class Demand extends NetworkElement implements IMonitorizableElement
 			{
 				coupling_thisLayerPair = new DemandLinkMapping();
 				boolean valid;
-				try { valid = netPlan.interLayerCoupling.addDagEdge(lowerLayer, upperLayer, coupling_thisLayerPair); }
-				catch (DirectedAcyclicGraph.CycleFoundException ex) { valid = false; }
+				try { valid = netPlan.interLayerCoupling.addEdge(lowerLayer, upperLayer, coupling_thisLayerPair); }
+				catch (IllegalArgumentException ex) { valid = false; }
 				if (!valid) throw new Net2PlanException("Coupling between link " + link + " at layer " + upperLayer + " and demand " + this.id + " at layer " + lowerLayer.id + " would induce a cycle between layers");
 			}
 		}

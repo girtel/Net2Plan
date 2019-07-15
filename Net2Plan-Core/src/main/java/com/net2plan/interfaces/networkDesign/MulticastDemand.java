@@ -11,17 +11,17 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import com.google.common.collect.Sets;
 import com.net2plan.internal.AttributeMap;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.TrafficPredictor;
 import com.net2plan.libraries.TrafficSeries;
 import com.net2plan.utils.DoubleUtils;
 import com.net2plan.utils.Pair;
-
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 
 import java.util.*;
+
+//import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
 /**
  * <p>This class contains a representation of a multicast demand. Multicast demands are defined by its initial node, a set of different end nodes (all different
@@ -403,8 +403,8 @@ public class MulticastDemand extends NetworkElement implements IMonitorizableEle
 		{
 			coupling_thisLayerPair = new DemandLinkMapping();
 			boolean valid;
-			try { valid = netPlan.interLayerCoupling.addDagEdge(lowerLayer, upperLayer, coupling_thisLayerPair); }
-			catch (DirectedAcyclicGraph.CycleFoundException ex) { valid = false; }
+			try { valid = netPlan.interLayerCoupling.addEdge(lowerLayer, upperLayer, coupling_thisLayerPair); }
+			catch (IllegalArgumentException ex) { valid = false; }
 			if (!valid) throw new Net2PlanException("Coupling between link set " + links + " at layer " + upperLayer + " and multicast demand " + id + " at layer " + lowerLayer.id + " would induce a cycle between layers");
 		}
 

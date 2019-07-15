@@ -11,63 +11,6 @@
 
 package com.net2plan.interfaces.networkDesign;
 
-import java.awt.geom.Point2D;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.XMLEvent;
-
-import org.apache.commons.lang3.mutable.MutableLong;
-import org.codehaus.stax2.XMLInputFactory2;
-import org.codehaus.stax2.XMLOutputFactory2;
-import org.codehaus.stax2.XMLStreamReader2;
-import org.codehaus.stax2.XMLStreamWriter2;
-import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
-
-import com.google.common.collect.Sets;
-import com.net2plan.internal.AttributeMap;
-import com.net2plan.internal.ErrorHandling;
-import com.net2plan.internal.UnmodifiablePoint2D;
-import com.net2plan.internal.Version;
-import com.net2plan.internal.XMLUtils;
-import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.SRGUtils;
-import com.net2plan.utils.CollectionUtils;
-import com.net2plan.utils.Constants.RoutingCycleType;
-import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.DoubleUtils;
-import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
-import com.net2plan.utils.StringUtils;
-import com.net2plan.utils.Triple;
-
 import cern.colt.function.tdouble.DoubleFunction;
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
@@ -75,6 +18,31 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.google.common.collect.Sets;
+import com.net2plan.internal.*;
+import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.SRGUtils;
+import com.net2plan.utils.*;
+import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.Constants.RoutingType;
+import org.apache.commons.lang3.mutable.MutableLong;
+import org.codehaus.stax2.XMLInputFactory2;
+import org.codehaus.stax2.XMLOutputFactory2;
+import org.codehaus.stax2.XMLStreamReader2;
+import org.codehaus.stax2.XMLStreamWriter2;
+import org.jgrapht.graph.DirectedAcyclicGraph;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+import java.awt.geom.Point2D;
+import java.io.*;
+import java.net.URL;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+//import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
 
 /**
  * <p>Class defining a complete multi-layer network structure. Layers may
@@ -2470,7 +2438,7 @@ public class NetPlan extends NetworkElement
 
             try
             {
-                this.interLayerCoupling.addDagEdge(newMapping.getDemandSideLayer(), newMapping.getLinkSideLayer(), newMapping);
+                this.interLayerCoupling.addEdge(newMapping.getDemandSideLayer(), newMapping.getLinkSideLayer(), newMapping);
             } catch (Exception e)
             {
                 throw new RuntimeException("Bad: " + e);
@@ -5611,8 +5579,8 @@ public class NetPlan extends NetworkElement
             boolean valid;
             try
             {
-                valid = interLayerCoupling.addDagEdge(lowerLayer, upperLayer, coupling_thisLayerPair);
-            } catch (DirectedAcyclicGraph.CycleFoundException ex)
+                valid = interLayerCoupling.addEdge(lowerLayer, upperLayer, coupling_thisLayerPair);
+            } catch (IllegalArgumentException ex)
             {
                 valid = false;
             }
