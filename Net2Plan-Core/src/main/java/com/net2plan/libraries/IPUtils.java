@@ -536,9 +536,7 @@ public class IPUtils
 		String str_linkWeight = link.getAttribute(IP_WEIGHT_ATTRIBUTE_NAME);
 		try	{ linkWeight = Double.parseDouble(str_linkWeight); }
 		catch(Throwable e) { }
-		
-		checkIPWeight(linkWeight);
-		
+		if (linkWeight <= 0) return Double.MAX_VALUE;
 		return linkWeight;
 	}
 	

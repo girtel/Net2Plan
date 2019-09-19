@@ -698,6 +698,11 @@ public class Demand extends NetworkElement implements IMonitorizableElement
 	 */
 	public void setBidirectionalPair(Demand d)
 	{
+		if (d == null)
+		{
+			if (bidirectionalPair != null) { this.bidirectionalPair.bidirectionalPair = null; this.bidirectionalPair = null; }
+			return;
+		}
 		checkAttachedToNetPlanObject();
 		d.checkAttachedToNetPlanObject(this.netPlan);
 		if (this.bidirectionalPair == d) return;

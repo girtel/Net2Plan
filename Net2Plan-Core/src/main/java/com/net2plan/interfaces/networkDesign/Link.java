@@ -812,6 +812,12 @@ public class Link extends NetworkElement implements IMonitorizableElement
 	 */
 	public void setBidirectionalPair(Link e)
 	{
+		if (e == null)
+		{
+			if (bidirectionalPair != null) { this.bidirectionalPair.bidirectionalPair = null; this.bidirectionalPair = null; }
+			return;
+		}
+
 		checkAttachedToNetPlanObject();
 		e.checkAttachedToNetPlanObject(this.netPlan);
 		if (e.layer != this.layer) throw new Net2PlanException ("Wrong layer");
