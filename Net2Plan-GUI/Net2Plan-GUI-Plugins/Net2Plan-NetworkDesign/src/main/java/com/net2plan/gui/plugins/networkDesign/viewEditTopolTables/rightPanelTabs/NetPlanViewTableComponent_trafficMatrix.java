@@ -416,25 +416,15 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                     final Set<Demand> applicableDemands = Sets.intersection(
                             np.getNodePairDemands(n1, n2, false, layerThisTable), filteredDemands);
                     final Demand demand = applicableDemands.iterator().next();
+                    demand.setOfferedTraffic(newOfferedTraffic);
+                    super.setValueAt(newValue, row, column);
+
                     if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
-                    {
-                        final WhatIfAnalysisPane whatIfPane = networkViewer.getWhatIfAnalysisPane();
-                        whatIfPane.whatIfDemandOfferedTrafficModified(demand, newOfferedTraffic);
-                        super.setValueAt(newValue, row, column);
-                        final VisualizationState vs = networkViewer.getVisualizationState();
-                        Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                                vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(networkViewer.getDesign().getNetworkLayers()));
-                        vs.setCanvasLayerVisibilityAndOrder(networkViewer.getDesign(), res.getFirst(), res.getSecond());
-                        networkViewer.updateVisualizationAfterNewTopology();
-                    } else
-                    {
-                        demand.setOfferedTraffic(newOfferedTraffic);
-                        super.setValueAt(newValue, row, column);
-                        networkViewer.updateVisualizationAfterChanges();
-                        networkViewer.getPickManager().pickElements(demand);
-                        networkViewer.updateVisualizationAfterPick();
-                        networkViewer.addNetPlanChange();
-                    }
+                    	networkViewer.getWhatIfAnalysisPane().whatIfSomethingModified();
+                    networkViewer.updateVisualizationAfterChanges();
+                    networkViewer.getPickManager().pickElements(demand);
+                    networkViewer.updateVisualizationAfterPick();
+                    networkViewer.addNetPlanChange();
                 } catch (Throwable e)
                 {
                     ErrorHandling.showErrorDialog("Wrong traffic value");
@@ -1143,23 +1133,13 @@ public class NetPlanViewTableComponent_trafficMatrix extends JPanel
                 for (Demand d : filteredDemandList)
                     demandOfferedTrafficsList.add(newTraffic2D.get(node2IndexInFilteredListMap.get(d.getIngressNode()), node2IndexInFilteredListMap.get(d.getEgressNode())));
 
-                if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
-                {
-                    final WhatIfAnalysisPane whatIfPane = networkViewer.getWhatIfAnalysisPane();
-                    whatIfPane.whatIfDemandOfferedTrafficModified(filteredDemandList, demandOfferedTrafficsList);
-                    final VisualizationState vs = networkViewer.getVisualizationState();
-                    Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
-                            vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(networkViewer.getDesign().getNetworkLayers()));
-                    vs.setCanvasLayerVisibilityAndOrder(networkViewer.getDesign(), res.getFirst(), res.getSecond());
-                    networkViewer.updateVisualizationAfterNewTopology();
-                } else
-                {
-                    for (int cont = 0; cont < filteredDemandList.size(); cont++)
-                        filteredDemandList.get(cont).setOfferedTraffic(demandOfferedTrafficsList.get(cont));
-                    networkViewer.updateVisualizationAfterChanges();
-                    networkViewer.addNetPlanChange();
-                }
+                for (int cont = 0; cont < filteredDemandList.size(); cont++)
+                    filteredDemandList.get(cont).setOfferedTraffic(demandOfferedTrafficsList.get(cont));
+                networkViewer.updateVisualizationAfterChanges();
+                networkViewer.addNetPlanChange();
 
+                if (networkViewer.getVisualizationState().isWhatIfAnalysisActive())
+                    networkViewer.getWhatIfAnalysisPane().whatIfSomethingModified();
             } catch (Net2PlanException ee)
             {
                 ErrorHandling.showErrorDialog(ee.getMessage(), "Error");

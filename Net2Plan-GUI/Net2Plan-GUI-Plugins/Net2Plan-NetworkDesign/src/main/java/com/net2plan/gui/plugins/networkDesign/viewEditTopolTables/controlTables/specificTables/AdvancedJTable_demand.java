@@ -202,14 +202,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                     	{
                     		final double newOfferedTraffic = (Double) list.get(0).get();
                     		final List<Demand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).collect(Collectors.toList());
-                    		try
-                    		{
-                                if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                                    callback.getWhatIfAnalysisPane().whatIfDemandOfferedTrafficModified(changedDemands, Collections.nCopies(changedDemands.size(), newOfferedTraffic));
-                                else
-                                	changedDemands.forEach(d->d.setOfferedTraffic(newOfferedTraffic));
-                    			
-                    		} catch (Throwable ex) { ex.printStackTrace(); throw new Net2PlanException (ex.getMessage());  }
+                        	changedDemands.forEach(d->d.setOfferedTraffic(newOfferedTraffic));
                     	}
                     );
 		}
@@ -218,14 +211,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
 		{
 			final Random rng = new Random ();
     		final List<Demand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).collect(Collectors.toList());
-    		try
-    		{
-                if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                    callback.getWhatIfAnalysisPane().whatIfDemandOfferedTrafficModified(changedDemands, changedDemands.stream().map(ee->rng.nextDouble()).collect(Collectors.toList()));
-                else
-                	changedDemands.forEach(d->d.setOfferedTraffic(rng.nextDouble()));
-    			
-    		} catch (Throwable ex) { ex.printStackTrace(); throw new Net2PlanException (ex.getMessage());  }
+        	changedDemands.forEach(d->d.setOfferedTraffic(rng.nextDouble()));
 		}
 		, (a, b) -> b>0, null));
         res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
@@ -242,10 +228,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
                     		final List<Demand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).collect(Collectors.toList());
                     		try
                     		{
+                            	changedDemands.forEach(d->d.setOfferedTraffic(d.getOfferedTraffic() * neScalingFactor));
                                 if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                                    callback.getWhatIfAnalysisPane().whatIfDemandOfferedTrafficModified(changedDemands, changedDemands.stream().map(d-> new Double ((d.getOfferedTraffic () * neScalingFactor))).collect(Collectors.toList()));
-                                else
-                                	changedDemands.forEach(d->d.setOfferedTraffic(d.getOfferedTraffic() * neScalingFactor));
+                                    callback.getWhatIfAnalysisPane().whatIfSomethingModified();
                     		} catch (Throwable ex) { ex.printStackTrace(); throw new Net2PlanException (ex.getMessage());  }
                     	}
                     );

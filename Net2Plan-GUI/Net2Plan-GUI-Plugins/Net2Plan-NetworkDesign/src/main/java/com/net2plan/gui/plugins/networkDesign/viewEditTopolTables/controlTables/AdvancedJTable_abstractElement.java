@@ -575,6 +575,8 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
                         newValueCastedOrParsed = newValue;
                     else throw new RuntimeException ();
                     columnInfo.getSetValueAtFunction().accept(ne , newValueCastedOrParsed);
+                    if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                        callback.getWhatIfAnalysisPane().whatIfSomethingModified();
                     callback.updateVisualizationAfterChanges();
                     if (AdvancedJTable_abstractElement.this instanceof AdvancedJTable_networkElement)
                     {
@@ -663,6 +665,8 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
                     popupInfo.getActionListener().accept(e);
                 else
                     SwingUtilities.invokeLater(() -> popupInfo.getActionListener().accept(e));
+                if (callback.getVisualizationState().isWhatIfAnalysisActive())
+                    callback.getWhatIfAnalysisPane().whatIfSomethingModified();
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges();
                 

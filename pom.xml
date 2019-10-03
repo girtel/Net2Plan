@@ -147,9 +147,9 @@
             <version>5.0</version>
         </dependency>
         <dependency>
-            <groupId>net.sourceforge.parallelcolt</groupId>
+            <groupId>com.github.rwl</groupId>
             <artifactId>parallelcolt</artifactId>
-            <version>0.10.1</version>
+            <version>parallelcolt-0.11.4</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.woodstox</groupId>

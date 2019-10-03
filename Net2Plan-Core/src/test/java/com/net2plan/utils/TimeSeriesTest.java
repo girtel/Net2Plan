@@ -2,7 +2,6 @@ package com.net2plan.utils;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -17,7 +16,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.Sets;
-import com.net2plan.TestConstants;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
@@ -139,7 +137,7 @@ public class TimeSeriesTest
 		}
 		catch (UnsatisfiedLinkError e)
 		{
-			System.out.println(TestConstants.IPOPT_NOT_FOUND_ERROR);
+			System.out.println("IPOPT not found");
 		}
 		
 
@@ -154,7 +152,7 @@ public class TimeSeriesTest
 		}
 		catch (UnsatisfiedLinkError e)
 		{
-			System.out.println(TestConstants.IPOPT_NOT_FOUND_ERROR);
+			System.out.println("IPOPT not found");
 		}
 
 	}
@@ -171,7 +169,7 @@ public class TimeSeriesTest
 		}
 		catch (UnsatisfiedLinkError e)
 		{
-			System.out.println(TestConstants.GLPK_NOT_FOUND_ERROR);
+			System.out.println("GLPK not found");
 		}
 
 	}
