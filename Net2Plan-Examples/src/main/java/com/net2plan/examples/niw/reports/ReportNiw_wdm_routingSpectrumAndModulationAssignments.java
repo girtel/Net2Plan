@@ -34,7 +34,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.niw.networkModel.OpticalSpectrumManager;
 import com.net2plan.niw.networkModel.WFiber;
-import com.net2plan.niw.networkModel.WLightpathUnregenerated;
+import com.net2plan.niw.networkModel.WLightpath;
 import com.net2plan.niw.networkModel.WNet;
 import com.net2plan.niw.networkModel.WNode;
 import com.net2plan.utils.InputParameter;
@@ -200,7 +200,7 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 		
 		for (WFiber e : net.getFibers())
 		{
-		   final SortedMap<Integer,SortedSet<WLightpathUnregenerated>> occupiedResources_e = osm.getOccupiedResources (e);
+		   final SortedMap<Integer,SortedSet<WLightpath>> occupiedResources_e = osm.getOccupiedResources (e);
 		   final SortedSet<Integer> validOpticalSlotsIds_e = e.getValidOpticalSlotIds();
 		   
 			out.append("<tr>");
@@ -213,7 +213,7 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 			{
 				String color = "";
 				final boolean inFiberCapacity = validOpticalSlotsIds_e.contains(s); 
-				final SortedSet<WLightpathUnregenerated> lps = occupiedResources_e.getOrDefault(s, new TreeSet<> ());
+				final SortedSet<WLightpath> lps = occupiedResources_e.getOrDefault(s, new TreeSet<> ());
 				final int numLpsBackup = (int) lps.stream().filter(ee -> ee.isBackupLightpath()).count();
 				final int numLpsPrimary = lps.size() - numLpsBackup;
 				if (!inFiberCapacity && (numLpsPrimary + numLpsBackup == 0)) color = "black";
@@ -223,7 +223,7 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 				else if (inFiberCapacity && (numLpsPrimary == 0) && (numLpsBackup == 1)) color = "yellow";
 				else { color = "red"; everythingOk = false; }
 				thisLine.append("<td bgcolor=\"" + color + "\">");
-				for (WLightpathUnregenerated r : lps) thisLine.append("<a href=\"#lp" + r.getNe().getIndex() + "\">L" + r.getNe().getIndex() + " </a>");
+				for (WLightpath r : lps) thisLine.append("<a href=\"#lp" + r.getNe().getIndex() + "\">L" + r.getNe().getIndex() + " </a>");
 				thisLine.append("</td>");
 			}
 			out.append("<td>" + (occupiedResources_e.size()) / ((double) validOpticalSlotsIds_e.size()) + "</td>");
@@ -241,7 +241,7 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 				+ "<th><b>Dest. node</b></th><th><b>Trav. nodes</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
 				+ "<th><b>Line rate (Gbps)</b></th><th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Backup routes assigned</b></th><th><b>Ok RSA?</b></th></tr>");
-		for (WLightpathUnregenerated r : net.getLightpaths())
+		for (WLightpath r : net.getLightpaths())
 		{
 			if (r.isBackupLightpath()) continue;
 			out.append("<tr>");
@@ -256,7 +256,7 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 			out.append("<td>" + r.getNumberOccupiedSlotIds() + "</td>");
 			out.append("<td>" + occupiedSlotsString(r.getOpticalSlotIds()) + "</td>");
 			out.append("<td>");
-			for (WLightpathUnregenerated backupRoute : r.getBackupLightpaths())
+			for (WLightpath backupRoute : r.getBackupLightpaths())
 				out.append("<a href=\"#lpProt" + backupRoute.getNe().getIndex() + "\">BU" + backupRoute.getNe().getIndex() + "</a> ");
 			out.append("</td>");
 			final boolean isOk = osm.isSpectrumOccupationOk(r);
@@ -273,13 +273,13 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 				+ "<th><b>Dest. node</b></th><th><b>Trav. nodes</b></th><th><b>Length (km)</b></th><th><b>Propagation delay (ms)</b></th>"
 				+ "<th><b>Num. slots</b></th><th><b>Occupied slots</b></th>"
 				+ "<th><b>Ok?</b></th></tr>");
-		for (WLightpathUnregenerated segment : net.getLightpaths())
+		for (WLightpath segment : net.getLightpaths())
 		{
 			if (!segment.isBackupLightpath()) continue;
 			out.append("<tr>");
 			out.append("<td><a name=\"lpProt" + segment.getNe().getIndex() + "\">" + segment.getNe().getIndex() + " (id: " + segment.getId() + ")"+ "</a></td>");
 			out.append("<td>");
-			for (WLightpathUnregenerated r : segment.getPrimaryLightpathsOfThisBackupLightpath())
+			for (WLightpath r : segment.getPrimaryLightpathsOfThisBackupLightpath())
 				out.append("<a href=\"#lp" + r.getNe().getIndex() + "\">L" + r.getNe().getIndex() + "</a> ");
 			out.append("</td>");
 			out.append("<td>" + printNode(segment.getA().getNe()) + "</td>");

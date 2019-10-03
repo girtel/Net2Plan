@@ -67,6 +67,7 @@ public abstract class ITableRowFilter
 	public static List<?> getAllElements (NetPlan np , NetworkLayer layer , AJTableType tableType)
 	{
 		if (tableType.getNeType() == null) throw new RuntimeException();
+		
 		switch (tableType.getNeType())
 		{
 		case DEMAND: return np.getDemands(layer);

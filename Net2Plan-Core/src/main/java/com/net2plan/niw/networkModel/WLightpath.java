@@ -20,7 +20,7 @@ import com.net2plan.interfaces.networkDesign.Route;
  * traversed fibers
  *
  */
-public class WLightpathUnregenerated extends WAbstractNetworkElement
+public class WLightpath extends WAbstractNetworkElement
 {
 	private static final String ATTNAMECOMMONPREFIX = "UnregLp_";
 	private static final String ATTNAMESUFFIX_OCCUPIEDSLOTIDS = "occupiedSlotIds";
@@ -34,7 +34,7 @@ public class WLightpathUnregenerated extends WAbstractNetworkElement
 
 	private final Route r;
 
-	WLightpathUnregenerated (Route r) { super (r, Optional.empty()); this.r = r; assert r.getLayer().equals(getNet().getWdmLayer().getNe()); }
+	WLightpath (Route r) { super (r, Optional.empty()); this.r = r; assert r.getLayer().equals(getNet().getWdmLayer().getNe()); }
 
 	@Override
 	public Route getNe () { return (Route) associatedNpElement; }
@@ -135,32 +135,32 @@ public class WLightpathUnregenerated extends WAbstractNetworkElement
 	/** Adds a backup lightpath to this lightpath
 	 * @param backup see above
 	 */
-	public void addBackupLightpath (WLightpathUnregenerated backup) { r.addBackupRoute(backup.getNe ()); }
+	public void addBackupLightpath (WLightpath backup) { r.addBackupRoute(backup.getNe ()); }
 	
 	/** Returns the list of lightpath designated to be backup of this one
 	 * @param backup see above
 	 */
-	public List<WLightpathUnregenerated> getBackupLightpaths () { return r.getBackupRoutes().stream().map(rr->new WLightpathUnregenerated(rr)).collect(Collectors.toList()); }
+	public List<WLightpath> getBackupLightpaths () { return r.getBackupRoutes().stream().map(rr->new WLightpath(rr)).collect(Collectors.toList()); }
 	
 	/** Returns the lightpaths from which this is backup, or an empty set
 	 * @return see above
 	 */
-	public SortedSet<WLightpathUnregenerated> getPrimaryLightpathsOfThisBackupLightpath () 
+	public SortedSet<WLightpath> getPrimaryLightpathsOfThisBackupLightpath () 
 	{
 		if (!this.isBackupLightpath()) return new TreeSet<> ();
-		return r.getRoutesIAmBackup().stream().map(rr->new WLightpathUnregenerated(rr)).collect(Collectors.toCollection(TreeSet::new));
+		return r.getRoutesIAmBackup().stream().map(rr->new WLightpath(rr)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	
 	/** Removes a backup lightpath 
 	 * @param backup see above
 	 */
-	public void removeBackupLightpath (WLightpathUnregenerated backup) { r.removeBackupRoute(backup.getNe ()); }
+	public void removeBackupLightpath (WLightpath backup) { r.removeBackupRoute(backup.getNe ()); }
 
 	/** Sets this lightpath as a backup lightpath of other lightpath in this request 
 	 * @param mainLp see above
 	 */
-	public void setAsBackupLightpath (WLightpathUnregenerated mainLp) { mainLp.addBackupLightpath(this); }
+	public void setAsBackupLightpath (WLightpath mainLp) { mainLp.addBackupLightpath(this); }
 	
 	/** Returns the sequence of fibers traversed by this lp
 	 * @return see above

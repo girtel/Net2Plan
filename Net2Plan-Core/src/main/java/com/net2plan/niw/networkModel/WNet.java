@@ -30,6 +30,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
@@ -85,12 +86,12 @@ public class WNet extends WAbstractNetworkElement
 			if (!lpr.hasLightpathsAssigned()) continue;
 			if (!lpr.is11Protected())
 			{
-				final WLightpathUnregenerated lp = getLightpaths().get(0);
+				final WLightpath lp = getLightpaths().get(0);
 				lp.getNe().setCarriedTraffic(lp.isUp()? lpr.getLineRateGbps() : 0.0 , null);
 			}
 			else
 			{
-				final List<WLightpathUnregenerated> lps = getLightpaths();
+				final List<WLightpath> lps = getLightpaths();
 				if (lps.get(0).isUp()) 
 				{ 
 					lps.get(0).getNe().setCarriedTraffic(lpr.getLineRateGbps(), null);   
@@ -187,9 +188,9 @@ public class WNet extends WAbstractNetworkElement
 	 * Returns the list of lightpaths, in increasing order according to its id
 	 * @return see above
 	 */
-	public List<WLightpathUnregenerated> getLightpaths()
+	public List<WLightpath> getLightpaths()
 	{
-		return np.getRoutes(getWdmLayer().getNe()).stream().map(n -> new WLightpathUnregenerated(n)).collect(Collectors.toCollection(ArrayList::new));
+		return np.getRoutes(getWdmLayer().getNe()).stream().map(n -> new WLightpath(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -385,7 +386,6 @@ public class WNet extends WAbstractNetworkElement
 		checkInThisWNet(userInjectionNode);
 		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer());
 		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
-		scReq.setUserServiceName(userService.getUserServiceUniqueId());
 		if (isUpstream)
 		{
 			scNp.setServiceChainSequenceOfTraversedResourceTypes(userService.getListVnfTypesToTraverseUpstream());
@@ -408,6 +408,59 @@ public class WNet extends WAbstractNetworkElement
 		return scReq;
 	}
 
+	/**
+	 * Adds a request for an upstream or downstream unidirectional service chain, for the given user service. The user
+	 * service will define the sequence of VNF types that the flow must traverse, and will indicate the set of potential end
+	 * nodes (for upstream flows) or potential initial nodes (for downstream flows).
+	 * @param userInjectionNode the node where the traffic starts (in upstream flows) or ends (in downstream flows)
+	 * @param isUpstream if true, the flow is supposed to start in the injection node, if false, the flow is supposed to end
+	 *        in the injection node
+	 * @param userService the user service defining this service chain request.
+	 * @return see above
+	 */
+	/**
+	 * Adds a request for an upstream or downstream unidirectional service chain, with the given characteristics. 
+	 * The user will define the sequence of VNF types that the flow must traverse, and will indicate the set of potential end
+	 * nodes (for upstream flows) or potential initial nodes (for downstream flows). Also the default sequence of expansion factors 
+	 * of the traffic when traversing the VNF, and the list with the maximum latency from the origin
+	 * node, to the input of the i-th VNF traversed. The last value of such list is the maximum latency from the origin node to
+	 * the end node for the service chains realizing this request. 
+	 * value for the 
+	 * @param originNodes see above
+	 * @param endNodes see above
+	 * @param vnfTypesToTraverse see above
+	 * @param isUpstream see above
+	 * @param defaultSequenceOfExpansionFactors see above
+	 * @param listMaxLatencyFromInitialToVnfStart_ms see above
+	 * @return  see above
+	 */
+	public WServiceChainRequest addServiceChainRequest(SortedSet<WNode> originNodes , SortedSet<WNode> endNodes , 
+			List<String> vnfTypesToTraverse , 
+			boolean isUpstream , 
+			Optional<List<Double>> defaultSequenceOfExpansionFactors , 
+			Optional<List<Double>> listMaxLatencyFromInitialToVnfStart_ms)
+	{
+		checkInThisWNetCol(originNodes);
+		checkInThisWNetCol(endNodes);
+		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer());
+		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
+		scNp.setServiceChainSequenceOfTraversedResourceTypes(vnfTypesToTraverse);
+		scReq.setIsUpstream(isUpstream);
+		scReq.setPotentiallyValidOrigins(originNodes);
+		scReq.setPotentiallyValidDestinations(endNodes);
+		final int numVnfs = vnfTypesToTraverse.size();
+		List<Double> defaultSeqExpFactor = defaultSequenceOfExpansionFactors.orElse(null);
+		if (defaultSeqExpFactor == null) defaultSeqExpFactor = Collections.nCopies(numVnfs, 1.0);
+		if (defaultSeqExpFactor.size() != numVnfs) defaultSeqExpFactor = Collections.nCopies(numVnfs, 1.0);
+		scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(defaultSeqExpFactor);
+		List<Double> actual_listMaxLatencyFromInitialToVnfStart_ms = listMaxLatencyFromInitialToVnfStart_ms.orElse(null);
+		if (actual_listMaxLatencyFromInitialToVnfStart_ms == null) actual_listMaxLatencyFromInitialToVnfStart_ms = Collections.nCopies(numVnfs + 1, Double.MAX_VALUE);
+		if (actual_listMaxLatencyFromInitialToVnfStart_ms.size() != numVnfs + 1) actual_listMaxLatencyFromInitialToVnfStart_ms = Collections.nCopies(numVnfs + 1, Double.MAX_VALUE);
+		scReq.setListMaxLatencyFromInitialToVnfStart_ms(actual_listMaxLatencyFromInitialToVnfStart_ms);
+		return scReq;
+	}
+
+	
 	/**
 	 * Adds a request for a unidirectional anycast service chain with hand picked initial and end nodes.
 	 * @param initialNodes list of nodes that can be the origin of this flow
@@ -432,7 +485,7 @@ public class WNet extends WAbstractNetworkElement
 		checkInThisWNetCol(endNodes);
 		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer());
 		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
-		scReq.setUserServiceName(userServiceIdString);
+		scReq.setQosType(userServiceIdString);
 		scNp.setServiceChainSequenceOfTraversedResourceTypes(listVnfTypes);
 		scReq.setPotentiallyValidOrigins(initialNodes);
 		scReq.setPotentiallyValidDestinations(endNodes);
@@ -897,4 +950,53 @@ public class WNet extends WAbstractNetworkElement
 		getWdmLayer().checkConsistency();
 	}
 
+	public Optional<WAbstractNetworkElement> getWElement (NetworkElement e)
+	{
+		if (e.getNetPlan() != this.getNe()) return Optional.empty();
+		
+		if (e == getNe ()) return Optional.of (this);
+		
+		if (e instanceof Node) return Optional.of (new WNode ((Node) e));
+		if (e instanceof Link)
+		{
+			final Link ee = (Link) e;
+			final boolean isIpLayer = ee.getLayer().equals(this.getIpLayer().getNe());
+			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer) return Optional.of (new WIpLink(ee));
+			if (isWdmLayer) return Optional.of (new WFiber(ee));
+		}
+		if (e instanceof Demand)
+		{
+			final Demand ee = (Demand) e;
+			final boolean isIpLayer = ee.getLayer().equals(this.getIpLayer().getNe());
+			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer && ee.isCoupled()) return Optional.empty(); // bundles
+			if (isIpLayer && ee.getRoutingType().isHopByHopRouting())
+				return Optional.of (new WIpUnicastDemand(ee));
+			if (isIpLayer && ee.getRoutingType().isSourceRouting())
+				return Optional.of (new WServiceChainRequest(ee));
+			if (isWdmLayer) return Optional.of (new WLightpathRequest(ee));
+		}
+		if (e instanceof Route)
+		{
+			final Route ee = (Route) e;
+			final boolean isIpLayer = ee.getLayer().equals(this.getIpLayer().getNe());
+			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer)
+				return Optional.of (new WServiceChain(ee));
+			if (isWdmLayer) return Optional.of (new WLightpath(ee));
+		}
+		if (e instanceof Resource)
+		{
+			final Resource ee = (Resource) e;
+			return Optional.of (new WVnfInstance(ee));
+		}
+		
+		return Optional.empty();
+	}
+	
+	
 }

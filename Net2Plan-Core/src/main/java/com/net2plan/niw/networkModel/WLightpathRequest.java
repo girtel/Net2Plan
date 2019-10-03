@@ -25,7 +25,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	private static final String ATTNAMESUFFIX_ISTOBE11PROTECTED = "isToBe11Protected";
 
 	
-	WLightpathRequest (Demand d) 
+	public WLightpathRequest (Demand d) 
 	{ 
 		super (d, Optional.empty()); 
 		this.d = d; 
@@ -72,7 +72,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Returns the set of lightpaths realizing this request. Typically one in unprotected ligtpaths, two in 1+1 settings
 	 * @return see above
 	 */
-	public List<WLightpathUnregenerated> getLightpaths () { return getNe().getRoutes().stream().map(r->new WLightpathUnregenerated(r)).collect(Collectors.toList()); }
+	public List<WLightpath> getLightpaths () { return getNe().getRoutes().stream().map(r->new WLightpath(r)).collect(Collectors.toList()); }
 	/** Returns the line rate of the lighptath request in Gbps
 	 * @return see above
 	 */
@@ -143,7 +143,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	 * @param isBackupRoute indicates if this is a backup route (needs a main lightpath to be already added to the request).
 	 * @return see above
 	 */
-	public WLightpathUnregenerated addLightpathUnregenerated (List<WFiber> sequenceFibers , 
+	public WLightpath addLightpathUnregenerated (List<WFiber> sequenceFibers , 
 			SortedSet<Integer> occupiedSlots ,
 			boolean isBackupRoute)
 	{
@@ -154,7 +154,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 		if (numRoutesAlready == 1 && !this.isToBe11Protected()) throw new Net2PlanException ("Already one lightpath");
 		if (numRoutesAlready == 1 && !isBackupRoute) throw new Net2PlanException ("Not a backup lightpath");
 		if (numRoutesAlready == 0 && isBackupRoute) throw new Net2PlanException ("Not a main lightpath yet");
-		final WLightpathUnregenerated lp12 = new WLightpathUnregenerated(getNetPlan().addRoute(getNe(), 
+		final WLightpath lp12 = new WLightpath(getNetPlan().addRoute(getNe(), 
 				this.getLineRateGbps(), 
 				occupiedSlots.size(), sequenceFibers.stream().map(ee->ee.getNe()).collect(Collectors.toList()), 
 				null));
@@ -190,12 +190,12 @@ public class WLightpathRequest extends WAbstractNetworkElement
 		if (!hasLightpathsAssigned()) return;
 		if (!is11Protected())
 		{
-			final WLightpathUnregenerated lp = getLightpaths().get(0);
+			final WLightpath lp = getLightpaths().get(0);
 			lp.getNe().setCarriedTraffic(lp.isUp()? getLineRateGbps() : 0.0 , null);
 		}
 		else
 		{
-			final List<WLightpathUnregenerated> lps = getLightpaths();
+			final List<WLightpath> lps = getLightpaths();
 			if (lps.get(0).isUp()) 
 			{ 
 				lps.get(0).getNe().setCarriedTraffic(getLineRateGbps(), null);   

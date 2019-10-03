@@ -19,7 +19,7 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.niw.networkModel.OpticalSimulationModule;
 import com.net2plan.niw.networkModel.OpticalSpectrumManager;
 import com.net2plan.niw.networkModel.WFiber;
-import com.net2plan.niw.networkModel.WLightpathUnregenerated;
+import com.net2plan.niw.networkModel.WLightpath;
 import com.net2plan.niw.networkModel.WNet;
 import com.net2plan.niw.networkModel.WNetConstants;
 import com.net2plan.niw.networkModel.OpticalSimulationModule.PERLPINFOMETRICS;
@@ -192,7 +192,7 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 				+ "<th><b>Rx. OSNR (dB)</b></th>"
 				+ "<th><b>Rx. PMD (ps)</b></th>"
 				+ "<th><b>Warnings</b></th></tr>");
-		for (WLightpathUnregenerated r : wNet.getLightpaths())
+		for (WLightpath r : wNet.getLightpaths())
 		{
 			final String st_a_e = r.getA().getName();
 			final String st_b_e = r.getB().getName();

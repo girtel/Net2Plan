@@ -399,9 +399,9 @@ public class WFiber extends WAbstractNetworkElement
 	 * Returns the set of lightpaths that traverse this fiber.
 	 * @return see above
 	 */
-	public SortedSet<WLightpathUnregenerated> getTraversingLps()
+	public SortedSet<WLightpath> getTraversingLps()
 	{
-		return e.getTraversingRoutes().stream().map(r -> new WLightpathUnregenerated(r)).collect(Collectors.toCollection(TreeSet::new));
+		return e.getTraversingRoutes().stream().map(r -> new WLightpath(r)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -493,7 +493,7 @@ public class WFiber extends WAbstractNetworkElement
 		if (this.wasRemoved()) return;
 		if (this.isBidirectional())
 			assert this.getBidirectionalPair().getBidirectionalPair().equals(this);
-		for (WLightpathUnregenerated lp : getTraversingLps())
+		for (WLightpath lp : getTraversingLps())
 			assert lp.getSeqFibers().contains(this);
 		assert getA().getOutgoingFibers().contains(this);
 		assert getB().getIncomingFibers().contains(this);

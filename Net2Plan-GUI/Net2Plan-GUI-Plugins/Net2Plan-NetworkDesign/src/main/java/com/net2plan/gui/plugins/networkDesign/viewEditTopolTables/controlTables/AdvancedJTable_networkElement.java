@@ -34,6 +34,7 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
@@ -56,6 +57,10 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.niw.networkModel.WIpUnicastDemand;
+import com.net2plan.niw.networkModel.WLightpathRequest;
+import com.net2plan.niw.networkModel.WNet;
+import com.net2plan.niw.networkModel.WServiceChainRequest;
 import com.net2plan.utils.Pair;
 
 
@@ -118,6 +123,32 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     @Override
     protected final List<T> getAllAbstractElementsInTable()
     {
+    	if (callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign())
+    	{
+    		/* Filters are de-activated */
+    		final WNet wNet = new WNet (callback.getDesign());
+
+    		
+    		if (this instanceof Niw_AdvancedJTable_demand)
+    		{
+    			final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
+    			final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
+    			assert isIpLayer || isWdmLayer;
+    			final List<Demand> res = new ArrayList<> (); 
+    			if (isIpLayer) 
+    			{
+    				for (WIpUnicastDemand d : wNet.getIpUnicastDemands()) res.add(d.getNe()); 
+    				for (WServiceChainRequest d : wNet.getServiceChainRequests()) res.add(d.getNe()); 
+    				return (List<T>) res;
+    			}
+    			else
+    			{
+    				for (WLightpathRequest d : wNet.getLightpathRequests()) res.add(d.getNe()); 
+    				return (List<T>) res;
+    			}
+    		}
+    	}
+    	
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         return rf == null ? (List<T>) ITableRowFilter.getAllElements(callback.getDesign(), this.layerThisTable , ajtType) : (List<T>) rf.getVisibleElements(this.layerThisTable, ajtType);
     }

@@ -251,7 +251,7 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 */
 	public boolean isLightpathUnregenerated()
 	{
-		return this instanceof WLightpathUnregenerated;
+		return this instanceof WLightpath;
 	}
 
 	/**
@@ -270,6 +270,15 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	public boolean isServiceChainRequest()
 	{
 		return this instanceof WServiceChainRequest;
+	}
+
+	/**
+	 * Returns true if this element is a unicast IP demand
+	 * @return see above
+	 */
+	public boolean isWIpUnicastDemand()
+	{
+		return this instanceof WIpUnicastDemand;
 	}
 
 	/**
@@ -330,9 +339,9 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 * Casts this element to a WLightpathUnregenerated object (fails if it is not an object of such type)
 	 * @return see above
 	 */
-	public WLightpathUnregenerated getAsLightpathUnregenerated()
+	public WLightpath getAsLightpathUnregenerated()
 	{
-		return (WLightpathUnregenerated) this;
+		return (WLightpath) this;
 	}
 
 	/**

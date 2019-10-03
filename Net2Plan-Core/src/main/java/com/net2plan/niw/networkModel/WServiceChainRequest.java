@@ -52,24 +52,18 @@ import com.net2plan.utils.Pair;
  * produced at different time slots.
  * </p>
  */
-public class WServiceChainRequest extends WAbstractNetworkElement
+public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 {
 	private static final String ATTNAMECOMMONPREFIX = "ServiceChainRequest_";
-	private static final String ATTNAMESUFFIX_TIMESLOTANDINTENSITYINGBPS = "timeSlotAndInitialInjectionIntensityInGbps";
-	private static final String ATTNAMESUFFIX_USERSERVICENAME = "userServiceName";
-	private static final String ATTNAMESUFFIX_ISUPSTREAM = "isUpstream";
 	private static final String ATTNAMESUFFIX_VALIDINPUTNODENAMES = "validInputNodeNames";
 	private static final String ATTNAMESUFFIX_VALIDOUTPUTNODENAMES = "validOutputNodeNames";
 	private static final String ATTNAMESUFFIX_SEQUENCEOFEXPANSIONFACTORRESPECTTOINJECTION = "sequenceOfPerVnfExpansionFactorsRespectToInjection";
 	private static final String ATTNAMESUFFIX_LISTMAXLATENCYFROMINITIALTOVNFSTART_MS = "limitMaxLatencyFromInitialToVnfStart_ms";
 	private static final String ATTNAMESUFFIX_BIDIRECTIONALPAIRNPDEMANDID = "bidirectionalPairNpDemandId";
 
-	private final Demand sc; // from anycastIN to anycastOUT
-
-	WServiceChainRequest(Demand sc)
+	public WServiceChainRequest(Demand sc)
 	{
-		super(sc, Optional.empty());
-		this.sc = sc;
+		super(sc);
 		assert sc.getLayer().equals (getNet().getIpLayer().getNe());
 		assert !sc.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
 		assert new WNode(sc.getIngressNode()).isVirtualNode();
@@ -84,14 +78,15 @@ public class WServiceChainRequest extends WAbstractNetworkElement
 	 */
 	public boolean isBidirectional()
 	{
-		return getOppositeServiceChainRequest().isPresent();
+		return getBidirectionalPair().isPresent();
 	}
 
 	/**
 	 * Returns the opposite service chain request to this, if any
 	 * @return
 	 */
-	public Optional<WServiceChainRequest> getOppositeServiceChainRequest()
+	@Override
+	public Optional<WServiceChainRequest> getBidirectionalPair()
 	{
 		final Double id = getNe().getAttributeAsDouble(ATTNAMESUFFIX_BIDIRECTIONALPAIRNPDEMANDID, null);
 		if (id == null) return Optional.empty();
@@ -105,13 +100,15 @@ public class WServiceChainRequest extends WAbstractNetworkElement
 	 * the other upstream. Any other opposite relation to other SCR is released.
 	 * @return
 	 */
-	public void setOppositeServiceChainRequest(WServiceChainRequest scr)
+	public void  setBidirectionalPair(WAbstractIpUnicastOrAnycastDemand scr)
 	{
 		if (scr == null) throw new Net2PlanException("Please specify a not null service chain request");
-		if (!this.getPotentiallyValidOrigins().equals(scr.getPotentiallyValidDestinations())) throw new Net2PlanException("The origins of this service chain request must be the end nodes of the opposite, and viceversa");
-		if (!scr.getPotentiallyValidOrigins().equals(this.getPotentiallyValidDestinations())) throw new Net2PlanException("The origins of this service chain request must be the end nodes of the opposite, and viceversa");
-		if (this.isDownstream() == scr.isDownstream()) throw new Net2PlanException("One flow must be tagged as upstream, the other as downstream");
-		removeOppositeServiceChainRequestRelation();
+		if (!(scr instanceof WServiceChainRequest)) throw new Net2PlanException("Please specify a not null service chain request");
+		final WServiceChainRequest scrr = (WServiceChainRequest) scr;
+		if (!this.getPotentiallyValidOrigins().equals(scrr.getPotentiallyValidDestinations())) throw new Net2PlanException("The origins of this service chain request must be the end nodes of the opposite, and viceversa");
+		if (!scrr.getPotentiallyValidOrigins().equals(this.getPotentiallyValidDestinations())) throw new Net2PlanException("The origins of this service chain request must be the end nodes of the opposite, and viceversa");
+		if (this.isDownstream() == scrr.isDownstream()) throw new Net2PlanException("One flow must be tagged as upstream, the other as downstream");
+		removeBidirectionalPairRelation();
 		getNe().setAttribute(ATTNAMESUFFIX_BIDIRECTIONALPAIRNPDEMANDID, scr.getNe().getId());
 		scr.getNe().setAttribute(ATTNAMESUFFIX_BIDIRECTIONALPAIRNPDEMANDID, this.getNe().getId());
 	}
@@ -121,10 +118,10 @@ public class WServiceChainRequest extends WAbstractNetworkElement
 	 * happens
 	 * @return
 	 */
-	public void removeOppositeServiceChainRequestRelation()
+	public void removeBidirectionalPairRelation()
 	{
 		if (!this.isBidirectional()) return;
-		getOppositeServiceChainRequest().get().getNe().setAttribute(ATTNAMESUFFIX_BIDIRECTIONALPAIRNPDEMANDID, -1);
+		getBidirectionalPair().get().getNe().setAttribute(ATTNAMESUFFIX_BIDIRECTIONALPAIRNPDEMANDID, -1);
 		getNe().setAttribute(ATTNAMESUFFIX_BIDIRECTIONALPAIRNPDEMANDID, -1);
 	}
 
@@ -262,6 +259,8 @@ public class WServiceChainRequest extends WAbstractNetworkElement
 	public void setPotentiallyValidOrigins(SortedSet<WNode> validOrigins)
 	{
 		final List<String> resNames = validOrigins.stream().map(n -> n.getName()).collect(Collectors.toList());
+		if (getPotentiallyValidDestinations().stream().anyMatch(n->validOrigins.contains(n))) 
+				throw new Net2PlanException("Origin nodes cannot also be destination nodes");
 		sc.setAttributeAsStringList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDINPUTNODENAMES, resNames);
 	}
 
@@ -294,29 +293,9 @@ public class WServiceChainRequest extends WAbstractNetworkElement
 	public void setPotentiallyValidDestinations(SortedSet<WNode> validDestinations)
 	{
 		final List<String> resNames = validDestinations.stream().map(n -> n.getName()).collect(Collectors.toList());
+		if (getPotentiallyValidOrigins().stream().anyMatch(n->validDestinations.contains(n))) 
+			throw new Net2PlanException("Origin nodes cannot also be destination nodes");
 		sc.setAttributeAsStringList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDOUTPUTNODENAMES, resNames);
-	}
-
-	/**
-	 * Get the user-defined traffic intensity associated to a time slot with the given name,
-	 * @param timeSlotName see above
-	 * @return see above
-	 */
-	public Optional<Double> getTrafficIntensityInfo(String timeSlotName)
-	{
-		return getTimeSlotNameAndInitialInjectionIntensityInGbpsList().stream().filter(p -> p.getFirst().equals(timeSlotName)).map(p -> p.getSecond()).findFirst();
-	}
-
-	/**
-	 * Get the user-defined traffic intensity associated to a time slot with the given index,
-	 * @param timeSlotIndex see above
-	 * @return a pair with name of the time slot and the traffic intensity value
-	 */
-	public Optional<Pair<String, Double>> getTrafficIntensityInfo(int timeSlotIndex)
-	{
-		final List<Pair<String, Double>> res = getTimeSlotNameAndInitialInjectionIntensityInGbpsList();
-		if (res.size() <= timeSlotIndex) return Optional.empty();
-		return Optional.of(res.get(timeSlotIndex));
 	}
 
 	/**
@@ -328,93 +307,6 @@ public class WServiceChainRequest extends WAbstractNetworkElement
 		return sc.getServiceChainSequenceOfTraversedResourceTypes();
 	}
 
-	/**
-	 * Returns the name of the user service that this service chain request is associated to
-	 * @return see above
-	 */
-	public String getUserServiceName()
-	{
-		final String res = getAttributeOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_USERSERVICENAME, null);
-		assert res != null;
-		return res;
-	}
-
-	/**
-	 * Sets the name of the user service that this service chain request is associated to
-	 * @param userServiceName see above
-	 */
-	public void setUserServiceName(String userServiceName)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_USERSERVICENAME, userServiceName);
-	}
-
-	/**
-	 * Returns the full user-defined traffic intensity information as a list of pairs, where each pair contains the
-	 * user-defined name of the time slot, and the traffic intensity associated to that time slot
-	 * @return see above
-	 */
-	public List<Pair<String, Double>> getTimeSlotNameAndInitialInjectionIntensityInGbpsList()
-	{
-		final List<String> vals = sc.getAttributeAsStringList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_TIMESLOTANDINTENSITYINGBPS, null);
-		if (vals == null) return new ArrayList<>();
-		try
-		{
-			final Set<String> previousTimeSlotIds = new HashSet<>();
-			final List<Pair<String, Double>> res = new ArrayList<>();
-			final Iterator<String> it = vals.iterator();
-			while (it.hasNext())
-			{
-				final String timeSlotName = it.next();
-				final Double intensity = Double.parseDouble(it.next());
-				if (previousTimeSlotIds.contains(timeSlotName)) continue;
-				else previousTimeSlotIds.add(timeSlotName);
-				res.add(Pair.of(timeSlotName, intensity));
-			}
-			return res;
-		} catch (Exception e)
-		{
-			return new ArrayList<>();
-		}
-	}
-
-	/**
-	 * Sets the full user-defined traffic intensity information as a list of pairs, where each pair contains the
-	 * user-defined name of the time slot, and the traffic intensity associated to that time slot
-	 * @param info see above
-	 */
-	public void setTimeSlotNameAndInitialInjectionIntensityInGbpsList(List<Pair<String, Double>> info)
-	{
-		final List<String> vals = new ArrayList<>();
-		final Set<String> previousTimeSlotIds = new HashSet<>();
-		for (Pair<String, Double> p : info)
-		{
-			final String timeSlotName = p.getFirst();
-			final Double intensity = p.getSecond();
-			if (previousTimeSlotIds.contains(timeSlotName)) continue;
-			else previousTimeSlotIds.add(timeSlotName);
-			vals.add(timeSlotName);
-			vals.add(intensity.toString());
-		}
-		sc.setAttributeAsStringList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_TIMESLOTANDINTENSITYINGBPS, vals);
-	}
-
-	/**
-	 * Returns the current offered traffic of this service chain request (that may carried partially, totally or none)
-	 * @return see above
-	 */
-	public double getCurrentOfferedTrafficInGbps()
-	{
-		return sc.getOfferedTraffic();
-	}
-
-	/**
-	 * Returns the carried traffic of this request
-	 * @return see above
-	 */
-	public double getCurrentCarriedTrafficGbps ()
-	{
-		return sc.getCarriedTraffic();
-	}
 
 	/**
 	 * Returns the carried traffic of this request if all the service chains where non-failed (al their traversed IP links and nodes where up)
@@ -423,62 +315,6 @@ public class WServiceChainRequest extends WAbstractNetworkElement
 	public double getCarriedTrafficInNonFailureStateGbps ()
 	{
 		return getServiceChains().stream().mapToDouble(e->e.getCarriedTrafficInNoFaillureStateGbps()).sum();
-	}
-
-	/**
-	 * Returns the carried traffic of this request
-	 * @return see above
-	 */
-	public double getCurrentBlockedTraffic()
-	{
-		final double dif = sc.getOfferedTraffic() - sc.getCarriedTraffic();
-		return dif < Configuration.precisionFactor ? 0 : dif;
-	}
-
-	/**
-	 * Sets the current offered traffic in Gbps for this service chain
-	 * @param offeredTrafficInGbps see above
-	 */
-	public void setCurrentOfferedTrafficInGbps(double offeredTrafficInGbps)
-	{
-		sc.setOfferedTraffic(offeredTrafficInGbps);
-	}
-
-	/**
-	 * Indicates if this is a service chain request is upstream (initiated in the user). Returns false if the service chain
-	 * is downstream (ended in the user)
-	 * @return see above
-	 */
-	public boolean isUpstream()
-	{
-		final Boolean res = getAttributeAsBooleanOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISUPSTREAM, null);
-		assert res != null;
-		return res;
-	}
-
-	/**
-	 * The opposite to isUpstream
-	 * @return see above
-	 */
-	public boolean isDownstream()
-	{
-		return !isUpstream();
-	}
-
-	/**
-	 * Sets if this is an upstream service chain request (initiated in the user), with true, of false if the service chain
-	 * is downstream (ended in the user)
-	 * @param isUpstream see above
-	 */
-	public void setIsUpstream(boolean isUpstream)
-	{
-		setAttributeAsBoolean(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISUPSTREAM, isUpstream);
-	}
-
-	@Override
-	public Demand getNe()
-	{
-		return (Demand) associatedNpElement;
 	}
 
 	@Override
@@ -498,8 +334,8 @@ public class WServiceChainRequest extends WAbstractNetworkElement
 		if (this.wasRemoved()) return;
 		assert Math.abs(getCurrentCarriedTrafficGbps() - getServiceChains().stream().mapToDouble(sc->sc.getCurrentCarriedTrafficGbps()).sum ()) < 1e-3;
 		assert getDefaultSequenceOfExpansionFactorsRespectToInjection().size() == getNumberVnfsToTraverse();
-		if (this.isBidirectional()) assert this.getOppositeServiceChainRequest().get().getOppositeServiceChainRequest().get().equals(this);
-		if (this.isBidirectional()) assert this.getOppositeServiceChainRequest().get().isDownstream() == this.isUpstream();
+		if (this.isBidirectional()) assert this.getBidirectionalPair().get().getBidirectionalPair().get().equals(this);
+		if (this.isBidirectional()) assert this.getBidirectionalPair().get().isDownstream() == this.isUpstream();
 		assert getServiceChains().stream().allMatch(s->s.getServiceChainRequest().equals(this));
 	}
 

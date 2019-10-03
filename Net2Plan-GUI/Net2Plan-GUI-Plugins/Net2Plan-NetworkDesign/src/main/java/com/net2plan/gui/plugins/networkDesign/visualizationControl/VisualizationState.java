@@ -15,12 +15,19 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
-import com.net2plan.gui.plugins.GUINetworkDesignConstants;
 import org.apache.commons.collections15.BidiMap;
 import org.apache.commons.collections15.MapUtils;
 import org.apache.commons.collections15.bidimap.DualHashBidiMap;
@@ -38,6 +45,8 @@ import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.niw.networkModel.WNet;
+import com.net2plan.niw.networkModel.WNode;
 import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -70,6 +79,7 @@ public class VisualizationState
     private float linkWidthIncreaseFactorRespectToDefault;
     private float nodeSizeFactorRespectToDefault;
 
+    private boolean isNiwDesignButtonActive;
     private boolean showInCanvasNonConnectedNodes;
     private int interLayerSpaceInPixels;
     private Set<Node> nodesToHideInCanvasAsMandatedByUserInTable;
@@ -99,6 +109,7 @@ public class VisualizationState
         this.showInCanvasLinksInNonActiveLayer = true;
         this.showInCanvasInterLayerLinks = true;
         this.showInCanvasNonConnectedNodes = true;
+        this.isNiwDesignButtonActive = false;
         this.showInCanvasLowerLayerPropagation = true;
         this.showInCanvasUpperLayerPropagation = true;
         this.showInCanvasThisLayerPropagation = true;
@@ -177,7 +188,11 @@ public class VisualizationState
     public boolean isVisibleInCanvas(GUINode gn)
     {
         final Node n = gn.getAssociatedNode();
+        
         if (nodesToHideInCanvasAsMandatedByUserInTable.contains(n)) return false;
+        if (isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign())
+        	if (new WNode (n).isVirtualNode())
+        		return false;
         if (!showInCanvasNonConnectedNodes)
         {
             final NetworkLayer layer = gn.getLayer();
@@ -189,6 +204,11 @@ public class VisualizationState
         return true;
     }
 
+    public boolean isNiwDesignButtonActive () { return this.isNiwDesignButtonActive; }
+    
+    public void setIsNiwDesignButtonActive (boolean isActive) { this.isNiwDesignButtonActive = isActive; }
+
+    
     public boolean isVisibleInCanvas(GUILink gl)
     {
         if (gl.isIntraNodeLink())

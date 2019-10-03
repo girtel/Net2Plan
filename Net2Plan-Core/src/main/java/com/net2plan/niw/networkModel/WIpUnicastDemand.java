@@ -44,18 +44,11 @@ import com.net2plan.utils.Pair;
  * produced at different time slots.
  * </p>
  */
-public class WIpUnicastDemand extends WAbstractNetworkElement
+public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 {
-	private static final String ATTNAMECOMMONPREFIX = "WIpUnicastDemand_";
-	private static final String ATTNAMESUFFIX_TIMESLOTANDINTENSITYINGBPS = "timeSlotAndInitialInjectionIntensityInGbps";
-	private static final String ATTNAMESUFFIX_ISUPSTREAM = "isUpstream";
-
-	private final Demand sc; // from anycastIN to anycastOUT
-
-	WIpUnicastDemand(Demand sc)
+	public WIpUnicastDemand(Demand sc)
 	{
-		super(sc, Optional.empty());
-		this.sc = sc;
+		super(sc);
 		assert sc.getLayer().equals (getNet().getIpLayer().getNe());
 		assert !sc.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
 		assert !(new WNode(sc.getIngressNode()).isVirtualNode());
@@ -83,41 +76,6 @@ public class WIpUnicastDemand extends WAbstractNetworkElement
 	public boolean isBidirectional()
 	{
 		return getNe().isBidirectional();
-	}
-
-	/**
-	 * Returns the opposite service chain request to this, if any
-	 * @return
-	 */
-	public Optional<WIpUnicastDemand> getBidirectionalPair ()
-	{
-		if (!this.isBidirectional()) return Optional.empty();
-		return Optional.of (new WIpUnicastDemand (getNe().getBidirectionalPair()));
-	}
-
-	/**
-	 * Makes that this IP demand tagged as the opposite one to a given IP demand, and viceversa. The two IP demand must
-	 * have opposite end nodes, one must be downstream and the other upstream. Any other opposite relation to other IP demand is released.
-	 * @return
-	 */
-	public void setBidirectionalPair(WIpUnicastDemand scr)
-	{
-		if (scr == null) throw new Net2PlanException("Please specify a not null IP demand");
-		if (!this.getOriginNode().equals(scr.getDestinationNode ())) throw new Net2PlanException("The origin of this IP demand must be the end node of the opposite, and viceversa");
-		if (!scr.getOriginNode().equals(this.getDestinationNode())) throw new Net2PlanException("The origin of this IP demand must be the end node of the opposite, and viceversa");
-		if (this.isDownstream() == scr.isDownstream()) throw new Net2PlanException("One flow must be tagged as upstream, the other as downstream");
-		removeOppositeUnicastDemandRelation();
-	}
-
-	/**
-	 * If this service chain request has an opposite request associated, removes such association. If not, makes nothing
-	 * happens
-	 * @return
-	 */
-	public void removeOppositeUnicastDemandRelation()
-	{
-		if (!this.isBidirectional()) return;
-		getNe().setBidirectionalPair(null);
 	}
 
 	/**
@@ -188,162 +146,12 @@ public class WIpUnicastDemand extends WAbstractNetworkElement
 		return new WNode (getNe().getEgressNode());
 	}
 
-	/**
-	 * Get the user-defined traffic intensity associated to a time slot with the given name,
-	 * @param timeSlotName see above
-	 * @return see above
-	 */
-	public Optional<Double> getTrafficIntensityInfo(String timeSlotName)
-	{
-		return getTimeSlotNameAndInitialInjectionIntensityInGbpsList().stream().filter(p -> p.getFirst().equals(timeSlotName)).map(p -> p.getSecond()).findFirst();
-	}
-
-	/**
-	 * Get the user-defined traffic intensity associated to a time slot with the given index,
-	 * @param timeSlotIndex see above
-	 * @return a pair with name of the time slot and the traffic intensity value
-	 */
-	public Optional<Pair<String, Double>> getTrafficIntensityInfo(int timeSlotIndex)
-	{
-		final List<Pair<String, Double>> res = getTimeSlotNameAndInitialInjectionIntensityInGbpsList();
-		if (res.size() <= timeSlotIndex) return Optional.empty();
-		return Optional.of(res.get(timeSlotIndex));
-	}
-
-	/**
-	 * Returns the full user-defined traffic intensity information as a list of pairs, where each pair contains the
-	 * user-defined name of the time slot, and the traffic intensity associated to that time slot
-	 * @return see above
-	 */
-	public List<Pair<String, Double>> getTimeSlotNameAndInitialInjectionIntensityInGbpsList()
-	{
-		final List<String> vals = sc.getAttributeAsStringList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_TIMESLOTANDINTENSITYINGBPS, null);
-		if (vals == null) return new ArrayList<>();
-		try
-		{
-			final Set<String> previousTimeSlotIds = new HashSet<>();
-			final List<Pair<String, Double>> res = new ArrayList<>();
-			final Iterator<String> it = vals.iterator();
-			while (it.hasNext())
-			{
-				final String timeSlotName = it.next();
-				final Double intensity = Double.parseDouble(it.next());
-				if (previousTimeSlotIds.contains(timeSlotName)) continue;
-				else previousTimeSlotIds.add(timeSlotName);
-				res.add(Pair.of(timeSlotName, intensity));
-			}
-			return res;
-		} catch (Exception e)
-		{
-			return new ArrayList<>();
-		}
-	}
-
-	/**
-	 * Sets the full user-defined traffic intensity information as a list of pairs, where each pair contains the
-	 * user-defined name of the time slot, and the traffic intensity associated to that time slot
-	 * @param info see above
-	 */
-	public void setTimeSlotNameAndInitialInjectionIntensityInGbpsList(List<Pair<String, Double>> info)
-	{
-		final List<String> vals = new ArrayList<>();
-		final Set<String> previousTimeSlotIds = new HashSet<>();
-		for (Pair<String, Double> p : info)
-		{
-			final String timeSlotName = p.getFirst();
-			final Double intensity = p.getSecond();
-			if (previousTimeSlotIds.contains(timeSlotName)) continue;
-			else previousTimeSlotIds.add(timeSlotName);
-			vals.add(timeSlotName);
-			vals.add(intensity.toString());
-		}
-		sc.setAttributeAsStringList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_TIMESLOTANDINTENSITYINGBPS, vals);
-	}
-
-	/**
-	 * Returns the current offered traffic of this service chain request (that may carried partially, totally or none)
-	 * @return see above
-	 */
-	public double getCurrentOfferedTrafficInGbps()
-	{
-		return sc.getOfferedTraffic();
-	}
-
-	/**
-	 * Returns the carried traffic of this request
-	 * @return see above
-	 */
-	public double getCurrentCarriedTrafficGbps ()
-	{
-		return sc.getCarriedTraffic();
-	}
-
-	/**
-	 * Returns the carried traffic of this request
-	 * @return see above
-	 */
-	public double getCurrentBlockedTraffic()
-	{
-		final double dif = sc.getOfferedTraffic() - sc.getCarriedTraffic();
-		return dif < Configuration.precisionFactor ? 0 : dif;
-	}
-
-	/**
-	 * Sets the current offered traffic in Gbps for this service chain
-	 * @param offeredTrafficInGbps see above
-	 */
-	public void setCurrentOfferedTrafficInGbps(double offeredTrafficInGbps)
-	{
-		sc.setOfferedTraffic(offeredTrafficInGbps);
-	}
-
-	/**
-	 * Indicates if this is a service chain request is upstream (initiated in the user). Returns false if the service chain
-	 * is downstream (ended in the user)
-	 * @return see above
-	 */
-	public boolean isUpstream()
-	{
-		final Boolean res = getAttributeAsBooleanOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISUPSTREAM, null);
-		assert res != null;
-		return res;
-	}
-
-	/**
-	 * The opposite to isUpstream
-	 * @return see above
-	 */
-	public boolean isDownstream()
-	{
-		return !isUpstream();
-	}
-
-	/**
-	 * Sets if this is an upstream service chain request (initiated in the user), with true, of false if the service chain
-	 * is downstream (ended in the user)
-	 * @param isUpstream see above
-	 */
-	public void setIsUpstream(boolean isUpstream)
-	{
-		setAttributeAsBoolean(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISUPSTREAM, isUpstream);
-	}
-
-	@Override
-	public Demand getNe()
-	{
-		return (Demand) associatedNpElement;
-	}
 
 	@Override
 	public String toString()
 	{
 		return "WIpUnicastDemand (" + this.getCurrentOfferedTrafficInGbps() + "G) " + getOriginNode() + "->" + getDestinationNode();
 	}
-
-	/** Returns the service chains realizing this serice chain request
-	 * @return
-	 */
-	public SortedSet<WServiceChain> getServiceChains () { return getNe().getRoutes().stream().map(r->new WServiceChain(r)).collect(Collectors.toCollection(TreeSet::new)); }
 
 	@Override
 	void checkConsistency()
@@ -355,5 +163,51 @@ public class WIpUnicastDemand extends WAbstractNetworkElement
 		assert this.getNe().getLayer().equals(getNet().getIpLayer().getNe());
 	}
 
-	
+	/**
+	 * Makes that this IP demand tagged as the opposite one to a given IP demand, and viceversa. The two IP demand must
+	 * have opposite end nodes, one must be downstream and the other upstream. Any other opposite relation to other IP demand is released.
+	 * @return
+	 */
+	@Override
+	public void setBidirectionalPair(WAbstractIpUnicastOrAnycastDemand d) 
+	{
+		if (d == null) throw new Net2PlanException("Please specify a not null IP demand");
+		if (!(d instanceof WIpUnicastDemand)) throw new Net2PlanException("Please specify a not null IP demand");
+		final WIpUnicastDemand dd = (WIpUnicastDemand) d;
+		if (!this.getOriginNode().equals(dd.getDestinationNode ())) throw new Net2PlanException("The origin of this IP demand must be the end node of the opposite, and viceversa");
+		if (!dd.getOriginNode().equals(this.getDestinationNode())) throw new Net2PlanException("The origin of this IP demand must be the end node of the opposite, and viceversa");
+		if (this.isDownstream() == dd.isDownstream()) throw new Net2PlanException("One flow must be tagged as upstream, the other as downstream");
+		removeBidirectionalPairRelation();
+		getNe().setBidirectionalPair(d.getNe());
+	}
+
+	/**
+	 * If this service chain request has an opposite request associated, removes such association. If not, makes nothing
+	 * happens
+	 * @return
+	 */
+	@Override
+	public void removeBidirectionalPairRelation() 
+	{
+		if (!this.isBidirectional()) return;
+		getNe().setBidirectionalPair(null);
+	}
+
+	/**
+	 * Returns the opposite service chain request to this, if any
+	 * @return
+	 */
+	@Override
+	public Optional<WIpUnicastDemand> getBidirectionalPair ()
+	{
+		if (!this.isBidirectional()) return Optional.empty();
+		return Optional.of (new WIpUnicastDemand (getNe().getBidirectionalPair()));
+	}
+
+	@Override
+	public void remove() 
+	{
+		getNe ().remove();
+	}
+
 }

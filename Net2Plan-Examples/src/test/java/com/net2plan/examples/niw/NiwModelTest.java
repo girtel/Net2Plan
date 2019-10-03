@@ -27,7 +27,7 @@ import com.net2plan.niw.networkModel.WFiber;
 import com.net2plan.niw.networkModel.WIpLink;
 import com.net2plan.niw.networkModel.WIpUnicastDemand;
 import com.net2plan.niw.networkModel.WLightpathRequest;
-import com.net2plan.niw.networkModel.WLightpathUnregenerated;
+import com.net2plan.niw.networkModel.WLightpath;
 import com.net2plan.niw.networkModel.WNet;
 import com.net2plan.niw.networkModel.WNetConstants;
 import com.net2plan.niw.networkModel.WNode;
@@ -47,7 +47,7 @@ public class NiwModelTest extends TestCase
 	private Pair<WFiber, WFiber> f12, f23, f34, f41,f45;
 	private Pair<WIpLink, WIpLink> i12, i13, i14;
 	private WLightpathRequest lr12, lr21, lr13, lr31, lr14, lr41;
-	private WLightpathUnregenerated l12, l21, l13, l31, l14, l41;
+	private WLightpath l12, l21, l13, l31, l14, l41;
 	private OpticalSpectrumManager osm;
 	private WUserService userService;
 	private WServiceChainRequest scr13, scr31;

@@ -182,7 +182,7 @@ public class WNode extends WAbstractNetworkElement
 		return n.getResources(RESOURCETYPE_HD).iterator().next();
 	}
 
-	boolean isVirtualNode()
+	public boolean isVirtualNode()
 	{
 		return n.hasTag(WNetConstants.TAGNODE_INDICATIONVIRTUALORIGINNODE) || n.hasTag(WNetConstants.TAGNODE_INDICATIONVIRTUALDESTINATIONNODE);
 	}
@@ -651,27 +651,27 @@ public class WNode extends WAbstractNetworkElement
 	 * Returns the set of outgoing lightpaths of the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpathUnregenerated> getOutgoingLigtpaths()
+	public SortedSet<WLightpath> getOutgoingLigtpaths()
 	{
-		return n.getOutgoingRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathUnregenerated(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getOutgoingRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
 	 * Returns the set of incoming, outgoing and traversing lightpaths to the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpathUnregenerated> getInOutOrTraversingLigtpaths()
+	public SortedSet<WLightpath> getInOutOrTraversingLigtpaths()
 	{
-		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathUnregenerated(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
 	 * Returns the set of incoming lightpaths to the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpathUnregenerated> getIncomingLigtpaths()
+	public SortedSet<WLightpath> getIncomingLigtpaths()
 	{
-		return n.getIncomingRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathUnregenerated(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getIncomingRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**

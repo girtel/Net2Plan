@@ -132,6 +132,10 @@ public class Constants
 		private final String label;
 		RoutingType(String label) { this.label = label; }
 		
+		public boolean isHopByHopRouting () { return this == RoutingType.HOP_BY_HOP_ROUTING; }
+		public boolean isSourceRouting () { return this == RoutingType.SOURCE_ROUTING; }
+		
+		
 		@Override
 		public String toString() { return label; }
 	}

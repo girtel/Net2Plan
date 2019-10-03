@@ -39,8 +39,8 @@ public class OpticalSimulationModule
 	private final WNet wNet;
 	public enum PERLPINFOMETRICS { POWER_DBM , CD_PERPERNM , PMDSQUARED_PS2 , OSNRAT12_5GHZREFBW };
 	public enum PERFIBERINFOMETRICS { TOTALPOWER_DBM };
-	final private SortedMap<WLightpathUnregenerated,Map<PERLPINFOMETRICS , Pair<Double,Double>>> perPerLpPerMetric_valStartEnd = new TreeMap<> ();
-	final private SortedMap<WFiber,SortedMap<WLightpathUnregenerated,Map<PERLPINFOMETRICS , Pair<Double,Double>>>> perFiberPerLpPerMetric_valStartEnd = new TreeMap<> ();
+	final private SortedMap<WLightpath,Map<PERLPINFOMETRICS , Pair<Double,Double>>> perPerLpPerMetric_valStartEnd = new TreeMap<> ();
+	final private SortedMap<WFiber,SortedMap<WLightpath,Map<PERLPINFOMETRICS , Pair<Double,Double>>>> perFiberPerLpPerMetric_valStartEnd = new TreeMap<> ();
 	final private SortedMap<WFiber,Map<PERFIBERINFOMETRICS , Quadruple<Double,Double,List<Double>,List<Double>>>> perFiberPerMetric_valStartEndAndAtEachOlaInputOutput = new TreeMap<> ();
 	
 	public OpticalSimulationModule (WNet wNet) { this.wNet = wNet; }
@@ -74,7 +74,7 @@ public class OpticalSimulationModule
    	 for (WFiber e : wNet.getFibers())
    		 perFiberPerLpPerMetric_valStartEnd.put(e, new TreeMap<> ());
 
-   	 for (WLightpathUnregenerated lp : wNet.getLightpaths())
+   	 for (WLightpath lp : wNet.getLightpaths())
    	 {
    		 final int numOpticalSlots = lp.getOpticalSlotIds().size();
    		 final double centralFrequency_hz = WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ * 1e12 + 12.5e9 * (lp.getOpticalSlotIds().first() + lp.getOpticalSlotIds().last())/2.0;
@@ -153,7 +153,7 @@ public class OpticalSimulationModule
    	 }
    	 
    	 /* Update the per lp information at add and end */
-   	 for (WLightpathUnregenerated lp : wNet.getLightpaths())
+   	 for (WLightpath lp : wNet.getLightpaths())
    	 {
    		 final double centralFrequency_hz = WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ * 1e12 + 12.5e9 * (lp.getOpticalSlotIds().first() + lp.getOpticalSlotIds().last())/2.0;
    		 final Map<PERLPINFOMETRICS,Pair<Double,Double>> vals = new HashMap<> ();
@@ -215,7 +215,7 @@ public class OpticalSimulationModule
    	 if (indexAmplifierInFiber < 0 || indexAmplifierInFiber >= fiber.getNumberOfOpticalLineAmplifiersTraversed()) throw new Net2PlanException ("Wrong index");
    	 return perFiberPerMetric_valStartEndAndAtEachOlaInputOutput.get(fiber).get(PERFIBERINFOMETRICS.TOTALPOWER_DBM).getFourth().get(indexAmplifierInFiber);
     }
-    public Map<PERLPINFOMETRICS , Pair<Double,Double>> getOpticalPerformanceOfLightpathAtFiberEnds (WFiber fiber , WLightpathUnregenerated lp)
+    public Map<PERLPINFOMETRICS , Pair<Double,Double>> getOpticalPerformanceOfLightpathAtFiberEnds (WFiber fiber , WLightpath lp)
     {
    	 if (!perFiberPerLpPerMetric_valStartEnd.containsKey(fiber)) return null;
    	 if (!perFiberPerLpPerMetric_valStartEnd.get(fiber).containsKey(lp)) return null;
@@ -228,14 +228,14 @@ public class OpticalSimulationModule
    			 perFiberPerMetric_valStartEndAndAtEachOlaInputOutput.get(fiber).get(PERFIBERINFOMETRICS.TOTALPOWER_DBM).getFirst (), 
    			 perFiberPerMetric_valStartEndAndAtEachOlaInputOutput.get(fiber).get(PERFIBERINFOMETRICS.TOTALPOWER_DBM).getSecond ());
     }
-    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderReceiverEnd_dBm (WLightpathUnregenerated lp)
+    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderReceiverEnd_dBm (WLightpath lp)
     {
    	 final Map<PERLPINFOMETRICS , Double> res = new HashMap<> ();
    	 for (PERLPINFOMETRICS type : PERLPINFOMETRICS.values())
    		 res.put(type, perPerLpPerMetric_valStartEnd.get(lp).get(type).getSecond());
    	 return res;
     }
-    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderTransmitterEnd_dBm (WLightpathUnregenerated lp)
+    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderTransmitterEnd_dBm (WLightpath lp)
     {
    	 final Map<PERLPINFOMETRICS , Double> res = new HashMap<> ();
    	 for (PERLPINFOMETRICS type : PERLPINFOMETRICS.values())

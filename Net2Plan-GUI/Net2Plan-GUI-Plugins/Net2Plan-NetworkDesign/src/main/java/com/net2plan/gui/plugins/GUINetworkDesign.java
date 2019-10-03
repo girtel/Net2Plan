@@ -87,6 +87,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
 import com.net2plan.internal.sim.SimCore.SimState;
+import com.net2plan.niw.networkModel.WNet;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
@@ -124,7 +125,8 @@ public class GUINetworkDesign extends IGUIModule
 
     private WindowController windowController;
     private GUIWindow tableControlWindow;
-
+    private boolean isCurrentDesignNiwValid;
+    
     
     
     /**
@@ -184,6 +186,7 @@ public class GUINetworkDesign extends IGUIModule
         }
 
         this.currentNetPlan = new NetPlan();
+        this.isCurrentDesignNiwValid = false;
         
         BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder = new DualHashBidiMap<>();
         Map<NetworkLayer, Boolean> layerVisibilityMap = new HashMap<>();
@@ -432,6 +435,8 @@ public class GUINetworkDesign extends IGUIModule
         undoRedoManager.addNetPlanChange();
     }
 
+    public boolean isNiwValidCurrentDesign () { return this.isCurrentDesignNiwValid; }
+    
     public void requestUndoAction()
     {
         if (inOnlineSimulationMode()) return;
@@ -439,6 +444,7 @@ public class GUINetworkDesign extends IGUIModule
         final Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> back = undoRedoManager.getNavigationBackElement();
         if (back == null) return;
         this.currentNetPlan = back.getFirst();
+        if (vs.isNiwDesignButtonActive()) this.isCurrentDesignNiwValid = WNet.isNiwValidDesign(currentNetPlan);
         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, back.getSecond(), back.getThird());
         updateVisualizationAfterNewTopology();
     }
@@ -450,6 +456,7 @@ public class GUINetworkDesign extends IGUIModule
         final Triple<NetPlan, Map<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> forward = undoRedoManager.getNavigationForwardElement();
         if (forward == null) return;
         this.currentNetPlan = forward.getFirst();
+        if (vs.isNiwDesignButtonActive()) this.isCurrentDesignNiwValid = WNet.isNiwValidDesign(currentNetPlan);
         this.vs.setCanvasLayerVisibilityAndOrder(this.currentNetPlan, forward.getSecond(), forward.getThird());
         updateVisualizationAfterNewTopology();
     }
@@ -458,6 +465,7 @@ public class GUINetworkDesign extends IGUIModule
     {
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         this.currentNetPlan = netPlan;
+        if (vs.isNiwDesignButtonActive()) this.isCurrentDesignNiwValid = WNet.isNiwValidDesign(currentNetPlan);
     }
 
 

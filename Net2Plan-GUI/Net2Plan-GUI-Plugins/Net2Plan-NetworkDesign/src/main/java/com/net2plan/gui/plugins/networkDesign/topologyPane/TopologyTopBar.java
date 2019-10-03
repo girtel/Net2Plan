@@ -36,6 +36,7 @@ import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.niw.networkModel.WNet;
 import com.net2plan.utils.Pair;
 
 /**
@@ -52,6 +53,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
     private final JButton btn_load, btn_loadDemand, btn_save, btn_zoomIn, btn_zoomOut, btn_zoomAll, btn_takeSnapshot, btn_reset;
     private final JButton btn_increaseNodeSize, btn_decreaseNodeSize, btn_increaseFontSize, btn_decreaseFontSize;
     private final JButton btn_increaseLinkSize, btn_decreaseLinkSize, btn_tableControlWindow;
+    private final JToggleButton btn_niwActive;
     private final JToggleButton btn_showNodeNames, btn_showNodesSite, btn_showLinkIds, btn_showNonConnectedNodes, btn_osmMap, btn_siteMode;
     private final JButton btn_linkStyle;
 
@@ -114,6 +116,8 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_osmMap.setToolTipText("Toggle on/off OSM support. An Internet connection is required for this function.");
         btn_tableControlWindow = new JButton();
         btn_tableControlWindow.setToolTipText("Show the network topology control window.");
+        btn_niwActive = new JToggleButton();
+        btn_niwActive.setToolTipText("Toggle on/off the NIW (NFV over IP over WDM view)");
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
         btn_reset.setMnemonic(KeyEvent.VK_R);
@@ -139,6 +143,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
         btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
         btn_osmMap.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showOSM.png")));
+        btn_niwActive.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/niw.png")));
         btn_tableControlWindow.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showControl.png")));
         btn_linkStyle.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/linkStyle.png")));
 
@@ -153,6 +158,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_zoomOut.addActionListener(this);
         btn_zoomAll.addActionListener(this);
         btn_takeSnapshot.addActionListener(this);
+        btn_niwActive.addActionListener(this);
         btn_reset.addActionListener(this);
         btn_increaseNodeSize.addActionListener(this);
         btn_decreaseNodeSize.addActionListener(this);
@@ -191,6 +197,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         this.add(btn_siteMode);
         this.add(btn_osmMap);
         this.add(btn_tableControlWindow);
+        this.add(btn_niwActive);
         this.add(btn_reset);
 
         btn_showNodeNames.setSelected(callback.getVisualizationState().isCanvasShowNodeNames());
@@ -274,6 +281,13 @@ public class TopologyTopBar extends JToolBar implements ActionListener
             {
                 canvas.setState(CanvasOption.ViewState);
             }
+        } else if (src == btn_niwActive)
+        {
+        	vs.setIsNiwDesignButtonActive(btn_niwActive.isSelected());
+            Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
+                    vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
+            vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());
+            callback.updateVisualizationAfterNewTopology();
         } else if (src == btn_increaseNodeSize)
         {
             callback.getVisualizationState().increaseCanvasNodeSizeAll();
