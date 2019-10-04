@@ -82,7 +82,7 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
 {
     public AdvancedJTable_demand(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.DEMANDS , layerThisTable , true , null);
+        super(callback, AJTableType.DEMANDS , null , layerThisTable , true , null);
     }
 
     @Override

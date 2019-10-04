@@ -253,8 +253,8 @@ public class WNet extends WAbstractNetworkElement
 	public static WNet createEmptyDesign()
 	{
 		final NetPlan np = new NetPlan();
-		np.getNetworkLayerDefault().setName("WDM");
-		np.addLayer("IP", "IP Layer", "", "", null, null);
+		np.getNetworkLayerDefault().setName(WNetConstants.wdmLayerName);
+		np.addLayer(WNetConstants.ipLayerName, WNetConstants.ipLayerName, "", "", null, null);
 		np.addNode(0, 0, WNetConstants.WNODE_NAMEOFANYCASTORIGINNODE, null).addTag(WNetConstants.TAGNODE_INDICATIONVIRTUALORIGINNODE);
 		np.addNode(0, 0, WNetConstants.WNODE_NAMEOFANYCASTDESTINATION, null).addTag(WNetConstants.TAGNODE_INDICATIONVIRTUALDESTINATIONNODE);
 		final WNet res = new WNet(np);

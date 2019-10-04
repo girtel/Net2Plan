@@ -74,6 +74,7 @@ import com.net2plan.niw.networkModel.WAbstractIpUnicastOrAnycastDemand;
 import com.net2plan.niw.networkModel.WIpUnicastDemand;
 import com.net2plan.niw.networkModel.WLightpathRequest;
 import com.net2plan.niw.networkModel.WNet;
+import com.net2plan.niw.networkModel.WNetConstants;
 import com.net2plan.niw.networkModel.WNode;
 import com.net2plan.niw.networkModel.WServiceChainRequest;
 import com.net2plan.utils.Constants.RoutingType;
@@ -90,7 +91,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
 	private static DecimalFormat df = new DecimalFormat("#.##");
     public Niw_AdvancedJTable_demand(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.DEMANDS , layerThisTable , true , null);
+        super(callback, AJTableType.DEMANDS , layerThisTable.getName().equals(WNetConstants.ipLayerName)? "IP demands" : "Lightpath requests" , layerThisTable , true , null);
     }
 
     @Override

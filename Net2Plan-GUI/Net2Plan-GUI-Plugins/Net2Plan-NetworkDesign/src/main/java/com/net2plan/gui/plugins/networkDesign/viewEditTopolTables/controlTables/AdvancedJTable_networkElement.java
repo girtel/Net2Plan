@@ -73,9 +73,9 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     protected final NetworkLayer layerThisTable;
     private boolean attributesAreCollapsedInOneColumn = true;
     
-	public AdvancedJTable_networkElement(GUINetworkDesign networkViewer, AJTableType ajtType , NetworkLayer layerThisTable , boolean hasAggregationRow , Function<T,Color> coloringFunctionForTheFullRowIfNotSelected)
+	public AdvancedJTable_networkElement(GUINetworkDesign networkViewer, AJTableType ajtType , String tableTitle , NetworkLayer layerThisTable , boolean hasAggregationRow , Function<T,Color> coloringFunctionForTheFullRowIfNotSelected)
     {
-        super(networkViewer, ajtType.getTabName() , 2 , hasAggregationRow , coloringFunctionForTheFullRowIfNotSelected);
+        super(networkViewer, tableTitle == null? ajtType.getTabName() : tableTitle, 2 , hasAggregationRow , coloringFunctionForTheFullRowIfNotSelected);
         this.ajtType = ajtType;
         this.layerThisTable = layerThisTable;
         updateView();

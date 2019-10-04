@@ -19,6 +19,10 @@ public class WNetConstants
 	 * The optical slot size in GHz 
 	 */
 	public static final double OPTICALSLOTSIZE_GHZ = 12.5;
+	
+	public static final String ipLayerName = "IP";
+	public static final String wdmLayerName = "WDM";
+	
 
 	public static final String TAG_NETPLAN_ISNIWDESIGN = "iSNiwDesign";
 	

@@ -47,6 +47,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_resource;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_srg;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafficMatrix;
@@ -233,7 +234,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         switch(type)
         {
 		case DEMANDS:
-            table = new AdvancedJTable_demand(callback , layerThisTable);
+            table = callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_demand(callback , layerThisTable) : new AdvancedJTable_demand(callback , layerThisTable);
 			break;
 		case FORWARDINGRULES:
             table = new AdvancedJTable_forwardingRule(callback , layerThisTable);

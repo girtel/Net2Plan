@@ -63,7 +63,7 @@ public class AdvancedJTable_multicastTree extends AdvancedJTable_networkElement<
 {
     public AdvancedJTable_multicastTree(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.MULTICAST_TREES , layerThisTable , true , null);
+        super(callback, AJTableType.MULTICAST_TREES , null , layerThisTable , true , null);
     }
 
     @Override

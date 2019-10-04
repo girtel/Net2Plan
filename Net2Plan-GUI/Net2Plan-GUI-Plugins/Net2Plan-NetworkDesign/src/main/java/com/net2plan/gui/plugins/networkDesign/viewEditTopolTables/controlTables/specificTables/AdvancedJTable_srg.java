@@ -56,7 +56,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement<SharedRisk
 {
     public AdvancedJTable_srg(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.SRGS , layerThisTable , true , null);
+        super(callback, AJTableType.SRGS , null , layerThisTable , true , null);
     }
 
     @Override
