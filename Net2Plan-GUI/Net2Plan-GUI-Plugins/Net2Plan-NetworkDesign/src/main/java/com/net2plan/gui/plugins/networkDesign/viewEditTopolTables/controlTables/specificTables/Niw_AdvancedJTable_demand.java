@@ -129,7 +129,9 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
         			return toWScr.apply(d).getPotentiallyValidDestinations().stream().map(e->e.getNe ()).collect (Collectors.toList());
         	} , AGTYPE.NOAGGREGATION , null) );
             res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "Anycast SCR?", "Indicates if this demand is an anycast service chain request", null , d->!wNet.getWElement(d).get().isWIpUnicastDemand() , AGTYPE.COUNTTRUE , null));
-            res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "Type?", "Indicates if this demand is upstream or downstream", null , d->toAbsIp.apply(d).isDownstream()? "Downstream" : "Upstream" , AGTYPE.COUNTTRUE , null));
+            res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "Type", "Indicates if this demand is a IP unicast demand, or an servichain request i.e. potentially anycast, potentially traversing VNFs, and carried by service chains", null , d->isWIpUnicast.apply(d)? "IP unicast demand" : "Service chain request" , AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Demand>(this , String.class, null , "Routing type", "For unicast IP demands, indicates if its routing type is HOP-BY-HOP routing, or connection-based source routing. Service chain request are always of the source routing type", null, d->isWIpUnicast.apply(d)? (toWIpUnicast.apply(d).isIpHopByHopRouted()? "Hop-by-hop" : "Source routing") : "Source routing" , AGTYPE.NOAGGREGATION, null));
+            res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "US/DS", "Indicates if this demand is upstream or downstream", null , d->toAbsIp.apply(d).isDownstream()? "Downstream" : "Upstream" , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Demand>(this , Demand.class, null , "Bidirectional pair", "If the demand is bidirectional, provides its bidirectional pair", null , d->toAbsIp.apply(d).getBidirectionalPair().orElse(null) , AGTYPE.NOAGGREGATION, null));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Offered traffic (Gbps)", "Currently offered traffic by the demand in Gbps", (d,val)->toAbsIp.apply(d).setCurrentOfferedTrafficInGbps((Double) val), d->toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() , AGTYPE.SUMDOUBLE , null));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Carried traffic (Gbps)", "Currently carried traffic by the demand in Gbps", null , d->toAbsIp.apply(d).getCurrentCarriedTrafficGbps() , AGTYPE.SUMDOUBLE , null));
@@ -140,7 +142,6 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Worst e2e lat (ms)", "Current worst case end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", null, d->toAbsIp.apply(d).getWorstCaseEndtoEndLatencyMs() , AGTYPE.NOAGGREGATION , d->{ if (isWScr.apply(d)) return null; final double maxMs = toWIpUnicast.apply(d).getMaximumAcceptableE2EWorstCaseLatencyInMs(); return maxMs <= 0? null : (toWIpUnicast.apply(d).getWorstCaseEndtoEndLatencyMs() > maxMs? Color.RED : null); }));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Worst e2e length (km)", "Current worst case end-to-end propagation length in km (accumulating any lower layer propagation lengths if any)", null, d->d.getWorstCaseLengthInKm() , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Limit e2e lat (ms)", "Maximum end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", (d,val)-> { if(isWIpUnicast.apply (d)) d.setMaximumAcceptableE2EWorstCaseLatencyInMs((Double)val); } , d-> isWIpUnicast.apply (d)? d.getMaximumAcceptableE2EWorstCaseLatencyInMs() : "--" , AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "Is service chain?", "", null, d->d.isServiceChainRequest() , AGTYPE.COUNTTRUE , null));
             res.add(new AjtColumnInfo<Demand>(this , String.class, null , "SC: VNFs types to traverse", "For service chain requests, the sequence of VNF types that has to be traversed by the service chains", null, d->isWIpUnicast.apply(d)? d.getServiceChainSequenceOfTraversedResourceTypes().stream().collect(Collectors.joining(",")) : "" , AGTYPE.COUNTTRUE , null));
             res.add(new AjtColumnInfo<Demand>(this , Collection.class, null , "SC: # Service chains", "Number of associated service chains, if this is a service chain request", null, d->isWScr.apply(d)? d.getRoutes (): new ArrayList<> () , AGTYPE.SUMINT, null));
             res.add(new AjtColumnInfo<Demand>(this , Collection.class, null , "SC: Max. lancies", "Returns the list of maximum latencies specified for this service chain request. The list contains V+1 values, being V the number of VNFs to traverse. The first V values (i=1,...,V) correspond to the maximum latency from the origin node, to the input of the i-th VNF traversed. The last value correspon to the maximum latency from the origin node to the end node.", null, d->isWIpUnicast.apply(d)? null : toWScr.apply(d).getListMaxLatencyFromOriginToVnStartAndToEndNode_ms().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION, null));
@@ -252,7 +253,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                     		InputForDialog.inputTfString("Origin node name", "Introduce the name of the origin node. First tries case sensitive, later case insensitive", 10, ""),
                     		InputForDialog.inputTfString("Destination node name", "Introduce the name of the destination node. First tries case sensitive, later case insensitive", 10, ""),
                     		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate of the lightpaths realizing this request", 20, 100.0),
-                    		InputForDialog.inputCheckBox("1+1 protetced?", "Indicate if this lighptath request has to be realized by a 1+1 arrangement of two lightpaths", false , null)
+                    		InputForDialog.inputCheckBox("1+1 protected?", "Indicate if this lighptath request has to be realized by a 1+1 arrangement of two lightpaths", false , null)
                     		),
                     (list)->
                     	{
@@ -295,25 +296,31 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
         res.add(new AjtRcMenu("Arrange selected service chains in bidirectional pairs", e->
         {
         	final SortedSet<WServiceChainRequest> nonBidiDemands = getSelectedElements().stream().filter(ee->isWScr.apply(ee)).map(ee->toWScr.apply(ee)).filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
-        	final Map<Pair<WNode,WNode> , WServiceChainRequest> nodePair2demand = new HashMap<>();
-        	for (WAbstractIpUnicastOrAnycastDemand ee : nonBidiDemands)
+        	final Map<Pair<SortedSet<WNode>,SortedSet<WNode>> , WServiceChainRequest> nodePair2demand = new HashMap<>();
+        	for (WServiceChainRequest ee : nonBidiDemands)
         	{
-        		final Pair<WNode,WNode> pair = Pair.of(ee.getIngressNode() , ee.getEgressNode());
-        		if (nodePair2demand.containsKey(pair)) throw new Net2PlanException ("At most one link per node pair is allowed");
+        		final Pair<SortedSet<WNode>,SortedSet<WNode>> pair = Pair.of(ee.getPotentiallyValidOrigins() , ee.getPotentiallyValidDestinations());
+        		if (nodePair2demand.containsKey(pair)) throw new Net2PlanException ("At most one demand per origin-destination nodes pair is allowed");
         		nodePair2demand.put(pair, ee);
         	}
-        	for (WAbstractIpUnicastOrAnycastDemand ee : nonBidiDemands)
+        	for (WServiceChainRequest ee : nonBidiDemands)
         	{
         		if (ee.isBidirectional()) continue;
-        		final Demand opposite = nodePair2demand.get(Pair.of(ee.getEgressNode(), ee.getIngressNode()));
+        		final WServiceChainRequest opposite = nodePair2demand.get(Pair.of(ee.getPotentiallyValidDestinations(), ee.getPotentiallyValidOrigins()));
         		if (opposite == null) continue;
         		if (opposite.isBidirectional()) continue;
-        		if (opposite.is)
+        		if (opposite.isDownstream() == ee.isDownstream()) continue;
         		ee.setBidirectionalPair(opposite);
         	}
         }
         , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Set QoS type to selected demands", e->
+        
+        res.add(new AjtRcMenu("Set routing type of seleted IP unicast demands", null , (a,b)->b>0, Arrays.asList(
+        		new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e-> getSelectedElements().stream().filter(d->isWIpUnicast.apply(d)).forEach(dd->toWIpUnicast.apply (dd).setAsHopByHopRouted ()), (a,b)->b>0, null),
+        		new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e-> getSelectedElements().stream().filter(d->isWIpUnicast.apply(d)).forEach(dd->toWIpUnicast.apply (dd).setAsSourceRouted ()), (a,b)->b>0, null)
+        		)));
+
+        res.add(new AjtRcMenu("Set QoS type to selected elements", e->
         {
             DialogBuilder.launch(
             		"Set selected demands QoS type", 
@@ -324,30 +331,14 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                     (list)->
                     	{
                     		final String qos = (String) list.get(0).get();
-                    		getSelectedElements().forEach(dd->dd.setQoSType(qos));
+                    		getSelectedElements().forEach(dd->toAbsIp.apply(dd).setQosType(qos));
                     	}
                     );
         }, (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Set routing type of selected demands", e->
+        res.add(new AjtRcMenu("Set maximum e2e limit to selected unicast demands", e->
         {
             DialogBuilder.launch(
-            		"Set routing type", 
-                    "Please introduce the routing type. Source routing or hop-by-hop routing.",
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfCombo ("Routing type", "Introduce the routing type of the demands" , 10, RoutingType.SOURCE_ROUTING ,
-                    		Arrays.asList(RoutingType.SOURCE_ROUTING , RoutingType.HOP_BY_HOP_ROUTING) , Arrays.asList("Source routing" , "Hop by hop routing") , (Consumer<RoutingType>) null)),
-                    (list)->
-                    	{
-                    		final RoutingType routingType = (RoutingType) list.get(0).get();
-                    		getSelectedElements().forEach(dd->dd.setRoutingType(routingType));
-                    	}
-                    );
-        }, (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Set maximum e2e limit to selected demands", e->
-        {
-            DialogBuilder.launch(
-            		"Set maximum e2e limit to selected demands", 
+            		"Set maximum e2e limit to selected unicast demands", 
                     "Please introduce the maximum end-to-end limit in ms, to set for the selected demands.", 
                     "", 
                     this, 
@@ -360,21 +351,24 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                     );
         }, (a,b)->b>0, null));
         
-        res.add(new AjtRcMenu("Add one source routing demand per selected node pair (all if none selected)", e->rcMenuFullMeshTraffic(true), (a,b)->true, null));
-        res.add(new AjtRcMenu("Add one hop-by-hop routing demand per selected node pair (all if none selected)", e->rcMenuFullMeshTraffic(false), (a,b)->true, null));
+        res.add(new AjtRcMenu("Add one IP unicast demand per selected node pair (all if none selected)", null, (a,b)->true, Arrays.asList(
+        		new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e->rcMenuFullMeshTraffic(true), (a,b)->true, null),
+        		new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e->rcMenuFullMeshTraffic(false), (a,b)->true, null)
+        		)
+        		));
         res.add(new AjtRcMenu("Set selected demands offered traffic", e ->
 		{
             DialogBuilder.launch(
-                    "Set selected demands offered traffic", 
+                    "Set selected demands offered traffic (Gbps)", 
                     "Please introduce the offered traffic. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Introduce the offered traffic", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (Gbps)", "Introduce the offered traffic", 10, 0.0)),
                     (list)->
                     	{
                     		final double newOfferedTraffic = (Double) list.get(0).get();
-                    		final List<Demand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).collect(Collectors.toList());
-                        	changedDemands.forEach(d->d.setOfferedTraffic(newOfferedTraffic));
+                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(newOfferedTraffic));
                     	}
                     );
 		}
@@ -382,8 +376,8 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
         res.add(new AjtRcMenu("Set selected demands offered traffic randomly", e ->
 		{
 			final Random rng = new Random ();
-    		final List<Demand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).collect(Collectors.toList());
-        	changedDemands.forEach(d->d.setOfferedTraffic(rng.nextDouble()));
+    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(rng.nextDouble()));
 		}
 		, (a, b) -> b>0, null));
         res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
@@ -393,222 +387,35 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                     "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
                     "", 
                     this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 0.0)),
+                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 2.0)),
                     (list)->
                     	{
                     		final double neScalingFactor = (Double) list.get(0).get();
-                    		final List<Demand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).collect(Collectors.toList());
-                    		try
-                    		{
-                            	changedDemands.forEach(d->d.setOfferedTraffic(d.getOfferedTraffic() * neScalingFactor));
-                                if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                                    callback.getWhatIfAnalysisPane().whatIfSomethingModified();
-                    		} catch (Throwable ex) { ex.printStackTrace(); throw new Net2PlanException (ex.getMessage());  }
+                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(d.getCurrentOfferedTrafficInGbps() * neScalingFactor));
                     	}
                     );
 		}
 		, (a, b) -> b>0, null));
-        res.add(new AjtRcMenu("Set traversed resource types (to selected or all demands in the table)", e ->
+        res.add(new AjtRcMenu("Set traversed VNF types to selected service chain requests (or all)", e ->
 		{
-			final SortedSet<Demand> selectedDemands = getSelectedElements();
-            String[] headers = StringUtils.arrayOf("Order", "Type");
-            Object[][] data = {null, null};
-            DefaultTableModel model = new ClassAwareTableModelImpl(data, headers);
-            AdvancedJTable table = new AdvancedJTable(model);
-            JButton addRow = new JButton("Add new traversed resource type");
-            addRow.addActionListener(e1 ->
-            {
-                Object[] newRow = {table.getRowCount(), ""};
-                ((DefaultTableModel) table.getModel()).addRow(newRow);
-            });
-            JButton removeRow = new JButton("Remove selected");
-            removeRow.addActionListener(e12 ->
-            {
-                ((DefaultTableModel) table.getModel()).removeRow(table.getSelectedRow());
-                for (int t = 0; t < table.getRowCount(); t++)
-                    table.getModel().setValueAt(t, t, 0);
-            });
-            JButton removeAllRows = new JButton("Remove all");
-            removeAllRows.addActionListener(e13 ->
-            {
-                while (table.getRowCount() > 0)
-                    ((DefaultTableModel) table.getModel()).removeRow(0);
-            });
-
-            final Set<String> resourceTypes = np.getResources().stream().map(Resource::getType).collect(Collectors.toSet());
-            final List<String> sortedResourceTypes = resourceTypes.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-            Object[][] newData = new Object[sortedResourceTypes.size()][headers.length];
-            for (int i = 0; i < sortedResourceTypes.size(); i++)
-            {
-                newData[i][0] = i;
-                newData[i][1] = sortedResourceTypes.get(i);
-            }
-
-            ((DefaultTableModel) table.getModel()).setDataVector(newData, headers);
-            JPanel pane = new JPanel();
-            JPanel pane2 = new JPanel();
-            pane.setLayout(new BorderLayout());
-            pane2.setLayout(new BorderLayout());
-            pane.add(new JScrollPane(table), BorderLayout.CENTER);
-            pane2.add(addRow, BorderLayout.WEST);
-            pane2.add(removeRow, BorderLayout.EAST);
-            pane2.add(removeAllRows, BorderLayout.SOUTH);
-            pane.add(pane2, BorderLayout.SOUTH);
-            final String[] optionsArray = new String[]{"Set to selected demand", "Set to all demands", "Cancel"};
-            int result = JOptionPane.showOptionDialog(null, pane, "Set traversed resource types", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, optionsArray, optionsArray[0]);
-            if ((result != 0) && (result != 1)) return;
-            List<String> newTraversedResourcesTypes = new LinkedList<>();
-            for (int j = 0; j < table.getRowCount(); j++)
-            {
-                String travResourceType = table.getModel().getValueAt(j, 1).toString();
-                newTraversedResourcesTypes.add(travResourceType);
-            }
-
-            for (Demand selectedDemand : selectedDemands)
-                if (!selectedDemand.getRoutes().isEmpty())
-                    throw new Net2PlanException("It is not possible to set the resource types traversed to demands with routes");
-
-            for (Demand selectedDemand : selectedDemands)
-                selectedDemand.setServiceChainSequenceOfTraversedResourceTypes(newTraversedResourcesTypes);
+            DialogBuilder.launch(
+                    "Set traversed VNF types", 
+                    "Please introduce the comma and/or space separated list of VNF types", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfString("VNF types", "Introduce the VNF types (comma or space separated)", 10, "")),
+                    (list)->
+                    	{
+                    		final String vnfNamesSt = (String) list.get(0).get();
+                    		final List<String> vnfNames = Stream.of (vnfNamesSt.split(", ")).filter(a->!a.equals("")).collect(Collectors.toList());
+                    		final List<WServiceChainRequest> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).filter(d->isWScr.apply(d)).map(d->toWScr.apply(d)).filter(d->d.getServiceChains().isEmpty()).collect(Collectors.toList());
+                        	changedDemands.forEach(d->d.setSequenceVnfTypes(vnfNames));
+                    	}
+                    );
 		}
 		, (a, b) -> true, null));
 
-        res.add(new AjtRcMenu("Create and couple upper layer links from uncoupled demands in selection", e ->
-		{
-            Collection<Long> layerIds = np.getNetworkLayerIds();
-            final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
-            for (long layerId : layerIds)
-            {
-                final String layerName = np.getNetworkLayerFromId(layerId).getName();
-                String layerLabel = "Layer " + layerId;
-                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
-                layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
-            }
-
-            layerSelector.setSelectedIndex(0);
-
-            JPanel pane = new JPanel();
-            pane.add(new JLabel("Select layer: "));
-            pane.add(layerSelector);
-
-            while (true)
-            {
-                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer to create the link", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (result != JOptionPane.OK_OPTION) return;
-
-                long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                for (Demand d : getSelectedElements())
-                    if (!d.isCoupled())
-                        d.coupleToNewLinkCreated(np.getNetworkLayerFromId(layerId));
-                break;
-            }
-		}
-		, (a, b) -> b>0, null));
-        
-        res.add(new AjtRcMenu("Couple selected demands to upper layer link", e ->
-		{
-            Collection<Long> layerIds = np.getNetworkLayerIds();
-            final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
-            final JComboBox<StringLabeller> linkSelector = new WiderJComboBox();
-            for (long layerId : layerIds)
-            {
-                final String layerName = np.getNetworkLayerFromId(layerId).getName();
-                String layerLabel = "Layer " + layerId;
-                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
-                layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
-            }
-
-            layerSelector.addItemListener(e1 ->
-            {
-                if (layerSelector.getSelectedIndex() >= 0)
-                {
-                    long selectedLayerId = (Long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                    NetworkLayer selectedLayer = np.getNetworkLayerFromId(selectedLayerId);
-
-                    linkSelector.removeAllItems();
-                    Collection<Link> links_thisLayer = np.getLinks(selectedLayer);
-                    for (Link link : links_thisLayer)
-                    {
-                        if (link.isCoupled()) continue;
-
-                        String originNodeName = link.getOriginNode().getName();
-                        String destinationNodeName = link.getDestinationNode().getName();
-
-                        linkSelector.addItem(StringLabeller.unmodifiableOf(link.getId(), "e" + link.getIndex() + " [n" + link.getOriginNode().getIndex() + " (" + originNodeName + ") -> n" + link.getDestinationNode().getIndex() + " (" + destinationNodeName + ")]"));
-                    }
-                }
-
-                if (linkSelector.getItemCount() == 0)
-                {
-                    linkSelector.setEnabled(false);
-                } else
-                {
-                    linkSelector.setSelectedIndex(0);
-                    linkSelector.setEnabled(true);
-                }
-            });
-
-            layerSelector.setSelectedIndex(-1);
-            layerSelector.setSelectedIndex(0);
-
-            JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
-            pane.add(new JLabel("Select layer: "));
-            pane.add(layerSelector, "growx, wrap");
-            pane.add(new JLabel("Select link: "));
-            pane.add(linkSelector, "growx, wrap");
-
-            while (true)
-            {
-                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer link", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (result != JOptionPane.OK_OPTION) return;
-
-                Long linkId = (Long) ((StringLabeller) linkSelector.getSelectedItem()).getObject();
-                if (linkId == null) throw new NullPointerException();
-
-                final Link link = np.getLinkFromId(linkId);
-                if (link == null) throw new NullPointerException();
-
-                for (Demand selectedDemand : getSelectedElements())
-                    selectedDemand.coupleToUpperOrSameLayerLink(link);
-                break;
-            }
-		}
-		, (a, b) -> b>0, null));
-        
-        res.add(new AjtRcMenu("Decouple selected demands", e->getSelectedElements().forEach(dd->((Demand)dd).decouple()) , (a,b)->b>0, null));
-
-        res.add(new AjtRcMenu("Create and couple links for selected uncoupled demands", e ->
-		{
-            Collection<Long> layerIds = np.getNetworkLayerIds();
-            final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
-            for (long layerId : layerIds)
-            {
-                final String layerName = np.getNetworkLayerFromId(layerId).getName();
-                String layerLabel = "Layer " + layerId;
-                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
-                layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
-            }
-
-            layerSelector.setSelectedIndex(0);
-
-            JPanel pane = new JPanel();
-            pane.add(new JLabel("Select layer: "));
-            pane.add(layerSelector);
-
-            while (true)
-            {
-                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the upper layer to create links", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (result != JOptionPane.OK_OPTION) return;
-
-                long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                NetworkLayer layer = np.getNetworkLayerFromId(layerId);
-                for (Demand demand : getSelectedElements())
-                    if (!demand.isCoupled())
-                        demand.coupleToNewLinkCreated(layer);
-            }
-		}
-		, (a, b) -> b>0, null));
-    
         res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
                 MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
                 MonitoringUtils.getMenuExportMonitoringInfo(this),
@@ -633,111 +440,21 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     }
 
     
-    private void createDemandGUI(WNet wNet , boolean isServiceChain)
+    private void rcMenuFullMeshTraffic(boolean isHopByHop)
     {
-        final PickManager pickManager = callback.getPickManager();
-        if(wNet.getNodes().isEmpty())
-            throw new Net2PlanException("Adding links or demands to an empty topology is not allowed");
-        
-        final JComboBox<StringLabeller<Node>> originNodeSelector = new WiderJComboBox();
-        final JComboBox<StringLabeller<Node>> destinationNodeSelector = new WiderJComboBox();
-        
-        for (WNode node : wNet.getNodes())
-        {
-            final String nodeName = node.getName().equals("")? "Node " + node.getId() : node.getName();
-            originNodeSelector.addItem(StringLabeller.of(node, nodeName));
-            destinationNodeSelector.addItem(StringLabeller.of(node, nodeName));
-        }
-
-        ItemListener nodeListener = new ItemListener()
-        {
-            @Override
-            public void itemStateChanged(ItemEvent e)
-            {
-                final WNode originNode = (WNode) ((StringLabeller) originNodeSelector.getSelectedItem()).getObject();
-                final WNode destinationNode = (WNode) ((StringLabeller) destinationNodeSelector.getSelectedItem()).getObject();
-                callback.putTransientColorInElementTopologyCanvas(Arrays.asList(originNode.getNe()), Color.GREEN);
-                callback.putTransientColorInElementTopologyCanvas(Arrays.asList(destinationNode.getNe()), Color.CYAN);
-            }
-        };
-
-        originNodeSelector.addItemListener(nodeListener);
-        destinationNodeSelector.addItemListener(nodeListener);
-
-        originNodeSelector.setSelectedIndex(0);
-        destinationNodeSelector.setSelectedIndex(1);
-
-        JPanel pane = new JPanel();
-        pane.add(new JLabel("Ingress router: "));
-        pane.add(originNodeSelector);
-        pane.add(Box.createHorizontalStrut(15));
-        pane.add(new JLabel("Egress router: "));
-        pane.add(destinationNodeSelector);
-        while (true)
-        {
-            int result = JOptionPane.showConfirmDialog(null, pane, "Please enter end nodes for the new " + networkElementType, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-            if (result != JOptionPane.OK_OPTION) return;
-
-            Node originNode = (Node) ((StringLabeller) originNodeSelector.getSelectedItem()).getObject();
-            Node destinationNode = (Node) ((StringLabeller) destinationNodeSelector.getSelectedItem()).getObject();
-            if (networkElementType == NetworkElementType.LINK)
-            {
-                final Link e = netPlan.addLink(originNode, destinationNode, 0, 0, 200000, null, layer);
-                callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-                callback.updateVisualizationAfterChanges();
-                pickManager.pickElements(pickManager.new PickStateInfo(e, Optional.empty()));
-                callback.updateVisualizationAfterPick();
-                callback.addNetPlanChange();
-
-            } else
-            {
-            	final RoutingType rt = (RoutingType) ((StringLabeller) routingTypeSelector.getSelectedItem()).getObject();
-                final Demand d = netPlan.addDemand(originNode, destinationNode, 0, rt , null , layer);
-                callback.updateVisualizationAfterChanges();
-                pickManager.pickElements(pickManager.new PickStateInfo(d, Optional.empty()));
-                callback.updateVisualizationAfterPick();
-                callback.addNetPlanChange();
-            }
-
-            break;
-        }
-    }
-    
-    private void rcMenuFullMeshTraffic(boolean isSourceRouting)
-    {
-        final NetPlan np = callback.getDesign();
-        final Collection<Node> nodes;
-        nodes = (callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).isEmpty()? np.getNodes() : (Set<Node>) callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()));
+        final WNet wNet = new WNet (callback.getDesign());
+        final Collection<WNode> nodes;
+        nodes = (callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).isEmpty()? wNet.getNodes() : (Set<WNode>) callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).stream().map(n->new WNode((Node) n)).filter(n->n.isRegularNode()).collect(Collectors.toList()));
         if (nodes.isEmpty()) throw new Net2PlanException("There are no nodes");
-        for (Node n1 : nodes)
-            for (Node n2 : nodes)
-                if (n1.getIndex() < n2.getIndex())
-                    np.addDemandBidirectional(n1, n2, 0 , isSourceRouting? RoutingType.SOURCE_ROUTING : RoutingType.HOP_BY_HOP_ROUTING , null , getTableNetworkLayer());
+        for (WNode n1 : nodes)
+            for (WNode n2 : nodes)
+            	if (n1.getId () > n2.getId())
+            	{
+                	wNet.addIpUnicastDemand(n1, n2, true, isHopByHop);
+                	wNet.addIpUnicastDemand(n2, n1, false, isHopByHop);
+            		
+            	}
         callback.getPickManager().reset();
-    }
-
-
-    private class ClassAwareTableModelImpl extends ClassAwareTableModel
-    {
-        public ClassAwareTableModelImpl(Object[][] dataVector, Object[] columnIdentifiers)
-        {
-            super(dataVector, columnIdentifiers);
-        }
-
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex)
-        {
-            if (columnIndex == 1) return true;
-            return false;
-        }
-
-        @Override
-        public void setValueAt(Object value, int row, int column)
-        {
-            super.setValueAt(value, row, column);
-
-        }
-
     }
 
     public static <TT extends NetworkElement>  List<AjtColumnInfo<IMonitorizableElement>> getMonitoringAndTrafficEstimationColumns (AdvancedJTable_networkElement<TT> table)

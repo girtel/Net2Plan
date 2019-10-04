@@ -973,9 +973,9 @@ public class WNet extends WAbstractNetworkElement
 			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
 			assert isIpLayer || isWdmLayer;
 			if (isIpLayer && ee.isCoupled()) return Optional.empty(); // bundles
-			if (isIpLayer && ee.getRoutingType().isHopByHopRouting())
+			if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
 				return Optional.of (new WIpUnicastDemand(ee));
-			if (isIpLayer && ee.getRoutingType().isSourceRouting())
+			if (isIpLayer && new WNode (ee.getIngressNode()).isVirtualNode())
 				return Optional.of (new WServiceChainRequest(ee));
 			if (isWdmLayer) return Optional.of (new WLightpathRequest(ee));
 		}

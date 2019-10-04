@@ -187,6 +187,11 @@ public class WNode extends WAbstractNetworkElement
 		return n.hasTag(WNetConstants.TAGNODE_INDICATIONVIRTUALORIGINNODE) || n.hasTag(WNetConstants.TAGNODE_INDICATIONVIRTUALDESTINATIONNODE);
 	}
 
+	public boolean isRegularNode()
+	{
+		return !isVirtualNode();
+	}
+
 	@Override
 	public Node getNe()
 	{

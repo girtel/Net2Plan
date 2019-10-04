@@ -307,7 +307,17 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 		return sc.getServiceChainSequenceOfTraversedResourceTypes();
 	}
 
+	/** Sets the sequence of the VNF types that should be traversed by the service chains realizing this request. The request cannot have 
+	 * service chains at the moment, or an exception is raised
+	 * @param seqVnfTypes see above
+	 */
+	public void setSequenceVnfTypes(List<String> seqVnfTypes)
+	{
+		if (!this.getServiceChains().isEmpty()) throw new Net2PlanException ("VNF types can only be modified in service chain requests without service chains");
+		sc.setServiceChainSequenceOfTraversedResourceTypes(seqVnfTypes);
+	}
 
+	
 	/**
 	 * Returns the carried traffic of this request if all the service chains where non-failed (al their traversed IP links and nodes where up)
 	 * @return see above
