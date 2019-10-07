@@ -671,6 +671,16 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	/**
+	 * Returns the set of incoming, outgoing and traversing lightpaths to the node
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getExpressSwitchedLightpaths()
+	{
+		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpath(ee)).filter(lp->lp.getNodesWhereThisLightpathIsExpressOpticallySwitched().contains(this)).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	
+	/**
 	 * Returns the set of incoming lightpaths to the node
 	 * @return see above
 	 */
@@ -689,6 +699,26 @@ public class WNode extends WAbstractNetworkElement
 		return getNet().getServiceChainRequests().stream().filter(sc -> sc.getPotentiallyValidOrigins().contains(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	/**
+	 * Returns the set of outgoing unicast IP demands of the node: those which have the node as origin
+	 * @return see above
+	 */
+	public SortedSet<WIpUnicastDemand> getOutgoingIpUnicastDemands ()
+	{
+		return getNe().getOutgoingDemands(getNet().getIpLayer().getNe()).stream().map(d->getNet().getWElement(d).orElse(null)).filter(d->d!=null).filter(d->d.isWIpUnicastDemand()).map(d->(WIpUnicastDemand)d).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/**
+	 * Returns the set of incoming unicast IP demands of the node: those which have the node as destination
+	 * @return see above
+	 */
+	public SortedSet<WIpUnicastDemand> getIncomingIpUnicastDemands ()
+	{
+		return getNe().getIncomingDemands(getNet().getIpLayer().getNe()).stream().map(d->getNet().getWElement(d).orElse(null)).filter(d->d!=null).filter(d->d.isWIpUnicastDemand()).map(d->(WIpUnicastDemand)d).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+
+	
 	/**
 	 * Returns the set of incoming service chain requests of the node: those which have the node as a potential end node
 	 * @return see above
@@ -847,5 +877,13 @@ public class WNode extends WAbstractNetworkElement
 		assert getVnfInstances().stream().allMatch(v->v.getHostingNode().equals(this));
 	}
 
+
+	/** Returns the SRGs that this node belongs to, i.e. the ones that make this node fail
+	 * @return see above
+	 */
+	public SortedSet<WSharedRiskGroup> getSrgsThisElementIsAssociatedTo ()
+	{
+		return getNe().getSRGs().stream().map(s->new WSharedRiskGroup(s)).collect(Collectors.toCollection(TreeSet::new));
+	}
 	
 }

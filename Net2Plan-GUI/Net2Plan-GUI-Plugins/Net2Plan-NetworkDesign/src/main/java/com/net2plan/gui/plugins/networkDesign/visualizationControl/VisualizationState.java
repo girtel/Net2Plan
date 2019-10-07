@@ -45,7 +45,6 @@ import com.net2plan.interfaces.networkDesign.MulticastTree;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.niw.networkModel.WNet;
 import com.net2plan.niw.networkModel.WNode;
 import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.Pair;

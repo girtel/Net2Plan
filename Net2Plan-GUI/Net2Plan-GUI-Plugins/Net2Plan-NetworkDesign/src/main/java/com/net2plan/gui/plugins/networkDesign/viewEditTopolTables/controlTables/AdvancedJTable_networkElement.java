@@ -35,6 +35,7 @@ import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_node;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
@@ -146,6 +147,10 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     				for (WLightpathRequest d : wNet.getLightpathRequests()) res.add(d.getNe()); 
     				return (List<T>) res;
     			}
+    		}
+    		if (this instanceof Niw_AdvancedJTable_node)
+    		{
+    			return (List<T>) wNet.getNodes().stream().map(n->n.getNe()).collect(Collectors.toList());
     		}
     	}
     	

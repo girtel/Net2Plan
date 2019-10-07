@@ -34,6 +34,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
@@ -157,6 +158,24 @@ public class WNet extends WAbstractNetworkElement
 		return new WLayerIp(np.getNetworkLayer(1));
 	}
 
+	/** Add a SRG, with no associated failing elements, a MTTR of 12 hours, and MTTF of 1 year of 365 days
+	 * @return see above
+	 */
+	public WSharedRiskGroup addSharedRiskGroup ()
+	{
+		final SharedRiskGroup srg = getNe().addSRG(WNetConstants.DEFAULT_SRG_MTTFHOURS, WNetConstants.DEFAULT_SRG_MTTRHOURS, null);
+		return new WSharedRiskGroup(srg);
+	}
+
+	/**
+	 * Returns the list of defined shared risk groups, in increasing order according to its id
+	 * @return see above
+	 */
+	public List<WSharedRiskGroup> getSrgs ()
+	{
+		return np.getSRGs().stream().map(n -> new WSharedRiskGroup(n)).collect(Collectors.toCollection(ArrayList::new));
+	}
+	
 	/**
 	 * Returns the list of network nodes, in increasing order according to its id
 	 * @return see above
@@ -948,6 +967,7 @@ public class WNet extends WAbstractNetworkElement
 		getVnfInstances().forEach(e->e.checkConsistency());
 		getIpLayer().checkConsistency();
 		getWdmLayer().checkConsistency();
+		getSrgs().forEach(s->s.checkConsistency());
 	}
 
 	public Optional<WAbstractNetworkElement> getWElement (NetworkElement e)

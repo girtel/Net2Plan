@@ -53,6 +53,11 @@ public class WLightpath extends WAbstractNetworkElement
 	 */
 	public WLightpathRequest getLightpathRequest () { return new WLightpathRequest(r.getDemand()); }
 
+	/** Returns the nodes where this lightpath is optically switched: the sequence of nodes removing the first and the last
+	 * @return see above
+	 */
+	public List<WNode> getNodesWhereThisLightpathIsExpressOpticallySwitched () { final List<WNode> seqNodes = getSeqNodes(); return new ArrayList<> (seqNodes.subList(1, seqNodes.size()-1)); }
+	
 	/** Returns the user-defined identifier of the modulation associated to the transponder realizing this lightpath
 	 * @return see above
 	 */

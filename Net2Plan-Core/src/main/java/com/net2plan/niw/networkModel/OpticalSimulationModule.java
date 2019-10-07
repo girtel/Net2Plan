@@ -37,8 +37,8 @@ public class OpticalSimulationModule
    /** Planck constant m^2 kg/sec */
    public final static double constant_h = 6.62607004E-34; 
 	private final WNet wNet;
-	public enum PERLPINFOMETRICS { POWER_DBM , CD_PERPERNM , PMDSQUARED_PS2 , OSNRAT12_5GHZREFBW };
-	public enum PERFIBERINFOMETRICS { TOTALPOWER_DBM };
+	public enum PERLPINFOMETRICS { POWER_DBM , CD_PERPERNM , PMDSQUARED_PS2 , OSNRAT12_5GHZREFBW }
+	public enum PERFIBERINFOMETRICS { TOTALPOWER_DBM }
 	final private SortedMap<WLightpath,Map<PERLPINFOMETRICS , Pair<Double,Double>>> perPerLpPerMetric_valStartEnd = new TreeMap<> ();
 	final private SortedMap<WFiber,SortedMap<WLightpath,Map<PERLPINFOMETRICS , Pair<Double,Double>>>> perFiberPerLpPerMetric_valStartEnd = new TreeMap<> ();
 	final private SortedMap<WFiber,Map<PERFIBERINFOMETRICS , Quadruple<Double,Double,List<Double>,List<Double>>>> perFiberPerMetric_valStartEndAndAtEachOlaInputOutput = new TreeMap<> ();

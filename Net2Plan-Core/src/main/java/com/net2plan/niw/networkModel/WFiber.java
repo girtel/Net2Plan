@@ -500,4 +500,13 @@ public class WFiber extends WAbstractNetworkElement
 		if (this.isDown()) assert getTraversingLps().stream().allMatch(lp->lp.isDown());
 	}
 
+	/** Returns the SRGs that this fiber belongs to, i.e. the ones that make this node fail
+	 * @return see above
+	 */
+	public SortedSet<WSharedRiskGroup> getSrgsThisElementIsAssociatedTo ()
+	{
+		return getNe().getSRGs().stream().map(s->new WSharedRiskGroup(s)).collect(Collectors.toCollection(TreeSet::new));
+	}
+	
+
 }

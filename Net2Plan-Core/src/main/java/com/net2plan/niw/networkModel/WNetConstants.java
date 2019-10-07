@@ -53,4 +53,8 @@ public class WNetConstants
 	static final boolean WLPREQUEST_DEFAULT_ISTOBE11PROTECTED = false;
 	static final boolean WSERVICECHAINREQUEST_DEFAULT_ISENDEDINCORENODE = false;
 	
+	static final double DEFAULT_SRG_MTTRHOURS = 12;
+	static final double DEFAULT_SRG_MTTFHOURS = 24*365;
+	
+	
 }
