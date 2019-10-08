@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 
 /** An instance of this class is a VNF instance hosted in a node, of a given type, with a given capacity. The characteristics of the 
  * VNF instance are:
@@ -175,5 +176,8 @@ public class WVnfInstance extends WAbstractNetworkElement
 		assert getHostingNode().getVnfInstances(this.getType()).contains(this);
 		assert getHostingNode().getVnfInstances().contains(this);
 	}
-	
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WVnfInstance; }
+
 }

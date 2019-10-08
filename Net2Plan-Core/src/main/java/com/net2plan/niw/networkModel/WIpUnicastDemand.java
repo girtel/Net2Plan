@@ -22,6 +22,7 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
@@ -49,10 +50,6 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	public WIpUnicastDemand(Demand sc)
 	{
 		super(sc);
-		assert sc.getLayer().equals (getNet().getIpLayer().getNe());
-		assert !sc.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
-		assert !(new WNode(sc.getIngressNode()).isVirtualNode());
-		assert !(new WNode(sc.getEgressNode()).isVirtualNode());
 	}
 
    /** Returns a map with an entry for each traversed link, and associated to it the demand's traffic carried in that link. 
@@ -209,5 +206,8 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	{
 		getNe ().remove();
 	}
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WIpUnicastDemand; }
 
 }

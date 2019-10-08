@@ -5,16 +5,17 @@
 
 package com.net2plan.niw.networkModel;
 
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 
 /**
  * This base class is inherited by all the classes in the library representing relevant network elements. Provides some
@@ -28,12 +29,14 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	protected final NetworkElement associatedNpElement;
 	private final Optional<Integer> indexIfDummyElement;
 
+	public abstract WTYPE getWType (); 
 
 	protected WAbstractNetworkElement(NetworkElement associatedNpElement , Optional<Integer> indexIfDummyElement)
 	{
 		// if associated element == null, this is a dummy fiber, used in some graphs
 		this.associatedNpElement = associatedNpElement;
 		this.indexIfDummyElement = indexIfDummyElement;
+		assert getNet().getWType(associatedNpElement).orElse(null) == this.getWType();
 	}
 
 	/**

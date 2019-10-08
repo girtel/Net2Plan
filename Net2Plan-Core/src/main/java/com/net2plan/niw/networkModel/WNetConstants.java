@@ -56,5 +56,39 @@ public class WNetConstants
 	static final double DEFAULT_SRG_MTTRHOURS = 12;
 	static final double DEFAULT_SRG_MTTFHOURS = 24*365;
 	
+	public static enum WTYPE 
+	{
+		WFiber,
+		WLayerIp,
+		WLayerWdm,
+		WIpLink,
+		WIpUnicastDemand,
+		WLightpath,
+		WLightpathRequest,
+		WMplsTeTunnel,
+		WNet,
+		WNode,
+		WServiceChain,
+		WServiceChainRequest,
+		WSharedRiskGroup,
+		WVnfInstance;
+		
+		public boolean isWFiber () { return this == WTYPE.WFiber; }
+		public boolean isIpLayer () { return this == WTYPE.WLayerIp; }
+		public boolean isWdmLayer () { return this == WTYPE.WLayerWdm; }
+		public boolean isIpLink() { return this == WIpLink; }
+		public boolean isIpUnicastDemand() { return this == WIpUnicastDemand; }
+		public boolean isLightpath() { return this == WTYPE.WLightpath; }
+		public boolean isLightpathRequest () { return this == WLightpathRequest; }
+		public boolean isMplsTeTunnel() { return this == WTYPE.WMplsTeTunnel; }
+		public boolean isWNet () { return this == WTYPE.WNet; }
+		public boolean isNode() { return this == WTYPE.WNode; }
+		public boolean isServiceChain () { return this == WTYPE.WServiceChain; }
+		public boolean isServiceChainRequest () { return this == WTYPE.WServiceChainRequest; }
+		public boolean isSrg () { return this == WTYPE.WSharedRiskGroup; }
+		public boolean isVnfInstance () { return this == WTYPE.WVnfInstance; }
+		
+	};
+	
 	
 }

@@ -25,7 +25,6 @@ import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -36,6 +35,7 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
@@ -176,6 +176,11 @@ public class WNet extends WAbstractNetworkElement
 		return np.getSRGs().stream().map(n -> new WSharedRiskGroup(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 	
+	/** Returns the number of nodes in the design, sa returned by getNodes
+	 * @return see above
+	 */
+	public int getNumberOfNodes () { return (int) np.getNodes().stream().map(n -> new WNode(n)).filter(n -> !n.isVirtualNode()).count (); }
+	
 	/**
 	 * Returns the list of network nodes, in increasing order according to its id
 	 * @return see above
@@ -200,7 +205,9 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WLightpathRequest> getLightpathRequests()
 	{
-		return np.getDemands(getWdmLayer().getNe()).stream().map(n -> new WLightpathRequest(n)).collect(Collectors.toCollection(ArrayList::new));
+		return np.getDemands(getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isLightpathRequest(); }).
+				map(n -> new WLightpathRequest(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -209,7 +216,9 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WLightpath> getLightpaths()
 	{
-		return np.getRoutes(getWdmLayer().getNe()).stream().map(n -> new WLightpath(n)).collect(Collectors.toCollection(ArrayList::new));
+		return np.getRoutes(getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(n -> new WLightpath(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -218,7 +227,9 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WIpLink> getIpLinks()
 	{
-		return np.getLinks(getIpLayer().getNe()).stream().map(n -> new WIpLink(n)).filter(e -> !e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
+		return np.getLinks(getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isIpLink(); }).
+				map(n -> new WIpLink(n)).filter(e -> !e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -228,9 +239,7 @@ public class WNet extends WAbstractNetworkElement
 	public List<WServiceChainRequest> getServiceChainRequests()
 	{
 		return np.getDemands(getIpLayer().getNe()).stream().
-				filter(d->!d.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE)).
-				filter(d->new WNode (d.getIngressNode()).isVirtualNode()).
-				filter(d->new WNode (d.getEgressNode()).isVirtualNode()).
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isServiceChainRequest(); }).
 				map(n -> new WServiceChainRequest(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
@@ -241,9 +250,7 @@ public class WNet extends WAbstractNetworkElement
 	public List<WIpUnicastDemand> getIpUnicastDemands ()
 	{
 		return np.getDemands(getIpLayer().getNe()).stream().
-				filter(d->!d.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE)).
-				filter(d->!(new WNode (d.getIngressNode()).isVirtualNode())).
-				filter(d->!(new WNode (d.getEgressNode()).isVirtualNode())).
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isIpUnicastDemand(); }).
 				map(n -> new WIpUnicastDemand(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
@@ -253,7 +260,20 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WServiceChain> getServiceChains()
 	{
-		return np.getRoutes(getIpLayer().getNe()).stream().filter(r->!r.getDemand().hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE)).map(n -> new WServiceChain(n)).collect(Collectors.toCollection(ArrayList::new));
+		return np.getRoutes(getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(n -> new WServiceChain(n)).collect(Collectors.toCollection(ArrayList::new));
+	}
+
+	/**
+	 * Returns the list of MPLS-TE tunnels, in increasing order according to its id
+	 * @return see above
+	 */
+	public List<WMplsTeTunnel> getMplsTeTunnels()
+	{
+		return np.getRoutes(getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
+				map(n -> new WMplsTeTunnel(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -977,6 +997,13 @@ public class WNet extends WAbstractNetworkElement
 		getSrgs().forEach(s->s.checkConsistency());
 	}
 
+	public Optional<WTYPE> getWType (NetworkElement e)
+	{
+		final WAbstractNetworkElement ee = getWElement(e).orElse(null);
+		if (ee == null) return Optional.empty();
+		return Optional.of(ee.getWType());
+	}
+	
 	public Optional<WAbstractNetworkElement> getWElement (NetworkElement e)
 	{
 		if (e.getNetPlan() != this.getNe()) return Optional.empty();
@@ -990,7 +1017,12 @@ public class WNet extends WAbstractNetworkElement
 			final boolean isIpLayer = ee.getLayer().equals(this.getIpLayer().getNe());
 			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
 			assert isIpLayer || isWdmLayer;
-			if (isIpLayer) return Optional.of (new WIpLink(ee));
+			if (isIpLayer)
+			{
+				if (new WNode (ee.getOriginNode()).isVirtualNode()) return Optional.empty();
+				if (new WNode (ee.getDestinationNode()).isVirtualNode()) return Optional.empty();
+				return Optional.of (new WIpLink(ee));
+			}
 			if (isWdmLayer) return Optional.of (new WFiber(ee));
 		}
 		if (e instanceof Demand)
@@ -999,7 +1031,12 @@ public class WNet extends WAbstractNetworkElement
 			final boolean isIpLayer = ee.getLayer().equals(this.getIpLayer().getNe());
 			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
 			assert isIpLayer || isWdmLayer;
-			if (isIpLayer && ee.isCoupled()) return Optional.empty(); // bundles
+			if (isIpLayer && ee.isCoupled())
+			{
+				assert ee.isCoupledInSameLayer();
+				assert ee.getCoupledLink().hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
+				return Optional.empty(); // bundles
+			}
 			if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
 				return Optional.of (new WIpUnicastDemand(ee));
 			if (isIpLayer && new WNode (ee.getIngressNode()).isVirtualNode())
@@ -1013,7 +1050,17 @@ public class WNet extends WAbstractNetworkElement
 			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
 			assert isIpLayer || isWdmLayer;
 			if (isIpLayer)
+			{
+				if (ee.getDemand().isCoupled()) return Optional.empty();
+				if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
+				{
+					assert new WNode (ee.getEgressNode()).isRegularNode();
+					return Optional.of (new WMplsTeTunnel(ee));
+				}
+				assert new WNode (ee.getIngressNode()).isVirtualNode();
+				assert new WNode (ee.getEgressNode()).isVirtualNode();
 				return Optional.of (new WServiceChain(ee));
+			}
 			if (isWdmLayer) return Optional.of (new WLightpath(ee));
 		}
 		if (e instanceof Resource)
@@ -1025,5 +1072,8 @@ public class WNet extends WAbstractNetworkElement
 		return Optional.empty();
 	}
 	
-	
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WNet; }
+
 }

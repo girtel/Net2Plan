@@ -21,6 +21,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 
 /**
  * This class represents a node in the network, capable of initiating or ending IP and WDM links, as well as lightpaths
@@ -734,7 +735,7 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getOutgoingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().map(ee -> new WServiceChain(ee)).filter(sc -> sc.getA().equals(this)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isServiceChain()).map(ee -> new WServiceChain(ee)).filter(sc -> sc.getA().equals(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -743,7 +744,7 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getIncomingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().map(ee -> new WServiceChain(ee)).filter(sc -> sc.getB().equals(this)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isServiceChain()).map(ee -> new WServiceChain(ee)).filter(sc -> sc.getB().equals(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -752,7 +753,7 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getInOutOrTraversingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().map(ee -> new WServiceChain(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isServiceChain()).map(ee -> new WServiceChain(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	Link getIncomingLinkFromAnycastOrigin()
@@ -885,5 +886,8 @@ public class WNode extends WAbstractNetworkElement
 	{
 		return getNe().getSRGs().stream().map(s->new WSharedRiskGroup(s)).collect(Collectors.toCollection(TreeSet::new));
 	}
-	
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WNode; }
+
 }

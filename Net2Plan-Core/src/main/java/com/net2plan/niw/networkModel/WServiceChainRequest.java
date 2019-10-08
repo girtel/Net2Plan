@@ -21,6 +21,7 @@ import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
 
 /**
@@ -64,10 +65,6 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	public WServiceChainRequest(Demand sc)
 	{
 		super(sc);
-		assert sc.getLayer().equals (getNet().getIpLayer().getNe());
-		assert !sc.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
-		assert new WNode(sc.getIngressNode()).isVirtualNode();
-		assert new WNode(sc.getEgressNode()).isVirtualNode();
 	}
 
 	/**
@@ -354,5 +351,8 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	/** Removes this service chain request, and any underlying service chains satisfying it
 	 */
 	public void remove () { this.getNe().remove(); }
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WServiceChainRequest; }
 
 }

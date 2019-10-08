@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 
 /** This class represents a request to establish a unidirectional lightpath between two nodes, for a given line rate. The 
  * lightpath request can be blocked (no lighptaths assigned), or relalizaed by one or two (1+1) lightpaths.
@@ -20,7 +21,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
  */
 public class WLightpathRequest extends WAbstractNetworkElement
 {
-	final private Demand d;
 	private static final String ATTNAMECOMMONPREFIX = "LightpathRequest_";
 	private static final String ATTNAMESUFFIX_ISTOBE11PROTECTED = "isToBe11Protected";
 
@@ -28,11 +28,8 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	public WLightpathRequest (Demand d) 
 	{ 
 		super (d, Optional.empty()); 
-		this.d = d; 
-		assert d.getLayer().equals(getNet().getWdmLayer().getNe());
-		assert d.getRoutes().size() <= 2; 
-		if (d.getRoutes().size() == 2) assert d.getRoutesAreBackup().size() == 1; 
-		assert !getA().isVirtualNode() && !getB().isVirtualNode();  
+		assert getNe().getRoutes().size() <= 2; 
+		if (getNe().getRoutes().size() == 2) assert getNe().getRoutesAreBackup().size() == 1; 
 	}
 	
 	@Override
@@ -54,7 +51,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** If the lightpath is part of a bidirectional pair, returns the opposite lightpath request, if not returns null 
 	 * @return see above
 	 */
-	public WLightpathRequest getBidirectionalPair () { assert this.isBidirectional(); return new WLightpathRequest(d.getBidirectionalPair()); }
+	public WLightpathRequest getBidirectionalPair () { assert this.isBidirectional(); return new WLightpathRequest(getNe().getBidirectionalPair()); }
 
 	/**
 	 * Sets the given lightpath request as the bidirectional pair of this request
@@ -76,15 +73,15 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Returns the line rate of the lighptath request in Gbps
 	 * @return see above
 	 */
-	public double getLineRateGbps () { return d.getOfferedTraffic(); }
+	public double getLineRateGbps () { return getNe().getOfferedTraffic(); }
 	/** Sets the line rate of the lighptath request in Gbps
 	 * @param lineRateGbps see above
 	 */
-	public void setLineRateGbps (double lineRateGbps) { d.setOfferedTraffic(lineRateGbps); }
+	public void setLineRateGbps (double lineRateGbps) { getNe().setOfferedTraffic(lineRateGbps); }
 	/** Indicates if the lighptath request is supported by a 1+1 setting of two lightpaths 
 	 * @return see above
 	 */
-	public boolean is11Protected () { return !d.getRoutesAreBackup().isEmpty(); }
+	public boolean is11Protected () { return !getNe().getRoutesAreBackup().isEmpty(); }
 	/** Indicates if the user has requested this lightpath request to be realized by a 1+1 setting
 	 * @return see above
 	 */
@@ -92,7 +89,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Sets if this lightpath request has to be realized by a 1+1 setting or not
 	 * @param isToBe11Protected see above
 	 */
-	public void setIsToBe11Protected (boolean isToBe11Protected) { d.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISTOBE11PROTECTED , new Boolean (isToBe11Protected).toString()); }
+	public void setIsToBe11Protected (boolean isToBe11Protected) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISTOBE11PROTECTED , new Boolean (isToBe11Protected).toString()); }
 	/** Returns the length of this lightpath request, as the physical length of fibers traversed by the lightpaths carrying this request. If the lightpath is 1+1 protected, 
 	 * the longest path length is returned. If the request has assigned no lighptaths, Double.MAX_VALUE is returned.
 	 * @return see above
@@ -113,7 +110,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Indicates if this lighptath request has lightpaths assigned
 	 * @return see above
 	 */
-	public boolean hasLightpathsAssigned () { return !d.getRoutes().isEmpty(); }
+	public boolean hasLightpathsAssigned () { return !getNe().getRoutes().isEmpty(); }
 	/** Indicates if the request is blocked, meaning (i) has no lightpaths assigned, or (ii) assigned lightpaths are all down
 	 * @return see above
 	 */
@@ -134,7 +131,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Removes this lightpath request. This automatically removes any lightpath realizing this request.
 	 * 
 	 */
-	public void remove () { d.remove(); }
+	public void remove () { getNe().remove(); }
 
 	
 	/** Adds a lightpath realizing this lightpath request. A demand can be assigned at most two lightpaths, one main and one backup.
@@ -172,17 +169,17 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Decouples this lightpath request to the IP link it was coupled to, if any
 	 * 
 	 */
-	public void decouple () { if (!d.isCoupled()) return; d.decouple(); }
+	public void decouple () { if (!getNe().isCoupled()) return; getNe().decouple(); }
 	
 	/** Indicates if the lightpath is coupled to an IP link
 	 * @return see above
 	 */
-	public boolean isCoupledToIpLink () { return d.isCoupled(); } 
+	public boolean isCoupledToIpLink () { return getNe().isCoupled(); } 
 	
 	/** Gets the coupled IP links, or raises an exception if none
 	 * @return see above
 	 */
-	public WIpLink getCoupledIpLink () { if (!isCoupledToIpLink()) throw new Net2PlanException ("Not coupled"); return new WIpLink(d.getCoupledLink()); }
+	public WIpLink getCoupledIpLink () { if (!isCoupledToIpLink()) throw new Net2PlanException ("Not coupled"); return new WIpLink(getNe().getCoupledLink()); }
 
 	
 	void updateNetPlanObjectAndPropagateUpwards ()
@@ -241,5 +238,8 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	 * @param name
 	 */
 	public void setTransponderName (String name) { getNe ().setAttribute(WNetConstants.ATTNAME_LIGHTPATHUNREG_TRANSPONDERNAME, name); }
-	
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WLightpathRequest; }
+
 }

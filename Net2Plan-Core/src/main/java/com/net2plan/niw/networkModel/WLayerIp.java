@@ -9,6 +9,7 @@ package com.net2plan.niw.networkModel;
 import java.util.Optional;
 
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 
 public class WLayerIp extends WAbstractNetworkElement
 {
@@ -25,5 +26,8 @@ public class WLayerIp extends WAbstractNetworkElement
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WLayerIp; }
 
 }

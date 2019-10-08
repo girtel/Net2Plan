@@ -14,10 +14,13 @@ import java.util.stream.Collectors;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.IPUtils;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Triple;
 
 /**
  * This class represents an unidirectional IP link. IP links can be realized by optical lightpaths or not. If yes, the
@@ -36,7 +39,6 @@ public class WIpLink extends WAbstractNetworkElement
 	{
 		super(e , Optional.empty());
 		this.npLink = e;
-		assert e.getLayer().equals(getNet().getIpLayer().getNe());
 	}
 
 	static WIpLink createFromAdd(Link e, double nominalCapacityGbps)
@@ -147,8 +149,17 @@ public class WIpLink extends WAbstractNetworkElement
 		if (this.isCoupledtoLpRequest()) return getCoupledLpRequest().getLineRateGbps();
 		if (this.isBundleOfIpLinks()) return getBundledIpLinks().stream().mapToDouble(e->e.getNominalCapacityGbps()).sum();
 		final Double res = npLink.getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_NOMINALCAPACITYGBPS, null);
-		if (res == null) throw new RuntimeException();
-		return res;
+		if (res == null) return 0;
+		return Math.max(0, res);
+	}
+
+	/**
+	 * Sets the link nominal capacity in Gbps, a value used only when the link is not a bundle, and not coupled to a lightpath request. Negative values are truncated to zero.
+	 * @return see above
+	 */
+	public void setNominalCapacityGbps(double capacityGbps)
+	{
+		npLink.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_NOMINALCAPACITYGBPS, Math.max(capacityGbps, 0));
 	}
 
 	/**
@@ -170,6 +181,20 @@ public class WIpLink extends WAbstractNetworkElement
 	{
 		return npLink.getOccupiedCapacity();
 	} // not the carried traffic, since service chains can compress/decompress traffic
+
+	/**
+	 * Returns the current IP link utilization (occupied capacity vs. current capacity)
+	 * @return see above
+	 */
+	public double getCurrentUtilization()
+	{
+		final double occup = this.getCarriedTrafficGbps();
+		final double cap = this.getCurrentCapacityGbps();
+		if (occup < Configuration.precisionFactor) return 0;
+		if (cap < Configuration.precisionFactor) return Double.MAX_VALUE;
+		return occup / cap;
+	} 
+
 
 	/**
 	 * Couples this IP link to the provided lightpath request. The lightpath line rate and the IP link nominal rate must be
@@ -291,7 +316,20 @@ public class WIpLink extends WAbstractNetworkElement
 	public SortedSet<WServiceChain> getTraversingServiceChains ()
 	{
 		if (this.isBundleMember()) return new TreeSet<> (); 
-		return getNe().getTraversingRoutes().stream().map(r->new WServiceChain(r)).collect(Collectors.toCollection(TreeSet::new));
+		return getNe().getTraversingRoutes().stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isServiceChain()).map(r->new WServiceChain(r)).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the traversing IP unicast demands 
+	 * @return see above
+	 */
+	public SortedSet<WIpUnicastDemand> getTraversingIpUnicastDemands ()
+	{
+		if (this.isBundleMember()) return new TreeSet<> (); 
+		final Triple<SortedSet<Demand>,SortedSet<Demand>,SortedSet<MulticastDemand>> travInfo = getNe().getDemandsPotentiallyTraversingThisLink();
+		final SortedSet<Demand> demands = new TreeSet<> ();
+		demands.addAll(travInfo.getFirst());
+		demands.addAll(travInfo.getSecond());
+		return demands.stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isWIpUnicastDemand()).map(r->new WIpUnicastDemand(r)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	public boolean isBundleOfIpLinks () { return getNe().isCoupledInSameLayer(); }
@@ -401,5 +439,8 @@ public class WIpLink extends WAbstractNetworkElement
 		if (this.isUp()) assert getCurrentCapacityGbps() > Configuration.precisionFactor;
 		if (this.isUp() && this.isCoupledtoLpRequest()) assert !this.getCoupledLpRequest().isBlocked();
 	}
-	
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WIpLink; }
+
 }

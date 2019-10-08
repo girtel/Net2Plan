@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
 
 /**
@@ -49,7 +50,6 @@ public class WFiber extends WAbstractNetworkElement
 	private static final String ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM = "AmplifierPmd_cdCompensation_psPerNm";
 	private static final String ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB = "AmplifierNF_dB";
 	private static final String ATTNAMESUFFIX_VALIDOPTICALSLOTRANGES = "OpticalSlotRanges";
-	private final Link e;
 	private static final String ATTNAMESUFFIX_ARBITRARYPARAMSTRING = "ArbitraryString";
 	private int numberAmplifiersToTraverse = 0;
 	
@@ -57,7 +57,6 @@ public class WFiber extends WAbstractNetworkElement
 	private WFiber (Optional<Integer> indexIfDummyFiber)
 	{
 		super(null , indexIfDummyFiber);
-		this.e = null;
 	}
 	
 	public static WFiber createDummyFiber (int indexIfDummyFiber)
@@ -87,14 +86,12 @@ public class WFiber extends WAbstractNetworkElement
 	public WFiber(Link e)
 	{
 		super(e , Optional.empty());
-		this.e = e;
-		assert !getA().isVirtualNode() && !getB().isVirtualNode();
 	}
 
 	@Override
 	public Link getNe()
 	{
-		return e;
+		return (Link) associatedNpElement;
 	}
 
 	/**
@@ -103,7 +100,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public WNode getA()
 	{
-		return new WNode(e.getOriginNode());
+		return new WNode(getNe().getOriginNode());
 	}
 
 	/**
@@ -112,7 +109,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public WNode getB()
 	{
-		return new WNode(e.getDestinationNode());
+		return new WNode(getNe().getDestinationNode());
 	}
 
 	/**
@@ -121,7 +118,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public double getLengthInKm()
 	{
-		return e.getLengthInKm();
+		return getNe().getLengthInKm();
 	}
 
 	/**
@@ -130,7 +127,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public void setLenghtInKm(double lenghtInKm)
 	{
-		e.setLengthInKm(lenghtInKm);
+		getNe().setLengthInKm(lenghtInKm);
 	}
 
 	/**
@@ -139,7 +136,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public boolean isBidirectional()
 	{
-		return e.isBidirectional();
+		return getNe().isBidirectional();
 	}
 
 	/**
@@ -157,7 +154,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public void setAttenuationCoefficient_dbPerKm(double attenuationCoef_dbPerKm)
 	{
-		e.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ATTENUATIONCOEFFICIENTDBPERKM, new Double(attenuationCoef_dbPerKm).toString());
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ATTENUATIONCOEFFICIENTDBPERKM, new Double(attenuationCoef_dbPerKm).toString());
 	}
 
 	/**
@@ -175,7 +172,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public void setPmdLinkDesignValueCoeff_psPerSqrtKm(double pmdCoeff_psPerSqrKm)
 	{
-		e.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_FIBERLINKDESIGNVALUEPMD_PSPERSQRKM, new Double(pmdCoeff_psPerSqrKm).toString());
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_FIBERLINKDESIGNVALUEPMD_PSPERSQRKM, new Double(pmdCoeff_psPerSqrKm).toString());
 	}
 
 	/**
@@ -193,7 +190,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public void setChromaticDispersionCoeff_psPerNmKm(double cdCoeff_psPerNmKm)
 	{
-		e.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_FIBERCHROMATICDISPCOEFF_PSPERNMKM, new Double(cdCoeff_psPerNmKm).toString());
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_FIBERCHROMATICDISPCOEFF_PSPERNMKM, new Double(cdCoeff_psPerNmKm).toString());
 	}
 
 	/**
@@ -203,7 +200,7 @@ public class WFiber extends WAbstractNetworkElement
 	public WFiber getBidirectionalPair()
 	{
 		if (!this.isBidirectional()) throw new Net2PlanException("Not a bidirectional link");
-		return new WFiber(e.getBidirectionalPair());
+		return new WFiber(getNe().getBidirectionalPair());
 	}
 
 	/**
@@ -331,15 +328,15 @@ public class WFiber extends WAbstractNetworkElement
 		if (maximumInputPower_dBm != null) if (maximumInputPower_dBm.size() != numAmplifiers) throw new Net2PlanException("Wrong number of Amplifier Maximum Input PowerB");
 		
 		
-		if (positionFromLinkOrigin_km != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERPOSITIONFROMORIGINNODE_KM, (List<Number>) (List<?>) positionFromLinkOrigin_km);
-		if (gains_db != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERGAINS_DB, (List<Number>) (List<?>) gains_db);
-		if (noiseFactors_dB != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB, (List<Number>) (List<?>) noiseFactors_dB);
-		if (pmd_ps != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERPMD_PS, (List<Number>) (List<?>) pmd_ps);
-		if (cdCompensation_psPerNm != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, (List<Number>) (List<?>) cdCompensation_psPerNm);
-		if (minimumGain_dB != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB, (List<Number>) (List<?>) minimumGain_dB);
-		if (maximumGain_dB != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, (List<Number>) (List<?>) maximumGain_dB);
-		if (minimumInputPower_dBm != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM, (List<Number>) (List<?>) minimumInputPower_dBm);
-		if (maximumInputPower_dBm != null) e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM, (List<Number>) (List<?>) maximumInputPower_dBm);
+		if (positionFromLinkOrigin_km != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERPOSITIONFROMORIGINNODE_KM, (List<Number>) (List<?>) positionFromLinkOrigin_km);
+		if (gains_db != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERGAINS_DB, (List<Number>) (List<?>) gains_db);
+		if (noiseFactors_dB != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB, (List<Number>) (List<?>) noiseFactors_dB);
+		if (pmd_ps != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERPMD_PS, (List<Number>) (List<?>) pmd_ps);
+		if (cdCompensation_psPerNm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, (List<Number>) (List<?>) cdCompensation_psPerNm);
+		if (minimumGain_dB != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB, (List<Number>) (List<?>) minimumGain_dB);
+		if (maximumGain_dB != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, (List<Number>) (List<?>) maximumGain_dB);
+		if (minimumInputPower_dBm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM, (List<Number>) (List<?>) minimumInputPower_dBm);
+		if (maximumInputPower_dBm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM, (List<Number>) (List<?>) maximumInputPower_dBm);
 	}
 
 	/**
@@ -352,7 +349,7 @@ public class WFiber extends WAbstractNetworkElement
 	public final void setValidOpticalSlotRanges(List<Integer> listInitialEndSlotRanges)
 	{
 		final SortedSet<Integer> cache_validSlotsIds = computeValidOpticalSlotIds(listInitialEndSlotRanges);
-		e.setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDOPTICALSLOTRANGES, (List<Number>) (List<?>) listInitialEndSlotRanges);
+		getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDOPTICALSLOTRANGES, (List<Number>) (List<?>) listInitialEndSlotRanges);
 	}
 
 	public double getAccumulatedChromaticDispersion ()
@@ -401,7 +398,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getTraversingLps()
 	{
-		return e.getTraversingRoutes().stream().map(r -> new WLightpath(r)).collect(Collectors.toCollection(TreeSet::new));
+		return getNe().getTraversingRoutes().stream().map(r -> new WLightpath(r)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -410,7 +407,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpathRequest> getTraversingLpRequestsInAtLeastOneLp()
 	{
-		return e.getTraversingRoutes().stream().map(r -> new WLightpathRequest(r.getDemand())).collect(Collectors.toCollection(TreeSet::new));
+		return getNe().getTraversingRoutes().stream().map(r -> new WLightpathRequest(r.getDemand())).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -419,7 +416,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public boolean isUp()
 	{
-		return e.isUp();
+		return getNe().isUp();
 	}
 
 	/**
@@ -437,7 +434,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public void setAsUp()
 	{
-		e.setFailureState(true);
+		getNe().setFailureState(true);
 		for (WLightpathRequest lpReq : this.getTraversingLpRequestsInAtLeastOneLp())
 			lpReq.updateNetPlanObjectAndPropagateUpwards();
 	}
@@ -447,7 +444,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public void setAsDown()
 	{
-		e.setFailureState(false);
+		getNe().setFailureState(false);
 		for (WLightpathRequest lpReq : this.getTraversingLpRequestsInAtLeastOneLp())
 			lpReq.updateNetPlanObjectAndPropagateUpwards();
 	}
@@ -458,7 +455,7 @@ public class WFiber extends WAbstractNetworkElement
 	public void remove()
 	{
 		this.setAsDown();
-		e.remove();
+		getNe().remove();
 	}
 
 	/**
@@ -507,6 +504,9 @@ public class WFiber extends WAbstractNetworkElement
 	{
 		return getNe().getSRGs().stream().map(s->new WSharedRiskGroup(s)).collect(Collectors.toCollection(TreeSet::new));
 	}
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WFiber; }
 	
 
 }

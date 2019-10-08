@@ -453,6 +453,7 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
     public void setColumnShowHideValueByHeaderMap (Map<String, Boolean> columnShowHideValueByHeader) 
     { 
     	this.columnShowHideValueByHeader.clear();
+    	System.out.println(columnShowHideValueByHeader);
     	this.columnShowHideValueByHeader.putAll(columnShowHideValueByHeader);
     }
     

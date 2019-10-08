@@ -35,6 +35,7 @@ import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_link;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_node;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
@@ -58,6 +59,8 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.niw.networkModel.WFiber;
+import com.net2plan.niw.networkModel.WIpLink;
 import com.net2plan.niw.networkModel.WIpUnicastDemand;
 import com.net2plan.niw.networkModel.WLightpathRequest;
 import com.net2plan.niw.networkModel.WNet;
@@ -151,6 +154,14 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     		if (this instanceof Niw_AdvancedJTable_node)
     		{
     			return (List<T>) wNet.getNodes().stream().map(n->n.getNe()).collect(Collectors.toList());
+    		}
+    		if (this instanceof Niw_AdvancedJTable_link)
+    		{
+    			final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
+    			final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
+    			assert isIpLayer || isWdmLayer;
+    			if (isIpLayer) return (List<T>) wNet.getIpLinks().stream().map(e->e.getNe()).collect(Collectors.toList());
+    			else return (List<T>) wNet.getFibers().stream().map(e->e.getNe()).collect(Collectors.toList());
     		}
     	}
     	

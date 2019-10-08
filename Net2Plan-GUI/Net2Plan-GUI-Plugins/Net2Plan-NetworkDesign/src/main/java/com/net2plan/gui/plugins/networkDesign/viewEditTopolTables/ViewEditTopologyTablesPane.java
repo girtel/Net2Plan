@@ -18,7 +18,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.JFileChooser;
@@ -48,6 +47,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_srg;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_node;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafficMatrix;
@@ -57,7 +57,6 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.utils.IntUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.SwingUtils;
 
@@ -234,7 +233,7 @@ public class ViewEditTopologyTablesPane extends JPanel
         switch(type)
         {
 		case DEMANDS:
-            table = callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_demand(callback , layerThisTable) : new AdvancedJTable_demand(callback , layerThisTable);
+            table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_demand(callback , layerThisTable) : new AdvancedJTable_demand(callback , layerThisTable);
 			break;
 		case FORWARDINGRULES:
             table = new AdvancedJTable_forwardingRule(callback , layerThisTable);
@@ -252,7 +251,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             table = new AdvancedJTable_multicastTree(callback , layerThisTable);
 			break;
 		case NODES:
-            table = new AdvancedJTable_node(callback , layerThisTable);
+            table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_node(callback , layerThisTable) : new AdvancedJTable_node(callback , layerThisTable);
 			break;
 		case RESOURCES:
             table = new AdvancedJTable_resource(callback , layerThisTable);

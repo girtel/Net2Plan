@@ -30,10 +30,12 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
+import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.niw.networkModel.WIpUnicastDemand;
 import com.net2plan.niw.networkModel.WNet;
 import com.net2plan.niw.networkModel.WNetConstants;
 import com.net2plan.niw.networkModel.WNode;
@@ -112,14 +114,14 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
     
     public List<AjtRcMenu> getNonBasicRightClickMenusInfo()
     {
-    	final NetPlan np = callback.getDesign();
         final List<AjtRcMenu> res = new ArrayList<> ();
-        res.add(new AjtRcMenu("Add node", e->np.addNode (0 , 0 , "Node " + np.getNumberOfNodes() , null), (a,b)->true, null));
-        res.add(new AjtRcMenu("Remove selected nodes", e->getSelectedElements().forEach(dd->((Node)dd).remove()) , (a,b)->b>0, null));
+    	final WNet wNet = new WNet (callback.getDesign()); 
+    	final Function<Node,WNode> toWNode = d -> (WNode) wNet.getWElement(d).get();
+        res.add(new AjtRcMenu("Add node", e->wNet.addNode (0 , 0 , "Node " + wNet.getNumberOfNodes() , null), (a,b)->true, null));
+        res.add(new AjtRcMenu("Remove selected nodes", e->getSelectedElements().forEach(dd->toWNode.apply(dd).remove()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Show selected nodes", e->getSelectedElements().forEach(ee->callback.getVisualizationState().showOnCanvas(ee)) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Hide selected nodes", e->getSelectedElements().forEach(ee->callback.getVisualizationState().hideOnCanvas(ee)) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Switch selected nodes' coordinates from (x,y) to (y,x)", e->getSelectedElements().forEach(node->node.setXYPositionMap(new Point2D.Double(node.getXYPositionMap().getY(), node.getXYPositionMap().getX()))) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Create planning domain restricted to selected nodes", e->np.restrictDesign(getSelectedElements()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Re-arrange selected nodes", null , (a,b)->b>0, Arrays.asList(
         		new AjtRcMenu("Equispaced in a circunference", e-> 
         		{
@@ -142,39 +144,18 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                                     if (getSelectedElements().isEmpty()) throw new Net2PlanException ("No nodes are selected");
                                     int contNode = 0;
                                     final double radQuantum = 2 * Math.PI / getSelectedElements().size(); 
-                                    for (Node ee : getSelectedElements())
+                                    for (Node np_ee : getSelectedElements())
                                     {
+                                    	final WNode ee = toWNode.apply(np_ee);
                                     	final double newX = x + radius * Math.cos(contNode * radQuantum);
                                     	final double newY = y + radius * Math.sin(contNode * radQuantum);
                                     	contNode ++;
-                                    	ee.setXYPositionMap(new Point2D.Double(newX ,  newY));
+                                    	ee.setNodePositionXY(new Point2D.Double(newX ,  newY));
                                     }
                                 }
                             );
         		}
-        		, (a,b)->true, null),
-        		new AjtRcMenu("To match length information", e-> 
-        		{
-                    DialogBuilder.launch(
-                            "Indicate the coordinates of the circle center, and the radius", 
-                            "Please introduce the requested data.",
-                            "", 
-                            this, 
-                            Arrays.asList(
-                                    InputForDialog.inputTfDouble("Minimum X coordinate", "Introduce the minimum valu for the node X position", 10, -10.0),
-                                    InputForDialog.inputTfDouble("Minimum Y coordinate", "Introduce the minimum valu for the node Y position", 10, -10.0)
-                                    ),
-                            (list)->
-                                {
-                                    final double minX = ((Double) list.get(0).get());
-                                    final double minY = ((Double) list.get(1).get());
-                                    throw new Net2PlanException ("The algorithm is not available");
-                                }
-                            );
-        		}
         		, (a,b)->true, null)
-        		
-        		
         		)));
 
         return res;

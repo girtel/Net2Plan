@@ -19,6 +19,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
+import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
 
 /** Instances of this class are service chains, realizing service chain requests. A service chain should start in one of the origin nodes of the service chain, and end in 
@@ -138,5 +139,8 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 		assert this.getFailingNodes().stream().allMatch(n->n.getSrgsThisElementIsAssociatedTo().contains(this));
 		assert this.getFailingFibers().stream().allMatch(n->n.getSrgsThisElementIsAssociatedTo().contains(this));
 	}
-	
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WSharedRiskGroup; }
+
 }
