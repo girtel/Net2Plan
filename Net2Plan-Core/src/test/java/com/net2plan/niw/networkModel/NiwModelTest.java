@@ -3,6 +3,7 @@ package com.net2plan.niw.networkModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -202,6 +203,7 @@ public class NiwModelTest extends TestCase
    {
    	final WNet net = createBasicTopology ();
    	net.checkConsistency();
+   	net.saveToFile(new File ("c:\\Dropbox\\niwFile.n2p"));
    }
     
  	@Test
@@ -252,5 +254,6 @@ public class NiwModelTest extends TestCase
 				
 		return wNet;
 	}
-	
+
+		
 }

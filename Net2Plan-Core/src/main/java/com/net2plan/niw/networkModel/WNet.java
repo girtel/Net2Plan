@@ -22,6 +22,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
@@ -30,7 +31,6 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
@@ -405,22 +405,29 @@ public class WNet extends WAbstractNetworkElement
 		checkInThisWNet(userInjectionNode);
 		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer());
 		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
+		final BiConsumer<Collection<WNode>,Boolean> setAttributeEndNodesOriginTrue = (stNames , isOrigin) ->
+		{
+			final String atName = isOrigin? WServiceChainRequest.ATTNAMECOMMONPREFIX + WServiceChainRequest.ATTNAMESUFFIX_VALIDINPUTNODENAMES : WServiceChainRequest.ATTNAMECOMMONPREFIX + WServiceChainRequest.ATTNAMESUFFIX_VALIDOUTPUTNODENAMES;
+			final List<String> resNames = stNames.stream().map(n -> n.getName()).collect(Collectors.toList());
+			scReq.getNe().setAttributeAsStringList(atName, resNames);
+		};
 		if (isUpstream)
 		{
+			/* Directly modify the attribute, if not an assert there breaks */
 			scNp.setServiceChainSequenceOfTraversedResourceTypes(userService.getListVnfTypesToTraverseUpstream());
 			scReq.setIsUpstream(true);
-			scReq.setPotentiallyValidOrigins(Sets.newTreeSet(Arrays.asList(userInjectionNode)));
-			if (userService.isEndingInCoreNode()) scReq.setPotentiallyValidDestinations(getNodesConnectedToCore());
-			else scReq.setPotentiallyValidDestinations(new TreeSet<>());
+			setAttributeEndNodesOriginTrue.accept(Arrays.asList(userInjectionNode), true);
+			if (userService.isEndingInCoreNode()) setAttributeEndNodesOriginTrue.accept(getNodesConnectedToCore() , false);
+			else setAttributeEndNodesOriginTrue.accept(new ArrayList<> () , false);
 			scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(userService.getSequenceTrafficExpansionFactorsRespectToBaseTrafficUpstream());
 			scReq.setListMaxLatencyFromInitialToVnfStart_ms(userService.getListMaxLatencyFromInitialToVnfStart_ms_upstream());
 		} else
 		{
 			scNp.setServiceChainSequenceOfTraversedResourceTypes(userService.getListVnfTypesToTraverseDownstream());
 			scReq.setIsUpstream(false);
-			scReq.setPotentiallyValidDestinations(Sets.newTreeSet(Arrays.asList(userInjectionNode)));
-			if (userService.isEndingInCoreNode()) scReq.setPotentiallyValidOrigins(getNodesConnectedToCore());
-			else scReq.setPotentiallyValidOrigins(new TreeSet<>());
+			setAttributeEndNodesOriginTrue.accept(Arrays.asList(userInjectionNode), false);
+			if (userService.isEndingInCoreNode()) setAttributeEndNodesOriginTrue.accept(getNodesConnectedToCore(), true);
+			else setAttributeEndNodesOriginTrue.accept(new ArrayList<> (), true);
 			scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(userService.getSequenceTrafficExpansionFactorsRespectToBaseTrafficDownstream());
 			scReq.setListMaxLatencyFromInitialToVnfStart_ms(userService.getListMaxLatencyFromInitialToVnfStart_ms_downstream());
 		}

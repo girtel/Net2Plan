@@ -54,9 +54,9 @@ import com.net2plan.utils.Pair;
  */
 public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 {
-	private static final String ATTNAMECOMMONPREFIX = "ServiceChainRequest_";
-	private static final String ATTNAMESUFFIX_VALIDINPUTNODENAMES = "validInputNodeNames";
-	private static final String ATTNAMESUFFIX_VALIDOUTPUTNODENAMES = "validOutputNodeNames";
+	static final String ATTNAMECOMMONPREFIX = "ServiceChainRequest_";
+	static final String ATTNAMESUFFIX_VALIDINPUTNODENAMES = "validInputNodeNames";
+	static final String ATTNAMESUFFIX_VALIDOUTPUTNODENAMES = "validOutputNodeNames";
 	private static final String ATTNAMESUFFIX_SEQUENCEOFEXPANSIONFACTORRESPECTTOINJECTION = "sequenceOfPerVnfExpansionFactorsRespectToInjection";
 	private static final String ATTNAMESUFFIX_LISTMAXLATENCYFROMINITIALTOVNFSTART_MS = "limitMaxLatencyFromInitialToVnfStart_ms";
 	private static final String ATTNAMESUFFIX_BIDIRECTIONALPAIRNPDEMANDID = "bidirectionalPairNpDemandId";
@@ -258,6 +258,7 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	 */
 	public void setPotentiallyValidOrigins(SortedSet<WNode> validOrigins)
 	{
+		if (validOrigins.isEmpty()) throw new Net2PlanException ("Nodes cannot be an empty set");
 		final List<String> resNames = validOrigins.stream().map(n -> n.getName()).collect(Collectors.toList());
 		if (getPotentiallyValidDestinations().stream().anyMatch(n->validOrigins.contains(n))) 
 				throw new Net2PlanException("Origin nodes cannot also be destination nodes");
@@ -292,6 +293,7 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	 */
 	public void setPotentiallyValidDestinations(SortedSet<WNode> validDestinations)
 	{
+		if (validDestinations.isEmpty()) throw new Net2PlanException ("Nodes cannot be an empty set");
 		final List<String> resNames = validDestinations.stream().map(n -> n.getName()).collect(Collectors.toList());
 		if (getPotentiallyValidOrigins().stream().anyMatch(n->validDestinations.contains(n))) 
 			throw new Net2PlanException("Origin nodes cannot also be destination nodes");

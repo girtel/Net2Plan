@@ -205,7 +205,11 @@ public class VisualizationState
 
     public boolean isNiwDesignButtonActive () { return this.isNiwDesignButtonActive; }
     
-    public void setIsNiwDesignButtonActive (boolean isActive) { this.isNiwDesignButtonActive = isActive; }
+    public void setIsNiwDesignButtonActive (boolean isActive) 
+    { 
+    	this.isNiwDesignButtonActive = isActive;
+    	callback.setDesign(callback.getDesign()); // para que se actualice el isNiwValidDesign
+    }
 
     
     public boolean isVisibleInCanvas(GUILink gl)
