@@ -11,6 +11,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.jfree.chart.plot.WaferMapPlot;
+
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -316,7 +318,20 @@ public class WIpLink extends WAbstractNetworkElement
 	public SortedSet<WServiceChain> getTraversingServiceChains ()
 	{
 		if (this.isBundleMember()) return new TreeSet<> (); 
-		return getNe().getTraversingRoutes().stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isServiceChain()).map(r->new WServiceChain(r)).collect(Collectors.toCollection(TreeSet::new));
+		return getNe().getTraversingRoutes().stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(r->new WServiceChain(r)).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the IP connections traversing this IP links
+	 * @return see above
+	 */
+	public SortedSet<WMplsTeTunnel> getTraversingIpConnections ()
+	{
+		if (this.isBundleMember()) return new TreeSet<> (); 
+		return getNe().getTraversingRoutes().stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
+				map(r->new WMplsTeTunnel(r)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/** Returns the traversing IP unicast demands 

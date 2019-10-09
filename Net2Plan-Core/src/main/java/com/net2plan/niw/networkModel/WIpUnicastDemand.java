@@ -143,6 +143,17 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		return new WNode (getNe().getEgressNode());
 	}
 
+	
+	/** Returns the IP connections realizing this demand. If the demand is hop-by-hop routed, an empty returns an empty set
+	 * @return see above
+	 */
+	public SortedSet<WMplsTeTunnel> getIpConnections ()
+	{
+		if (this.isIpHopByHopRouted()) return new TreeSet<> ();
+		return getNe().getRoutes().stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
+				map(ee -> new WMplsTeTunnel(ee)).collect(Collectors.toCollection(TreeSet::new));
+	}
 
 	@Override
 	public String toString()

@@ -88,7 +88,7 @@ public class WNetConstants
 		public boolean isSrg () { return this == WTYPE.WSharedRiskGroup; }
 		public boolean isVnfInstance () { return this == WTYPE.WVnfInstance; }
 		
-	};
+	}
 	
 	
 }

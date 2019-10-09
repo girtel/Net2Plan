@@ -84,7 +84,7 @@ public class WMplsTeTunnel extends WAbstractNetworkElement
 	public void setPath (List<WIpLink> seqIpLinks) 
 	{
 		if (seqIpLinks.stream().anyMatch(e->e.isBundleMember())) throw new Net2PlanException ("Cannot directly route traffic in a LAG bundle member");
-		final double trafGbs = getCarriedTrafficInNoFaillureStateGbps(); 
+		final double trafGbs = getCarriedTrafficInNoFailureStateGbps(); 
 		getNe().setPath(trafGbs, seqIpLinks.stream().map(e->e.getNe()).collect(Collectors.toList()) , Collections.nCopies(seqIpLinks.size(), trafGbs)); 
 	}
 
@@ -104,7 +104,7 @@ public class WMplsTeTunnel extends WAbstractNetworkElement
 	}
 
 	@Override
-	public String toString () { return "MPLS-TE tunnel(" + this.getCarriedTrafficInNoFaillureStateGbps() + "G) " + getA().getName() + "->" + getB().getName(); }
+	public String toString () { return "MPLS-TE tunnel(" + this.getCarriedTrafficInNoFailureStateGbps() + "G) " + getA().getName() + "->" + getB().getName(); }
 
 	/** Indicates if this serivce chain is up: not traversing failied links or nodes, and not traversing links with zero capacity
 	 * @return
@@ -137,12 +137,11 @@ public class WMplsTeTunnel extends WAbstractNetworkElement
 	void checkConsistency()
 	{
 		if (this.wasRemoved()) return;
-		assert getA().getOutgoingServiceChains().contains(this);
-		assert getB().getIncomingServiceChains().contains(this);
 		if (isDown()) assert getCurrentCarriedTrafficGbps() == 0;
-		assert getSequenceOfTraversedIpLinks().stream().allMatch(e->e.getTraversingServiceChains().contains(this));
-		assert getSequenceOfTraversedVnfInstances().stream().allMatch(v->v.getTraversingServiceChains().contains(this));
-		assert getCurrentExpansionFactorApplied().size() == getSequenceOfTraversedVnfInstances().size();
+		assert getA().getOutgoingIpConnections().contains(this);
+		assert getB().getIncomingIpConnections().contains(this);
+		assert getSequenceOfTraversedIpLinks().stream().allMatch(e->e.getTraversingIpConnections().contains(this));
+		assert getIpUnicastDemand().getIpConnections().contains(this);
 	}
 	
 	@Override

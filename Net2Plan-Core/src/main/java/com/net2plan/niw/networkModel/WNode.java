@@ -605,7 +605,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WFiber> getOutgoingFibers()
 	{
-		return n.getOutgoingLinks(getNet().getWdmLayer().getNe()).stream().map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getOutgoingLinks(getNet().getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isWFiber(); }).
+				map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -614,7 +616,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WFiber> getIncomingFibers()
 	{
-		return n.getIncomingLinks(getNet().getWdmLayer().getNe()).stream().map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getIncomingLinks(getNet().getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isWFiber(); }).
+				map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -623,16 +627,41 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpLink> getOutgoingIpLinks()
 	{
-		return n.getOutgoingLinks(getNet().getIpLayer().getNe()).stream().map(ee -> new WIpLink(ee)).filter(e -> !e.isVirtualLink()).collect(Collectors.toCollection(TreeSet::new));
+		return n.getOutgoingLinks(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpLink(); }).
+				map(ee -> new WIpLink(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	/** Returns the IP connections, realizing IP unicast demands, that are initiated in this node 
+	 * @return see above
+	 */
+	public SortedSet<WMplsTeTunnel> getOutgoingIpConnections ()
+	{
+		return n.getOutgoingRoutes(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
+				map(ee -> new WMplsTeTunnel(ee)).collect(Collectors.toCollection(TreeSet::new));
+	}
+	
+	/** Returns the IP connections, realizing IP unicast demands, that are ended in this node 
+	 * @return see above
+	 */
+	public SortedSet<WMplsTeTunnel> getIncomingIpConnections ()
+	{
+		return n.getIncomingRoutes(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
+				map(ee -> new WMplsTeTunnel(ee)).collect(Collectors.toCollection(TreeSet::new));
+	}
+	
+	
 	/**
 	 * Returns the set of incoming IP links to the node
 	 * @return see above
 	 */
 	public SortedSet<WIpLink> getIncomingIpLinks()
 	{
-		return n.getIncomingLinks(getNet().getIpLayer().getNe()).stream().map(ee -> new WIpLink(ee)).filter(e -> !e.isVirtualLink()).collect(Collectors.toCollection(TreeSet::new));
+		return n.getIncomingLinks(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpLink(); }).
+				map(ee -> new WIpLink(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -641,7 +670,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpathRequest> getOutgoingLigtpathRequests()
 	{
-		return n.getOutgoingDemands(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getOutgoingDemands(getNet().getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpathRequest(); }).
+				map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -650,7 +681,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpathRequest> getIncomingLigtpathRequests()
 	{
-		return n.getIncomingDemands(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getIncomingDemands(getNet().getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpathRequest(); }).
+				map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -659,7 +692,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getOutgoingLigtpaths()
 	{
-		return n.getOutgoingRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getOutgoingRoutes(getNet().getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -668,7 +703,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getInOutOrTraversingLigtpaths()
 	{
-		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -677,7 +714,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getExpressSwitchedLightpaths()
 	{
-		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpath(ee)).filter(lp->lp.getNodesWhereThisLightpathIsExpressOpticallySwitched().contains(this)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(ee -> new WLightpath(ee)).filter(lp->lp.getNodesWhereThisLightpathIsExpressOpticallySwitched().contains(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	
@@ -687,7 +726,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getIncomingLigtpaths()
 	{
-		return n.getIncomingRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getIncomingRoutes(getNet().getWdmLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -706,7 +747,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpUnicastDemand> getOutgoingIpUnicastDemands ()
 	{
-		return getNe().getOutgoingDemands(getNet().getIpLayer().getNe()).stream().map(d->getNet().getWElement(d).orElse(null)).filter(d->d!=null).filter(d->d.isWIpUnicastDemand()).map(d->(WIpUnicastDemand)d).collect(Collectors.toCollection(TreeSet::new));
+		return getNe().getOutgoingDemands(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpUnicastDemand(); }).
+				map(d->new WIpUnicastDemand(d)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -715,7 +758,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpUnicastDemand> getIncomingIpUnicastDemands ()
 	{
-		return getNe().getIncomingDemands(getNet().getIpLayer().getNe()).stream().map(d->getNet().getWElement(d).orElse(null)).filter(d->d!=null).filter(d->d.isWIpUnicastDemand()).map(d->(WIpUnicastDemand)d).collect(Collectors.toCollection(TreeSet::new));
+		return getNe().getIncomingDemands(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpUnicastDemand(); }).
+				map(d->new WIpUnicastDemand(d)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 
@@ -726,7 +771,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChainRequest> getIncomingServiceChainRequests()
 	{
-		return getNet().getServiceChainRequests().stream().filter(sc -> sc.getPotentiallyValidDestinations().contains(this)).collect(Collectors.toCollection(TreeSet::new));
+		return getNet().getServiceChainRequests().stream().
+				filter(sc -> sc.getPotentiallyValidDestinations().contains(this)).
+				collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -735,7 +782,10 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getOutgoingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isServiceChain()).map(ee -> new WServiceChain(ee)).filter(sc -> sc.getA().equals(this)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(ee -> new WServiceChain(ee)).
+				filter(sc -> sc.getA().equals(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -744,7 +794,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getIncomingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isServiceChain()).map(ee -> new WServiceChain(ee)).filter(sc -> sc.getB().equals(this)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(ee -> new WServiceChain(ee)).filter(sc -> sc.getB().equals(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -753,7 +805,9 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getInOutOrTraversingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().filter(r->getNet().getWElement(r).isPresent()).filter(r->getNet().getWElement(r).get().isServiceChain()).map(ee -> new WServiceChain(ee)).collect(Collectors.toCollection(TreeSet::new));
+		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(ee -> new WServiceChain(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	Link getIncomingLinkFromAnycastOrigin()
@@ -863,6 +917,8 @@ public class WNode extends WAbstractNetworkElement
 		if (this.wasRemoved()) return;
 		assert getIncomingFibers().stream().allMatch(e->e.getB().equals(this));
 		assert getOutgoingFibers().stream().allMatch(e->e.getA().equals(this));
+		assert getIncomingIpConnections().stream().allMatch(e->e.getB().equals(this));
+		assert getOutgoingIpConnections().stream().allMatch(e->e.getA().equals(this));
 		assert getIncomingLigtpathRequests().stream().allMatch(e->e.getB().equals(this));
 		assert getOutgoingLigtpathRequests().stream().allMatch(e->e.getA().equals(this));
 		assert getIncomingLigtpaths().stream().allMatch(e->e.getB().equals(this));
