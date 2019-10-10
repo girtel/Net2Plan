@@ -11,8 +11,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.jfree.chart.plot.WaferMapPlot;
-
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -22,6 +20,7 @@ import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 /**
@@ -234,13 +233,17 @@ public class WIpLink extends WAbstractNetworkElement
 	}
 	
 	/**
-	 * If this IP link is a bundle, it removes the bundling, so previous bundle members are now regular IP links
+	 * If this IP link is a bundle, it removes the bundling, so previous bundle members are now regular IP links. 
+	 * It makes all this in this link and its opposite link 
 	 * 
 	 */
-	public void unbundle ()
+	public void unbundleBidirectional ()
 	{
 		if (!this.isBundleOfIpLinks()) throw new Net2PlanException ("This IP link is not a bundle.");
+		assert this.getBidirectionalPair().isBundleOfIpLinks();
+		getNe().getBidirectionalPair().getCoupledDemand().remove();
 		getNe().getCoupledDemand().remove();
+		this.getBidirectionalPair().updateNetPlanObjectAndPropagateUpwards();
 		this.updateNetPlanObjectAndPropagateUpwards();
 	}
 
@@ -296,10 +299,10 @@ public class WIpLink extends WAbstractNetworkElement
 		return "IpLink(" + getNominalCapacityGbps() + "G) " + getA().getName() + "->" + getB().getName();
 	}
 
-	public void remove()
+	public void removeBidirectional()
 	{
 		if (this.isCoupledtoLpRequest()) { this.getBidirectionalPair().decoupleFromLightpathRequest(); this.decoupleFromLightpathRequest(); }
-		if (this.isBundleOfIpLinks()) { this.getBidirectionalPair().unbundle(); this.unbundle(); }
+		if (this.isBundleOfIpLinks()) { this.unbundleBidirectional(); }
 
 		final Link ee = getNe().getBidirectionalPair();
 		getNe().remove();
@@ -363,24 +366,38 @@ public class WIpLink extends WAbstractNetworkElement
 		return res;
 	}
 	
-	public void setIpLinkAsBundleOfIpLinks (SortedSet<WIpLink> ipLinksToBundle)
+	public void setIpLinkAsBundleOfIpLinksBidirectional (SortedSet<WIpLink> ipLinksToBundleAb)
 	{
-		if (ipLinksToBundle.stream().anyMatch(e->!e.getA().equals(this.getA()))) throw new Net2PlanException ("All IP links to bundle must have the same end nodes");
-		if (ipLinksToBundle.stream().anyMatch(e->!e.getB().equals(this.getB()))) throw new Net2PlanException ("All IP links to bundle must have the same end nodes");
-		if (ipLinksToBundle.stream().anyMatch(e->e.isBundleOfIpLinks())) throw new Net2PlanException ("All IP links to bundle cannot be themselves bundles");
-		if (ipLinksToBundle.stream().anyMatch(e->e.isBundleMember())) throw new Net2PlanException ("All IP links to bundle cannot be bundle members already");
-		if (ipLinksToBundle.stream().anyMatch(e->!e.getTraversingServiceChains().isEmpty())) throw new Net2PlanException ("The IP links to bundle cannot have service chains");
+		if (!this.isBidirectional()) throw new Net2PlanException ("All IP link must be bidirectional");
+		if (this.isBundleMember() || this.isBundleOfIpLinks()) throw new Net2PlanException ("This elements cannot be a bundle nor a bundle member");
+		if (this.getBidirectionalPair().isBundleMember() || this.getBidirectionalPair().isBundleOfIpLinks()) throw new Net2PlanException ("This elements cannot be a bundle nor a bundle member");
+		if (ipLinksToBundleAb.stream().anyMatch(e->!e.isBidirectional())) throw new Net2PlanException ("All IP links must be bidirectional");
+		final SortedSet<WIpLink> ipLinksToBundleBa = ipLinksToBundleAb.stream().map(e->e.getBidirectionalPair()).collect(Collectors.toCollection(TreeSet::new));
+		final SortedSet<WIpLink> ipLinksToBundleAbBa = new TreeSet<> (ipLinksToBundleAb);
+		ipLinksToBundleAbBa.addAll(ipLinksToBundleBa);
+		if (ipLinksToBundleAb.stream().anyMatch(e->!e.getA().equals(this.getA()))) throw new Net2PlanException ("All IP links to bundle must have the same end nodes");
+		if (ipLinksToBundleAb.stream().anyMatch(e->!e.getB().equals(this.getB()))) throw new Net2PlanException ("All IP links to bundle must have the same end nodes");
+		if (ipLinksToBundleAbBa.stream().anyMatch(e->e.isBundleOfIpLinks())) throw new Net2PlanException ("All IP links to bundle cannot be themselves bundles");
+		if (ipLinksToBundleAbBa.stream().anyMatch(e->e.isBundleMember())) throw new Net2PlanException ("All IP links to bundle cannot be bundle members already");
+		if (ipLinksToBundleAbBa.stream().anyMatch(e->!e.getTraversingServiceChains().isEmpty())) throw new Net2PlanException ("The IP links to bundle cannot have service chains");
+		if (ipLinksToBundleAbBa.stream().anyMatch(e->!e.getTraversingIpConnections().isEmpty())) throw new Net2PlanException ("The IP links to bundle cannot have IP connections");
+		if (ipLinksToBundleAbBa.stream().anyMatch(e->!e.getTraversingIpUnicastDemands().isEmpty())) throw new Net2PlanException ("The IP links to bundle cannot have traversing IP demands");
 		
-		final Demand demandToCreate = getNet().getNe().addDemand(getA().getNe (), getB().getNe (), 0, RoutingType.SOURCE_ROUTING, null, getNet().getIpLayer().getNe());
-		demandToCreate.addTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
-		for (WIpLink member : ipLinksToBundle)
+		final Pair<Demand,Demand> demandToCreate = getNet().getNe().addDemandBidirectional(getA().getNe (), getB().getNe (), 0, RoutingType.SOURCE_ROUTING, null, getNet().getIpLayer().getNe());
+		demandToCreate.getFirst().addTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
+		demandToCreate.getSecond().addTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
+		for (WIpLink memberAb : ipLinksToBundleAb)
 		{
-			final Route r = getNet().getNe().addRoute(demandToCreate, 0, 0, Arrays.asList(member.getNe()), null);
+			final Route rAb = getNet().getNe().addRoute(demandToCreate.getFirst(), 0, 0, Arrays.asList(memberAb.getNe()), null);
+			final Route rBa = getNet().getNe().addRoute(demandToCreate.getSecond(), 0, 0, Arrays.asList(memberAb.getBidirectionalPair().getNe()), null);
+			rAb.setBidirectionalPair(rBa);
 		}
-		demandToCreate.coupleToUpperOrSameLayerLink(this.getNe());
-		ipLinksToBundle.forEach(e->e.updateNetPlanObjectAndPropagateUpwards());
-		assert ipLinksToBundle.stream().allMatch(e->e.isBundleMember());
-		assert ipLinksToBundle.stream().allMatch(e->e.getBundleParentIfMember().equals(this));
+		demandToCreate.getFirst().coupleToUpperOrSameLayerLink(this.getNe());
+		demandToCreate.getSecond().coupleToUpperOrSameLayerLink(this.getBidirectionalPair().getNe());
+		ipLinksToBundleAbBa.forEach(e->e.updateNetPlanObjectAndPropagateUpwards());
+		assert ipLinksToBundleAbBa.stream().allMatch(e->e.isBundleMember());
+		assert ipLinksToBundleAb.stream().allMatch(e->e.getBundleParentIfMember().equals(this));
+		assert ipLinksToBundleBa.stream().allMatch(e->e.getBundleParentIfMember().equals(this.getBidirectionalPair()));
 	}
 
 	void updateNetPlanObjectAndPropagateUpwards ()

@@ -57,6 +57,7 @@ import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WIpLink;
+import com.net2plan.niw.WLightpathRequest;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNetConstants.WTYPE;
@@ -233,37 +234,306 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
             	{
             		final WIpLink ee = toWIpLink.apply(d);
             		if (ee.isBundleOfIpLinks()) continue;
+            		if (ee.isBundleMember()) continue;
             		assert ee.isBidirectional();
-            		if (ee.getId() < ee.getBidirectionalPair().getId()) selectedNonBundlesLowHigh.add(ee); else selectedNonBundlesLowHigh.add(ee.getBidirectionalPair());
+            		final WIpLink ipLinkAb = ee.getId() < ee.getBidirectionalPair().getId()? ee : ee.getBidirectionalPair();
+            		final Pair<WNode,WNode> ab = Pair.of(ipLinkAb.getA(), ipLinkAb.getB());
+            		SortedSet<WIpLink> previousAbs = selectedNonBundlesLowHigh.get(ab);
+            		if (previousAbs == null)  { previousAbs = new TreeSet<> (); selectedNonBundlesLowHigh.put (ab , previousAbs); }
+            		previousAbs.add(ipLinkAb);
             	}
-            	
-              DialogBuilder.launch(
-              "Add IP link" , 
-              "Please introduce the information required.", 
-              "", 
-              this, 
-              Arrays.asList(
-              		InputForDialog.inputTfString("Input node name", "Introduce the name of the input node", 10, ""),
-              		InputForDialog.inputTfString("End node name", "Introduce the name of the end node", 10, ""),
-              		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate in Gbps of the IP link", 10, 100.0)
-              		),
-              (list)->
-              	{
-            		final String aName  = (String) list.get(0).get();
-            		final String bName  = (String) list.get(1).get();
-            		final double rateGbps = (Double) list.get(2).get();
-            		final WNode a = nodeByName.apply(aName).orElse(null);
-            		final WNode b = nodeByName.apply(bName).orElse(null);
-            		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
-            		wNet.addIpLinkBidirectional(a, b, rateGbps);
-              	}
-              );
+            	for (SortedSet<WIpLink> linksAb : selectedNonBundlesLowHigh.values())
+            	{
+            		if (linksAb.isEmpty()) continue;
+            		final WNode a = linksAb.first().getA();
+            		final WNode b = linksAb.first().getB();
+            		final Pair<WIpLink , WIpLink> lag = wNet.addIpLinkBidirectional(a, b, 0.0);
+            		lag.getFirst().setIpLinkAsBundleOfIpLinksBidirectional(linksAb);
+            	}
             }
             , (a,b)->true, null));
+
+            res.add(new AjtRcMenu("Unbundle selected LAGs", e->
+            {
+            	for (Link d : getSelectedElements())
+            	{
+            		final WIpLink ee = toWIpLink.apply(d);
+            		if (!ee.isBundleOfIpLinks()) continue;
+            		ee.unbundleBidirectional();
+            	}
+            }
+            , (a,b)->true, null));
+            res.add(new AjtRcMenu("Remove selected IP links", e->getSelectedElements().forEach(dd->toWIpLink.apply(dd).removeBidirectional()) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Generate full-mesh", null , (a, b)->true, Arrays.asList( 
+            		new AjtRcMenu("Link length as Euclidean distance", e->
+            		{
+            			for (WNode n1 : wNet.getNodes ())
+            				for (WNode n2 : wNet.getNodes ())
+            					if (n1.getId() < n2.getId ())
+            					{
+            						final Pair<WIpLink,WIpLink> p = wNet.addIpLinkBidirectional(n1, n2, 0.0);
+            						p.getFirst().setLengthIfNotCoupledInKm(wNet.getNe().getNodePairEuclideanDistance(n1.getNe(), n2.getNe()));
+            						p.getSecond().setLengthIfNotCoupledInKm(wNet.getNe().getNodePairEuclideanDistance(n1.getNe(), n2.getNe()));
+            					}
+            		} , (a, b)->true, null) , 
+            		new AjtRcMenu("Link length as geographical distance", e->
+            		{
+            			for (WNode n1 : wNet.getNodes ())
+            				for (WNode n2 : wNet.getNodes ())
+            					if (n1.getId() < n2.getId ())
+            					{
+            						final Pair<WIpLink,WIpLink> p = wNet.addIpLinkBidirectional(n1, n2, 0.0);
+            						p.getFirst().setLengthIfNotCoupledInKm(wNet.getNe().getNodePairHaversineDistanceInKm(n1.getNe(), n2.getNe()));
+            						p.getSecond().setLengthIfNotCoupledInKm(wNet.getNe().getNodePairHaversineDistanceInKm(n1.getNe(), n2.getNe()));
+            					}
+            		} , (a, b)->true, null) 
+            		)));
+            res.add(new AjtRcMenu("Decouple selected IP links", e->getSelectedElements().stream().filter(dd->!toWIpLink.apply(dd).isBundleOfIpLinks ()).forEach(dd-> { toWIpLink.apply(dd).decoupleFromLightpathRequest(); toWIpLink.apply(dd).getBidirectionalPair().decoupleFromLightpathRequest(); }   ) , (a,b)->b>0, null) );
+
+            res.add(new AjtRcMenu("Create & couple lightpath requests for uncoupled selected links", e->
+            {
+            	for (Link d : getSelectedElements())
+            	{
+            		final WIpLink ee = toWIpLink.apply(d);
+            		if (ee.isBundleOfIpLinks()) continue;
+            		assert ee.isBidirectional();
+            		if (ee.isCoupledtoLpRequest()) continue;
+            		if (ee.getBidirectionalPair().isCoupledtoLpRequest()) continue;
+            		final WLightpathRequest lprAb = wNet.addLightpathRequest(ee.getA(), ee.getB(), ee.getNominalCapacityGbps(), false);
+            		final WLightpathRequest lprBa = wNet.addLightpathRequest(ee.getB(), ee.getA(), ee.getNominalCapacityGbps(), false);
+            		lprAb.setBidirectionalPair(lprBa);
+            		ee.coupleToLightpathRequest(lprAb);
+            		ee.getBidirectionalPair().coupleToLightpathRequest(lprBa);
+            	}
+            } , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Couple IP link to lightpath request", e->
+            {
+            	final WIpLink ipLinkAb = toWIpLink.apply(getSelectedElements().first());
+            	final List<WLightpathRequest> lprsAb = new ArrayList<> (wNet.getLightpathRequests().stream().
+            			filter(ee->ee.getA().equals (ipLinkAb.getA())).
+            			filter(ee->ee.getB().equals (ipLinkAb.getB())).
+            			filter(ee->!ee.isCoupledToIpLink()).
+            			filter(ee->ee.getLineRateGbps() == ipLinkAb.getNominalCapacityGbps()).
+            			collect(Collectors.toCollection(TreeSet::new))); 
+            	final List<WLightpathRequest> lprsBa = new ArrayList<> (wNet.getLightpathRequests().stream().
+            			filter(ee->ee.getB().equals (ipLinkAb.getA())).
+            			filter(ee->ee.getA().equals (ipLinkAb.getB())).
+            			filter(ee->!ee.isCoupledToIpLink()).
+            			filter(ee->ee.getLineRateGbps() == ipLinkAb.getNominalCapacityGbps()).
+            			collect(Collectors.toCollection(TreeSet::new))); 
+                DialogBuilder.launch(
+                "Couple IP link to lightpath request" , 
+                "Please introduce the information required.", 
+                "", 
+                this, 
+                Arrays.asList(
+                		InputForDialog.inputTfCombo("Lp request A-B", "Introduce the lightpath request to couple in direction A-B", 10, lprsAb.get(0), lprsAb, null, null),
+                		InputForDialog.inputTfCombo("Lp request B-A", "Introduce the lightpath request to couple in direction B-A", 10, lprsBa.get(0), lprsBa, null, null)
+                		),
+                (list)->
+                	{
+              		final WLightpathRequest ab  = (WLightpathRequest) list.get(0).get();
+              		final WLightpathRequest ba  = (WLightpathRequest) list.get(1).get();
+              		ipLinkAb.coupleToLightpathRequest(ab);
+              		ipLinkAb.getBidirectionalPair().coupleToLightpathRequest(ba);
+                	}          		
+                );
+            } , (a,b)->b==1, null));
+            res.add(new AjtRcMenu("Set selected links nominal capacity", null , (a,b)->b>0, Arrays.asList(
+            		new AjtRcMenu("As constant value", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set selected links nominal capacity" , 
+                                "Please introduce the IP link nominal capacity. Negative values are not allowed. The capacity will be assigned to not coupled links", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("IP link nominal capacity (Gbps)", "Introduce the link capacity", 10, 0.0)),
+                                (list)->
+                                	{
+                                		final double newLinkCapacity = (Double) list.get(0).get();
+                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach (ee->ee.setNominalCapacityGbps (newLinkCapacity));
+                                	}
+                                );
+                    } , (a,b)->b>0, null),
+            		new AjtRcMenu("To match a given utilization", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set selected links capacity to match utilization" , 
+                                "Please introduce the link target utilization. Negative values are not allowed. The capacity will be assigned to not coupled links", 
+                                "", 
+                                this, 
+                                Arrays.asList(
+                                		InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.9),
+                                		InputForDialog.inputTfDouble("Capacity module (if > 0, capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 100.0),
+                                		InputForDialog.inputCheckBox("Bidirectional modules", "If checked, the module will have a capacity which is the largest between the traffic in both directions", true, null)
+                                		),
+                                (list)->
+                                	{
+                                		final double newLinkUtilization = (Double) list.get(0).get();
+                                		final double capacityModule = (Double) list.get(1).get();
+                                		final boolean isBidirectional = (Boolean) list.get(2).get();
+                                		if (newLinkUtilization <= 0) throw new Net2PlanException ("Link utilization must be positive");
+                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->
+                                		{
+                                			double occupiedCap = isBidirectional && ee.isBidirectional ()? Math.max (ee.getCarriedTrafficGbps() , ee.getBidirectionalPair ().getCarriedTrafficGbps ()) : ee.getCarriedTrafficGbps ();
+                                			if (newLinkUtilization > 0) occupiedCap /= newLinkUtilization;
+                                			if (capacityModule > 0) occupiedCap = capacityModule * Math.ceil(occupiedCap / capacityModule);
+                                			ee.setNominalCapacityGbps(occupiedCap);
+                                		});
+                                	}
+                                );
+                    } , (a,b)->b>0, null)
+            		)));
+            res.add(new AjtRcMenu("Set selected links length as", null , (a,b)->b>0, Arrays.asList(
+            		new AjtRcMenu("Constant value", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set selected links length (km)" , 
+                                "Please introduce the link length. Negative values are not allowed. The length will be assigned to not coupled links", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
+                                (list)->
+                                	{
+                                		final double newLinkLength = (Double) list.get(0).get();
+                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(newLinkLength));
+                                	}
+                                );
+                    } , (a,b)->b>0, null) , 
+            		
+            		new AjtRcMenu("Scaled version of current lengths", e->
+                    {
+                        DialogBuilder.launch(
+                                "Scale selected links length (km)" , 
+                                "Please introduce the scaling factor for which the link lengths will be multiplied. Negative values are not allowed. The length will be assigned to not coupled links", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
+                                (list)->
+                                	{
+                                		final double scalingFactor = (Double) list.get(0).get();
+                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(scalingFactor * ee.getLengthIfNotCoupledInKm()));
+                                	}
+                                );
+                    } , (a,b)->b>0, null) ,         		
+            		new AjtRcMenu("As the euclidean node pair distance", e->
+                    {
+                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(np.getNodePairEuclideanDistance(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
+                    } , (a,b)->b>0, null) ,
+            		
+            		new AjtRcMenu("As the harversine node pair distance", e->
+                    {
+                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(np.getNodePairHaversineDistanceInKm(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
+                    } , (a,b)->b>0, null)
+            		)));
+
+            res.add(new AjtRcMenu("Set IGP link weights of selected links", null , (a, b)->true, Arrays.asList( 
+            		new AjtRcMenu("as constant value", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set IGP weight as constant value" , 
+                                "Please introduce the IGP weight for the selected links. Non-positive values are not allowed.", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("IGP weight", "Introduce the IGP weight for selected links", 10, 1.0)),
+                                (list)->
+                                	{
+                                		final double newLinWeight = (Double) list.get(0).get();
+                                		if (newLinWeight <= 0) throw new Net2PlanException ("IGP weights must be strictly positive");
+                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).forEach(ee->ee.setIgpWeight(newLinWeight));
+                                	}
+                                );
+                    } , (a,b)->b>0, null) , 
+            		new AjtRcMenu("proportional to link latency", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set IGP weight proportional to latency" , 
+                                "Please introduce the information required for computing the IGP weight.", 
+                                "", 
+                                this, 
+                                Arrays.asList(
+                                		InputForDialog.inputTfDouble("IGP weight to links of minimum latency", "Introduce the IGP weight to assign to the links of the minimum latency among the selected ones. IGP weight must be strictly positive.", 10, 1.0),
+                                		InputForDialog.inputTfDouble("IGP weight to links of maximum latency", "Introduce the IGP weight to assign to the links of the maximum latency among the selected ones, IGP weight must be strictly positive.", 10, 10.0),
+                                		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
+                                		),
+                                (list)->
+                                	{
+                                    	final double minLatency = getSelectedElements().stream().mapToDouble(ee->toWIpLink.apply(ee).getWorstCasePropagationDelayInMs()).min().orElse(0.0);
+                                    	final double maxLatency = getSelectedElements().stream().mapToDouble(ee->toWIpLink.apply(ee).getWorstCasePropagationDelayInMs()).max().orElse(0.0);
+                                    	final double difLatency = maxLatency - minLatency;
+                                		final double minLatencyWeight = (Double) list.get(0).get();
+                                		final double maxLatencyWeight = (Double) list.get(1).get();
+                                		final boolean roundToInteger = (Boolean) list.get(2).get();
+                                		final double difWeight = maxLatencyWeight - minLatencyWeight;
+                                		if (minLatencyWeight <= 0 || maxLatencyWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                            			for (Link linkNp : getSelectedElements())
+                            			{
+                            				final WIpLink ee = toWIpLink.apply(linkNp);
+                            				double linkWeight = difLatency == 0? minLatencyWeight : minLatencyWeight + difWeight * (ee.getWorstCasePropagationDelayInMs() - minLatency) / difLatency;  
+                            				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
+                            				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                            				ee.setIgpWeight(linkWeight);
+                            			}
+                                	}
+                                );
+                    } , (a,b)->b>0, null) ,
+            		new AjtRcMenu("inversely proportional to capacity", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set IGP weight inversely proportional to link capacity" , 
+                                "Please introduce the information required for computing the IGP weight.", 
+                                "", 
+                                this, 
+                                Arrays.asList(
+                                		InputForDialog.inputTfDouble("Reference bandwidth (to assign IGP weight one)", "Introduce the reference bandwidth (REFBW), measured in the same units as the traffic. IGP weight of link of capacity c is REFBW/c. REFBW must be positive", 10, 0.1),
+                                		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
+                                		),
+                                (list)->
+                                	{
+                                		final double refBw = (Double) list.get(0).get();
+                                		final boolean roundToInteger = (Boolean) list.get(1).get();
+                                		if (refBw <= 0) throw new Net2PlanException ("The reference bandwidth must be positive");
+                            			for (Link eeNp : getSelectedElements())
+                            			{
+                            				final WIpLink ee = toWIpLink.apply(eeNp);
+                            				double linkWeight = ee.getCurrentCapacityGbps() == 0? Double.MAX_VALUE : refBw / ee.getCurrentCapacityGbps();  
+                            				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
+                            				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                            				ee.setIgpWeight(linkWeight);
+                            			}
+                                	}
+                                );
+                    } , (a,b)->b>0, null) 
+            		)));
             
+            res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
+                    MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
+                    MonitoringUtils.getMenuExportMonitoringInfo(this),
+                    MonitoringUtils.getMenuImportMonitoringInfo (this),
+                    MonitoringUtils.getMenuSetMonitoredTraffic(this),
+                    MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (this),
+                    MonitoringUtils.getMenuAddLinkMonitoringInfoSimulatingTrafficVariations (this),
+                    MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
+                    MonitoringUtils.getMenuCreatePredictorTraffic (this),
+                    MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
+                    MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
+                    MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
+                    new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
+                    new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()) , (a,b)->b>0, null),
+                    new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
+                            MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
+                            MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
+                    		))
+            		)));
             
+    	} // if ipLayer
+    	
+    	if (isWdmLayer)
+    	{
     		
     	}
+    	
+    	
     	
         res.add(new AjtRcMenu("Add link", e->AdvancedJTable_demand.createLinkDemandGUI(NetworkElementType.LINK, getTableNetworkLayer () , callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected links", e->getSelectedElements().forEach(dd->((Link)dd).remove()) , (a,b)->b>0, null));
@@ -294,289 +564,27 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
         , (a,b)->b>0, null));
 
         res.add(new AjtRcMenu("Decouple selected links", e->getSelectedElements().forEach(dd->((Link)dd).decouple()) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Create lower layer coupled demand from uncoupled links in selection", e->
-        {
-            Collection<Long> layerIds = np.getNetworkLayerIds();
-            final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
-            for (long layerId : layerIds)
-            {
-                final String layerName = np.getNetworkLayerFromId(layerId).getName();
-                String layerLabel = "Layer " + layerId;
-                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
-                layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
-            }
-
-            layerSelector.setSelectedIndex(0);
-
-            JPanel pane = new JPanel();
-            pane.add(new JLabel("Select layer: "));
-            pane.add(layerSelector);
-
-            while (true)
-            {
-                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the lower layer to create the demand", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (result != JOptionPane.OK_OPTION) return;
-                final long layerId = (long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-                for (Link link : getSelectedElements ())
-                    if (!link.isCoupled())
-                        link.coupleToNewDemandCreated(np.getNetworkLayerFromId(layerId) , RoutingType.SOURCE_ROUTING);
-                break;
-            }
-        } , (a,b)->b>0, null));
-
-        res.add(new AjtRcMenu("Couple link to lower layer demand", e->
-        {
-            Collection<Long> layerIds = np.getNetworkLayerIds();
-            final JComboBox<StringLabeller> layerSelector = new WiderJComboBox();
-            final JComboBox<StringLabeller> demandSelector = new WiderJComboBox();
-            for (long layerId : layerIds)
-            {
-                if (layerId == this.getTableNetworkLayer().getId()) continue;
-
-                final String layerName = np.getNetworkLayerFromId(layerId).getName();
-                String layerLabel = "Layer " + layerId;
-                if (!layerName.isEmpty()) layerLabel += " (" + layerName + ")";
-                layerSelector.addItem(StringLabeller.of(layerId, layerLabel));
-            }
-
-            layerSelector.addItemListener(e1 ->
-            {
-                if (layerSelector.getSelectedIndex() >= 0)
-                {
-                    long selectedLayerId = (Long) ((StringLabeller) layerSelector.getSelectedItem()).getObject();
-
-                    demandSelector.removeAllItems();
-                    for (Demand demand : np.getDemands(np.getNetworkLayerFromId(selectedLayerId)))
-                    {
-                        if (demand.isCoupled()) continue;
-                        long ingressNodeId = demand.getIngressNode().getId();
-                        long egressNodeId = demand.getEgressNode().getId();
-                        String ingressNodeName = demand.getIngressNode().getName();
-                        String egressNodeName = demand.getEgressNode().getName();
-
-                        demandSelector.addItem(StringLabeller.unmodifiableOf(demand.getId(), "d" + demand.getId() + " [n" + ingressNodeId + " (" + ingressNodeName + ") -> n" + egressNodeId + " (" + egressNodeName + ")]"));
-                    }
-                }
-
-                if (demandSelector.getItemCount() == 0)
-                {
-                    demandSelector.setEnabled(false);
-                } else
-                {
-                    demandSelector.setSelectedIndex(0);
-                    demandSelector.setEnabled(true);
-                }
-            });
-
-            layerSelector.setSelectedIndex(-1);
-            layerSelector.setSelectedIndex(0);
-
-            JPanel pane = new JPanel(new MigLayout("", "[][grow]", "[][]"));
-            pane.add(new JLabel("Select layer: "));
-            pane.add(layerSelector, "growx, wrap");
-            pane.add(new JLabel("Select demand: "));
-            pane.add(demandSelector, "growx, wrap");
-
-            while (true)
-            {
-                int result = JOptionPane.showConfirmDialog(null, pane, "Please select the lower layer demand", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (result != JOptionPane.OK_OPTION) return;
-                final Long demandId = (Long) ((StringLabeller) demandSelector.getSelectedItem()).getObject();
-                final Demand demand = np.getDemandFromId(demandId);
-                final Link link = getSelectedElements().first();
-                demand.coupleToUpperOrSameLayerLink(link);
-                break;
-            }
-        } , (a,b)->b>0, null));
-
-        res.add(new AjtRcMenu("Set selected links capacity", null , (a,b)->b>0, Arrays.asList(
-        		new AjtRcMenu("As constant value", e->
-                {
-                    DialogBuilder.launch(
-                            "Set selected links capacity" , 
-                            "Please introduce the link capacity. Negative values are not allowed. The capacity will be assigned to not coupled links", 
-                            "", 
-                            this, 
-                            Arrays.asList(InputForDialog.inputTfDouble("Link capacity (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Introduce the link capacity", 10, 0.0)),
-                            (list)->
-                            	{
-                            		final double newLinkCapacity = (Double) list.get(0).get();
-                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setCapacity(newLinkCapacity));
-                            	}
-                            );
-                } , (a,b)->b>0, null),
-        		new AjtRcMenu("To match a given utilization", e->
-                {
-                    DialogBuilder.launch(
-                            "Set selected links capacity to match utilization" , 
-                            "Please introduce the link target utilization. Negative values are not allowed. The capacity will be assigned to not coupled links", 
-                            "", 
-                            this, 
-                            Arrays.asList(
-                            		InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.9),
-                            		InputForDialog.inputTfDouble("Capacity module (if > 0, capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 100.0),
-                            		InputForDialog.inputCheckBox("Bidirectional modules", "If checked, if links are bidirectional, the module will have a capacity which is the largest between the traffic in both directions", true, null)
-                            		),
-                            (list)->
-                            	{
-                            		final double newLinkUtilization = (Double) list.get(0).get();
-                            		final double capacityModule = (Double) list.get(1).get();
-                            		final boolean isBidirectional = (Boolean) list.get(2).get();
-                            		if (newLinkUtilization <= 0) throw new Net2PlanException ("Link utilization must be positive");
-                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->
-                            		{
-                            			double occupiedCap = isBidirectional && ee.isBidirectional ()? Math.max (ee.getOccupiedCapacity() , ee.getBidirectionalPair ().getOccupiedCapacity ()) : ee.getCapacity ();
-                            			if (newLinkUtilization > 0) occupiedCap /= newLinkUtilization;
-                            			if (capacityModule > 0) occupiedCap = capacityModule * Math.ceil(occupiedCap / capacityModule);
-                            			ee.setCapacity(occupiedCap);
-                            		});
-                            	}
-                            );
-                } , (a,b)->b>0, null)
-        		)));
-
-        res.add(new AjtRcMenu("Set selected links length as", null , (a,b)->b>0, Arrays.asList(
-        		new AjtRcMenu("Constant value", e->
-                {
-                    DialogBuilder.launch(
-                            "Set selected links length (km)" , 
-                            "Please introduce the link length. Negative values are not allowed. The length will be assigned to not coupled links", 
-                            "", 
-                            this, 
-                            Arrays.asList(InputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
-                            (list)->
-                            	{
-                            		final double newLinkLength = (Double) list.get(0).get();
-                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(newLinkLength));
-                            	}
-                            );
-                } , (a,b)->b>0, null) , 
-        		
-        		new AjtRcMenu("Scaled version of current lengths", e->
-                {
-                    DialogBuilder.launch(
-                            "Scale selected links length (km)" , 
-                            "Please introduce the scaling factor for which the link lengths will be multiplied. Negative values are not allowed. The length will be assigned to not coupled links", 
-                            "", 
-                            this, 
-                            Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
-                            (list)->
-                            	{
-                            		final double scalingFactor = (Double) list.get(0).get();
-                            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(scalingFactor * ee.getLengthInKm()));
-                            	}
-                            );
-                } , (a,b)->b>0, null) ,         		
-        		new AjtRcMenu("As the euclidean node pair distance", e->
-                {
-            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(np.getNodePairEuclideanDistance(ee.getOriginNode(), ee.getDestinationNode())));
-                } , (a,b)->b>0, null) ,
-        		
-        		new AjtRcMenu("As the harversine node pair distance", e->
-                {
-            		getSelectedElements().stream().filter(ee->!ee.isCoupled()).forEach(ee->ee.setLengthInKm(np.getNodePairHaversineDistanceInKm(ee.getOriginNode(), ee.getDestinationNode())));
-                } , (a,b)->b>0, null)
-        		)));
-
-        res.add(new AjtRcMenu("Set IGP link weights of selected links", null , (a, b)->true, Arrays.asList( 
-        		new AjtRcMenu("as constant value", e->
-                {
-                    DialogBuilder.launch(
-                            "Set IGP weight as constant value" , 
-                            "Please introduce the IGP weight for the selected links. Non-positive values are not allowed.", 
-                            "", 
-                            this, 
-                            Arrays.asList(InputForDialog.inputTfDouble("IGP weight", "Introduce the IGP weight for selected links", 10, 1.0)),
-                            (list)->
-                            	{
-                            		final double newLinWeight = (Double) list.get(0).get();
-                            		if (newLinWeight <= 0) throw new Net2PlanException ("IGP weights must be strictly positive");
-                            		getSelectedElements().stream().forEach(ee->IPUtils.setLinkWeight(ee, newLinWeight));
-                            		IPUtils.setECMPForwardingRulesFromLinkWeights(np, null);
-                            	}
-                            );
-                } , (a,b)->b>0, null) , 
-        		new AjtRcMenu("proportional to link latency", e->
-                {
-                    DialogBuilder.launch(
-                            "Set IGP weight proportional to latency" , 
-                            "Please introduce the information required for computing the IGP weight.", 
-                            "", 
-                            this, 
-                            Arrays.asList(
-                            		InputForDialog.inputTfDouble("IGP weight to links of minimum latency", "Introduce the IGP weight to assign to the links of the minimum latency among the selected ones. IGP weight must be strictly positive.", 10, 1.0),
-                            		InputForDialog.inputTfDouble("IGP weight to links of maximum latency", "Introduce the IGP weight to assign to the links of the maximum latency among the selected ones, IGP weight must be strictly positive.", 10, 10.0),
-                            		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
-                            		),
-                            (list)->
-                            	{
-                                	final double minLatency = getSelectedElements().stream().mapToDouble(ee->ee.getPropagationDelayInMs()).min().orElse(0.0);
-                                	final double maxLatency = getSelectedElements().stream().mapToDouble(ee->ee.getPropagationDelayInMs()).max().orElse(0.0);
-                                	final double difLatency = maxLatency - minLatency;
-                            		final double minLatencyWeight = (Double) list.get(0).get();
-                            		final double maxLatencyWeight = (Double) list.get(1).get();
-                            		final boolean roundToInteger = (Boolean) list.get(2).get();
-                            		final double difWeight = maxLatencyWeight - minLatencyWeight;
-                            		if (minLatencyWeight <= 0 || maxLatencyWeight <= 0) throw new Net2PlanException ("Weights must be positive");
-                        			for (Link ee : getSelectedElements())
-                        			{
-                        				double linkWeight = difLatency == 0? minLatencyWeight : minLatencyWeight + difWeight * (ee.getPropagationDelayInMs() - minLatency) / difLatency;  
-                        				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
-                        				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
-                        				IPUtils.setLinkWeight(ee, linkWeight);
-                        			}
-                            		IPUtils.setECMPForwardingRulesFromLinkWeights(np, null);
-                            	}
-                            );
-                } , (a,b)->b>0, null) ,
-        		new AjtRcMenu("inversely proportional to capacity", e->
-                {
-                    DialogBuilder.launch(
-                            "Set IGP weight inversely proportional to link capacity" , 
-                            "Please introduce the information required for computing the IGP weight.", 
-                            "", 
-                            this, 
-                            Arrays.asList(
-                            		InputForDialog.inputTfDouble("Reference bandwidth (to assign IGP weight one)", "Introduce the reference bandwidth (REFBW), measured in the same units as the traffic. IGP weight of link of capacity c is REFBW/c. REFBW must be positive", 10, 0.1),
-                            		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
-                            		),
-                            (list)->
-                            	{
-                            		final double refBw = (Double) list.get(0).get();
-                            		final boolean roundToInteger = (Boolean) list.get(1).get();
-                            		if (refBw <= 0) throw new Net2PlanException ("The reference bandwidth must be positive");
-                        			for (Link ee : getSelectedElements())
-                        			{
-                        				double linkWeight = ee.getCapacity() == 0? Double.MAX_VALUE : refBw / ee.getCapacity();  
-                        				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
-                        				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
-                        				IPUtils.setLinkWeight(ee, linkWeight);
-                        			}
-                            		IPUtils.setECMPForwardingRulesFromLinkWeights(np, null);
-                            	}
-                            );
-                } , (a,b)->b>0, null) 
-        		)));
-
-        res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
-                MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
-                MonitoringUtils.getMenuExportMonitoringInfo(this),
-                MonitoringUtils.getMenuImportMonitoringInfo (this),
-                MonitoringUtils.getMenuSetMonitoredTraffic(this),
-                MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (this),
-                MonitoringUtils.getMenuAddLinkMonitoringInfoSimulatingTrafficVariations (this),
-                MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
-                MonitoringUtils.getMenuCreatePredictorTraffic (this),
-                MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
-                MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
-                MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
-                new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
-                new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()) , (a,b)->b>0, null),
-                new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
-                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
-                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
-                		))
-        		)));
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
 
         return res;

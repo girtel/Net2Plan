@@ -88,7 +88,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 
 		/* Remove current parts */
 		for (WLightpathRequest e : new ArrayList<> (wNet.getLightpathRequests())) e.remove();
-		for (WIpLink e : new ArrayList<> (wNet.getIpLinks())) e.remove();
+		for (WIpLink e : new ArrayList<> (wNet.getIpLinks())) e.removeBidirectional();
 		for (WServiceChainRequest e : new ArrayList<> (wNet.getServiceChainRequests())) e.remove();
 		for (WIpUnicastDemand e : wNet.getIpUnicastDemands()) e.setAsHopByHopRouted();
 		for (WVnfInstance e : new ArrayList<>(wNet.getVnfInstances())) e.remove();
@@ -247,7 +247,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 					final WNode b = e.getB();
 					
 					/* Actually remove the IP link and its bidi pair */
-					e.remove();
+					e.removeBidirectional();
 
 					/* If removing the IP adjacency leaves the end nodes unconnected => not possible, add the IP link again */
 					final boolean theIPLinkHasTraffic = ipLinkTrafficGbpsWc > Configuration.precisionFactor;
@@ -361,8 +361,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 			lprAb.coupleToIpLink(ipLinkAbBa.getFirst());
 			lprAb.getBidirectionalPair().coupleToIpLink(ipLinkAbBa.getSecond());
 		}
-		ipBidiLink.setIpLinkAsBundleOfIpLinks(lpsCreatedAb.stream().map(lpr -> lpr.getCoupledIpLink()).collect(Collectors.toCollection(TreeSet::new)));
-		ipBidiLink.getBidirectionalPair().setIpLinkAsBundleOfIpLinks(lpsCreatedAb.stream().map(lpr -> lpr.getBidirectionalPair()).map(lpr -> lpr.getCoupledIpLink()).collect(Collectors.toCollection(TreeSet::new)));
+		ipBidiLink.setIpLinkAsBundleOfIpLinksBidirectional(lpsCreatedAb.stream().map(lpr -> lpr.getCoupledIpLink()).collect(Collectors.toCollection(TreeSet::new)));
 	}
 
 	public OpticalSpectrumManager getOpticalSpectrumManager () { return this.osm; }
