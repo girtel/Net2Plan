@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,16 +35,16 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.niw.networkModel.OpticalSpectrumManager;
-import com.net2plan.niw.networkModel.WFiber;
-import com.net2plan.niw.networkModel.WIpLink;
-import com.net2plan.niw.networkModel.WIpUnicastDemand;
-import com.net2plan.niw.networkModel.WLightpathRequest;
-import com.net2plan.niw.networkModel.WLightpath;
-import com.net2plan.niw.networkModel.WNet;
-import com.net2plan.niw.networkModel.WNode;
-import com.net2plan.niw.networkModel.WServiceChainRequest;
-import com.net2plan.niw.networkModel.WVnfInstance;
+import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WIpLink;
+import com.net2plan.niw.WIpUnicastDemand;
+import com.net2plan.niw.WLightpath;
+import com.net2plan.niw.WLightpathRequest;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNode;
+import com.net2plan.niw.WServiceChainRequest;
+import com.net2plan.niw.WVnfInstance;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quintuple;
@@ -93,7 +94,10 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 		for (WVnfInstance e : new ArrayList<>(wNet.getVnfInstances())) e.remove();
 
 		/* Modify the fiber structure for the algorithm */
-		final List<Integer> validOpticalSlotRanges = Stream.of(fiberDefaultValidSlotRanges.getString().split(",")).map(d -> Integer.parseInt(d.trim())).map(d -> d.intValue()).collect(Collectors.toList());
+		final List<Integer> validOpticalSlotRangesList = Stream.of(fiberDefaultValidSlotRanges.getString().split(",")).map(d -> Integer.parseInt(d.trim())).map(d -> d.intValue()).collect(Collectors.toList());
+		final List<Pair<Integer,Integer>> validOpticalSlotRanges = new ArrayList<> ();
+		final Iterator<Integer> itList = validOpticalSlotRangesList.iterator();
+		while (itList.hasNext()) validOpticalSlotRanges.add(Pair.of(itList.next(), itList.next()));
 		for (WFiber e : wNet.getFibers ())
 			e.setValidOpticalSlotRanges(validOpticalSlotRanges);
 
@@ -211,7 +215,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 					final int numTps = getNumberOfDefinedTransponders();
 					final boolean noTpCanMakeIt = IntStream.rangeClosed(0, numTps - 1).allMatch(i -> getTransponderNameRateGbpsCostReachKmNumSlots(i).getFourth() < spDistanceWdmKm);
 					if (noTpCanMakeIt) continue;
-					wNet.addIpLink(a, b, Double.MAX_VALUE, true);
+					wNet.addIpLinkBidirectional(a, b, Double.MAX_VALUE);
 				}
 			}
 		}
@@ -250,7 +254,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 					final boolean theIpLinkEndNodesBecomeDisconnected = wNet.getKShortestIpUnicastPath(1, wNet.getNodes(), wNet.getIpLinks(), a, b, Optional.empty()).isEmpty(); 
 					if (theIPLinkHasTraffic && theIpLinkEndNodesBecomeDisconnected)
 					{
-						wNet.addIpLink(a, b, Double.MAX_VALUE, true);
+						wNet.addIpLinkBidirectional (a, b, Double.MAX_VALUE);
 						continue;
 					}
 						
@@ -353,7 +357,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 		/* Create the WIpLinks and bundle them */
 		for (WLightpathRequest lprAb : lpsCreatedAb)
 		{
-			final Pair<WIpLink, WIpLink> ipLinkAbBa = wNet.addIpLink(ipBidiLink.getA(), ipBidiLink.getB(), lprAb.getLineRateGbps(), true);
+			final Pair<WIpLink, WIpLink> ipLinkAbBa = wNet.addIpLinkBidirectional(ipBidiLink.getA(), ipBidiLink.getB(), lprAb.getLineRateGbps());
 			lprAb.coupleToIpLink(ipLinkAbBa.getFirst());
 			lprAb.getBidirectionalPair().coupleToIpLink(ipLinkAbBa.getSecond());
 		}

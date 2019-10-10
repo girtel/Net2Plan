@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +18,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
 
 /** Instances of this class are service chains, realizing service chain requests. A service chain should start in one of the origin nodes of the service chain, and end in 
@@ -28,9 +28,9 @@ import com.net2plan.utils.Pair;
  *  
  *
  */
-public class WMplsTeTunnel extends WAbstractNetworkElement
+public class WIpSourceRoutedConnection extends WAbstractNetworkElement
 {
-	WMplsTeTunnel(Route r) 
+	WIpSourceRoutedConnection(Route r) 
 	{ 
 		super (r, Optional.empty()); 
 	}
@@ -104,7 +104,7 @@ public class WMplsTeTunnel extends WAbstractNetworkElement
 	}
 
 	@Override
-	public String toString () { return "MPLS-TE tunnel(" + this.getCarriedTrafficInNoFailureStateGbps() + "G) " + getA().getName() + "->" + getB().getName(); }
+	public String toString () { return "IP-SR-Connection(" + this.getCarriedTrafficInNoFailureStateGbps() + "G) " + getA().getName() + "->" + getB().getName(); }
 
 	/** Indicates if this serivce chain is up: not traversing failied links or nodes, and not traversing links with zero capacity
 	 * @return
@@ -145,6 +145,6 @@ public class WMplsTeTunnel extends WAbstractNetworkElement
 	}
 	
 	@Override
-	public WTYPE getWType() { return WTYPE.WMplsTeTunnel; }
+	public WTYPE getWType() { return WTYPE.WIpSourceRoutedConnection; }
 
 }

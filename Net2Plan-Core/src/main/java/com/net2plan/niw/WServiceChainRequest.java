@@ -3,7 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +21,7 @@ import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
 
 /**

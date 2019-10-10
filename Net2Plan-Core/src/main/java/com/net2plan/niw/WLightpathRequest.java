@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 
 /** This class represents a request to establish a unidirectional lightpath between two nodes, for a given line rate. The 
  * lightpath request can be blocked (no lighptaths assigned), or relalizaed by one or two (1+1) lightpaths.

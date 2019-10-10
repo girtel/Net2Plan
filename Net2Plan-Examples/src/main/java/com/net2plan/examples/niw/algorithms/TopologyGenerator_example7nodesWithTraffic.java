@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.niw.networkModel.WIpUnicastDemand;
-import com.net2plan.niw.networkModel.WNet;
-import com.net2plan.niw.networkModel.WNetConstants;
-import com.net2plan.niw.networkModel.WNode;
+import com.net2plan.niw.WIpUnicastDemand;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -61,14 +61,14 @@ public class TopologyGenerator_example7nodesWithTraffic implements IAlgorithm
 		final WNode malaga = wNet.addNode(-4.4166667 , 36.7166667 , "Malaga" , ""); malaga.setPoputlation(568030.0);
 		final WNode murcia = wNet.addNode(-1.1302778 , 37.9861111 , "Murcia" , ""); murcia.setPoputlation(442203.0);
 		
-		wNet.addFiber(sevilla, malaga, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES.stream().map(e->e.intValue()).collect(Collectors.toList()) , -1, true);
-		wNet.addFiber(malaga, murcia , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES.stream().map(e->e.intValue()).collect(Collectors.toList()) , -1, true);
-		wNet.addFiber(murcia , valencia , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES.stream().map(e->e.intValue()).collect(Collectors.toList()) , -1, true);
-		wNet.addFiber(valencia , barcelona , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES.stream().map(e->e.intValue()).collect(Collectors.toList()) , -1, true);
-		wNet.addFiber(barcelona , zaragoza , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES.stream().map(e->e.intValue()).collect(Collectors.toList()) , -1, true);
-		wNet.addFiber(zaragoza , madrid , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES.stream().map(e->e.intValue()).collect(Collectors.toList()) , -1, true);
-		wNet.addFiber(madrid , sevilla, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES.stream().map(e->e.intValue()).collect(Collectors.toList()) , -1, true);
-		wNet.addFiber(madrid , valencia, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES.stream().map(e->e.intValue()).collect(Collectors.toList()) , -1, true);
+		wNet.addFiber(sevilla, malaga, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES , -1, true);
+		wNet.addFiber(malaga, murcia , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES , -1, true);
+		wNet.addFiber(murcia , valencia , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES , -1, true);
+		wNet.addFiber(valencia , barcelona , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES , -1, true);
+		wNet.addFiber(barcelona , zaragoza , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES , -1, true);
+		wNet.addFiber(zaragoza , madrid , WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES , -1, true);
+		wNet.addFiber(madrid , sevilla, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES , -1, true);
+		wNet.addFiber(madrid , valencia, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES , -1, true);
 		
 		final Random rng = new Random (1);
 		for (WNode n1 : wNet.getNodes())

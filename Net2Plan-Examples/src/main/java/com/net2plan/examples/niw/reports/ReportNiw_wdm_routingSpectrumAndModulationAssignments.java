@@ -32,11 +32,11 @@ import java.util.stream.Collectors;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.niw.networkModel.OpticalSpectrumManager;
-import com.net2plan.niw.networkModel.WFiber;
-import com.net2plan.niw.networkModel.WLightpath;
-import com.net2plan.niw.networkModel.WNet;
-import com.net2plan.niw.networkModel.WNode;
+import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WLightpath;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 

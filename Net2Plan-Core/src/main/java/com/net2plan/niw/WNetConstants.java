@@ -4,10 +4,12 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.Arrays;
 import java.util.List;
+
+import com.net2plan.utils.Pair;
 
 public class WNetConstants
 {
@@ -48,7 +50,8 @@ public class WNetConstants
 	static final List<Double> WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB = Arrays.asList(6.0);
 	
 	static final double WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC = 200000;
-	public static final List<Double> WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES = Arrays.asList(1.0,320.0);
+	public static final List<Double> WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE = Arrays.asList(1.0,320.0);
+	public static final List<Pair<Integer,Integer>> WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES = Arrays.asList(Pair.of(1,320));
 	static final List<Double> WFIBER_DEFAULT_AMPLIFIERPOSITION = Arrays.asList(0.0);
 	static final boolean WLPREQUEST_DEFAULT_ISTOBE11PROTECTED = false;
 	static final boolean WSERVICECHAINREQUEST_DEFAULT_ISENDEDINCORENODE = false;
@@ -65,7 +68,7 @@ public class WNetConstants
 		WIpUnicastDemand,
 		WLightpath,
 		WLightpathRequest,
-		WMplsTeTunnel,
+		WIpSourceRoutedConnection,
 		WNet,
 		WNode,
 		WServiceChain,
@@ -80,7 +83,7 @@ public class WNetConstants
 		public boolean isIpUnicastDemand() { return this == WIpUnicastDemand; }
 		public boolean isLightpath() { return this == WTYPE.WLightpath; }
 		public boolean isLightpathRequest () { return this == WLightpathRequest; }
-		public boolean isMplsTeTunnel() { return this == WTYPE.WMplsTeTunnel; }
+		public boolean isIpSourceRoutedConnection() { return this == WTYPE.WIpSourceRoutedConnection; }
 		public boolean isWNet () { return this == WTYPE.WNet; }
 		public boolean isNode() { return this == WTYPE.WNode; }
 		public boolean isServiceChain () { return this == WTYPE.WServiceChain; }

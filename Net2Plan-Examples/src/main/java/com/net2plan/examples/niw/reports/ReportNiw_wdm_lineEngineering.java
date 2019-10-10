@@ -16,13 +16,13 @@ import java.util.Map;
 
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.niw.networkModel.OpticalSimulationModule;
-import com.net2plan.niw.networkModel.OpticalSpectrumManager;
-import com.net2plan.niw.networkModel.WFiber;
-import com.net2plan.niw.networkModel.WLightpath;
-import com.net2plan.niw.networkModel.WNet;
-import com.net2plan.niw.networkModel.WNetConstants;
-import com.net2plan.niw.networkModel.OpticalSimulationModule.PERLPINFOMETRICS;
+import com.net2plan.niw.OpticalSimulationModule;
+import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WLightpath;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -158,9 +158,9 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			append("<td>" + e.getNumberOfOpticalLineAmplifiersTraversed() + "</td>").
 			append("<td>" + e.getTraversingLps().size() + "</td>").
 			append("<td>" + osm.getOccupiedOpticalSlotIds(e).size() + " / " + e.getNumberOfValidOpticalChannels() + " (" + df_2.format(100.0 * osm.getOccupiedOpticalSlotIds(e).size() /  e.getNumberOfValidOpticalChannels())   + "%)</td>").
-			append("<td>" + df_2.format(e.getAccumulatedChromaticDispersion()) + "</td>").
-			append("<td>" + df_2.format(osim.getTotalPowerAtFiberEnds(e).getFirst()) + "</td>").
-			append("<td>" + df_2.format(osim.getTotalPowerAtFiberEnds(e).getSecond()) + "</td>");
+			append("<td>" + df_2.format(e.getAccumulatedChromaticDispersion_psPerNm()) + "</td>").
+			append("<td>" + df_2.format(osim.getTotalPowerAtFiberEnds_dBm(e).getFirst()) + "</td>").
+			append("<td>" + df_2.format(osim.getTotalPowerAtFiberEnds_dBm(e).getSecond()) + "</td>");
 			
 			final StringBuffer st = new StringBuffer ();
 			for (int contOla = 0; contOla < e.getNumberOfOpticalLineAmplifiersTraversed() ; contOla ++)

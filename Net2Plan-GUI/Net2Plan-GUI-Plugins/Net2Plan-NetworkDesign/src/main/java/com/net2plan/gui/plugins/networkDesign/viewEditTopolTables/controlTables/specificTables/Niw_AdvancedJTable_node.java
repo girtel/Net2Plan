@@ -35,10 +35,10 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.niw.networkModel.WIpUnicastDemand;
-import com.net2plan.niw.networkModel.WNet;
-import com.net2plan.niw.networkModel.WNetConstants;
-import com.net2plan.niw.networkModel.WNode;
+import com.net2plan.niw.WIpUnicastDemand;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.WNode;
 
 /**
  */

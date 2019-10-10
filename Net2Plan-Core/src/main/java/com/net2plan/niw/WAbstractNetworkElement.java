@@ -3,7 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +15,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 
 /**
  * This base class is inherited by all the classes in the library representing relevant network elements. Provides some

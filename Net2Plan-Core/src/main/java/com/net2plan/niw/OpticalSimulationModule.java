@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -205,6 +205,14 @@ public class OpticalSimulationModule
    	 return this;
     }
         
+    public List<Double> getTotalPowerAtAmplifierInputs_dBm (WFiber fiber)
+    {
+    	return perFiberPerMetric_valStartEndAndAtEachOlaInputOutput.get(fiber).get(PERFIBERINFOMETRICS.TOTALPOWER_DBM).getThird();
+    }
+    public List<Double> getTotalPowerAtAmplifierOutputs_dBm (WFiber fiber)
+    {
+    	return perFiberPerMetric_valStartEndAndAtEachOlaInputOutput.get(fiber).get(PERFIBERINFOMETRICS.TOTALPOWER_DBM).getFourth();
+    }
     public double getTotalPowerAtAmplifierInput_dBm (WFiber fiber , int indexAmplifierInFiber)
     {
    	 if (indexAmplifierInFiber < 0 || indexAmplifierInFiber >= fiber.getNumberOfOpticalLineAmplifiersTraversed()) throw new Net2PlanException ("Wrong index");
@@ -221,7 +229,7 @@ public class OpticalSimulationModule
    	 if (!perFiberPerLpPerMetric_valStartEnd.get(fiber).containsKey(lp)) return null;
    	 return perFiberPerLpPerMetric_valStartEnd.get(fiber).get(lp);
     }
-    public Pair<Double,Double> getTotalPowerAtFiberEnds (WFiber fiber)
+    public Pair<Double,Double> getTotalPowerAtFiberEnds_dBm (WFiber fiber)
     {
    	 if (!perFiberPerMetric_valStartEndAndAtEachOlaInputOutput.containsKey(fiber)) return null;
    	 return Pair.of(
@@ -243,4 +251,34 @@ public class OpticalSimulationModule
    	 return res;
     }
 
+    public static double nm2thz (double wavelengthInNm)
+    {
+    	return constant_c / (1000 * wavelengthInNm);
+    }
+    public static double thz2nm (double freqInThz)
+    {
+    	return constant_c / (1000 * freqInThz);
+    }
+    public static double getLowestFreqfSlotTHz (int slot)
+    {
+    	return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + (slot - 0.5)  * (WNetConstants.OPTICALSLOTSIZE_GHZ/1000);
+    }
+    public static double getHighestFreqfSlotTHz (int slot)
+    {
+    	return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + (slot + 0.5)  * (WNetConstants.OPTICALSLOTSIZE_GHZ/1000);
+    }
+    
+    public boolean isOkOpticalPowerAtAmplifierInputAllOlas (WFiber e)
+    {
+		final List<Double> minInputPowerDbm = e.getAmplifierMinAcceptableInputPower_dBm();
+		final List<Double> maxInputPowerDbm = e.getAmplifierMaxAcceptableInputPower_dBm();
+		for (int cont = 0; cont < minInputPowerDbm.size() ; cont ++)
+		{
+			final double inputPowerDbm = this.getTotalPowerAtAmplifierInput_dBm(e, cont);
+			if (inputPowerDbm < minInputPowerDbm.get(cont)) return false;
+			if (inputPowerDbm > maxInputPowerDbm.get(cont)) return false;
+		}
+		return true;
+    }
+    
 }

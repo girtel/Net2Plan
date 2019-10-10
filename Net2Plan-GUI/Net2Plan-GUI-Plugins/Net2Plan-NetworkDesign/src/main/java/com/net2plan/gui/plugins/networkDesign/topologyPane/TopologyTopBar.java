@@ -36,7 +36,7 @@ import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.niw.networkModel.WNet;
+import com.net2plan.niw.WNet;
 import com.net2plan.utils.Pair;
 
 /**

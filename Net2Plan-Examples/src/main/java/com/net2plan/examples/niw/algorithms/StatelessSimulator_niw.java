@@ -34,7 +34,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.IPUtils;
-import com.net2plan.niw.networkModel.WNet;
+import com.net2plan.niw.WNet;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 

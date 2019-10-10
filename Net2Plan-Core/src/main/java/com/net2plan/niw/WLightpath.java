@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 
 /** This class represents a unidirectional lightpath of a given line rate, being a main path or backup path of a lightpath request.
  * The lighptath is unregenerated, and has no wavelength conversion: the same set of optical slot are occupied in all the 

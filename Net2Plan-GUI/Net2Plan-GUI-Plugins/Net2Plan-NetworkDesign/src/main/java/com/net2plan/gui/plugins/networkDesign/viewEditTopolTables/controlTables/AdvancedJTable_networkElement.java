@@ -59,12 +59,12 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.niw.networkModel.WFiber;
-import com.net2plan.niw.networkModel.WIpLink;
-import com.net2plan.niw.networkModel.WIpUnicastDemand;
-import com.net2plan.niw.networkModel.WLightpathRequest;
-import com.net2plan.niw.networkModel.WNet;
-import com.net2plan.niw.networkModel.WServiceChainRequest;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WIpLink;
+import com.net2plan.niw.WIpUnicastDemand;
+import com.net2plan.niw.WLightpathRequest;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WServiceChainRequest;
 import com.net2plan.utils.Pair;
 
 

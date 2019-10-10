@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +30,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.niw.networkModel.WNode.OPTICALSWITCHTYPE;
+import com.net2plan.niw.WNode.OPTICALSWITCHTYPE;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
@@ -479,6 +479,26 @@ public class OpticalSpectrumManager
 		final SortedSet<Integer> res = wdmLink.getValidOpticalSlotIds();
 		res.removeAll(getOccupiedOpticalSlotIds(wdmLink));
 		return res;
+	}
+
+	/** Returns the optical slots where there is wavelength clashing, i.e. more than one traversing lightpath is using this slot
+	 * @param wdmLink see above
+	 * @return  see above
+	 */
+	public SortedSet<Integer> getClashingOpticalSlotIds (WFiber wdmLink)
+	{
+		checkSameWNet(wdmLink);
+		return getOccupiedResources (wdmLink).entrySet().stream().filter(e->e.getValue().size() > 1).map(e->e.getKey()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the number optical slots where there is wavelength clashing, i.e. more than one traversing lightpath is using this slot
+	 * @param wdmLink see above
+	 * @return  see above
+	 */
+	public int getNumberOfClashingOpticalSlotIds (WFiber wdmLink)
+	{
+		checkSameWNet(wdmLink);
+		return (int) getOccupiedResources (wdmLink).entrySet().stream().filter(e->e.getValue().size() > 1).count();
 	}
 	
 	/** Returns the optical slots that are usable (valid and idle) in the given fiber

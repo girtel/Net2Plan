@@ -3,7 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -20,7 +20,7 @@ import com.net2plan.interfaces.networkDesign.MulticastDemand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.IPUtils;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Triple;
 
@@ -326,12 +326,12 @@ public class WIpLink extends WAbstractNetworkElement
 	/** Returns the IP connections traversing this IP links
 	 * @return see above
 	 */
-	public SortedSet<WMplsTeTunnel> getTraversingIpConnections ()
+	public SortedSet<WIpSourceRoutedConnection> getTraversingIpConnections ()
 	{
 		if (this.isBundleMember()) return new TreeSet<> (); 
 		return getNe().getTraversingRoutes().stream().
-				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
-				map(r->new WMplsTeTunnel(r)).collect(Collectors.toCollection(TreeSet::new));
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
+				map(r->new WIpSourceRoutedConnection(r)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/** Returns the traversing IP unicast demands 

@@ -87,7 +87,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
 import com.net2plan.internal.sim.SimCore.SimState;
-import com.net2plan.niw.networkModel.WNet;
+import com.net2plan.niw.WNet;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 

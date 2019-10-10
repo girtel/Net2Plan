@@ -3,7 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,7 +22,7 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
@@ -101,7 +101,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		return getNe ().getRoutingType() == RoutingType.HOP_BY_HOP_ROUTING; 
 	}
 	
-	/** Indicates if this demand is tagged to be routed via source-routing (e.g. via an MPLS-TE circuit)
+	/** Indicates if this demand is tagged to be routed via source-routing (e.g. via an IP source routed connection)
 	 * @return see above
 	 */
 	public boolean isIpSourceRouted () 
@@ -117,7 +117,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		this.getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
 	}
 
-	/** Sets this IP demand to be routed via source-routing (e.g. MPLS-TE)
+	/** Sets this IP demand to be routed via source-routing (e.g. IP source routed connection)
 	 */
 	public void setAsSourceRouted () 
 	{
@@ -147,12 +147,12 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	/** Returns the IP connections realizing this demand. If the demand is hop-by-hop routed, an empty returns an empty set
 	 * @return see above
 	 */
-	public SortedSet<WMplsTeTunnel> getIpConnections ()
+	public SortedSet<WIpSourceRoutedConnection> getIpConnections ()
 	{
 		if (this.isIpHopByHopRouted()) return new TreeSet<> ();
 		return getNe().getRoutes().stream().
-				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
-				map(ee -> new WMplsTeTunnel(ee)).collect(Collectors.toCollection(TreeSet::new));
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
+				map(ee -> new WIpSourceRoutedConnection(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	@Override

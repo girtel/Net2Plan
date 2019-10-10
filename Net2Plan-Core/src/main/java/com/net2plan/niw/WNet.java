@@ -3,7 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
@@ -266,14 +266,14 @@ public class WNet extends WAbstractNetworkElement
 	}
 
 	/**
-	 * Returns the list of MPLS-TE tunnels, in increasing order according to its id
+	 * Returns the list of IP source routed connections, in increasing order according to its id
 	 * @return see above
 	 */
-	public List<WMplsTeTunnel> getMplsTeTunnels()
+	public List<WIpSourceRoutedConnection> getIpSourceRoutedConnections()
 	{
 		return np.getRoutes(getIpLayer().getNe()).stream().
-				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
-				map(n -> new WMplsTeTunnel(n)).collect(Collectors.toCollection(ArrayList::new));
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
+				map(n -> new WIpSourceRoutedConnection(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -347,8 +347,8 @@ public class WNet extends WAbstractNetworkElement
 		if (getNodes().stream().anyMatch(n -> n.getName().equals(name))) ex("Names cannot be repeated");
 		final WNode n = new WNode(getNetPlan().addNode(xCoord, yCoord, name, null));
 		n.setType(type);
-		addIpLink(getAnycastOriginNode(), n, Double.MAX_VALUE, false);
-		addIpLink(n, getAnycastDestinationNode(), Double.MAX_VALUE, false);
+		addIpLinkUnidirectional(getAnycastOriginNode(), n, Double.MAX_VALUE);
+		addIpLinkUnidirectional(n, getAnycastDestinationNode(), Double.MAX_VALUE);
 		return n;
 	}
 
@@ -362,7 +362,7 @@ public class WNet extends WAbstractNetworkElement
 	 * @param isBidirectional indicates if the fiber to add is bidirectional
 	 * @return the first element of the pair is the fiber a- b, the second is b-a or null in non-bidirectional cases
 	 */
-	public Pair<WFiber, WFiber> addFiber(WNode a, WNode b, List<Integer> validOpticalSlotRanges, double lengthInKm, boolean isBidirectional)
+	public Pair<WFiber, WFiber> addFiber(WNode a, WNode b, List<Pair<Integer,Integer>> validOpticalSlotRanges, double lengthInKm, boolean isBidirectional)
 	{
 		checkInThisWNet(a, b);
 		if (lengthInKm < 0) lengthInKm = getNetPlan().getNodePairHaversineDistanceInKm(a.getNe(), b.getNe());
@@ -560,25 +560,23 @@ public class WNet extends WAbstractNetworkElement
 	 * @param a The IP link origin node
 	 * @param b The IP lin kend node
 	 * @param nominalLineRateGbps The nominal line rate of the IP link in Gbps
-	 * @param isBidirectional An indication if the IP link to add should be a pair of two unidirectional IP links in
-	 *        opposite directions
-	 * @return the first element of the pair is the a-b IP link, the second is the b-a IP link or null if not bidirectional
-	 *         IP link is requested
+	 * @return the first element of the pair is the a-b IP link, the second is the b-a IP link 
 	 */
-	public Pair<WIpLink, WIpLink> addIpLink(WNode a, WNode b, double nominalLineRateGbps, boolean isBidirectional)
+	public Pair<WIpLink, WIpLink> addIpLinkBidirectional (WNode a, WNode b, double nominalLineRateGbps)
 	{
 		checkInThisWNet(a, b);
-		if (isBidirectional)
-		{
-			final Pair<Link, Link> ee = getNetPlan().addLinkBidirectional(a.getNe(), b.getNe(), nominalLineRateGbps, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
-			return Pair.of(WIpLink.createFromAdd(ee.getFirst(), nominalLineRateGbps), WIpLink.createFromAdd(ee.getSecond(), nominalLineRateGbps));
-		} else
-		{
-			final Link ee = getNetPlan().addLink(a.getNe(), b.getNe(), nominalLineRateGbps, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
-			return Pair.of(WIpLink.createFromAdd(ee, nominalLineRateGbps), null);
-		}
+		final Pair<Link, Link> ee = getNetPlan().addLinkBidirectional(a.getNe(), b.getNe(), nominalLineRateGbps, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
+		return Pair.of(WIpLink.createFromAdd(ee.getFirst(), nominalLineRateGbps), WIpLink.createFromAdd(ee.getSecond(), nominalLineRateGbps));
 	}
 
+	Pair<WIpLink, WIpLink> addIpLinkUnidirectional (WNode a, WNode b, double nominalLineRateGbps)
+	{
+		checkInThisWNet(a, b);
+		final Link ee = getNetPlan().addLink(a.getNe(), b.getNe(), nominalLineRateGbps, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
+		return Pair.of(WIpLink.createFromAdd(ee, nominalLineRateGbps), null);
+	}
+
+	
 	/**
 	 * Returns the network node with the indicated name, if any
 	 * @param name see above
@@ -1055,7 +1053,7 @@ public class WNet extends WAbstractNetworkElement
 				if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
 				{
 					assert new WNode (ee.getEgressNode()).isRegularNode();
-					return Optional.of (new WMplsTeTunnel(ee));
+					return Optional.of (new WIpSourceRoutedConnection(ee));
 				}
 				assert new WNode (ee.getIngressNode()).isVirtualNode();
 				assert new WNode (ee.getEgressNode()).isVirtualNode();

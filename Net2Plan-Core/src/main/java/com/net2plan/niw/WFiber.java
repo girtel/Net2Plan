@@ -3,7 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
 
 /**
@@ -120,6 +120,16 @@ public class WFiber extends WAbstractNetworkElement
 	{
 		return getNe().getLengthInKm();
 	}
+
+	/**
+	 * Returns the link propagation delay in ms
+	 * @return see above
+	 */
+	public double getPropagationDelayInMs()
+	{
+		return getNe().getPropagationDelayInMs();
+	}
+
 
 	/**
 	 * Sets the link length in km
@@ -346,13 +356,15 @@ public class WFiber extends WAbstractNetworkElement
 	 * included, and from 320 to 360 both included.
 	 * @param listInitialEndSlotRanges see above
 	 */
-	public final void setValidOpticalSlotRanges(List<Integer> listInitialEndSlotRanges)
+	public final void setValidOpticalSlotRanges(List<Pair<Integer,Integer>> listInitialEndSlotRanges)
 	{
 		final SortedSet<Integer> cache_validSlotsIds = computeValidOpticalSlotIds(listInitialEndSlotRanges);
-		getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDOPTICALSLOTRANGES, (List<Number>) (List<?>) listInitialEndSlotRanges);
+		final List<Integer> auxList = new ArrayList<> ();
+		listInitialEndSlotRanges.forEach(p->{ auxList.add(p.getFirst()); auxList.add(p.getSecond()); } ); 
+		getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDOPTICALSLOTRANGES, (List<Number>) (List<?>) auxList);
 	}
 
-	public double getAccumulatedChromaticDispersion ()
+	public double getAccumulatedChromaticDispersion_psPerNm ()
 	{
 		return this.getLengthInKm() * this.getChromaticDispersionCoeff_psPerNmKm() + this.getAmplifierCdCompensarion_psPerNm().stream().mapToDouble(e->e).sum();
 	}
@@ -361,9 +373,28 @@ public class WFiber extends WAbstractNetworkElement
 	 * Returns the valid optical slot ranges as defined by the user
 	 * @return see above
 	 */
-	public final List<Integer> getValidOpticalSlotRanges()
+	public final List<Pair<Integer,Integer>> getValidOpticalSlotRanges()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDOPTICALSLOTRANGES, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES).stream().map(ee -> ee.intValue()).collect(Collectors.toList());
+		final List<Pair<Integer,Integer>> res = new ArrayList<> ();
+		final List<Integer> auxList = getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDOPTICALSLOTRANGES, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE).stream().map(ee -> ee.intValue()).collect(Collectors.toList());
+		final Iterator<Integer> it = auxList.iterator();
+		while (it.hasNext())
+		{
+			final int startRange = it.next();
+			if (!it.hasNext()) throw new Net2PlanException("Invalid optical slot ranges");
+			final int endRange = it.next();
+			if (endRange < startRange) throw new Net2PlanException("Invalid optical slot ranges");
+			res.add(Pair.of(startRange, endRange));
+		}
+		return res;
+	}
+
+	/** Returns the net gain of the fiber, considering optical line amplifiers and fiber attenuation
+	 * @return
+	 */
+	public double getNetGain_dB ()
+	{
+		return getAmplifierGains_dB().stream().mapToDouble(e->e).sum() - getLengthInKm() * getAttenuationCoefficient_dbPerKm();
 	}
 
 	/**
@@ -376,19 +407,12 @@ public class WFiber extends WAbstractNetworkElement
 		return computeValidOpticalSlotIds(getValidOpticalSlotRanges());
 	}
 
-	static final SortedSet<Integer> computeValidOpticalSlotIds(List<Integer> validOpticalSlotRanges)
+	static final SortedSet<Integer> computeValidOpticalSlotIds(List<Pair<Integer,Integer>> validOpticalSlotRanges)
 	{
 		final SortedSet<Integer> res = new TreeSet<>();
-		final Iterator<Integer> it = validOpticalSlotRanges.iterator();
-		while (it.hasNext())
-		{
-			final int startRange = it.next();
-			if (!it.hasNext()) throw new Net2PlanException("Invalid optical slot ranges");
-			final int endRange = it.next();
-			if (endRange < startRange) throw new Net2PlanException("Invalid optical slot ranges");
-			for (int i = startRange; i <= endRange; i++)
+		for (Pair<Integer,Integer> p : validOpticalSlotRanges)
+			for (int i = p.getFirst(); i <= p.getSecond(); i++)
 				res.add(i);
-		}
 		return res;
 	}
 
@@ -509,4 +533,17 @@ public class WFiber extends WAbstractNetworkElement
 	public WTYPE getWType() { return WTYPE.WFiber; }
 	
 
+	public boolean isOkAllGainsOfLineAmplifiers ()
+	{
+		final List<Double> gainDb = getAmplifierGains_dB();
+		final List<Double> minGainDb = getAmplifierMinAcceptableGains_dB();
+		final List<Double> maxGainDb = getAmplifierMaxAcceptableGains_dB();
+		for (int cont = 0; cont < gainDb.size() ; cont ++)
+		{
+			if (gainDb.get(cont) < minGainDb.get(cont)) return false;
+			if (gainDb.get(cont) > maxGainDb.get(cont)) return false;
+		}
+		return true;
+	}
+	
 }

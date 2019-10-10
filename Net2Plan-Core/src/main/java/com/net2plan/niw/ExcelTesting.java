@@ -3,7 +3,7 @@
  * are made available under the terms of the MIT License available at
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.io.File;
 import java.util.ArrayList;

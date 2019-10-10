@@ -13,6 +13,7 @@
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
 import java.awt.Color;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -51,10 +53,14 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants.NetworkElementType;
 import com.net2plan.libraries.IPUtils;
-import com.net2plan.niw.networkModel.WFiber;
-import com.net2plan.niw.networkModel.WIpLink;
-import com.net2plan.niw.networkModel.WNet;
-import com.net2plan.niw.networkModel.WNetConstants;
+import com.net2plan.niw.OpticalSimulationModule;
+import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WIpLink;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.WNetConstants.WTYPE;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
@@ -65,6 +71,7 @@ import net.miginfocom.swing.MigLayout;
 @SuppressWarnings({ "unchecked", "serial" })
 public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 {
+	private static DecimalFormat df = new DecimalFormat("#.##");
 	
     public Niw_AdvancedJTable_link(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
@@ -109,43 +116,155 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "LAG members", "If the IP link is a LAG bundle, this column links to the LAG members.", null , d->toWIpLink.apply(d).isBundleOfIpLinks()? toWIpLink.apply(d).getBundledIpLinks().stream().map(e->e.getNe()).collect (Collectors.toList()) : "--" , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "IGP weitgh", "The strictly positive weight to be used for IGP routing calculations", (d,val)->toWIpLink.apply(d).setIgpWeight((Double) val) , d->toWIpLink.apply(d).getIgpWeight() , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. Unicast demands", "Unicast demands routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingIpUnicastDemands().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
-		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. MPLS-TE tunnels", "MPLS-TE tunnels routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingIpUnicastDemands().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
+		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. IP connections", "IP source routed connections routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingIpUnicastDemands().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. SCs", "Service chains routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingServiceChains().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
+
+		      res.addAll(AdvancedJTable_demand.getMonitoringAndTrafficEstimationColumns(this).stream().map(c->(AjtColumnInfo<Link>)(AjtColumnInfo<?>)c).collect(Collectors.toList()));
     	}
     	else
     	{
+    		final OpticalSpectrumManager ospec = OpticalSpectrumManager.createFromRegularLps(wNet);
+    		final OpticalSimulationModule osim = new OpticalSimulationModule (wNet);
+    		osim.updateAllPerformanceInfo();
+    		
+		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Length (km)", "WDM link length in km", (d,val)->toWFiber.apply(d).setLenghtInKm((Double) val) , d->toWFiber.apply(d).getLengthInKm()  , AGTYPE.SUMDOUBLE, null));
+		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Latency (ms)", "WDM link latency in ms", null , d->toWFiber.apply(d).getPropagationDelayInMs()  , AGTYPE.MAXDOUBLE, null));
+		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "SRGs", "The SRGs that this fiber link belongs to", null , d->toWFiber.apply(d).getSrgsThisElementIsAssociatedTo().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION , null));
 		      res.add(new AjtColumnInfo<Link>(this , Boolean.class, null , "Up?", "", (d,val)->
 		      {
 		          final boolean isLinkUp = (Boolean) val;
 		          if (isLinkUp) toWFiber.apply(d).setAsUp(); else toWFiber.apply(d).setAsDown(); 
 		      } , d->toWFiber.apply(d).isUp() , AGTYPE.COUNTTRUE , e->e.isUp()? null : Color.RED));
 		      //fibras..
-		      
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Capacity (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Link capacity", (d,val)->{ if (!d.isCoupled()) d.setCapacity((Double) val); }, d->d.getCapacity() , AGTYPE.SUMDOUBLE , e->e.getCapacity() == 0? Color.YELLOW : null));
-    	}
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Freq. ranges (THz)", "The ranges of the frequencies that are valid in this fiber, e.g. because of affecting amplifiers limits and/or fiber limits", null , d->
+    	      {
+    	    	  return toWFiber.apply(d).getValidOpticalSlotRanges().stream().
+    	    			  map(p->df.format(OpticalSimulationModule.getLowestFreqfSlotTHz(p.getFirst())) + " - " + df.format(OpticalSimulationModule.getHighestFreqfSlotTHz(p.getSecond()))).
+    	    			  collect(Collectors.joining(", "));
+    	      }, AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Spectrum (THz)", "The total available spectrum in the fiber to be used by WDM channels", null , d->
+    	      {
+    	    	  final int numChannels = toWFiber.apply(d).getNumberOfValidOpticalChannels();
+    	    	  return df.format(numChannels * WNetConstants.OPTICALSLOTSIZE_GHZ / 1000.0);
+    	      }, AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Fiber physical coefs.") , "Coef. CD ps/nm/km", "Chromatic disperion coefficient in ps/nm/km, assumed to be the same in all the wavelengths", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setChromaticDispersionCoeff_psPerNmKm((Double)val); }, d->toWFiber.apply(d).getChromaticDispersionCoeff_psPerNmKm() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Fiber physical coefs.") , "Coef. PMD-Q ps/sqrt(km)", "PMD fiber coefficient, typically called Link Design Value, or PMD-Q. Measured in ps per square root of km of fiber", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setPmdLinkDesignValueCoeff_psPerSqrtKm((Double)val); }, d->toWFiber.apply(d).getPmdLinkDesignValueCoeff_psPerSqrtKm() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Fiber physical coefs.") , "Coef. Attenuation dB/km", "Fiber attenuation coefficient, measured in dB/km, assumed to be the same for all the wavelengths", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setAttenuationCoefficient_dbPerKm((Double)val); }, d->toWFiber.apply(d).getAttenuationCoefficient_dbPerKm() , AGTYPE.NOAGGREGATION , null));
+
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signals") , "# Valid slots", "Number of valid slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) in this fiber", null , d->ospec.getIdleOpticalSlotIds(toWFiber.apply(d)).size() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signals") , "# Occupied slots", "Number of occupied slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) in this fiber", null , d->ospec.getOccupiedOpticalSlotIds(toWFiber.apply(d)).size() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signals") , "# Idle slots", "Number of idle slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) in this fiber", null , d->ospec.getIdleOpticalSlotIds(toWFiber.apply(d)).size() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signals") , "# Clashing slots", "Number of slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) occupied by two or more lightpaths, whose signal would be destroyed", null , d->ospec.getNumberOfClashingOpticalSlotIds(toWFiber.apply(d)) , AGTYPE.NOAGGREGATION , d->ospec.getNumberOfClashingOpticalSlotIds(toWFiber.apply(d)) > 0? Color.RED : null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signals") , "Power at input (dBm)", "Total power at the start of this WDM fiber (output of previous OADM)", null , d->osim.getTotalPowerAtFiberEnds_dBm(toWFiber.apply(d)).getFirst() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signals") , "Power at output (dBm)", "Total power at the end of this WDM fiber (input of next OADM)", null , d->osim.getTotalPowerAtFiberEnds_dBm(toWFiber.apply(d)).getSecond() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signals") , "Net gain (dB)" , "Net gain of this fiber link, considering effect of line amplifiers and fiber attenuation", null , d->toWFiber.apply(d).getNetGain_dB() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signals") , "Net CD (ps/nm)" , "Net accummulated chromatic dispersion in the WDM link, considering fiber CD coefficient, and potnetial compensation in the line amplifiers", null , d->toWFiber.apply(d).getAccumulatedChromaticDispersion_psPerNm() , AGTYPE.NOAGGREGATION , null));
     	
-     
-      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Capacity (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Link capacity", (d,val)->{ if (!d.isCoupled()) d.setCapacity((Double) val); }, d->d.getCapacity() , AGTYPE.SUMDOUBLE , e->e.getCapacity() == 0? Color.YELLOW : null));
-      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Occupied capacity (" + getTableNetworkLayer().getLinkCapacityUnits() + ")", "Link occupied capacity", null , d->d.getOccupiedCapacity() , AGTYPE.SUMDOUBLE , null));
-      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Carried traffic (" + getTableNetworkLayer().getDemandTrafficUnits() + ")", "Link carried traffic", null , d->d.getCarriedTraffic() , AGTYPE.SUMDOUBLE , null));
-      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Utilization", "Link utilization (occupied capacity vs. capacity)", null , d->d.getUtilization() , AGTYPE.NOAGGREGATION, e->{ final double v = e.getUtilization(); return v == 1? Color.YELLOW : (v > 1?  Color.RED : null  ); }));
-      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Length (km)", "Link length in km, considering the worst case lower layer propagation", null , d->d.getLengthInKm() , AGTYPE.SUMDOUBLE, null));
-      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Prop. speed (km/sec)", "Link average propagation speed in km per second", (d,val)->{ if (!d.isCoupled()) d.setPropagationSpeedInKmPerSecond((Double)val); } , d->d.getPropagationSpeedInKmPerSecond() , AGTYPE.NOAGGREGATION, null));
-      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Prop. delay (ms)", "Link propagation delay in ms, considering the worst case lower layer propagation of the traffic", null , d->d.getPropagationDelayInMs() , AGTYPE.MAXDOUBLE, null));
-      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Routes", "Traversing routes", null , d->d.getTraversingRoutes() , AGTYPE.NOAGGREGATION, null));
-      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Forw. rules", "Forwarding rules defined for this link", null , d->d.getForwardingRules().keySet() , AGTYPE.NOAGGREGATION, null));
-      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trees", "Traversing multicast trees", null , d->d.getTraversingTrees() , AGTYPE.NOAGGREGATION, null));
-      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "SRGs", "The SRGs that this link belongs to", null , d->d.getSRGs() , AGTYPE.NOAGGREGATION , null));
-//      res.add(new AjtColumnInfo<Link>(this , Integer.class, null , "#Monit points" , "Number of samples of the carried traffic stored, coming from a monitoring or forecasting traffic process", null , d->d.getMonitoredOrForecastedCarriedTraffic().getSize() , AGTYPE.NOAGGREGATION , null));
-      res.addAll(AdvancedJTable_demand.getMonitoringAndTrafficEstimationColumns(this).stream().map(c->(AjtColumnInfo<Link>)(AjtColumnInfo<?>)c).collect(Collectors.toList()));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "# OLAs", "Number of optical line amplifiers. Nota that each OLA can have chromatic dispersion compensation", null , d->toWFiber.apply(d).getNumberOfOpticalLineAmplifiersTraversed() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA pos (km)", "Positions of OLAs, in km from the fiber start", null , d->toWFiber.apply(d).getAmplifierPositionsKmFromOrigin_km().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA gains (dB)", "Gains in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierGains_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->toWFiber.apply(d).isOkAllGainsOfLineAmplifiers()? null : Color.RED));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min gains (dB)", "Minimum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableGains_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max gains (dB)", "Maximum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableGains_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA NFs (dB)", "Noise factors in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierNoiseFactor_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA CD (ps/nm)", "Chromatic dispersion compensation inside this OLA if any", null , d->toWFiber.apply(d).getAmplifierCdCompensarion_psPerNm().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA PMD (ps)", "PMD factor for this OLA", null , d->toWFiber.apply(d).getAmplifierPmd_ps().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA input power (dBm)", "Total power at the input of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->osim.isOkOpticalPowerAtAmplifierInputAllOlas(toWFiber.apply(d))? null : Color.RED));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA output power (dBm)", "Total power at the output of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min input power (dBm)", "Minimum acceptable power for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableInputPower_dBm().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max input power (dBm)", "Maximum acceptable power for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableInputPower_dBm().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	}
       return res;
-  }
+  	}
 
     @Override
     public List<AjtRcMenu> getNonBasicRightClickMenusInfo()
     {
     	final NetPlan np = callback.getDesign();
         final List<AjtRcMenu> res = new ArrayList<> ();
+    	final WNet wNet = new WNet (callback.getDesign()); 
+    	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
+    	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
+    	assert isIpLayer || isWdmLayer;
+    	assert !(isIpLayer && isWdmLayer);
+    	final Function<Link,WFiber> toWFiber = d -> (WFiber) wNet.getWElement(d).get();
+    	final Function<Link,WIpLink> toWIpLink = d ->(WIpLink) wNet.getWElement(d).get();
+    	final Function<Link,Boolean> isWIpLink = d -> { final WTYPE y = wNet.getWType(d).orElse (null); return y == null? false : y.isIpLink(); };
+		final Function<String,Optional<WNode>> nodeByName = st -> 
+		{
+    		WNode a = wNet.getNodeByName(st).orElse(null);
+    		if (a == null) a = wNet.getNodes().stream().filter(n->n.getName().equalsIgnoreCase(st)).findFirst().orElse(null);
+    		return Optional.ofNullable(a);
+		};
+
+
+
+    	if (isIpLayer)
+    	{
+            res.add(new AjtRcMenu("Add bidirectional IP link", e->
+            {
+              DialogBuilder.launch(
+              "Add IP link" , 
+              "Please introduce the information required.", 
+              "", 
+              this, 
+              Arrays.asList(
+              		InputForDialog.inputTfString("Input node name", "Introduce the name of the input node", 10, ""),
+              		InputForDialog.inputTfString("End node name", "Introduce the name of the end node", 10, ""),
+              		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate in Gbps of the IP link", 10, 100.0)
+              		),
+              (list)->
+              	{
+            		final String aName  = (String) list.get(0).get();
+            		final String bName  = (String) list.get(1).get();
+            		final double rateGbps = (Double) list.get(2).get();
+            		final WNode a = nodeByName.apply(aName).orElse(null);
+            		final WNode b = nodeByName.apply(bName).orElse(null);
+            		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
+            		wNet.addIpLinkBidirectional(a, b, rateGbps);
+              	}
+              );
+            }
+            , (a,b)->true, null));
+            
+            res.add(new AjtRcMenu("Bundle selected IP links when possible", e->
+            {
+            	final Map<Pair<WNode,WNode>,SortedSet<WIpLink>> selectedNonBundlesLowHigh = new HashMap<> ();
+            	for (Link d : getSelectedElements())
+            	{
+            		final WIpLink ee = toWIpLink.apply(d);
+            		if (ee.isBundleOfIpLinks()) continue;
+            		assert ee.isBidirectional();
+            		if (ee.getId() < ee.getBidirectionalPair().getId()) selectedNonBundlesLowHigh.add(ee); else selectedNonBundlesLowHigh.add(ee.getBidirectionalPair());
+            	}
+            	
+              DialogBuilder.launch(
+              "Add IP link" , 
+              "Please introduce the information required.", 
+              "", 
+              this, 
+              Arrays.asList(
+              		InputForDialog.inputTfString("Input node name", "Introduce the name of the input node", 10, ""),
+              		InputForDialog.inputTfString("End node name", "Introduce the name of the end node", 10, ""),
+              		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate in Gbps of the IP link", 10, 100.0)
+              		),
+              (list)->
+              	{
+            		final String aName  = (String) list.get(0).get();
+            		final String bName  = (String) list.get(1).get();
+            		final double rateGbps = (Double) list.get(2).get();
+            		final WNode a = nodeByName.apply(aName).orElse(null);
+            		final WNode b = nodeByName.apply(bName).orElse(null);
+            		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
+            		wNet.addIpLinkBidirectional(a, b, rateGbps);
+              	}
+              );
+            }
+            , (a,b)->true, null));
+            
+            
+    		
+    	}
+    	
         res.add(new AjtRcMenu("Add link", e->AdvancedJTable_demand.createLinkDemandGUI(NetworkElementType.LINK, getTableNetworkLayer () , callback), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected links", e->getSelectedElements().forEach(dd->((Link)dd).remove()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Generate full-mesh", null , (a, b)->true, Arrays.asList( 

@@ -3,7 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.awt.geom.Point2D;
 import java.net.URL;
@@ -21,7 +21,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.niw.networkModel.WNetConstants.WTYPE;
+import com.net2plan.niw.WNetConstants.WTYPE;
 
 /**
  * This class represents a node in the network, capable of initiating or ending IP and WDM links, as well as lightpaths
@@ -635,21 +635,21 @@ public class WNode extends WAbstractNetworkElement
 	/** Returns the IP connections, realizing IP unicast demands, that are initiated in this node 
 	 * @return see above
 	 */
-	public SortedSet<WMplsTeTunnel> getOutgoingIpConnections ()
+	public SortedSet<WIpSourceRoutedConnection> getOutgoingIpConnections ()
 	{
 		return n.getOutgoingRoutes(getNet().getIpLayer().getNe()).stream().
-				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
-				map(ee -> new WMplsTeTunnel(ee)).collect(Collectors.toCollection(TreeSet::new));
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
+				map(ee -> new WIpSourceRoutedConnection(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 	
 	/** Returns the IP connections, realizing IP unicast demands, that are ended in this node 
 	 * @return see above
 	 */
-	public SortedSet<WMplsTeTunnel> getIncomingIpConnections ()
+	public SortedSet<WIpSourceRoutedConnection> getIncomingIpConnections ()
 	{
 		return n.getIncomingRoutes(getNet().getIpLayer().getNe()).stream().
-				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isMplsTeTunnel(); }).
-				map(ee -> new WMplsTeTunnel(ee)).collect(Collectors.toCollection(TreeSet::new));
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
+				map(ee -> new WIpSourceRoutedConnection(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 	
 	
