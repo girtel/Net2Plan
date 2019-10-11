@@ -36,18 +36,18 @@ public class WNetConstants
 	static final String WNODE_NAMEOFANYCASTDESTINATION = "ANYCASTDESTINATION" + WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER;
 	static final String LISTSEPARATORANDINVALIDNAMECHARACTER = ",";
 	
-	static final boolean WNODE_DEFAULT_ISCONNECTEDTOCORE = false;
-	static final String WNODE_DEFAULT_TYPE = "Node";
-	static final double WNODE_DEFAULT_NUMCPU = 15;
-	static final double WNODE_DEFAULT_RAM = 15;
-	static final double WNODE_DEFAULT_HD = 15;
-	static final double WFIBER_DEFAULT_ATTCOEFFICIENTDBPERKM = 0.25;
-	static final double WFIBER_DEFAULT_PMDCOEFF_PSPERSQRKM = 0.5;
-	static final double WFIBER_DEFAULT_CDCOEFF_PSPERNMKM = 15;
-	static final List<Double> WFIBER_DEFAULT_AMPLIFIERGAIN_DB = Arrays.asList(15.0);
-	static final List<Double> WFIBER_DEFAULT_AMPLIFIERPMD_PS = Arrays.asList(15.0);
-	static final List<Double> WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION = Arrays.asList(0.0);
-	static final List<Double> WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB = Arrays.asList(6.0);
+	public static final boolean WNODE_DEFAULT_ISCONNECTEDTOCORE = false;
+	public static final String WNODE_DEFAULT_TYPE = "Node";
+	public static final double WNODE_DEFAULT_NUMCPU = 15;
+	public static final double WNODE_DEFAULT_RAM = 15;
+	public static final double WNODE_DEFAULT_HD = 15;
+	public static final double WFIBER_DEFAULT_ATTCOEFFICIENTDBPERKM = 0.25;
+	public static final double WFIBER_DEFAULT_PMDCOEFF_PSPERSQRKM = 0.5;
+	public static final double WFIBER_DEFAULT_CDCOEFF_PSPERNMKM = 15;
+	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERGAIN_DB = Arrays.asList(15.0);
+	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERPMD_PS = Arrays.asList(15.0);
+	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION = Arrays.asList(0.0);
+	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB = Arrays.asList(6.0);
 	
 	static final double WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC = 200000;
 	public static final List<Double> WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE = Arrays.asList(1.0,320.0);

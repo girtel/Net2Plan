@@ -47,6 +47,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_srg;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_link;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_node;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
@@ -242,7 +243,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             table = new AdvancedJTable_layer(callback , layerThisTable);
 			break;
 		case LINKS:
-            table = new AdvancedJTable_link(callback , layerThisTable);
+            table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_link(callback , layerThisTable) : new AdvancedJTable_link(callback , layerThisTable);
 			break;
 		case MULTICAST_DEMANDS:
             table = new AdvancedJTable_multicastDemand(callback , layerThisTable);
@@ -348,13 +349,13 @@ public class ViewEditTopologyTablesPane extends JPanel
                 	this.trafficMatrixComponent.put (layer, new NetPlanViewTableComponent_trafficMatrix(callback , layer));
                     this.demandTabbedPaneListAndMatrix.get(layer).addTab("List view", component.getSecond());
                     this.demandTabbedPaneListAndMatrix.get(layer).addTab("Traffic matrix view", trafficMatrixComponent.get(layer));
-                    subpaneThisLayer.addTab(ajType.getTabName(), demandTabbedPaneListAndMatrix.get(layer));
+                    subpaneThisLayer.addTab(component.getFirst().getTableTitle(), demandTabbedPaneListAndMatrix.get(layer));
             	}
             	else
             	{
                 	final Pair<AdvancedJTable_abstractElement, FilteredTablePanel> component = createPanelComponentInfo(ajType , layer);//createPanelComponentInfo(ajType); 
                 	netPlanViewTable.get(layer).put(ajType, component);
-                	subpaneThisLayer.addTab(ajType.getTabName(), component.getSecond());
+                	subpaneThisLayer.addTab(component.getFirst().getTableTitle(), component.getSecond());
             	}
             }
         	netPlanView.addTab(layer.getName().equals("")? "Layer " + layer.getIndex() : layer.getName() , subpaneThisLayer);

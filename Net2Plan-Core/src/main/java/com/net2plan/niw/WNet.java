@@ -30,6 +30,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
@@ -997,9 +998,75 @@ public class WNet extends WAbstractNetworkElement
 
 	public Optional<WTYPE> getWType (NetworkElement e)
 	{
-		final WAbstractNetworkElement ee = getWElement(e).orElse(null);
-		if (ee == null) return Optional.empty();
-		return Optional.of(ee.getWType());
+		if (e.getNetPlan() != this.getNe()) return Optional.empty();
+		
+		if (e == getNe ()) return Optional.of (WTYPE.WNet);
+		
+		if (e instanceof Node) return Optional.of (WTYPE.WNode);
+		if (e instanceof Link)
+		{
+			final Link ee = (Link) e;
+			final boolean isIpLayer = ee.getLayer().equals(this.getIpLayer().getNe());
+			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer)
+			{
+				if (new WNode (ee.getOriginNode()).isVirtualNode()) return Optional.empty();
+				if (new WNode (ee.getDestinationNode()).isVirtualNode()) return Optional.empty();
+				return Optional.of (WTYPE.WIpLink);
+			}
+			if (isWdmLayer) return Optional.of (WTYPE.WFiber);
+		}
+		if (e instanceof Demand)
+		{
+			final Demand ee = (Demand) e;
+			final boolean isIpLayer = ee.getLayer().equals(this.getIpLayer().getNe());
+			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer && ee.isCoupled())
+			{
+				assert ee.isCoupledInSameLayer();
+				assert ee.getCoupledLink().hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
+				return Optional.empty(); // bundles
+			}
+			if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
+				return Optional.of (WTYPE.WIpUnicastDemand);
+			if (isIpLayer && new WNode (ee.getIngressNode()).isVirtualNode())
+				return Optional.of (WTYPE.WServiceChainRequest);
+			if (isWdmLayer) return Optional.of (WTYPE.WLightpathRequest);
+		}
+		if (e instanceof Route)
+		{
+			final Route ee = (Route) e;
+			final boolean isIpLayer = ee.getLayer().equals(this.getIpLayer().getNe());
+			final boolean isWdmLayer = ee.getLayer().equals(this.getWdmLayer().getNe());
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer)
+			{
+				if (ee.getDemand().isCoupled()) return Optional.empty();
+				if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
+				{
+					assert new WNode (ee.getEgressNode()).isRegularNode();
+					return Optional.of (WTYPE.WIpSourceRoutedConnection);
+				}
+				assert new WNode (ee.getIngressNode()).isVirtualNode();
+				assert new WNode (ee.getEgressNode()).isVirtualNode();
+				return Optional.of (WTYPE.WServiceChain);
+			}
+			if (isWdmLayer) return Optional.of (WTYPE.WLightpath);
+		}
+		if (e instanceof Resource)
+		{
+			final Resource ee = (Resource) e;
+			return Optional.of (WTYPE.WVnfInstance);
+		}
+		if (e instanceof NetworkLayer)
+		{
+			final NetworkLayer ee = (NetworkLayer) e;
+			if (ee.getName().equals(WNetConstants.wdmLayerName)) return Optional.of (WTYPE.WLayerWdm);
+			if (ee.getName().equals(WNetConstants.ipLayerName)) return Optional.of (WTYPE.WLayerIp);
+		}
+		return Optional.empty();
 	}
 	
 	public Optional<WAbstractNetworkElement> getWElement (NetworkElement e)

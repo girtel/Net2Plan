@@ -121,6 +121,8 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
 
     }
 
+    public String getTableTitle ( ) { return this.tableTitle; }
+    
     public Function<T,Color> getColoringFunctionForTheFullRowIfNotSelected () { return this.coloringFunctionForTheFullRowIfNotSelected; }
     
     /**

@@ -87,7 +87,7 @@ public class OpticalSimulationModule
    			 final WNode oadm_a = fiber.getA();
    			 final double totalFiberGain_dB = fiber.getAmplifierGains_dB().stream().mapToDouble(e->e).sum();
    			 final double totalFiberAttenuation_dB = fiber.getAttenuationCoefficient_dbPerKm() * fiber.getLengthInKm();
-   			 final double totalFiberCdBalance_psPerNm = fiber.getChromaticDispersionCoeff_psPerNmKm() * fiber.getLengthInKm() + fiber.getAmplifierCdCompensarion_psPerNm().stream().mapToDouble(e->e).sum();
+   			 final double totalFiberCdBalance_psPerNm = fiber.getChromaticDispersionCoeff_psPerNmKm() * fiber.getLengthInKm() + fiber.getAmplifierCdCompensation_psPerNm().stream().mapToDouble(e->e).sum();
    			 final double totalFiberPmdSquaredBalance_ps2 = fiber.getLengthInKm() * Math.pow(fiber.getPmdLinkDesignValueCoeff_psPerSqrtKm() , 2) + fiber.getAmplifierPmd_ps().stream().mapToDouble(e->Math.pow(e, 2)).sum();
    			 final boolean isAEqualizing = oadm_a.isConfiguredToEqualizeOutput();
    			 final double startFiber_powerLp_dBm;

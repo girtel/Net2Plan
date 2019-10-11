@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -167,7 +169,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min gains (dB)", "Minimum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableGains_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max gains (dB)", "Maximum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableGains_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA NFs (dB)", "Noise factors in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierNoiseFactor_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA CD (ps/nm)", "Chromatic dispersion compensation inside this OLA if any", null , d->toWFiber.apply(d).getAmplifierCdCompensarion_psPerNm().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA CD (ps/nm)", "Chromatic dispersion compensation inside this OLA if any", null , d->toWFiber.apply(d).getAmplifierCdCompensation_psPerNm().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA PMD (ps)", "PMD factor for this OLA", null , d->toWFiber.apply(d).getAmplifierPmd_ps().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA input power (dBm)", "Total power at the input of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->osim.isOkOpticalPowerAtAmplifierInputAllOlas(toWFiber.apply(d))? null : Color.RED));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA output power (dBm)", "Total power at the output of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
@@ -530,113 +532,208 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	
     	if (isWdmLayer)
     	{
-    		
-    	}
-    	
-    	
-    	
-        res.add(new AjtRcMenu("Add link", e->AdvancedJTable_demand.createLinkDemandGUI(NetworkElementType.LINK, getTableNetworkLayer () , callback), (a,b)->true, null));
-        res.add(new AjtRcMenu("Remove selected links", e->getSelectedElements().forEach(dd->((Link)dd).remove()) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Generate full-mesh", null , (a, b)->true, Arrays.asList( 
-        		new AjtRcMenu("Link length as Euclidean distance", e->new FullMeshTopology(this , callback, true), (a, b)->true, null),
-        		new AjtRcMenu("Link length as Haversine distance", e->new FullMeshTopology(this , callback, false), (a, b)->true, null)
-        		)));
-        
-        res.add(new AjtRcMenu("Arrange selected links in bidirectional pairs", e->
-        {
-        	final SortedSet<Link> nonBidiLinks = getSelectedElements().stream().filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
-        	final Map<Pair<Node,Node> , Link> nodePair2link = new HashMap<>();
-        	for (Link ee : nonBidiLinks)
-        	{
-        		final Pair<Node,Node> pair = Pair.of(ee.getOriginNode() , ee.getDestinationNode());
-        		if (nodePair2link.containsKey(pair)) throw new Net2PlanException ("At most one link per node pair is allowed");
-        		nodePair2link.put(pair, ee);
-        	}
-        	for (Link ee : nonBidiLinks)
-        	{
-        		if (ee.isBidirectional()) continue;
-        		final Link opposite = nodePair2link.get(Pair.of(ee.getDestinationNode(), ee.getOriginNode()));
-        		if (opposite == null) continue;
-        		if (opposite.isBidirectional()) continue;
-        		ee.setBidirectionalPair(opposite);
-        	}
-        }
-        , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Add fiber", e->
+            {
+              DialogBuilder.launch(
+              "Add fiber" , 
+              "Please introduce the information required.", 
+              "", 
+              this, 
+              Arrays.asList(
+              		InputForDialog.inputTfString("Input node name", "Introduce the name of the input node", 10, ""),
+              		InputForDialog.inputTfString("End node name", "Introduce the name of the end node", 10, ""),
+              		InputForDialog.inputCheckBox("Bidirectional?", "If checked, two fibers in opposite directions are created", true, null)
+              		),
+              (list)->
+              	{
+            		final String aName  = (String) list.get(0).get();
+            		final String bName  = (String) list.get(1).get();
+            		final boolean isBidirectional = (Boolean) list.get(2).get();
+            		final WNode a = nodeByName.apply(aName).orElse(null);
+            		final WNode b = nodeByName.apply(bName).orElse(null);
+            		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
+            		wNet.addFiber(a, b, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES, -1.0 , isBidirectional);
+              	}
+              );
+            }
+            , (a,b)->true, null));
 
-        res.add(new AjtRcMenu("Decouple selected links", e->getSelectedElements().forEach(dd->((Link)dd).decouple()) , (a,b)->b>0, null));
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+            res.add(new AjtRcMenu("Remove selected fibers", e->getSelectedElements().forEach(dd->toWFiber.apply(dd).remove()) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Generate full-mesh of fibers", e->
+            		{
+    			for (WNode n1 : wNet.getNodes ())
+    				for (WNode n2 : wNet.getNodes ())
+    					if (n1.getId() < n2.getId ())
+    						wNet.addFiber(n1, n2, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES, -1.0, true);
+            		} , (a, b)->true, null));
+            res.add(new AjtRcMenu("Set selected links length as", null , (a,b)->b>0, Arrays.asList(
+            		new AjtRcMenu("Constant value", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set selected links length (km)" , 
+                                "Please introduce the link length. Negative values are not allowed. The length will be assigned to not coupled links", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
+                                (list)->
+                                	{
+                                		final double newLinkLength = (Double) list.get(0).get();
+                                		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(newLinkLength));
+                                	}
+                                );
+                    } , (a,b)->b>0, null) , 
+            		
+            		new AjtRcMenu("Scaled version of current lengths", e->
+                    {
+                        DialogBuilder.launch(
+                                "Scale selected links length (km)" , 
+                                "Please introduce the scaling factor for which the link lengths will be multiplied. Negative values are not allowed. The length will be assigned to not coupled links", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
+                                (list)->
+                                	{
+                                		final double scalingFactor = (Double) list.get(0).get();
+                                		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(scalingFactor * ee.getLengthInKm()));
+                                	}
+                                );
+                    } , (a,b)->b>0, null) ,         		
+            		new AjtRcMenu("As the euclidean node pair distance", e->
+                    {
+                		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(np.getNodePairEuclideanDistance(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
+                    } , (a,b)->b>0, null) ,
+            		
+            		new AjtRcMenu("As the harversine node pair distance", e->
+                    {
+                		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(np.getNodePairHaversineDistanceInKm(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
+                    } , (a,b)->b>0, null)
+            		)));
+
+            res.add(new AjtRcMenu("Arrange selected fibers in bidirectional pairs", e->
+            {
+            	final SortedSet<WFiber> nonBidiLinks = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
+            	final Map<Pair<WNode,WNode> , WFiber> nodePair2link = new HashMap<>();
+            	for (WFiber ee : nonBidiLinks)
+            	{
+            		final Pair<WNode,WNode> pair = Pair.of(ee.getA() , ee.getB());
+            		if (nodePair2link.containsKey(pair)) throw new Net2PlanException ("At most one link per node pair is allowed");
+            		nodePair2link.put(pair, ee);
+            	}
+            	for (WFiber ee : nonBidiLinks)
+            	{
+            		if (ee.isBidirectional()) continue;
+            		final WFiber opposite = nodePair2link.get(Pair.of(ee.getB(), ee.getA()));
+            		if (opposite == null) continue;
+            		if (opposite.isBidirectional()) continue;
+            		ee.setBidirectionalPair(opposite);
+            	}
+            }
+            , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Remove bidirectional relation of selected fibers", e-> getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.removeBidirectionalPairRelation()) , (a,b)->b>0, null));
+            
+            res.add(new AjtRcMenu("Set attenuation coef. dB/km to selected fibers", e-> 
+            DialogBuilder.launch(
+                    "Set attenuation coefficient (dB/km)" , 
+                    "Please introduce the requested information", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfDouble("Attenuation coefficient (dB/km)", "Introduce the attenuation coefficient", 10, WNetConstants.WFIBER_DEFAULT_ATTCOEFFICIENTDBPERKM)),
+                    (list)->
+                    	{
+                    		final double value = (Double) list.get(0).get();
+                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setAttenuationCoefficient_dbPerKm(value));
+                    	}
+                    ) , (a,b)->b>0, null));
+
+            res.add(new AjtRcMenu("Set chromatic dispersion coef. ps/nm/km to selected fibers", e-> 
+            DialogBuilder.launch(
+                    "Set chromatic dispersion coefficient (ps/nm/km)" , 
+                    "Please introduce the requested information", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfDouble("Chromatic dispersion coefficient (ps/nm/km)", "Introduce the chromatic dispersion coefficient", 10, WNetConstants.WFIBER_DEFAULT_CDCOEFF_PSPERNMKM)),
+                    (list)->
+                    	{
+                    		final double value = (Double) list.get(0).get();
+                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setChromaticDispersionCoeff_psPerNmKm(value));
+                    	}
+                    ) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set PMD link design value (ps/sqrt(km)) to selected fibers", e-> 
+            DialogBuilder.launch(
+                    "Set PMD link design value (ps/sqrt(km))" , 
+                    "Please introduce the requested information", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfDouble("Polarization Model Dispersion (PMD) coefficient (ps/sqrt(km))", "Introduce the PMD link design value.", 10, WNetConstants.WFIBER_DEFAULT_PMDCOEFF_PSPERSQRKM)),
+                    (list)->
+                    	{
+                    		final double value = (Double) list.get(0).get();
+                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setChromaticDispersionCoeff_psPerNmKm(value));
+                    	}
+                    ) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set valid optical slot ranges to selected fibers", e-> 
+            DialogBuilder.launch(
+                    "Set valid optical slot ranges " , 
+                    "Please introduce the requested information. Each slot has a size of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz. Slot zero is centered at the frequency of " + WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + " THz", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfString("Space-separated indexes of the initial and final slots", "An even number of integers separated by spaces. Each pair of integers is the initial and end slot of a range of frequencies that is usable in this fiber.", 10, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE.stream().map(ee->""+ee.intValue()).collect (Collectors.joining(" ")))),
+                    (list)->
+                    	{
+                    		final String auxListSt = (String) list.get(0).get();
+                    		final List<Integer> auxList = Stream.of(auxListSt.split(" ")).map(ee->Integer.parseInt(ee)).collect(Collectors.toList());
+                    		final Iterator<Integer> it = auxList.iterator();
+                    		final List<Pair<Integer,Integer>> listSlotsRanges = new ArrayList<> ();
+                    		while (it.hasNext())
+                    		{
+                    			final int startRange = it.next();
+                    			if (!it.hasNext()) throw new Net2PlanException("Invalid optical slot ranges");
+                    			final int endRange = it.next();
+                    			if (endRange < startRange) throw new Net2PlanException("Invalid optical slot ranges");
+                    			listSlotsRanges.add(Pair.of(startRange, endRange));
+                    		}
+                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setValidOpticalSlotRanges(listSlotsRanges));
+                    	}
+                    ) , (a,b)->b>0, null));
+
+            res.add(new AjtRcMenu("Set optical line amplifiers (OLA) info to selected fibers", e->
+            {
+            	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
+            	if (firstFiber == null) return;
+            	DialogBuilder.launch(
+                    "Set optical line amplifiers (OLA) info" , 
+                    "Please introduce the requested information. All the lists are space-separated and with the same number of elements, one per optical line amplifier" , 
+                    "", 
+                    this, 
+                    Arrays.asList(
+                    		InputForDialog.inputTfString("OLA positions (km from fiber init)", "A space separated list, wiht as many elements as OLAs, and the OLA position in km from the fiber start point.", 10, firstFiber.getAmplifierPositionsKmFromOrigin_km().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
+                    		InputForDialog.inputTfString("OLA gains (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA gains in dB.", 10, firstFiber.getAmplifierGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
+                    		InputForDialog.inputTfString("OLA noise factors (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA noise factors in dB.", 10, firstFiber.getAmplifierNoiseFactor_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
+                    		InputForDialog.inputTfString("OLA PMDs (ps)", "A space separated list, wiht as many elements as OLAs, and the OLA added PMD in ps.", 10, firstFiber.getAmplifierPmd_ps().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
+                    		InputForDialog.inputTfString("OLA CD compensation (ps/nm)", "A space separated list, wiht as many elements as OLAs, and the OLA chromatic dispersion that is compensated within the OLA in ps/nm.", 10, firstFiber.getAmplifierCdCompensation_psPerNm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
+                    		InputForDialog.inputTfString("OLA minimum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable gain in dB.", 10, firstFiber.getAmplifierMinAcceptableGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
+                    		InputForDialog.inputTfString("OLA maximum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable gain in dB.", 10, firstFiber.getAmplifierMaxAcceptableGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
+                    		InputForDialog.inputTfString("OLA minimum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable input power in dBm.", 10, firstFiber.getAmplifierMinAcceptableInputPower_dBm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
+                    		InputForDialog.inputTfString("OLA maximum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable input power in dBm.", 10, firstFiber.getAmplifierMaxAcceptableInputPower_dBm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" ")))
+                    	),
+                    (list)->
+                    	{
+                    		final List<Double> posKm = Stream.of(((String) list.get(0).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		final List<Double> gainDb = Stream.of(((String) list.get(1).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		final List<Double> nfDb = Stream.of(((String) list.get(2).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		final List<Double> pmdPs = Stream.of(((String) list.get(3).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		final List<Double> cd = Stream.of(((String) list.get(4).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		final List<Double> minGain = Stream.of(((String) list.get(5).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		final List<Double> maxGain = Stream.of(((String) list.get(6).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		final List<Double> minPower = Stream.of(((String) list.get(7).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		final List<Double> maxPower = Stream.of(((String) list.get(8).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setAmplifiersTraversedInfo(posKm, gainDb , nfDb , pmdPs , cd , minGain , maxGain , minPower , maxPower));
+                    	}
+                    ); 
+            } , (a,b)->b>0, null));
+    	}
 
         return res;
     }
-    
-    
-    static class FullMeshTopology
-    {
-        private final GUINetworkDesign callback;
-        private final boolean euclidean;
-        private AdvancedJTable_networkElement table;
-        
-        public FullMeshTopology(AdvancedJTable_networkElement table , GUINetworkDesign callback, boolean euclidean)
-        {
-            this.callback = callback;
-            this.euclidean = euclidean;
-            this.table = table;
-            create();
-        }
-
-        public void create()
-        {
-            assert callback != null;
-
-            NetPlan netPlan = callback.getDesign();
-
-            // Ask for current element removal
-            if (netPlan.hasLinks(table.getTableNetworkLayer ()))
-            {
-                final int answer = JOptionPane.showConfirmDialog(null, "Remove all existing links?", "", JOptionPane.YES_NO_CANCEL_OPTION);
-                if (answer == JOptionPane.CANCEL_OPTION || answer == JOptionPane.CLOSED_OPTION) return;
-                if (answer == JOptionPane.OK_OPTION) netPlan.removeAllLinks(table.getTableNetworkLayer ());
-            }
-
-            for (long nodeId_1 : netPlan.getNodeIds())
-            {
-                for (long nodeId_2 : netPlan.getNodeIds())
-                {
-                    if (nodeId_1 >= nodeId_2) continue;
-                    Node n1 = netPlan.getNodeFromId(nodeId_1);
-                    Node n2 = netPlan.getNodeFromId(nodeId_2);
-
-                    Pair<Link, Link> out = netPlan.addLinkBidirectional(n1, n2, 0, euclidean ? netPlan.getNodePairEuclideanDistance(n1, n2) : netPlan.getNodePairHaversineDistanceInKm(n1, n2), 200000, null);
-                }
-            }
-            callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-            callback.updateVisualizationAfterChanges();
-            callback.addNetPlanChange();
-        }
-
-    }
-
-
     
 }

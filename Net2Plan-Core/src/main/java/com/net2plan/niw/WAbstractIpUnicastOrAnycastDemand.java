@@ -178,7 +178,7 @@ public abstract class WAbstractIpUnicastOrAnycastDemand extends WAbstractNetwork
 	 */
 	public final boolean isUpstream()
 	{
-		final Boolean res = getAttributeAsBooleanOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISUPSTREAM, null);
+		final Boolean res = getAttributeAsBooleanOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISUPSTREAM, false);
 		assert res != null;
 		return res;
 	}

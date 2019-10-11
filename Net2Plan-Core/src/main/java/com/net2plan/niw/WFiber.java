@@ -288,7 +288,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Gets the chromatic dispersion compensation in the amplifier (if any) in ps per nm
 	 * @return see above
 	 */
-	public List<Double> getAmplifierCdCompensarion_psPerNm ()
+	public List<Double> getAmplifierCdCompensation_psPerNm ()
 	{
 		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION.get(0)));
 	}
@@ -366,7 +366,7 @@ public class WFiber extends WAbstractNetworkElement
 
 	public double getAccumulatedChromaticDispersion_psPerNm ()
 	{
-		return this.getLengthInKm() * this.getChromaticDispersionCoeff_psPerNmKm() + this.getAmplifierCdCompensarion_psPerNm().stream().mapToDouble(e->e).sum();
+		return this.getLengthInKm() * this.getChromaticDispersionCoeff_psPerNmKm() + this.getAmplifierCdCompensation_psPerNm().stream().mapToDouble(e->e).sum();
 	}
 	
 	/**
@@ -545,5 +545,27 @@ public class WFiber extends WAbstractNetworkElement
 		}
 		return true;
 	}
+
 	
+	/**
+	 * Makes that this fiber to be tagged as the opposite one to other, and viceversa. 
+	 */
+	public void  setBidirectionalPair(WFiber fiber)
+	{
+		if (fiber == null) throw new Net2PlanException("Please specify a not null fiber");
+		if (!this.getA().equals(fiber.getB())) throw new Net2PlanException ("Fibers have no opposite end nodes");
+		if (!this.getB().equals(fiber.getA())) throw new Net2PlanException ("Fibers have no opposite end nodes");
+		removeBidirectionalPairRelation();
+		getNe().setBidirectionalPair(fiber.getNe());
+	}
+
+	/**
+	 * If this fiber has an opposite fiber associated, removes such association. If not, makes nothing
+	 */
+	public void removeBidirectionalPairRelation()
+	{
+		if (!this.isBidirectional()) return;
+		getNe().setBidirectionalPair(null);
+	}
+
 }

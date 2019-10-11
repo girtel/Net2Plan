@@ -36,7 +36,8 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 		// if associated element == null, this is a dummy fiber, used in some graphs
 		this.associatedNpElement = associatedNpElement;
 		this.indexIfDummyElement = indexIfDummyElement;
-		assert getNet().getWType(associatedNpElement).orElse(null) == this.getWType();
+		if (this.getWType() != WTYPE.WNet)
+			assert getNet().getWType(associatedNpElement).orElse(null) == this.getWType();
 	}
 
 	/**
@@ -65,7 +66,7 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 * @param defaultValue see above
 	 * @return see above
 	 */
-	public boolean getAttributeAsBooleanOrDefault(String name, Boolean defaultValue)
+	public Boolean getAttributeAsBooleanOrDefault(String name, Boolean defaultValue)
 	{
 		final String s = associatedNpElement.getAttribute(name);
 		if (s == null) return defaultValue;
