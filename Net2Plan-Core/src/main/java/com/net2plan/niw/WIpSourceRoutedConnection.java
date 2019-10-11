@@ -51,6 +51,17 @@ public class WIpSourceRoutedConnection extends WAbstractNetworkElement
 		return getNe().getSeqLinks().stream().map(ee->new WIpLink (ee)).filter(e->!e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
 	}
 	
+	public double getWorstCaseLengthInKm ()
+	{
+		return getSequenceOfTraversedIpLinks().stream().mapToDouble(e->e.getWorstCaseLengthInKm()).sum();
+	}
+
+	public double getWorstCasePropgationLatencyInMs ()
+	{
+		return getSequenceOfTraversedIpLinks().stream().mapToDouble(e->e.getWorstCasePropagationDelayInMs()).sum();
+	}
+
+	
 	/** Returns the sequence of traversed IP links and VNF instances traversed
 	 * @return see above
 	 */

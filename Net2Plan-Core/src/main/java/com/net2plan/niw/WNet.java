@@ -348,8 +348,14 @@ public class WNet extends WAbstractNetworkElement
 		if (getNodes().stream().anyMatch(n -> n.getName().equals(name))) ex("Names cannot be repeated");
 		final WNode n = new WNode(getNetPlan().addNode(xCoord, yCoord, name, null));
 		n.setType(type);
-		addIpLinkUnidirectional(getAnycastOriginNode(), n, Double.MAX_VALUE);
-		addIpLinkUnidirectional(n, getAnycastDestinationNode(), Double.MAX_VALUE);
+		
+		/* Add the virtual links from the anycast nodes to this node */ 
+		final Link anycastOriginToNode = getNetPlan().addLink(getAnycastOriginNode().getNe(), n.getNe(), Double.MAX_VALUE, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
+		anycastOriginToNode.setAttribute(WIpLink.ATTNAMECOMMONPREFIX + WIpLink.ATTNAMESUFFIX_NOMINALCAPACITYGBPS, Double.MAX_VALUE);
+
+		final Link nodeToAnycastDestination = getNetPlan().addLink(n.getNe(), getAnycastDestinationNode().getNe() , Double.MAX_VALUE, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
+		nodeToAnycastDestination.setAttribute(WIpLink.ATTNAMECOMMONPREFIX + WIpLink.ATTNAMESUFFIX_NOMINALCAPACITYGBPS, Double.MAX_VALUE);
+
 		return n;
 	}
 
@@ -570,14 +576,6 @@ public class WNet extends WAbstractNetworkElement
 		return Pair.of(WIpLink.createFromAdd(ee.getFirst(), nominalLineRateGbps), WIpLink.createFromAdd(ee.getSecond(), nominalLineRateGbps));
 	}
 
-	Pair<WIpLink, WIpLink> addIpLinkUnidirectional (WNode a, WNode b, double nominalLineRateGbps)
-	{
-		checkInThisWNet(a, b);
-		final Link ee = getNetPlan().addLink(a.getNe(), b.getNe(), nominalLineRateGbps, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
-		return Pair.of(WIpLink.createFromAdd(ee, nominalLineRateGbps), null);
-	}
-
-	
 	/**
 	 * Returns the network node with the indicated name, if any
 	 * @param name see above

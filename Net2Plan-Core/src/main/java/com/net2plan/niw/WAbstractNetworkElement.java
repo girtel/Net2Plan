@@ -37,7 +37,17 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 		this.associatedNpElement = associatedNpElement;
 		this.indexIfDummyElement = indexIfDummyElement;
 		if (this.getWType() != WTYPE.WNet)
-			assert getNet().getWType(associatedNpElement).orElse(null) == this.getWType();
+		{
+			final WTYPE type1 = getNet().getWType(associatedNpElement).orElse(null);
+			final WTYPE type2 = this.getWType();
+			if (type1 != type2) 
+			{
+				System.out.println("TYPE ACCORDING TO associtatedElement: " + type1 + " . According to this.getType(): " + type2);
+				System.out.println("associatedNpElement: " + associatedNpElement);
+			}
+			assert type1 == type2;
+			
+		}
 	}
 
 	/**
@@ -223,6 +233,16 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	}
 
 	/**
+	 * Returns true if this element is an IP source routde connection
+	 * @return see above
+	 */
+	public boolean isIpConnection()
+	{
+		return this instanceof WIpSourceRoutedConnection;
+	}
+
+
+	/**
 	 * Returns true if this element is an IP layer
 	 * @return see above
 	 */
@@ -253,7 +273,7 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 * Returns true if this element is a lightpath unregenerated (without intermediate regenerations)
 	 * @return see above
 	 */
-	public boolean isLightpathUnregenerated()
+	public boolean isLightpath()
 	{
 		return this instanceof WLightpath;
 	}

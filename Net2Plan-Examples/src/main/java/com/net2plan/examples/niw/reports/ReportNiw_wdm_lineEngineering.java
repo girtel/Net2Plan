@@ -204,12 +204,12 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			append("<td>" + r.getSeqFibers().stream().mapToInt(e->e.getNumberOfOpticalLineAmplifiersTraversed()).sum() + "</td>").
 			append("<td>" + (r.getSeqFibers().size()+1) + "</td>").
 			append("<td>" + df_2.format(r.getAddTransponderInjectionPower_dBm()) + "</td>");
-			final double powerReceiver_dBm = osim.getOpticalPerformanceAtTransponderReceiverEnd_dBm(r).get(PERLPINFOMETRICS.POWER_DBM);
-			final double cdReceiver_psPernm = osim.getOpticalPerformanceAtTransponderReceiverEnd_dBm(r).get(PERLPINFOMETRICS.CD_PERPERNM);
-			final double osnrReceiver_dB = osim.getOpticalPerformanceAtTransponderReceiverEnd_dBm(r).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW);
-			final double pmdReceiver_ps = Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd_dBm(r).get(PERLPINFOMETRICS.PMDSQUARED_PS2));
+			final double powerReceiver_dBm = osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.POWER_DBM);
+			final double cdReceiver_psPernm = osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.CD_PERPERNM);
+			final double osnrReceiver_dB = osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW);
+			final double pmdReceiver_ps = Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.PMDSQUARED_PS2));
 			final boolean ok_powerReceiver = powerReceiver_dBm >= r.getTransponderMinimumTolerableReceptionPower_dBm() && powerReceiver_dBm <= r.getTransponderMinimumTolerableReceptionPower_dBm();
-			final boolean ok_cdReceiver = Math.abs(cdReceiver_psPernm) <= r.getTransponderMinimumTolerableCdInAbsoluteValue_perPerNm();
+			final boolean ok_cdReceiver = Math.abs(cdReceiver_psPernm) <= r.getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm();
 			final boolean ok_osnrReceiver = osnrReceiver_dB >= r.getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB();
 			final boolean ok_pmdReceiver = pmdReceiver_ps >= r.getTransponderMaximumTolerablePmd_ps();
 			out.append("<td bgcolor=\"" + (ok_powerReceiver?"PaleGreen":"Red") +"\">" + df_2.format(powerReceiver_dBm) + "</td>");
@@ -221,7 +221,7 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			if (!ok_powerReceiver)
 				st.append("<p>Rx power is " + df_2.format(powerReceiver_dBm) + " dBm. It should be between [" + df_2.format(r.getTransponderMinimumTolerableReceptionPower_dBm()) + ", " + df_2.format(r.getTransponderMinimumTolerableReceptionPower_dBm()) + "] dBm</p>");
 			if (!ok_cdReceiver)
-				st.append("<p>Rx CD is " + df_2.format(cdReceiver_psPernm) + " ps/nm. Absolute value should be below " + df_2.format(r.getTransponderMinimumTolerableCdInAbsoluteValue_perPerNm())+ "</p>");
+				st.append("<p>Rx CD is " + df_2.format(cdReceiver_psPernm) + " ps/nm. Absolute value should be below " + df_2.format(r.getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm())+ "</p>");
 			if (!ok_osnrReceiver)
 				st.append("<p>Rx OSNR is " + df_2.format(osnrReceiver_dB) + " dB. Should be over " + df_2.format(r.getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB())+ "</p>");
 			if (!ok_pmdReceiver)

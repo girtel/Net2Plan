@@ -236,14 +236,14 @@ public class OpticalSimulationModule
    			 perFiberPerMetric_valStartEndAndAtEachOlaInputOutput.get(fiber).get(PERFIBERINFOMETRICS.TOTALPOWER_DBM).getFirst (), 
    			 perFiberPerMetric_valStartEndAndAtEachOlaInputOutput.get(fiber).get(PERFIBERINFOMETRICS.TOTALPOWER_DBM).getSecond ());
     }
-    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderReceiverEnd_dBm (WLightpath lp)
+    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderReceiverEnd (WLightpath lp)
     {
    	 final Map<PERLPINFOMETRICS , Double> res = new HashMap<> ();
    	 for (PERLPINFOMETRICS type : PERLPINFOMETRICS.values())
    		 res.put(type, perPerLpPerMetric_valStartEnd.get(lp).get(type).getSecond());
    	 return res;
     }
-    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderTransmitterEnd_dBm (WLightpath lp)
+    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderTransmitterEnd (WLightpath lp)
     {
    	 final Map<PERLPINFOMETRICS , Double> res = new HashMap<> ();
    	 for (PERLPINFOMETRICS type : PERLPINFOMETRICS.values())

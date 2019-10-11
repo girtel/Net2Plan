@@ -51,14 +51,17 @@ public class WServiceChain extends WAbstractNetworkElement
 	 */
 	public List<WIpLink> getSequenceOfTraversedIpLinks () 
 	{
-		return r.getSeqLinks().stream().map(ee->new WIpLink (ee)).filter(e->!e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
+		return r.getSeqLinks().stream().
+				filter(ee->getNet().getWElement(ee).equals(Optional.of(WTYPE.WIpLink))).
+				map(ee->new WIpLink (ee)).filter(e->!e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
 	}
 	/** Returns the sequence of traversed VNF instances, filtering out any IP link traversed
 	 * @return see above
 	 */
 	public List<WVnfInstance> getSequenceOfTraversedVnfInstances () 
 	{
-		return r.getSeqResourcesTraversed().stream().map(ee->new WVnfInstance (ee)).collect(Collectors.toCollection(ArrayList::new));
+		return r.getSeqResourcesTraversed().stream().
+				map(ee->new WVnfInstance (ee)).collect(Collectors.toCollection(ArrayList::new));
 	}
 	
 	public List<Double> getCurrentExpansionFactorApplied () 
@@ -91,7 +94,11 @@ public class WServiceChain extends WAbstractNetworkElement
 	 */
 	public List<? extends WAbstractNetworkElement> getSequenceOfLinksAndVnfs ()
 	{
-		return r.getPath().stream().map(ee->(ee instanceof Link? new WIpLink ((Link) ee) : new WVnfInstance ((Resource) ee))).filter(e->e.isWIpLink()? !e.getAsIpLink().isVirtualLink() : true).collect(Collectors.toCollection(ArrayList::new));
+		return r.getPath().stream().
+				filter(ee->getNet().getWElement(ee).isPresent()).
+				map(ee->getNet().getWElement(ee).get()).
+				filter(e->e.isWIpLink()? !e.getAsIpLink().isVirtualLink() : true).
+				collect(Collectors.toCollection(ArrayList::new));
 	}
 	/** Returns the traffic injected by the service chain origin node in Gbps
 	 * @return see above

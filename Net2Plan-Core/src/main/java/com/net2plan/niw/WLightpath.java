@@ -74,7 +74,7 @@ public class WLightpath extends WAbstractNetworkElement
 	/** Returns the tolerance of the receiver side in terms of chromatic dispersion value at the receiver, in absolute value. Defaults to -DOUBLE.MAX_VALUE
 	 * @return see above
 	 */
-	public double getTransponderMinimumTolerableCdInAbsoluteValue_perPerNm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM, Double.MAX_VALUE); }
+	public double getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM, Double.MAX_VALUE); }
 	/** Returns the tolerance of the receiver side in terms of OSNR at 12.5 GHz of reference bandwidth. Defaults to 20 dB
 	 * @return see above
 	 */
@@ -87,7 +87,7 @@ public class WLightpath extends WAbstractNetworkElement
 	/** Returns the tolerance of the receiver side in terms of chromatic dispersion value at the receiver, in absolute value. 
 	 * @return see above
 	 */
-	public void setTransponderMinimumTolerableCdInAbsoluteValue_perPerNm (double cdTolerance_psPerNm) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM, cdTolerance_psPerNm); }
+	public void setTransponderMaximumTolerableCdInAbsoluteValue_perPerNm (double cdTolerance_psPerNm) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM, cdTolerance_psPerNm); }
 	/** Sets the tolerance of the receiver side in terms of OSNR at a reference bandwidth of 12.5 GHz. 
 	 */
 	public void setTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB (double osnrTolerance_dB) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMINIMUMOSNR_DB, osnrTolerance_dB); }
