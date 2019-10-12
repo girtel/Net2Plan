@@ -134,7 +134,7 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Transponder info") , "Max. CD (ps/nm)", "The maximum chromatic dispersion in absolutte value, measured in ps/nm, acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMaximumTolerableCdInAbsoluteValue_perPerNm((Double)val) , d->toLp.apply(d).getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm(), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Transponder info") , "Max. PMS (ps)", "The maximum polarization mode dispersion (PMD), measured in ps, acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMaximumTolerablePmd_ps((Double)val) , d->toLp.apply(d).getTransponderMaximumTolerablePmd_ps(), AGTYPE.NOAGGREGATION , null));
 
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Injection power (dBm)", "The injection power of the transponder in the ADD part (transmission side)", (d,val)->toLp.apply(d).setAddTransponderInjectionPower_dBm((Double)val) , d->toLp.apply(d).getAddTransponderInjectionPower_dBm(), AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Injection power (dBm)", "The injection power of the lightpath, measured at the output of the transponder", (d,val)->toLp.apply(d).setAddTransponderInjectionPower_dBm((Double)val) , d->toLp.apply(d).getAddTransponderInjectionPower_dBm(), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tx end: power (dBm)", "The optical power at the transmission end of the lightpath", null , d->osim.getOpticalPerformanceAtTransponderTransmitterEnd(toLp.apply(d)).get(PERLPINFOMETRICS.POWER_DBM), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tx end: OSNR (dB)", "The OSNR (at 12.5 GHz reference bandwidth) of the lightpath at the transmission end", null , d->osim.getOpticalPerformanceAtTransponderTransmitterEnd(toLp.apply(d)).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tx end: CD (ps/nm)", "The chromatic dispersion in ps/nm of the lightpath at the transmission end", null , d->osim.getOpticalPerformanceAtTransponderTransmitterEnd(toLp.apply(d)).get(PERLPINFOMETRICS.CD_PERPERNM), AGTYPE.NOAGGREGATION , null));
@@ -172,540 +172,128 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
 
     	if (isIpLayer)
     	{
-
-    		
-    		
-    		res.add(new AjtRcMenu("Add IP connection", null , (a,b)->true, Arrays.asList(
-    				new AjtRcMenu("as shortest path in lantecy") , 
-    				e->
-    	            {
-    	              DialogBuilder.launch(
-    	              "Add IP source routed connection" , 
-    	              "Please introduce the information required.", 
-    	              "", 
-    	              this, 
-    	              Arrays.asList(
-    	              		InputForDialog.inputTfString("Input node name", "Introduce the name of the input node", 10, ""),
-    	              		InputForDialog.inputTfString("End node name", "Introduce the name of the end node", 10, ""),
-    	              		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate in Gbps of the IP link", 10, 100.0)
-    	              		),
-    	              (list)->
-    	              	{
-    	            		final String aName  = (String) list.get(0).get();
-    	            		final String bName  = (String) list.get(1).get();
-    	            		final double rateGbps = (Double) list.get(2).get();
-    	            		final WNode a = nodeByName.apply(aName).orElse(null);
-    	            		final WNode b = nodeByName.apply(bName).orElse(null);
-    	            		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
-    	            		wNet.addIpLinkBidirectional(a, b, rateGbps);
-    	              	}
-    	              );
-    	            } ,     (a,b)->true, null)				
-    				)
-    				));
-            
-            res.add(new AjtRcMenu("Bundle selected IP links when possible", e->
-            {
-            	final Map<Pair<WNode,WNode>,SortedSet<WIpLink>> selectedNonBundlesLowHigh = new HashMap<> ();
-            	for (Link d : getSelectedElements())
-            	{
-            		final WIpLink ee = toWIpLink.apply(d);
-            		if (ee.isBundleOfIpLinks()) continue;
-            		if (ee.isBundleMember()) continue;
-            		assert ee.isBidirectional();
-            		final WIpLink ipLinkAb = ee.getId() < ee.getBidirectionalPair().getId()? ee : ee.getBidirectionalPair();
-            		final Pair<WNode,WNode> ab = Pair.of(ipLinkAb.getA(), ipLinkAb.getB());
-            		SortedSet<WIpLink> previousAbs = selectedNonBundlesLowHigh.get(ab);
-            		if (previousAbs == null)  { previousAbs = new TreeSet<> (); selectedNonBundlesLowHigh.put (ab , previousAbs); }
-            		previousAbs.add(ipLinkAb);
-            	}
-            	for (SortedSet<WIpLink> linksAb : selectedNonBundlesLowHigh.values())
-            	{
-            		if (linksAb.isEmpty()) continue;
-            		final WNode a = linksAb.first().getA();
-            		final WNode b = linksAb.first().getB();
-            		final Pair<WIpLink , WIpLink> lag = wNet.addIpLinkBidirectional(a, b, 0.0);
-            		lag.getFirst().setIpLinkAsBundleOfIpLinksBidirectional(linksAb);
-            	}
-            }
-            , (a,b)->true, null));
-
-            res.add(new AjtRcMenu("Unbundle selected LAGs", e->
-            {
-            	for (Link d : getSelectedElements())
-            	{
-            		final WIpLink ee = toWIpLink.apply(d);
-            		if (!ee.isBundleOfIpLinks()) continue;
-            		ee.unbundleBidirectional();
-            	}
-            }
-            , (a,b)->true, null));
-            res.add(new AjtRcMenu("Remove selected IP links", e->getSelectedElements().forEach(dd->toWIpLink.apply(dd).removeBidirectional()) , (a,b)->b>0, null));
-            res.add(new AjtRcMenu("Generate full-mesh", null , (a, b)->true, Arrays.asList( 
-            		new AjtRcMenu("Link length as Euclidean distance", e->
-            		{
-            			for (WNode n1 : wNet.getNodes ())
-            				for (WNode n2 : wNet.getNodes ())
-            					if (n1.getId() < n2.getId ())
-            					{
-            						final Pair<WIpLink,WIpLink> p = wNet.addIpLinkBidirectional(n1, n2, 0.0);
-            						p.getFirst().setLengthIfNotCoupledInKm(wNet.getNe().getNodePairEuclideanDistance(n1.getNe(), n2.getNe()));
-            						p.getSecond().setLengthIfNotCoupledInKm(wNet.getNe().getNodePairEuclideanDistance(n1.getNe(), n2.getNe()));
-            					}
-            		} , (a, b)->true, null) , 
-            		new AjtRcMenu("Link length as geographical distance", e->
-            		{
-            			for (WNode n1 : wNet.getNodes ())
-            				for (WNode n2 : wNet.getNodes ())
-            					if (n1.getId() < n2.getId ())
-            					{
-            						final Pair<WIpLink,WIpLink> p = wNet.addIpLinkBidirectional(n1, n2, 0.0);
-            						p.getFirst().setLengthIfNotCoupledInKm(wNet.getNe().getNodePairHaversineDistanceInKm(n1.getNe(), n2.getNe()));
-            						p.getSecond().setLengthIfNotCoupledInKm(wNet.getNe().getNodePairHaversineDistanceInKm(n1.getNe(), n2.getNe()));
-            					}
-            		} , (a, b)->true, null) 
-            		)));
-            res.add(new AjtRcMenu("Decouple selected IP links", e->getSelectedElements().stream().filter(dd->!toWIpLink.apply(dd).isBundleOfIpLinks ()).forEach(dd-> { toWIpLink.apply(dd).decoupleFromLightpathRequest(); toWIpLink.apply(dd).getBidirectionalPair().decoupleFromLightpathRequest(); }   ) , (a,b)->b>0, null) );
-
-            res.add(new AjtRcMenu("Create & couple lightpath requests for uncoupled selected links", e->
-            {
-            	for (Link d : getSelectedElements())
-            	{
-            		final WIpLink ee = toWIpLink.apply(d);
-            		if (ee.isBundleOfIpLinks()) continue;
-            		assert ee.isBidirectional();
-            		if (ee.isCoupledtoLpRequest()) continue;
-            		if (ee.getBidirectionalPair().isCoupledtoLpRequest()) continue;
-            		final WLightpathRequest lprAb = wNet.addLightpathRequest(ee.getA(), ee.getB(), ee.getNominalCapacityGbps(), false);
-            		final WLightpathRequest lprBa = wNet.addLightpathRequest(ee.getB(), ee.getA(), ee.getNominalCapacityGbps(), false);
-            		lprAb.setBidirectionalPair(lprBa);
-            		ee.coupleToLightpathRequest(lprAb);
-            		ee.getBidirectionalPair().coupleToLightpathRequest(lprBa);
-            	}
-            } , (a,b)->b>0, null));
-            res.add(new AjtRcMenu("Couple IP link to lightpath request", e->
-            {
-            	final WIpLink ipLinkAb = toWIpLink.apply(getSelectedElements().first());
-            	final List<WLightpathRequest> lprsAb = new ArrayList<> (wNet.getLightpathRequests().stream().
-            			filter(ee->ee.getA().equals (ipLinkAb.getA())).
-            			filter(ee->ee.getB().equals (ipLinkAb.getB())).
-            			filter(ee->!ee.isCoupledToIpLink()).
-            			filter(ee->ee.getLineRateGbps() == ipLinkAb.getNominalCapacityGbps()).
-            			collect(Collectors.toCollection(TreeSet::new))); 
-            	final List<WLightpathRequest> lprsBa = new ArrayList<> (wNet.getLightpathRequests().stream().
-            			filter(ee->ee.getB().equals (ipLinkAb.getA())).
-            			filter(ee->ee.getA().equals (ipLinkAb.getB())).
-            			filter(ee->!ee.isCoupledToIpLink()).
-            			filter(ee->ee.getLineRateGbps() == ipLinkAb.getNominalCapacityGbps()).
-            			collect(Collectors.toCollection(TreeSet::new))); 
-                DialogBuilder.launch(
-                "Couple IP link to lightpath request" , 
-                "Please introduce the information required.", 
-                "", 
-                this, 
-                Arrays.asList(
-                		InputForDialog.inputTfCombo("Lp request A-B", "Introduce the lightpath request to couple in direction A-B", 10, lprsAb.get(0), lprsAb, null, null),
-                		InputForDialog.inputTfCombo("Lp request B-A", "Introduce the lightpath request to couple in direction B-A", 10, lprsBa.get(0), lprsBa, null, null)
-                		),
-                (list)->
-                	{
-              		final WLightpathRequest ab  = (WLightpathRequest) list.get(0).get();
-              		final WLightpathRequest ba  = (WLightpathRequest) list.get(1).get();
-              		ipLinkAb.coupleToLightpathRequest(ab);
-              		ipLinkAb.getBidirectionalPair().coupleToLightpathRequest(ba);
-                	}          		
-                );
-            } , (a,b)->b==1, null));
-            res.add(new AjtRcMenu("Set selected links nominal capacity", null , (a,b)->b>0, Arrays.asList(
+            res.add(new AjtRcMenu("Remove selected elements", e->getSelectedElements().forEach(dd-> { if (isIpc.apply(dd)) toIpc.apply(dd).remove (); else toSc.apply(dd).remove();  }) , (a,b)->b>0, null) );
+            res.add(new AjtRcMenu("Set selected elements injected traffic", null , (a,b)->b>0, Arrays.asList(
             		new AjtRcMenu("As constant value", e->
                     {
                         DialogBuilder.launch(
-                                "Set selected links nominal capacity" , 
-                                "Please introduce the IP link nominal capacity. Negative values are not allowed. The capacity will be assigned to not coupled links", 
+                                "Set selected elements injected traffic" , 
+                                "Please introduce the IP traffic in Gbps. Negative values are not allowed.", 
                                 "", 
                                 this, 
-                                Arrays.asList(InputForDialog.inputTfDouble("IP link nominal capacity (Gbps)", "Introduce the link capacity", 10, 0.0)),
+                                Arrays.asList(InputForDialog.inputTfDouble("IP injected traffic (Gbps)", "Introduce the injected traffic in Gbps for each IP connection / service chain", 10, 0.0)),
                                 (list)->
                                 	{
-                                		final double newLinkCapacity = (Double) list.get(0).get();
-                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach (ee->ee.setNominalCapacityGbps (newLinkCapacity));
+                                		final double val = (Double) list.get(0).get();
+                                		getSelectedElements().stream().forEach(ee->{ if (isIpc.apply(ee)) toIpc.apply(ee).setCarriedTrafficInNoFailureStateGbps(val); else toSc.apply(ee).setInitiallyInjectedTrafficGbps (val); });
                                 	}
                                 );
                     } , (a,b)->b>0, null),
-            		new AjtRcMenu("To match a given utilization", e->
-                    {
-                        DialogBuilder.launch(
-                                "Set selected links capacity to match utilization" , 
-                                "Please introduce the link target utilization. Negative values are not allowed. The capacity will be assigned to not coupled links", 
-                                "", 
-                                this, 
-                                Arrays.asList(
-                                		InputForDialog.inputTfDouble("Link utilization", "Introduce the link utilization", 10, 0.9),
-                                		InputForDialog.inputTfDouble("Capacity module (if > 0, capacities are multiple of this)", "Introduce the capacity module, so the link capacity will be the lowest multiple of this quantity that matches the required utilization limit. A non-positive value means no modular capacity is applied", 10, 100.0),
-                                		InputForDialog.inputCheckBox("Bidirectional modules", "If checked, the module will have a capacity which is the largest between the traffic in both directions", true, null)
-                                		),
-                                (list)->
-                                	{
-                                		final double newLinkUtilization = (Double) list.get(0).get();
-                                		final double capacityModule = (Double) list.get(1).get();
-                                		final boolean isBidirectional = (Boolean) list.get(2).get();
-                                		if (newLinkUtilization <= 0) throw new Net2PlanException ("Link utilization must be positive");
-                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->
-                                		{
-                                			double occupiedCap = isBidirectional && ee.isBidirectional ()? Math.max (ee.getCarriedTrafficGbps() , ee.getBidirectionalPair ().getCarriedTrafficGbps ()) : ee.getCarriedTrafficGbps ();
-                                			if (newLinkUtilization > 0) occupiedCap /= newLinkUtilization;
-                                			if (capacityModule > 0) occupiedCap = capacityModule * Math.ceil(occupiedCap / capacityModule);
-                                			ee.setNominalCapacityGbps(occupiedCap);
-                                		});
-                                	}
-                                );
-                    } , (a,b)->b>0, null)
-            		)));
-            res.add(new AjtRcMenu("Set selected links length as", null , (a,b)->b>0, Arrays.asList(
-            		new AjtRcMenu("Constant value", e->
-                    {
-                        DialogBuilder.launch(
-                                "Set selected links length (km)" , 
-                                "Please introduce the link length. Negative values are not allowed. The length will be assigned to not coupled links", 
-                                "", 
-                                this, 
-                                Arrays.asList(InputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
-                                (list)->
-                                	{
-                                		final double newLinkLength = (Double) list.get(0).get();
-                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(newLinkLength));
-                                	}
-                                );
-                    } , (a,b)->b>0, null) , 
-            		
-            		new AjtRcMenu("Scaled version of current lengths", e->
-                    {
-                        DialogBuilder.launch(
-                                "Scale selected links length (km)" , 
-                                "Please introduce the scaling factor for which the link lengths will be multiplied. Negative values are not allowed. The length will be assigned to not coupled links", 
-                                "", 
-                                this, 
-                                Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
-                                (list)->
-                                	{
-                                		final double scalingFactor = (Double) list.get(0).get();
-                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(scalingFactor * ee.getLengthIfNotCoupledInKm()));
-                                	}
-                                );
-                    } , (a,b)->b>0, null) ,         		
-            		new AjtRcMenu("As the euclidean node pair distance", e->
-                    {
-                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(np.getNodePairEuclideanDistance(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
-                    } , (a,b)->b>0, null) ,
-            		
-            		new AjtRcMenu("As the harversine node pair distance", e->
-                    {
-                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(np.getNodePairHaversineDistanceInKm(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
-                    } , (a,b)->b>0, null)
+            		new AjtRcMenu("Equal to its demand offered traffic", e->getSelectedElements().stream().forEach(ee->{ if (isIpc.apply(ee)) toIpc.apply(ee).setCarriedTrafficInNoFailureStateGbps(toIpc.apply(ee).getIpUnicastDemand().getCurrentOfferedTrafficInGbps()); else toSc.apply(ee).setInitiallyInjectedTrafficGbps (toSc.apply(ee).getServiceChainRequest().getCurrentOfferedTrafficInGbps()); }) , (a,b)->b>0, null)
             		)));
 
-            res.add(new AjtRcMenu("Set IGP link weights of selected links", null , (a, b)->true, Arrays.asList( 
-            		new AjtRcMenu("as constant value", e->
-                    {
-                        DialogBuilder.launch(
-                                "Set IGP weight as constant value" , 
-                                "Please introduce the IGP weight for the selected links. Non-positive values are not allowed.", 
-                                "", 
-                                this, 
-                                Arrays.asList(InputForDialog.inputTfDouble("IGP weight", "Introduce the IGP weight for selected links", 10, 1.0)),
-                                (list)->
-                                	{
-                                		final double newLinWeight = (Double) list.get(0).get();
-                                		if (newLinWeight <= 0) throw new Net2PlanException ("IGP weights must be strictly positive");
-                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).forEach(ee->ee.setIgpWeight(newLinWeight));
-                                	}
-                                );
-                    } , (a,b)->b>0, null) , 
-            		new AjtRcMenu("proportional to link latency", e->
-                    {
-                        DialogBuilder.launch(
-                                "Set IGP weight proportional to latency" , 
-                                "Please introduce the information required for computing the IGP weight.", 
-                                "", 
-                                this, 
-                                Arrays.asList(
-                                		InputForDialog.inputTfDouble("IGP weight to links of minimum latency", "Introduce the IGP weight to assign to the links of the minimum latency among the selected ones. IGP weight must be strictly positive.", 10, 1.0),
-                                		InputForDialog.inputTfDouble("IGP weight to links of maximum latency", "Introduce the IGP weight to assign to the links of the maximum latency among the selected ones, IGP weight must be strictly positive.", 10, 10.0),
-                                		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
-                                		),
-                                (list)->
-                                	{
-                                    	final double minLatency = getSelectedElements().stream().mapToDouble(ee->toWIpLink.apply(ee).getWorstCasePropagationDelayInMs()).min().orElse(0.0);
-                                    	final double maxLatency = getSelectedElements().stream().mapToDouble(ee->toWIpLink.apply(ee).getWorstCasePropagationDelayInMs()).max().orElse(0.0);
-                                    	final double difLatency = maxLatency - minLatency;
-                                		final double minLatencyWeight = (Double) list.get(0).get();
-                                		final double maxLatencyWeight = (Double) list.get(1).get();
-                                		final boolean roundToInteger = (Boolean) list.get(2).get();
-                                		final double difWeight = maxLatencyWeight - minLatencyWeight;
-                                		if (minLatencyWeight <= 0 || maxLatencyWeight <= 0) throw new Net2PlanException ("Weights must be positive");
-                            			for (Link linkNp : getSelectedElements())
-                            			{
-                            				final WIpLink ee = toWIpLink.apply(linkNp);
-                            				double linkWeight = difLatency == 0? minLatencyWeight : minLatencyWeight + difWeight * (ee.getWorstCasePropagationDelayInMs() - minLatency) / difLatency;  
-                            				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
-                            				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
-                            				ee.setIgpWeight(linkWeight);
-                            			}
-                                	}
-                                );
-                    } , (a,b)->b>0, null) ,
-            		new AjtRcMenu("inversely proportional to capacity", e->
-                    {
-                        DialogBuilder.launch(
-                                "Set IGP weight inversely proportional to link capacity" , 
-                                "Please introduce the information required for computing the IGP weight.", 
-                                "", 
-                                this, 
-                                Arrays.asList(
-                                		InputForDialog.inputTfDouble("Reference bandwidth (to assign IGP weight one)", "Introduce the reference bandwidth (REFBW), measured in the same units as the traffic. IGP weight of link of capacity c is REFBW/c. REFBW must be positive", 10, 0.1),
-                                		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
-                                		),
-                                (list)->
-                                	{
-                                		final double refBw = (Double) list.get(0).get();
-                                		final boolean roundToInteger = (Boolean) list.get(1).get();
-                                		if (refBw <= 0) throw new Net2PlanException ("The reference bandwidth must be positive");
-                            			for (Link eeNp : getSelectedElements())
-                            			{
-                            				final WIpLink ee = toWIpLink.apply(eeNp);
-                            				double linkWeight = ee.getCurrentCapacityGbps() == 0? Double.MAX_VALUE : refBw / ee.getCurrentCapacityGbps();  
-                            				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
-                            				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
-                            				ee.setIgpWeight(linkWeight);
-                            			}
-                                	}
-                                );
-                    } , (a,b)->b>0, null) 
-            		)));
-            
-            res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
-                    MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
-                    MonitoringUtils.getMenuExportMonitoringInfo(this),
-                    MonitoringUtils.getMenuImportMonitoringInfo (this),
-                    MonitoringUtils.getMenuSetMonitoredTraffic(this),
-                    MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (this),
-                    MonitoringUtils.getMenuAddLinkMonitoringInfoSimulatingTrafficVariations (this),
-                    MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
-                    MonitoringUtils.getMenuCreatePredictorTraffic (this),
-                    MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
-                    MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
-                    MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
-                    new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
-                    new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()) , (a,b)->b>0, null),
-                    new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
-                            MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
-                            MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
-                    		))
-            		)));
-            
     	} // if ipLayer
     	
     	if (isWdmLayer)
     	{
-            res.add(new AjtRcMenu("Add fiber", e->
-            {
-              DialogBuilder.launch(
-              "Add fiber" , 
-              "Please introduce the information required.", 
-              "", 
-              this, 
-              Arrays.asList(
-              		InputForDialog.inputTfString("Input node name", "Introduce the name of the input node", 10, ""),
-              		InputForDialog.inputTfString("End node name", "Introduce the name of the end node", 10, ""),
-              		InputForDialog.inputCheckBox("Bidirectional?", "If checked, two fibers in opposite directions are created", true, null)
-              		),
-              (list)->
-              	{
-            		final String aName  = (String) list.get(0).get();
-            		final String bName  = (String) list.get(1).get();
-            		final boolean isBidirectional = (Boolean) list.get(2).get();
-            		final WNode a = nodeByName.apply(aName).orElse(null);
-            		final WNode b = nodeByName.apply(bName).orElse(null);
-            		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
-            		wNet.addFiber(a, b, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES, -1.0 , isBidirectional);
-              	}
-              );
-            }
-            , (a,b)->true, null));
+            res.add(new AjtRcMenu("Remove selected elements", e->getSelectedElements().forEach(dd->toLp.apply(dd).remove()) , (a,b)->b>0, null));
 
-            res.add(new AjtRcMenu("Remove selected fibers", e->getSelectedElements().forEach(dd->toWFiber.apply(dd).remove()) , (a,b)->b>0, null));
-            res.add(new AjtRcMenu("Generate full-mesh of fibers", e->
-            		{
-    			for (WNode n1 : wNet.getNodes ())
-    				for (WNode n2 : wNet.getNodes ())
-    					if (n1.getId() < n2.getId ())
-    						wNet.addFiber(n1, n2, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES, -1.0, true);
-            		} , (a, b)->true, null));
-            res.add(new AjtRcMenu("Set selected links length as", null , (a,b)->b>0, Arrays.asList(
-            		new AjtRcMenu("Constant value", e->
-                    {
-                        DialogBuilder.launch(
-                                "Set selected links length (km)" , 
-                                "Please introduce the link length. Negative values are not allowed. The length will be assigned to not coupled links", 
-                                "", 
-                                this, 
-                                Arrays.asList(InputForDialog.inputTfDouble("Link length (km)", "Introduce the link length", 10, 0.0)),
-                                (list)->
-                                	{
-                                		final double newLinkLength = (Double) list.get(0).get();
-                                		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(newLinkLength));
-                                	}
-                                );
-                    } , (a,b)->b>0, null) , 
-            		
-            		new AjtRcMenu("Scaled version of current lengths", e->
-                    {
-                        DialogBuilder.launch(
-                                "Scale selected links length (km)" , 
-                                "Please introduce the scaling factor for which the link lengths will be multiplied. Negative values are not allowed. The length will be assigned to not coupled links", 
-                                "", 
-                                this, 
-                                Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 1.0)),
-                                (list)->
-                                	{
-                                		final double scalingFactor = (Double) list.get(0).get();
-                                		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(scalingFactor * ee.getLengthIfNotCoupledInKm()));
-                                	}
-                                );
-                    } , (a,b)->b>0, null) ,         		
-            		new AjtRcMenu("As the euclidean node pair distance", e->
-                    {
-                		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(np.getNodePairEuclideanDistance(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
-                    } , (a,b)->b>0, null) ,
-            		
-            		new AjtRcMenu("As the harversine node pair distance", e->
-                    {
-                		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(np.getNodePairHaversineDistanceInKm(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
-                    } , (a,b)->b>0, null)
-            		)));
+//            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Injection power (dBm)", "The injection power of the transponder in the ADD part (transmission side)", (d,val)->toLp.apply(d).setAddTransponderInjectionPower_dBm((Double)val) , d->toLp.apply(d).getAddTransponderInjectionPower_dBm(), AGTYPE.NOAGGREGATION , null));
 
-            res.add(new AjtRcMenu("Arrange selected fibers in bidirectional pairs", e->
-            {
-            	final SortedSet<WFiber> nonBidiLinks = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
-            	final Map<Pair<WNode,WNode> , WFiber> nodePair2link = new HashMap<>();
-            	for (WFiber ee : nonBidiLinks)
-            	{
-            		final Pair<WNode,WNode> pair = Pair.of(ee.getA() , ee.getB());
-            		if (nodePair2link.containsKey(pair)) throw new Net2PlanException ("At most one link per node pair is allowed");
-            		nodePair2link.put(pair, ee);
-            	}
-            	for (WFiber ee : nonBidiLinks)
-            	{
-            		if (ee.isBidirectional()) continue;
-            		final WFiber opposite = nodePair2link.get(Pair.of(ee.getB(), ee.getA()));
-            		if (opposite == null) continue;
-            		if (opposite.isBidirectional()) continue;
-            		ee.setBidirectionalPair(opposite);
-            	}
-            }
-            , (a,b)->b>0, null));
-            res.add(new AjtRcMenu("Remove bidirectional relation of selected fibers", e-> getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.removeBidirectionalPairRelation()) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set modulation id to selected lightpaths", e-> 
+            DialogBuilder.launch(
+                    "Set modulation id" , 
+                    "Please introduce the requested information", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfString("Modulation Id", "Introduce the modulation Id", 10, "")),
+                    (list)->
+                    	{
+                    		final String value = (String) list.get(0).get();
+                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setModulationId(value));
+                    	}
+                    ) , (a,b)->b>0, null));
+
+            res.add(new AjtRcMenu("Set transmission injection power (dBm) to selected lightpaths", e-> 
+        	DialogBuilder.launch(
+                "Set transmission injected power (dBm)" , 
+                "Please introduce the requested information", 
+                "", 
+                this, 
+                Arrays.asList(InputForDialog.inputTfDouble("Lightpath power measured at the output of the transponder (dBm)", "Introduce the requested information", 10, WNetConstants.WLIGHTPATH_DEFAULT_TRANSPONDERADDINJECTIONPOWER_DBM)),
+                (list)->
+                	{
+                		final double value = (Double) list.get(0).get();
+                		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setAddTransponderInjectionPower_dBm(value));
+                	}
+                ) , (a,b)->b>0, null));
             
-            res.add(new AjtRcMenu("Set attenuation coef. dB/km to selected fibers", e-> 
-            DialogBuilder.launch(
-                    "Set attenuation coefficient (dB/km)" , 
-                    "Please introduce the requested information", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Attenuation coefficient (dB/km)", "Introduce the attenuation coefficient", 10, WNetConstants.WFIBER_DEFAULT_ATTCOEFFICIENTDBPERKM)),
-                    (list)->
-                    	{
-                    		final double value = (Double) list.get(0).get();
-                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setAttenuationCoefficient_dbPerKm(value));
-                    	}
-                    ) , (a,b)->b>0, null));
-
-            res.add(new AjtRcMenu("Set chromatic dispersion coef. ps/nm/km to selected fibers", e-> 
-            DialogBuilder.launch(
-                    "Set chromatic dispersion coefficient (ps/nm/km)" , 
-                    "Please introduce the requested information", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Chromatic dispersion coefficient (ps/nm/km)", "Introduce the chromatic dispersion coefficient", 10, WNetConstants.WFIBER_DEFAULT_CDCOEFF_PSPERNMKM)),
-                    (list)->
-                    	{
-                    		final double value = (Double) list.get(0).get();
-                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setChromaticDispersionCoeff_psPerNmKm(value));
-                    	}
-                    ) , (a,b)->b>0, null));
-            res.add(new AjtRcMenu("Set PMD link design value (ps/sqrt(km)) to selected fibers", e-> 
-            DialogBuilder.launch(
-                    "Set PMD link design value (ps/sqrt(km))" , 
-                    "Please introduce the requested information", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Polarization Model Dispersion (PMD) coefficient (ps/sqrt(km))", "Introduce the PMD link design value.", 10, WNetConstants.WFIBER_DEFAULT_PMDCOEFF_PSPERSQRKM)),
-                    (list)->
-                    	{
-                    		final double value = (Double) list.get(0).get();
-                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setChromaticDispersionCoeff_psPerNmKm(value));
-                    	}
-                    ) , (a,b)->b>0, null));
-            res.add(new AjtRcMenu("Set valid optical slot ranges to selected fibers", e-> 
-            DialogBuilder.launch(
-                    "Set valid optical slot ranges " , 
-                    "Please introduce the requested information. Each slot has a size of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz. Slot zero is centered at the frequency of " + WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + " THz", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfString("Space-separated indexes of the initial and final slots", "An even number of integers separated by spaces. Each pair of integers is the initial and end slot of a range of frequencies that is usable in this fiber.", 10, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE.stream().map(ee->""+ee.intValue()).collect (Collectors.joining(" ")))),
-                    (list)->
-                    	{
-                    		final String auxListSt = (String) list.get(0).get();
-                    		final List<Integer> auxList = Stream.of(auxListSt.split(" ")).map(ee->Integer.parseInt(ee)).collect(Collectors.toList());
-                    		final Iterator<Integer> it = auxList.iterator();
-                    		final List<Pair<Integer,Integer>> listSlotsRanges = new ArrayList<> ();
-                    		while (it.hasNext())
-                    		{
-                    			final int startRange = it.next();
-                    			if (!it.hasNext()) throw new Net2PlanException("Invalid optical slot ranges");
-                    			final int endRange = it.next();
-                    			if (endRange < startRange) throw new Net2PlanException("Invalid optical slot ranges");
-                    			listSlotsRanges.add(Pair.of(startRange, endRange));
-                    		}
-                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setValidOpticalSlotRanges(listSlotsRanges));
-                    	}
-                    ) , (a,b)->b>0, null));
-
-            res.add(new AjtRcMenu("Set optical line amplifiers (OLA) info to selected fibers", e->
-            {
-            	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
-            	if (firstFiber == null) return;
+            res.add(new AjtRcMenu("Set minimum acceptable reception power (dBm) to selected lightpaths", e-> 
             	DialogBuilder.launch(
-                    "Set optical line amplifiers (OLA) info" , 
-                    "Please introduce the requested information. All the lists are space-separated and with the same number of elements, one per optical line amplifier" , 
+                    "Set minimum acceptable reception power (dBm)" , 
+                    "Please introduce the requested information", 
                     "", 
                     this, 
-                    Arrays.asList(
-                    		InputForDialog.inputTfString("OLA positions (km from fiber init)", "A space separated list, wiht as many elements as OLAs, and the OLA position in km from the fiber start point.", 10, firstFiber.getAmplifierPositionsKmFromOrigin_km().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA gains (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA gains in dB.", 10, firstFiber.getAmplifierGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA noise factors (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA noise factors in dB.", 10, firstFiber.getAmplifierNoiseFactor_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA PMDs (ps)", "A space separated list, wiht as many elements as OLAs, and the OLA added PMD in ps.", 10, firstFiber.getAmplifierPmd_ps().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA CD compensation (ps/nm)", "A space separated list, wiht as many elements as OLAs, and the OLA chromatic dispersion that is compensated within the OLA in ps/nm.", 10, firstFiber.getAmplifierCdCompensation_psPerNm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA minimum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable gain in dB.", 10, firstFiber.getAmplifierMinAcceptableGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA maximum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable gain in dB.", 10, firstFiber.getAmplifierMaxAcceptableGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA minimum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable input power in dBm.", 10, firstFiber.getAmplifierMinAcceptableInputPower_dBm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA maximum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable input power in dBm.", 10, firstFiber.getAmplifierMaxAcceptableInputPower_dBm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" ")))
-                    	),
+                    Arrays.asList(InputForDialog.inputTfDouble("Minimum acceptable reception power (dBm)", "Introduce the requested information", 10, WNetConstants.WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLERECEPTIONPOWER_DBM)),
                     (list)->
                     	{
-                    		final List<Double> posKm = Stream.of(((String) list.get(0).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> gainDb = Stream.of(((String) list.get(1).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> nfDb = Stream.of(((String) list.get(2).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> pmdPs = Stream.of(((String) list.get(3).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> cd = Stream.of(((String) list.get(4).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> minGain = Stream.of(((String) list.get(5).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> maxGain = Stream.of(((String) list.get(6).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> minPower = Stream.of(((String) list.get(7).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> maxPower = Stream.of(((String) list.get(8).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setAmplifiersTraversedInfo(posKm, gainDb , nfDb , pmdPs , cd , minGain , maxGain , minPower , maxPower));
+                    		final double value = (Double) list.get(0).get();
+                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setTransponderMinimumTolerableReceptionPower_dBm(value));
                     	}
-                    ); 
-            } , (a,b)->b>0, null));
+                    ) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set maximum acceptable reception power (dBm) to selected lightpaths", e-> 
+        	DialogBuilder.launch(
+                "Set maximum acceptable reception power (dBm)" , 
+                "Please introduce the requested information", 
+                "", 
+                this, 
+                Arrays.asList(InputForDialog.inputTfDouble("Maximum acceptable reception power (dBm)", "Introduce the requested information", 10, WNetConstants.WLIGHTPATH_DEFAULT_MAXIMUMACCEPTABLERECEPTIONPOWER_DBM)),
+                (list)->
+                	{
+                		final double value = (Double) list.get(0).get();
+                		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setTransponderMaximumTolerableReceptionPower_dBm(value));
+                	}
+                ) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set minimum acceptable OSNR (dB) at 12.5 GHZ ref. BW, to selected lightpaths", e-> 
+        	DialogBuilder.launch(
+                "Set minimum acceptable OSNR (dB) at 12.5 GHZ reference bandwidth" , 
+                "Please introduce the requested information", 
+                "", 
+                this, 
+                Arrays.asList(InputForDialog.inputTfDouble("Minimum acceptable reception OSNR (dB) at 12.5 GHZ reference bandwidth", "Introduce the requested information", 10, WNetConstants.WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLEOSNRAT12_5GHZREFBW_DB)),
+                (list)->
+                	{
+                		final double value = (Double) list.get(0).get();
+                		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB(value));
+                	}
+                ) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set maximum tolerable absolute CD (ps/nm), to selected lightpaths", e-> 
+        	DialogBuilder.launch(
+                "Set maximum tolerable absolute chromatic dispersion (CD) in reception" , 
+                "Please introduce the requested information", 
+                "", 
+                this, 
+                Arrays.asList(InputForDialog.inputTfDouble("Maximum tolerable absolute CD in reception", "Introduce the requested information", 10, WNetConstants.WLIGHTPATH_DEFAULT_MAXIMUMABSOLUTE_CD_PSPERNM)),
+                (list)->
+                	{
+                		final double value = (Double) list.get(0).get();
+                		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setTransponderMaximumTolerableCdInAbsoluteValue_perPerNm(value));
+                	}
+                ) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set maximum tolerable PMD (ps) in reception to selected lightpaths", e-> 
+        	DialogBuilder.launch(
+                "Set maximum tolerable Polarization Mode Dispersion (PMD) in reception" , 
+                "Please introduce the requested information", 
+                "", 
+                this, 
+                Arrays.asList(InputForDialog.inputTfDouble("Maximum PMD (ps) in reception", "Introduce the requested information", 10, WNetConstants.WLIGHTPATH_DEFAULT_MAXIMUMPMD_PS)),
+                (list)->
+                	{
+                		final double value = (Double) list.get(0).get();
+                		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setTransponderMaximumTolerablePmd_ps(value));
+                	}
+                ) , (a,b)->b>0, null));
+            
     	}
 
         return res;

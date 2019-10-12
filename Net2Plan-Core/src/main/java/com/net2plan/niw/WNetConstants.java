@@ -49,6 +49,23 @@ public class WNetConstants
 	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION = Arrays.asList(0.0);
 	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB = Arrays.asList(6.0);
 	
+	public static final double WLIGHTPATH_DEFAULT_TRANSPONDERADDINJECTIONPOWER_DBM = 0.0;
+	public static final double WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLERECEPTIONPOWER_DBM = -20.0;
+	public static final double WLIGHTPATH_DEFAULT_MAXIMUMACCEPTABLERECEPTIONPOWER_DBM = 10.0;
+	public static final double WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLEOSNRAT12_5GHZREFBW_DB = 20.0;
+	public static final double WLIGHTPATH_DEFAULT_MAXIMUMABSOLUTE_CD_PSPERNM = 30000.0;
+	public static final double WLIGHTPATH_DEFAULT_MAXIMUMPMD_PS = 35.0;
+	
+	public static final double WNODE_DEFAULT_ADDGAIN_DB = 0.0;
+	public static final double WNODE_DEFAULT_EXPRESSGAIN_DB = 20.0;
+	public static final double WNODE_DEFAULT_DROPGAIN_DB = 0.0;
+	public static final double WNODE_DEFAULT_ADDNF_DB = -50.0;
+	public static final double WNODE_DEFAULT_EXPRESSNF_DB = 5.0;
+	public static final double WNODE_DEFAULT_DROPNF_DB = -50.0;
+	public static final double WNODE_DEFAULT_ADDPMD_PS = 0.0;
+	public static final double WNODE_DEFAULT_EXPRESSPMD_PS = 0.0;
+	public static final double WNODE_DEFAULT_DROPPMD_PS = 0.0;
+	
 	static final double WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC = 200000;
 	public static final List<Double> WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE = Arrays.asList(1.0,320.0);
 	public static final List<Pair<Integer,Integer>> WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES = Arrays.asList(Pair.of(1,320));

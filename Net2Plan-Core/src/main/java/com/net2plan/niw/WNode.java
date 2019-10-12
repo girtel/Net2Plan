@@ -228,63 +228,63 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public double getAddNoiseFactor_dB ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_NOISEFIGUREDB, 5.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_NOISEFIGUREDB, WNetConstants.WNODE_DEFAULT_ADDNF_DB);
 	}
 	/** Returns the noise factor observed by the dropped channels, in dB. Defaults to 5.0 dB
 	 * @return see above
 	 */
 	public double getDropNoiseFactor_dB ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_NOISEFIGUREDB, 5.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_NOISEFIGUREDB, WNetConstants.WNODE_DEFAULT_DROPNF_DB);
 	}
 	/** Returns the noise factor observed by the express channels, in dB. Defaults to 5.0 dB
 	 * @return see above
 	 */
 	public double getExpressNoiseFactor_dB ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB, 5.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB, WNetConstants.WNODE_DEFAULT_EXPRESSNF_DB);
 	}
 	/** Returns the gain observed by the added channels, in dB. Defaults to20.0 dB
 	 * @return see above
 	 */
 	public double getAddGain_dB ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_GAINDB, 20.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_GAINDB, WNetConstants.WNODE_DEFAULT_ADDGAIN_DB);
 	}
 	/** Returns the gain observed by the dropped channels, in dB. Defaults to20.0 dB
 	 * @return see above
 	 */
 	public double getDropGain_dB ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_GAINDB, 20.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_GAINDB, WNetConstants.WNODE_DEFAULT_DROPGAIN_DB);
 	}
 	/** Returns the gain observed by the express channels, in dB. Defaults to20.0 dB
 	 * @return see above
 	 */
 	public double getExpressGain_dB ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_GAINDB, 20.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_GAINDB, WNetConstants.WNODE_DEFAULT_EXPRESSGAIN_DB);
 	}
 	/** Returns the PMD added to the added channels, in ps. Defaults to 0 ps
 	 * @return see above
 	 */
 	public double getAddPmd_ps ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_PMD_PS, 0.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_PMD_PS, WNetConstants.WNODE_DEFAULT_ADDPMD_PS);
 	}
 	/** Returns the PMD added to the drop channels, in ps. Defaults to 0 ps
 	 * @return see above
 	 */
 	public double getDropPmd_ps ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_PMD_PS, 0.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_PMD_PS, WNetConstants.WNODE_DEFAULT_DROPPMD_PS);
 	}
 	/** Returns the PMD added to the express channels, in ps. Defaults to 0 ps
 	 * @return see above
 	 */
 	public double getExpressPmd_ps ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_PMD_PS, 0.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_PMD_PS, WNetConstants.WNODE_DEFAULT_EXPRESSPMD_PS);
 	}
 
 	/** Sets the noise factor observed by the added channels, in dB. 

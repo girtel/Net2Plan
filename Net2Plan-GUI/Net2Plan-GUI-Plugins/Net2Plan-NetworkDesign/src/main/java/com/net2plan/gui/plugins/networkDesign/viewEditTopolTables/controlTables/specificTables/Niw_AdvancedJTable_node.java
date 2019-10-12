@@ -28,6 +28,7 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement.AGTYPE;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -35,6 +36,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.WIpUnicastDemand;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
@@ -96,6 +98,15 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "In SCReqs", "The service chain requests that have this node as potential destination", null , d->toWNode.apply(d).getIncomingServiceChainRequests().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Out SCs", "The service chains initiated in this node", null , d->toWNode.apply(d).getOutgoingServiceChains().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "In SCs", "The service chains ending in this node", null , d->toWNode.apply(d).getIncomingServiceChains().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
+          
+          /* Pending information of HD/RAM etc capacicites */
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("CPU/RAM/HD") , "Node CPUs", "The CPUs available in the node", (d,val)->toWNode.apply(d).setTotalNumCpus((Double)val) , d->toWNode.apply(d).getTotalNumCpus(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("CPU/RAM/HD") , "Node RAM (GB)", "The amount of RAM in the node,in GB", (d,val)->toWNode.apply(d).setTotalRamGB((Double)val) , d->toWNode.apply(d).getTotalRamGB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("CPU/RAM/HD") , "Node HD (TB)", "The amount of hard-disk storage in TeraBytes", (d,val)->toWNode.apply(d).setTotalHdGB(0.001 * (Double)val) , d->toWNode.apply(d).getTotalHdGB()*1000.0, AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("CPU/RAM/HD") , "Occupied CPUs", "The CPUs occupied in the node", null , d->toWNode.apply(d).getOccupiedCpus(), AGTYPE.NOAGGREGATION , e->toWNode.apply(e).getOccupiedCpus() > toWNode.apply(e).getTotalNumCpus()? Color.red : null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("CPU/RAM/HD") , "Occupied RAM (GB)", "The amount of RAM occupied in the node, in GB", null , d->toWNode.apply(d).getOccupiedRamGB(), AGTYPE.NOAGGREGATION , e->toWNode.apply(e).getOccupiedRamGB() > toWNode.apply(e).getTotalRamGB()? Color.red : null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("CPU/RAM/HD") , "Occupied HD (TB)", "The amount of storage occupied in the node, in TeraBytes", null , d->toWNode.apply(d).getOccupiedHdGB() * 1000, AGTYPE.NOAGGREGATION , e->toWNode.apply(e).getOccupiedHdGB() > toWNode.apply(e).getTotalHdGB()? Color.red : null));
+          
       }
       else if (isWdmLayer)
       {
@@ -107,6 +118,19 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "ADD optical rate (Gbps)", "The sum of the line rates of the lightpaths added in this node", null , d->toWNode.apply(d).getOutgoingLigtpaths().stream().mapToDouble(n->n.getLightpathRequest().getLineRateGbps()).sum() , AGTYPE.SUMDOUBLE , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "DROP optical rate (Gbps)", "The sum of the line rates of the lightpaths dropped in this node", null , d->toWNode.apply(d).getIncomingLigtpaths().stream().mapToDouble(n->n.getLightpathRequest().getLineRateGbps()).sum() , AGTYPE.SUMDOUBLE , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "EXPRESS optical rate (Gbps)", "The sum of the line rates of the lightpaths express in this node", null , d->toWNode.apply(d).getExpressSwitchedLightpaths().stream().mapToDouble(n->n.getLightpathRequest().getLineRateGbps()).sum() , AGTYPE.SUMDOUBLE , null));
+          
+          /* Pending here all the OADM information about physical impairments */
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Add gain (dB)", "The gain observed by the added lightpaths", (d,val)->toWNode.apply(d).setAddGain_dB((Double)val) , d->toWNode.apply(d).getAddGain_dB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Express gain (dB)", "The gain observed by the express lightpaths", (d,val)->toWNode.apply(d).setExpressGain_dB((Double)val) , d->toWNode.apply(d).getExpressGain_dB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Drop gain (dB)", "The gain observed by the dropped lightpaths", (d,val)->toWNode.apply(d).setDropGain_dB((Double)val) , d->toWNode.apply(d).getDropGain_dB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Add noise factor (dB)", "The noise factor observed by the added lightpaths", (d,val)->toWNode.apply(d).setAddNoiseFactor_dB((Double)val) , d->toWNode.apply(d).getAddNoiseFactor_dB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Express noise factor (dB)", "The noise factor observed by the express lightpaths", (d,val)->toWNode.apply(d).setExpressNoiseFactor_dB((Double)val) , d->toWNode.apply(d).getExpressNoiseFactor_dB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Drop noise factor (dB)", "The noise factor observed by the dropped lightpaths", (d,val)->toWNode.apply(d).setDropNoiseFactor_dB((Double)val) , d->toWNode.apply(d).getDropNoiseFactor_dB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Add PMD factor (ps)", "The PMD added to the added lightpaths", (d,val)->toWNode.apply(d).setAddPmd_ps((Double)val) , d->toWNode.apply(d).getAddPmd_ps(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Express PMD factor (ps)", "The PMD added to the express lightpaths", (d,val)->toWNode.apply(d).setExpressPmd_ps((Double)val) , d->toWNode.apply(d).getExpressPmd_ps(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("OADM info") , "Drop PMD factor (ps)", "The PMD added to the dropped lightpaths", (d,val)->toWNode.apply(d).setDropPmd_ps((Double)val) , d->toWNode.apply(d).getDropPmd_ps(), AGTYPE.NOAGGREGATION , null));
+
+          
       }
       return res;
   }

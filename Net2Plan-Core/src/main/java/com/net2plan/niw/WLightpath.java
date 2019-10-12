@@ -74,15 +74,15 @@ public class WLightpath extends WAbstractNetworkElement
 	/** Returns the tolerance of the receiver side in terms of chromatic dispersion value at the receiver, in absolute value. Defaults to -DOUBLE.MAX_VALUE
 	 * @return see above
 	 */
-	public double getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM, Double.MAX_VALUE); }
+	public double getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM, WNetConstants.WLIGHTPATH_DEFAULT_MAXIMUMABSOLUTE_CD_PSPERNM); }
 	/** Returns the tolerance of the receiver side in terms of OSNR at 12.5 GHz of reference bandwidth. Defaults to 20 dB
 	 * @return see above
 	 */
-	public double getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMINIMUMOSNR_DB, 20.0); }
+	public double getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMINIMUMOSNR_DB, WNetConstants.WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLEOSNRAT12_5GHZREFBW_DB); }
 	/** Returns the tolerance of the receiver side in terms of Polarization Mode Dispersion (PMD), in ps. Defaults to Double.MAX_VALUE
 	 * @return see above
 	 */
-	public double getTransponderMaximumTolerablePmd_ps () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS, Double.MAX_VALUE); }
+	public double getTransponderMaximumTolerablePmd_ps () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS, WNetConstants.WLIGHTPATH_DEFAULT_MAXIMUMPMD_PS); }
 
 	/** Returns the tolerance of the receiver side in terms of chromatic dispersion value at the receiver, in absolute value. 
 	 * @return see above
@@ -100,17 +100,17 @@ public class WLightpath extends WAbstractNetworkElement
 	/** Returns the injection power in dBm at the output of the ADD transponder, before entering the OADM switching matrix. Defaults to 0 dBm
 	 * @return see above
 	 */
-	public double getAddTransponderInjectionPower_dBm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDTRANSPONDERINJECTIONPOWER_DBM, 0.0); }
+	public double getAddTransponderInjectionPower_dBm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDTRANSPONDERINJECTIONPOWER_DBM, WNetConstants.WLIGHTPATH_DEFAULT_TRANSPONDERADDINJECTIONPOWER_DBM); }
 
 	/** Returns the tolerance of the receiver side in terms of maximum power that can receive. Defaults to DOUBLE.MAX_VALUE
 	 * @return see above
 	 */
-	public double getTransponderMaximumTolerableReceptionPower_dBm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMPOWER_DBM, Double.MAX_VALUE); }
+	public double getTransponderMaximumTolerableReceptionPower_dBm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMPOWER_DBM, WNetConstants.WLIGHTPATH_DEFAULT_MAXIMUMACCEPTABLERECEPTIONPOWER_DBM); }
 
 	/** Returns the tolerance of the receiver side in terms of minimum power that can receive. Defaults to -20 dBm 
 	 * @return see above
 	 */
-	public double getTransponderMinimumTolerableReceptionPower_dBm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMINIMUMPOWER_DBM, -20.0); }
+	public double getTransponderMinimumTolerableReceptionPower_dBm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMINIMUMPOWER_DBM, WNetConstants.WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLERECEPTIONPOWER_DBM); }
 
 	/** Sets the tolerance of the receiver side in terms of maximum power that can receive. 
 	 * @return see above
