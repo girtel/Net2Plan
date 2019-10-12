@@ -12,15 +12,11 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,20 +28,11 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.table.DefaultTableModel;
-
+import com.google.common.collect.Lists;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
@@ -54,34 +41,29 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
-import com.net2plan.gui.utils.AdvancedJTable;
-import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.StringLabeller;
-import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.IMonitorizableElement;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.WAbstractIpUnicastOrAnycastDemand;
+import com.net2plan.niw.WAbstractNetworkElement;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpUnicastDemand;
+import com.net2plan.niw.WLightpath;
 import com.net2plan.niw.WLightpathRequest;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.niw.WNode;
 import com.net2plan.niw.WServiceChainRequest;
-import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.niw.WVnfInstance;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.StringUtils;
-
-import net.miginfocom.swing.MigLayout;
 
 /**
  */
@@ -116,7 +98,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
         	{  
         		if (d.isCoupled ()) throw new RuntimeException ("The IP demand in NIW is coupled. These demands should be filtered out");
         		if (isWIpUnicast.apply(d))
-        			return toWIpUnicast.apply(d).getOriginNode().getNe ();
+        			return toWIpUnicast.apply(d).getA().getNe ();
         		else
         			return toWScr.apply(d).getPotentiallyValidOrigins().stream().map(e->e.getNe ()).collect (Collectors.toList());
         	} , AGTYPE.NOAGGREGATION , null) );
@@ -124,7 +106,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
         	{  
         		if (d.isCoupled ()) throw new RuntimeException ("The IP demand in NIW is coupled. These demands should be filtered out");
         		if (isWIpUnicast.apply(d))
-        			return toWIpUnicast.apply(d).getDestinationNode().getNe ();
+        			return toWIpUnicast.apply(d).getB().getNe ();
         		else
         			return toWScr.apply(d).getPotentiallyValidDestinations().stream().map(e->e.getNe ()).collect (Collectors.toList());
         	} , AGTYPE.NOAGGREGATION , null) );
@@ -269,173 +251,400 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                     );
         } , (a,b)->b>0, null));         		
 
-        res.add(new AjtRcMenu("Remove selected demands", e->getSelectedElements().forEach(dd->toAbsIp.apply (dd).remove ()) , (a,b)->b>0, null));
+    	if (isIpLayer)
+            res.add(new AjtRcMenu("Add IP source routed connection to selected unicast demands", null , (a, b)->true, Arrays.asList( 
+            		new AjtRcMenu("as shortest path in latency", e->
+            		{
+            			final List<WIpUnicastDemand> ds = getSelectedElements().stream().filter(ee->wNet.getWType(ee).equals(Optional.of(WTYPE.WIpUnicastDemand))).map(ee->wNet.getWElement(ee).get().getAsIpUnicastDemand()).collect(Collectors.toList());
+            			final Map<WIpLink , Double> costMap = new HashMap<> ();
+            			for (WIpLink ee : wNet.getIpLinks()) costMap.put(ee, ee.getWorstCasePropagationDelayInMs());
+            			for (WIpUnicastDemand dd : ds)
+            			{
+            				if (dd.isIpHopByHopRouted()) continue;
+            				final List<List<WIpLink>> sps = wNet.getKShortestIpUnicastPath(1, wNet.getNodes(), wNet.getIpLinks(), dd.getA(), dd.getB(), Optional.of(costMap));
+            				if (sps.size() != 1) continue;
+            				dd.addIpSourceRoutedConnection(sps.get(0), 0.0);
+            			}
+            		} , (a, b)->true, null) , 
+            		new AjtRcMenu("as shortest path in num hops", e->
+            		{
+            			final List<WIpUnicastDemand> ds = getSelectedElements().stream().filter(ee->wNet.getWType(ee).equals(Optional.of(WTYPE.WIpUnicastDemand))).map(ee->wNet.getWElement(ee).get().getAsIpUnicastDemand()).collect(Collectors.toList());
+            			final Map<WIpLink , Double> costMap = new HashMap<> ();
+            			for (WIpLink ee : wNet.getIpLinks()) costMap.put(ee, 1.0);
+            			for (WIpUnicastDemand dd : ds)
+            			{
+            				if (dd.isIpHopByHopRouted()) continue;
+            				final List<List<WIpLink>> sps = wNet.getKShortestIpUnicastPath(1, wNet.getNodes(), wNet.getIpLinks(), dd.getA(), dd.getB(), Optional.of(costMap));
+            				if (sps.size() != 1) continue;
+            				dd.addIpSourceRoutedConnection(sps.get(0), 0.0);
+            			}
+            		} , (a, b)->true, null)  
+            		)));
 
-        res.add(new AjtRcMenu("Arrange selected IP unicast demands in bidirectional pairs", e->
-        {
-        	final SortedSet<WIpUnicastDemand> nonBidiDemands = getSelectedElements().stream().filter(ee->isWIpUnicast.apply(ee)).map(ee->toWIpUnicast.apply(ee)).filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
-        	final Map<Pair<WNode,WNode> , WIpUnicastDemand> nodePair2demand = new HashMap<>();
-        	for (WIpUnicastDemand ee : nonBidiDemands)
-        	{
-        		final Pair<WNode,WNode> pair = Pair.of(ee.getOriginNode() , ee.getDestinationNode());
-        		if (nodePair2demand.containsKey(pair)) throw new Net2PlanException ("At most one link per node pair is allowed");
-        		nodePair2demand.put(pair, ee);
-        	}
-        	for (WIpUnicastDemand ee : nonBidiDemands)
-        	{
-        		if (ee.isBidirectional()) continue;
-        		final WIpUnicastDemand opposite = nodePair2demand.get(Pair.of(ee.getDestinationNode(), ee.getOriginNode()));
-        		if (opposite == null) continue;
-        		if (opposite.isBidirectional()) continue;
-        		if (opposite.isDownstream() == ee.isDownstream()) continue;
-        		ee.setBidirectionalPair(opposite);
-        	}
-        }
-        , (a,b)->b>0, null));
+    	if (isIpLayer)
+            res.add(new AjtRcMenu("Add service chain to selected service chain requests", null , (a, b)->true, Arrays.asList( 
+            		new AjtRcMenu("as shortest path in latency", e->
+            		{
+            			final List<WServiceChainRequest> ds = getSelectedElements().stream().filter(ee->wNet.getWType(ee).equals(Optional.of(WTYPE.WServiceChainRequest))).map(ee->wNet.getWElement(ee).get().getAsServiceChainRequest()).collect(Collectors.toList());
+            			final Map<WIpLink , Double> costMap = new HashMap<> ();
+            			for (WIpLink ee : wNet.getIpLinks()) costMap.put(ee, ee.getWorstCasePropagationDelayInMs());
+            			final Function<List<WAbstractNetworkElement> ,Double> getCost = sp -> sp.stream().mapToDouble(ee->ee.isWIpLink()? costMap.get((WIpLink)ee) : ((WVnfInstance) ee).getProcessingTimeInMs()).sum();
+            			for (WServiceChainRequest dd : ds)
+            			{
+            				List<WAbstractNetworkElement> bestOption = null;
+            				double bestOptionCost = Double.MAX_VALUE;
+            				for (WNode a : dd.getPotentiallyValidOrigins())
+            					for (WNode b : dd.getPotentiallyValidDestinations())
+            					{
+                    				final List<List<WAbstractNetworkElement>> sps = wNet.getKShortestServiceChainInIpLayer(1, a, b, dd.getSequenceVnfTypes(), Optional.of(costMap), Optional.empty());
+                    				if (sps.size() != 1) continue;
+                    				final double cost = getCost.apply(sps.get(0));
+                    				if (cost < bestOptionCost) { bestOptionCost = cost; bestOption = sps.get(0); }
+            					}
+            				if (bestOption != null)
+            					dd.addServiceChain(bestOption, 0.0);
+            			}
+            		} , (a, b)->true, null) , 
+            		new AjtRcMenu("as shortest path in num IP hops", e->
+            		{
+            			final List<WServiceChainRequest> ds = getSelectedElements().stream().filter(ee->wNet.getWType(ee).equals(Optional.of(WTYPE.WServiceChainRequest))).map(ee->wNet.getWElement(ee).get().getAsServiceChainRequest()).collect(Collectors.toList());
+            			final Map<WIpLink , Double> costMap = new HashMap<> ();
+            			for (WIpLink ee : wNet.getIpLinks()) costMap.put(ee, 1.0);
+            			final Function<List<WAbstractNetworkElement> ,Double> getCost = sp -> sp.stream().mapToDouble(ee->ee.isWIpLink()? costMap.get((WIpLink)ee) : 0.0).sum();
+            			for (WServiceChainRequest dd : ds)
+            			{
+            				List<WAbstractNetworkElement> bestOption = null;
+            				double bestOptionCost = Double.MAX_VALUE;
+            				for (WNode a : dd.getPotentiallyValidOrigins())
+            					for (WNode b : dd.getPotentiallyValidDestinations())
+            					{
+                    				final List<List<WAbstractNetworkElement>> sps = wNet.getKShortestServiceChainInIpLayer(1, a, b, dd.getSequenceVnfTypes(), Optional.of(costMap), Optional.empty());
+                    				if (sps.size() != 1) continue;
+                    				final double cost = getCost.apply(sps.get(0));
+                    				if (cost < bestOptionCost) { bestOptionCost = cost; bestOption = sps.get(0); }
+            					}
+            				if (bestOption != null)
+            					dd.addServiceChain(bestOption, 0.0);
+            			}
+            		} , (a, b)->true, null)  
+            		)));
 
-        res.add(new AjtRcMenu("Arrange selected service chains in bidirectional pairs", e->
-        {
-        	final SortedSet<WServiceChainRequest> nonBidiDemands = getSelectedElements().stream().filter(ee->isWScr.apply(ee)).map(ee->toWScr.apply(ee)).filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
-        	final Map<Pair<SortedSet<WNode>,SortedSet<WNode>> , WServiceChainRequest> nodePair2demand = new HashMap<>();
-        	for (WServiceChainRequest ee : nonBidiDemands)
-        	{
-        		final Pair<SortedSet<WNode>,SortedSet<WNode>> pair = Pair.of(ee.getPotentiallyValidOrigins() , ee.getPotentiallyValidDestinations());
-        		if (nodePair2demand.containsKey(pair)) throw new Net2PlanException ("At most one demand per origin-destination nodes pair is allowed");
-        		nodePair2demand.put(pair, ee);
-        	}
-        	for (WServiceChainRequest ee : nonBidiDemands)
-        	{
-        		if (ee.isBidirectional()) continue;
-        		final WServiceChainRequest opposite = nodePair2demand.get(Pair.of(ee.getPotentiallyValidDestinations(), ee.getPotentiallyValidOrigins()));
-        		if (opposite == null) continue;
-        		if (opposite.isBidirectional()) continue;
-        		if (opposite.isDownstream() == ee.isDownstream()) continue;
-        		ee.setBidirectionalPair(opposite);
-        	}
-        }
-        , (a,b)->b>0, null));
+    	if (isWdmLayer)
+    	{
+    		final OpticalSpectrumManager osm = OpticalSpectrumManager.createFromRegularLps(wNet);
+            res.add(new AjtRcMenu("Add lightpath to selected requests", null , (a, b)->true, Arrays.asList( 
+            		new AjtRcMenu("as shortest path, first-fit", e->
+            		{
+                        DialogBuilder.launch(
+                                "Add lightpath to selected requests" , 
+                                "Please introduce the required data", 
+                                "", 
+                                this, 
+                                Arrays.asList(
+                                		InputForDialog.inputCheckBox("Shortest path in latency?", "If checked, the shortest path is computed considering optical latency as link cost, if not, the shortest patrh minimizes the number of traversed fibers", true, null),
+                                		InputForDialog.inputTfInt("Number of optical slots", "Introduce the number of optical slots to reserve for each lightpath", 10, 4)
+                                		),
+                                (list)->
+                                	{
+                                		final Boolean spLatency = (Boolean) list.get(0).get();
+                                		final Integer numContiguousSlots = (Integer) list.get(1).get();
+                            			final List<WLightpathRequest> ds = getSelectedElements().stream().filter(ee->wNet.getWType(ee).equals(Optional.of(WTYPE.WLightpathRequest))).map(ee->wNet.getWElement(ee).get().getAsLightpathRequest()).collect(Collectors.toList());
+                            			final Map<WFiber , Double> costMap = new HashMap<> ();
+                            			for (WFiber ee : wNet.getFibers()) costMap.put(ee, spLatency? ee.getPropagationDelayInMs() : 1.0);
+                            			for (WLightpathRequest dd : ds)
+                            			{
+                            				if (!dd.getLightpaths().isEmpty()) continue;
+                            				if (dd.is11Protected())
+                            				{
+                                				final List<List<WFiber>> sps = wNet.getTwoMaximallyLinkAndNodeDisjointWdmPaths(dd.getA(), dd.getB(), Optional.of(costMap));
+                                				if (sps.isEmpty()) continue;
+                                				final List<WFiber> seqFibersAbMain = sps.get(0); 
+                                				final List<WFiber> seqFibersAbBackup = sps.size() == 1? null : sps.get(1); 
+                                				final boolean twoRoutes = seqFibersAbBackup != null;
+                                				boolean isBidirectional = dd.isBidirectional() && seqFibersAbMain.stream().allMatch(ee->ee.isBidirectional());
+                                				if (twoRoutes) isBidirectional &= seqFibersAbBackup.stream().allMatch(ee->ee.isBidirectional()); 
+                            					if (isBidirectional)
+                            					{
+                            						if (!dd.getBidirectionalPair().getLightpaths().isEmpty()) continue;
+                                    				final List<WFiber> seqFibersBaMain = Lists.reverse(seqFibersAbMain.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
+                                    				final List<WFiber> seqFibersBaBackup = seqFibersAbBackup == null? null : Lists.reverse(seqFibersAbBackup.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
+                                    				final List<WFiber> seqFibersAbbAMain = new ArrayList<> (seqFibersAbMain); seqFibersAbbAMain.addAll(seqFibersBaMain);
+                                    				final List<WFiber> seqFibersAbbABackup = seqFibersAbBackup == null? null : new ArrayList<> (seqFibersAbBackup); seqFibersAbbABackup.addAll(seqFibersBaBackup);
+                                    				if (twoRoutes)
+                                    				{
+                                    					final Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> slotsTwoRoutes = osm.spectrumAssignment_firstFitTwoRoutes(seqFibersAbbAMain, seqFibersAbbABackup, numContiguousSlots); 
+                                        				if (!slotsTwoRoutes.isPresent()) continue;
+                                        				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slotsTwoRoutes.get().getFirst(), false);
+                                        				final WLightpath lpBaMain = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaMain, slotsTwoRoutes.get().getFirst(), false);
+                                        				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slotsTwoRoutes.get().getFirst());
+                                        				osm.allocateOccupation(lpBaMain, seqFibersBaMain, slotsTwoRoutes.get().getFirst());
+                                        				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), false);
+                                        				final WLightpath lpBaBackup = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaBackup, slotsTwoRoutes.get().getSecond(), false);
+                                        				osm.allocateOccupation(lpAbBackup, seqFibersAbBackup, slotsTwoRoutes.get().getSecond());
+                                        				osm.allocateOccupation(lpBaBackup, seqFibersBaBackup, slotsTwoRoutes.get().getSecond());
+                                    				}
+                                    				else
+                                    				{
+                                    					final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAbbAMain, numContiguousSlots , Optional.empty()); 
+                                        				if (!slots.isPresent()) continue;
+                                        				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slots.get(), false);
+                                        				final WLightpath lpBaMain = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaMain, slots.get(), false);
+                                        				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slots.get());
+                                        				osm.allocateOccupation(lpBaMain, seqFibersBaMain, slots.get());
+                                    				}
+                            					}
+                            					else
+                            					{
+                            						// 1+1 not bidirectional  
+                                    				if (twoRoutes)
+                                    				{
+                                    					final Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> slotsTwoRoutes = osm.spectrumAssignment_firstFitTwoRoutes(seqFibersAbMain, seqFibersAbBackup, numContiguousSlots); 
+                                        				if (!slotsTwoRoutes.isPresent()) continue;
+                                        				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slotsTwoRoutes.get().getFirst(), false);
+                                        				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slotsTwoRoutes.get().getFirst());
+                                        				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), false);
+                                        				osm.allocateOccupation(lpAbBackup, seqFibersAbBackup, slotsTwoRoutes.get().getSecond());
+                                    				}
+                                    				else
+                                    				{
+                                    					final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAbMain, numContiguousSlots , Optional.empty()); 
+                                        				if (!slots.isPresent()) continue;
+                                        				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slots.get(), false);
+                                        				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slots.get());
+                                    				}
+                            					}
+                            				}
+                            				else
+                            				{
+                                				final List<List<WFiber>> sps = wNet.getKShortestWdmPath(1, dd.getA(), dd.getB(), Optional.of(costMap));
+                                				if (sps.size() != 1) continue;
+                                				final List<WFiber> seqFibersAb = sps.get(0); 
+                            					if (dd.isBidirectional() && seqFibersAb.stream().allMatch(ee->ee.isBidirectional()))
+                            					{
+                            						if (!dd.getBidirectionalPair().getLightpaths().isEmpty()) continue;
+                                    				final List<WFiber> seqFibersBa = Lists.reverse(seqFibersAb.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
+                                    				final List<WFiber> seqFibersAbbA = new ArrayList<> (seqFibersAb); seqFibersAbbA.addAll(seqFibersBa);
+                                    				final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAbbA, numContiguousSlots, Optional.empty());
+                                    				if (!slots.isPresent()) continue;
+                                    				final WLightpath lpAb = dd.addLightpathUnregenerated(seqFibersAb, slots.get(), false);
+                                    				final WLightpath lpBa = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBa, slots.get(), false);
+                                    				osm.allocateOccupation(lpAb, seqFibersAb, slots.get());
+                                    				osm.allocateOccupation(lpBa, seqFibersBa, slots.get());
+                            					}
+                            					else
+                            					{
+                                    				final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAb, numContiguousSlots, Optional.empty());
+                                    				if (!slots.isPresent()) continue;
+                                    				final WLightpath lp = dd.addLightpathUnregenerated(seqFibersAb, slots.get(), false);
+                                    				osm.allocateOccupation(lp, seqFibersAb, slots.get());
+                            					}
+                            				}
+                            			}
+                                	}
+                                );
+
+            			
+            			
+            			
+            		} , (a, b)->true, null) , 
+            		new AjtRcMenu("as shortest path in num hops", e->
+            		{
+            			final List<WIpUnicastDemand> ds = getSelectedElements().stream().filter(ee->wNet.getWType(ee).equals(Optional.of(WTYPE.WIpUnicastDemand))).map(ee->wNet.getWElement(ee).get().getAsIpUnicastDemand()).collect(Collectors.toList());
+            			final Map<WIpLink , Double> costMap = new HashMap<> ();
+            			for (WIpLink ee : wNet.getIpLinks()) costMap.put(ee, 1.0);
+            			for (WIpUnicastDemand dd : ds)
+            			{
+            				if (dd.isIpHopByHopRouted()) continue;
+            				final List<List<WIpLink>> sps = wNet.getKShortestIpUnicastPath(1, wNet.getNodes(), wNet.getIpLinks(), dd.getA(), dd.getB(), Optional.of(costMap));
+            				if (sps.size() != 1) continue;
+            				dd.addIpSourceRoutedConnection(sps.get(0), 0.0);
+            			}
+            		} , (a, b)->true, null)  
+            		)));
+    	}
+    	
+        if (isIpLayer)
+        	res.add(new AjtRcMenu("Remove selected demands", e->getSelectedElements().forEach(dd->toAbsIp.apply (dd).remove ()) , (a,b)->b>0, null));
+
+        if (isIpLayer)
+	        res.add(new AjtRcMenu("Arrange selected IP unicast demands in bidirectional pairs", e->
+	        {
+	        	final SortedSet<WIpUnicastDemand> nonBidiDemands = getSelectedElements().stream().filter(ee->isWIpUnicast.apply(ee)).map(ee->toWIpUnicast.apply(ee)).filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
+	        	final Map<Pair<WNode,WNode> , WIpUnicastDemand> nodePair2demand = new HashMap<>();
+	        	for (WIpUnicastDemand ee : nonBidiDemands)
+	        	{
+	        		final Pair<WNode,WNode> pair = Pair.of(ee.getA() , ee.getB());
+	        		if (nodePair2demand.containsKey(pair)) throw new Net2PlanException ("At most one link per node pair is allowed");
+	        		nodePair2demand.put(pair, ee);
+	        	}
+	        	for (WIpUnicastDemand ee : nonBidiDemands)
+	        	{
+	        		if (ee.isBidirectional()) continue;
+	        		final WIpUnicastDemand opposite = nodePair2demand.get(Pair.of(ee.getB(), ee.getA()));
+	        		if (opposite == null) continue;
+	        		if (opposite.isBidirectional()) continue;
+	        		if (opposite.isDownstream() == ee.isDownstream()) continue;
+	        		ee.setBidirectionalPair(opposite);
+	        	}
+	        }
+	        , (a,b)->b>0, null));
+
+        if (isIpLayer)
+        	res.add(new AjtRcMenu("Arrange selected service chains in bidirectional pairs", e->
+	        {
+	        	final SortedSet<WServiceChainRequest> nonBidiDemands = getSelectedElements().stream().filter(ee->isWScr.apply(ee)).map(ee->toWScr.apply(ee)).filter(ee->!ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
+	        	final Map<Pair<SortedSet<WNode>,SortedSet<WNode>> , WServiceChainRequest> nodePair2demand = new HashMap<>();
+	        	for (WServiceChainRequest ee : nonBidiDemands)
+	        	{
+	        		final Pair<SortedSet<WNode>,SortedSet<WNode>> pair = Pair.of(ee.getPotentiallyValidOrigins() , ee.getPotentiallyValidDestinations());
+	        		if (nodePair2demand.containsKey(pair)) throw new Net2PlanException ("At most one demand per origin-destination nodes pair is allowed");
+	        		nodePair2demand.put(pair, ee);
+	        	}
+	        	for (WServiceChainRequest ee : nonBidiDemands)
+	        	{
+	        		if (ee.isBidirectional()) continue;
+	        		final WServiceChainRequest opposite = nodePair2demand.get(Pair.of(ee.getPotentiallyValidDestinations(), ee.getPotentiallyValidOrigins()));
+	        		if (opposite == null) continue;
+	        		if (opposite.isBidirectional()) continue;
+	        		if (opposite.isDownstream() == ee.isDownstream()) continue;
+	        		ee.setBidirectionalPair(opposite);
+	        	}
+	        }
+	        , (a,b)->b>0, null));
         
-        res.add(new AjtRcMenu("Set routing type of seleted IP unicast demands", null , (a,b)->b>0, Arrays.asList(
+        if (isIpLayer)
+        	res.add(new AjtRcMenu("Set routing type of seleted IP unicast demands", null , (a,b)->b>0, Arrays.asList(
         		new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e-> getSelectedElements().stream().filter(d->isWIpUnicast.apply(d)).forEach(dd->toWIpUnicast.apply (dd).setAsHopByHopRouted ()), (a,b)->b>0, null),
         		new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e-> getSelectedElements().stream().filter(d->isWIpUnicast.apply(d)).forEach(dd->toWIpUnicast.apply (dd).setAsSourceRouted ()), (a,b)->b>0, null)
         		)));
 
-        res.add(new AjtRcMenu("Set QoS type to selected elements", e->
-        {
-            DialogBuilder.launch(
-            		"Set selected demands QoS type", 
-                    "Please introduce the QoS type.", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
-                    (list)->
-                    	{
-                    		final String qos = (String) list.get(0).get();
-                    		getSelectedElements().forEach(dd->toAbsIp.apply(dd).setQosType(qos));
-                    	}
-                    );
-        }, (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Set maximum e2e limit to selected unicast demands", e->
-        {
-            DialogBuilder.launch(
-            		"Set maximum e2e limit to selected unicast demands", 
-                    "Please introduce the maximum end-to-end limit in ms, to set for the selected demands.", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
-                    (list)->
-                    	{
-                    		final double newLimit = (Double) list.get(0).get();
-                    		getSelectedElements().forEach(dd->((Demand)dd).setMaximumAcceptableE2EWorstCaseLatencyInMs(newLimit));
-                    	}
-                    );
-        }, (a,b)->b>0, null));
+        if (isIpLayer)
+	        res.add(new AjtRcMenu("Set QoS type to selected elements", e->
+	        {
+	            DialogBuilder.launch(
+	            		"Set selected demands QoS type", 
+	                    "Please introduce the QoS type.", 
+	                    "", 
+	                    this, 
+	                    Arrays.asList(InputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
+	                    (list)->
+	                    	{
+	                    		final String qos = (String) list.get(0).get();
+	                    		getSelectedElements().forEach(dd->toAbsIp.apply(dd).setQosType(qos));
+	                    	}
+	                    );
+	        }, (a,b)->b>0, null));
+
+        if (isIpLayer) 
+        	res.add(new AjtRcMenu("Set maximum e2e limit to selected unicast demands", e->
+	        {
+	            DialogBuilder.launch(
+	            		"Set maximum e2e limit to selected unicast demands", 
+	                    "Please introduce the maximum end-to-end limit in ms, to set for the selected demands.", 
+	                    "", 
+	                    this, 
+	                    Arrays.asList(InputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)),
+	                    (list)->
+	                    	{
+	                    		final double newLimit = (Double) list.get(0).get();
+	                    		getSelectedElements().forEach(dd->((Demand)dd).setMaximumAcceptableE2EWorstCaseLatencyInMs(newLimit));
+	                    	}
+	                    );
+	        }, (a,b)->b>0, null));
         
-        res.add(new AjtRcMenu("Add one IP unicast demand per selected node pair (all if none selected)", null, (a,b)->true, Arrays.asList(
-        		new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e->rcMenuFullMeshTraffic(true), (a,b)->true, null),
-        		new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e->rcMenuFullMeshTraffic(false), (a,b)->true, null)
-        		)
-        		));
-        res.add(new AjtRcMenu("Set selected demands offered traffic", e ->
-		{
-            DialogBuilder.launch(
-                    "Set selected demands offered traffic (Gbps)", 
-                    "Please introduce the offered traffic. Negative values are not allowed", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (Gbps)", "Introduce the offered traffic", 10, 0.0)),
-                    (list)->
-                    	{
-                    		final double newOfferedTraffic = (Double) list.get(0).get();
-                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
-                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(newOfferedTraffic));
-                    	}
-                    );
-		}
-		, (a, b) -> b>0, null));
-        res.add(new AjtRcMenu("Set selected demands offered traffic randomly", e ->
-		{
-			final Random rng = new Random ();
-    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
-        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(rng.nextDouble()));
-		}
-		, (a, b) -> b>0, null));
-        res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
-		{
-            DialogBuilder.launch(
-                    "Scale selected demands offered traffic", 
-                    "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 2.0)),
-                    (list)->
-                    	{
-                    		final double neScalingFactor = (Double) list.get(0).get();
-                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
-                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(d.getCurrentOfferedTrafficInGbps() * neScalingFactor));
-                    	}
-                    );
-		}
-		, (a, b) -> b>0, null));
-        res.add(new AjtRcMenu("Set traversed VNF types to selected service chain requests (or all)", e ->
-		{
-            DialogBuilder.launch(
-                    "Set traversed VNF types", 
-                    "Please introduce the comma and/or space separated list of VNF types", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfString("VNF types", "Introduce the VNF types (comma or space separated)", 10, "")),
-                    (list)->
-                    	{
-                    		final String vnfNamesSt = (String) list.get(0).get();
-                    		final List<String> vnfNames = Stream.of (vnfNamesSt.split(", ")).filter(a->!a.equals("")).collect(Collectors.toList());
-                    		final List<WServiceChainRequest> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).filter(d->isWScr.apply(d)).map(d->toWScr.apply(d)).filter(d->d.getServiceChains().isEmpty()).collect(Collectors.toList());
-                        	changedDemands.forEach(d->d.setSequenceVnfTypes(vnfNames));
-                    	}
-                    );
-		}
-		, (a, b) -> true, null));
+        if (isIpLayer)
+	        res.add(new AjtRcMenu("Add one IP unicast demand per selected node pair (all if none selected)", null, (a,b)->true, Arrays.asList(
+	        		new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e->rcMenuFullMeshTraffic(true), (a,b)->true, null),
+	        		new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e->rcMenuFullMeshTraffic(false), (a,b)->true, null)
+	        		)
+	        		));
+        if (isIpLayer)
+	        res.add(new AjtRcMenu("Set selected demands offered traffic", e ->
+			{
+	            DialogBuilder.launch(
+	                    "Set selected demands offered traffic (Gbps)", 
+	                    "Please introduce the offered traffic. Negative values are not allowed", 
+	                    "", 
+	                    this, 
+	                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (Gbps)", "Introduce the offered traffic", 10, 0.0)),
+	                    (list)->
+	                    	{
+	                    		final double newOfferedTraffic = (Double) list.get(0).get();
+	                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+	                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(newOfferedTraffic));
+	                    	}
+	                    );
+			}
+			, (a, b) -> b>0, null));
+        if (isIpLayer)
+	        res.add(new AjtRcMenu("Set selected demands offered traffic randomly", e ->
+			{
+				final Random rng = new Random ();
+	    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+	        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(rng.nextDouble()));
+			}
+			, (a, b) -> b>0, null));
+        if (isIpLayer)
+	        res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
+			{
+	            DialogBuilder.launch(
+	                    "Scale selected demands offered traffic", 
+	                    "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
+	                    "", 
+	                    this, 
+	                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 2.0)),
+	                    (list)->
+	                    	{
+	                    		final double neScalingFactor = (Double) list.get(0).get();
+	                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+	                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(d.getCurrentOfferedTrafficInGbps() * neScalingFactor));
+	                    	}
+	                    );
+			}
+			, (a, b) -> b>0, null));
+        if (isIpLayer)
+	        res.add(new AjtRcMenu("Set traversed VNF types to selected service chain requests (or all)", e ->
+			{
+	            DialogBuilder.launch(
+	                    "Set traversed VNF types", 
+	                    "Please introduce the comma and/or space separated list of VNF types", 
+	                    "", 
+	                    this, 
+	                    Arrays.asList(InputForDialog.inputTfString("VNF types", "Introduce the VNF types (comma or space separated)", 10, "")),
+	                    (list)->
+	                    	{
+	                    		final String vnfNamesSt = (String) list.get(0).get();
+	                    		final List<String> vnfNames = Stream.of (vnfNamesSt.split(", ")).filter(a->!a.equals("")).collect(Collectors.toList());
+	                    		final List<WServiceChainRequest> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).filter(d->isWScr.apply(d)).map(d->toWScr.apply(d)).filter(d->d.getServiceChains().isEmpty()).collect(Collectors.toList());
+	                        	changedDemands.forEach(d->d.setSequenceVnfTypes(vnfNames));
+	                    	}
+	                    );
+			}
+			, (a, b) -> true, null));
 
-        res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
-                MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
-                MonitoringUtils.getMenuExportMonitoringInfo(this),
-                MonitoringUtils.getMenuImportMonitoringInfo (this),
-                MonitoringUtils.getMenuSetMonitoredTraffic(this),
-                MonitoringUtils.getMenuSetOfferedTrafficAsForecasted (this),
-                MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (this),
-                MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
-                MonitoringUtils.getMenuCreatePredictorTraffic (this),
-                MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
-                MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
-                MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
-                new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Demand)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
-                new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Demand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
-                new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
-                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
-                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
-                		))
-        		)));
+        if (isIpLayer)
+	        res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
+	                MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
+	                MonitoringUtils.getMenuExportMonitoringInfo(this),
+	                MonitoringUtils.getMenuImportMonitoringInfo (this),
+	                MonitoringUtils.getMenuSetMonitoredTraffic(this),
+	                MonitoringUtils.getMenuSetOfferedTrafficAsForecasted (this),
+	                MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement (this),
+	                MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
+	                MonitoringUtils.getMenuCreatePredictorTraffic (this),
+	                MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
+	                MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
+	                MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
+	                new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Demand)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
+	                new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Demand)dd).getMonitoredOrForecastedOfferedTraffic().removeAllValues()) , (a,b)->b>0, null),
+	                new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
+	                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
+	                        MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
+	                		))
+	        		)));
 
+        
+        
         return res;
     }
 

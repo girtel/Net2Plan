@@ -23,7 +23,13 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.jgrapht.GraphPath;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.alg.shortestpath.SuurballeKDisjointShortestPaths;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -902,6 +908,32 @@ public class WNet extends WAbstractNetworkElement
 		return res;
 	}
 
+
+	/**
+	 * Returns two maximally link disjoint WDM paths between the given nodes. If exactly one path exists, one path is returned. If no paths exist, no paths are returned.
+	 * @param a the origin node
+	 * @param b the end node
+	 * @param optionalCostMapOrElseLatency an optional map of the cost to assign to traversing each WFiber link, if none,
+	 *        the cost is assumed to be the WFiber latency
+	 * @return a list of up to k paths, where each path is a sequence of WFiber objects forming a path from a to b
+	 */
+	public List<List<WFiber>> getTwoMaximallyLinkAndNodeDisjointWdmPaths(WNode a, WNode b, Optional<Map<WFiber, Double>> optionalCostMapOrElseLatency)
+	{
+		final List<Node> nodes = getNodes().stream().map(e->e.getNe()).collect(Collectors.toList());
+		final List<Link> links = getFibers().stream().map(e->e.getNe()).collect(Collectors.toList());
+		final SortedMap<Link,Double> costMap = new TreeMap<> ();
+		for (Link e : links) 
+			if (optionalCostMapOrElseLatency.isPresent()) 
+				costMap.put(e, optionalCostMapOrElseLatency.get().get(new WFiber(e)));
+			else
+				costMap.put(e, (new WFiber(e)).getPropagationDelayInMs());
+		final List<List<Link>> sps = GraphUtils.getTwoMaximumLinkAndNodeDisjointPaths(nodes, links, a.getNe(), b.getNe(), costMap);
+		final List<List<WFiber>> res = new ArrayList<> ();
+		for (List<Link> ee : sps) res.add(ee.stream().map(e->new WFiber(e)).collect(Collectors.toList()));
+		return res;
+	}
+
+	
 	void checkInThisWNet(WAbstractNetworkElement... ne)
 	{
 		for (WAbstractNetworkElement e : ne)
@@ -1135,7 +1167,7 @@ public class WNet extends WAbstractNetworkElement
 		return Optional.empty();
 	}
 	
-
+	
 	@Override
 	public WTYPE getWType() { return WTYPE.WNet; }
 

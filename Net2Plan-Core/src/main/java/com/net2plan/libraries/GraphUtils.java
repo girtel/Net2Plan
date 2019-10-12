@@ -13,6 +13,75 @@
 
 package com.net2plan.libraries;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.swing.JComponent;
+
+import org.apache.commons.collections15.ListUtils;
+import org.apache.commons.collections15.Predicate;
+import org.apache.commons.collections15.Transformer;
+import org.apache.commons.collections15.functors.ConstantTransformer;
+import org.apache.commons.collections15.functors.MapTransformer;
+import org.jgrapht.alg.connectivity.ConnectivityInspector;
+import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector;
+import org.jgrapht.alg.shortestpath.SuurballeKDisjointShortestPaths;
+import org.jgrapht.graph.AsSubgraph;
+import org.jgrapht.graph.AsWeightedGraph;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultUndirectedGraph;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
+
+import com.jom.OptimizationProblem;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.utils.CollectionUtils;
+import com.net2plan.utils.Constants;
+import com.net2plan.utils.Constants.CheckRoutingCycleType;
+import com.net2plan.utils.Constants.RoutingCycleType;
+import com.net2plan.utils.ImageUtils;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
+import com.net2plan.utils.Quintuple;
+
 import cern.colt.list.tdouble.DoubleArrayList;
 import cern.colt.list.tint.IntArrayList;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
@@ -24,11 +93,6 @@ import cern.colt.matrix.tdouble.algo.SparseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.jet.math.tdouble.DoubleFunctions;
 import cern.jet.math.tdouble.DoublePlusMultFirst;
-import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.*;
-import com.net2plan.utils.*;
-import com.net2plan.utils.Constants.CheckRoutingCycleType;
-import com.net2plan.utils.Constants.RoutingCycleType;
 import edu.uci.ics.jung.algorithms.filters.EdgePredicateFilter;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.algorithms.layout.StaticLayout;
@@ -45,25 +109,6 @@ import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.DefaultVertexLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
-import org.apache.commons.collections15.ListUtils;
-import org.apache.commons.collections15.Predicate;
-import org.apache.commons.collections15.Transformer;
-import org.apache.commons.collections15.functors.ConstantTransformer;
-import org.apache.commons.collections15.functors.MapTransformer;
-import org.jgrapht.alg.connectivity.ConnectivityInspector;
-import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector;
-import org.jgrapht.graph.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.util.*;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 //import org.jgrapht.DirectedGraph;
 //import org.jgrapht.UndirectedGraph;
@@ -3268,6 +3313,36 @@ public class GraphUtils
 			super(message);
 		}
 	}
+
+	private static <V,E> List<List<Pair<V,V>>> getTwoMaximumLinkDisjointPaths (org.jgrapht.graph.DirectedWeightedMultigraph<V , E> graph , V originNode, V destinationNode)
+	   {
+			final Function<E,Pair<V,V>> toNodePair = e -> Pair.of(graph.getEdgeSource(e), graph.getEdgeTarget(e));
+			
+				final List<org.jgrapht.GraphPath<V,E>> paths = new SuurballeKDisjointShortestPaths<>(graph).getPaths(originNode, destinationNode, 2);
+	       List<List<E>> resAsLinks = paths.stream().map(gp->gp.getEdgeList()).collect(Collectors.toCollection(ArrayList::new));
+	       
+	       if (resAsLinks.size() == 1)
+	       {
+	           final Set<E> traversedLinks = new HashSet<> (resAsLinks.get(0));
+	           final Map<E,Double> originalLinkCost = new HashMap<> ();
+	           double sumLinkCostsExcludingDoubleMaxValues = 0;
+	           for (E e : graph.edgeSet())
+	           {
+	           	final double currentWeight = graph.getEdgeWeight(e);
+	           	if (currentWeight != Double.MAX_VALUE && currentWeight != Double.POSITIVE_INFINITY) sumLinkCostsExcludingDoubleMaxValues += currentWeight;
+	           	if (traversedLinks.contains(e))
+	           		originalLinkCost.put(e, currentWeight);
+	           }
+	           for (E edgeToChangeWeight : originalLinkCost.keySet()) graph.setEdgeWeight(edgeToChangeWeight, sumLinkCostsExcludingDoubleMaxValues + 1.0);
+	           final org.jgrapht.alg.shortestpath.DijkstraShortestPath<V , E> dsp = new org.jgrapht.alg.shortestpath.DijkstraShortestPath<>(graph);
+	           final List<E> spModified = dsp.getPath(originNode, destinationNode).getEdgeList();
+	           for (Entry<E,Double> modifiedCost : originalLinkCost.entrySet()) graph.setEdgeWeight(modifiedCost.getKey(), modifiedCost.getValue());
+	           if (!resAsLinks.get(0).equals(spModified))
+	         	  resAsLinks.add(spModified); // only add if there is at least one different hop
+	       }
+	       return resAsLinks.stream().map(gp->gp.stream().map(ee->toNodePair.apply(ee)).collect(Collectors.toList())).collect(Collectors.toCollection(ArrayList::new));
+	   }
+
 
 	
 }

@@ -396,6 +396,16 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	}
 
 	/**
+	 * Casts this element to a WIpUnicastDemand
+	 * @return see above
+	 */
+	public WIpUnicastDemand getAsIpUnicastDemand()
+	{
+		return (WIpUnicastDemand) this;
+	}
+
+
+	/**
 	 * Casts this element to a WVnfInstance object (fails if it is not an object of such type)
 	 * @return see above
 	 */

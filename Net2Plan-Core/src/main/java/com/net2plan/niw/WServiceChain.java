@@ -205,6 +205,23 @@ public class WServiceChain extends WAbstractNetworkElement
 	 */
 	public void remove () { this.r.remove(); }
 
+	/** Returns the worst case length in km considering the traversed km in the transport layers
+	 * @return
+	 */
+	public double getWorstCaseLengthInKm ()
+	{
+		return this.getSequenceOfTraversedIpLinks().stream().mapToDouble(e->e.getWorstCaseLengthInKm()).sum();
+	}
+
+	/** Returns the worst case latency of this service chain, including propagation time in transport layers, and processing time at the traversed VNFs
+	 * @return see above
+	 */
+	public double getWorstCaseLatencyInMs ()
+	{
+		return this.getSequenceOfTraversedIpLinks().stream().mapToDouble(e->e.getWorstCasePropagationDelayInMs()).sum() + this.getSequenceOfTraversedVnfInstances().stream().mapToDouble(e->e.getProcessingTimeInMs()).sum();
+	}
+
+	
 	/** Returns the traffic carried in this service now, in the current network failure state
 	 * @return see above
 	 */

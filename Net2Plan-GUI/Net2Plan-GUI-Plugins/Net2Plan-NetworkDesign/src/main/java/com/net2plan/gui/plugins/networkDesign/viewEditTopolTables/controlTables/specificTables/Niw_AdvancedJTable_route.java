@@ -34,6 +34,7 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement.AGTYPE;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
@@ -56,6 +57,7 @@ import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.niw.WNode;
+import com.net2plan.niw.WServiceChain;
 import com.net2plan.utils.Pair;
 
 /**
@@ -79,24 +81,29 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
     	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
     	assert isIpLayer || isWdmLayer;
     	assert !(isIpLayer && isWdmLayer);
+    	final Function<Route,WServiceChain> toSc = d -> (WServiceChain) wNet.getWElement(d).get();
     	final Function<Route,WIpSourceRoutedConnection> toIpc = d -> (WIpSourceRoutedConnection) wNet.getWElement(d).get();
     	final Function<Route,WLightpath> toLp = d ->(WLightpath) wNet.getWElement(d).get();
+    	final Function<Route,Boolean> isSc = d -> wNet.getWElement(d).get().isServiceChain();
     	final Function<Route,Boolean> isIpc = d -> wNet.getWElement(d).get().isIpConnection();
     	final Function<Route,Boolean> isLp = d -> wNet.getWElement(d).get().isLightpath();
     	
-        res.add(new AjtColumnInfo<Route>(this , Node.class, null , "A", "Origin node", null , d->isLp.apply(d)? toLp.apply(d).getA() : toIpc.apply(d).getA() , AGTYPE.NOAGGREGATION , null));
-        res.add(new AjtColumnInfo<Route>(this , Node.class, null , "B", "Destination node", null , d->isLp.apply(d)? toLp.apply(d).getB() : toIpc.apply(d).getB() , AGTYPE.NOAGGREGATION , null));
+        res.add(new AjtColumnInfo<Route>(this , Node.class, null , "A", "Origin node", null , d->isLp.apply(d)? toLp.apply(d).getA().getNe() : (isIpc.apply(d)? toIpc.apply(d).getA().getNe() : toSc.apply(d).getA().getNe()) , AGTYPE.NOAGGREGATION , null));
+        res.add(new AjtColumnInfo<Route>(this , Node.class, null , "B", "Destination node", null , d->isLp.apply(d)? toLp.apply(d).getB().getNe() : (isIpc.apply(d)? toIpc.apply(d).getB().getNe() : toSc.apply(d).getB().getNe()) , AGTYPE.NOAGGREGATION , null));
 
     	if (isIpLayer)
     	{
-            res.add(new AjtColumnInfo<Route>(this , Demand.class, null , "IP unicast demand", "Associated IP unicast demand", null , d->toIpc.apply(d).getIpUnicastDemand().getNe() , AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , Boolean.class, null , "Up?", "Indicates if this IP connection is up (not traversing any down node or IP link)", null , d->!toIpc.apply(d).isDown() , AGTYPE.COUNTTRUE , null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, null , "Target carried IP traffic (Gbps)", "Nominal IP traffic in Gbps to be carried by this connection, in the non-failure state", (d,val)->toIpc.apply(d).setCarriedTrafficInNoFailureStateGbps((Double) val), d->toIpc.apply(d).getCarriedTrafficInNoFailureStateGbps() , AGTYPE.SUMDOUBLE , null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, null , "Current IP traffic (Gbps)", "Current carried IP traffic by this IP connection", null , d->toIpc.apply(d).getCurrentCarriedTrafficGbps() , AGTYPE.SUMDOUBLE , null));
-            res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# IP links", "Number of traversed IP links", null , d->toIpc.apply(d).getSequenceOfTraversedIpLinks().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# IP nodes", "Number of traversed IP nodes", null , d->toIpc.apply(d).getSequenceOfTraversedIpNodes().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, null , "Length (km)", "Length of the IP connection, considering also the length of the transport layer WDM links traversed if any", null , d->toIpc.apply(d).getWorstCaseLengthInKm() , AGTYPE.MAXDOUBLE , null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, null , "E2e latency (ms)", "End-to-end latency considering links traversed, and propagation time in transport layer links if any", null , d->toIpc.apply(d).getWorstCasePropgationLatencyInMs() , AGTYPE.MAXDOUBLE , d->{ final double m = toIpc.apply(d).getIpUnicastDemand().getMaximumAcceptableE2EWorstCaseLatencyInMs(); if (m >= 0) return null; return toIpc.apply(d).getWorstCasePropgationLatencyInMs() > m? Color.RED : null; }));
+            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Type", "Indicates if this demand is a IP connection or a service chain realizing a service chain request, potentially traversing VNFs", null , d->isIpc.apply(d)? "IP connection" : "Service chain" , AGTYPE.NOAGGREGATION , null));
+    		res.add(new AjtColumnInfo<Route>(this , Demand.class, null , "Demand / Service chain req.", "Associated IP unicast demand or service chain request of this element", null , d->isIpc.apply(d)? toIpc.apply(d).getIpUnicastDemand().getNe() : toSc.apply(d).getServiceChainRequest().getNe() , AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , Boolean.class, null , "Up?", "Indicates if this IP connection or service chain is up (not traversing any down node or IP link)", null , d->isIpc.apply(d)? !toIpc.apply(d).isDown() : !toSc.apply(d).isDown() , AGTYPE.COUNTTRUE , null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, null , "Target carried IP traffic (Gbps)", "Nominal IP traffic in Gbps to be carried by this IP connection or service chain (in this case the one injected by the origin node), in the non-failure state", (d,val)-> { if (isIpc.apply(d)) toIpc.apply(d).setCarriedTrafficInNoFailureStateGbps((Double) val); else toSc.apply(d).setInitiallyInjectedTrafficGbps((Double) val); } , d->isIpc.apply(d)? toIpc.apply(d).getCarriedTrafficInNoFailureStateGbps() : toSc.apply(d).getCarriedTrafficInNoFaillureStateGbps() , AGTYPE.SUMDOUBLE , null) );
+            res.add(new AjtColumnInfo<Route>(this , Double.class, null , "Current IP traffic (Gbps)", "Current carried IP traffic by this IP connection or this service chain. In the latter case it is the traffic injected by the origin node", null , d->isIpc.apply(d)? toIpc.apply(d).getCurrentCarriedTrafficGbps() : toSc.apply(d).getCurrentCarriedTrafficGbps() , AGTYPE.SUMDOUBLE , null));
+            res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# IP links", "Number of traversed IP links", null , d->isIpc.apply(d)? toIpc.apply(d).getSequenceOfTraversedIpLinks().stream().map(e->e.getNe()).collect(Collectors.toList()) : toSc.apply(d).getSequenceOfTraversedIpLinks().stream().map(e->e.getNe()).collect(Collectors.toList()), AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# IP nodes", "Number of traversed IP nodes", null , d->isIpc.apply(d)? toIpc.apply(d).getSequenceOfTraversedIpNodes().stream().map(e->e.getNe()).collect(Collectors.toList()) : toSc.apply(d).getSequenceOfTraversedIpNodesWithoutConsecutiveRepetitions().stream().map(e->e.getNe()).collect(Collectors.toList()), AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# VNFs", "Number of traversed VNF instances", null , d->isIpc.apply(d)? "--" : toSc.apply(d).getSequenceOfTraversedVnfInstances().stream().map(e->e.getNe()).collect(Collectors.toList()), AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "SC: VNF expansion factors", "For each VNF, the expansion factor applied to the traffic. That is, the ratio between the traffic at the output and the input of the VNF. E.g. 0.5 if the VNF compresses the traffic a 50%", null , d->isIpc.apply(d)? "--" : toSc.apply(d).getCurrentExpansionFactorApplied().stream().map(e->"" + df.format(e)).collect(Collectors.joining(" ")), AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, null , "Length (km)", "Length of the IP connection, considering also the length of the transport layer WDM links traversed if any", null , d->isIpc.apply(d)? toIpc.apply(d).getWorstCaseLengthInKm() : toSc.apply(d).getWorstCaseLengthInKm() , AGTYPE.MAXDOUBLE , null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, null , "E2e latency (ms)", "End-to-end latency considering links traversed, and propagation time in transport layer links if any, and processing time in the VNFs for the service chains", null , d->isIpc.apply(d)? toIpc.apply(d).getWorstCasePropgationLatencyInMs() : toSc.apply(d).getWorstCaseLatencyInMs() , AGTYPE.MAXDOUBLE , d->{ if (isSc.apply(d)) return null; final double m = toIpc.apply(d).getIpUnicastDemand().getMaximumAcceptableE2EWorstCaseLatencyInMs(); if (m >= 0) return null; return toIpc.apply(d).getWorstCasePropgationLatencyInMs() > m? Color.RED : null; }));
     	}
     	else
     	{
@@ -150,9 +157,12 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
     	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
     	assert isIpLayer || isWdmLayer;
     	assert !(isIpLayer && isWdmLayer);
-    	final Function<Link,WFiber> toWFiber = d -> (WFiber) wNet.getWElement(d).get();
-    	final Function<Link,WIpLink> toWIpLink = d ->(WIpLink) wNet.getWElement(d).get();
-    	final Function<Link,Boolean> isWIpLink = d -> { final WTYPE y = wNet.getWType(d).orElse (null); return y == null? false : y.isIpLink(); };
+    	final Function<Route,WServiceChain> toSc = d -> (WServiceChain) wNet.getWElement(d).get();
+    	final Function<Route,WIpSourceRoutedConnection> toIpc = d -> (WIpSourceRoutedConnection) wNet.getWElement(d).get();
+    	final Function<Route,WLightpath> toLp = d ->(WLightpath) wNet.getWElement(d).get();
+    	final Function<Route,Boolean> isSc = d -> wNet.getWElement(d).get().isServiceChain();
+    	final Function<Route,Boolean> isIpc = d -> wNet.getWElement(d).get().isIpConnection();
+    	final Function<Route,Boolean> isLp = d -> wNet.getWElement(d).get().isLightpath();
 		final Function<String,Optional<WNode>> nodeByName = st -> 
 		{
     		WNode a = wNet.getNodeByName(st).orElse(null);
@@ -160,35 +170,39 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
     		return Optional.ofNullable(a);
 		};
 
-
-
     	if (isIpLayer)
     	{
-            res.add(new AjtRcMenu("Add bidirectional IP link", e->
-            {
-              DialogBuilder.launch(
-              "Add IP link" , 
-              "Please introduce the information required.", 
-              "", 
-              this, 
-              Arrays.asList(
-              		InputForDialog.inputTfString("Input node name", "Introduce the name of the input node", 10, ""),
-              		InputForDialog.inputTfString("End node name", "Introduce the name of the end node", 10, ""),
-              		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate in Gbps of the IP link", 10, 100.0)
-              		),
-              (list)->
-              	{
-            		final String aName  = (String) list.get(0).get();
-            		final String bName  = (String) list.get(1).get();
-            		final double rateGbps = (Double) list.get(2).get();
-            		final WNode a = nodeByName.apply(aName).orElse(null);
-            		final WNode b = nodeByName.apply(bName).orElse(null);
-            		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
-            		wNet.addIpLinkBidirectional(a, b, rateGbps);
-              	}
-              );
-            }
-            , (a,b)->true, null));
+
+    		
+    		
+    		res.add(new AjtRcMenu("Add IP connection", null , (a,b)->true, Arrays.asList(
+    				new AjtRcMenu("as shortest path in lantecy") , 
+    				e->
+    	            {
+    	              DialogBuilder.launch(
+    	              "Add IP source routed connection" , 
+    	              "Please introduce the information required.", 
+    	              "", 
+    	              this, 
+    	              Arrays.asList(
+    	              		InputForDialog.inputTfString("Input node name", "Introduce the name of the input node", 10, ""),
+    	              		InputForDialog.inputTfString("End node name", "Introduce the name of the end node", 10, ""),
+    	              		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate in Gbps of the IP link", 10, 100.0)
+    	              		),
+    	              (list)->
+    	              	{
+    	            		final String aName  = (String) list.get(0).get();
+    	            		final String bName  = (String) list.get(1).get();
+    	            		final double rateGbps = (Double) list.get(2).get();
+    	            		final WNode a = nodeByName.apply(aName).orElse(null);
+    	            		final WNode b = nodeByName.apply(bName).orElse(null);
+    	            		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
+    	            		wNet.addIpLinkBidirectional(a, b, rateGbps);
+    	              	}
+    	              );
+    	            } ,     (a,b)->true, null)				
+    				)
+    				));
             
             res.add(new AjtRcMenu("Bundle selected IP links when possible", e->
             {

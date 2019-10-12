@@ -22,6 +22,8 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
@@ -64,6 +66,19 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		return res;
 	}
 	
+	/**
+	 * Adds a source routed IP connection to this unicast demand, in the case that it is of the source routed type
+	 * @param sequenceOfIpLinks the sequence of IP links traversed
+	 * @param carriedTrafficGbpsInNonFailureState the traffic to inject in the non failure state
+	 * @return the IP source routed connection object
+	 */
+	public WIpSourceRoutedConnection addIpSourceRoutedConnection (List<WIpLink> sequenceOfIpLinks, double carriedTrafficGbpsInNonFailureState)
+	{
+		if (this.isIpHopByHopRouted()) throw new Net2PlanException ("The IP unicast demand is hop-by-hop routed: no IP source routed connection can be added");
+		final Route r = getNe().getNetPlan().addRoute(this.getNe(), carriedTrafficGbpsInNonFailureState, carriedTrafficGbpsInNonFailureState, sequenceOfIpLinks.stream().map(e->e.getNe()).collect(Collectors.toList()) , null);
+		return new WIpSourceRoutedConnection(r);
+	}
+
 	/**
 	 * Indicates if this unidirectional service chain request has associated an opposite service chain request-. If this
 	 * flow is upstream, the opposite is downstream. An initial valid node for this stream is an ending valid node of the
@@ -129,7 +144,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	 * Returns the origin node of this IP demand
 	 * @return see above
 	 */
-	public WNode getOriginNode ()
+	public WNode getA ()
 	{
 		return new WNode (getNe().getIngressNode());
 	}
@@ -138,7 +153,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	 * Returns the destination node of this IP demand
 	 * @return see above
 	 */
-	public WNode getDestinationNode ()
+	public WNode getB ()
 	{
 		return new WNode (getNe().getEgressNode());
 	}
@@ -158,7 +173,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	@Override
 	public String toString()
 	{
-		return "WIpUnicastDemand (" + this.getCurrentOfferedTrafficInGbps() + "G) " + getOriginNode() + "->" + getDestinationNode();
+		return "WIpUnicastDemand (" + this.getCurrentOfferedTrafficInGbps() + "G) " + getA() + "->" + getB();
 	}
 
 	@Override
@@ -182,8 +197,8 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		if (d == null) throw new Net2PlanException("Please specify a not null IP demand");
 		if (!(d instanceof WIpUnicastDemand)) throw new Net2PlanException("Please specify a not null IP demand");
 		final WIpUnicastDemand dd = (WIpUnicastDemand) d;
-		if (!this.getOriginNode().equals(dd.getDestinationNode ())) throw new Net2PlanException("The origin of this IP demand must be the end node of the opposite, and viceversa");
-		if (!dd.getOriginNode().equals(this.getDestinationNode())) throw new Net2PlanException("The origin of this IP demand must be the end node of the opposite, and viceversa");
+		if (!this.getA().equals(dd.getB ())) throw new Net2PlanException("The origin of this IP demand must be the end node of the opposite, and viceversa");
+		if (!dd.getA().equals(this.getB())) throw new Net2PlanException("The origin of this IP demand must be the end node of the opposite, and viceversa");
 		if (this.isDownstream() == dd.isDownstream()) throw new Net2PlanException("One flow must be tagged as upstream, the other as downstream");
 		removeBidirectionalPairRelation();
 		getNe().setBidirectionalPair(d.getNe());
