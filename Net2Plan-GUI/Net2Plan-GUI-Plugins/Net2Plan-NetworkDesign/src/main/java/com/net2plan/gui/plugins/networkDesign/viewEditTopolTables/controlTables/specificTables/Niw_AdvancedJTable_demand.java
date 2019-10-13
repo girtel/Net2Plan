@@ -80,7 +80,8 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
   public List<AjtColumnInfo<Demand>> getNonBasicUserDefinedColumnsVisibleOrNot()
   {
     	final List<AjtColumnInfo<Demand>> res = new LinkedList<> ();
-    	final WNet wNet = new WNet (callback.getDesign()); 
+    	assert callback.getNiwInfo().getFirst();
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
     	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
     	assert isIpLayer || isWdmLayer;
@@ -152,7 +153,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     public List<AjtRcMenu> getNonBasicRightClickMenusInfo()
     {
         final List<AjtRcMenu> res = new ArrayList<> ();
-    	final WNet wNet = new WNet (callback.getDesign()); 
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final Function<Demand,Boolean> isWScr = d ->wNet.getWElement(d).get().isServiceChainRequest();
     	final Function<Demand,Boolean> isWIpUnicast = d ->wNet.getWElement(d).get().isWIpUnicastDemand();
     	final Function<Demand,Boolean> isWAbstractIpD = d ->isWScr.apply(d) || isWIpUnicast.apply(d); 
@@ -500,7 +501,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         	}
                         );
             } , (a,b)->b>0, null));
-    		final OpticalSpectrumManager osm = OpticalSpectrumManager.createFromRegularLps(wNet);
+    		final OpticalSpectrumManager osm = callback.getNiwInfo().getThird();
             res.add(new AjtRcMenu("Add lightpath to selected requests", null , (a, b)->true, Arrays.asList( 
             		new AjtRcMenu("as shortest path, first-fit", e->
             		{
@@ -667,7 +668,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     
     private void rcMenuFullMeshTraffic(boolean isHopByHop)
     {
-        final WNet wNet = new WNet (callback.getDesign());
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
         final Collection<WNode> nodes;
         nodes = (callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).isEmpty()? wNet.getNodes() : (Set<WNode>) callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).stream().map(n->new WNode((Node) n)).filter(n->n.isRegularNode()).collect(Collectors.toList()));
         if (nodes.isEmpty()) throw new Net2PlanException("There are no nodes");

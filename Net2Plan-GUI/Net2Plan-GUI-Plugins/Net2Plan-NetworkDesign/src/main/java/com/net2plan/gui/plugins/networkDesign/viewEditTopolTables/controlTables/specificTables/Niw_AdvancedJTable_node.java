@@ -58,7 +58,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
   {
     	final List<AjtColumnInfo<Node>> res = new LinkedList<> ();
 
-    	final WNet wNet = new WNet (callback.getDesign()); 
+    	assert callback.getNiwInfo().getFirst();
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final Function<Node,WNode> toWNode = n -> { final WNode nn = new WNode (n); assert !nn.isVirtualNode();  return nn; };
     	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
     	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
@@ -139,7 +140,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
     public List<AjtRcMenu> getNonBasicRightClickMenusInfo()
     {
         final List<AjtRcMenu> res = new ArrayList<> ();
-    	final WNet wNet = new WNet (callback.getDesign()); 
+    	assert callback.getNiwInfo().getFirst();
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final Function<Node,WNode> toWNode = d -> (WNode) wNet.getWElement(d).get();
         res.add(new AjtRcMenu("Add node", e->wNet.addNode (0 , 0 , "Node " + wNet.getNumberOfNodes() , null), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected nodes", e->getSelectedElements().forEach(dd->toWNode.apply(dd).remove()) , (a,b)->b>0, null));

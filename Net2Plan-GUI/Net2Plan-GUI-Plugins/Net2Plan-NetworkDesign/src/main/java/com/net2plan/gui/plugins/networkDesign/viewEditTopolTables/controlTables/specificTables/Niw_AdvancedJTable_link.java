@@ -85,7 +85,8 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
   public List<AjtColumnInfo<Link>> getNonBasicUserDefinedColumnsVisibleOrNot()
   {
     	final List<AjtColumnInfo<Link>> res = new LinkedList<> ();
-    	final WNet wNet = new WNet (callback.getDesign()); 
+    	assert callback.getNiwInfo().getFirst();
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
     	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
     	assert isIpLayer || isWdmLayer;
@@ -126,9 +127,8 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	}
     	else
     	{
-    		final OpticalSpectrumManager ospec = OpticalSpectrumManager.createFromRegularLps(wNet);
-    		final OpticalSimulationModule osim = new OpticalSimulationModule (wNet);
-    		osim.updateAllPerformanceInfo();
+    		final OpticalSpectrumManager ospec = callback.getNiwInfo().getThird();
+    		final OpticalSimulationModule osim = callback.getNiwInfo().getFourth();
     		
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Length (km)", "WDM link length in km", (d,val)->toWFiber.apply(d).setLenghtInKm((Double) val) , d->toWFiber.apply(d).getLengthInKm()  , AGTYPE.SUMDOUBLE, null));
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Latency (ms)", "WDM link latency in ms", null , d->toWFiber.apply(d).getPropagationDelayInMs()  , AGTYPE.MAXDOUBLE, null));
@@ -184,7 +184,8 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     {
     	final NetPlan np = callback.getDesign();
         final List<AjtRcMenu> res = new ArrayList<> ();
-    	final WNet wNet = new WNet (callback.getDesign()); 
+    	assert callback.getNiwInfo().getFirst();
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
     	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
     	assert isIpLayer || isWdmLayer;

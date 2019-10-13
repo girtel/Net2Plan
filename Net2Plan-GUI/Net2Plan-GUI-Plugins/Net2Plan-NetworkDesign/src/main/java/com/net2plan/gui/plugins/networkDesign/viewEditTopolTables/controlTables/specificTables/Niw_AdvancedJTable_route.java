@@ -76,7 +76,8 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
   public List<AjtColumnInfo<Route>> getNonBasicUserDefinedColumnsVisibleOrNot()
   {
     	final List<AjtColumnInfo<Route>> res = new LinkedList<> ();
-    	final WNet wNet = new WNet (callback.getDesign()); 
+    	assert callback.getNiwInfo().getFirst();
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
     	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
     	assert isIpLayer || isWdmLayer;
@@ -107,9 +108,8 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
     	}
     	else
     	{
-    		final OpticalSpectrumManager ospec = OpticalSpectrumManager.createFromRegularLps(wNet);
-    		final OpticalSimulationModule osim = new OpticalSimulationModule (wNet);
-    		osim.updateAllPerformanceInfo();
+    		final OpticalSpectrumManager ospec = callback.getNiwInfo().getThird();
+    		final OpticalSimulationModule osim = callback.getNiwInfo().getFourth();
     		
             res.add(new AjtColumnInfo<Route>(this , Demand.class, null , "Lp request", "Associated lightpath request", null , d->toLp.apply(d).getLightpathRequest().getNe() , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Boolean.class, null , "Up?", "Indicates if this lightpath is up (not traversing any down node or fiber)", null , d->!toLp.apply(d).isDown() , AGTYPE.COUNTTRUE , null));
@@ -152,7 +152,8 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
     {
     	final NetPlan np = callback.getDesign();
         final List<AjtRcMenu> res = new ArrayList<> ();
-    	final WNet wNet = new WNet (callback.getDesign()); 
+    	assert callback.getNiwInfo().getFirst();
+    	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
     	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
     	assert isIpLayer || isWdmLayer;
@@ -192,6 +193,33 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
             		new AjtRcMenu("Equal to its demand offered traffic", e->getSelectedElements().stream().forEach(ee->{ if (isIpc.apply(ee)) toIpc.apply(ee).setCarriedTrafficInNoFailureStateGbps(toIpc.apply(ee).getIpUnicastDemand().getCurrentOfferedTrafficInGbps()); else toSc.apply(ee).setInitiallyInjectedTrafficGbps (toSc.apply(ee).getServiceChainRequest().getCurrentOfferedTrafficInGbps()); }) , (a,b)->b>0, null)
             		)));
 
+            res.add(new AjtRcMenu("Set selected service chains VNF expansion factors", ee-> 
+            {
+                DialogBuilder.launch(
+                        "Set VNF expansion factors" , 
+                        "Please introduce one non-negative value per VNF traversed, indicating the ratio between the output traffic in the respective VNF, respect to the service chain initial injected traffic", 
+                        "", 
+                        this, 
+                        Arrays.asList(InputForDialog.inputTfString("Space-separated expansion factors.", "Introduce the requested information", 10, "")),
+                        (list)->
+                        	{
+                        		final String value = (String) list.get(0).get();
+                        		final List<Double> expFactors = Stream.of(value.split(" ")).filter(e->e.isEmpty()).map(e->Double.parseDouble(e)).collect(Collectors.toList());
+                        		if (expFactors.stream().anyMatch(e->e<0)) throw new Net2PlanException("All values must be non-negative");
+                        		final int numVnfs = expFactors.size();
+                        		for (Route r : getSelectedElements())
+                        		{
+                        			if (!isSc.apply(r)) continue;
+                        			final WServiceChain sc = toSc.apply (r);
+                        			if (sc.getSequenceOfTraversedVnfInstances().size() != numVnfs) continue;
+                        			sc.setPathAndInitiallyInjectedTraffic(Optional.empty(), Optional.empty(), Optional.of(expFactors));
+                        		}
+                        	}
+                        );
+            } , (a,b)->b>0, null) );
+
+            
+            
     	} // if ipLayer
     	
     	if (isWdmLayer)
