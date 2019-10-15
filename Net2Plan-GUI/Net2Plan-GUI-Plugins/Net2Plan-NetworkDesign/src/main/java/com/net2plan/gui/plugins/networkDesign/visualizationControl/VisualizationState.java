@@ -66,6 +66,7 @@ public class VisualizationState
     private boolean showInCanvasUpperLayerPropagation;
     private boolean showInCanvasThisLayerPropagation;
     private boolean whatIfAnalysisActive;
+    private boolean whatIfAnalysis_useDefaultNiwSimulator;
     private ITableRowFilter tableRowFilter;
 
     private List<Double> linkUtilizationColorThresholdList;
@@ -113,6 +114,7 @@ public class VisualizationState
         this.showInCanvasUpperLayerPropagation = true;
         this.showInCanvasThisLayerPropagation = true;
         this.whatIfAnalysisActive = false;
+        this.whatIfAnalysis_useDefaultNiwSimulator = true;
         this.nodesToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
         this.linksToHideInCanvasAsMandatedByUserInTable = new HashSet<>();
         this.interLayerSpaceInPixels = 50;
@@ -137,11 +139,20 @@ public class VisualizationState
         return whatIfAnalysisActive;
     }
 
+    public boolean isWhatIfAnalysisUseDefaultNiwSimulatorActive ()
+    {
+    	return this.whatIfAnalysis_useDefaultNiwSimulator;
+    }
+    
     public void setWhatIfAnalysisActive(boolean isWhatIfAnalysisActive)
     {
         this.whatIfAnalysisActive = isWhatIfAnalysisActive;
     }
 
+    public void setIsActiveWhatIfAnalysisUseDefaultNiwSimulator (boolean isActive)
+    {
+        this.whatIfAnalysis_useDefaultNiwSimulator = isActive;
+    }
 
     public ITableRowFilter getTableRowFilter()
     {
@@ -210,7 +221,6 @@ public class VisualizationState
     	this.isNiwDesignButtonActive = isActive;
     	callback.setDesign(callback.getDesign()); // para que se actualice el isNiwValidDesign
     }
-
     
     public boolean isVisibleInCanvas(GUILink gl)
     {

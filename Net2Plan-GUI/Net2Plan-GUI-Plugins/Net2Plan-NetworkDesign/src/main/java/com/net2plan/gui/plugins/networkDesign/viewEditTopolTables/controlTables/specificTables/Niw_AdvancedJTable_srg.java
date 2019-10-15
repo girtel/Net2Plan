@@ -12,7 +12,6 @@
 
 package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables;
 
-import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,29 +19,26 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement.AGTYPE;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
-import com.net2plan.libraries.SRGUtils;
+import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNode;
 import com.net2plan.niw.WSharedRiskGroup;
-import com.net2plan.niw.WVnfInstance;
 
 /**
  */
@@ -89,9 +85,6 @@ public class Niw_AdvancedJTable_srg extends AdvancedJTable_networkElement<Shared
         res.add(new AjtRcMenu("Add SRG", e->wNet.addSharedRiskGroup() , (a,b)->b>0, null) );
 		res.add(new AjtRcMenu("Remove selected SRGs", e->getSelectedElements().forEach(dd-> toSrg.apply(dd).remove ()) , (a,b)->b>0, null) );
 
-		res.add(new AjtRcMenu("Add SRGs from model", e->getSelectedElements().forEach(dd-> toSrg.apply(dd).remove ()) , (a,b)->b>0, null) );
-
-		
         res.add(new AjtRcMenu("Add SRGs from model", e->
         {
         	final List<String> models = Arrays.asList(
@@ -123,78 +116,127 @@ public class Niw_AdvancedJTable_srg extends AdvancedJTable_networkElement<Shared
                     		}
                     		else if (srgModel.equals(models.get(1)))
                     		{
-                    			for (WNode n : wNet.getNodes())
-                    				wNet.addSharedRiskGroup().setMeanTimeToFailInHours(mttf).setMeanTimeToRepairInHours(mttr).addFailingNode(n);
+                    			for (WFiber n : wNet.getFibers())
+                    				wNet.addSharedRiskGroup().setMeanTimeToFailInHours(mttf).setMeanTimeToRepairInHours(mttr).addFailingFiber(n);
+                    		}
+                    		else if (srgModel.equals(models.get(2)))
+                    		{
+                    			for (WNode n1 : wNet.getNodes())
+                    				for (WNode n2 : wNet.getNodes())
+                    					if (n1.getId() > n2.getId())
+                    					{
+                    						final SortedSet<WFiber> fibersAbbA = new TreeSet<> ();
+                    						fibersAbbA.addAll(wNet.getNodePairFibers(n1, n2));
+                    						fibersAbbA.addAll(wNet.getNodePairFibers(n2, n1));
+                            				wNet.addSharedRiskGroup().setMeanTimeToFailInHours(mttf).setMeanTimeToRepairInHours(mttr).addFailingFibers(fibersAbbA);
+                    					}
                     		}
                     	}
                     );
         }, (a,b)->true, null));
 
-		
-		
-        res.add(new AjtRcMenu("Set capacity (Gbps) of selected VNF instances", e-> 
+        res.add(new AjtRcMenu("Set failing nodes of selected SRGs", e-> 
     	DialogBuilder.launch(
-            "Set capacity (Gbps) of selected VNF instances" , 
+            "Set failing nodes of selected SRGs" , 
             "Please introduce the requested information", 
             "", 
             this, 
-            Arrays.asList(InputForDialog.inputTfDouble("Capacity (Gbps)", "Introduce the requested information", 10, 100.0)),
+            Arrays.asList(InputForDialog.inputTfString("Node names (space separated)", "Introduce the requested information", 10, "")),
             (list)->
             	{
-            		final double value = (Double) list.get(0).get();
-            		getSelectedElements().stream().map(ee->toVnf.apply(ee)).forEach(ee->ee.setCapacityInGbpsOfInputTraffic(Optional.of(value) , Optional.empty(), Optional.empty(), Optional.empty()));
+            		final List<String> nameList = Stream.of(((String) list.get(0).get()).split(" ")).
+            				filter(ee->!ee.isEmpty()).collect(Collectors.toList());
+            		final List<WNode> nodes = new ArrayList<> ();
+            		for (String name : nameList)
+            		{
+            			final WNode n = nodeByName.apply(name).orElse(null);
+            			if (n == null) throw new Net2PlanException ("Unknown node: " + name);
+            			nodes.add(n);
+            		}
+            		for (WSharedRiskGroup srg : getSelectedElements().stream().map(ee->toSrg.apply(ee)).collect(Collectors.toList()))
+            		{
+            			srg.removeAllFailingNodes();
+            			srg.addFailingNodes(nodes);
+            		}
             	}
             ) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Set number of allocated CPUs of selected VNF instances", e-> 
+
+        res.add(new AjtRcMenu("Set failing fibers of selected SRGs", e-> 
     	DialogBuilder.launch(
-            "Set number of allocated CPUs of selected VNF instances" , 
+            "Set failing fibers of selected SRGs" , 
             "Please introduce the requested information", 
             "", 
             this, 
-            Arrays.asList(InputForDialog.inputTfDouble("Number of allocated CPUs", "Introduce the requested information", 10, 1.0)),
+            Arrays.asList(InputForDialog.inputTfString("Fiber ids (space separated)", "Introduce the requested information", 10, "")),
             (list)->
             	{
-            		final double value = (Double) list.get(0).get();
-            		getSelectedElements().stream().map(ee->toVnf.apply(ee)).forEach(ee->ee.setCapacityInGbpsOfInputTraffic(Optional.empty() , Optional.of(value), Optional.empty(), Optional.empty()));
+            		final List<String> idList = Stream.of(((String) list.get(0).get()).split(" ")).
+            				filter(ee->!ee.isEmpty()).collect(Collectors.toList());
+            		final List<WFiber> fibers = new ArrayList<> ();
+            		for (String id : idList)
+            		{
+            			final WFiber n = wNet.getFiberFromId(Long.parseLong(id)).orElse(null);
+            			if (n == null) throw new Net2PlanException ("Unknown fiber ID: " + id);
+            			fibers.add(n);
+            		}
+            		for (WSharedRiskGroup srg : getSelectedElements().stream().map(ee->toSrg.apply(ee)).collect(Collectors.toList()))
+            		{
+            			srg.removeAllFailingFibers();
+            			srg.addFailingFibers(fibers);
+            		}
             	}
             ) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Set amount of RAM (GB) allocated to selected VNF instances", e-> 
+
+        res.add(new AjtRcMenu("Set failing fibers of selected SRGs", e-> 
     	DialogBuilder.launch(
-            "Set amount of RAM (GB) allocated to selected VNF instances" , 
+            "Set failing fibers of selected SRGs" , 
             "Please introduce the requested information", 
             "", 
             this, 
-            Arrays.asList(InputForDialog.inputTfDouble("RAM (GigaBytes)", "Introduce the requested information", 10, 32.0)),
+            Arrays.asList(InputForDialog.inputTfString("Fiber ids (space separated)", "Introduce the requested information", 10, "")),
             (list)->
             	{
-            		final double value = (Double) list.get(0).get();
-            		getSelectedElements().stream().map(ee->toVnf.apply(ee)).forEach(ee->ee.setCapacityInGbpsOfInputTraffic(Optional.empty() , Optional.empty(), Optional.of(value), Optional.empty()));
+            		final List<String> idList = Stream.of(((String) list.get(0).get()).split(" ")).
+            				filter(ee->!ee.isEmpty()).collect(Collectors.toList());
+            		final List<WFiber> fibers = new ArrayList<> ();
+            		for (String id : idList)
+            		{
+            			final WFiber n = wNet.getFiberFromId(Long.parseLong(id)).orElse(null);
+            			if (n == null) throw new Net2PlanException ("Unknown fiber ID: " + id);
+            			fibers.add(n);
+            		}
+            		for (WSharedRiskGroup srg : getSelectedElements().stream().map(ee->toSrg.apply(ee)).collect(Collectors.toList()))
+            		{
+            			srg.removeAllFailingFibers();
+            			srg.addFailingFibers(fibers);
+            		}
             	}
             ) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Set amount of HD storage (TB) allocated to selected VNF instances", e-> 
+
+        res.add(new AjtRcMenu("Set Mean Time To Fail (MTTF) of selected SRGs", e-> 
     	DialogBuilder.launch(
-            "Set amount of HD storage (TB) allocated to selected VNF instances" , 
+            "Set Mean Time To Fail (MTTF) of selected SRGs" , 
             "Please introduce the requested information", 
             "", 
             this, 
-            Arrays.asList(InputForDialog.inputTfDouble("HD (TeraBytes)", "Introduce the requested information", 10, 1.0)),
+            Arrays.asList(InputForDialog.inputTfDouble("MTTF (hours)", "Introduce the requested information", 10, 12*365.0)),
             (list)->
             	{
             		final double value = (Double) list.get(0).get();
-            		getSelectedElements().stream().map(ee->toVnf.apply(ee)).forEach(ee->ee.setCapacityInGbpsOfInputTraffic(Optional.empty() , Optional.empty(), Optional.empty(), Optional.of(value*1000)));
+            		getSelectedElements().stream().map(ee->toSrg.apply(ee)).forEach(ee->ee.setMeanTimeToFailInHours(value));
             	}
             ) , (a,b)->b>0, null));
-        res.add(new AjtRcMenu("Set processing time (ms) of selected VNF instances", e-> 
+        res.add(new AjtRcMenu("Set Mean Time To Repair (MTTR) of selected SRGs", e-> 
     	DialogBuilder.launch(
-            "Set processing time (ms) of selected VNF instances" , 
+            "Set Mean Time To Repair (MTTF) of selected SRGs" , 
             "Please introduce the requested information", 
             "", 
             this, 
-            Arrays.asList(InputForDialog.inputTfDouble("Processing time (ms)", "Introduce the requested information", 10, 10.0)),
+            Arrays.asList(InputForDialog.inputTfDouble("MTTR (hours)", "Introduce the requested information", 10, 12.0)),
             (list)->
             	{
             		final double value = (Double) list.get(0).get();
-            		getSelectedElements().stream().map(ee->toVnf.apply(ee)).forEach(ee->ee.setProcessingTimeInMs(value));
+            		getSelectedElements().stream().map(ee->toSrg.apply(ee)).forEach(ee->ee.setMeanTimeToRepairInHours(value));
             	}
             ) , (a,b)->b>0, null));
 

@@ -342,7 +342,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 	}          		
                 );
             } , (a,b)->b==1, null));
-            res.add(new AjtRcMenu("Set selected links nominal capacity", null , (a,b)->b>0, Arrays.asList(
+            res.add(new AjtRcMenu("Set selected links capacity", null , (a,b)->b>0, Arrays.asList(
             		new AjtRcMenu("As constant value", e->
                     {
                         DialogBuilder.launch(
@@ -354,7 +354,8 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                                 (list)->
                                 	{
                                 		final double newLinkCapacity = (Double) list.get(0).get();
-                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach (ee->ee.setNominalCapacityGbps (newLinkCapacity));
+                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).
+                                			forEach (ee->{ ee.setNominalCapacityGbps (newLinkCapacity);  } );
                                 	}
                                 );
                     } , (a,b)->b>0, null),

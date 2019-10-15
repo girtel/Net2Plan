@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.topologyPane;
 
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -19,6 +20,7 @@ import java.util.Map;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
@@ -116,7 +118,8 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_osmMap.setToolTipText("Toggle on/off OSM support. An Internet connection is required for this function.");
         btn_tableControlWindow = new JButton();
         btn_tableControlWindow.setToolTipText("Show the network topology control window.");
-        btn_niwActive = new JToggleButton();
+        btn_niwActive = new JToggleButton("NIW");
+        btn_niwActive.setFont(new Font(new JLabel().getFont ().getFontName(), Font.PLAIN, 20));
         btn_niwActive.setToolTipText("Toggle on/off the NIW (NFV over IP over WDM view)");
         btn_reset = new JButton("Reset");
         btn_reset.setToolTipText("Reset the user interface");
@@ -143,7 +146,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
         btn_increaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/increaseFont.png")));
         btn_decreaseFontSize.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/decreaseFont.png")));
         btn_osmMap.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showOSM.png")));
-        btn_niwActive.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/niw.png")));
+        //btn_niwActive.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/niw.png")));
         btn_tableControlWindow.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/showControl.png")));
         btn_linkStyle.setIcon(new ImageIcon(TopologyPanel.class.getResource("/resources/gui/linkStyle.png")));
 
@@ -257,8 +260,10 @@ public class TopologyTopBar extends JToolBar implements ActionListener
 
             if (result == JOptionPane.YES_OPTION)
             {
-
-                callback.setDesign(new NetPlan());
+            	if (callback.getVisualizationState().isNiwDesignButtonActive())
+            		callback.setDesign(WNet.createEmptyDesign().getNe());
+            	else
+            		callback.setDesign(new NetPlan());
                 Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                         vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
                 vs.setCanvasLayerVisibilityAndOrder(callback.getDesign(), res.getFirst(), res.getSecond());

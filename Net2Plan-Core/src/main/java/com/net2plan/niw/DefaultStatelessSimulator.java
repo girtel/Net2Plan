@@ -1,4 +1,4 @@
-package com.net2plan.examples.niw.algorithms;
+package com.net2plan.niw;
 /*******************************************************************************
  * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
@@ -34,7 +34,6 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.IPUtils;
-import com.net2plan.niw.WNet;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -59,7 +58,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class StatelessSimulator_niw implements IAlgorithm
+public class DefaultStatelessSimulator implements IAlgorithm
 {
 	private InputParameter mplsTeTunnelType = new InputParameter ("mplsTeTunnelType", "#select# cspf-dynamic 1+1-FRR-link-disjoint" , "The type of path computation for MPLS-TE tunnels");
 
@@ -174,7 +173,7 @@ public class StatelessSimulator_niw implements IAlgorithm
 
 	public static void run (WNet wNet , Optional<String> mplsTeTunnelType)
 	{
-		final StatelessSimulator_niw alg = new StatelessSimulator_niw(); 
+		final DefaultStatelessSimulator alg = new DefaultStatelessSimulator(); 
 		final Map<String,String> params = InputParameter.getDefaultParameters(alg.getParameters());
 		if (mplsTeTunnelType.isPresent()) params.put("mplsTeTunnelType", mplsTeTunnelType.get());
 		alg.executeAlgorithm(wNet.getNe(), params , new HashMap<> ());

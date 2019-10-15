@@ -492,7 +492,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         	{
                         		final String aName  = (String) list.get(0).get();
                         		final String bName  = (String) list.get(1).get();
-                        		final double lineRateGbps = (double) list.get(2).get();
+                        		final Double lineRateGbps = (Double) list.get(2).get();
                         		final Boolean isToBe11Protected = (Boolean) list.get(3).get();
                         		final WNode a = nodeByName.apply(aName).orElse(null);
                         		final WNode b = nodeByName.apply(bName).orElse(null);

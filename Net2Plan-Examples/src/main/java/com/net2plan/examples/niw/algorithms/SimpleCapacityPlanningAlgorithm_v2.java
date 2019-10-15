@@ -36,6 +36,7 @@ import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.DefaultStatelessSimulator;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpUnicastDemand;
@@ -128,7 +129,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 				createBundleOfIpLinkWithLightpathsAndAssignTransponders(e);
 
 		/* Reroute the traffic appropriately */
-		StatelessSimulator_niw.run(wNet , Optional.empty());
+		DefaultStatelessSimulator.run(wNet , Optional.empty());
 		
 		/* Check all the WDM links for which fault tolerance is not possible for topological reasons */
 //		System.out.println("-------------------------------------------------------------------------");
@@ -230,7 +231,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 		{
 			atLeastOneIpLinkRemoved = false;
 			
-			StatelessSimulator_niw.run(wNet , Optional.empty());
+			DefaultStatelessSimulator.run(wNet , Optional.empty());
 			
 			for (WIpLink e : wNet.getIpLinks().stream().sorted((e1, e2) -> Double.compare(e1.getCarriedTrafficGbps(), e2.getCarriedTrafficGbps())).collect(Collectors.toList()))
 			{
@@ -266,7 +267,7 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 		}
 		
 		/* Return with an updated design */
-		StatelessSimulator_niw.run(wNet , Optional.empty());
+		DefaultStatelessSimulator.run(wNet , Optional.empty());
 		
 		assert wNet.getIpLinks().stream().allMatch(e->Math.max(e.getCarriedTrafficGbps() , e.getBidirectionalPair().getCarriedTrafficGbps()) > Configuration.precisionFactor);
 	}

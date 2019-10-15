@@ -23,13 +23,9 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.jgrapht.GraphPath;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.alg.shortestpath.SuurballeKDisjointShortestPaths;
-import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.apache.poi.util.SAXHelper;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -1114,6 +1110,11 @@ public class WNet extends WAbstractNetworkElement
 			final Resource ee = (Resource) e;
 			return Optional.of (WTYPE.WVnfInstance);
 		}
+		if (e instanceof SharedRiskGroup)
+		{
+			final SharedRiskGroup ee = (SharedRiskGroup) e;
+			return Optional.of(WTYPE.WSharedRiskGroup);
+		}
 		if (e instanceof NetworkLayer)
 		{
 			final NetworkLayer ee = (NetworkLayer) e;
@@ -1187,10 +1188,38 @@ public class WNet extends WAbstractNetworkElement
 			final Resource ee = (Resource) e;
 			return Optional.of (new WVnfInstance(ee));
 		}
+		if (e instanceof SharedRiskGroup)
+		{
+			final SharedRiskGroup ee = (SharedRiskGroup) e;
+			return Optional.of (new WSharedRiskGroup(ee));
+		}
 		
 		return Optional.empty();
 	}
 	
+	/** Returns the node element with the given id, if any
+	 * @param id see above
+	 * @return see above
+	 */
+	public Optional<WNode> getNodeFromId (long id)
+	{
+		final Node n = getNe().getNodeFromId(id);
+		if (n == null) return Optional.empty();
+		if (getWType(n).equals (Optional.of(WTYPE.WNode))) return Optional.of(new WNode (n));
+		return Optional.empty();
+	}
+	
+	/** Returns the fiber element with the given id, if any
+	 * @param id see above
+	 * @return see above
+	 */
+	public Optional<WFiber> getFiberFromId (long id)
+	{
+		final Link n = getNe().getLinkFromId(id);
+		if (n == null) return Optional.empty();
+		if (getWType(n).equals (Optional.of(WTYPE.WFiber))) return Optional.of(new WFiber (n));
+		return Optional.empty();
+	}
 	
 	@Override
 	public WTYPE getWType() { return WTYPE.WNet; }

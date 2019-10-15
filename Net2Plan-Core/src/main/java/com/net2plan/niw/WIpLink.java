@@ -161,6 +161,8 @@ public class WIpLink extends WAbstractNetworkElement
 	public void setNominalCapacityGbps(double capacityGbps)
 	{
 		npLink.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_NOMINALCAPACITYGBPS, Math.max(capacityGbps, 0));
+		if (!this.isBundleOfIpLinks() && !this.isCoupledtoLpRequest())
+			npLink.setCapacity(Math.max(capacityGbps, 0));
 	}
 
 	/**
@@ -220,6 +222,7 @@ public class WIpLink extends WAbstractNetworkElement
 		if (this.isBundleOfIpLinks()) throw new Net2PlanException ("This IP link is a bundle. To unbundle use unbundle method");
 		if (!npLink.isCoupled()) return;
 		npLink.getCoupledDemand().decouple();
+		npLink.setCapacity(getNominalCapacityGbps());
 		this.updateNetPlanObjectAndPropagateUpwards();
 	}
 
@@ -243,6 +246,8 @@ public class WIpLink extends WAbstractNetworkElement
 		assert this.getBidirectionalPair().isBundleOfIpLinks();
 		getNe().getBidirectionalPair().getCoupledDemand().remove();
 		getNe().getCoupledDemand().remove();
+		npLink.setCapacity(getNominalCapacityGbps());
+		npLink.getBidirectionalPair().setCapacity(getNominalCapacityGbps());
 		this.getBidirectionalPair().updateNetPlanObjectAndPropagateUpwards();
 		this.updateNetPlanObjectAndPropagateUpwards();
 	}

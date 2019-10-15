@@ -214,9 +214,14 @@ public class NiwModelTest extends TestCase
    @Test
    public void testAlgorithm ()
    {
-   	final WNet net = createBasicTopology ();
-   	net.checkConsistency();
-   	net.saveToFile(new File ("c:\\Dropbox\\niwFile.n2p"));
+   	final WNet netIp = createBasicTopology_ex7nodesWithTraff (true);
+   	final WNet netWdm = createBasicTopology_ex7nodesWithTraff (false);
+   	netIp.checkConsistency();
+   	netWdm.checkConsistency();
+   	netIp.updateNetPlanObjectInternalState();
+   	netWdm.updateNetPlanObjectInternalState();
+   	netIp.saveToFile(new File ("c:\\Dropbox\\niw_example7nodes_ipLinks.n2p"));
+   	netWdm.saveToFile(new File ("c:\\Dropbox\\niw_example7nodes_wdmLinks.n2p"));
    }
     
  	@Test
@@ -230,7 +235,7 @@ public class NiwModelTest extends TestCase
 	{
 	}
 
-	private WNet createBasicTopology ()
+	private WNet createBasicTopology_ex7nodesWithTraff (boolean linksAreInIp)
 	{
 		final WNet wNet = WNet.createEmptyDesign();
 
@@ -242,14 +247,28 @@ public class NiwModelTest extends TestCase
 		final WNode malaga = wNet.addNode(-4.4166667 , 36.7166667 , "Malaga" , ""); malaga.setPoputlation(568030.0);
 		final WNode murcia = wNet.addNode(-1.1302778 , 37.9861111 , "Murcia" , ""); murcia.setPoputlation(442203.0);
 		
-		wNet.addFiber(sevilla, malaga, Arrays.asList(Pair.of(1,320)) , -1, true);
-		wNet.addFiber(malaga, murcia , Arrays.asList(Pair.of(1,320)) , -1, true);
-		wNet.addFiber(murcia , valencia , Arrays.asList(Pair.of(1,320)) , -1, true);
-		wNet.addFiber(valencia , barcelona , Arrays.asList(Pair.of(1,320)) , -1, true);
-		wNet.addFiber(barcelona , zaragoza , Arrays.asList(Pair.of(1,320)) , -1, true);
-		wNet.addFiber(zaragoza , madrid , Arrays.asList(Pair.of(1,320)) , -1, true);
-		wNet.addFiber(madrid , sevilla, Arrays.asList(Pair.of(1,320)) , -1, true);
-		wNet.addFiber(madrid , valencia, Arrays.asList(Pair.of(1,320)) , -1, true);
+		if (linksAreInIp)
+		{
+			wNet.addIpLinkBidirectional(sevilla, malaga, 50.0);
+			wNet.addIpLinkBidirectional(malaga, murcia, 50.0);
+			wNet.addIpLinkBidirectional(murcia , valencia, 50.0);
+			wNet.addIpLinkBidirectional(valencia , barcelona, 50.0);
+			wNet.addIpLinkBidirectional(barcelona , zaragoza, 50.0);
+			wNet.addIpLinkBidirectional(zaragoza , madrid, 50.0);
+			wNet.addIpLinkBidirectional(madrid , sevilla, 50.0);
+			wNet.addIpLinkBidirectional(madrid , valencia, 50.0);
+		} else
+		{
+			wNet.addFiber(sevilla, malaga, Arrays.asList(Pair.of(1,320)) , -1, true);
+			wNet.addFiber(malaga, murcia , Arrays.asList(Pair.of(1,320)) , -1, true);
+			wNet.addFiber(murcia , valencia , Arrays.asList(Pair.of(1,320)) , -1, true);
+			wNet.addFiber(valencia , barcelona , Arrays.asList(Pair.of(1,320)) , -1, true);
+			wNet.addFiber(barcelona , zaragoza , Arrays.asList(Pair.of(1,320)) , -1, true);
+			wNet.addFiber(zaragoza , madrid , Arrays.asList(Pair.of(1,320)) , -1, true);
+			wNet.addFiber(madrid , sevilla, Arrays.asList(Pair.of(1,320)) , -1, true);
+			wNet.addFiber(madrid , valencia, Arrays.asList(Pair.of(1,320)) , -1, true);
+		}
+			
 		
 		final Random rng = new Random (1);
 		for (WNode n1 : wNet.getNodes())
@@ -263,7 +282,7 @@ public class NiwModelTest extends TestCase
 					d21.setCurrentOfferedTrafficInGbps(rng.nextDouble() * n1.getPopulation() * n2.getPopulation());
 				}
 		final double totalTrafficGbps = wNet.getIpUnicastDemands().stream().mapToDouble(e->e.getCurrentOfferedTrafficInGbps()).sum();
-		for (WIpUnicastDemand e : wNet.getIpUnicastDemands()) e.setCurrentOfferedTrafficInGbps(e.getCurrentCarriedTrafficGbps() * 100 / totalTrafficGbps);
+		for (WIpUnicastDemand e : wNet.getIpUnicastDemands()) e.setCurrentOfferedTrafficInGbps(e.getCurrentOfferedTrafficInGbps() * 100 / totalTrafficGbps);
 				
 		return wNet;
 	}

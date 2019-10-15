@@ -7,20 +7,15 @@
 package com.net2plan.niw;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.niw.WNetConstants.WTYPE;
-import com.net2plan.utils.Pair;
 
 /** Instances of this class are service chains, realizing service chain requests. A service chain should start in one of the origin nodes of the service chain, and end in 
  * one of the destination nodes of the service chain. The injection traffic of the service chain is the traffic produced by its origin node. Note that when the service chain 
@@ -65,19 +60,45 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 		getNe().addNode (node.getNe());
 	}
 
+	/** Adds failing nodes to the SRG 
+	 * @param nodes see above
+	 */
+	public void addFailingNodes (Collection<WNode> nodes)
+	{
+		for (WNode n : nodes) addFailingNode(n);
+	}
+
+
 	/** Removes this SRG
 	 */
 	public void remove () 
 	{
 		getNe().remove();
 	}
+
+	/** Removes all the failing nodes in this SRG
+	 */
+	public void removeAllFailingNodes ()
+	{
+		for (WNode n : new ArrayList<> (getFailingNodes ()))
+			this.removeFailingNode(n);
+	}
 	
+	/** Removes all the failing fibers in this SRG
+	 */
+	public void removeAllFailingFibers ()
+	{
+		for (WFiber n : new ArrayList<> (getFailingFibers ()))
+			this.removeFailingFiber(n);
+	}
+	
+
 	/** Removes a failing node from the SRG. If the node is not in the SRG, no action is taken 
 	 * @param node see above
 	 */
 	public void removeFailingNode (WNode node)
 	{
-		if (node.isVirtualNode()) throw new Net2PlanException ("Cannot add virtual nodes to the SRG");
+		if (node.isVirtualNode()) return;
 		getNe().removeNode (node.getNe());
 	}
 	
@@ -89,6 +110,14 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 		getNe().addLink (fiber.getNe());
 	}
 
+	/** Adds failing fibers to the SRG 
+	 * @param fibers see above
+	 */
+	public void addFailingFibers (Collection<WFiber> fibers)
+	{
+		for (WFiber e : fibers) getNe().addLink (e.getNe());
+	}
+	
 	/** Removes a failing fiber from the SRG. If it is not in the SRG, no action is taken 
 	 * @param fiber see above
 	 */
