@@ -37,7 +37,9 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterC
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_link;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_node;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_resource;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_route;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_srg;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
@@ -60,10 +62,8 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.ErrorHandling;
-import com.net2plan.niw.WIpUnicastDemand;
-import com.net2plan.niw.WLightpathRequest;
 import com.net2plan.niw.WNet;
-import com.net2plan.niw.WServiceChainRequest;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.Pair;
 
 
@@ -134,11 +134,15 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     		if (this instanceof Niw_AdvancedJTable_demand)
 				return (List<T>) callback.getDesign().getDemands(this.layerThisTable).stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
     		if (this instanceof Niw_AdvancedJTable_node)
-				return (List<T>) callback.getDesign().getNodes().stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
+				return (List<T>) callback.getDesign().getNodes().stream().filter(e->wNet.getWElement(e).isPresent()).filter(e->!new WNode(e).isVirtualNode()).collect(Collectors.toList());
     		if (this instanceof Niw_AdvancedJTable_link)
 				return (List<T>) callback.getDesign().getLinks(this.layerThisTable).stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
     		if (this instanceof Niw_AdvancedJTable_route)
 				return (List<T>) callback.getDesign().getRoutes(this.layerThisTable).stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
+    		if (this instanceof Niw_AdvancedJTable_resource)
+				return (List<T>) callback.getDesign().getResources().stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
+    		if (this instanceof Niw_AdvancedJTable_srg)
+				return (List<T>) callback.getDesign().getSRGs().stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
     	}
     	
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();

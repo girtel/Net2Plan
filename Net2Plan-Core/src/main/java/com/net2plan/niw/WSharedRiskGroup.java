@@ -65,6 +65,13 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 		getNe().addNode (node.getNe());
 	}
 
+	/** Removes this SRG
+	 */
+	public void remove () 
+	{
+		getNe().remove();
+	}
+	
 	/** Removes a failing node from the SRG. If the node is not in the SRG, no action is taken 
 	 * @param node see above
 	 */
@@ -100,6 +107,16 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 	}
 
 	/**
+	 * <p>Returns the availability (between 0 and 1) of the SRG. That is, the fraction of time that the SRG is in non failure state. </p>
+	 * <p>Availability is computed as: MTTF/ (MTTF + MTTR)</p>
+	 * @return MTTF/ (MTTF + MTTR)
+	 */
+	public double getAvailability()
+	{
+		return getMeanTimeToFailInHours() / (getMeanTimeToFailInHours() + getMeanTimeToRepairInHours());
+	}
+
+	/**
 	 * <p>Sets the mean time to fail (MTTF) in hours of the SRG, that is, the average time between it is repaired, and the next failure.</p>
 	 * @param value The new MTTF (it must be greater than zero)
 	 * @return this element (for convenience)
@@ -120,6 +137,8 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 		return getNe().getMeanTimeToRepairInHours ();
 	}
 
+	
+	
 	/**
 	 * <p>Sets the mean time to repair (MTTR) in hours of the SRG, that is, the average time  between a failure occurs, and it is repaired.</p>
 	 * @param value the new MTTR (negative values are not accepted)

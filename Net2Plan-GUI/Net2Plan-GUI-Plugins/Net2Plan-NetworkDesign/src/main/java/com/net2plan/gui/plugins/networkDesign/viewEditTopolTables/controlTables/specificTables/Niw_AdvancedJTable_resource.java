@@ -103,6 +103,40 @@ public class Niw_AdvancedJTable_resource extends AdvancedJTable_networkElement<R
     		return Optional.ofNullable(a);
 		};
 
+		
+        res.add(new AjtRcMenu("Add VNF instance", e->
+    	DialogBuilder.launch(
+                "Add VNF instance" , 
+                "Please introduce the requested information", 
+                "", 
+                this, 
+                Arrays.asList(
+                		InputForDialog.inputTfString("VNF host node name", "The name of the node where the VNF will be hosted", 10, ""),
+                		InputForDialog.inputTfString("VNF instance type", "The type of the VNF instance", 10, ""),
+                		InputForDialog.inputTfString("VNF instance name", "The name of VNF instance", 10, ""),
+                		InputForDialog.inputTfDouble("Capacity (Gbps)", "The capacity of this instance in terms of Gbps that is able to process", 10, 100.0),
+                		InputForDialog.inputTfDouble("Allocated CPU", "The amount of CPU allocated to this VNF instance", 10, 100.0),
+                		InputForDialog.inputTfDouble("Allocated RAM (GB)", "The amount of RAM allocated to this VNF instance in GigaBytes", 10, 100.0),
+                		InputForDialog.inputTfDouble("Allocated HD (TB)", "The amount of storage allocated to this VNF instance in TeraBytes", 10, 1.0),
+                		InputForDialog.inputTfDouble("Processing time (ms)", "The processing time in ms, added as delay to the traversing traffic", 10, 1.0)
+                		),
+                (list)->
+                	{
+                		final String node = (String) list.get(0).get();
+                		final String type = (String) list.get(1).get();
+                		final String name = (String) list.get(2).get();
+                		final double capacityGbps = (Double) list.get(3).get();
+                		final double occupiedCpu = (Double) list.get(4).get();
+                		final double occupiedRamGB = (Double) list.get(5).get();
+                		final double occupiedHdGb = (Double) list.get(6).get();
+                		final double processingTimeMs = (Double) list.get(7).get();
+                		final WNode hostNode = nodeByName.apply(node).orElse(null);
+                		if (hostNode == null) throw new Net2PlanException("Unkown node name. " + node);
+                		wNet.addVnfInstance(hostNode, name, type, capacityGbps, occupiedCpu, occupiedRamGB, occupiedHdGb, processingTimeMs);
+                	}
+                )
+        , (a,b)->b>0, null) );
+
         res.add(new AjtRcMenu("Remove selected VNFs", e->getSelectedElements().forEach(dd-> toVnf.apply(dd).remove ()) , (a,b)->b>0, null) );
 
         res.add(new AjtRcMenu("Set capacity (Gbps) of selected VNF instances", e-> 

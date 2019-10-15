@@ -49,6 +49,9 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_link;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_node;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_resource;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_route;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_srg;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_network;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTabs.NetPlanViewTableComponent_trafficMatrix;
@@ -255,13 +258,13 @@ public class ViewEditTopologyTablesPane extends JPanel
             table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_node(callback , layerThisTable) : new AdvancedJTable_node(callback , layerThisTable);
 			break;
 		case RESOURCES:
-            table = new AdvancedJTable_resource(callback , layerThisTable);
+            table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_resource(callback , layerThisTable) : new AdvancedJTable_resource(callback , layerThisTable);
 			break;
 		case ROUTES:
-            table = new AdvancedJTable_route(callback , layerThisTable);
+            table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_route(callback , layerThisTable) : new AdvancedJTable_route(callback , layerThisTable);
 			break;
 		case SRGS:
-            table = new AdvancedJTable_srg(callback , layerThisTable);
+            table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_srg(callback , layerThisTable) : new AdvancedJTable_srg(callback , layerThisTable);
 			break;
 		default:
         	System.out.println(type);

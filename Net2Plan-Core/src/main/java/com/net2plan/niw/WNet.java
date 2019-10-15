@@ -977,6 +977,30 @@ public class WNet extends WAbstractNetworkElement
 	}
 
 	/**
+	 * Adds an instance of the VNF of the given type, in the indicated host node, applying it the given name, and other info
+	 * @param hostNode  see above
+	 * @param name see above
+	 * @param type see above
+	 * @param capacityGbps see above
+	 * @param occupiedCpu see above
+	 * @param occupiedRamGB see above
+	 * @param occupiedHdGb see above
+	 * @param processingTimeMs see above
+	 * @return see above
+	 */
+	public WVnfInstance addVnfInstance(WNode hostNode, String name, String type , double capacityGbps , double occupiedCpu , double occupiedRamGB , double occupiedHdGb , double processingTimeMs)
+	{
+		if (name.contains(WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER)) throw new Net2PlanException("Names cannot contain the character: " + WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER);
+		final Map<Resource, Double> cpuRamHdOccupied = new HashMap<>();
+		cpuRamHdOccupied.put(hostNode.getCpuBaseResource(), occupiedCpu);
+		cpuRamHdOccupied.put(hostNode.getRamBaseResource(), occupiedRamGB);
+		cpuRamHdOccupied.put(hostNode.getHdBaseResource(), occupiedHdGb);
+		final Resource resource = np.addResource(type, name, Optional.of(hostNode.getNe()), capacityGbps, "Gbps", cpuRamHdOccupied, processingTimeMs, null);
+		return new WVnfInstance(resource);
+	}
+
+	
+	/**
 	 * Get the propagation delay given a list of Fibers to traverse.
 	 * @param fiberLinks see above
 	 * @return see above
