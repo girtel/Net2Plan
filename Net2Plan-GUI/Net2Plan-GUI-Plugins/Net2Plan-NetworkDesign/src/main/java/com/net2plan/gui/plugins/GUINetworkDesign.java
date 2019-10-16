@@ -478,6 +478,8 @@ public class GUINetworkDesign extends IGUIModule
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         this.currentNetPlan = netPlan;
         this.niwInformationCurrentDesign = Optional.empty();
+        if (getVisualizationState().isWhatIfAnalysisActive())
+            getWhatIfAnalysisPane().whatIfSomethingModified();
     }
 
 

@@ -130,16 +130,6 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
 
     public void whatIfSomethingModified() 
     {
-    	runSimulation();
-    }
-
-    /**
-     * Runs a short simulation to perform the what-if analysis. At the end, the resulting netplan is set
-     *
-     * @param eventToRun
-     */
-    private void runSimulation()
-    {
     	final NetPlan originalNpCopy = callback.getDesign().copy();
     	try
     	{
@@ -153,10 +143,8 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
 	    	else
 	    	{
 	            final Triple<File, String, Class> aux = statelessSimulatorPanel.getRunnable();
-	            System.out.println("To load: " + aux);
 	            final IAlgorithm algorithmInstance = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), IAlgorithm.class , null);
 	            Map<String, String> eventProcessorParameters = statelessSimulatorPanel.getRunnableParameters();
-	            System.out.println("eventProcessorParameters: " + eventProcessorParameters);
 	            algorithmInstance.executeAlgorithm(np, eventProcessorParameters, net2planParameters);
 	    	}
         } catch (Throwable ex)
@@ -165,6 +153,7 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
         	callback.getDesign().assignFrom(originalNpCopy);
         }
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e)
@@ -187,6 +176,10 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
             		(callback.getVisualizationState().isNiwDesignButtonActive()? checkBox_useDefaultNiwSimulator.isSelected() : true);
             statelessSimulatorPanel.setEnabled(activePanel);
         }
+        
+        if (callback.getVisualizationState().isWhatIfAnalysisActive())
+        	this.whatIfSomethingModified ();
+        
     }
 
 }

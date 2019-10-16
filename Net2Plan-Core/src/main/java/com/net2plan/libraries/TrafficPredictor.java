@@ -132,8 +132,6 @@ public abstract class TrafficPredictor
 		@Override
 		public int hashCode() {  return super.hashCode(); }
 
-		
-		
 		final double N;
         final Date initialDate , endDate;
 		double sum_x = 0;

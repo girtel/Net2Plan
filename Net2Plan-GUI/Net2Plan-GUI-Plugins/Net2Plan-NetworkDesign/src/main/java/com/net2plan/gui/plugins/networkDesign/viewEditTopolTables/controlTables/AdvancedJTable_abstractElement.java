@@ -213,11 +213,8 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
         final List<AjtColumnInfo<T>> visibleTableColumnsToBeInUnifiedViewOrder = visibleTableColumnsInTableModelOrder.stream().
         		sorted((c1,c2)->
         		{
-//        		    System.out.println("-- Compare: " + c1 + " - " + c2);
                     final int indexView1 = widthAndGlobalViewIndexIfPreviouslyVisible.getOrDefault(c1 , Pair.of(-1, Integer.MAX_VALUE)).getSecond();
                     final int indexView2 = widthAndGlobalViewIndexIfPreviouslyVisible.getOrDefault(c2 , Pair.of(-1, Integer.MAX_VALUE)).getSecond();
-//                    System.out.println("indexView1: " + indexView1 + ", indexView2: " + indexView2);
-//                    System.out.println("indexUser1: " + c1.getColumnIndexOriginallyUserDefined() + ", indexUser2: " + c2.getColumnIndexOriginallyUserDefined());
                     final int comp1 = Integer.compare(indexView1, indexView2);
                     if (comp1 != 0) return comp1;
                     return Integer.compare(c1.getColumnIndexOriginallyUserDefined(), c2.getColumnIndexOriginallyUserDefined());
@@ -455,7 +452,6 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
     public void setColumnShowHideValueByHeaderMap (Map<String, Boolean> columnShowHideValueByHeader) 
     { 
     	this.columnShowHideValueByHeader.clear();
-    	System.out.println(columnShowHideValueByHeader);
     	this.columnShowHideValueByHeader.putAll(columnShowHideValueByHeader);
     }
     

@@ -345,6 +345,8 @@ public class TopologyPanel extends JPanel
             NetPlan aux = fc_netPlan.readNetPlan();
 
             callback.setDesign(aux);
+            
+            
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));

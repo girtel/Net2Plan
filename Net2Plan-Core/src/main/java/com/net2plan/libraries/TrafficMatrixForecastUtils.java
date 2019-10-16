@@ -352,10 +352,9 @@ public class TrafficMatrixForecastUtils
 		for (Node n : np.getNodes())
 		{
 			if (n.getIncomingDemands(layer).isEmpty() && n.getOutgoingDemands(layer).isEmpty()) continue;
-			if (n.getIncomingLinks(layer).stream().anyMatch(e->!e.getTrafficPredictor().isPresent())) throw new Net2PlanException ("No predictor information is available for some links");
-			if (n.getOutgoingLinks(layer).stream().anyMatch(e->!e.getTrafficPredictor().isPresent())) throw new Net2PlanException ("No predictor information is available for some links");
-			ingressTrafficPerNode [n.getIndex()] = n.getIncomingLinks(layer).stream().mapToDouble(e->e.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate())).sum();
-			egressTrafficPerNode [n.getIndex()] = n.getOutgoingLinks(layer).stream().mapToDouble(e->e.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate())).sum();
+			/* No traffic predictor for a link => zero traffic for it */
+			ingressTrafficPerNode [n.getIndex()] = n.getIncomingLinks(layer).stream().filter(e->e.getTrafficPredictor().isPresent()).mapToDouble(e->e.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate())).sum();
+			egressTrafficPerNode [n.getIndex()] = n.getOutgoingLinks(layer).stream().filter(e->e.getTrafficPredictor().isPresent()).mapToDouble(e->e.getTrafficPredictor().get().getPredictorFunctionNoConfidenceInterval().apply (np.getCurrentDate())).sum();
 		}
 		final DoubleMatrix2D tm = TrafficMatrixGenerationModels.gravityModel(ingressTrafficPerNode, egressTrafficPerNode);
 		final SortedMap<Demand,Double> res = new TreeMap<> ();

@@ -122,6 +122,7 @@ public class MonitoringUtils
                         );
 
                         /* Add values */
+                        final Random rng = new Random (rngSeed);
                         for (T ee: table.getSelectedElements())
                         {
                             Double initialTraffic = null;
@@ -144,7 +145,7 @@ public class MonitoringUtils
                                     numberOfSamples,
                                     initialTraffic,
                                     growthFactorPerYear, dayVariation_peakFactor , dayVariation_startHour , dayVariation_durationHours , noiseRelativeTypicalDeviationRespectToAverage , 
-                                    new Random (rngSeed));
+                                    rng);
                         }
 
                     }
