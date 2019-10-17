@@ -373,6 +373,8 @@ public class WIpLink extends WAbstractNetworkElement
 	
 	public void setIpLinkAsBundleOfIpLinksBidirectional (SortedSet<WIpLink> ipLinksToBundleAb)
 	{
+		if (!getNet().isWithIpLayer()) throw new Net2PlanException ("The design has no IP layer");
+		
 		if (!this.isBidirectional()) throw new Net2PlanException ("All IP link must be bidirectional");
 		if (this.isBundleMember() || this.isBundleOfIpLinks()) throw new Net2PlanException ("This elements cannot be a bundle nor a bundle member");
 		if (this.getBidirectionalPair().isBundleMember() || this.getBidirectionalPair().isBundleOfIpLinks()) throw new Net2PlanException ("This elements cannot be a bundle nor a bundle member");
@@ -388,7 +390,7 @@ public class WIpLink extends WAbstractNetworkElement
 		if (ipLinksToBundleAbBa.stream().anyMatch(e->!e.getTraversingIpConnections().isEmpty())) throw new Net2PlanException ("The IP links to bundle cannot have IP connections");
 		if (ipLinksToBundleAbBa.stream().anyMatch(e->!e.getTraversingIpUnicastDemands().isEmpty())) throw new Net2PlanException ("The IP links to bundle cannot have traversing IP demands");
 		
-		final Pair<Demand,Demand> demandToCreate = getNet().getNe().addDemandBidirectional(getA().getNe (), getB().getNe (), 0, RoutingType.SOURCE_ROUTING, null, getNet().getIpLayer().getNe());
+		final Pair<Demand,Demand> demandToCreate = getNet().getNe().addDemandBidirectional(getA().getNe (), getB().getNe (), 0, RoutingType.SOURCE_ROUTING, null, getNet().getIpLayer().get().getNe());
 		demandToCreate.getFirst().addTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
 		demandToCreate.getSecond().addTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
 		for (WIpLink memberAb : ipLinksToBundleAb)

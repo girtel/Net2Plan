@@ -48,7 +48,8 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 	 */
 	public SortedSet<WFiber> getFailingFibers () 
 	{
-		return getNe().getLinks(getNet().getWdmNpLayer()).stream().map(n->new WFiber(n)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return getNe().getLinks(getNet().getWdmNpLayer().get()).stream().map(n->new WFiber(n)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/** Adds a failing node to the SRG 

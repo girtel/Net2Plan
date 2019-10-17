@@ -53,7 +53,7 @@ public class NiwModelTest extends TestCase
     @Before
 	public void setUp() throws Exception
 	{
-		this.net = WNet.createEmptyDesign();
+		this.net = WNet.createEmptyDesign(true , true);
 		this.n1 = net.addNode(0, 0, "n1", "type1");
 		this.n2 = net.addNode(0, 0, "n2", "type1");
 		this.n3 = net.addNode(0, 0, "n3", "type1");
@@ -214,14 +214,14 @@ public class NiwModelTest extends TestCase
    @Test
    public void testAlgorithm ()
    {
-   	final WNet netIp = createBasicTopology_ex7nodesWithTraff (true);
-   	final WNet netWdm = createBasicTopology_ex7nodesWithTraff (false);
+   	final WNet netIp = createBasicTopology_ex7nodesWithTraff (true , false);
+   	final WNet netIpOverWdm = createBasicTopology_ex7nodesWithTraff (true , true);
    	netIp.checkConsistency();
-   	netWdm.checkConsistency();
+   	netIpOverWdm.checkConsistency();
    	netIp.updateNetPlanObjectInternalState();
-   	netWdm.updateNetPlanObjectInternalState();
-   	netIp.saveToFile(new File ("c:\\Dropbox\\niw_example7nodes_ipLinks.n2p"));
-   	netWdm.saveToFile(new File ("c:\\Dropbox\\niw_example7nodes_wdmLinks.n2p"));
+   	netIpOverWdm.updateNetPlanObjectInternalState();
+   	netIp.saveToFile(new File ("c:\\Dropbox\\niw_example7nodes_ip.n2p"));
+   	netIpOverWdm.saveToFile(new File ("c:\\Dropbox\\niw_example7nodes_ipOverWdm.n2p"));
    }
     
  	@Test
@@ -235,9 +235,9 @@ public class NiwModelTest extends TestCase
 	{
 	}
 
-	private WNet createBasicTopology_ex7nodesWithTraff (boolean linksAreInIp)
+	private WNet createBasicTopology_ex7nodesWithTraff (boolean withIpLayer , boolean withWdmLayer)
 	{
-		final WNet wNet = WNet.createEmptyDesign();
+		final WNet wNet = WNet.createEmptyDesign(withIpLayer , withWdmLayer);
 
 		final WNode madrid = wNet.addNode (-3.6919444, 40.4188889 , "Madrid" , ""); madrid.setPoputlation(3265038.0);
 		final WNode barcelona = wNet.addNode (2.1769444 , 41.3825 , "Barcelona" , ""); barcelona.setPoputlation(1615448.0);
@@ -247,7 +247,7 @@ public class NiwModelTest extends TestCase
 		final WNode malaga = wNet.addNode(-4.4166667 , 36.7166667 , "Malaga" , ""); malaga.setPoputlation(568030.0);
 		final WNode murcia = wNet.addNode(-1.1302778 , 37.9861111 , "Murcia" , ""); murcia.setPoputlation(442203.0);
 		
-		if (linksAreInIp)
+		if (!withWdmLayer)
 		{
 			wNet.addIpLinkBidirectional(sevilla, malaga, 50.0);
 			wNet.addIpLinkBidirectional(malaga, murcia, 50.0);
@@ -268,22 +268,24 @@ public class NiwModelTest extends TestCase
 			wNet.addFiber(madrid , sevilla, Arrays.asList(Pair.of(1,320)) , -1, true);
 			wNet.addFiber(madrid , valencia, Arrays.asList(Pair.of(1,320)) , -1, true);
 		}
-			
+
+		if (withIpLayer)
+		{
+			final Random rng = new Random (1);
+			for (WNode n1 : wNet.getNodes())
+				for (WNode n2 : wNet.getNodes())
+					if (n1.getId() < n2.getId())
+					{
+						final WIpUnicastDemand d12 = wNet.addIpUnicastDemand(n1, n2, true, true);
+						final WIpUnicastDemand d21 = wNet.addIpUnicastDemand(n2, n1, false, true);
+						d12.setBidirectionalPair(d21);
+						d12.setCurrentOfferedTrafficInGbps(rng.nextDouble() * n1.getPopulation() * n2.getPopulation());
+						d21.setCurrentOfferedTrafficInGbps(rng.nextDouble() * n1.getPopulation() * n2.getPopulation());
+					}
+			final double totalTrafficGbps = wNet.getIpUnicastDemands().stream().mapToDouble(e->e.getCurrentOfferedTrafficInGbps()).sum();
+			for (WIpUnicastDemand e : wNet.getIpUnicastDemands()) e.setCurrentOfferedTrafficInGbps(e.getCurrentOfferedTrafficInGbps() * 100 / totalTrafficGbps);
+		}
 		
-		final Random rng = new Random (1);
-		for (WNode n1 : wNet.getNodes())
-			for (WNode n2 : wNet.getNodes())
-				if (n1.getId() < n2.getId())
-				{
-					final WIpUnicastDemand d12 = wNet.addIpUnicastDemand(n1, n2, true, true);
-					final WIpUnicastDemand d21 = wNet.addIpUnicastDemand(n2, n1, false, true);
-					d12.setBidirectionalPair(d21);
-					d12.setCurrentOfferedTrafficInGbps(rng.nextDouble() * n1.getPopulation() * n2.getPopulation());
-					d21.setCurrentOfferedTrafficInGbps(rng.nextDouble() * n1.getPopulation() * n2.getPopulation());
-				}
-		final double totalTrafficGbps = wNet.getIpUnicastDemands().stream().mapToDouble(e->e.getCurrentOfferedTrafficInGbps()).sum();
-		for (WIpUnicastDemand e : wNet.getIpUnicastDemands()) e.setCurrentOfferedTrafficInGbps(e.getCurrentOfferedTrafficInGbps() * 100 / totalTrafficGbps);
-				
 		return wNet;
 	}
 

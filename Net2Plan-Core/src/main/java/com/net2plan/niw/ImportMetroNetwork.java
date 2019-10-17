@@ -36,7 +36,7 @@ public class ImportMetroNetwork
 	public static WNet importFromExcelFile (File excelFile)
     {
         final SortedMap<String, Object[][]> fileData = new TreeMap<>(ExcelReader.readFile(excelFile));
-        final WNet net = WNet.createEmptyDesign ();
+        final WNet net = WNet.createEmptyDesign (true , true);
         
         /* Nodes sheet */
         System.out.println("###################### Reading Nodes sheet ######################");

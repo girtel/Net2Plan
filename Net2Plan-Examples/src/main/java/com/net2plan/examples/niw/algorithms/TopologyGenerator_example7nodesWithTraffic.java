@@ -51,7 +51,7 @@ public class TopologyGenerator_example7nodesWithTraffic implements IAlgorithm
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 
-		final WNet wNet = WNet.createEmptyDesign();
+		final WNet wNet = WNet.createEmptyDesign(true , true);
 
 		final WNode madrid = wNet.addNode (-3.6919444, 40.4188889 , "Madrid" , ""); madrid.setPoputlation(3265038.0);
 		final WNode barcelona = wNet.addNode (2.1769444 , 41.3825 , "Barcelona" , ""); barcelona.setPoputlation(1615448.0);

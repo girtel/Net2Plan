@@ -58,7 +58,7 @@ public class NiwModelTest extends TestCase
     @Before
 	public void setUp() throws Exception
 	{
-		this.net = WNet.createEmptyDesign();
+		this.net = WNet.createEmptyDesign(true , true);
 		this.n1 = net.addNode(0, 0, "n1", "type1");
 		this.n2 = net.addNode(0, 0, "n2", "type1");
 		this.n3 = net.addNode(0, 0, "n3", "type1");
@@ -219,7 +219,7 @@ public class NiwModelTest extends TestCase
    @Test
    public void testAlgorithm ()
    {
-   	final WNet net = WNet.createEmptyDesign();
+   	final WNet net = WNet.createEmptyDesign(true , true);
    	new TopologyGenerator_example7nodesWithTraffic().executeAlgorithm(net.getNe(), new TreeMap<> (), new TreeMap<> ());
    	net.checkConsistency();
    	final Map<String,String> params = InputParameter.getDefaultParameters(new SimpleCapacityPlanningAlgorithm_v2 ().getParameters());
@@ -244,7 +244,7 @@ public class NiwModelTest extends TestCase
 
 	private WNet createBasicTopology ()
 	{
-		final WNet wNet = WNet.createEmptyDesign();
+		final WNet wNet = WNet.createEmptyDesign(true , true);
 
 		final WNode madrid = wNet.addNode (-3.6919444, 40.4188889 , "Madrid" , ""); madrid.setPoputlation(3265038.0);
 		final WNode barcelona = wNet.addNode (2.1769444 , 41.3825 , "Barcelona" , ""); barcelona.setPoputlation(1615448.0);

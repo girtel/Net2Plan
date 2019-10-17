@@ -361,7 +361,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public void setWdmIcon(URL urlIcon, double relativeSize)
 	{
-		getNe().setUrlNodeIcon(getWdmNpLayer(), urlIcon, relativeSize);
+		if (!getNet().isWithWdmLayer()) return;
+		getNe().setUrlNodeIcon(getWdmNpLayer().get(), urlIcon, relativeSize);
 	}
 
 	/**
@@ -371,25 +372,28 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public void setIpIcon(URL urlIcon, double relativeSize)
 	{
-		getNe().setUrlNodeIcon(getIpNpLayer(), urlIcon, relativeSize);
+		if (!getNet().isWithIpLayer()) return;
+		getNe().setUrlNodeIcon(getIpNpLayer().get(), urlIcon, relativeSize);
 	}
 
 	/**
 	 * Returns the url of the icon specified by the user for the WDM layer, or null if none
 	 * @return the url
 	 */
-	public URL getUrlNodeIconWdm()
+	public Optional<URL> getUrlNodeIconWdm()
 	{
-		return getNe().getUrlNodeIcon(getWdmNpLayer());
+		if (!getNet().isWithWdmLayer()) return Optional.empty();
+		return Optional.ofNullable(getNe().getUrlNodeIcon(getWdmNpLayer().get()));
 	}
 
 	/**
 	 * Returns the url of the icon specified by the user for the WDM layer, or null if none
 	 * @return the url
 	 */
-	public URL getUrlNodeIconIp()
+	public Optional<URL> getUrlNodeIconIp()
 	{
-		return getNe().getUrlNodeIcon(getIpNpLayer());
+		if (!getNet().isWithIpLayer()) return Optional.empty();
+		return Optional.ofNullable(getNe().getUrlNodeIcon(getIpNpLayer().get()));
 	}
 
 	/**
@@ -398,7 +402,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public double getIconRelativeSizeInWdm()
 	{
-		return getNe().getNodeIconRelativeSize(getWdmNpLayer());
+		if (!getNet().isWithWdmLayer()) return 1.0;
+		return getNe().getNodeIconRelativeSize(getWdmNpLayer().get());
 	}
 
 	/**
@@ -407,7 +412,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public double getIconRelativeSizeInIp()
 	{
-		return getNe().getNodeIconRelativeSize(getIpNpLayer());
+		if (!getNet().isWithIpLayer()) return 1.0;
+		return getNe().getNodeIconRelativeSize(getIpNpLayer().get());
 	}
 
 	/**
@@ -605,7 +611,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WFiber> getOutgoingFibers()
 	{
-		return n.getOutgoingLinks(getNet().getWdmLayer().getNe()).stream().
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getOutgoingLinks(getNet().getWdmLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isWFiber(); }).
 				map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -616,7 +623,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WFiber> getIncomingFibers()
 	{
-		return n.getIncomingLinks(getNet().getWdmLayer().getNe()).stream().
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getIncomingLinks(getNet().getWdmLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isWFiber(); }).
 				map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -627,7 +635,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpLink> getOutgoingIpLinks()
 	{
-		return n.getOutgoingLinks(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getOutgoingLinks(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpLink(); }).
 				map(ee -> new WIpLink(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -637,7 +646,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpSourceRoutedConnection> getOutgoingIpConnections ()
 	{
-		return n.getOutgoingRoutes(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getOutgoingRoutes(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
 				map(ee -> new WIpSourceRoutedConnection(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -647,7 +657,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpSourceRoutedConnection> getIncomingIpConnections ()
 	{
-		return n.getIncomingRoutes(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getIncomingRoutes(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
 				map(ee -> new WIpSourceRoutedConnection(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -659,7 +670,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpLink> getIncomingIpLinks()
 	{
-		return n.getIncomingLinks(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getIncomingLinks(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpLink(); }).
 				map(ee -> new WIpLink(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -670,7 +682,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpathRequest> getOutgoingLigtpathRequests()
 	{
-		return n.getOutgoingDemands(getNet().getWdmLayer().getNe()).stream().
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getOutgoingDemands(getNet().getWdmLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpathRequest(); }).
 				map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -681,7 +694,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpathRequest> getIncomingLigtpathRequests()
 	{
-		return n.getIncomingDemands(getNet().getWdmLayer().getNe()).stream().
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getIncomingDemands(getNet().getWdmLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpathRequest(); }).
 				map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -692,7 +706,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getOutgoingLigtpaths()
 	{
-		return n.getOutgoingRoutes(getNet().getWdmLayer().getNe()).stream().
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getOutgoingRoutes(getNet().getWdmLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
 				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -703,7 +718,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getInOutOrTraversingLigtpaths()
 	{
-		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getWdmLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
 				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -714,7 +730,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getExpressSwitchedLightpaths()
 	{
-		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getWdmLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
 				map(ee -> new WLightpath(ee)).filter(lp->lp.getNodesWhereThisLightpathIsExpressOpticallySwitched().contains(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -726,7 +743,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getIncomingLigtpaths()
 	{
-		return n.getIncomingRoutes(getNet().getWdmLayer().getNe()).stream().
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getIncomingRoutes(getNet().getWdmLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
 				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -747,7 +765,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpUnicastDemand> getOutgoingIpUnicastDemands ()
 	{
-		return getNe().getOutgoingDemands(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return getNe().getOutgoingDemands(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpUnicastDemand(); }).
 				map(d->new WIpUnicastDemand(d)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -758,7 +777,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpUnicastDemand> getIncomingIpUnicastDemands ()
 	{
-		return getNe().getIncomingDemands(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return getNe().getIncomingDemands(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpUnicastDemand(); }).
 				map(d->new WIpUnicastDemand(d)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -782,7 +802,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getOutgoingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
 				map(ee -> new WServiceChain(ee)).
 				filter(sc -> sc.getA().equals(this)).collect(Collectors.toCollection(TreeSet::new));
@@ -794,7 +815,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getIncomingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
 				map(ee -> new WServiceChain(ee)).filter(sc -> sc.getB().equals(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
@@ -805,19 +827,22 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getInOutOrTraversingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getIpLayer().get().getNe()).stream().
 				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
 				map(ee -> new WServiceChain(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	Link getIncomingLinkFromAnycastOrigin()
 	{
-		return n.getNetPlan().getNodePairLinks(getNet().getAnycastOriginNode().getNe(), n, false, getIpNpLayer()).stream().findFirst().orElseThrow(() -> new RuntimeException());
+		assert getNet().isWithIpLayer();
+		return n.getNetPlan().getNodePairLinks(getNet().getAnycastOriginNode().getNe(), n, false, getIpNpLayer().get()).stream().findFirst().orElseThrow(() -> new RuntimeException());
 	}
 
 	Link getOutgoingLinkToAnycastDestination()
 	{
-		return n.getNetPlan().getNodePairLinks(n, getNet().getAnycastDestinationNode().getNe(), false, getIpNpLayer()).stream().findFirst().orElseThrow(() -> new RuntimeException());
+		assert getNet().isWithIpLayer();
+		return n.getNetPlan().getNodePairLinks(n, getNet().getAnycastDestinationNode().getNe(), false, getIpNpLayer().get()).stream().findFirst().orElseThrow(() -> new RuntimeException());
 	}
 
 	/**

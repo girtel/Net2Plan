@@ -156,14 +156,16 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 		return res.stream().map(nn -> new Integer(nn.intValue())).collect(Collectors.toCollection(TreeSet::new));
 	}
 
-	NetworkLayer getIpNpLayer()
+	Optional<NetworkLayer> getIpNpLayer()
 	{
-		return associatedNpElement.getNetPlan().getNetworkLayer(1);
+		final WLayerIp ipLayer = getNet().getIpLayer().orElse(null);
+		return ipLayer == null? Optional.empty() : Optional.of(ipLayer.getNe());
 	}
 
-	NetworkLayer getWdmNpLayer()
+	Optional<NetworkLayer> getWdmNpLayer()
 	{
-		return associatedNpElement.getNetPlan().getNetworkLayer(0);
+		final WLayerWdm wdmLayer = getNet().getWdmLayer().orElse(null);
+		return wdmLayer == null? Optional.empty() : Optional.of(wdmLayer.getNe());
 	}
 
 	/**

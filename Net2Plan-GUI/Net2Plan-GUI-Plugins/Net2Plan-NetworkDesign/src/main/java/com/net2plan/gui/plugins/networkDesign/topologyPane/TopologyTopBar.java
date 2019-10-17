@@ -261,7 +261,7 @@ public class TopologyTopBar extends JToolBar implements ActionListener
             if (result == JOptionPane.YES_OPTION)
             {
             	if (callback.getVisualizationState().isNiwDesignButtonActive())
-            		callback.setDesign(WNet.createEmptyDesign().getNe());
+            		callback.setDesign(WNet.createEmptyDesign(true , true).getNe());
             	else
             		callback.setDesign(new NetPlan());
                 Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =

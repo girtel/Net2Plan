@@ -61,8 +61,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
     	assert callback.getNiwInfo().getFirst();
     	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final Function<Node,WNode> toWNode = n -> { final WNode nn = new WNode (n); assert !nn.isVirtualNode();  return nn; };
-    	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
-    	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
+    	final boolean isIpLayer = getTableNetworkLayer().getName ().equals(WNetConstants.ipLayerName);
+    	final boolean isWdmLayer = getTableNetworkLayer().getName ().equals(WNetConstants.wdmLayerName);
     	assert isIpLayer || isWdmLayer;
     	assert !(isIpLayer && isWdmLayer);
 

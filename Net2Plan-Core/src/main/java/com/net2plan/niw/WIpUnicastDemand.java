@@ -183,7 +183,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		if (this.isBidirectional()) assert this.getBidirectionalPair().get().getBidirectionalPair().get().equals(this);
 		if (this.isBidirectional()) assert this.getBidirectionalPair().get().isDownstream() == this.isUpstream();
 		assert !this.getNe().hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
-		assert this.getNe().getLayer().equals(getNet().getIpLayer().getNe());
+		assert this.getNe().getLayer().equals(getNet().getIpLayer().get().getNe());
 	}
 
 	/**

@@ -82,8 +82,8 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     	final List<AjtColumnInfo<Demand>> res = new LinkedList<> ();
     	assert callback.getNiwInfo().getFirst();
     	final WNet wNet = callback.getNiwInfo().getSecond(); 
-    	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
-    	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
+    	final boolean isIpLayer = getTableNetworkLayer().getName ().equals(WNetConstants.ipLayerName);
+    	final boolean isWdmLayer = getTableNetworkLayer().getName ().equals(WNetConstants.wdmLayerName);
     	assert isIpLayer || isWdmLayer;
     	assert !(isIpLayer && isWdmLayer);
     	if (isIpLayer)
@@ -162,8 +162,8 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     	final Function<Demand,WServiceChainRequest> toWScr = d ->(WServiceChainRequest) wNet.getWElement(d).get();
     	final Function<Demand,WAbstractIpUnicastOrAnycastDemand> toAbsIp = d ->(WAbstractIpUnicastOrAnycastDemand) wNet.getWElement(d).get();
     	final Function<Demand,WLightpathRequest> toLpr = d ->(WLightpathRequest) wNet.getWElement(d).get();
-    	final boolean isIpLayer = getTableNetworkLayer().equals(wNet.getIpLayer().getNe());
-    	final boolean isWdmLayer = getTableNetworkLayer().equals(wNet.getWdmLayer().getNe());
+    	final boolean isIpLayer = getTableNetworkLayer().getName ().equals(WNetConstants.ipLayerName);
+    	final boolean isWdmLayer = getTableNetworkLayer().getName ().equals(WNetConstants.wdmLayerName);
     	assert isIpLayer || isWdmLayer;
     	assert !(isIpLayer && isWdmLayer);
 		final Function<String,Optional<WNode>> nodeByName = st -> 
