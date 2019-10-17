@@ -92,9 +92,19 @@ public final class JUNGCanvas implements ITopologyCanvas
     	transformNetPlanCoordinatesToJungCoordinates = vertex ->
         {
             final int vlIndex = this.callback.getVisualizationState().getCanvasVisualizationOrderRemovingNonVisible(vertex.getLayer());
+
             final double interLayerDistanceInNpCoord = currentInterLayerDistanceInNpCoordinates;
             final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNode().getXYPositionMap();
-            return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (vlIndex * interLayerDistanceInNpCoord)));
+            if (getState () == CanvasOption.OSMState)
+            {
+                System.out.println("OSM: Vertex: " + vertex.getAssociatedNode() + ", layer: " + vertex.getLayer().getName() + " - vlIndex: " + vlIndex + ", interLDistance: " + interLayerDistanceInNpCoord + ", basePosition: " + basePositionInNetPlanCoord + ", returned pos: " + (new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)))));
+            	return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
+            }
+            else
+            {
+                System.out.println("NOT OSM: Vertex: " + vertex.getAssociatedNode() + ", layer: " + vertex.getLayer().getName() + " - vlIndex: " + vlIndex + ", interLDistance: " + interLayerDistanceInNpCoord + ", basePosition: " + basePositionInNetPlanCoord + ", returned pos: " + (new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (vlIndex * interLayerDistanceInNpCoord)))));
+            	return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (vlIndex * interLayerDistanceInNpCoord)));
+            }
         };
 
         g = new DirectedOrderedSparseMultigraph<>();
