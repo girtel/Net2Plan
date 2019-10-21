@@ -16,7 +16,7 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan-gui</artifactId>
-        <version>0.6.3.2</version>
+        <version>0.6.4.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -35,7 +35,7 @@
             <dependency>
                 <groupId>com.net2plan.net2plan-gui</groupId>
                 <artifactId>net2plan-gui-exec</artifactId>
-                <version>0.6.3.2</version>
+                <version>0.6.4.0</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>

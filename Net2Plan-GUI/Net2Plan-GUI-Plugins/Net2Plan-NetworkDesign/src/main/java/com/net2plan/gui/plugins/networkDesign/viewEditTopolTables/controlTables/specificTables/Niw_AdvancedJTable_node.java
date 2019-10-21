@@ -143,7 +143,7 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
     	assert callback.getNiwInfo().getFirst();
     	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final Function<Node,WNode> toWNode = d -> (WNode) wNet.getWElement(d).get();
-        res.add(new AjtRcMenu("Add node", e->wNet.addNode (0 , 0 , "Node " + wNet.getNumberOfNodes() , null), (a,b)->true, null));
+        res.add(new AjtRcMenu("Add node", e->wNet.addNode (0 , 0 , wNet.getUnusedValidNodeName () , null), (a,b)->true, null));
         res.add(new AjtRcMenu("Remove selected nodes", e->getSelectedElements().forEach(dd->toWNode.apply(dd).remove()) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Show selected nodes", e->getSelectedElements().forEach(ee->callback.getVisualizationState().showOnCanvas(ee)) , (a,b)->b>0, null));
         res.add(new AjtRcMenu("Hide selected nodes", e->getSelectedElements().forEach(ee->callback.getVisualizationState().hideOnCanvas(ee)) , (a,b)->b>0, null));

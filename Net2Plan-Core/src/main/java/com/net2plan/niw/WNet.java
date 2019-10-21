@@ -23,6 +23,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Demand;
@@ -356,6 +357,17 @@ public class WNet extends WAbstractNetworkElement
 		return new WNode (n);
 	}
 
+	public String getUnusedValidNodeName () 
+	{
+		int index = getNumberOfNodes();
+		while (true)
+		{
+			final String name = "Node" + index;
+			if (getNodes().stream().anyMatch(n -> n.getName().equals(name))) { index ++; continue; }
+			return name;
+		}
+	}
+	
 	/**
 	 * Adds a node to the design
 	 * @param xCoord the x coordinate
@@ -1107,7 +1119,14 @@ public class WNet extends WAbstractNetworkElement
 	@Override
 	public void checkConsistency()
 	{
-		getNodes().forEach(e->e.checkConsistency());
+    	final Function<NetworkLayer,Boolean> isIp = d -> { final WAbstractNetworkElement ee = getWElement(d).orElse(null); return ee == null? false : ee.isLayerIp(); };
+    	final Function<NetworkLayer,Boolean> isWdm = d -> { final WAbstractNetworkElement ee = getWElement(d).orElse(null); return ee == null? false : ee.isLayerWdm(); };
+    	final int numIpLayers = (int) getNe().getNetworkLayers().stream().filter(e->isIp.apply(e)).count ();
+    	final int numWdmLayers = (int) getNe().getNetworkLayers().stream().filter(e->isWdm.apply(e)).count ();
+    	if (numIpLayers > 1 || numWdmLayers > 1) throw new Net2PlanException ();
+    	if (numIpLayers + numWdmLayers != getNe().getNumberOfLayers()) throw new Net2PlanException ();
+
+    	getNodes().forEach(e->e.checkConsistency());
 		getFibers().forEach(e->e.checkConsistency());
 		getLightpaths().forEach(e->e.checkConsistency());
 		getLightpathRequests().forEach(e->e.checkConsistency());
@@ -1267,6 +1286,12 @@ public class WNet extends WAbstractNetworkElement
 		{
 			final SharedRiskGroup ee = (SharedRiskGroup) e;
 			return Optional.of (new WSharedRiskGroup(ee));
+		}
+		if (e instanceof NetworkLayer)
+		{
+			final NetworkLayer ee = (NetworkLayer) e;
+			if (ee.getName().equals(WNetConstants.wdmLayerName)) return Optional.of(new WLayerWdm(ee));
+			if (ee.getName().equals(WNetConstants.ipLayerName)) return Optional.of(new WLayerIp(ee));
 		}
 		
 		return Optional.empty();

@@ -135,7 +135,7 @@ public class Niw_AdvancedJTable_resource extends AdvancedJTable_networkElement<R
                 		wNet.addVnfInstance(hostNode, name, type, capacityGbps, occupiedCpu, occupiedRamGB, occupiedHdGb, processingTimeMs);
                 	}
                 )
-        , (a,b)->b>0, null) );
+        , (a,b)->true, null) );
 
         res.add(new AjtRcMenu("Remove selected VNFs", e->getSelectedElements().forEach(dd-> toVnf.apply(dd).remove ()) , (a,b)->b>0, null) );
 

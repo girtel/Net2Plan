@@ -27,6 +27,12 @@ public class WLayerIp extends WAbstractNetworkElement
 		
 	}
 
+	public String getName () { return getNe().getName(); }
+
+	public String getDescription () { return getNe().getDescription(); }
+
+	public void setDescription (String description) { getNe ().setDescription(description); }
+	
 	@Override
 	public WTYPE getWType() { return WTYPE.WLayerIp; }
 

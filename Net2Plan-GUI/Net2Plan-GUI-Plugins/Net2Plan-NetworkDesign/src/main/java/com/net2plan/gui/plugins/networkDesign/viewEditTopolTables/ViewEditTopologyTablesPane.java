@@ -47,6 +47,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_route;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_srg;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_layer;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_link;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_node;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_resource;
@@ -243,7 +244,7 @@ public class ViewEditTopologyTablesPane extends JPanel
             table = new AdvancedJTable_forwardingRule(callback , layerThisTable);
 			break;
 		case LAYERS:
-            table = new AdvancedJTable_layer(callback , layerThisTable);
+            table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_layer(callback , layerThisTable) : new AdvancedJTable_layer(callback , layerThisTable);
 			break;
 		case LINKS:
             table = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign()? new Niw_AdvancedJTable_link(callback , layerThisTable) : new AdvancedJTable_link(callback , layerThisTable);
@@ -329,7 +330,12 @@ public class ViewEditTopologyTablesPane extends JPanel
 
     	netPlanView.removeAll();
     	
-        final AdvancedJTable_layer layerTable = new AdvancedJTable_layer (callback , callback.getDesign().getNetworkLayerDefault());
+        final AdvancedJTable_networkElement layerTable;
+        if (callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign())
+        	layerTable = new Niw_AdvancedJTable_layer(callback , callback.getDesign().getNetworkLayerDefault());
+        else
+        	layerTable = new AdvancedJTable_layer(callback , callback.getDesign().getNetworkLayerDefault());
+
     	highLevelTabComponent_network = new NetPlanViewTableComponent_network(callback, layerTable);
     	netPlanView.addTab("Network", highLevelTabComponent_network);
     	

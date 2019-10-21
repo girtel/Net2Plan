@@ -790,7 +790,10 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
         allOptions.addAll(viewTypesDefined);
         for (String viewTypeDefined : allOptions)
             submenus.add(new AjtRcMenu(viewTypeDefined == null? "Default view" : viewTypeDefined, 
-                    (e)-> { control_currentViewTypeForColumns = viewTypeDefined; }  , 
+                    (e)-> 
+            		{
+            			control_currentViewTypeForColumns = viewTypeDefined; 
+            		}  , 
                     (a,b)->true, null));
         final AjtRcMenu res =  new AjtRcMenu("View", null, (a,b)->true, submenus);
         return Optional.of(res);

@@ -118,6 +118,7 @@ public class GUINetworkDesign extends IGUIModule
     private WindowController windowController;
     private GUIWindow tableControlWindow;
     private Optional<Quadruple<Boolean,WNet,OpticalSpectrumManager,OpticalSimulationModule>> niwInformationCurrentDesign;
+    private SortedSet<String> viewTypesForVisibleColumns
     
     
     
@@ -440,7 +441,7 @@ public class GUINetworkDesign extends IGUIModule
     		osi.updateAllPerformanceInfo();
     		this.niwInformationCurrentDesign = Optional.of(Quadruple.of(true, wNet , osm , osi));
     	}
-    	else this.niwInformationCurrentDesign = Optional.of(Quadruple.of(true, null , null , null));
+    	else this.niwInformationCurrentDesign = Optional.of(Quadruple.of(false, null , null , null));
     	return this.niwInformationCurrentDesign.get(); 
     }
     

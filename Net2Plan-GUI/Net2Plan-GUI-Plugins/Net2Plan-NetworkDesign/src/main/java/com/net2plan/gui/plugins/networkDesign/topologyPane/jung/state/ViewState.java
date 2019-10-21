@@ -10,6 +10,21 @@
  *******************************************************************************/
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.state;
 
+import java.awt.Color;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
@@ -19,20 +34,8 @@ import com.net2plan.gui.plugins.networkDesign.visualizationControl.Visualization
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.utils.FileChooserConfirmOverwrite;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.ImageUtils;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Jorge San Emeterio
@@ -172,7 +175,11 @@ class ViewState implements ICanvasState
     @Override
     public void addNode(Point2D pos)
     {
-        final Node node = callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
+        final Node node;
+        if (callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign())
+        	node = callback.getNiwInfo().getSecond().addNode(pos.getX(), pos.getY(), callback.getNiwInfo().getSecond().getUnusedValidNodeName(), "").getNe();
+        else
+        	node = callback.getDesign().addNode(pos.getX(), pos.getY(), "Node" + callback.getDesign().getNumberOfNodes(), null);
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges();
         callback.addNetPlanChange();
@@ -183,7 +190,10 @@ class ViewState implements ICanvasState
     @Override
     public void removeNode(Node node)
     {
-        node.remove();
+        if (callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign())
+        	new WNode(node).remove ();
+        else
+        	node.remove();
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges();
         callback.addNetPlanChange();
