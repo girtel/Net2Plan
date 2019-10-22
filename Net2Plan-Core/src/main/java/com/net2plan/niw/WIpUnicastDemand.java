@@ -236,4 +236,18 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	@Override
 	public WTYPE getWType() { return WTYPE.WIpUnicastDemand; }
 
+	@Override
+	public double getWorstCaseEndtoEndLatencyMs() 
+	{
+		if (this.isIpSourceRouted()) return getIpConnections().stream().filter(e->e.isUp()).mapToDouble(e->e.getWorstCasePropgationLatencyInMs()).max().orElse(Double.MAX_VALUE);
+		return getNe().getWorstCasePropagationTimeInMs();
+	}
+
+	@Override
+	public double getWorstCaseEndtoEndLengthInKm() 
+	{
+		if (this.isIpSourceRouted()) return getIpConnections().stream().filter(e->e.isUp()).mapToDouble(e->e.getWorstCaseLengthInKm()).max().orElse(Double.MAX_VALUE);
+		return getNe().getWorstCaseLengthInKm();
+	}
+
 }

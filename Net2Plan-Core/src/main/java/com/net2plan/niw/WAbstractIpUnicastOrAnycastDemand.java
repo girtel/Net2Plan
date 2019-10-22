@@ -208,21 +208,26 @@ public abstract class WAbstractIpUnicastOrAnycastDemand extends WAbstractNetwork
 		return (Demand) associatedNpElement;
 	}
 
-	/** Returns the worst case latency in milliseconds of any flow realizing this IP demand, considering all the underlying layers  
-	 * @return see above
-	 */
-	public final double getWorstCaseEndtoEndLatencyMs ()
-	{
-		return getNe().getWorstCasePropagationTimeInMs();
-	}
+	public abstract double getWorstCaseEndtoEndLatencyMs ();
+
+	public abstract double getWorstCaseEndtoEndLengthInKm ();
+
 	
-	/** Returns the worst case length in km of any flow realizing this IP demand, considering all the underlying layers  
-	 * @return see above
-	 */
-	public final double getWorstCaseEndtoEndLengthInKm ()
-	{
-		return getNe().getWorstCaseLengthInKm();
-	}
+//	/** Returns the worst case latency in milliseconds of any flow realizing this IP demand, considering all the underlying layers  
+//	 * @return see above
+//	 */
+//	public final double getWorstCaseEndtoEndLatencyMs ()
+//	{
+//		return getNe().getWorstCasePropagationTimeInMs();
+//	}
+	
+//	/** Returns the worst case length in km of any flow realizing this IP demand, considering all the underlying layers  
+//	 * @return see above
+//	 */
+//	public final double getWorstCaseEndtoEndLengthInKm ()
+//	{
+//		return getNe().getWorstCaseLengthInKm();
+//	}
 
 	public abstract void remove ();
 	

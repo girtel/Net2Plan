@@ -280,7 +280,7 @@ public class WIpLink extends WAbstractNetworkElement
 	public double getWorstCaseLengthInKm()
 	{
 		if (this.isCoupledtoLpRequest()) return getCoupledLpRequest().getWorstCaseLengthInKm();
-		if (this.isBundleOfIpLinks()) return getBundledIpLinks().stream().mapToDouble(e->e.getWorstCaseLengthInKm()).max().orElse(Double.MAX_VALUE);
+		if (this.isBundleOfIpLinks()) return getBundledIpLinks().stream().filter(e->e.isUp()).mapToDouble(e->e.getWorstCaseLengthInKm()).max().orElse(Double.MAX_VALUE);
 		return getLengthIfNotCoupledInKm();
 	}
 
@@ -294,7 +294,7 @@ public class WIpLink extends WAbstractNetworkElement
 	public double getWorstCasePropagationDelayInMs()
 	{
 		if (this.isCoupledtoLpRequest()) return getCoupledLpRequest().getWorstCasePropagationDelayMs();
-		if (this.isBundleOfIpLinks()) return getBundledIpLinks().stream().mapToDouble(e->e.getWorstCasePropagationDelayInMs()).max().orElse(Double.MAX_VALUE);
+		if (this.isBundleOfIpLinks()) return getBundledIpLinks().stream().filter(e->e.isUp()).mapToDouble(e->e.getWorstCasePropagationDelayInMs()).max().orElse(Double.MAX_VALUE);
 		return npLink.getPropagationDelayInMs();
 	}
 
@@ -452,6 +452,7 @@ public class WIpLink extends WAbstractNetworkElement
 	 */
 	public boolean isDown () 
 	{
+		if (this.isBundleOfIpLinks()) return this.getBundledIpLinks().stream().allMatch(e->e.isDown());
 		return getNe().isDown() || getNe().getCapacity() < Configuration.precisionFactor;
 	}
 	

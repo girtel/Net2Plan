@@ -355,4 +355,16 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	@Override
 	public WTYPE getWType() { return WTYPE.WServiceChainRequest; }
 
+	@Override
+	public double getWorstCaseEndtoEndLatencyMs() 
+	{
+		return getServiceChains().stream().filter(e->e.isUp()).mapToDouble(e->e.getWorstCaseLatencyInMs()).max().orElse(Double.MAX_VALUE);
+	}
+
+	@Override
+	public double getWorstCaseEndtoEndLengthInKm() 
+	{
+		return getServiceChains().stream().filter(e->e.isUp()).mapToDouble(e->e.getWorstCaseLengthInKm()).max().orElse(Double.MAX_VALUE);
+	}
+
 }

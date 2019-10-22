@@ -190,11 +190,11 @@ public class WLightpath extends WAbstractNetworkElement
 	/** Returns the length in km of this lighptath, as the sum of the lengths of the traversed fibers
 	 * @return see above
 	 */
-	public double getLengthInKm () { return getNe().getLengthInKm(); }
+	public double getLengthInKm () { return getSeqFibers().stream().mapToDouble(e->e.getLengthInKm()).sum(); }
 	/** Returns the propagation delay in ms of this lighptath, as the sum of the propagation delays of the traversed fibers
 	 * @return see above
 	 */
-	public double getPropagationDelayInMs () { return getNe().getPropagationDelayInMiliseconds(); }
+	public double getPropagationDelayInMs () { return getSeqFibers().stream().mapToDouble(e->e.getPropagationDelayInMs()).sum(); }
 	
 	/** Indicates if this lightpath is up (does not traverse any failed fiber/node)
 	 * @return see above
