@@ -117,7 +117,7 @@ public class WNet extends WAbstractNetworkElement
 				{
 					assert e.getNe().getTraversingRoutes().size() == 1;
 					final Route r = e.getNe().getTraversingRoutes().first();
-					r.setCarriedTraffic(e.getNe().getCapacity(), e.getNe().getCapacity());
+					r.setCarriedTraffic(e.getNominalCapacityGbps(), e.getNominalCapacityGbps());
 				}
 			} 
 		}
@@ -1170,7 +1170,7 @@ public class WNet extends WAbstractNetworkElement
 			if (isIpLayer && ee.isCoupled())
 			{
 				assert ee.isCoupledInSameLayer();
-				assert ee.getCoupledLink().hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
+				assert ee.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
 				return Optional.empty(); // bundles
 			}
 			if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
@@ -1248,7 +1248,7 @@ public class WNet extends WAbstractNetworkElement
 			if (isIpLayer && ee.isCoupled())
 			{
 				assert ee.isCoupledInSameLayer();
-				assert ee.getCoupledLink().hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
+				assert ee.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
 				return Optional.empty(); // bundles
 			}
 			if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())

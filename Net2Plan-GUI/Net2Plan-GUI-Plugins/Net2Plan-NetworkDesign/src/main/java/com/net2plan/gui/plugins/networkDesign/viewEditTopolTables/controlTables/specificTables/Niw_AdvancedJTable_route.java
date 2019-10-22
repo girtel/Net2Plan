@@ -228,6 +228,21 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
 
 //            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Injection power (dBm)", "The injection power of the transponder in the ADD part (transmission side)", (d,val)->toLp.apply(d).setAddTransponderInjectionPower_dBm((Double)val) , d->toLp.apply(d).getAddTransponderInjectionPower_dBm(), AGTYPE.NOAGGREGATION , null));
 
+            res.add(new AjtRcMenu("Set optical slots occupied to selected lightpaths", e-> 
+            DialogBuilder.launch(
+                    "Set optical slots occupied" , 
+                    "Please introduce the requested information", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfString("Slots indexes (space separated)", "Introduce the modulation Id", 10, "")),
+                    (list)->
+                    	{
+                    		final String value = (String) list.get(0).get();
+                    		final SortedSet<Integer> vals = Stream.of(value.split(" ")).filter(ee->!ee.equals("") && !ee.equals(" ")).map(ee->Integer.parseInt(ee)).collect(Collectors.toCollection(TreeSet::new));
+                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setOpticalSlotIds(vals));
+                    	}
+                    ) , (a,b)->b>0, null));
+
             res.add(new AjtRcMenu("Set modulation id to selected lightpaths", e-> 
             DialogBuilder.launch(
                     "Set modulation id" , 
@@ -241,7 +256,6 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
                     		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setModulationId(value));
                     	}
                     ) , (a,b)->b>0, null));
-
             res.add(new AjtRcMenu("Set transmission injection power (dBm) to selected lightpaths", e-> 
         	DialogBuilder.launch(
                 "Set transmission injected power (dBm)" , 

@@ -77,7 +77,11 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Sets the line rate of the lighptath request in Gbps
 	 * @param lineRateGbps see above
 	 */
-	public void setLineRateGbps (double lineRateGbps) { getNe().setOfferedTraffic(lineRateGbps); }
+	public void setLineRateGbps (double lineRateGbps) 
+	{
+		if (!this.getLightpaths().isEmpty()) throw new Net2PlanException ("This option is only possible when the lightpath request has no lightpaths realizing it");
+		getNe().setOfferedTraffic(lineRateGbps); 
+	}
 	/** Indicates if the lighptath request is supported by a 1+1 setting of two lightpaths 
 	 * @return see above
 	 */
@@ -89,7 +93,11 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Sets if this lightpath request has to be realized by a 1+1 setting or not
 	 * @param isToBe11Protected see above
 	 */
-	public void setIsToBe11Protected (boolean isToBe11Protected) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISTOBE11PROTECTED , new Boolean (isToBe11Protected).toString()); }
+	public void setIsToBe11Protected (boolean isToBe11Protected) 
+	{
+		if (!this.getLightpaths().isEmpty()) throw new Net2PlanException ("This option is only possible when the lightpath request has no lightpaths realizing it");
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISTOBE11PROTECTED , new Boolean (isToBe11Protected).toString()); 
+	}
 	/** Returns the length of this lightpath request, as the physical length of fibers traversed by the lightpaths carrying this request. If the lightpath is 1+1 protected, 
 	 * the longest path length is returned. If the request has assigned no lighptaths, Double.MAX_VALUE is returned.
 	 * @return see above
@@ -225,7 +233,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 		if (this.isCoupledToIpLink()) assert getCoupledIpLink().getCoupledLpRequest().equals(this);
 		if (this.isBidirectional()) assert this.getBidirectionalPair().getBidirectionalPair().equals(this);
 		if (getLightpaths().stream().anyMatch(lp->lp.isUp())) assert getCurrentCapacityGbps() == getLineRateGbps();
-		if (getLightpaths().stream().filter(lp->lp.isUp()).count() == 0) assert getCurrentCapacityGbps() == getLineRateGbps();
+		if (getLightpaths().stream().filter(lp->lp.isUp()).count() == 0) assert getCurrentCapacityGbps() == 0;
 	}
 
 	

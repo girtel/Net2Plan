@@ -43,7 +43,11 @@ public class OpticalSimulationModule
 	final private SortedMap<WFiber,SortedMap<WLightpath,Map<PERLPINFOMETRICS , Pair<Double,Double>>>> perFiberPerLpPerMetric_valStartEnd = new TreeMap<> ();
 	final private SortedMap<WFiber,Map<PERFIBERINFOMETRICS , Quadruple<Double,Double,List<Double>,List<Double>>>> perFiberPerMetric_valStartEndAndAtEachOlaInputOutput = new TreeMap<> ();
 	
-	public OpticalSimulationModule (WNet wNet) { this.wNet = wNet; }
+	public OpticalSimulationModule (WNet wNet) 
+	{
+		this.wNet = wNet;
+		this.updateAllPerformanceInfo();
+	}
 	
     public static double osnrInDbUnitsAccummulation_dB (List<Double> osnrs_dB)
     {
@@ -71,6 +75,7 @@ public class OpticalSimulationModule
 
     public OpticalSimulationModule updateAllPerformanceInfo ()
     {
+    	System.out.println("Update all performance info");
    	 for (WFiber e : wNet.getFibers())
    		 perFiberPerLpPerMetric_valStartEnd.put(e, new TreeMap<> ());
 

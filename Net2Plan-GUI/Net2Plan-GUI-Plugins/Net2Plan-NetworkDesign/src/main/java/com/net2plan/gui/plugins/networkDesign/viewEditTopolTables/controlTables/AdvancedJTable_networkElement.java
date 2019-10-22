@@ -62,7 +62,10 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.niw.WNode;
 import com.net2plan.utils.Pair;
 
@@ -259,6 +262,7 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 		assert selection != null;
 		final NetPlan npCopy = this.callback.getDesign().copy();
 		final NetPlan np = callback.getDesign();
+		final boolean isNiwActive = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign();
 		try 
 		{
 			for (T es : selection) 
@@ -267,28 +271,84 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 				{
 					final NetworkElement e = (NetworkElement) es;
 					if (e.wasRemoved()) continue;
-					switch (e.getNeType())
+					if (isNiwActive)
 					{
-					case DEMAND: ((Demand) e).remove(); break; 
-					case LAYER: np.removeNetworkLayer((NetworkLayer) e); break;
-					case LINK: ((Link)e).remove(); break;
-					case MULTICAST_DEMAND: ((MulticastDemand)e).remove(); break;
-					case MULTICAST_TREE: ((MulticastTree)e).remove(); break;
-					case NODE: ((Node)e).remove(); break;
-					case RESOURCE: ((Resource)e).remove(); break;
-					case ROUTE: ((Route)e).remove(); break;
-					case SRG: ((SharedRiskGroup)e).remove(); break;
-					default: throw new  RuntimeException();
+						final WNet wNet = callback.getNiwInfo().getSecond();
+						final WTYPE type = wNet.getWType(e).orElse(null);
+						if (type == null) continue;
+						switch (type)
+						{
+						case WFiber: wNet.getWElement(e).get().getAsFiber().remove (); 
+							break;
+						case WIpLink:
+							wNet.getWElement(e).get().getAsIpLink().removeBidirectional();
+							break;
+						case WIpSourceRoutedConnection:
+							wNet.getWElement(e).get().getAsIpSourceRoutedConnection().remove();
+							break;
+						case WIpUnicastDemand:
+							wNet.getWElement(e).get().getAsIpUnicastDemand().remove();
+							break;
+						case WLayerIp:
+							wNet.removeIpLayer();
+							break;
+						case WLayerWdm:
+							wNet.removeWdmLayer();
+							break;
+						case WLightpath:
+							wNet.getWElement(e).get().getAsLightpath().remove();
+							break;
+						case WLightpathRequest:
+							wNet.getWElement(e).get().getAsLightpathRequest().remove();
+							break;
+						case WNet:
+							break;
+						case WNode:
+							wNet.getWElement(e).get().getAsNode().remove();
+							break;
+						case WServiceChain:
+							wNet.getWElement(e).get().getAsServiceChain().remove();
+							break;
+						case WServiceChainRequest:
+							wNet.getWElement(e).get().getAsServiceChainRequest().remove();
+							break;
+						case WSharedRiskGroup:
+							wNet.getWElement(e).get().getAsSrg().remove();
+							break;
+						case WVnfInstance:
+							wNet.getWElement(e).get().getAsVnfInstance().remove();
+							break;
+						default:
+							break;
+						
+						}
+					}
+					else
+					{
+						switch (e.getNeType())
+						{
+						case DEMAND: ((Demand) e).remove(); break; 
+						case LAYER: np.removeNetworkLayer((NetworkLayer) e); break;
+						case LINK: ((Link)e).remove(); break;
+						case MULTICAST_DEMAND: ((MulticastDemand)e).remove(); break;
+						case MULTICAST_TREE: ((MulticastTree)e).remove(); break;
+						case NODE: ((Node)e).remove(); break;
+						case RESOURCE: ((Resource)e).remove(); break;
+						case ROUTE: ((Route)e).remove(); break;
+						case SRG: ((SharedRiskGroup)e).remove(); break;
+						default: throw new  RuntimeException();
+						}
 					}
 				} 
 			}
+			callback.setDesignAndCallWhatIfSomethingModified(callback.getDesign());
 			callback.updateVisualizationAfterNewTopology();
 		} catch (Exception ex) 
 		{
 			
 			ErrorHandling.showErrorDialog(ex.getMessage(), "Error");
 			
-			callback.setDesign(npCopy);
+			callback.setDesignAndCallWhatIfSomethingModified(npCopy);
             callback.updateVisualizationAfterNewTopology();
 		} 
     }

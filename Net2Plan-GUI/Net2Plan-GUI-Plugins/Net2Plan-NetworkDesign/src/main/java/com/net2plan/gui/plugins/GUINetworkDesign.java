@@ -22,7 +22,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +79,6 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.plugins.PluginSystem;
 import com.net2plan.internal.sim.SimCore.SimState;
-import com.net2plan.libraries.OpticalImpairmentUtils;
 import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.WNet;
@@ -118,7 +119,7 @@ public class GUINetworkDesign extends IGUIModule
     private WindowController windowController;
     private GUIWindow tableControlWindow;
     private Optional<Quadruple<Boolean,WNet,OpticalSpectrumManager,OpticalSimulationModule>> niwInformationCurrentDesign;
-    private SortedSet<String> viewTypesForVisibleColumns
+    private SortedSet<String> typesForVisibleColumns;
     
     
     
@@ -180,6 +181,7 @@ public class GUINetworkDesign extends IGUIModule
 
         this.currentNetPlan = new NetPlan();
         this.niwInformationCurrentDesign = Optional.empty();
+        this.typesForVisibleColumns = new TreeSet<> ();
         
         BidiMap<NetworkLayer, Integer> mapLayer2VisualizationOrder = new DualHashBidiMap<>();
         Map<NetworkLayer, Boolean> layerVisibilityMap = new HashMap<>();
@@ -215,7 +217,7 @@ public class GUINetworkDesign extends IGUIModule
 
         reportPane = new ViewReportPane(GUINetworkDesign.this, JSplitPane.VERTICAL_SPLIT);
 
-        setDesign(currentNetPlan);
+        setDesignAndCallWhatIfSomethingModified(currentNetPlan);
         Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res = VisualizationState.generateCanvasDefaultVisualizationLayerInfo(getDesign());
         vs.setCanvasLayerVisibilityAndOrder(getDesign(), res.getFirst(), res.getSecond());
 
@@ -334,6 +336,19 @@ public class GUINetworkDesign extends IGUIModule
         updateVisualizationAfterNewTopology();
     }
 
+    public SortedSet<String> getVisibleColumnsInTables ()
+    {
+    	return Collections.unmodifiableSortedSet(this.typesForVisibleColumns);
+    }
+    public void removeVisibleColumnInTable (String name)
+    {
+    	this.typesForVisibleColumns.remove(name);
+    }
+    public void addVisibleColumnInTable (String name)
+    {
+    	this.typesForVisibleColumns.add(name);
+    }
+    
     public PickManager getPickManager () { return this.pickManager; }
     
     /*private JPanel configureLeftBottomPanel()
@@ -474,7 +489,7 @@ public class GUINetworkDesign extends IGUIModule
         updateVisualizationAfterNewTopology();
     }
 
-    public void setDesign(NetPlan netPlan)
+    public void setDesignAndCallWhatIfSomethingModified(NetPlan netPlan)
     {
         if (ErrorHandling.isDebugEnabled()) netPlan.checkCachesConsistency();
         this.currentNetPlan = netPlan;
@@ -513,10 +528,11 @@ public class GUINetworkDesign extends IGUIModule
                         break;
                 }
                 onlineSimulationPane.getSimKernel().reset();
-                setDesign(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
+                setDesignAndCallWhatIfSomethingModified(onlineSimulationPane.getSimKernel().getCurrentNetPlan());
             } else
             {
-                setDesign(new NetPlan());
+                setDesignAndCallWhatIfSomethingModified(new NetPlan());
+                for (String type : new ArrayList<> (this.getVisibleColumnsInTables())) this.removeVisibleColumnInTable(type);
                 //algorithmSelector.reset();
                 executionPane.reset();
             }

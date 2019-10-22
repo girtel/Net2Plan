@@ -46,7 +46,7 @@ import com.net2plan.utils.Triple;
  */
 public class OpticalSpectrumManager
 {
-	private final WNet wNet;
+	private WNet wNet;
 	final private SortedMap<WFiber,SortedMap<Integer,SortedSet<WLightpath>>> occupation_f_s_ll = new TreeMap<> ();
 	final private SortedMap<WLightpath,SortedMap<WFiber,SortedSet<Integer>>> occupation_ll_f_s = new TreeMap<> ();
 
@@ -64,7 +64,22 @@ public class OpticalSpectrumManager
         return osm;
     }
 
-		/** Returns the set of the optical slots ids that are idle in ALL the fibers provided 
+	/** Resets this object, makes it associated to a given network and according to their lightpaths
+	 * @param net the network
+	 * @return see above
+	 */
+	public OpticalSpectrumManager resetFromRegularLps (WNet net)
+    {
+		this.wNet = net;
+		this.occupation_f_s_ll.clear();
+		this.occupation_ll_f_s.clear();
+		for (WLightpath lp : net.getLightpaths())
+			this.allocateOccupation(lp, lp.getSeqFibers(), lp.getOpticalSlotIds());
+        return this;
+    }
+
+
+	/** Returns the set of the optical slots ids that are idle in ALL the fibers provided 
      * @param wdmLinks the set of fibers
      * @return see above
      */

@@ -258,8 +258,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
             		callback.getDesign().addLink(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
             }
 
-            if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                callback.getWhatIfAnalysisPane().whatIfSomethingModified();
+            callback.setDesignAndCallWhatIfSomethingModified(callback.getDesign());
         	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         	callback.updateVisualizationAfterChanges();
             callback.addNetPlanChange();

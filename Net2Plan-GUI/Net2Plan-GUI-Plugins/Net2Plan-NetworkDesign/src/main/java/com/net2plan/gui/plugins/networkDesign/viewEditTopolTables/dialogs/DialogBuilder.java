@@ -146,7 +146,10 @@ public class DialogBuilder
         dialog.setVisible(true);
 
         if(dialog.getException().isPresent())
+        {
+        	dialog.getException().get().printStackTrace();
         	throw new Net2PlanException(dialog.getException().get().getMessage());
+        }
     }
     
     public static JLabel createJLabel(String label, String tooltip)

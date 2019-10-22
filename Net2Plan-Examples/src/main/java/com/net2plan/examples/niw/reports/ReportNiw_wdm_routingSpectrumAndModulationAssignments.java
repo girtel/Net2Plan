@@ -69,7 +69,7 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 	@Override
 	public String getDescription()
 	{
-		return "This report shows line engineering information for WDM links in the network. Further description in the HTML generated.";
+		return "This report shows routing and spectrum occupation of the ligtpaths in the network. Requires a NIW valid design.";
 	}
 
 	@Override
@@ -82,7 +82,7 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 	@Override
 	public String getTitle()
 	{
-		return "WDM line engineering";
+		return "NIW: Routing spectrum and modulation assignment";
 	}
 
 	private String printReport(WNet net , Map<String, String> reportParameters)

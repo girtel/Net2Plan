@@ -111,14 +111,14 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 		      res.add(new AjtColumnInfo<Link>(this , NetworkElement.class, null , "Lp request coupled", "The lightpath request that is coupled to this IP link, if any", null , d->toWIpLink.apply(d).isCoupledtoLpRequest()? toWIpLink.apply(d).getCoupledLpRequest().getNe () : null , AGTYPE.NOAGGREGATION , null));
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Nominal cap. (Gbps)", "Nominal capacity of the IP link. If a bundle, the sum of the nominal capacities of the members. If coupled to a lightpath, the lightpath line rate. If not, a user-defined value", (d,val)->{ final WIpLink e = toWIpLink.apply(d); if (!e.isBundleOfIpLinks() && !e.isCoupledtoLpRequest()) toWIpLink.apply(d).setNominalCapacityGbps((Double) val); }, d->toWIpLink.apply(d).getNominalCapacityGbps() , AGTYPE.SUMDOUBLE , null));
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Current cap. (Gbps)", "Current capacity of the IP link. If a bundle, the sum of the current capacities of the members. If coupled to a lightpath, the lightpath line rate if up, or zero if down.", null , d->toWIpLink.apply(d).getCurrentCapacityGbps() , AGTYPE.SUMDOUBLE , null));
-		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Occupied cap. (Gbps)", "Occupied capacity of the IP link.", null , d->toWIpLink.apply(d).getCarriedTrafficGbps() , AGTYPE.SUMDOUBLE , null));
-		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Utilization (%)", "IP link utilization (occupied capacity vs. current capacity)", null , d->toWIpLink.apply(d).getCurrentUtilization() , AGTYPE.MAXDOUBLE , null));
+		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Occupied cap. (Gbps)", "Occupied capacity of the IP link.", null , d->toWIpLink.apply(d).isBundleMember()? "--" : toWIpLink.apply(d).getCarriedTrafficGbps() , AGTYPE.SUMDOUBLE , null));
+		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Utilization (%)", "IP link utilization (occupied capacity vs. current capacity)", null , d->toWIpLink.apply(d).isBundleMember()? "--" : toWIpLink.apply(d).getCurrentUtilization() , AGTYPE.MAXDOUBLE , null));
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Length (km)", "IP link length in km, considering the worst case WDM layer propagation, and worst case IP member propagation if is a bundle. Can be edited: the user-defined value would be then used if the IP link is not coupled to a lightpath, and is not a bundle", (d,val)->toWIpLink.apply(d).setLengthIfNotCoupledInKm((Double) val) , d->toWIpLink.apply(d).getWorstCaseLengthInKm()  , AGTYPE.SUMDOUBLE, null));
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Latency (ms)", "IP link propagation delay in ms, considering the worst case WDM layer propagation, and worst case IP member propagation if is a bundle.", null , d->toWIpLink.apply(d).getWorstCasePropagationDelayInMs() , AGTYPE.MAXDOUBLE, null));
 		      res.add(new AjtColumnInfo<Link>(this , String.class, null , "Type", "Indicates if the link is a Link Aggregation Group of other IP links, or a LAG member, or a regular IP link (not a bundle of IP links, nor a LAG member).", null , d->toWIpLink.apply(d).isBundleOfIpLinks()? "LAG" : (toWIpLink.apply(d).isBundleMember()? "LAG-member" : "Regular IP link") , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , NetworkElement.class, null , "Parent LAG", "If the IP link is member of a LAG, indicates the parent LAG IP link.", null , d->toWIpLink.apply(d).isBundleMember()? toWIpLink.apply(d).getBundleParentIfMember().getNe () : "--" , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "LAG members", "If the IP link is a LAG bundle, this column links to the LAG members.", null , d->toWIpLink.apply(d).isBundleOfIpLinks()? toWIpLink.apply(d).getBundledIpLinks().stream().map(e->e.getNe()).collect (Collectors.toList()) : "--" , AGTYPE.NOAGGREGATION, null));
-		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "IGP weitgh", "The strictly positive weight to be used for IGP routing calculations", (d,val)->toWIpLink.apply(d).setIgpWeight((Double) val) , d->toWIpLink.apply(d).getIgpWeight() , AGTYPE.NOAGGREGATION, null));
+		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "IGP weitgh", "The strictly positive weight to be used for IGP routing calculations", (d,val)->toWIpLink.apply(d).setIgpWeight((Double) val) , d->toWIpLink.apply(d).isBundleMember()? "--" : toWIpLink.apply(d).getIgpWeight() , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. Unicast demands", "Unicast demands routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingIpUnicastDemands().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. IP connections", "IP source routed connections routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingIpUnicastDemands().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. SCs", "Service chains routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingServiceChains().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
@@ -229,43 +229,74 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
               );
             }
             , (a,b)->true, null));
-            
-            res.add(new AjtRcMenu("Bundle selected IP links when possible", e->
-            {
-            	final Map<Pair<WNode,WNode>,SortedSet<WIpLink>> selectedNonBundlesLowHigh = new HashMap<> ();
-            	for (Link d : getSelectedElements())
-            	{
-            		final WIpLink ee = toWIpLink.apply(d);
-            		if (ee.isBundleOfIpLinks()) continue;
-            		if (ee.isBundleMember()) continue;
-            		assert ee.isBidirectional();
-            		final WIpLink ipLinkAb = ee.getId() < ee.getBidirectionalPair().getId()? ee : ee.getBidirectionalPair();
-            		final Pair<WNode,WNode> ab = Pair.of(ipLinkAb.getA(), ipLinkAb.getB());
-            		SortedSet<WIpLink> previousAbs = selectedNonBundlesLowHigh.get(ab);
-            		if (previousAbs == null)  { previousAbs = new TreeSet<> (); selectedNonBundlesLowHigh.put (ab , previousAbs); }
-            		previousAbs.add(ipLinkAb);
-            	}
-            	for (SortedSet<WIpLink> linksAb : selectedNonBundlesLowHigh.values())
-            	{
-            		if (linksAb.isEmpty()) continue;
-            		final WNode a = linksAb.first().getA();
-            		final WNode b = linksAb.first().getB();
-            		final Pair<WIpLink , WIpLink> lag = wNet.addIpLinkBidirectional(a, b, 0.0);
-            		lag.getFirst().setIpLinkAsBundleOfIpLinksBidirectional(linksAb);
-            	}
-            }
-            , (a,b)->true, null));
 
-            res.add(new AjtRcMenu("Unbundle selected LAGs", e->
-            {
-            	for (Link d : getSelectedElements())
-            	{
-            		final WIpLink ee = toWIpLink.apply(d);
-            		if (!ee.isBundleOfIpLinks()) continue;
-            		ee.unbundleBidirectional();
-            	}
-            }
-            , (a,b)->true, null));
+            res.add(new AjtRcMenu("Link Aggregation Group (LAG) options", null , (a,b)->true, Arrays.asList(
+            		new AjtRcMenu("Create LAGs bundling selected IP links", e->
+                    {
+                    	final Map<Pair<WNode,WNode>,SortedSet<WIpLink>> selectedNonBundlesLowHigh = new HashMap<> ();
+                    	for (Link d : getSelectedElements())
+                    	{
+                    		final WIpLink ee = toWIpLink.apply(d);
+                    		if (ee.isBundleOfIpLinks()) continue;
+                    		if (ee.isBundleMember()) continue;
+                    		assert ee.isBidirectional();
+                    		final WIpLink ipLinkAb = ee.getId() < ee.getBidirectionalPair().getId()? ee : ee.getBidirectionalPair();
+                    		final Pair<WNode,WNode> ab = Pair.of(ipLinkAb.getA(), ipLinkAb.getB());
+                    		SortedSet<WIpLink> previousAbs = selectedNonBundlesLowHigh.get(ab);
+                    		if (previousAbs == null)  { previousAbs = new TreeSet<> (); selectedNonBundlesLowHigh.put (ab , previousAbs); }
+                    		previousAbs.add(ipLinkAb);
+                    	}
+                    	for (SortedSet<WIpLink> linksAb : selectedNonBundlesLowHigh.values())
+                    	{
+                    		if (linksAb.isEmpty()) continue;
+                    		final WNode a = linksAb.first().getA();
+                    		final WNode b = linksAb.first().getB();
+                    		final Pair<WIpLink , WIpLink> lag = wNet.addIpLinkBidirectional(a, b, 0.0);
+                    		lag.getFirst().setIpLinkAsBundleOfIpLinksBidirectional(linksAb);
+                    	}
+                    }
+                    , (a,b)->true, null),
+            		new AjtRcMenu("Convert selected links into LAGs, and create LAG members", e->
+                    {
+                        DialogBuilder.launch(
+                                "Convert selected links into LAGs, and create LAG members" , 
+                                "Indicate the capacity of each member (Gbps). The minimum number of members is created for each LAG, so the LAG capacity is at least equal to the required one.", 
+                                "", 
+                                this, 
+                                Arrays.asList(
+                                		InputForDialog.inputTfDouble("LAG member line rate (Gbps)", "All the LAG member will be of this rate. Enough number of them is created", 10, 100.0)
+                                		),
+                                (list)->
+                                	{
+                                		final Double rateGbps = (Double) list.get(0).get();
+                                		if(rateGbps <= 0) throw new Net2PlanException("Member capacities must be positive");
+                                    	for (Link d : getSelectedElements())
+                                    	{
+                                    		final WIpLink ee = toWIpLink.apply(d);
+                                    		if (ee.isBundleMember()) continue;
+                                    		if (ee.isBundleOfIpLinks()) continue;
+                                    		final int numOfMembers = (int) Math.ceil(ee.getNominalCapacityGbps() / rateGbps);
+                                    		final SortedSet<WIpLink> linkMembersAb = new TreeSet<> ();
+                                    		while (linkMembersAb.size() < numOfMembers)
+                                    			linkMembersAb.add(wNet.addIpLinkBidirectional(ee.getA(), ee.getB(), rateGbps).getFirst());
+                                    		ee.setIpLinkAsBundleOfIpLinksBidirectional(linkMembersAb);
+                                    	}
+                                	}          		
+                                );
+                    }
+                    , (a,b)->true, null),
+            		new AjtRcMenu("Unbundle selected LAGs", e->
+                    {
+                    	for (Link d : getSelectedElements())
+                    	{
+                    		final WIpLink ee = toWIpLink.apply(d);
+                    		if (!ee.isBundleOfIpLinks()) continue;
+                    		ee.unbundleBidirectional();
+                    	}
+                    }
+                    , (a,b)->true, null)
+            		)));
+
             res.add(new AjtRcMenu("Remove selected IP links", e->getSelectedElements().forEach(dd->toWIpLink.apply(dd).removeBidirectional()) , (a,b)->b>0, null));
             res.add(new AjtRcMenu("Generate full-mesh", null , (a, b)->true, Arrays.asList( 
             		new AjtRcMenu("Link length as Euclidean distance", e->

@@ -335,6 +335,16 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	}
 
 	/**
+	 * Casts this element to a WIpSourceRoutedConnection object (fails if it is not an object of such type)
+	 * @return see above
+	 */
+	public WIpSourceRoutedConnection getAsIpSourceRoutedConnection()
+	{
+		return (WIpSourceRoutedConnection) this;
+	}
+
+
+	/**
 	 * Casts this element to a WLayerIp object (fails if it is not an object of such type)
 	 * @return see above
 	 */
@@ -365,9 +375,17 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 * Casts this element to a WLightpathUnregenerated object (fails if it is not an object of such type)
 	 * @return see above
 	 */
-	public WLightpath getAsLightpathUnregenerated()
+	public WLightpath getAsLightpath()
 	{
 		return (WLightpath) this;
+	}
+	/**
+	 * Casts this element to a WSharedRiskGroup object (fails if it is not an object of such type)
+	 * @return see above
+	 */
+	public WSharedRiskGroup getAsSrg()
+	{
+		return (WSharedRiskGroup) this;
 	}
 
 	/**

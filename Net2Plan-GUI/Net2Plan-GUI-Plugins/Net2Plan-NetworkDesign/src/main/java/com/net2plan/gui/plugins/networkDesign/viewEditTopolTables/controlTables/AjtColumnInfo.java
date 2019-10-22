@@ -47,11 +47,10 @@ public class AjtColumnInfo<T>
     
     public SortedSet<String> getViewTypesBelongTo () { return viewTypesBelongsTo; }
     
-    public boolean isVisibleInView (String viewDefinedForTheTable)
+    public boolean isVisibleInView (SortedSet<String> visibleViews)
     {
         if (getViewTypesBelongTo() == null) return true;
-        if (viewDefinedForTheTable == null) return false;
-        return getViewTypesBelongTo().contains(viewDefinedForTheTable);
+        return getViewTypesBelongTo().stream().anyMatch(view->visibleViews.contains(view));
     }
 
     public Function<T,Color> getGetSpecialBgColorIfNotSelected()

@@ -36,7 +36,7 @@ public class WIpLink extends WAbstractNetworkElement
 
 	final private Link npLink;
 
-	WIpLink(Link e)
+	public WIpLink(Link e)
 	{
 		super(e , Optional.empty());
 		this.npLink = e;

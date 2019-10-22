@@ -97,12 +97,12 @@ public final class JUNGCanvas implements ITopologyCanvas
             final Point2D basePositionInNetPlanCoord = vertex.getAssociatedNode().getXYPositionMap();
             if (getState () == CanvasOption.OSMState)
             {
-                System.out.println("OSM: Vertex: " + vertex.getAssociatedNode() + ", layer: " + vertex.getLayer().getName() + " - vlIndex: " + vlIndex + ", interLDistance: " + interLayerDistanceInNpCoord + ", basePosition: " + basePositionInNetPlanCoord + ", returned pos: " + (new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)))));
+//                System.out.println("OSM: Vertex: " + vertex.getAssociatedNode() + ", layer: " + vertex.getLayer().getName() + " - vlIndex: " + vlIndex + ", interLDistance: " + interLayerDistanceInNpCoord + ", basePosition: " + basePositionInNetPlanCoord + ", returned pos: " + (new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)))));
             	return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() + (vlIndex * interLayerDistanceInNpCoord)));
             }
             else
             {
-                System.out.println("NOT OSM: Vertex: " + vertex.getAssociatedNode() + ", layer: " + vertex.getLayer().getName() + " - vlIndex: " + vlIndex + ", interLDistance: " + interLayerDistanceInNpCoord + ", basePosition: " + basePositionInNetPlanCoord + ", returned pos: " + (new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (vlIndex * interLayerDistanceInNpCoord)))));
+//                System.out.println("NOT OSM: Vertex: " + vertex.getAssociatedNode() + ", layer: " + vertex.getLayer().getName() + " - vlIndex: " + vlIndex + ", interLDistance: " + interLayerDistanceInNpCoord + ", basePosition: " + basePositionInNetPlanCoord + ", returned pos: " + (new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (vlIndex * interLayerDistanceInNpCoord)))));
             	return new Point2D.Double(basePositionInNetPlanCoord.getX(), -(basePositionInNetPlanCoord.getY() - (vlIndex * interLayerDistanceInNpCoord)));
             }
         };

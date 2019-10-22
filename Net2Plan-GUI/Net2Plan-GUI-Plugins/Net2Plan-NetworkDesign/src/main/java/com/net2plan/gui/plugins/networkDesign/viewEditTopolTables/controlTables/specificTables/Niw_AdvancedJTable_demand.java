@@ -118,7 +118,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             res.add(new AjtColumnInfo<Demand>(this , Demand.class, null , "Bidirectional pair", "If the demand is bidirectional, provides its bidirectional pair", null , d->toAbsIp.apply(d).isBidirectional()? toAbsIp.apply(d).getBidirectionalPair().get().getNe() : null , AGTYPE.NOAGGREGATION, null));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Offered traffic (Gbps)", "Currently offered traffic by the demand in Gbps", (d,val)->toAbsIp.apply(d).setCurrentOfferedTrafficInGbps((Double) val), d->toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() , AGTYPE.SUMDOUBLE , null));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Carried traffic (Gbps)", "Currently carried traffic by the demand in Gbps", null , d->toAbsIp.apply(d).getCurrentCarriedTrafficGbps() , AGTYPE.SUMDOUBLE , null));
-            res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() == 0? 0 : toAbsIp.apply(d).getCurrentBlockedTraffic() / toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > Configuration.precisionFactor? Color.RED : Color.GREEN));
+            res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() == 0? 0 : 100.0 * toAbsIp.apply(d).getCurrentBlockedTraffic() / toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > Configuration.precisionFactor? Color.RED : Color.GREEN));
             res.add(new AjtColumnInfo<Demand>(this , String.class, null , "QoS type", "A used-defined string identifying the QoS type of traffic of the demand. QoS differentiation in the IP links is possible for each QoS type", (d,val)-> toAbsIp.apply(d).setQosType((String)val) , d->toAbsIp.apply(d).getQosType(), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Demand>(this , String.class, null , "WC Oversubscription", "The worst case, among all the traversed links, of the amount of traffic of this demand that is oversubscribed", null , d->d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getSecond()).max().orElse(0.0), AGTYPE.NOAGGREGATION , d-> d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getSecond()).max().orElse(0.0) > Configuration.precisionFactor? Color.red : Color.green));
             res.add(new AjtColumnInfo<Demand>(this , String.class, null , "Bifurcated?", "Indicates whether the demand is satisfied by more than one path from origin to destination", null, d->!d.isSourceRouting() ? "-" : (d.isBifurcated()) ? String.format("Yes (%d)", d.getRoutes().size()) : "No" , AGTYPE.NOAGGREGATION , null));
@@ -140,9 +140,10 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     	      res.add(new AjtColumnInfo<Demand>(this , Link.class, null , "IP link coupled", "The IP link that this lightpath request is coupled to", null , d-> { final WLightpathRequest lp = new WLightpathRequest(d); if (lp.isCoupledToIpLink()) return lp.getCoupledIpLink().getNe(); else return null; } , AGTYPE.NOAGGREGATION , null) );
     	      res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Line rate (Gbps)", "Line rate of the lightpaths to carry this demand", (d,val)->new WLightpathRequest(d).setLineRateGbps((Double) val), d->new WLightpathRequest(d).getLineRateGbps() , AGTYPE.SUMDOUBLE , null));
     	      res.add(new AjtColumnInfo<Demand>(this , Collection.class, null , "# Lightpaths", "Number of associated lightpaths, realizing this request. If more than one, all are of the same line rate, and in backup relation (e.g. 1+1, one main, one backup)", null, d->d.getRoutes() , AGTYPE.SUMINT, null));
-    	      res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "1+1?", "Indicates if this lightpath request is 1+1 protected", null, d->new WLightpathRequest(d).is11Protected() , AGTYPE.COUNTTRUE, null));
+    	      res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "1+1?", "Indicates if this lightpath request IS now 1+1 protected, that is, has two lightpaths protecting it in 1+1", null , d->new WLightpathRequest(d).is11Protected() , AGTYPE.COUNTTRUE, d-> new WLightpathRequest(d).is11Protected() != new WLightpathRequest(d).isToBe11Protected() ? Color.red : null) );
+    	      res.add(new AjtColumnInfo<Demand>(this , Boolean.class, null , "To be 1+1?", "Indicates if this lightpath request SHOULD BE 1+1 protected", (d,val)->new WLightpathRequest(d).setIsToBe11Protected((Boolean)val) , d->new WLightpathRequest(d).isToBe11Protected() , AGTYPE.COUNTTRUE, null));
     	      res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Up?", "Indicates the lightpath request is up, meaning that at least one lightpath realizing it is up", null, d->!(new WLightpathRequest(d).isBlocked()) , AGTYPE.COUNTTRUE , d->(new WLightpathRequest(d).isBlocked())? Color.RED : Color.GREEN));
-    	      res.add(new AjtColumnInfo<Demand>(this , String.class, null , "Tp name", "Name of the transponder realizing the lightpaths of this lightpath request", (d,val)-> new WLightpathRequest(d).setTransponderName((String) val) , d->new WLightpathRequest(d).getTransponderName() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Demand>(this , String.class, null , "Tp name", "Name of the transponder realizing the lightpaths of this lightpath request", (d,val)-> new WLightpathRequest(d).setTransponderName((String) val) , d->new WLightpathRequest(d).getTransponderName().orElse("--") , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Worst e2e lat (ms)", "Current worst case end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", null, d->d.getWorstCasePropagationTimeInMs() , AGTYPE.NOAGGREGATION , d->{ final double maxMs = d.getMaximumAcceptableE2EWorstCaseLatencyInMs(); return maxMs <= 0? null : (d.getWorstCasePropagationTimeInMs() > maxMs? Color.RED : null); }));
     	      res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Worst e2e length (km)", "Current worst case end-to-end propagation length in km (accumulating any lower layer propagation lengths if any)", null, d->d.getWorstCaseLengthInKm() , AGTYPE.NOAGGREGATION , null));
     	}
@@ -199,6 +200,11 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         	}
                         );
             } , (a,b)->b>0, null));         		
+	        res.add(new AjtRcMenu("Add one IP unicast demand per selected node pair (all if none selected)", null, (a,b)->true, Arrays.asList(
+	        		new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e->rcMenuFullMeshTraffic(true), (a,b)->true, null),
+	        		new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e->rcMenuFullMeshTraffic(false), (a,b)->true, null)
+	        		)
+	        		));
     		
         	res.add(new AjtRcMenu("Add anycast service chain request", e->
             {
@@ -385,53 +391,94 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     	                    	}
     	                    );
     	        }, (a,b)->b>0, null));
-            
-    	        res.add(new AjtRcMenu("Add one IP unicast demand per selected node pair (all if none selected)", null, (a,b)->true, Arrays.asList(
-    	        		new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e->rcMenuFullMeshTraffic(true), (a,b)->true, null),
-    	        		new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e->rcMenuFullMeshTraffic(false), (a,b)->true, null)
+
+    	        res.add(new AjtRcMenu("Set selected demands offered traffic", null, (a, b) -> b>0, Arrays.asList(
+    	        		new AjtRcMenu("as constant traffic", e ->
+    	    			{
+    	    	            DialogBuilder.launch(
+    	    	                    "Set selected demands offered traffic (Gbps)", 
+    	    	                    "Please introduce the offered traffic. Negative values are not allowed", 
+    	    	                    "", 
+    	    	                    this, 
+    	    	                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (Gbps)", "Introduce the offered traffic", 10, 0.0)),
+    	    	                    (list)->
+    	    	                    	{
+    	    	                    		final double newOfferedTraffic = (Double) list.get(0).get();
+    	    	                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+    	    	                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(newOfferedTraffic));
+    	    	                    	}
+    	    	                    );
+    	    			}
+    	    			, (a, b) -> b>0, null),
+    	        		new AjtRcMenu("as a random uniform value", e ->
+    	    			{
+    	    				final Random rng = new Random ();
+    	    	    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+    	    	        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(rng.nextDouble()));
+    	    			}
+    	    			, (a, b) -> b>0, null),
+    	        		
+    	        		new AjtRcMenu("proportional to sum of end nodes' populations (unicast demands)", e ->
+    	    			{
+    	    	            DialogBuilder.launch(
+    	    	                    "Scale selected demands offered traffic", 
+    	    	                    "Please introduce the total traffic to normalize the demands. Negative values are not allowed", 
+    	    	                    "", 
+    	    	                    this, 
+    	    	                    Arrays.asList(InputForDialog.inputTfDouble("Total traffic of selected demands (Gbpd)", "Introduce the total traffic in Gbps, so selected demands will be scaled making them have an aggregated traffic equal to this value", 10, 1000.0)),
+    	    	                    (list)->
+    	    	                    	{
+    	    	                    		final double totalTrafficExpectedGbps = (Double) list.get(0).get();
+    	    	                    		final List<WIpUnicastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).filter(ee->isWIpUnicast.apply(ee)).map(d->toWIpUnicast.apply(d)).collect(Collectors.toList());
+    	    	                    		double totalPopulationSums = changedDemands.stream().mapToDouble(ee->ee.getA().getPopulation() + ee.getB().getPopulation()).sum();
+    	    	                    		if (totalPopulationSums <= 0) totalPopulationSums = 1; 
+    	    	                    		final double neScalingFactor = totalTrafficExpectedGbps / totalPopulationSums;
+    	    	                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps((d.getA().getPopulation () + d.getB().getPopulation()) * neScalingFactor));
+    	    	                    	}
+    	    	                    );
+    	    			}
+    	    			, (a, b) -> b>0, null),
+
+    	        		new AjtRcMenu("as scaled version", e ->
+    	    			{
+    	    	            DialogBuilder.launch(
+    	    	                    "Scale selected demands offered traffic", 
+    	    	                    "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
+    	    	                    "", 
+    	    	                    this, 
+    	    	                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 2.0)),
+    	    	                    (list)->
+    	    	                    	{
+    	    	                    		final double neScalingFactor = (Double) list.get(0).get();
+    	    	                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+    	    	                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(d.getCurrentOfferedTrafficInGbps() * neScalingFactor));
+    	    	                    	}
+    	    	                    );
+    	    			}
+    	    			, (a, b) -> b>0, null),
+    	        		new AjtRcMenu("as normalized version", e ->
+    	    			{
+    	    	            DialogBuilder.launch(
+    	    	                    "Normalize selected demands offered traffic", 
+    	    	                    "Please introduce the total traffic, so traffic is scaled to make it sum this amount", 
+    	    	                    "", 
+    	    	                    this, 
+    	    	                    Arrays.asList(InputForDialog.inputTfDouble("Total traffic of selected demands (Gbpd)", "Introduce the total traffic in Gbps, so selected demands will be scaled making them have an aggregated traffic equal to this value", 10, 1000.0)),
+    	    	                    (list)->
+    	    	                    	{
+    	    	                    		final double totalTrafficExpectedGbps = (Double) list.get(0).get();
+    	    	                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
+    	    	                    		final double totalTrafficNowGbps = changedDemands.stream().mapToDouble(ee->ee.getCurrentOfferedTrafficInGbps()).sum();
+    	    	                    		final double neScalingFactor = totalTrafficExpectedGbps / totalTrafficNowGbps;
+    	    	                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(d.getCurrentOfferedTrafficInGbps() * neScalingFactor));
+    	    	                    	}
+    	    	                    );
+    	    			}
+    	    			, (a, b) -> true, null)    	        		
+
     	        		)
     	        		));
-    	        res.add(new AjtRcMenu("Set selected demands offered traffic", e ->
-    			{
-    	            DialogBuilder.launch(
-    	                    "Set selected demands offered traffic (Gbps)", 
-    	                    "Please introduce the offered traffic. Negative values are not allowed", 
-    	                    "", 
-    	                    this, 
-    	                    Arrays.asList(InputForDialog.inputTfDouble("Offered traffic (Gbps)", "Introduce the offered traffic", 10, 0.0)),
-    	                    (list)->
-    	                    	{
-    	                    		final double newOfferedTraffic = (Double) list.get(0).get();
-    	                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
-    	                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(newOfferedTraffic));
-    	                    	}
-    	                    );
-    			}
-    			, (a, b) -> b>0, null));
-    	        res.add(new AjtRcMenu("Set selected demands offered traffic randomly", e ->
-    			{
-    				final Random rng = new Random ();
-    	    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
-    	        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(rng.nextDouble()));
-    			}
-    			, (a, b) -> b>0, null));
-    	        res.add(new AjtRcMenu("Scale selected demands offered traffic", e ->
-    			{
-    	            DialogBuilder.launch(
-    	                    "Scale selected demands offered traffic", 
-    	                    "Please introduce the factor for which the offered traffic will be multiplied. Negative values are not allowed", 
-    	                    "", 
-    	                    this, 
-    	                    Arrays.asList(InputForDialog.inputTfDouble("Scaling factor", "Introduce the scaling factor", 10, 2.0)),
-    	                    (list)->
-    	                    	{
-    	                    		final double neScalingFactor = (Double) list.get(0).get();
-    	                    		final List<WAbstractIpUnicastOrAnycastDemand> changedDemands = getSelectedElements().stream().map(ee->(Demand)ee).map(d->toAbsIp.apply(d)).collect(Collectors.toList());
-    	                        	changedDemands.forEach(d->d.setCurrentOfferedTrafficInGbps(d.getCurrentOfferedTrafficInGbps() * neScalingFactor));
-    	                    	}
-    	                    );
-    			}
-    			, (a, b) -> b>0, null));
+
     	        res.add(new AjtRcMenu("Set traversed VNF types to selected service chain requests (or all)", e ->
     			{
     	            DialogBuilder.launch(
@@ -486,6 +533,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         		InputForDialog.inputTfString("Origin node name", "Introduce the name of the origin node. First tries case sensitive, later case insensitive", 10, ""),
                         		InputForDialog.inputTfString("Destination node name", "Introduce the name of the destination node. First tries case sensitive, later case insensitive", 10, ""),
                         		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate of the lightpaths realizing this request", 20, 100.0),
+                        		InputForDialog.inputCheckBox("Bidirectional?", "Indicate if this lighptath request should be bidirectional, so two unidirectional opposite requests are created", true , null),
                         		InputForDialog.inputCheckBox("1+1 protected?", "Indicate if this lighptath request has to be realized by a 1+1 arrangement of two lightpaths", false , null)
                         		),
                         (list)->
@@ -493,15 +541,20 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         		final String aName  = (String) list.get(0).get();
                         		final String bName  = (String) list.get(1).get();
                         		final Double lineRateGbps = (Double) list.get(2).get();
-                        		final Boolean isToBe11Protected = (Boolean) list.get(3).get();
+                        		final Boolean bidirectional = (Boolean) list.get(3).get();
+                        		final Boolean isToBe11Protected = (Boolean) list.get(4).get();
                         		final WNode a = nodeByName.apply(aName).orElse(null);
                         		final WNode b = nodeByName.apply(bName).orElse(null);
                         		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
-                        		wNet.addLightpathRequest(a, b, lineRateGbps, isToBe11Protected);
+                        		final WLightpathRequest lprAb = wNet.addLightpathRequest(a, b, lineRateGbps, isToBe11Protected);
+                        		if (bidirectional)
+                        		{
+                            		final WLightpathRequest lprBa = wNet.addLightpathRequest(b,a, lineRateGbps, isToBe11Protected);
+                        			lprAb.setBidirectionalPair(lprBa);
+                        		}
                         	}
                         );
-            } , (a,b)->b>0, null));
-    		final OpticalSpectrumManager osm = callback.getNiwInfo().getThird();
+            } , (a,b)->true, null));
             res.add(new AjtRcMenu("Add lightpath to selected requests", null , (a, b)->true, Arrays.asList( 
             		new AjtRcMenu("as shortest path, first-fit", e->
             		{
@@ -511,11 +564,13 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                                 "", 
                                 this, 
                                 Arrays.asList(
-                                		InputForDialog.inputCheckBox("Shortest path in latency?", "If checked, the shortest path is computed considering optical latency as link cost, if not, the shortest patrh minimizes the number of traversed fibers", true, null),
-                                		InputForDialog.inputTfInt("Number of optical slots", "Introduce the number of optical slots to reserve for each lightpath", 10, 4)
+                                		InputForDialog.inputCheckBox("Shortest path in optical latency?", "If checked, the shortest path is computed considering optical latency as link cost, if not, the shortest patrh minimizes the number of traversed fibers", true, null),
+                                		InputForDialog.inputTfInt("Number of optical slots (" + df.format(WNetConstants.OPTICALSLOTSIZE_GHZ) + " GHz each)", "Introduce the number of optical slots to reserve for each lightpath", 10, 4)
                                 		),
                                 (list)->
                                 	{
+                                		final OpticalSpectrumManager osm = callback.getNiwInfo().getThird();
+                                		assert callback.getNiwInfo().getSecond().getNe().equals(callback.getDesign());
                                 		final Boolean spLatency = (Boolean) list.get(0).get();
                                 		final Integer numContiguousSlots = (Integer) list.get(1).get();
                             			final List<WLightpathRequest> ds = getSelectedElements().stream().filter(ee->wNet.getWType(ee).equals(Optional.of(WTYPE.WLightpathRequest))).map(ee->wNet.getWElement(ee).get().getAsLightpathRequest()).collect(Collectors.toList());
@@ -524,7 +579,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                             			for (WLightpathRequest dd : ds)
                             			{
                             				if (!dd.getLightpaths().isEmpty()) continue;
-                            				if (dd.is11Protected())
+                            				if (dd.isToBe11Protected())
                             				{
                                 				final List<List<WFiber>> sps = wNet.getTwoMaximallyLinkAndNodeDisjointWdmPaths(dd.getA(), dd.getB(), Optional.of(costMap));
                                 				if (sps.isEmpty()) continue;
@@ -534,27 +589,27 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                                 				boolean isBidirectional = dd.isBidirectional() && seqFibersAbMain.stream().allMatch(ee->ee.isBidirectional());
                                 				if (twoRoutes) isBidirectional &= seqFibersAbBackup.stream().allMatch(ee->ee.isBidirectional()); 
                             					if (isBidirectional)
-                            					{
+                            					{ 
                             						if (!dd.getBidirectionalPair().getLightpaths().isEmpty()) continue;
                                     				final List<WFiber> seqFibersBaMain = Lists.reverse(seqFibersAbMain.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
                                     				final List<WFiber> seqFibersBaBackup = seqFibersAbBackup == null? null : Lists.reverse(seqFibersAbBackup.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
                                     				final List<WFiber> seqFibersAbbAMain = new ArrayList<> (seqFibersAbMain); seqFibersAbbAMain.addAll(seqFibersBaMain);
                                     				final List<WFiber> seqFibersAbbABackup = seqFibersAbBackup == null? null : new ArrayList<> (seqFibersAbBackup); seqFibersAbbABackup.addAll(seqFibersBaBackup);
                                     				if (twoRoutes)
-                                    				{
+                                    				{ // 1+1 bidirectional 2 routes
                                     					final Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> slotsTwoRoutes = osm.spectrumAssignment_firstFitTwoRoutes(seqFibersAbbAMain, seqFibersAbbABackup, numContiguousSlots); 
                                         				if (!slotsTwoRoutes.isPresent()) continue;
                                         				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slotsTwoRoutes.get().getFirst(), false);
                                         				final WLightpath lpBaMain = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaMain, slotsTwoRoutes.get().getFirst(), false);
                                         				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slotsTwoRoutes.get().getFirst());
                                         				osm.allocateOccupation(lpBaMain, seqFibersBaMain, slotsTwoRoutes.get().getFirst());
-                                        				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), false);
-                                        				final WLightpath lpBaBackup = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaBackup, slotsTwoRoutes.get().getSecond(), false);
+                                        				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), true);
+                                        				final WLightpath lpBaBackup = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaBackup, slotsTwoRoutes.get().getSecond(), true);
                                         				osm.allocateOccupation(lpAbBackup, seqFibersAbBackup, slotsTwoRoutes.get().getSecond());
                                         				osm.allocateOccupation(lpBaBackup, seqFibersBaBackup, slotsTwoRoutes.get().getSecond());
                                     				}
                                     				else
-                                    				{
+                                    				{ // 1+1 bidirectional , but one route
                                     					final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAbbAMain, numContiguousSlots , Optional.empty()); 
                                         				if (!slots.isPresent()) continue;
                                         				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slots.get(), false);
@@ -567,16 +622,16 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                             					{
                             						// 1+1 not bidirectional  
                                     				if (twoRoutes)
-                                    				{
+                                    				{ // 1+1 not bidirectional, two routes
                                     					final Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> slotsTwoRoutes = osm.spectrumAssignment_firstFitTwoRoutes(seqFibersAbMain, seqFibersAbBackup, numContiguousSlots); 
                                         				if (!slotsTwoRoutes.isPresent()) continue;
                                         				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slotsTwoRoutes.get().getFirst(), false);
                                         				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slotsTwoRoutes.get().getFirst());
-                                        				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), false);
+                                        				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), true);
                                         				osm.allocateOccupation(lpAbBackup, seqFibersAbBackup, slotsTwoRoutes.get().getSecond());
                                     				}
                                     				else
-                                    				{
+                                    				{// 1+1 not bidirectional, one route
                                     					final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAbMain, numContiguousSlots , Optional.empty()); 
                                         				if (!slots.isPresent()) continue;
                                         				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slots.get(), false);
@@ -591,6 +646,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                                 				final List<WFiber> seqFibersAb = sps.get(0); 
                             					if (dd.isBidirectional() && seqFibersAb.stream().allMatch(ee->ee.isBidirectional()))
                             					{
+                            						// not protected, bidirectional
                             						if (!dd.getBidirectionalPair().getLightpaths().isEmpty()) continue;
                                     				final List<WFiber> seqFibersBa = Lists.reverse(seqFibersAb.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
                                     				final List<WFiber> seqFibersAbbA = new ArrayList<> (seqFibersAb); seqFibersAbbA.addAll(seqFibersBa);
@@ -602,7 +658,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                                     				osm.allocateOccupation(lpBa, seqFibersBa, slots.get());
                             					}
                             					else
-                            					{
+                            					{ // not protected, unidirectional
                                     				final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAb, numContiguousSlots, Optional.empty());
                                     				if (!slots.isPresent()) continue;
                                     				final WLightpath lp = dd.addLightpathUnregenerated(seqFibersAb, slots.get(), false);
