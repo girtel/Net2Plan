@@ -129,6 +129,8 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	{
     		final OpticalSpectrumManager ospec = callback.getNiwInfo().getThird();
     		final OpticalSimulationModule osim = callback.getNiwInfo().getFourth();
+    		final SortedSet<WFiber> fibersInLasingLoops = new TreeSet<> ();
+    		ospec.getUnavoidableLasingLoops().forEach (list->fibersInLasingLoops.addAll(list));
     		
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Length (km)", "WDM link length in km", (d,val)->toWFiber.apply(d).setLenghtInKm((Double) val) , d->toWFiber.apply(d).getLengthInKm()  , AGTYPE.SUMDOUBLE, null));
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Latency (ms)", "WDM link latency in ms", null , d->toWFiber.apply(d).getPropagationDelayInMs()  , AGTYPE.MAXDOUBLE, null));
@@ -150,6 +152,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	    	  final int numChannels = toWFiber.apply(d).getNumberOfValidOpticalChannels();
     	    	  return df.format(numChannels * WNetConstants.OPTICALSLOTSIZE_GHZ / 1000.0);
     	      }, AGTYPE.NOAGGREGATION , null));
+		      res.add(new AjtColumnInfo<Link>(this , Boolean.class, null , "In lasing loop?", "", null , d->fibersInLasingLoops.contains(toWFiber.apply(d)) , AGTYPE.COUNTTRUE , e->fibersInLasingLoops.contains(toWFiber.apply(e))? Color.RED : null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Fiber physical coefs.") , "Coef. CD ps/nm/km", "Chromatic disperion coefficient in ps/nm/km, assumed to be the same in all the wavelengths", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setChromaticDispersionCoeff_psPerNmKm((Double)val); }, d->toWFiber.apply(d).getChromaticDispersionCoeff_psPerNmKm() , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Fiber physical coefs.") , "Coef. PMD-Q ps/sqrt(km)", "PMD fiber coefficient, typically called Link Design Value, or PMD-Q. Measured in ps per square root of km of fiber", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setPmdLinkDesignValueCoeff_psPerSqrtKm((Double)val); }, d->toWFiber.apply(d).getPmdLinkDesignValueCoeff_psPerSqrtKm() , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Fiber physical coefs.") , "Coef. Attenuation dB/km", "Fiber attenuation coefficient, measured in dB/km, assumed to be the same for all the wavelengths", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setAttenuationCoefficient_dbPerKm((Double)val); }, d->toWFiber.apply(d).getAttenuationCoefficient_dbPerKm() , AGTYPE.NOAGGREGATION , null));

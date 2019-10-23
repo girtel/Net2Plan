@@ -111,6 +111,7 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
       }
       else if (isWdmLayer)
       {
+          res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Sw. type", "The switching type of the architecture. At this moment e.g. filterless (drop-and-waste), or non-blocking OADM", null , d->toWNode.apply(d).getOpticalSwitchType().getShortName() , AGTYPE.NOAGGREGATION, null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Out LP requests", "The outgoing lightpath requests of the node", null , d->toWNode.apply(d).getOutgoingLigtpathRequests().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "In LP requests", "The incoming lightpath requests of the node", null , d->toWNode.apply(d).getIncomingLigtpathRequests().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "ADD LPs", "The outgoing lightpaths of the node", null , d->toWNode.apply(d).getOutgoingLigtpaths().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
@@ -182,6 +183,10 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                             );
         		}
         		, (a,b)->true, null)
+        		)));
+        res.add(new AjtRcMenu("Set optical switching type of selected nodes", null , (a,b)->b>0, Arrays.asList(
+        		new AjtRcMenu("As non-blocking OADM", e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.ROADM)) , (a,b)->b>0, null),
+        		new AjtRcMenu("As filterless drop and waste", e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS)) , (a,b)->b>0, null)
         		)));
 
         return res;

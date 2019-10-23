@@ -83,6 +83,10 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public void updateNetPlanObjectInternalState ()
 	{
+		for (WNode n : this.getNodes())
+			if (n.getOpticalSwitchType().isDropAndWaste())
+				n.setWdmIcon(WNet.class.getResource("/resources/gui/figs/OADM_DW.png"), 1.0);
+		
 		/* Updates the NetPlan object in the carried traffic of lighptaths */
 		for (WLightpathRequest lpr : this.getLightpathRequests())
 		{
