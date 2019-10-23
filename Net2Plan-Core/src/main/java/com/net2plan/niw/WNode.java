@@ -959,7 +959,7 @@ public class WNode extends WAbstractNetworkElement
 		assert getVnfInstances().stream().allMatch(v->v.getHostingNode().equals(this));
 	}
 
-
+	
 	/** Returns the SRGs that this node belongs to, i.e. the ones that make this node fail
 	 * @return see above
 	 */

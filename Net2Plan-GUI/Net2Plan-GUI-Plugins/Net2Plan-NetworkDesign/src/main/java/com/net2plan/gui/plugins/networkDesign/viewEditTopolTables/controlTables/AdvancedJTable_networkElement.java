@@ -587,7 +587,7 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
                     	for (NetworkElement ne : getSelectedNetworkElementsNorFr())
                     		ne.setAttribute(key, value);
                     });
-    		}, (a,b)->b==1 && !getSelectedNetworkElementsNorFr().first().getAttributes().isEmpty(), null) ,
+    		}, (a,b)->b==1 , null) ,
     		
     		new AjtRcMenu("Remove attribute of selected elements", e -> 
     		{

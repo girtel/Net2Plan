@@ -131,7 +131,9 @@ public class WNet extends WAbstractNetworkElement
 			else
 				sc.getNe().setCarriedTraffic(0.0, Collections.nCopies(sc.getNe().getSeqOccupiedCapacitiesIfNotFailing ().size(), 0.0));
 		}
-		
+
+		/* Updates the worst case latency and length info of */
+		//for (WIpUnicastDemand d : this.getIpUnicastDemands())
 	}
 	
 	private final NetPlan np;

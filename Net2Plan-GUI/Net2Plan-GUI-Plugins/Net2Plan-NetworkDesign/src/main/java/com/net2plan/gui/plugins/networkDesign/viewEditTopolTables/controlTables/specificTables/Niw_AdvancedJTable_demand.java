@@ -24,10 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -89,6 +90,8 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     	if (isIpLayer)
     	{
         	final SortedMap<Link,SortedMap<String,Pair<Double,Double>>> perLink_qos2occupationAndViolationMap = callback.getDesign().getAllLinksPerQosOccupationAndQosViolationMap(layerThisTable);
+        	final BiFunction<Link,Demand,Double> violationGbps = (e,d) -> perLink_qos2occupationAndViolationMap.getOrDefault (e , new TreeMap<>()).getOrDefault (d.getQosType () , Pair.of (0.0 , 0.0)).getSecond ();
+        			
         	final Function<Demand,Boolean> isWScr = d ->wNet.getWElement(d).get().isServiceChainRequest();
         	final Function<Demand,Boolean> isWIpUnicast = d ->wNet.getWElement(d).get().isWIpUnicastDemand();
         	final Function<Demand,Boolean> isWAbstractIpD = d ->isWScr.apply(d) || isWIpUnicast.apply(d); 
@@ -118,9 +121,9 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             res.add(new AjtColumnInfo<Demand>(this , Demand.class, null , "Bidirectional pair", "If the demand is bidirectional, provides its bidirectional pair", null , d->toAbsIp.apply(d).isBidirectional()? toAbsIp.apply(d).getBidirectionalPair().get().getNe() : null , AGTYPE.NOAGGREGATION, null));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Offered traffic (Gbps)", "Currently offered traffic by the demand in Gbps", (d,val)->toAbsIp.apply(d).setCurrentOfferedTrafficInGbps((Double) val), d->toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() , AGTYPE.SUMDOUBLE , null));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Carried traffic (Gbps)", "Currently carried traffic by the demand in Gbps", null , d->toAbsIp.apply(d).getCurrentCarriedTrafficGbps() , AGTYPE.SUMDOUBLE , null));
-            res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() == 0? 0 : 100.0 * toAbsIp.apply(d).getCurrentBlockedTraffic() / toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() , AGTYPE.NOAGGREGATION , d->d.getBlockedTraffic() > Configuration.precisionFactor? Color.RED : Color.GREEN));
+            res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "% Lost traffic", "Percentage of the lost traffic by the demand", null, d->toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() == 0? 0 : 100.0 * toAbsIp.apply(d).getCurrentBlockedTraffic() / toAbsIp.apply(d).getCurrentOfferedTrafficInGbps() , AGTYPE.NOAGGREGATION , d->toAbsIp.apply(d).getCurrentBlockedTraffic() > Configuration.precisionFactor? Color.RED : Color.GREEN));
             res.add(new AjtColumnInfo<Demand>(this , String.class, null , "QoS type", "A used-defined string identifying the QoS type of traffic of the demand. QoS differentiation in the IP links is possible for each QoS type", (d,val)-> toAbsIp.apply(d).setQosType((String)val) , d->toAbsIp.apply(d).getQosType(), AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Demand>(this , String.class, null , "WC Oversubscription", "The worst case, among all the traversed links, of the amount of traffic of this demand that is oversubscribed", null , d->d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getSecond()).max().orElse(0.0), AGTYPE.NOAGGREGATION , d-> d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> perLink_qos2occupationAndViolationMap.get(e).get(d.getQosType()).getSecond()).max().orElse(0.0) > Configuration.precisionFactor? Color.red : Color.green));
+            res.add(new AjtColumnInfo<Demand>(this , String.class, null , "WC Oversubscription", "The worst case, among all the traversed links, of the amount of traffic of this demand that is oversubscribed", null , d->d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> violationGbps.apply(e, d)).max().orElse(0.0) , AGTYPE.NOAGGREGATION , d-> d.getTraversedLinksAndCarriedTraffic(false).keySet().stream().mapToDouble (e -> violationGbps.apply(e, d)).max().orElse(0.0) > Configuration.precisionFactor? Color.red : Color.green));
             res.add(new AjtColumnInfo<Demand>(this , String.class, null , "Bifurcated?", "Indicates whether the demand is satisfied by more than one path from origin to destination", null, d->!d.isSourceRouting() ? "-" : (d.isBifurcated()) ? String.format("Yes (%d)", d.getRoutes().size()) : "No" , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Worst e2e lat (ms)", "Current worst case end-to-end propagation time in miliseconds (accumulating any lower layer propagation times if any)", null, d->toAbsIp.apply(d).getWorstCaseEndtoEndLatencyMs() , AGTYPE.NOAGGREGATION , d->{ if (isWScr.apply(d)) return null; final double maxMs = toWIpUnicast.apply(d).getMaximumAcceptableE2EWorstCaseLatencyInMs(); return maxMs <= 0? null : (toWIpUnicast.apply(d).getWorstCaseEndtoEndLatencyMs() > maxMs? Color.RED : null); }));
             res.add(new AjtColumnInfo<Demand>(this , Double.class, null , "Worst e2e length (km)", "Current worst case end-to-end propagation length in km (accumulating any lower layer propagation lengths if any)", null, d->toAbsIp.apply(d).getWorstCaseEndtoEndLengthInKm() , AGTYPE.NOAGGREGATION , null));
@@ -726,7 +729,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     {
     	final WNet wNet = callback.getNiwInfo().getSecond(); 
         final Collection<WNode> nodes;
-        nodes = (callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).isEmpty()? wNet.getNodes() : (Set<WNode>) callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).stream().map(n->new WNode((Node) n)).filter(n->n.isRegularNode()).collect(Collectors.toList()));
+        nodes = (callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).isEmpty()? wNet.getNodes() : callback.getSelectedElements(AJTableType.NODES , getTableNetworkLayer()).stream().map(n->new WNode((Node) n)).filter(n->n.isRegularNode()).collect(Collectors.toList()));
         if (nodes.isEmpty()) throw new Net2PlanException("There are no nodes");
         for (WNode n1 : nodes)
             for (WNode n2 : nodes)

@@ -6,27 +6,26 @@
 package com.net2plan.niw;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.jgrapht.graph.DirectedAcyclicGraph;
 
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Pair;
 
 /**
  * <p>
@@ -65,7 +64,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 			res.put(new WIpLink(entry.getKey()), entry.getValue());
 		return res;
 	}
-	
+
 	/**
 	 * Adds a source routed IP connection to this unicast demand, in the case that it is of the source routed type
 	 * @param sequenceOfIpLinks the sequence of IP links traversed
@@ -240,14 +239,100 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	public double getWorstCaseEndtoEndLatencyMs() 
 	{
 		if (this.isIpSourceRouted()) return getIpConnections().stream().filter(e->e.isUp()).mapToDouble(e->e.getWorstCasePropgationLatencyInMs()).max().orElse(Double.MAX_VALUE);
-		return getNe().getWorstCasePropagationTimeInMs();
+		return computeWorstCaseE2eCost(e->e.getWorstCasePropagationDelayInMs(), Optional.empty());
 	}
 
 	@Override
 	public double getWorstCaseEndtoEndLengthInKm() 
 	{
 		if (this.isIpSourceRouted()) return getIpConnections().stream().filter(e->e.isUp()).mapToDouble(e->e.getWorstCaseLengthInKm()).max().orElse(Double.MAX_VALUE);
-		return getNe().getWorstCaseLengthInKm();
+		return computeWorstCaseE2eCost(e->e.getWorstCaseLengthInKm(), Optional.empty());
 	}
 
+    private double computeWorstCaseE2eCost (Function<WIpLink,Double> costFunction , Optional<SortedMap<WNode,SortedSet<WIpLink>>> optinalOutFrs)
+    {
+    	final WNode ingressNode = this.getA();
+    	final WNode egressNode = this.getB();
+        final SortedMap<WNode,WIpLink> inNodesAndPrevLinkInLongestPath_latLengthHops = new TreeMap<> ();
+        final BiFunction<WNode , Function<WIpLink,Double> , Double> longestPathSoFarIngressToNode = (n,cf) -> 
+        {
+            double accumCost = 0;
+            int numHops = 0;
+            WNode currentNode = n; 
+            while (true)
+            {
+                final WIpLink prevLink = inNodesAndPrevLinkInLongestPath_latLengthHops.get(currentNode);
+                if (prevLink == null) return Double.MAX_VALUE;
+                accumCost += cf.apply(prevLink);
+                numHops ++;
+                currentNode = prevLink.getA();
+                if (currentNode.equals(ingressNode)) break;
+                if (numHops > inNodesAndPrevLinkInLongestPath_latLengthHops.size() + 2) throw new RuntimeException();
+            }
+            return accumCost;
+        };
+        
+        final SortedMap<WNode,SortedSet<WIpLink>> outFrs;
+        if (optinalOutFrs.isPresent()) outFrs = optinalOutFrs.get();
+        else
+        {
+    		outFrs = new TreeMap<> ();
+    		for (Entry<WIpLink,Double> entry : getTraversedIpLinksAndCarriedTraffic(true).entrySet())
+    		{
+    			if (entry.getValue() < Configuration.precisionFactor) continue;
+    			final WIpLink e = entry.getKey();
+    			final WNode a = e.getA();
+    			SortedSet<WIpLink> links = outFrs.get(a);
+    			if (links == null) { links = new TreeSet<> (); outFrs.put(a, links); }
+    			links.add(e);
+    		}
+        }
+        
+        /* If the end node has out links, loop => infinite length */
+        if (!outFrs.getOrDefault(egressNode , new TreeSet<> ()).isEmpty()) return Double.MAX_VALUE;
+        
+        final SortedSet<WNode> currentNodes = new TreeSet<> ();
+        currentNodes.add(ingressNode);
+        do
+        {
+            for (WNode n : new ArrayList<> (currentNodes))
+            {
+                if (n.equals(egressNode))
+                {
+                    final SortedSet<WIpLink> outFrsEgressNode = outFrs.get(n);
+                    if (outFrsEgressNode == null) continue;
+                    /* check if there are outgoing links of the egress node carrying traffic => cycle */
+                    currentNodes.remove(egressNode);
+                    if (currentNodes.isEmpty()) return longestPathSoFarIngressToNode.apply(egressNode, costFunction);
+                    continue;
+                }
+                
+                /* Usual loop */
+                final WIpLink wcSoFarToCurrentNode = inNodesAndPrevLinkInLongestPath_latLengthHops.get(n);
+                final SortedSet<WIpLink> outgoingFrsThisNode = outFrs.getOrDefault(n , new TreeSet<> ());
+                if (outgoingFrsThisNode != null) 
+                    for (WIpLink e : outgoingFrsThisNode)
+                    {
+                        final double thisPathCost = (wcSoFarToCurrentNode == null? 0 : longestPathSoFarIngressToNode.apply(n, costFunction)) + costFunction.apply(e);
+                        final WNode nextNode = e.getB();
+                        if (inNodesAndPrevLinkInLongestPath_latLengthHops.containsKey(nextNode))
+                        {
+                            if (thisPathCost > longestPathSoFarIngressToNode.apply(nextNode , costFunction))
+                                inNodesAndPrevLinkInLongestPath_latLengthHops.put(nextNode, e); 
+                        }
+                        else
+                            inNodesAndPrevLinkInLongestPath_latLengthHops.put(nextNode, e);
+                        currentNodes.add(e.getB());
+                    }
+                currentNodes.remove(n);
+            }
+            
+            if (currentNodes.isEmpty()) 
+                return longestPathSoFarIngressToNode.apply(egressNode , costFunction);
+            if ((currentNodes.size() == 1) && (currentNodes.iterator().next().equals(egressNode))) 
+                return longestPathSoFarIngressToNode.apply(egressNode , costFunction);
+        } while (true);
+    }
+	
+	
 }
