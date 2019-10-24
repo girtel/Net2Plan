@@ -43,6 +43,7 @@ public class OpticalSimulationModule
 	final private SortedMap<WLightpath,Map<PERLPINFOMETRICS , Double>> perLpPerMetric_valAtDropTransponderEnd = new TreeMap<> ();
 	final private SortedMap<WFiber,SortedMap<WLightpath,Map<PERLPINFOMETRICS , Pair<Double,Double>>>> perFiberPerLpPerMetric_valStartEnd = new TreeMap<> ();
 	final private SortedMap<WFiber,Map<PERFIBERINFOMETRICS , Quadruple<Double,Double,List<Double>,List<Double>>>> perFiberPerMetric_valStartEndAndAtEachOlaInputOutput = new TreeMap<> ();
+	final private SortedMap<WFiber,SortedMap<WLightpath,SortedMap<Integer , Map<PERLPINFOMETRICS , Pair<Double,Double>>>>> perFiberPerLpPerOlaIndexMetric_valStartEnd = new TreeMap<> ();
 	
 	public OpticalSimulationModule (WNet wNet) 
 	{
@@ -78,8 +79,12 @@ public class OpticalSimulationModule
     {
     	System.out.println("Update all performance info");
    	 for (WFiber e : wNet.getFibers())
+   	 {
    		 perFiberPerLpPerMetric_valStartEnd.put(e, new TreeMap<> ());
-
+   		 perFiberPerLpPerOlaIndexMetric_valStartEnd.put(e, new TreeMap <> ());
+   		 for (WLightpath lp : e.getTraversingLps())
+   			perFiberPerLpPerOlaIndexMetric_valStartEnd.get(e).put(lp, new TreeMap<> ());
+   	 }
    	 for (WLightpath lp : wNet.getLightpaths())
    	 {
    		 final int numOpticalSlots = lp.getOpticalSlotIds().size();
@@ -89,7 +94,10 @@ public class OpticalSimulationModule
    		 for (WFiber fiber : lp.getSeqFibers())
    		 {
    			 final Map<PERLPINFOMETRICS,Pair<Double,Double>> infoToAdd = new HashMap<> ();
+   			 final SortedMap<Integer , Map<PERLPINFOMETRICS,Pair<Double,Double>>> infoToAddPerOla = new TreeMap<> ();
    			 perFiberPerLpPerMetric_valStartEnd.get(fiber).put(lp, infoToAdd);
+   			 perFiberPerLpPerOlaIndexMetric_valStartEnd.get(fiber).put(lp, infoToAddPerOla);
+   			
    			 final WNode oadm_a = fiber.getA();
    			 final double totalFiberGain_dB = fiber.getAmplifierGains_dB().stream().mapToDouble(e->e).sum();
    			 final double totalFiberAttenuation_dB = fiber.getAttenuationCoefficient_dbPerKm() * fiber.getLengthInKm();
@@ -116,8 +124,18 @@ public class OpticalSimulationModule
    					 final double kmFromStartFiber = fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla);
    					 final double sumGainsTraversedAmplifiers_db = IntStream.range(0, contOla).mapToDouble(olaIndex -> fiber.getAmplifierGains_dB().get(olaIndex)).sum();
    					 final double lpPowerAtInputOla_dBm = startFiber_powerLp_dBm - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiers_db;
+   					 final double lpCdAtInputOla_perPerNm = infoToAdd.get(PERLPINFOMETRICS.CD_PERPERNM).getFirst() + fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) * fiber.getChromaticDispersionCoeff_psPerNmKm() + IntStream.range(0, contOla).mapToDouble(ee->fiber.getAmplifierCdCompensation_psPerNm().get(ee)).sum();
+   					 final double lpPmdSquaredAtInputOla_perPerNm = infoToAdd.get(PERLPINFOMETRICS.PMDSQUARED_PS2).getFirst() + fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) * Math.pow(fiber.getPmdLinkDesignValueCoeff_psPerSqrtKm(),2) + IntStream.range(0, contOla).mapToDouble(ee->Math.pow(fiber.getAmplifierPmd_ps().get(ee) , 2)).sum();
+   					 final double lpOsnrAtInputOla_dB = osnrInDbUnitsAccummulation_dB (osnrAddedEachEdfa_db);
    					 final double osnrContributionThisOla_db = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, noiseFactor_db, lpPowerAtInputOla_dBm));
    					 osnrAddedEachEdfa_db.add (osnrContributionThisOla_db); 
+   					 final double lpOsnrAtOutputOla_dB = osnrInDbUnitsAccummulation_dB (osnrAddedEachEdfa_db);
+   					 final Map<PERLPINFOMETRICS , Pair<Double,Double>> infoThisOla = new HashMap<> ();
+   					infoThisOla.put(PERLPINFOMETRICS.POWER_DBM, Pair.of (lpPowerAtInputOla_dBm , lpPowerAtInputOla_dBm + fiber.getAmplifierGains_dB().get(contOla)));
+   					infoThisOla.put(PERLPINFOMETRICS.CD_PERPERNM, Pair.of (lpCdAtInputOla_perPerNm , lpCdAtInputOla_perPerNm + fiber.getAmplifierCdCompensation_psPerNm().get(contOla)));
+   					infoThisOla.put(PERLPINFOMETRICS.PMDSQUARED_PS2, Pair.of (lpPmdSquaredAtInputOla_perPerNm , lpPmdSquaredAtInputOla_perPerNm + Math.pow(1.0 ,2)));
+   					infoThisOla.put(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW, Pair.of (lpOsnrAtInputOla_dB , lpOsnrAtOutputOla_dB));
+   					infoToAddPerOla.put(contOla, infoThisOla);
    				 }
    				 final double osnrEndOfFiber_dB = osnrInDbUnitsAccummulation_dB (osnrAddedEachEdfa_db);
    				 infoToAdd.put(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW, Pair.of(Double.MAX_VALUE, osnrEndOfFiber_dB));
@@ -146,8 +164,18 @@ public class OpticalSimulationModule
    					 final double kmFromStartFiber = fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla);
    					 final double sumGainsTraversedAmplifiers_db = IntStream.range(0, contOla).mapToDouble(olaIndex -> fiber.getAmplifierGains_dB().get(olaIndex)).sum();
    					 final double lpPowerAtInputOla_dBm = startFiber_powerLp_dBm - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiers_db;
+   					 final double lpCdAtInputOla_perPerNm = infoToAdd.get(PERLPINFOMETRICS.CD_PERPERNM).getFirst() + fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) * fiber.getChromaticDispersionCoeff_psPerNmKm() + IntStream.range(0, contOla).mapToDouble(ee->fiber.getAmplifierCdCompensation_psPerNm().get(ee)).sum();
+   					 final double lpPmdSquaredAtInputOla_perPerNm = infoToAdd.get(PERLPINFOMETRICS.PMDSQUARED_PS2).getFirst() + fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) * Math.pow(fiber.getPmdLinkDesignValueCoeff_psPerSqrtKm(),2) + IntStream.range(0, contOla).mapToDouble(ee->Math.pow(fiber.getAmplifierPmd_ps().get(ee) , 2)).sum();
+   					 final double lpOsnrAtInputOla_dB = osnrInDbUnitsAccummulation_dB (osnrAddedEachEdfaAndOadm_db);
    					 final double osnrContributionThisOla_db = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, noiseFactor_db, lpPowerAtInputOla_dBm));
-   					 osnrAddedEachEdfaAndOadm_db.add (osnrContributionThisOla_db); 
+   					 osnrAddedEachEdfaAndOadm_db.add (osnrContributionThisOla_db);
+   					 final double lpOsnrAtOutputOla_dB = osnrInDbUnitsAccummulation_dB (osnrAddedEachEdfaAndOadm_db);
+   					 final Map<PERLPINFOMETRICS , Pair<Double,Double>> infoThisOla = new HashMap<> ();
+   					infoThisOla.put(PERLPINFOMETRICS.POWER_DBM, Pair.of (lpPowerAtInputOla_dBm , lpPowerAtInputOla_dBm + fiber.getAmplifierGains_dB().get(contOla)));
+   					infoThisOla.put(PERLPINFOMETRICS.CD_PERPERNM, Pair.of (lpCdAtInputOla_perPerNm , lpCdAtInputOla_perPerNm + fiber.getAmplifierCdCompensation_psPerNm().get(contOla)));
+   					infoThisOla.put(PERLPINFOMETRICS.PMDSQUARED_PS2, Pair.of (lpPmdSquaredAtInputOla_perPerNm , lpPmdSquaredAtInputOla_perPerNm + Math.pow(1.0 ,2)));
+   					infoThisOla.put(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW, Pair.of (lpOsnrAtInputOla_dB , lpOsnrAtOutputOla_dB));
+   					infoToAddPerOla.put(contOla, infoThisOla);
    				 }
    				 final double osnrEndOfFiber_dB = osnrInDbUnitsAccummulation_dB (osnrAddedEachEdfaAndOadm_db);
    				 infoToAdd.put(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW, Pair.of(osnrAtStartOfFiber_dB, osnrEndOfFiber_dB));
@@ -157,6 +185,10 @@ public class OpticalSimulationModule
    			 firstFiber = false;
    		 }
    	 }
+   	 
+   	 assert perFiberPerLpPerOlaIndexMetric_valStartEnd.keySet().containsAll(wNet.getFibers());
+   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().equals(perFiberPerLpPerOlaIndexMetric_valStartEnd.get(e).keySet()));
+   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().stream().allMatch(lp->perFiberPerLpPerOlaIndexMetric_valStartEnd.get(e).get(lp).size() == e.getNumberOfOpticalLineAmplifiersTraversed()));
    	 
    	 /* Update the per lp information at add and end */
    	 for (WLightpath lp : wNet.getLightpaths())
@@ -183,6 +215,7 @@ public class OpticalSimulationModule
    		 
    		 perLpPerMetric_valAtDropTransponderEnd.put(lp, vals);
    	 }
+   	 
    	 
    	 /* Update the total power per fiber */
    	 for (WFiber fiber : wNet.getFibers())
@@ -246,6 +279,15 @@ public class OpticalSimulationModule
     {
     	return Collections.unmodifiableMap(perLpPerMetric_valAtDropTransponderEnd.get(lp));
     }
+    public Map<PERLPINFOMETRICS , Pair<Double,Double>> getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput (WLightpath lp , WFiber e , int olaIndex)
+    {
+    	if (olaIndex >= e.getNumberOfOpticalLineAmplifiersTraversed()) throw new Net2PlanException ("Wrong amplifier index");
+    	if (!lp.getSeqFibers().contains(e)) throw new Net2PlanException ("Wrong amplifier fiber");
+    	final Map<PERLPINFOMETRICS , Pair<Double,Double>> res = perFiberPerLpPerOlaIndexMetric_valStartEnd.getOrDefault(e , new TreeMap<> ()).getOrDefault(lp, new TreeMap<> ()).get(olaIndex); 
+    	if (res == null) throw new Net2PlanException ("Unknown value");
+    	return res;
+    }
+    
 
     public static double nm2thz (double wavelengthInNm)
     {
