@@ -8,6 +8,7 @@ package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class OpticalSimulationModule
 	private final WNet wNet;
 	public enum PERLPINFOMETRICS { POWER_DBM , CD_PERPERNM , PMDSQUARED_PS2 , OSNRAT12_5GHZREFBW }
 	public enum PERFIBERINFOMETRICS { TOTALPOWER_DBM }
-	final private SortedMap<WLightpath,Map<PERLPINFOMETRICS , Pair<Double,Double>>> perPerLpPerMetric_valStartEnd = new TreeMap<> ();
+	final private SortedMap<WLightpath,Map<PERLPINFOMETRICS , Double>> perLpPerMetric_valAtDropTransponderEnd = new TreeMap<> ();
 	final private SortedMap<WFiber,SortedMap<WLightpath,Map<PERLPINFOMETRICS , Pair<Double,Double>>>> perFiberPerLpPerMetric_valStartEnd = new TreeMap<> ();
 	final private SortedMap<WFiber,Map<PERFIBERINFOMETRICS , Quadruple<Double,Double,List<Double>,List<Double>>>> perFiberPerMetric_valStartEndAndAtEachOlaInputOutput = new TreeMap<> ();
 	
@@ -161,7 +162,7 @@ public class OpticalSimulationModule
    	 for (WLightpath lp : wNet.getLightpaths())
    	 {
    		 final double centralFrequency_hz = WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ * 1e12 + 12.5e9 * (lp.getOpticalSlotIds().first() + lp.getOpticalSlotIds().last())/2.0;
-   		 final Map<PERLPINFOMETRICS,Pair<Double,Double>> vals = new HashMap<> ();
+   		 final Map<PERLPINFOMETRICS,Double> vals = new HashMap<> ();
    		 final WFiber lastFiber = lp.getSeqFibers().get(lp.getSeqFibers().size()-1);
    		 final WNode lastOadm = lastFiber.getB();
    		 final double inputLastOadm_power_dBm = perFiberPerLpPerMetric_valStartEnd.get(lastFiber).get(lp).get(PERLPINFOMETRICS.POWER_DBM).getSecond();
@@ -175,12 +176,12 @@ public class OpticalSimulationModule
    		 final double addedOsnrByDropOadm = osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, lastOadm.getDropNoiseFactor_dB(), inputLastOadm_power_dBm);
    		 final double drop_osnr12_5RefBw_dB = osnrInDbUnitsAccummulation_dB(Arrays.asList(inputLastOadm_onsnr_dB , addedOsnrByDropOadm));
 
-   		 vals.put(PERLPINFOMETRICS.POWER_DBM, Pair.of(lp.getAddTransponderInjectionPower_dBm(), drop_power_dBm));
-   		 vals.put(PERLPINFOMETRICS.CD_PERPERNM, Pair.of(0.0, drop_cd_psPerNm));
-   		 vals.put(PERLPINFOMETRICS.PMDSQUARED_PS2, Pair.of(0.0, drop_pmdSquared_ps2));
-   		 vals.put(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW, Pair.of(Double.MAX_VALUE, drop_osnr12_5RefBw_dB));
+   		 vals.put(PERLPINFOMETRICS.POWER_DBM, drop_power_dBm);
+   		 vals.put(PERLPINFOMETRICS.CD_PERPERNM, drop_cd_psPerNm);
+   		 vals.put(PERLPINFOMETRICS.PMDSQUARED_PS2, drop_pmdSquared_ps2);
+   		 vals.put(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW, drop_osnr12_5RefBw_dB);
    		 
-   		 perPerLpPerMetric_valStartEnd.put(lp, vals);
+   		 perLpPerMetric_valAtDropTransponderEnd.put(lp, vals);
    	 }
    	 
    	 /* Update the total power per fiber */
@@ -243,17 +244,7 @@ public class OpticalSimulationModule
     }
     public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderReceiverEnd (WLightpath lp)
     {
-   	 final Map<PERLPINFOMETRICS , Double> res = new HashMap<> ();
-   	 for (PERLPINFOMETRICS type : PERLPINFOMETRICS.values())
-   		 res.put(type, perPerLpPerMetric_valStartEnd.get(lp).get(type).getSecond());
-   	 return res;
-    }
-    public Map<PERLPINFOMETRICS , Double> getOpticalPerformanceAtTransponderTransmitterEnd (WLightpath lp)
-    {
-   	 final Map<PERLPINFOMETRICS , Double> res = new HashMap<> ();
-   	 for (PERLPINFOMETRICS type : PERLPINFOMETRICS.values())
-   		 res.put(type, perPerLpPerMetric_valStartEnd.get(lp).get(type).getFirst());
-   	 return res;
+    	return Collections.unmodifiableMap(perLpPerMetric_valAtDropTransponderEnd.get(lp));
     }
 
     public static double nm2thz (double wavelengthInNm)
