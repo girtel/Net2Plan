@@ -537,7 +537,8 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         		InputForDialog.inputTfString("Destination node name", "Introduce the name of the destination node. First tries case sensitive, later case insensitive", 10, ""),
                         		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate of the lightpaths realizing this request", 20, 100.0),
                         		InputForDialog.inputCheckBox("Bidirectional?", "Indicate if this lighptath request should be bidirectional, so two unidirectional opposite requests are created", true , null),
-                        		InputForDialog.inputCheckBox("1+1 protected?", "Indicate if this lighptath request has to be realized by a 1+1 arrangement of two lightpaths", false , null)
+                        		InputForDialog.inputCheckBox("1+1 protected?", "Indicate if this lighptath request has to be realized by a 1+1 arrangement of two lightpaths", false , null),
+                        		InputForDialog.inputTfInt("Number of lightpath requests", "Number of lightpath requests to create", 10, 1)
                         		),
                         (list)->
                         	{
@@ -546,14 +547,18 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         		final Double lineRateGbps = (Double) list.get(2).get();
                         		final Boolean bidirectional = (Boolean) list.get(3).get();
                         		final Boolean isToBe11Protected = (Boolean) list.get(4).get();
+                        		final Integer numRequests = (Integer) list.get(5).get();
                         		final WNode a = nodeByName.apply(aName).orElse(null);
                         		final WNode b = nodeByName.apply(bName).orElse(null);
                         		if (a == null || b == null) throw new Net2PlanException("Unkown node name. " + (a == null? aName : bName));
-                        		final WLightpathRequest lprAb = wNet.addLightpathRequest(a, b, lineRateGbps, isToBe11Protected);
-                        		if (bidirectional)
+                        		for (int cont = 0; cont < numRequests ; cont ++)
                         		{
-                            		final WLightpathRequest lprBa = wNet.addLightpathRequest(b,a, lineRateGbps, isToBe11Protected);
-                        			lprAb.setBidirectionalPair(lprBa);
+                            		final WLightpathRequest lprAb = wNet.addLightpathRequest(a, b, lineRateGbps, isToBe11Protected);
+                            		if (bidirectional)
+                            		{
+                                		final WLightpathRequest lprBa = wNet.addLightpathRequest(b,a, lineRateGbps, isToBe11Protected);
+                            			lprAb.setBidirectionalPair(lprBa);
+                            		}
                         		}
                         	}
                         );
