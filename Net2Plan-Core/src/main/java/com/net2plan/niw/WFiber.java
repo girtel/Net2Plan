@@ -6,6 +6,7 @@
 package com.net2plan.niw;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -231,13 +232,20 @@ public class WFiber extends WAbstractNetworkElement
 		return getAmplifierPositionsKmFromOrigin_km().size();
 	}
 
+	private List<Double> getList (String attribNameSuffix , double defaultValue)
+	{
+		final int numOlas = getNumberOfOpticalLineAmplifiersTraversed();
+		final List<Double> res = getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + attribNameSuffix, Collections.nCopies(numOlas, defaultValue));
+		return res.size() != numOlas? Collections.nCopies(numOlas, defaultValue) : res;
+	}
+	
 	/**
 	 * Get minimum possible gain of the amplifiers traversed, in the same order as they are traversed. Defaults to 15 dB
 	 * @return see above
 	 */
 	public List<Double> getAmplifierMinAcceptableGains_dB()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), 15.0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMINGAIN_DB.get(0));
 	}
 	/**
 	 * Get maximum possible gain of the amplifiers traversed, in the same order as they are traversed. Defaults to 30 dB
@@ -245,7 +253,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getAmplifierMaxAcceptableGains_dB()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), 30.0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMAXGAIN_DB.get(0));
 	}
 	/**
 	 * Get minimum possible total input power of the amplifiers traversed, in the same order as they are traversed. Defaults to -30 dBm
@@ -253,7 +261,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getAmplifierMinAcceptableInputPower_dBm()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), -30.0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMININPUTPOWER_DBM.get(0));
 	}
 	/**
 	 * Get maximum possible total input power of the amplifiers traversed, in the same order as they are traversed. Defaults to 10 dBm
@@ -261,18 +269,16 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getAmplifierMaxAcceptableInputPower_dBm()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), 10.0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMAXINPUTPOWER_DBM.get(0));
 	}
 
-	
-	
 	/**
 	 * Get gains of the amplifiers traversed, in the same order as they are traversed
 	 * @return see above
 	 */
 	public List<Double> getAmplifierGains_dB()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERGAINS_DB, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB.get(0)));
+		return getList(ATTNAMESUFFIX_AMPLIFIERGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB.get(0));
 	}
 
 	/**
@@ -281,7 +287,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getAmplifierPmd_ps()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERPMD_PS, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS.get(0)));
+		return getList(ATTNAMESUFFIX_AMPLIFIERPMD_PS, WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS.get(0));
 	}
 
 	/**
@@ -290,7 +296,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getAmplifierCdCompensation_psPerNm ()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION.get(0)));
+		return getList(ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION.get(0));
 	}
 
 
@@ -300,7 +306,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getAmplifierNoiseFactor_dB()
 	{
-		return getAttributeAsListDoubleOrDefault(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB, Collections.nCopies(getNumberOfOpticalLineAmplifiersTraversed(), WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB.get(0)));
+		return getList(ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB.get(0));
 	}
 
 	/**
@@ -325,7 +331,7 @@ public class WFiber extends WAbstractNetworkElement
 			List<Double> minimumInputPower_dBm , 
 			List<Double> maximumInputPower_dBm)
 	{
-		final int numAmplifiers = positionFromLinkOrigin_km.size();
+		final int numAmplifiers = positionFromLinkOrigin_km == null? this.getNumberOfOpticalLineAmplifiersTraversed() : positionFromLinkOrigin_km.size();
 		if (gains_db != null) if (gains_db.size() != numAmplifiers) throw new Net2PlanException("Wrong number of Amplifier Gains in dB");
 		if (pmd_ps != null) if (pmd_ps.size() != numAmplifiers) throw new Net2PlanException("Wrong number of PMD values");
 		if (noiseFactors_dB != null) if (noiseFactors_dB.size() != numAmplifiers) throw new Net2PlanException("Wrong number of noise factors");
@@ -347,6 +353,14 @@ public class WFiber extends WAbstractNetworkElement
 		if (maximumGain_dB != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, (List<Number>) (List<?>) maximumGain_dB);
 		if (minimumInputPower_dBm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM, (List<Number>) (List<?>) minimumInputPower_dBm);
 		if (maximumInputPower_dBm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM, (List<Number>) (List<?>) maximumInputPower_dBm);
+	}
+
+	/**
+	 * Removes the traversed amplifiers in the fiber 
+	 */
+	public void removeOpticalLineAmplifiers()
+	{
+		setAmplifiersTraversedInfo(Arrays.asList(), Arrays.asList(), Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList());
 	}
 
 	/**

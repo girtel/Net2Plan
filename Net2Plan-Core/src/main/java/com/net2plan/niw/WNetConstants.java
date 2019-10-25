@@ -48,7 +48,11 @@ public class WNetConstants
 	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERPMD_PS = Arrays.asList(15.0);
 	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION = Arrays.asList(0.0);
 	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB = Arrays.asList(6.0);
-	
+	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERMINGAIN_DB = Arrays.asList(15.0);
+	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERMAXGAIN_DB = Arrays.asList(30.0);
+	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERMININPUTPOWER_DBM = Arrays.asList(-29.0);
+	public static final List<Double> WFIBER_DEFAULT_AMPLIFIERMAXINPUTPOWER_DBM = Arrays.asList(2.0);
+
 	public static final double WLIGHTPATH_DEFAULT_TRANSPONDERADDINJECTIONPOWER_DBM = 0.0;
 	public static final double WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLERECEPTIONPOWER_DBM = -20.0;
 	public static final double WLIGHTPATH_DEFAULT_MAXIMUMACCEPTABLERECEPTIONPOWER_DBM = 10.0;

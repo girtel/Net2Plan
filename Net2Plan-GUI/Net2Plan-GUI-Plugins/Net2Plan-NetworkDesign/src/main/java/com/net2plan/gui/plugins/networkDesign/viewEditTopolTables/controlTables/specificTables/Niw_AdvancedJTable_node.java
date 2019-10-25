@@ -47,7 +47,8 @@ import com.net2plan.niw.WNode;
 @SuppressWarnings("unchecked")
 public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
 {
-	private static DecimalFormat df = new DecimalFormat("#.##");
+	private static final DecimalFormat df = new DecimalFormat("#.##");
+	private static Function<Double,String> df2 = d -> d <= -Double.MAX_VALUE ? "-\u221E" : d >= Double.MAX_VALUE? "\u221E" : df.format(d);
     public Niw_AdvancedJTable_node(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
         super(callback, AJTableType.NODES , layerThisTable.getName().equals(WNetConstants.ipLayerName)? "IP routers" : "OADMs" , layerThisTable , true , n->n.isDown()? Color.RED : null);

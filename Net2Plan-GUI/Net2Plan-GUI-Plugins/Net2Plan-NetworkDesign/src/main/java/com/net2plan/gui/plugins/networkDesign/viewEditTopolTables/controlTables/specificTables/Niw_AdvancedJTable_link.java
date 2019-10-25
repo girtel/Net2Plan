@@ -17,6 +17,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -29,12 +30,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
@@ -44,17 +41,12 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
-import com.net2plan.gui.utils.StringLabeller;
-import com.net2plan.gui.utils.WiderJComboBox;
-import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants.NetworkElementType;
-import com.net2plan.libraries.IPUtils;
 import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.WFiber;
@@ -64,17 +56,15 @@ import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.niw.WNode;
-import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
-
-import net.miginfocom.swing.MigLayout;
 
 /**
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 {
-	private static DecimalFormat df = new DecimalFormat("#.##");
+	private static final DecimalFormat df = new DecimalFormat("#.##");
+	private static Function<Double,String> df2 = d -> d <= -Double.MAX_VALUE ? "-\u221E" : d >= Double.MAX_VALUE? "\u221E" : df.format(d);
 	
     public Niw_AdvancedJTable_link(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
@@ -144,13 +134,13 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Freq. ranges (THz)", "The ranges of the frequencies that are valid in this fiber, e.g. because of affecting amplifiers limits and/or fiber limits", null , d->
     	      {
     	    	  return toWFiber.apply(d).getValidOpticalSlotRanges().stream().
-    	    			  map(p->df.format(OpticalSimulationModule.getLowestFreqfSlotTHz(p.getFirst())) + " - " + df.format(OpticalSimulationModule.getHighestFreqfSlotTHz(p.getSecond()))).
+    	    			  map(p->df2.apply(OpticalSimulationModule.getLowestFreqfSlotTHz(p.getFirst())) + " - " + df2.apply(OpticalSimulationModule.getHighestFreqfSlotTHz(p.getSecond()))).
     	    			  collect(Collectors.joining(", "));
     	      }, AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Spectrum (THz)", "The total available spectrum in the fiber to be used by WDM channels", null , d->
     	      {
     	    	  final int numChannels = toWFiber.apply(d).getNumberOfValidOpticalChannels();
-    	    	  return df.format(numChannels * WNetConstants.OPTICALSLOTSIZE_GHZ / 1000.0);
+    	    	  return df2.apply(numChannels * WNetConstants.OPTICALSLOTSIZE_GHZ / 1000.0);
     	      }, AGTYPE.NOAGGREGATION , null));
 		      res.add(new AjtColumnInfo<Link>(this , Boolean.class, null , "In lasing loop?", "", null , d->fibersInLasingLoops.contains(toWFiber.apply(d)) , AGTYPE.COUNTTRUE , e->fibersInLasingLoops.contains(toWFiber.apply(e))? Color.RED : null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signal") , "Coef. CD ps/nm/km", "Chromatic disperion coefficient in ps/nm/km, assumed to be the same in all the wavelengths", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setChromaticDispersionCoeff_psPerNmKm((Double)val); }, d->toWFiber.apply(d).getChromaticDispersionCoeff_psPerNmKm() , AGTYPE.NOAGGREGATION , null));
@@ -167,17 +157,17 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signal") , "Net CD (ps/nm)" , "Net accummulated chromatic dispersion in the WDM link, considering fiber CD coefficient, and potnetial compensation in the line amplifiers", null , d->toWFiber.apply(d).getAccumulatedChromaticDispersion_psPerNm() , AGTYPE.NOAGGREGATION , null));
     	
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "# OLAs", "Number of optical line amplifiers. Nota that each OLA can have chromatic dispersion compensation", null , d->toWFiber.apply(d).getNumberOfOpticalLineAmplifiersTraversed() , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA pos (km)", "Positions of OLAs, in km from the fiber start", null , d->toWFiber.apply(d).getAmplifierPositionsKmFromOrigin_km().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA gains (dB)", "Gains in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierGains_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->toWFiber.apply(d).isOkAllGainsOfLineAmplifiers()? null : Color.RED));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min gains (dB)", "Minimum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableGains_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max gains (dB)", "Maximum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableGains_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA NFs (dB)", "Noise factors in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierNoiseFactor_dB().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA CD (ps/nm)", "Chromatic dispersion compensation inside this OLA if any", null , d->toWFiber.apply(d).getAmplifierCdCompensation_psPerNm().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA PMD (ps)", "PMD factor for this OLA", null , d->toWFiber.apply(d).getAmplifierPmd_ps().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA input power (dBm)", "Total power at the input of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->osim.isOkOpticalPowerAtAmplifierInputAllOlas(toWFiber.apply(d))? null : Color.RED));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA output power (dBm)", "Total power at the output of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min input power (dBm)", "Minimum acceptable power for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableInputPower_dBm().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max input power (dBm)", "Maximum acceptable power for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableInputPower_dBm().stream().map(e->df.format(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA pos (km)", "Positions of OLAs, in km from the fiber start", null , d->toWFiber.apply(d).getAmplifierPositionsKmFromOrigin_km().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA gains (dB)", "Gains in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->toWFiber.apply(d).isOkAllGainsOfLineAmplifiers()? null : Color.RED));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min gains (dB)", "Minimum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max gains (dB)", "Maximum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA NFs (dB)", "Noise factors in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierNoiseFactor_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA CD (ps/nm)", "Chromatic dispersion compensation inside this OLA if any", null , d->toWFiber.apply(d).getAmplifierCdCompensation_psPerNm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA PMD (ps)", "PMD factor for this OLA", null , d->toWFiber.apply(d).getAmplifierPmd_ps().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA input power (dBm)", "Total power at the input of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->osim.isOkOpticalPowerAtAmplifierInputAllOlas(toWFiber.apply(d))? null : Color.RED));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA output power (dBm)", "Total power at the output of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min input power (dBm)", "Minimum acceptable power for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableInputPower_dBm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max input power (dBm)", "Maximum acceptable power for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableInputPower_dBm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
     	}
       return res;
   	}
@@ -732,41 +722,246 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                     	}
                     ) , (a,b)->b>0, null));
 
-            res.add(new AjtRcMenu("Set optical line amplifiers (OLA) info to selected fibers", e->
-            {
-            	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
-            	if (firstFiber == null) return;
-            	DialogBuilder.launch(
-                    "Set optical line amplifiers (OLA) info" , 
-                    "Please introduce the requested information. All the lists are space-separated and with the same number of elements, one per optical line amplifier" , 
-                    "", 
-                    this, 
-                    Arrays.asList(
-                    		InputForDialog.inputTfString("OLA positions (km from fiber init)", "A space separated list, wiht as many elements as OLAs, and the OLA position in km from the fiber start point.", 10, firstFiber.getAmplifierPositionsKmFromOrigin_km().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA gains (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA gains in dB.", 10, firstFiber.getAmplifierGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA noise factors (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA noise factors in dB.", 10, firstFiber.getAmplifierNoiseFactor_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA PMDs (ps)", "A space separated list, wiht as many elements as OLAs, and the OLA added PMD in ps.", 10, firstFiber.getAmplifierPmd_ps().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA CD compensation (ps/nm)", "A space separated list, wiht as many elements as OLAs, and the OLA chromatic dispersion that is compensated within the OLA in ps/nm.", 10, firstFiber.getAmplifierCdCompensation_psPerNm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA minimum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable gain in dB.", 10, firstFiber.getAmplifierMinAcceptableGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA maximum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable gain in dB.", 10, firstFiber.getAmplifierMaxAcceptableGains_dB().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA minimum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable input power in dBm.", 10, firstFiber.getAmplifierMinAcceptableInputPower_dBm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" "))),
-                    		InputForDialog.inputTfString("OLA maximum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable input power in dBm.", 10, firstFiber.getAmplifierMaxAcceptableInputPower_dBm().stream().map(ee->df.format(ee)).collect(Collectors.joining(" ")))
-                    	),
-                    (list)->
-                    	{
-                    		final List<Double> posKm = Stream.of(((String) list.get(0).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> gainDb = Stream.of(((String) list.get(1).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> nfDb = Stream.of(((String) list.get(2).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> pmdPs = Stream.of(((String) list.get(3).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> cd = Stream.of(((String) list.get(4).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> minGain = Stream.of(((String) list.get(5).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> maxGain = Stream.of(((String) list.get(6).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> minPower = Stream.of(((String) list.get(7).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		final List<Double> maxPower = Stream.of(((String) list.get(8).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setAmplifiersTraversedInfo(posKm, gainDb , nfDb , pmdPs , cd , minGain , maxGain , minPower , maxPower));
-                    	}
-                    ); 
-            } , (a,b)->b>0, null));
+            
+            res.add(new AjtRcMenu("Optical line amplifiers", null , (a,b)->true, Arrays.asList(
+
+            		new AjtRcMenu("Remove existing OLAs in selected fibers", e->
+                    {
+                    	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
+                    	if (firstFiber == null) return;
+                    	getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.removeOpticalLineAmplifiers());
+                    } , (a,b)->b>0, null),
+
+            		new AjtRcMenu("Set optical line amplifiers (OLA) info to selected fibers", e->
+                    {
+                    	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
+                    	if (firstFiber == null) return;
+                    	DialogBuilder.launch(
+                            "Set optical line amplifiers (OLA) info" , 
+                            "Please introduce the requested information. All the lists are space-separated and with the same number of elements, one per optical line amplifier" , 
+                            "", 
+                            this, 
+                            Arrays.asList(
+                            		InputForDialog.inputTfString("OLA positions (km from fiber init)", "A space separated list, wiht as many elements as OLAs, and the OLA position in km from the fiber start point.", 10, firstFiber.getAmplifierPositionsKmFromOrigin_km().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA gains (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA gains in dB.", 10, firstFiber.getAmplifierGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA noise factors (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA noise factors in dB.", 10, firstFiber.getAmplifierNoiseFactor_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA PMDs (ps)", "A space separated list, wiht as many elements as OLAs, and the OLA added PMD in ps.", 10, firstFiber.getAmplifierPmd_ps().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA CD compensation (ps/nm)", "A space separated list, wiht as many elements as OLAs, and the OLA chromatic dispersion that is compensated within the OLA in ps/nm.", 10, firstFiber.getAmplifierCdCompensation_psPerNm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA minimum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable gain in dB.", 10, firstFiber.getAmplifierMinAcceptableGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA maximum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable gain in dB.", 10, firstFiber.getAmplifierMaxAcceptableGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA minimum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable input power in dBm.", 10, firstFiber.getAmplifierMinAcceptableInputPower_dBm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA maximum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable input power in dBm.", 10, firstFiber.getAmplifierMaxAcceptableInputPower_dBm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" ")))
+                            	),
+                            (list)->
+                            	{
+                            		final List<Double> posKm = Stream.of(((String) list.get(0).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		final List<Double> gainDb = Stream.of(((String) list.get(1).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		final List<Double> nfDb = Stream.of(((String) list.get(2).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		final List<Double> pmdPs = Stream.of(((String) list.get(3).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		final List<Double> cd = Stream.of(((String) list.get(4).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		final List<Double> minGain = Stream.of(((String) list.get(5).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		final List<Double> maxGain = Stream.of(((String) list.get(6).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		final List<Double> minPower = Stream.of(((String) list.get(7).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		final List<Double> maxPower = Stream.of(((String) list.get(8).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
+                            		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setAmplifiersTraversedInfo(posKm, gainDb , nfDb , pmdPs , cd , minGain , maxGain , minPower , maxPower));
+                            	}
+                            ); 
+                    } , (a,b)->b>0, null),
+
+            		new AjtRcMenu("Add OLAs uniformly spaced to selected fibers", e-> 
+                    DialogBuilder.launch(
+                            "Add OLAs uniformly spaced to selected fibers" , 
+                            "Please introduce the requested information.", 
+                            "", 
+                            this, 
+                            Arrays.asList(InputForDialog.inputTfDouble("Maximum distance without amplification (km)", "The OLAs are placed equispacedly. The number of OLAs in a fiber is computed such that the maximum inter-OLA and OADM-to-OLA distance is equal or below this", 10, 80.0)),
+                            (list)->
+                            	{
+                            		final Double maxDistanceKm = (Double) list.get(0).get();
+                            		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                            		{
+                            			fiber.removeOpticalLineAmplifiers();
+                            			final int numOlas = (int) Math.floor(fiber.getLengthInKm() / maxDistanceKm);
+                            			final double interOlaDistanceKm = fiber.getLengthInKm() / (numOlas + 1);
+                            			final List<Double> olaPositionsKm = new ArrayList<> ();
+                            			for (int cont = 0; cont < numOlas ; cont ++) olaPositionsKm.add(cont * interOlaDistanceKm);
+                            			fiber.setAmplifiersTraversedInfo(olaPositionsKm, null, null, null, null, null, null, null, null);
+                            		}
+                            	}
+                            ) , (a,b)->b>0, null),
+
+            		new AjtRcMenu("Set OLA gains to compensate previous span losses", e-> 
+            		{
+                		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                		{
+                			final List<Double> listGains_dB = new ArrayList<> ();
+                			for (int olaCont = 0; olaCont < fiber.getNumberOfOpticalLineAmplifiersTraversed() ; olaCont ++)
+                			{
+                				final double startPreviousScanKm = olaCont == 0? 0.0 : fiber.getAmplifierPositionsKmFromOrigin_km().get(olaCont-1);
+                				final double lengthPreviousSpanKm = fiber.getAmplifierPositionsKmFromOrigin_km().get(olaCont) - startPreviousScanKm;
+                				final double attenuationPreviousSpan_dB = Math.abs(fiber.getAttenuationCoefficient_dbPerKm() * lengthPreviousSpanKm);
+                				listGains_dB.add(attenuationPreviousSpan_dB);
+                			}
+                			fiber.setAmplifiersTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
+                		}
+            		}
+            		, (a,b)->b>0, null),
+            		
+            		new AjtRcMenu("Set OLA gains to compensate next span losses", e-> 
+            		{
+                		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                		{
+                			final List<Double> listGains_dB = new ArrayList<> ();
+                			for (int olaCont = 0; olaCont < fiber.getNumberOfOpticalLineAmplifiersTraversed() ; olaCont ++)
+                			{
+                				final double endNextScanKm = olaCont == fiber.getNumberOfOpticalLineAmplifiersTraversed()-1? fiber.getLengthInKm() : fiber.getAmplifierPositionsKmFromOrigin_km().get(olaCont);
+                				final double lengthNextSpanKm = endNextScanKm - fiber.getAmplifierPositionsKmFromOrigin_km().get(olaCont);
+                				final double attenuationNextSpan_dB = Math.abs(fiber.getAttenuationCoefficient_dbPerKm() * lengthNextSpanKm);
+                				listGains_dB.add(attenuationNextSpan_dB);
+                			}
+                			fiber.setAmplifiersTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
+                		}
+            		}
+            		, (a,b)->b>0, null),
+
+            		new AjtRcMenu("Set OLA gains as a constant value", e-> 
+            		{
+            			DialogBuilder.launch(
+                                "Set OLA gains as constant value" , 
+                                "Please introduce the requested information.", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("Gain (dB)", "Gain (dB) of the OLAs", 10, WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB.get(0))),
+                                (list)->
+                                	{
+                                		final Double gainDb = (Double) list.get(0).get();
+                                		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                                		{
+                                			final List<Double> listGains_dB = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), gainDb);
+                                			fiber.setAmplifiersTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
+                                		}
+                                	}
+                                );
+            		}
+            		, (a,b)->b>0, null),
+
+            		new AjtRcMenu("Set OLA noise factors as a constant value", e-> 
+            		{
+            			DialogBuilder.launch(
+                                "Set OLA noise factors as constant value" , 
+                                "Please introduce the requested information.", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("Noise factor (dB)", "Gain (dB) of the OLAs", 10, WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB.get(0))),
+                                (list)->
+                                	{
+                                		final Double noiseFactorDb = (Double) list.get(0).get();
+                                		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                                		{
+                                			final List<Double> listVals = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), noiseFactorDb);
+                                			fiber.setAmplifiersTraversedInfo(null, null, listVals, null, null, null, null, null, null);
+                                		}
+                                	}
+                                );
+            		}
+            		, (a,b)->b>0, null),
+
+            		new AjtRcMenu("Set OLA PMD (ps) as a constant value", e-> 
+            		{
+            			DialogBuilder.launch(
+                                "Set OLA PMS as constant value" , 
+                                "Please introduce the requested information.", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("PMD (ps)", "PMD (ps) of the OLAs", 10, WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS.get(0))),
+                                (list)->
+                                	{
+                                		final Double pmdPs = (Double) list.get(0).get();
+                                		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                                		{
+                                			final List<Double> listVals = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), pmdPs);
+                                			fiber.setAmplifiersTraversedInfo(null, null, null , listVals, null, null, null, null, null);
+                                		}
+                                	}
+                                );
+            		}
+            		, (a,b)->b>0, null),
+
+            		new AjtRcMenu("Set OLA CD compensation (ps/nm) as a constant value", e-> 
+            		{
+            			DialogBuilder.launch(
+                                "Set OLA CD compensation (ps/nm) as constant value" , 
+                                "Please introduce the requested information.", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("CD compensation (ps/nm)", "CD compensation (ps/nm) of the OLAs", 10, WNetConstants.WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION.get(0))),
+                                (list)->
+                                	{
+                                		final Double cdPsPerNm = (Double) list.get(0).get();
+                                		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                                		{
+                                			final List<Double> listVals = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), cdPsPerNm);
+                                			fiber.setAmplifiersTraversedInfo(null, null, null , null , listVals, null, null, null, null);
+                                		}
+                                	}
+                                );
+            		}
+            		, (a,b)->b>0, null),
+
+            		new AjtRcMenu("Set OLA maximum and minimum gain as constant values", e-> 
+            		{
+            			DialogBuilder.launch(
+                                "Set OLA maximum and minimum gain as constant values" , 
+                                "Please introduce the requested information.", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("Minimum gain (dB)", "Minimum gain (dB) of the OLA", 10, 19.0),
+                                		InputForDialog.inputTfDouble("Maximum gain (dB)", "Maximum gain (dB) of the OLA", 10, 23.0)),
+                                (list)->
+                                	{
+                                		final Double minGainDb = (Double) list.get(0).get();
+                                		final Double maxGainDb = (Double) list.get(1).get();
+                                		if (minGainDb > maxGainDb) throw new Net2PlanException ("Invalid gain values");
+                                		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                                		{
+                                			final List<Double> listVals1 = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), minGainDb);
+                                			final List<Double> listVals2 = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), maxGainDb);
+                                			fiber.setAmplifiersTraversedInfo(null, null, null , null , null, listVals1, listVals2, null, null);
+                                		}
+                                	}
+                                );
+            		}
+            		, (a,b)->b>0, null),
+            		
+            		new AjtRcMenu("Set OLA maximum and minimum input power as constant values", e-> 
+            		{
+            			DialogBuilder.launch(
+                                "Set OLA maximum and minimum input power as constant values" , 
+                                "Please introduce the requested information.", 
+                                "", 
+                                this, 
+                                Arrays.asList(InputForDialog.inputTfDouble("Minimum input power (dBm)", "Minimum input power (dBm) of the OLA", 10, -29.0),
+                                		InputForDialog.inputTfDouble("Maximum input power (dmB)", "Maximum input power (dmB) of the OLA", 10, 2.0)),
+                                (list)->
+                                	{
+                                		final Double minInputPowerDbm = (Double) list.get(0).get();
+                                		final Double maxInputPowerDbm = (Double) list.get(1).get();
+                                		if (minInputPowerDbm > maxInputPowerDbm) throw new Net2PlanException ("Invalid gain values");
+                                		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
+                                		{
+                                			final List<Double> listVals1 = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), minInputPowerDbm);
+                                			final List<Double> listVals2 = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), maxInputPowerDbm);
+                                			fiber.setAmplifiersTraversedInfo(null, null, null , null , null, null , null , listVals1, listVals2);
+                                		}
+                                	}
+                                );
+            		}
+            		, (a,b)->b>0, null)
+
+            		)));
+
+
+            
     	}
 
         return res;
