@@ -45,8 +45,17 @@ public class WFiber extends WAbstractNetworkElement
 	private static final String ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB = "AmplifierMaxGains_dB";
 	private static final String ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM = "AmplifierMinInputPower_dBm";
 	private static final String ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM = "AmplifierMaxInputPower_dBm";
+	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_NOISEFIGUREDB = "aSideBoosterAmplifierNoiseFigure_db";
+	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_GAINDB = "aSideBoosterAmplifierGain_db";
+	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_PMD_PS = "aSideBoosterAmplifierPmd_ps";
+	private static final String ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_NOISEFIGUREDB = "bSidePreAmplifierNoiseFigure_db";
+	private static final String ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_GAINDB = "bSidePreAmplifierGain_db";
+	private static final String ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_PMD_PS = "bSidePreAmplifierPmd_ps";
+	private static final String ATTNAMESUFFIX_ASIDE_EXISTSBOOSTERAMPLIFIER = "aSideExistsBoosterAmplifier";
+	private static final String ATTNAMESUFFIX_BSIDE_EXISTSPREAMPLIFIER = "bSideExistsPreAmplifier";
+	private static final String ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED = "isOutputSpectrumEqualized";
+	private static final String ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ = "equalizationTarget_mwPerGhz";
 
-	
 	private static final String ATTNAMESUFFIX_AMPLIFIERPMD_PS = "AmplifierPmd_ps";
 	private static final String ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM = "AmplifierPmd_cdCompensation_psPerNm";
 	private static final String ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB = "AmplifierNF_dB";
@@ -243,7 +252,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Get minimum possible gain of the amplifiers traversed, in the same order as they are traversed. Defaults to 15 dB
 	 * @return see above
 	 */
-	public List<Double> getAmplifierMinAcceptableGains_dB()
+	public List<Double> getOlaMinAcceptableGains_dB()
 	{
 		return getList(ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMINGAIN_DB.get(0));
 	}
@@ -251,7 +260,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Get maximum possible gain of the amplifiers traversed, in the same order as they are traversed. Defaults to 30 dB
 	 * @return see above
 	 */
-	public List<Double> getAmplifierMaxAcceptableGains_dB()
+	public List<Double> getOlaMaxAcceptableGains_dB()
 	{
 		return getList(ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMAXGAIN_DB.get(0));
 	}
@@ -259,7 +268,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Get minimum possible total input power of the amplifiers traversed, in the same order as they are traversed. Defaults to -30 dBm
 	 * @return see above
 	 */
-	public List<Double> getAmplifierMinAcceptableInputPower_dBm()
+	public List<Double> getOlaMinAcceptableInputPower_dBm()
 	{
 		return getList(ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMININPUTPOWER_DBM.get(0));
 	}
@@ -267,7 +276,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Get maximum possible total input power of the amplifiers traversed, in the same order as they are traversed. Defaults to 10 dBm
 	 * @return see above
 	 */
-	public List<Double> getAmplifierMaxAcceptableInputPower_dBm()
+	public List<Double> getOlaMaxAcceptableInputPower_dBm()
 	{
 		return getList(ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMAXINPUTPOWER_DBM.get(0));
 	}
@@ -276,7 +285,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Get gains of the amplifiers traversed, in the same order as they are traversed
 	 * @return see above
 	 */
-	public List<Double> getAmplifierGains_dB()
+	public List<Double> getOlaGains_dB()
 	{
 		return getList(ATTNAMESUFFIX_AMPLIFIERGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB.get(0));
 	}
@@ -285,7 +294,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Gets the PMD in ps added to the signal by the amplifier
 	 * @return see above
 	 */
-	public List<Double> getAmplifierPmd_ps()
+	public List<Double> getOlaPmd_ps()
 	{
 		return getList(ATTNAMESUFFIX_AMPLIFIERPMD_PS, WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS.get(0));
 	}
@@ -294,7 +303,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Gets the chromatic dispersion compensation in the amplifier (if any) in ps per nm
 	 * @return see above
 	 */
-	public List<Double> getAmplifierCdCompensation_psPerNm ()
+	public List<Double> getOlaCdCompensation_psPerNm ()
 	{
 		return getList(ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION.get(0));
 	}
@@ -304,7 +313,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * Gets the list of amplifier noise factors in dB
 	 * @return see above
 	 */
-	public List<Double> getAmplifierNoiseFactor_dB()
+	public List<Double> getOlaNoiseFactor_dB()
 	{
 		return getList(ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB.get(0));
 	}
@@ -321,7 +330,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * @param minimumInputPower_dBm minimum total input power at amplifier inputs acceptable for the amplifier
 	 * @param maximumInputPower_dBm maximum total input power at amplifier inputs acceptable for the amplifier
 	 */
-	public void setAmplifiersTraversedInfo(List<Double> positionFromLinkOrigin_km, 
+	public void setOlaTraversedInfo(List<Double> positionFromLinkOrigin_km, 
 			List<Double> gains_db, 
 			List<Double> noiseFactors_dB, 
 			List<Double> pmd_ps , 
@@ -360,7 +369,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public void removeOpticalLineAmplifiers()
 	{
-		setAmplifiersTraversedInfo(Arrays.asList(), Arrays.asList(), Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList());
+		setOlaTraversedInfo(Arrays.asList(), Arrays.asList(), Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList() , Arrays.asList());
 	}
 
 	/**
@@ -380,7 +389,7 @@ public class WFiber extends WAbstractNetworkElement
 
 	public double getAccumulatedChromaticDispersion_psPerNm ()
 	{
-		return this.getLengthInKm() * this.getChromaticDispersionCoeff_psPerNmKm() + this.getAmplifierCdCompensation_psPerNm().stream().mapToDouble(e->e).sum();
+		return this.getLengthInKm() * this.getChromaticDispersionCoeff_psPerNmKm() + this.getOlaCdCompensation_psPerNm().stream().mapToDouble(e->e).sum();
 	}
 	
 	/**
@@ -408,7 +417,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public double getNetGain_dB ()
 	{
-		return getAmplifierGains_dB().stream().mapToDouble(e->e).sum() - getLengthInKm() * getAttenuationCoefficient_dbPerKm();
+		return getOlaGains_dB().stream().mapToDouble(e->e).sum() - getLengthInKm() * getAttenuationCoefficient_dbPerKm();
 	}
 
 	/**
@@ -549,9 +558,9 @@ public class WFiber extends WAbstractNetworkElement
 
 	public boolean isOkAllGainsOfLineAmplifiers ()
 	{
-		final List<Double> gainDb = getAmplifierGains_dB();
-		final List<Double> minGainDb = getAmplifierMinAcceptableGains_dB();
-		final List<Double> maxGainDb = getAmplifierMaxAcceptableGains_dB();
+		final List<Double> gainDb = getOlaGains_dB();
+		final List<Double> minGainDb = getOlaMinAcceptableGains_dB();
+		final List<Double> maxGainDb = getOlaMaxAcceptableGains_dB();
 		for (int cont = 0; cont < gainDb.size() ; cont ++)
 		{
 			if (gainDb.get(cont) < minGainDb.get(cont)) return false;
@@ -582,4 +591,161 @@ public class WFiber extends WAbstractNetworkElement
 		getNe().setBidirectionalPair(null);
 	}
 
+	
+	/** Returns the noise factor of the booster amplifier at fiber origin end, in dB. Defaults to 5.0 dB
+	 * @return see above
+	 */
+	public Optional<Double> getOriginBoosterAmplifierNoiseFactor_dB ()
+	{
+		if (!isExistingBoosterAmplifierAtOriginOadm()) return Optional.empty();
+		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_NOISEFIGUREDB, WNetConstants.WFIBER_DEFAULT_BOOSTER_NF_DB));
+	}
+	/** Returns the noise factor of the pre-amplifier at the end of the fiber, in dB. Defaults to 5.0 dB
+	 * @return see above
+	 */
+	public Optional<Double> getDestinationPreAmplifierNoiseFactor_dB ()
+	{
+		if (!isExistingPreamplifierAtDestinationOadm()) return Optional.empty();
+		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_NOISEFIGUREDB, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_NF_DB));
+	}
+	/** Returns the gain of the booster amplifier at fiber origin end, in dB. Defaults to20.0 dB
+	 * @return see above
+	 */
+	public Optional<Double> getOriginBoosterAmplifierGain_dB ()
+	{
+		if (!isExistingBoosterAmplifierAtOriginOadm()) return Optional.empty();
+		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_GAINDB, WNetConstants.WFIBER_DEFAULT_BOOSTER_GAIN_DB));
+	}
+	/** Returns the gain of the pre-amplifier at the end of the fiber, in dB. Defaults to20.0 dB
+	 * @return see above
+	 */
+	public Optional<Double> getDestinationPreAmplifierGain_dB ()
+	{
+		if (!isExistingPreamplifierAtDestinationOadm()) return Optional.empty();
+		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_GAINDB, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_GAIN_DB));
+	}
+	/** Returns the PMD of the booster amplifier at fiber origin end, in ps. Defaults to 0 ps
+	 * @return see above
+	 */
+	public Optional<Double> getOriginBoosterAmplifierPmd_ps ()
+	{
+		if (!isExistingBoosterAmplifierAtOriginOadm()) return Optional.empty();
+		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_PMD_PS, WNetConstants.WFIBER_DEFAULT_BOOSTER_PMD_PS));
+	}
+	/** Returns the PMD added of the pre-amplifier at the end of the fiber, in ps. Defaults to 0 ps
+	 * @return see above
+	 */
+	public Optional<Double> getDestinationPreAmplifierPmd_ps ()
+	{
+		if (!isExistingPreamplifierAtDestinationOadm()) return Optional.empty();
+		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_PMD_PS, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_PMD_PS));
+	}
+	/** Sets the noise factor of the booster amplifier at fiber origin end, in dB. 
+	 * @return see above
+	 */
+	public void setOriginBoosterAmplifierNoiseFactor_dB (double noiseFactor_dB)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_NOISEFIGUREDB, noiseFactor_dB);
+	}
+	/** Sets the noise factor of the pre-amplifier at the end of the fiber, in dB. 
+	 * @return see above
+	 */
+	public void setDestinationPreAmplifierNoiseFactor_dB (double noiseFactor_dB)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_NOISEFIGUREDB, noiseFactor_dB);
+	}
+	/** Sets the gain of the booster amplifier at fiber origin end, in dB. 
+	 * @return see above
+	 */
+	public void setOriginBoosterAmplifierGain_dB (double gain_dB)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_GAINDB, gain_dB);
+	}
+	/** Sets the gain of the pre-amplifier at the end of the fiber, in dB. 
+	 * @return see above
+	 */
+	public void setDestinationPreAmplifierGain_dB (double gain_dB)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_GAINDB, gain_dB);
+	}
+	/** Sets the PMD added of the booster amplifier at fiber origin end, in ps. 
+	 * @return see above
+	 */
+	public void setOriginBoosterAmplifierPmd_ps (double pmd_ps)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_PMD_PS, pmd_ps);
+	}
+	/** Sets the PMD added of the pre-amplifier at the end of the fiber, in ps. 
+	 * @return see above
+	 */
+	public void setDestinationPreAmplifierPmd_ps (double pmd_ps)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_PMD_PS, pmd_ps);
+	}
+
+	/** Indicates if a pre-amplifier exists at the OADM at the end of the fiber.
+	 * @return see above
+	 */
+	public boolean isExistingPreamplifierAtDestinationOadm ()
+	{
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_EXISTSPREAMPLIFIER, 0.0) == 0;
+	}
+
+	/** Indicates if a booster-amplifier exists at the OADM at the start of the fiber.
+	 * @return see above
+	 */
+	public boolean isExistingBoosterAmplifierAtOriginOadm ()
+	{
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_EXISTSBOOSTERAMPLIFIER, 0.0) == 0;
+	}
+	/** Sets if exists a pre-amplifier exists at the OADM at the end of the fiber.
+	 * @return see above
+	 */
+	public void setIsExistingPreamplifierAtDestinationOadm (boolean exists)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_EXISTSPREAMPLIFIER, exists? 1 : 0);
+	}
+	/** Indicates if a booster-amplifier exists at the OADM at the start of the fiber.
+	 * @return see above
+	 */
+	public void setIsExistingBoosterAmplifierAtOriginOadm (boolean exists)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_EXISTSBOOSTERAMPLIFIER, exists? 1 : 0);
+	}
+	
+	/** Returns the spectral density enforced to all the channels by the origin OADM, right before the booster.
+	 * @return see above
+	 */
+	public Optional<Double> getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz ()
+	{
+		if (getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 0.0).equals (0.0)) return Optional.empty();
+		final Double val = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ, null);
+		return Optional.ofNullable(val);
+	}
+
+	/** Indicates if the origin OADM is configured to equalize the power for this fiber, fixing the power density in all the channels right before the booster amplifier
+	 * @return see above
+	 */
+	public boolean isOriginOadmConfiguredToEqualizeOutput ()
+	{
+		return getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().isPresent();
+	}
+
+	/** Sets tthe spectral density enforced to all the channels by the origin OADM, right before the booster.
+	 * @return see above
+	 */
+	public void setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz (Optional<Double> valInMwPerGhz)
+	{
+		if (valInMwPerGhz.isPresent())
+		{
+			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 1);
+			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ, valInMwPerGhz.get());
+		} else
+		{
+			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 0);
+		}
+	}
+	
+
+	
 }

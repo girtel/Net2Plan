@@ -132,7 +132,7 @@ public class ImportMetroNetwork
             	e.setAttenuationCoefficient_dbPerKm(FIBERATTENUATIONCOEFFICIENT_DBPERKM);
             	e.setChromaticDispersionCoeff_psPerNmKm(FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM);
             	e.setPmdLinkDesignValueCoeff_psPerSqrtKm(FIBERLINKDESIGNVALUEPMD_PSPERSQRKM);
-            	e.setAmplifiersTraversedInfo(AMPLIFIERSPOSITIONFROMORIGIN_KM, AMPLIFIERGAINS_DB, AMPLIFIERNOISEFACTOR_DB, AMPLIFIERPMD_PS , null , null , null , null , null);
+            	e.setOlaTraversedInfo(AMPLIFIERSPOSITIONFROMORIGIN_KM, AMPLIFIERGAINS_DB, AMPLIFIERNOISEFACTOR_DB, AMPLIFIERPMD_PS , null , null , null , null , null);
             	e.setArbitraryParamString(arbitraryParamsString);
         	}
         }

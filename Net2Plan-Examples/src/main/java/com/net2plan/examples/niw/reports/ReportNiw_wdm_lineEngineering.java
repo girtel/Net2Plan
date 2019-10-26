@@ -167,11 +167,11 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			{
 				final double distKm = e.getAmplifierPositionsKmFromOrigin_km().get(contOla);
 				final double powerAtInput_dBm = osim.getTotalPowerAtAmplifierInput_dBm(e, contOla);
-				final double gain_dB = e.getAmplifierGains_dB().get(contOla);
-				if (powerAtInput_dBm < e.getAmplifierMinAcceptableInputPower_dBm().get(contOla) || powerAtInput_dBm > e.getAmplifierMaxAcceptableInputPower_dBm().get(contOla))
-					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Power at the input is " + df_2.format(powerAtInput_dBm) + " dBm. It should be between [" + df_2.format(e.getAmplifierMinAcceptableInputPower_dBm().get(contOla)) + ", " + df_2.format(e.getAmplifierMaxAcceptableInputPower_dBm().get(contOla)) + "] dBm</p>");
-				if (gain_dB < e.getAmplifierMinAcceptableGains_dB().get(contOla) || gain_dB > e.getAmplifierMaxAcceptableGains_dB().get(contOla))
-					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Gain is " + df_2.format(gain_dB) + " dB. It should be between [" + df_2.format(e.getAmplifierMinAcceptableGains_dB().get(contOla)) + ", " + df_2.format(e.getAmplifierMaxAcceptableGains_dB().get(contOla)) + "] dBm</p>");
+				final double gain_dB = e.getOlaGains_dB().get(contOla);
+				if (powerAtInput_dBm < e.getOlaMinAcceptableInputPower_dBm().get(contOla) || powerAtInput_dBm > e.getOlaMaxAcceptableInputPower_dBm().get(contOla))
+					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Power at the input is " + df_2.format(powerAtInput_dBm) + " dBm. It should be between [" + df_2.format(e.getOlaMinAcceptableInputPower_dBm().get(contOla)) + ", " + df_2.format(e.getOlaMaxAcceptableInputPower_dBm().get(contOla)) + "] dBm</p>");
+				if (gain_dB < e.getOlaMinAcceptableGains_dB().get(contOla) || gain_dB > e.getOlaMaxAcceptableGains_dB().get(contOla))
+					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Gain is " + df_2.format(gain_dB) + " dB. It should be between [" + df_2.format(e.getOlaMinAcceptableGains_dB().get(contOla)) + ", " + df_2.format(e.getOlaMaxAcceptableGains_dB().get(contOla)) + "] dBm</p>");
 			}
 			out.append("<td>" + st.toString() + "</td>");
 			out.append("</tr>");

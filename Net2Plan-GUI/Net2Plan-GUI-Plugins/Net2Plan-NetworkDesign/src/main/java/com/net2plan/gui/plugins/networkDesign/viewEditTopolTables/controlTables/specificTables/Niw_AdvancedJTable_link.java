@@ -38,6 +38,7 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement.AGTYPE;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
@@ -156,18 +157,28 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signal") , "Net gain (dB)" , "Net gain of this fiber link, considering effect of line amplifiers and fiber attenuation", null , d->toWFiber.apply(d).getNetGain_dB() , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Optical signal") , "Net CD (ps/nm)" , "Net accummulated chromatic dispersion in the WDM link, considering fiber CD coefficient, and potnetial compensation in the line amplifiers", null , d->toWFiber.apply(d).getAccumulatedChromaticDispersion_psPerNm() , AGTYPE.NOAGGREGATION , null));
     	
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "# OLAs", "Number of optical line amplifiers. Nota that each OLA can have chromatic dispersion compensation", null , d->toWFiber.apply(d).getNumberOfOpticalLineAmplifiersTraversed() , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA pos (km)", "Positions of OLAs, in km from the fiber start", null , d->toWFiber.apply(d).getAmplifierPositionsKmFromOrigin_km().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA gains (dB)", "Gains in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->toWFiber.apply(d).isOkAllGainsOfLineAmplifiers()? null : Color.RED));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min gains (dB)", "Minimum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max gains (dB)", "Maximum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA NFs (dB)", "Noise factors in dB of the OLAs", null , d->toWFiber.apply(d).getAmplifierNoiseFactor_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA CD (ps/nm)", "Chromatic dispersion compensation inside this OLA if any", null , d->toWFiber.apply(d).getAmplifierCdCompensation_psPerNm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA PMD (ps)", "PMD factor for this OLA", null , d->toWFiber.apply(d).getAmplifierPmd_ps().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA input power (dBm)", "Total power at the input of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->osim.isOkOpticalPowerAtAmplifierInputAllOlas(toWFiber.apply(d))? null : Color.RED));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA output power (dBm)", "Total power at the output of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Min input power (dBm)", "Minimum acceptable power for the OLAs", null , d->toWFiber.apply(d).getAmplifierMinAcceptableInputPower_dBm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Line amplifiers") , "OLA Max input power (dBm)", "Maximum acceptable power for the OLAs", null , d->toWFiber.apply(d).getAmplifierMaxAcceptableInputPower_dBm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+              res.add(new AjtColumnInfo<Link>(this , Boolean.class, Arrays.asList("Amplifiers") , "WSS eq. power (mW/GHz)", "If set, means that the power at the start of the fiber es equalized by the WSS associated to this degree in the origin OADM. Then, here we indicate the power density enforced by the WDD inside the OADM switch fabric for this degree, and thus before the booster amplifier. The power is expressed as mW per GHz", null , d->toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().isPresent()? toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() : "--", AGTYPE.COUNTTRUE , null));
+              res.add(new AjtColumnInfo<Link>(this , Boolean.class, Arrays.asList("Amplifiers") , "Booster?", "Indicates if exists a booster amplifier at the start of this fiber", (d,val)->toWFiber.apply(d).setIsExistingBoosterAmplifierAtOriginOadm((Boolean)val) , d->toWFiber.apply(d).isExistingBoosterAmplifierAtOriginOadm(), AGTYPE.COUNTTRUE , null));
+              res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "Booster gain (dB)", "The gain of the booster amplifier at the start of the fiber", (d,val)->toWFiber.apply(d).setOriginBoosterAmplifierGain_dB((Double)val) , d->toWFiber.apply(d).isExistingBoosterAmplifierAtOriginOadm()? toWFiber.apply(d).getOriginBoosterAmplifierGain_dB().get() : "--", AGTYPE.NOAGGREGATION , null));
+              res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifers") , "Booster noise factor (dB)", "The noise factor of the booster amplifier at the start of the fiber", (d,val)->toWFiber.apply(d).setOriginBoosterAmplifierNoiseFactor_dB((Double)val) , d->toWFiber.apply(d).isExistingBoosterAmplifierAtOriginOadm()? toWFiber.apply(d).getOriginBoosterAmplifierNoiseFactor_dB().get () : "--", AGTYPE.NOAGGREGATION , null));
+              res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifers") , "Booster PMD (ps)", "The PMD added of the booster amplifier at the start of the fiber", (d,val)->toWFiber.apply(d).setOriginBoosterAmplifierPmd_ps((Double)val) , d->toWFiber.apply(d).isExistingBoosterAmplifierAtOriginOadm()? toWFiber.apply(d).getOriginBoosterAmplifierPmd_ps().get() : "--", AGTYPE.NOAGGREGATION , null));
+              res.add(new AjtColumnInfo<Link>(this , Boolean.class, Arrays.asList("Amplifiers") , "Preamplifier?", "Indicates if exists a pre-amplifier at the end of this fiber", (d,val)->toWFiber.apply(d).setIsExistingPreamplifierAtDestinationOadm((Boolean)val) , d->toWFiber.apply(d).isExistingPreamplifierAtDestinationOadm(), AGTYPE.COUNTTRUE , null));
+              res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "PreAmp gain (dB)", "The gain of the pre-amplifier at the end of this fiber", (d,val)->toWFiber.apply(d).setDestinationPreAmplifierGain_dB((Double)val) , d->toWFiber.apply(d).isExistingPreamplifierAtDestinationOadm()? toWFiber.apply(d).getDestinationPreAmplifierGain_dB().get () : "--", AGTYPE.NOAGGREGATION , null));
+              res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifers") , "PreAmp noise factor (dB)", "The noise factor of the pre-amplifier at the end of this fiber", (d,val)->toWFiber.apply(d).setDestinationPreAmplifierNoiseFactor_dB((Double)val) , d->toWFiber.apply(d).isExistingPreamplifierAtDestinationOadm()? toWFiber.apply(d).getDestinationPreAmplifierNoiseFactor_dB().get() : "--", AGTYPE.NOAGGREGATION , null));
+              res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifers") , "PreAmp PMD (ps)", "The PMD added of the pre-amplifier at the end of this fiber", (d,val)->toWFiber.apply(d).setDestinationPreAmplifierPmd_ps((Double)val) , d->toWFiber.apply(d).isExistingPreamplifierAtDestinationOadm()? toWFiber.apply(d).getDestinationPreAmplifierPmd_ps().get() : "--", AGTYPE.NOAGGREGATION , null));
+
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "# OLAs", "Number of optical line amplifiers. Nota that each OLA can have chromatic dispersion compensation", null , d->toWFiber.apply(d).getNumberOfOpticalLineAmplifiersTraversed() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA pos (km)", "Positions of OLAs, in km from the fiber start", null , d->toWFiber.apply(d).getAmplifierPositionsKmFromOrigin_km().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA gains (dB)", "Gains in dB of the OLAs", null , d->toWFiber.apply(d).getOlaGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->toWFiber.apply(d).isOkAllGainsOfLineAmplifiers()? null : Color.RED));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA Min gains (dB)", "Minimum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getOlaMinAcceptableGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA Max gains (dB)", "Maximum gains acceptable for the OLAs", null , d->toWFiber.apply(d).getOlaMaxAcceptableGains_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA NFs (dB)", "Noise factors in dB of the OLAs", null , d->toWFiber.apply(d).getOlaNoiseFactor_dB().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA CD (ps/nm)", "Chromatic dispersion compensation inside this OLA if any", null , d->toWFiber.apply(d).getOlaCdCompensation_psPerNm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA PMD (ps)", "PMD factor for this OLA", null , d->toWFiber.apply(d).getOlaPmd_ps().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA input power (dBm)", "Total power at the input of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , d->osim.isOkOpticalPowerAtAmplifierInputAllOlas(toWFiber.apply(d))? null : Color.RED));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA output power (dBm)", "Total power at the output of the OLAs", null , d->osim.getTotalPowerAtAmplifierInputs_dBm(toWFiber.apply(d)).stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA Min input power (dBm)", "Minimum acceptable power for the OLAs", null , d->toWFiber.apply(d).getOlaMinAcceptableInputPower_dBm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "OLA Max input power (dBm)", "Maximum acceptable power for the OLAs", null , d->toWFiber.apply(d).getOlaMaxAcceptableInputPower_dBm().stream().map(e->df2.apply(e)).collect(Collectors.joining(" ")) , AGTYPE.NOAGGREGATION , null));
     	}
       return res;
   	}
@@ -722,6 +733,82 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                     	}
                     ) , (a,b)->b>0, null));
 
+
+            res.add(new AjtRcMenu("Set fiber initial node booster amplification info to selected fibers", e->
+            {
+            	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
+            	if (firstFiber == null) return;
+            	DialogBuilder.launch(
+                    "Set fiber initial node booster amplification info to selected fibers" , 
+                    "Please introduce the requested information." , 
+                    "", 
+                    this, 
+                    Arrays.asList(
+                    		InputForDialog.inputCheckBox("Optical equalization applied?", "Indicate if the optical equalization should be applied", true , null),
+                    		InputForDialog.inputTfDouble("Pre-booster power density (mW per GHz)", "If the previous option is checked, the power density of the channels to be enforced for this degree by the origin OADM, right before the booster amplifier", 10, 1.0/50.0),
+                    		InputForDialog.inputCheckBox("Booster amplifier exists?", "Indicate if a booster amplifier exists at the start of this fiber", true , null),
+                    		InputForDialog.inputTfDouble("Booster gain (dB)", "The gain of the booster amplifier, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_GAIN_DB),
+                    		InputForDialog.inputTfDouble("Booster noise factor (dB)", "The noise factor of the booster amplifier in dB, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_NF_DB),
+                    		InputForDialog.inputTfDouble("Booster PMD (ps)", "The PMD added by the booster amplifier in ps, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_PMD_PS)
+                    	),
+                    (list)->
+                    	{
+                    		final Boolean equalize = (Boolean) list.get(0).get();
+                    		final Double powerDensity = (Double) list.get(1).get();
+                    		final Boolean boosterExists = (Boolean) list.get(2).get();
+                    		final Double boosterGainDb = (Double) list.get(3).get();
+                    		final Double boosterNfDb = (Double) list.get(4).get();
+                    		final Double boosterPmdPs = (Double) list.get(5).get();
+                    		if (equalize)
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz(Optional.of(powerDensity)));
+                    		else
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz(Optional.empty()));
+                    		if (boosterExists)
+                    		{
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(true));
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierGain_dB(boosterGainDb));
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierNoiseFactor_dB(boosterNfDb));
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierPmd_ps(boosterPmdPs));
+                    		}
+                    		else
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(false));
+                    	}
+                    ); 
+            } , (a,b)->b>0, null));
+            
+            res.add(new AjtRcMenu("Set fiber end node pre-amplification info to selected fibers", e->
+            {
+            	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
+            	if (firstFiber == null) return;
+            	DialogBuilder.launch(
+                    "Set fiber end node pre-amplification info to selected fibers" , 
+                    "Please introduce the requested information." , 
+                    "", 
+                    this, 
+                    Arrays.asList(
+                    		InputForDialog.inputCheckBox("Pre-amplifer exists?", "Indicate if a pre-amplifer exists at the OADM at the end of this fiber", true , null),
+                    		InputForDialog.inputTfDouble("Pre-amplifer gain (dB)", "The gain of the pre-amplifer, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_GAIN_DB),
+                    		InputForDialog.inputTfDouble("Pre-amplifer noise factor (dB)", "The noise factor of the pre-amplifer in dB, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_NF_DB),
+                    		InputForDialog.inputTfDouble("Pre-amplifer PMD (ps)", "The PMD added by the pre-amplifer in ps, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_PMD_PS)
+                    	),
+                    (list)->
+                    	{
+                    		final Boolean preamplifierExists = (Boolean) list.get(0).get();
+                    		final Double preamplifierGainDb = (Double) list.get(1).get();
+                    		final Double preamplifierNfDb = (Double) list.get(2).get();
+                    		final Double preamplifierPmdPs = (Double) list.get(3).get();
+                    		if (preamplifierExists)
+                    		{
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingPreamplifierAtDestinationOadm(true));
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierGain_dB(preamplifierGainDb));
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierNoiseFactor_dB(preamplifierNfDb));
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierPmd_ps(preamplifierPmdPs));
+                    		}
+                    		else
+                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingPreamplifierAtDestinationOadm(false));
+                    	}
+                    ); 
+            } , (a,b)->b>0, null));
             
             res.add(new AjtRcMenu("Optical line amplifiers", null , (a,b)->true, Arrays.asList(
 
@@ -743,14 +830,14 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             this, 
                             Arrays.asList(
                             		InputForDialog.inputTfString("OLA positions (km from fiber init)", "A space separated list, wiht as many elements as OLAs, and the OLA position in km from the fiber start point.", 10, firstFiber.getAmplifierPositionsKmFromOrigin_km().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
-                            		InputForDialog.inputTfString("OLA gains (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA gains in dB.", 10, firstFiber.getAmplifierGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
-                            		InputForDialog.inputTfString("OLA noise factors (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA noise factors in dB.", 10, firstFiber.getAmplifierNoiseFactor_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
-                            		InputForDialog.inputTfString("OLA PMDs (ps)", "A space separated list, wiht as many elements as OLAs, and the OLA added PMD in ps.", 10, firstFiber.getAmplifierPmd_ps().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
-                            		InputForDialog.inputTfString("OLA CD compensation (ps/nm)", "A space separated list, wiht as many elements as OLAs, and the OLA chromatic dispersion that is compensated within the OLA in ps/nm.", 10, firstFiber.getAmplifierCdCompensation_psPerNm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
-                            		InputForDialog.inputTfString("OLA minimum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable gain in dB.", 10, firstFiber.getAmplifierMinAcceptableGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
-                            		InputForDialog.inputTfString("OLA maximum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable gain in dB.", 10, firstFiber.getAmplifierMaxAcceptableGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
-                            		InputForDialog.inputTfString("OLA minimum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable input power in dBm.", 10, firstFiber.getAmplifierMinAcceptableInputPower_dBm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
-                            		InputForDialog.inputTfString("OLA maximum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable input power in dBm.", 10, firstFiber.getAmplifierMaxAcceptableInputPower_dBm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" ")))
+                            		InputForDialog.inputTfString("OLA gains (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA gains in dB.", 10, firstFiber.getOlaGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA noise factors (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA noise factors in dB.", 10, firstFiber.getOlaNoiseFactor_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA PMDs (ps)", "A space separated list, wiht as many elements as OLAs, and the OLA added PMD in ps.", 10, firstFiber.getOlaPmd_ps().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA CD compensation (ps/nm)", "A space separated list, wiht as many elements as OLAs, and the OLA chromatic dispersion that is compensated within the OLA in ps/nm.", 10, firstFiber.getOlaCdCompensation_psPerNm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA minimum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable gain in dB.", 10, firstFiber.getOlaMinAcceptableGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA maximum acceptable gain (dB)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable gain in dB.", 10, firstFiber.getOlaMaxAcceptableGains_dB().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA minimum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA minimum acceptable input power in dBm.", 10, firstFiber.getOlaMinAcceptableInputPower_dBm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" "))),
+                            		InputForDialog.inputTfString("OLA maximum acceptable input power (dBm)", "A space separated list, wiht as many elements as OLAs, and the OLA maximum acceptable input power in dBm.", 10, firstFiber.getOlaMaxAcceptableInputPower_dBm().stream().map(ee->df2.apply(ee)).collect(Collectors.joining(" ")))
                             	),
                             (list)->
                             	{
@@ -763,7 +850,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             		final List<Double> maxGain = Stream.of(((String) list.get(6).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
                             		final List<Double> minPower = Stream.of(((String) list.get(7).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
                             		final List<Double> maxPower = Stream.of(((String) list.get(8).get()).split(" ")).map(ee->Double.parseDouble(ee)).collect(Collectors.toList());
-                            		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setAmplifiersTraversedInfo(posKm, gainDb , nfDb , pmdPs , cd , minGain , maxGain , minPower , maxPower));
+                            		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOlaTraversedInfo(posKm, gainDb , nfDb , pmdPs , cd , minGain , maxGain , minPower , maxPower));
                             	}
                             ); 
                     } , (a,b)->b>0, null),
@@ -784,8 +871,8 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                             			final int numOlas = (int) Math.floor(fiber.getLengthInKm() / maxDistanceKm);
                             			final double interOlaDistanceKm = fiber.getLengthInKm() / (numOlas + 1);
                             			final List<Double> olaPositionsKm = new ArrayList<> ();
-                            			for (int cont = 0; cont < numOlas ; cont ++) olaPositionsKm.add(cont * interOlaDistanceKm);
-                            			fiber.setAmplifiersTraversedInfo(olaPositionsKm, null, null, null, null, null, null, null, null);
+                            			for (int cont = 0; cont < numOlas ; cont ++) olaPositionsKm.add((cont+1) * interOlaDistanceKm);
+                            			fiber.setOlaTraversedInfo(olaPositionsKm, null, null, null, null, null, null, null, null);
                             		}
                             	}
                             ) , (a,b)->b>0, null),
@@ -802,7 +889,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 				final double attenuationPreviousSpan_dB = Math.abs(fiber.getAttenuationCoefficient_dbPerKm() * lengthPreviousSpanKm);
                 				listGains_dB.add(attenuationPreviousSpan_dB);
                 			}
-                			fiber.setAmplifiersTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
+                			fiber.setOlaTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
                 		}
             		}
             		, (a,b)->b>0, null),
@@ -819,7 +906,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 				final double attenuationNextSpan_dB = Math.abs(fiber.getAttenuationCoefficient_dbPerKm() * lengthNextSpanKm);
                 				listGains_dB.add(attenuationNextSpan_dB);
                 			}
-                			fiber.setAmplifiersTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
+                			fiber.setOlaTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
                 		}
             		}
             		, (a,b)->b>0, null),
@@ -838,7 +925,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                                 		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
                                 		{
                                 			final List<Double> listGains_dB = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), gainDb);
-                                			fiber.setAmplifiersTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
+                                			fiber.setOlaTraversedInfo(null, listGains_dB, null, null, null, null, null, null, null);
                                 		}
                                 	}
                                 );
@@ -859,7 +946,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                                 		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
                                 		{
                                 			final List<Double> listVals = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), noiseFactorDb);
-                                			fiber.setAmplifiersTraversedInfo(null, null, listVals, null, null, null, null, null, null);
+                                			fiber.setOlaTraversedInfo(null, null, listVals, null, null, null, null, null, null);
                                 		}
                                 	}
                                 );
@@ -880,7 +967,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                                 		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
                                 		{
                                 			final List<Double> listVals = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), pmdPs);
-                                			fiber.setAmplifiersTraversedInfo(null, null, null , listVals, null, null, null, null, null);
+                                			fiber.setOlaTraversedInfo(null, null, null , listVals, null, null, null, null, null);
                                 		}
                                 	}
                                 );
@@ -901,7 +988,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                                 		for (WFiber fiber : getSelectedElements().stream().map(ee->toWFiber.apply(ee)).collect(Collectors.toList()))
                                 		{
                                 			final List<Double> listVals = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), cdPsPerNm);
-                                			fiber.setAmplifiersTraversedInfo(null, null, null , null , listVals, null, null, null, null);
+                                			fiber.setOlaTraversedInfo(null, null, null , null , listVals, null, null, null, null);
                                 		}
                                 	}
                                 );
@@ -926,7 +1013,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                                 		{
                                 			final List<Double> listVals1 = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), minGainDb);
                                 			final List<Double> listVals2 = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), maxGainDb);
-                                			fiber.setAmplifiersTraversedInfo(null, null, null , null , null, listVals1, listVals2, null, null);
+                                			fiber.setOlaTraversedInfo(null, null, null , null , null, listVals1, listVals2, null, null);
                                 		}
                                 	}
                                 );
@@ -951,7 +1038,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                                 		{
                                 			final List<Double> listVals1 = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), minInputPowerDbm);
                                 			final List<Double> listVals2 = Collections.nCopies(fiber.getNumberOfOpticalLineAmplifiersTraversed(), maxInputPowerDbm);
-                                			fiber.setAmplifiersTraversedInfo(null, null, null , null , null, null , null , listVals1, listVals2);
+                                			fiber.setOlaTraversedInfo(null, null, null , null , null, null , null , listVals1, listVals2);
                                 		}
                                 	}
                                 );

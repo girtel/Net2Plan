@@ -92,51 +92,10 @@ public class WNode extends WAbstractNetworkElement
 	private static final String RESOURCETYPE_HD = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "HD";
 	private static final String ATTNAMESUFFIX_ARBITRARYPARAMSTRING = "ArbitraryString";
 	private static final String ATTNAME_OPTICALSWITCHTYPE = "ATTNAME_OPTICALSWITCHTYPE";
-	private static final String ATTNAMESUFFIX_ADD_NOISEFIGUREDB = "addNoiseFigure_db";
-	private static final String ATTNAMESUFFIX_ADD_GAINDB = "addGain_db";
-	private static final String ATTNAMESUFFIX_ADD_PMD_PS = "addPmd_ps";
-	private static final String ATTNAMESUFFIX_DROP_NOISEFIGUREDB = "dropNoiseFigure_db";
-	private static final String ATTNAMESUFFIX_DROP_GAINDB = "dropGain_db";
-	private static final String ATTNAMESUFFIX_DROP_PMD_PS = "dropPmd_ps";
 	private static final String ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB = "expressNoiseFigure_db";
-	private static final String ATTNAMESUFFIX_EXPRESS_GAINDB = "expressGain_db";
-	private static final String ATTNAMESUFFIX_EXPRESS_PMD_PS = "expressPmd_ps";
-	private static final String ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED = "isOutputSpectrumEqualized";
-	private static final String ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ = "equalizationTarget_mwPerGhz";
+	private static final String ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB = "expressGain_db";
+	private static final String ATTNAMESUFFIX_OADMSWFABRICPMD_PS = "expressPmd_ps";
 
-	
-	/** Returns the spectral density for the output optical channels of this OADM, to be enforced, if the node is configered to equalize the output power
-	 * @return see above
-	 */
-	public Optional<Double> getOutputSpectrumEqualizationTarget_mwPerGhz ()
-	{
-		if (getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 0.0).equals (0.0)) return Optional.empty();
-		final Double val = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ, null);
-		return Optional.ofNullable(val);
-	}
-
-	/** Indicates if the node is configured to equalize the output power of the output (express and add) optical channels
-	 * @return see above
-	 */
-	public boolean isConfiguredToEqualizeOutput ()
-	{
-		return getOutputSpectrumEqualizationTarget_mwPerGhz().isPresent();
-	}
-
-	/** Sets the spectral density for the output optical channels of this OADM, to be enforced. If an optional empty is passed, the node is set to NOT equalize the output power
-	 * @return see above
-	 */
-	public void setOutputSpectrumEqualizationTarget_mwPerGhz (Optional<Double> valInMwPerGhz)
-	{
-		if (valInMwPerGhz.isPresent())
-		{
-			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 1);
-			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ, valInMwPerGhz.get());
-		} else
-		{
-			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 0);
-		}
-	}
 	
 	public void setArbitraryParamString(String s)
 	{
@@ -223,135 +182,35 @@ public class WNode extends WAbstractNetworkElement
 
 	
 	
-	/** Returns the noise factor observed by the added channels, in dB. Defaults to 5.0 dB
-	 * @return see above
-	 */
-	public double getAddNoiseFactor_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_NOISEFIGUREDB, WNetConstants.WNODE_DEFAULT_ADDNF_DB);
-	}
-	/** Returns the noise factor observed by the dropped channels, in dB. Defaults to 5.0 dB
-	 * @return see above
-	 */
-	public double getDropNoiseFactor_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_NOISEFIGUREDB, WNetConstants.WNODE_DEFAULT_DROPNF_DB);
-	}
-	/** Returns the noise factor observed by the express channels, in dB. Defaults to 5.0 dB
-	 * @return see above
-	 */
-	public double getExpressNoiseFactor_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB, WNetConstants.WNODE_DEFAULT_EXPRESSNF_DB);
-	}
-	/** Returns the gain observed by the added channels, in dB. Defaults to20.0 dB
-	 * @return see above
-	 */
-	public double getAddGain_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_GAINDB, WNetConstants.WNODE_DEFAULT_ADDGAIN_DB);
-	}
-	/** Returns the gain observed by the dropped channels, in dB. Defaults to20.0 dB
-	 * @return see above
-	 */
-	public double getDropGain_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_GAINDB, WNetConstants.WNODE_DEFAULT_DROPGAIN_DB);
-	}
 	/** Returns the gain observed by the express channels, in dB. Defaults to20.0 dB
 	 * @return see above
 	 */
-	public double getExpressGain_dB ()
+	public double getOadmSwitchFabricAttenuation_dB ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_GAINDB, WNetConstants.WNODE_DEFAULT_EXPRESSGAIN_DB);
-	}
-	/** Returns the PMD added to the added channels, in ps. Defaults to 0 ps
-	 * @return see above
-	 */
-	public double getAddPmd_ps ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_PMD_PS, WNetConstants.WNODE_DEFAULT_ADDPMD_PS);
-	}
-	/** Returns the PMD added to the drop channels, in ps. Defaults to 0 ps
-	 * @return see above
-	 */
-	public double getDropPmd_ps ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_PMD_PS, WNetConstants.WNODE_DEFAULT_DROPPMD_PS);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, WNetConstants.WNODE_DEFAULT_OPTICALSWITCHFABRIC_ATTENUATION_DB);
 	}
 	/** Returns the PMD added to the express channels, in ps. Defaults to 0 ps
 	 * @return see above
 	 */
-	public double getExpressPmd_ps ()
+	public double getOadmSwitchFabricPmd_ps ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_PMD_PS, WNetConstants.WNODE_DEFAULT_EXPRESSPMD_PS);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICPMD_PS, WNetConstants.WNODE_DEFAULT_OPTICALSWITCHFABRIC_PMD_PS);
 	}
 
-	/** Sets the noise factor observed by the added channels, in dB. 
-	 * @return see above
-	 */
-	public void setAddNoiseFactor_dB (double noiseFactor_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_NOISEFIGUREDB, noiseFactor_dB);
-	}
-	/** Sets the noise factor observed by the dropped channels, in dB. 
-	 * @return see above
-	 */
-	public void setDropNoiseFactor_dB (double noiseFactor_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_NOISEFIGUREDB, noiseFactor_dB);
-	}
-	/** Sets the noise factor observed by the express channels, in dB. 
-	 * @return see above
-	 */
-	public void setExpressNoiseFactor_dB (double noiseFactor_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB, noiseFactor_dB);
-	}
-	/** Sets the gain observed by the added channels, in dB. 
-	 * @return see above
-	 */
-	public void setAddGain_dB (double gain_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_GAINDB, gain_dB);
-	}
-	/** Sets the gain observed by the dropped channels, in dB. 
-	 * @return see above
-	 */
-	public void setDropGain_dB (double gain_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_GAINDB, gain_dB);
-	}
 	/** Sets the gain observed by the express channels, in dB. 
 	 * @return see above
 	 */
-	public void setExpressGain_dB (double gain_dB)
+	public void setOadmSwitchFabricAttenuation_dB (double gain_dB)
 	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_GAINDB, gain_dB);
-	}
-	/** Sets the PMD added observed by the added channels, in ps. 
-	 * @return see above
-	 */
-	public void setAddPmd_ps (double pmd_ps)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_PMD_PS, pmd_ps);
-	}
-	/** Sets the PMD added observed by the dropped channels, in ps. 
-	 * @return see above
-	 */
-	public void setDropPmd_ps (double pmd_ps)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_PMD_PS, pmd_ps);
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, gain_dB);
 	}
 	/** Sets the PMD added observed by the express channels, in ps. 
 	 * @return see above
 	 */
-	public void setExpressPmd_ps (double pmd_ps)
+	public void setOadmSwitchFabricPmd_ps (double pmd_ps)
 	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_PMD_PS, pmd_ps);
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICPMD_PS, pmd_ps);
 	}
-	
-	
 	
 	
 	/**
