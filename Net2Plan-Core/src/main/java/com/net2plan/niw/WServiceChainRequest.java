@@ -55,7 +55,7 @@ import com.net2plan.utils.Pair;
  */
 public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 {
-	static final String ATTNAMECOMMONPREFIX = "ServiceChainRequest_";
+	static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "ServiceChainRequest_";
 	static final String ATTNAMESUFFIX_VALIDINPUTNODENAMES = "validInputNodeNames";
 	static final String ATTNAMESUFFIX_VALIDOUTPUTNODENAMES = "validOutputNodeNames";
 	private static final String ATTNAMESUFFIX_SEQUENCEOFEXPANSIONFACTORRESPECTTOINJECTION = "sequenceOfPerVnfExpansionFactorsRespectToInjection";

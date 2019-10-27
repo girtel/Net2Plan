@@ -62,6 +62,7 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.niw.WAbstractNetworkElement;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WNet;
@@ -456,6 +457,7 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     @Override
     protected final List<AjtColumnInfo<T>> getAllColumnsVisibleOrNot ()
     {
+    	final boolean isNiwOk = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign();
         final List<AjtColumnInfo<T>> completeListIncludingCommonColumns = new ArrayList<> ();
         if (!this.isForwardingRulesTable())
         {
@@ -466,16 +468,25 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 
         if (!this.isForwardingRulesTable())
         {
-        	completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Tags", "User-defined tags associated to this element", null , e->((NetworkElement)e).getTags() , AGTYPE.NOAGGREGATION , null));
-        	
+    		if (isNiwOk)
+    			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Tags", "User-defined tags associated to this element", null , e->((NetworkElement)e).getTags().stream().filter(ee->!ee.startsWith(WAbstractNetworkElement.NIWNAMEPREFIX)).collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
+    		else
+    			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Tags", "User-defined tags associated to this element", null , e->((NetworkElement)e).getTags().stream().collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
+    			
         	if (isAttributesAreCollapsedInOneColumn())       	
-        		completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Attributes", "User-defined attributes associated to this element", null , e->((NetworkElement)e).getAttributes() , AGTYPE.NOAGGREGATION , null));
+        	{
+        		if (isNiwOk)
+        			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Attributes", "User-defined attributes associated to this element", null , e->((NetworkElement)e).getAttributes().entrySet().stream().filter(ee->!ee.getKey().startsWith(WAbstractNetworkElement.NIWNAMEPREFIX)).collect(Collectors.toMap(ee->ee.getKey(), ee->ee.getValue())) , AGTYPE.NOAGGREGATION , null));
+        		else
+        			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Attributes", "User-defined attributes associated to this element", null , e->((NetworkElement)e).getAttributes() , AGTYPE.NOAGGREGATION , null));
+        	}
         	else
         	{
         		final Set<String> allAttributeKeys = new TreeSet<>();
         		this.getAllAbstractElementsInTable().forEach(e->allAttributeKeys.addAll(((NetworkElement)e).getAttributes().keySet()));
         		for (String attributeKey : allAttributeKeys)
         		{
+        			if (isNiwOk && attributeKey.startsWith(WAbstractNetworkElement.NIWNAMEPREFIX)) continue;
             		completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Att: " + attributeKey, "User-defined attribute '" + attributeKey + "' associated to this element", (e, o) -> 
             		{
             			final String value = (String) o;

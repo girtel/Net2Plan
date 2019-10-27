@@ -6,6 +6,7 @@
 package com.net2plan.niw;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,8 +53,8 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  */
 public class WNet extends WAbstractNetworkElement
 {
-	private static final String ATTNAME_VNFTYPELIST = "VnfTypeListMatrix";
-	private static final String ATTNAME_USERSERVICELIST = "userServiceListMatrix";
+	private static final String ATTNAME_VNFTYPELIST = NIWNAMEPREFIX + "VnfTypeListMatrix";
+	private static final String ATTNAME_USERSERVICELIST = NIWNAMEPREFIX + "userServiceListMatrix";
 
 	/** Creates a WNet object from a NetPlan object. Does not check its consistency as a valid NIW design
 	 * @param np see above
@@ -83,10 +84,6 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public void updateNetPlanObjectInternalState ()
 	{
-		for (WNode n : this.getNodes())
-			if (n.getOpticalSwitchType().isDropAndWaste())
-				n.setWdmIcon(WNet.class.getResource("/resources/gui/figs/OADM_DW.png"), 1.0);
-		
 		/* Updates the NetPlan object in the carried traffic of lighptaths */
 		for (WLightpathRequest lpr : this.getLightpathRequests())
 		{

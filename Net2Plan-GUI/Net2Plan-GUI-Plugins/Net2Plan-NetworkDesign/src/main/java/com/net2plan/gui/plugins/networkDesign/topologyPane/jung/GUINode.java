@@ -124,8 +124,11 @@ public class GUINode
     public Icon getIcon()
     {
         URL url = npNode.getUrlNodeIcon(layer);
+//        System.out.println("Node: " + this.getAssociatedNode() + " url1 " + url);
         if (url == null) url = layer.getDefaultNodeIconURL();
+//        System.out.println("Node: " + this.getAssociatedNode() + " url2 " + url);
         if (url == null) url = VisualizationConstants.DEFAULT_LAYERNAME2ICONURLMAP.get(layer.getName());
+//        System.out.println("Node: " + this.getAssociatedNode() + " url3 " + url);
         final int height = layer.isDefaultLayer() ? (int) (iconHeightIfNotActive * VisualizationConstants.INCREASENODESIZEFACTORACTIVE) : (int) iconHeightIfNotActive;
         final Color borderColor = getBorderPaint() == VisualizationConstants.DEFAULT_GUINODE_COLOR ? VisualizationConstants.TRANSPARENTCOLOR : (Color) getBorderPaint();
         final Icon icon = VisualizationState.getIcon(url, height, borderColor).getFirst();

@@ -31,7 +31,7 @@ import com.net2plan.utils.Triple;
  */
 public class WIpLink extends WAbstractNetworkElement
 {
-	static final String ATTNAMECOMMONPREFIX = "IpLink_";
+	static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "IpLink_";
 	static final String ATTNAMESUFFIX_NOMINALCAPACITYGBPS = "nominalCapacityGbps";
 
 	final private Link npLink;

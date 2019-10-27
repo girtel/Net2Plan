@@ -23,6 +23,8 @@ import com.net2plan.niw.WNetConstants.WTYPE;
  */
 public abstract class WAbstractNetworkElement implements Comparable<WAbstractNetworkElement>
 {
+	public static final String NIWNAMEPREFIX = "$$$";
+
 	/**
 	 * The Net2Plan object associated to this library object
 	 */

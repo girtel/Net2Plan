@@ -23,7 +23,7 @@ import com.net2plan.niw.WNetConstants.WTYPE;
  */
 public class WLightpath extends WAbstractNetworkElement
 {
-	private static final String ATTNAMECOMMONPREFIX = "UnregLp_";
+	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Lp_";
 	private static final String ATTNAMESUFFIX_OCCUPIEDSLOTIDS = "occupiedSlotIds";
 	private static final String ATTNAMESUFFIX_MODULATIONID = "modulationId";
 	private static final String ATTNAMESUFFIX_ADDTRANSPONDERINJECTIONPOWER_DBM = "addTransponderInjectionPower_dBm";

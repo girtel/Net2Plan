@@ -26,7 +26,6 @@ import com.net2plan.niw.WNetConstants.WTYPE;
  */
 public class WSharedRiskGroup extends WAbstractNetworkElement
 {
-	static String ATTRIBUTE_CURRENTEXPANSIONFACTOR = "ATTRIBUTE_CURRENTEXPANSIONFACTOR";
 	WSharedRiskGroup(SharedRiskGroup r) 
 	{ 
 		super (r, Optional.empty()); 

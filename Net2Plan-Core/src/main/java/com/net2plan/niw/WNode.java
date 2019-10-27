@@ -84,7 +84,7 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	
-	private static final String ATTNAMECOMMONPREFIX = "Node_";
+	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Node_";
 	private static final String ATTNAMESUFFIX_TYPE = "type";
 	private static final String ATTNAMESUFFIX_ISCONNECTEDTOCORE = "isConnectedToNetworkCore";
 	private static final String RESOURCETYPE_CPU = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "CPU";
@@ -783,16 +783,17 @@ public class WNode extends WAbstractNetworkElement
 	{
 		try
 		{
-			return OPTICALSWITCHTYPE.valueOf(this.getNe().getAttribute(ATTNAME_OPTICALSWITCHTYPE, null));
+			return OPTICALSWITCHTYPE.valueOf(this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, OPTICALSWITCHTYPE.getDefault().name()));
 		} catch (Exception exc) 
 		{
+			exc.printStackTrace();
 			return OPTICALSWITCHTYPE.getDefault();
 		}
 	}
 	
 	public void setOpticalSwitchType (OPTICALSWITCHTYPE type)
 	{
-		getNe().setAttribute(ATTNAME_OPTICALSWITCHTYPE, type.name());
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, type.name());
 	}
 	
 	@Override

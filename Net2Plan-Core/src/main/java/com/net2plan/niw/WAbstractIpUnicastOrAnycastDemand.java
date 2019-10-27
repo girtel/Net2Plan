@@ -23,7 +23,7 @@ import com.net2plan.utils.Pair;
  */
 public abstract class WAbstractIpUnicastOrAnycastDemand extends WAbstractNetworkElement
 {
-	private static final String ATTNAMECOMMONPREFIX = "WAbstractIpUnicastOrAnycastDemand_";
+	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "WAbstractIpUnicastOrAnycastDemand_";
 	private static final String ATTNAMESUFFIX_TIMESLOTANDINTENSITYINGBPS = "timeSlotAndInitialInjectionIntensityInGbps";
 	private static final String ATTNAMESUFFIX_ISUPSTREAM = "isUpstream";
 

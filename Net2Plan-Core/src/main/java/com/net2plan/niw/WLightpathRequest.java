@@ -21,7 +21,7 @@ import com.net2plan.niw.WNetConstants.WTYPE;
  */
 public class WLightpathRequest extends WAbstractNetworkElement
 {
-	private static final String ATTNAMECOMMONPREFIX = "LightpathRequest_";
+	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "LightpathRequest_";
 	private static final String ATTNAMESUFFIX_ISTOBE11PROTECTED = "isToBe11Protected";
 
 	

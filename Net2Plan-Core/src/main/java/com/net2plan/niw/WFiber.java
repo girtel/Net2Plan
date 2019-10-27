@@ -35,7 +35,7 @@ import com.net2plan.utils.Pair;
  */
 public class WFiber extends WAbstractNetworkElement
 {
-	private static final String ATTNAMECOMMONPREFIX = "Fiber_";
+	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Fiber_";
 	private static final String ATTNAMESUFFIX_ATTENUATIONCOEFFICIENTDBPERKM = "FiberAttenuationCoefficient_dbPerKm";
 	private static final String ATTNAMESUFFIX_FIBERLINKDESIGNVALUEPMD_PSPERSQRKM = "FiberPmdCoef_psPerSqrKm";
 	private static final String ATTNAMESUFFIX_FIBERCHROMATICDISPCOEFF_PSPERNMKM = "FiberCdCoef_psPerNmKm";

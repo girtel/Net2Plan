@@ -22,6 +22,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -65,6 +66,7 @@ import com.net2plan.gui.plugins.networkDesign.viewReportsPane.ViewReportPane;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager.PickStateInfo;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.UndoRedoManager;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationConstants;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
 import com.net2plan.gui.plugins.networkDesign.whatIfAnalysisPane.WhatIfAnalysisPane;
 import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
@@ -82,6 +84,7 @@ import com.net2plan.internal.sim.SimCore.SimState;
 import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.Triple;
@@ -455,6 +458,9 @@ public class GUINetworkDesign extends IGUIModule
     		final OpticalSimulationModule osi = new OpticalSimulationModule (wNet);
     		osi.updateAllPerformanceInfo();
     		this.niwInformationCurrentDesign = Optional.of(Quadruple.of(true, wNet , osm , osi));
+    		for (WNode n : wNet.getNodes())
+    			if (n.getOpticalSwitchType().isDropAndWaste())
+    				n.setWdmIcon(VisualizationConstants.FILTERLESS_ICON_URL, 1.0);
     	}
     	else this.niwInformationCurrentDesign = Optional.of(Quadruple.of(false, null , null , null));
     	return this.niwInformationCurrentDesign.get(); 

@@ -29,7 +29,7 @@ import com.net2plan.utils.Pair;
  */
 public class WServiceChain extends WAbstractNetworkElement
 {
-	static String ATTRIBUTE_CURRENTEXPANSIONFACTOR = "ATTRIBUTE_CURRENTEXPANSIONFACTOR";
+	static String ATTRIBUTE_CURRENTEXPANSIONFACTOR = NIWNAMEPREFIX + "ATTRIBUTE_CURRENTEXPANSIONFACTOR";
 	WServiceChain(Route r) 
 	{ 
 		super (r, Optional.empty()); 
