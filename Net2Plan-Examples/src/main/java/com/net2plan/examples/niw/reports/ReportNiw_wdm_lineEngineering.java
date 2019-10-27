@@ -166,10 +166,10 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			for (int contOla = 0; contOla < e.getNumberOfOpticalLineAmplifiersTraversed() ; contOla ++)
 			{
 				final double distKm = e.getAmplifierPositionsKmFromOrigin_km().get(contOla);
-				final double powerAtInput_dBm = osim.getTotalPowerAtAmplifierInput_dBm(e, contOla);
+				final double powerAtOutput_dBm = osim.getTotalPowerAtAmplifierOutput_dBm(e, contOla);
 				final double gain_dB = e.getOlaGains_dB().get(contOla);
-				if (powerAtInput_dBm < e.getOlaMinAcceptableInputPower_dBm().get(contOla) || powerAtInput_dBm > e.getOlaMaxAcceptableInputPower_dBm().get(contOla))
-					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Power at the input is " + df_2.format(powerAtInput_dBm) + " dBm. It should be between [" + df_2.format(e.getOlaMinAcceptableInputPower_dBm().get(contOla)) + ", " + df_2.format(e.getOlaMaxAcceptableInputPower_dBm().get(contOla)) + "] dBm</p>");
+				if (powerAtOutput_dBm < e.getOlaMinAcceptableOutputPower_dBm().get(contOla) || powerAtOutput_dBm > e.getOlaMaxAcceptableOutputPower_dBm().get(contOla))
+					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Power at the output is " + df_2.format(powerAtOutput_dBm) + " dBm. It should be between [" + df_2.format(e.getOlaMinAcceptableOutputPower_dBm().get(contOla)) + ", " + df_2.format(e.getOlaMaxAcceptableOutputPower_dBm().get(contOla)) + "] dBm</p>");
 				if (gain_dB < e.getOlaMinAcceptableGains_dB().get(contOla) || gain_dB > e.getOlaMaxAcceptableGains_dB().get(contOla))
 					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Gain is " + df_2.format(gain_dB) + " dB. It should be between [" + df_2.format(e.getOlaMinAcceptableGains_dB().get(contOla)) + ", " + df_2.format(e.getOlaMaxAcceptableGains_dB().get(contOla)) + "] dBm</p>");
 			}

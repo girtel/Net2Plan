@@ -170,10 +170,11 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			for (int contOla = 0; contOla < e.getNumberOfOpticalLineAmplifiersTraversed() ; contOla ++)
 			{
 				final double distKm = e.getAmplifierPositionsKmFromOrigin_km().get(contOla);
-				final double powerAtInput_dBm = osim.getTotalPowerAtAmplifierInput_dBm(e, contOla);
 				final double gain_dB = e.getOlaGains_dB().get(contOla);
-				if (powerAtInput_dBm < e.getOlaMinAcceptableInputPower_dBm().get(contOla) || powerAtInput_dBm > e.getOlaMaxAcceptableInputPower_dBm().get(contOla))
-					st.append("<p>EDFA-" + contOla + " ("+ df.apply(distKm) + " km)" + ": Power at the input is " + df.apply(powerAtInput_dBm) + " dBm. It should be between [" + df.apply(e.getOlaMinAcceptableInputPower_dBm().get(contOla)) + ", " + df.apply(e.getOlaMaxAcceptableInputPower_dBm().get(contOla)) + "] dBm</p>");
+				final double powerAtOutput_dBm = osim.getTotalPowerAtAmplifierOutput_dBm(e, contOla);
+				
+				if (powerAtOutput_dBm < e.getOlaMinAcceptableOutputPower_dBm().get(contOla) || powerAtOutput_dBm > e.getOlaMaxAcceptableOutputPower_dBm().get(contOla))
+					st.append("<p>EDFA-" + contOla + " ("+ df.apply(distKm) + " km)" + ": Power at the output is " + df.apply(powerAtOutput_dBm) + " dBm. It should be between [" + df.apply(e.getOlaMinAcceptableOutputPower_dBm().get(contOla)) + ", " + df.apply(e.getOlaMaxAcceptableOutputPower_dBm().get(contOla)) + "] dBm</p>");
 				if (gain_dB < e.getOlaMinAcceptableGains_dB().get(contOla) || gain_dB > e.getOlaMaxAcceptableGains_dB().get(contOla))
 					st.append("<p>EDFA-" + contOla + " ("+ df.apply(distKm) + " km)" + ": Gain is " + df.apply(gain_dB) + " dB. It should be between [" + df.apply(e.getOlaMinAcceptableGains_dB().get(contOla)) + ", " + df.apply(e.getOlaMaxAcceptableGains_dB().get(contOla)) + "] dBm</p>");
 			}
@@ -212,10 +213,10 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			final double cdReceiver_psPernm = osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.CD_PERPERNM);
 			final double osnrReceiver_dB = osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW);
 			final double pmdReceiver_ps = Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.PMDSQUARED_PS2));
-			final boolean ok_powerReceiver = powerReceiver_dBm >= r.getTransponderMinimumTolerableReceptionPower_dBm() && powerReceiver_dBm <= r.getTransponderMinimumTolerableReceptionPower_dBm();
+			final boolean ok_powerReceiver = powerReceiver_dBm >= r.getTransponderMinimumTolerableReceptionPower_dBm() && powerReceiver_dBm <= r.getTransponderMaximumTolerableReceptionPower_dBm();
 			final boolean ok_cdReceiver = Math.abs(cdReceiver_psPernm) <= r.getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm();
 			final boolean ok_osnrReceiver = osnrReceiver_dB >= r.getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB();
-			final boolean ok_pmdReceiver = pmdReceiver_ps >= r.getTransponderMaximumTolerablePmd_ps();
+			final boolean ok_pmdReceiver = pmdReceiver_ps <= r.getTransponderMaximumTolerablePmd_ps();
 			out.append("<td bgcolor=\"" + (ok_powerReceiver?"PaleGreen":"Red") +"\">" + df.apply(powerReceiver_dBm) + "</td>");
 			out.append("<td bgcolor=\"" + (ok_cdReceiver?"PaleGreen":"Red") +"\">" + df.apply(cdReceiver_psPernm) + "</td>");
 			out.append("<td bgcolor=\"" + (ok_osnrReceiver?"PaleGreen":"Red") +"\">" + df.apply(osnrReceiver_dB) + "</td>");
@@ -223,7 +224,7 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 
 			final StringBuffer st = new StringBuffer ();
 			if (!ok_powerReceiver)
-				st.append("<p>Rx power is " + df.apply(powerReceiver_dBm) + " dBm. It should be between [" + df.apply(r.getTransponderMinimumTolerableReceptionPower_dBm()) + ", " + df.apply(r.getTransponderMinimumTolerableReceptionPower_dBm()) + "] dBm</p>");
+				st.append("<p>Rx power is " + df.apply(powerReceiver_dBm) + " dBm. It should be between [" + df.apply(r.getTransponderMinimumTolerableReceptionPower_dBm()) + ", " + df.apply(r.getTransponderMaximumTolerableReceptionPower_dBm()) + "] dBm</p>");
 			if (!ok_cdReceiver)
 				st.append("<p>Rx CD is " + df.apply(cdReceiver_psPernm) + " ps/nm. Absolute value should be below " + df.apply(r.getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm())+ "</p>");
 			if (!ok_osnrReceiver)

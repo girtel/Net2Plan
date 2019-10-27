@@ -43,8 +43,8 @@ public class WFiber extends WAbstractNetworkElement
 	private static final String ATTNAMESUFFIX_AMPLIFIERGAINS_DB = "AmplifierGains_dB";
 	private static final String ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB = "AmplifierMinGains_dB";
 	private static final String ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB = "AmplifierMaxGains_dB";
-	private static final String ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM = "AmplifierMinInputPower_dBm";
-	private static final String ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM = "AmplifierMaxInputPower_dBm";
+	private static final String ATTNAMESUFFIX_AMPLIFIERMINOUTPUTPOWER_DBM = "AmplifierMinOutputPower_dBm";
+	private static final String ATTNAMESUFFIX_AMPLIFIERMAXOUTPUTPOWER_DBM = "AmplifierMaxOutputPower_dBm";
 	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_NOISEFIGUREDB = "aSideBoosterAmplifierNoiseFigure_db";
 	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_GAINDB = "aSideBoosterAmplifierGain_db";
 	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_PMD_PS = "aSideBoosterAmplifierPmd_ps";
@@ -254,7 +254,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getOlaMinAcceptableGains_dB()
 	{
-		return getList(ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMINGAIN_DB.get(0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB, WNetConstants.WFIBER_DEFAULT_OLAMINGAIN_DB.get(0));
 	}
 	/**
 	 * Get maximum possible gain of the amplifiers traversed, in the same order as they are traversed. Defaults to 30 dB
@@ -262,23 +262,23 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getOlaMaxAcceptableGains_dB()
 	{
-		return getList(ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMAXGAIN_DB.get(0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, WNetConstants.WFIBER_DEFAULT_OLAMAXGAIN_DB.get(0));
 	}
 	/**
-	 * Get minimum possible total input power of the amplifiers traversed, in the same order as they are traversed. Defaults to -30 dBm
+	 * Get minimum possible total output power of the amplifiers traversed, in the same order as they are traversed. Defaults to -30 dBm
 	 * @return see above
 	 */
-	public List<Double> getOlaMinAcceptableInputPower_dBm()
+	public List<Double> getOlaMinAcceptableOutputPower_dBm()
 	{
-		return getList(ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMININPUTPOWER_DBM.get(0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERMINOUTPUTPOWER_DBM, WNetConstants.WFIBER_DEFAULT_OLAMINOUTPUTPOWER_DBM.get(0));
 	}
 	/**
-	 * Get maximum possible total input power of the amplifiers traversed, in the same order as they are traversed. Defaults to 10 dBm
+	 * Get maximum possible total output power of the amplifiers traversed, in the same order as they are traversed. Defaults to 10 dBm
 	 * @return see above
 	 */
-	public List<Double> getOlaMaxAcceptableInputPower_dBm()
+	public List<Double> getOlaMaxAcceptableOutputPower_dBm()
 	{
-		return getList(ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERMAXINPUTPOWER_DBM.get(0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERMAXOUTPUTPOWER_DBM, WNetConstants.WFIBER_DEFAULT_OLAMAXOUTPUTPOWER_DBM.get(0));
 	}
 
 	/**
@@ -287,7 +287,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getOlaGains_dB()
 	{
-		return getList(ATTNAMESUFFIX_AMPLIFIERGAINS_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB.get(0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERGAINS_DB, WNetConstants.WFIBER_DEFAULT_OLAGAIN_DB.get(0));
 	}
 
 	/**
@@ -296,7 +296,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getOlaPmd_ps()
 	{
-		return getList(ATTNAMESUFFIX_AMPLIFIERPMD_PS, WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS.get(0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERPMD_PS, WNetConstants.WFIBER_DEFAULT_OLAPMD_PS.get(0));
 	}
 
 	/**
@@ -305,7 +305,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getOlaCdCompensation_psPerNm ()
 	{
-		return getList(ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, WNetConstants.WFIBER_DEFAULT_AMPLIFIERCDCOMPENSATION.get(0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, WNetConstants.WFIBER_DEFAULT_OLACDCOMPENSATION.get(0));
 	}
 
 
@@ -315,7 +315,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public List<Double> getOlaNoiseFactor_dB()
 	{
-		return getList(ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB, WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB.get(0));
+		return getList(ATTNAMESUFFIX_AMPLIFIERNOISEFACTOR_DB, WNetConstants.WFIBER_DEFAULT_OLANOISEFACTOR_DB.get(0));
 	}
 
 	/**
@@ -360,8 +360,8 @@ public class WFiber extends WAbstractNetworkElement
 		if (cdCompensation_psPerNm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERCDCOMPENSARION_PSPERNM, (List<Number>) (List<?>) cdCompensation_psPerNm);
 		if (minimumGain_dB != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMINGAINS_DB, (List<Number>) (List<?>) minimumGain_dB);
 		if (maximumGain_dB != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXGAINS_DB, (List<Number>) (List<?>) maximumGain_dB);
-		if (minimumInputPower_dBm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMININPUTPOWER_DBM, (List<Number>) (List<?>) minimumInputPower_dBm);
-		if (maximumInputPower_dBm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXINPUTPOWER_DBM, (List<Number>) (List<?>) maximumInputPower_dBm);
+		if (minimumInputPower_dBm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMINOUTPUTPOWER_DBM, (List<Number>) (List<?>) minimumInputPower_dBm);
+		if (maximumInputPower_dBm != null) getNe().setAttributeAsNumberList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_AMPLIFIERMAXOUTPUTPOWER_DBM, (List<Number>) (List<?>) maximumInputPower_dBm);
 	}
 
 	/**
@@ -688,7 +688,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public boolean isExistingPreamplifierAtDestinationOadm ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_EXISTSPREAMPLIFIER, 0.0) == 0;
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_EXISTSPREAMPLIFIER, 0.0) == 1;
 	}
 
 	/** Indicates if a booster-amplifier exists at the OADM at the start of the fiber.
@@ -696,7 +696,7 @@ public class WFiber extends WAbstractNetworkElement
 	 */
 	public boolean isExistingBoosterAmplifierAtOriginOadm ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_EXISTSBOOSTERAMPLIFIER, 0.0) == 0;
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_EXISTSBOOSTERAMPLIFIER, 0.0) == 1;
 	}
 	/** Sets if exists a pre-amplifier exists at the OADM at the end of the fiber.
 	 * @return see above

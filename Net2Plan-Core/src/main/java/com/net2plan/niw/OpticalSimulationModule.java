@@ -114,7 +114,7 @@ public class OpticalSimulationModule
    					startFiberBeforeBooster_powerLp_dBm = linear2dB(numOpticalSlots * fiber.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * WNetConstants.OPTICALSLOTSIZE_GHZ); 
    				 else
    					startFiberBeforeBooster_powerLp_dBm = lp.getAddTransponderInjectionPower_dBm() - oadm_a.getOadmSwitchFabricAttenuation_dB();
-   				 startFiberAfterBooster_powerLp_dBm = startFiberBeforeBooster_powerLp_dBm + (fiber.isExistingBoosterAmplifierAtOriginOadm()? fiber.getOriginBoosterAmplifierGain_dB().get() : 0.0); 
+   				 startFiberAfterBooster_powerLp_dBm = startFiberBeforeBooster_powerLp_dBm + fiber.getOriginBoosterAmplifierGain_dB().orElse(0.0); 
    				 infoToAdd.put(PERLPINFOMETRICS.POWER_DBM, Pair.of(startFiberAfterBooster_powerLp_dBm, startFiberAfterBooster_powerLp_dBm + totalJustFiberGain_dB - totalJustFiberAttenuation_dB));
    				 infoToAdd.put(PERLPINFOMETRICS.CD_PERPERNM, Pair.of(0.0, totalJustFiberCdBalance_psPerNm));
    				 infoToAdd.put(PERLPINFOMETRICS.PMDSQUARED_PS2, Pair.of(Math.pow (fiber.getOriginBoosterAmplifierPmd_ps().orElse(0.0) , 2), totalJustFiberPmdSquaredBalance_ps2));
@@ -127,7 +127,7 @@ public class OpticalSimulationModule
    					 final double noiseFactor_db = fiber.getOlaNoiseFactor_dB().get(contOla);
    					 final double kmFromStartFiber = fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla);
    					 final double sumGainsTraversedAmplifiers_db = IntStream.range(0, contOla).mapToDouble(olaIndex -> fiber.getOlaGains_dB().get(olaIndex)).sum();
-   					 final double lpPowerAtInputOla_dBm = startFiberBeforeBooster_powerLp_dBm - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiers_db;
+   					 final double lpPowerAtInputOla_dBm = infoToAdd.get(PERLPINFOMETRICS.POWER_DBM).getFirst() - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiers_db;
    					 final double lpCdAtInputOla_perPerNm = infoToAdd.get(PERLPINFOMETRICS.CD_PERPERNM).getFirst() + fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) * fiber.getChromaticDispersionCoeff_psPerNmKm() + IntStream.range(0, contOla).mapToDouble(ee->fiber.getOlaCdCompensation_psPerNm().get(ee)).sum();
    					 final double lpPmdSquaredAtInputOla_perPerNm = infoToAdd.get(PERLPINFOMETRICS.PMDSQUARED_PS2).getFirst() + fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) * Math.pow(fiber.getPmdLinkDesignValueCoeff_psPerSqrtKm(),2) + IntStream.range(0, contOla).mapToDouble(ee->Math.pow(fiber.getOlaPmd_ps().get(ee) , 2)).sum();
    					 final double lpOsnrAtInputOla_dB = osnrInDbUnitsAccummulation_dB (osnrAddedEachEdfa_db);
@@ -237,9 +237,9 @@ public class OpticalSimulationModule
 			 for (int contOla = 0; contOla < fiber.getOlaGains_dB().size() ; contOla ++)
 			 {
 				 final double kmFromStartFiber = fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla);
-				 final double sumGainsTraversedAmplifiers_db = IntStream.range(0, contOla).mapToDouble(olaIndex -> fiber.getOlaGains_dB().get(olaIndex)).sum();
-				 final double powerAtOutputThisOla_dBm = powerAtStart_dBm - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiers_db;
-				 final double powerAtInputThisOla_dBm = powerAtOutputThisOla_dBm - fiber.getOlaGains_dB().get(contOla);
+				 final double sumGainsTraversedAmplifiersBeforeThisOla_db = IntStream.range(0, contOla).mapToDouble(olaIndex -> fiber.getOlaGains_dB().get(olaIndex)).sum();
+				 final double powerAtInputThisOla_dBm = powerAtStart_dBm - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiersBeforeThisOla_db;
+				 final double powerAtOutputThisOla_dBm = powerAtInputThisOla_dBm + fiber.getOlaGains_dB().get(contOla);
 				 powerInputOla_dBm.add(powerAtInputThisOla_dBm);
 				 powerOutputOla_dBm.add(powerAtOutputThisOla_dBm);
 			 }
@@ -314,13 +314,13 @@ public class OpticalSimulationModule
     
     public boolean isOkOpticalPowerAtAmplifierInputAllOlas (WFiber e)
     {
-		final List<Double> minInputPowerDbm = e.getOlaMinAcceptableInputPower_dBm();
-		final List<Double> maxInputPowerDbm = e.getOlaMaxAcceptableInputPower_dBm();
-		for (int cont = 0; cont < minInputPowerDbm.size() ; cont ++)
+		final List<Double> minOutputPowerDbm = e.getOlaMinAcceptableOutputPower_dBm();
+		final List<Double> maxOutputPowerDbm = e.getOlaMaxAcceptableOutputPower_dBm();
+		for (int cont = 0; cont < minOutputPowerDbm.size() ; cont ++)
 		{
-			final double inputPowerDbm = this.getTotalPowerAtAmplifierInput_dBm(e, cont);
-			if (inputPowerDbm < minInputPowerDbm.get(cont)) return false;
-			if (inputPowerDbm > maxInputPowerDbm.get(cont)) return false;
+			final double outputPowerDbm = this.getTotalPowerAtAmplifierOutput_dBm(e, cont);
+			if (outputPowerDbm < minOutputPowerDbm.get(cont)) return false;
+			if (outputPowerDbm > maxOutputPowerDbm.get(cont)) return false;
 		}
 		return true;
     }
