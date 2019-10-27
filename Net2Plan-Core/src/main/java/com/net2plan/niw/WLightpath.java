@@ -66,8 +66,34 @@ public class WLightpath extends WAbstractNetworkElement
 	 */
 	public void setModulationId (String modulationId) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_MODULATIONID, modulationId); }
 	
+	/** Returns the central frequency of this lightpath in THz
+	 * @return see above
+	 */
+	public double getCentralFrequencyThz ()
+	{
+		final double centralSlot = (getOpticalSlotIds().first() + getOpticalSlotIds().last())/2.0;
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+	}
 	
-//	private static final String ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS = "receiverMaximumPmd_ps";
+	/** Returns the lowest frequency of this lightpath in THz
+	 * @return see above
+	 */
+	public double getLowestFrequencyThz ()
+	{
+		final double centralSlot = getOpticalSlotIds().first() - WNetConstants.OPTICALSLOTSIZE_GHZ *0.5;
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+	}
+	
+	/** Returns the highest frequency of this lightpath in THz
+	 * @return see above
+	 */
+	public double getHighestFrequencyThz ()
+	{
+		final double centralSlot = getOpticalSlotIds().last() + WNetConstants.OPTICALSLOTSIZE_GHZ *0.5;
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+	}
+
+	//	private static final String ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS = "receiverMaximumPmd_ps";
 //	private static final String ATTNAMESUFFIX_RECEIVERMINIMUMOSNR_DB = "receiverMinimumOsnr_dB";
 
 

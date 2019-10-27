@@ -68,7 +68,9 @@ public class WNetConstants
 	public static final double WFIBER_DEFAULT_BOOSTER_NF_DB = 6.0;
 	public static final double WFIBER_DEFAULT_PREAMPLIFIER_NF_DB = 6.0;
 	public static final double WFIBER_DEFAULT_BOOSTER_PMD_PS = 0.5;
+	public static final double WFIBER_DEFAULT_BOOSTER_CD_PSPERNM = 0.0;
 	public static final double WFIBER_DEFAULT_PREAMPLIFIER_PMD_PS = 0.5;
+	public static final double WFIBER_DEFAULT_PREAMPLIFIER_CD_PSPERNM = 0.0;
 	public static final double WFIBER_DEFAULT_PREBOOSTER_OUTPUTEQUALIZATION_MWPERGHZ = OpticalSimulationModule.dB2linear(WLIGHTPATH_DEFAULT_TRANSPONDERADDINJECTIONPOWER_DBM - WNODE_DEFAULT_OPTICALSWITCHFABRIC_ATTENUATION_DB) / 50.0; // equalize add and express channels make it equal to ADD channel power at booster input
 
 	static final double WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC = 200000;

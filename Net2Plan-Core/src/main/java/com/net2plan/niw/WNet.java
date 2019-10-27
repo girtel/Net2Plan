@@ -416,6 +416,7 @@ public class WNet extends WAbstractNetworkElement
 	{
 		if (!isWithWdmLayer ()) throw new Net2PlanException ("WDM layer does not exist");
 		checkInThisWNet(a, b);
+		if (validOpticalSlotRanges == null) validOpticalSlotRanges = WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES;
 		if (lengthInKm < 0) lengthInKm = getNetPlan().getNodePairHaversineDistanceInKm(a.getNe(), b.getNe());
 		final SortedSet<Integer> opticalSlots = WFiber.computeValidOpticalSlotIds(validOpticalSlotRanges);
 		if (isBidirectional)

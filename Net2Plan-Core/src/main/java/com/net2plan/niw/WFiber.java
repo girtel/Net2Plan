@@ -48,9 +48,12 @@ public class WFiber extends WAbstractNetworkElement
 	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_NOISEFIGUREDB = "aSideBoosterAmplifierNoiseFigure_db";
 	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_GAINDB = "aSideBoosterAmplifierGain_db";
 	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_PMD_PS = "aSideBoosterAmplifierPmd_ps";
+	private static final String ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_CD_PSPERNM = "aSideBoosterAmplifierCd_psPerNm";
+	
 	private static final String ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_NOISEFIGUREDB = "bSidePreAmplifierNoiseFigure_db";
 	private static final String ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_GAINDB = "bSidePreAmplifierGain_db";
 	private static final String ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_PMD_PS = "bSidePreAmplifierPmd_ps";
+	private static final String ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_CD_PSPERNM = "bSidePreAmplifierCd_psPerNm";
 	private static final String ATTNAMESUFFIX_ASIDE_EXISTSBOOSTERAMPLIFIER = "aSideExistsBoosterAmplifier";
 	private static final String ATTNAMESUFFIX_BSIDE_EXISTSPREAMPLIFIER = "bSideExistsPreAmplifier";
 	private static final String ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED = "isOutputSpectrumEqualized";
@@ -668,12 +671,43 @@ public class WFiber extends WAbstractNetworkElement
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_GAINDB, gain_dB);
 	}
+	/** Sets the CD compensattion added of the destination amplifier at fiber end, in ps per nm. 
+	 * @return see above
+	 */
+	public void setDestinationPreAmplifierCdCompensation_psPerNm (double cd_psPerNm)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_CD_PSPERNM, cd_psPerNm);
+	}
+	/** Gets the CD compensattion added of the preamplifier at fiber end, in ps per nm. 
+	 * @return see above
+	 */
+	public Optional<Double> getDestinationPreAmplifierCdCompensation_psPerNm ()
+	{
+		if (!isExistingPreamplifierAtDestinationOadm()) return Optional.empty();
+		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_CD_PSPERNM, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_CD_PSPERNM));
+	}
+
 	/** Sets the PMD added of the booster amplifier at fiber origin end, in ps. 
 	 * @return see above
 	 */
 	public void setOriginBoosterAmplifierPmd_ps (double pmd_ps)
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_PMD_PS, pmd_ps);
+	}
+	/** Sets the CD compensattion added of the booster amplifier at fiber origin end, in ps per nm. 
+	 * @return see above
+	 */
+	public void setOriginBoosterAmplifierCdCompensation_psPerNm (double cd_psPerNm)
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_CD_PSPERNM, cd_psPerNm);
+	}
+	/** Gets the CD compensattion added of the booster amplifier at fiber origin end, in ps per nm. 
+	 * @return see above
+	 */
+	public Optional<Double> getOriginBoosterAmplifierCdCompensation_psPerNm ()
+	{
+		if (!isExistingBoosterAmplifierAtOriginOadm()) return Optional.empty();
+		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_CD_PSPERNM, WNetConstants.WFIBER_DEFAULT_BOOSTER_CD_PSPERNM));
 	}
 	/** Sets the PMD added of the pre-amplifier at the end of the fiber, in ps. 
 	 * @return see above

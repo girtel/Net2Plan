@@ -11,13 +11,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import org.apache.xmlbeans.impl.tool.XSTCTester.TestCase;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.net2plan.niw.OpticalSimulationModule;
+import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
 import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WIpLink;
@@ -25,7 +26,6 @@ import com.net2plan.niw.WIpUnicastDemand;
 import com.net2plan.niw.WLightpath;
 import com.net2plan.niw.WLightpathRequest;
 import com.net2plan.niw.WNet;
-import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNode;
 import com.net2plan.niw.WServiceChain;
 import com.net2plan.niw.WServiceChainRequest;
@@ -289,5 +289,94 @@ public class NiwModelTest extends TestCase
 		return wNet;
 	}
 
+	
+	@Test
+	public void opticalSignalTests () 
+	{
+		final WNet net = WNet.createEmptyDesign(false, true);
+		final WNode a = net.addNode(0, 0, "A", "");
+		final WNode b = net.addNode(0, 0, "B", "");
+		final WNode c = net.addNode(0, 0, "C", "");
+		final WFiber ab = net.addFiber(a, b, null, 160.0, false).getFirst();
+		final WFiber bc = net.addFiber(b, c, null, 160.0, false).getFirst();
+		final List<WFiber> fibers = Arrays.asList(ab , bc);
+		final List<WNode> nodes = Arrays.asList(a , b , c);
+		nodes.forEach(e->e.setOadmSwitchFabricAttenuation_dB(6.0));
+		nodes.forEach(e->e.setOadmSwitchFabricPmd_ps(0.5));
+		fibers.forEach(e->e.setAttenuationCoefficient_dbPerKm(0.25));
+		fibers.forEach(e->e.setChromaticDispersionCoeff_psPerNmKm(15.0));
+		fibers.forEach(e->e.setPmdLinkDesignValueCoeff_psPerSqrtKm(0.5));
+		fibers.forEach(e->e.setIsExistingBoosterAmplifierAtOriginOadm(true));
+		fibers.forEach(e->e.setIsExistingPreamplifierAtDestinationOadm(true));
+		fibers.forEach(e->e.setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz(Optional.empty()));
+		fibers.forEach(e->e.setOriginBoosterAmplifierGain_dB(6.0));
+		fibers.forEach(e->e.setDestinationPreAmplifierGain_dB(20.0));
+		fibers.forEach(e->e.setOriginBoosterAmplifierNoiseFactor_dB(6.0));
+		fibers.forEach(e->e.setDestinationPreAmplifierNoiseFactor_dB(6.0));
+		fibers.forEach(e->e.setOriginBoosterAmplifierCdCompensation_psPerNm(-10.0));
+		fibers.forEach(e->e.setDestinationPreAmplifierCdCompensation_psPerNm(-10.0));
+		fibers.forEach(e->e.setOriginBoosterAmplifierPmd_ps(0.5));
+		fibers.forEach(e->e.setDestinationPreAmplifierPmd_ps(0.5));
+		final double olasPmd_ps = 0.5;
+		final double olasCdCompensation_psPerNm = -100.0;
+		fibers.forEach(e->e.setOlaTraversedInfo(Arrays.asList (80.0), Arrays.asList (20.0), Arrays.asList (6.0), Arrays.asList(olasPmd_ps), Arrays.asList(olasCdCompensation_psPerNm), null, null, null, null));
+		for (int cont = 0 ; cont < 10 ; cont ++)
+		{
+			final WLightpathRequest lpr = net.addLightpathRequest(a, c, 100.0, false);
+			final int s0 = cont * 4;
+			lpr.addLightpathUnregenerated(Arrays.asList(ab , bc), new TreeSet<> (Arrays.asList(s0 , s0+1 , s0+2 , s0+3)), false);
+		}
+		final List<WLightpath> lps = net.getLightpaths();
+		lps.forEach(e->e.setAddTransponderInjectionPower_dBm(0.0));
+		final OpticalSimulationModule osm = new OpticalSimulationModule (net).updateAllPerformanceInfo();
+		for (WLightpath lp : lps)
+		{
+			assertEquals (lp.getAddTransponderInjectionPower_dBm() ,  0.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(ab, lp).get(PERLPINFOMETRICS.POWER_DBM).getFirst() ,  0.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(ab, lp).get(PERLPINFOMETRICS.POWER_DBM).getSecond() ,  -20.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(bc, lp).get(PERLPINFOMETRICS.POWER_DBM).getFirst() ,  0.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(bc, lp).get(PERLPINFOMETRICS.POWER_DBM).getSecond() ,  -20.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).get(PERLPINFOMETRICS.POWER_DBM) ,  -6.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, ab, 0).get(PERLPINFOMETRICS.POWER_DBM).getFirst() ,  -20.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, ab, 0).get(PERLPINFOMETRICS.POWER_DBM).getSecond() ,  0.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, bc, 0).get(PERLPINFOMETRICS.POWER_DBM).getFirst() ,  -20.0 , 1e-3);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, bc, 0).get(PERLPINFOMETRICS.POWER_DBM).getSecond() ,  0.0 , 1e-3);
+		}
+		for (WFiber e : net.getFibers())
+		{
+			assertEquals (osm.getTotalPowerAtAmplifierInput_dBm(e, 0) , -10.0 , 1e-3);
+			assertEquals (osm.getTotalPowerAtAmplifierOutput_dBm(e, 0) , 10.0 , 1e-3);
+			assertEquals (osm.getTotalPowerAtFiberEnds_dBm(e).getFirst() , 10.0 , 1e-3);
+			assertEquals (osm.getTotalPowerAtFiberEnds_dBm(e).getSecond() , -10.0 , 1e-3);
+		}
+		
+		for (WLightpath lp : net.getLightpaths())
+		{
+			final double noisePartAll_linear = OpticalSimulationModule.dB2linear(6.0) * OpticalSimulationModule.constant_h * lp.getCentralFrequencyThz() * 1e12 * 12.5e9;
+			final double powerPartBoosters_linear = OpticalSimulationModule.dB2linear(-6.0) / 1000.0;
+			final double powerPartOlasAndPreampl_linear = OpticalSimulationModule.dB2linear(-20.0) / 1000.0;
+			final double osnrTotal_linear = 1.0 / (2*(noisePartAll_linear / powerPartBoosters_linear) + 3*(noisePartAll_linear / powerPartOlasAndPreampl_linear));
+			final double osnrTotal_dB = OpticalSimulationModule.linear2dB(osnrTotal_linear);
+			assertEquals (osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW) , osnrTotal_dB , 1e-3);
+			
+			final double totalLengthKm = ab.getLengthInKm() + bc.getLengthInKm();
+			final double pmdSquare = Math.pow(0.5, 2) * totalLengthKm + // fiber 
+					3 * Math.pow(0.5, 2) + // optical switches 
+					2 * Math.pow(0.5, 2) + // OLAs 
+					2 * Math.pow(0.5, 2) + // booster
+					2 * Math.pow(0.5, 2); // pre-amplifiers
+			assertEquals (pmdSquare , osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).get(PERLPINFOMETRICS.PMDSQUARED_PS2) , 1e-3);
+
+			final double cdEnd = ab.getChromaticDispersionCoeff_psPerNmKm() * totalLengthKm + // fiber 
+					2 * olasCdCompensation_psPerNm + // OLAs 
+					2 * (-10.0) + // booster
+					2 * (-10.0); // pre-amplifiers
+			assertEquals (cdEnd , osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).get(PERLPINFOMETRICS.CD_PERPERNM) , 1e-3);
+
+			
+		}
+
+	}
+	
 		
 }
