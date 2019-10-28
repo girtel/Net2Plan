@@ -172,6 +172,12 @@ public class Route extends NetworkElement
      */
     public void setBidirectionalPair(Route r)
     {
+		if (r == null)
+		{
+			if (bidirectionalPair != null) { this.bidirectionalPair.bidirectionalPair = null; this.bidirectionalPair = null; }
+			return;
+		}
+
         checkAttachedToNetPlanObject();
         r.checkAttachedToNetPlanObject(this.netPlan);
         if (r.layer != this.layer) throw new Net2PlanException ("Wrong layer");

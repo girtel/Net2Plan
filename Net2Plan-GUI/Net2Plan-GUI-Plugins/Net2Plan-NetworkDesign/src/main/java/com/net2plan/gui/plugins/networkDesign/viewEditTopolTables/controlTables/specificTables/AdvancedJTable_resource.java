@@ -58,7 +58,7 @@ public class AdvancedJTable_resource extends AdvancedJTable_networkElement<Resou
 
     public AdvancedJTable_resource(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.RESOURCES , layerThisTable , true , r->!r.iAttachedToANode()? null : (r.getHostNode().get().isDown()? Color.RED : null));
+        super(callback, AJTableType.RESOURCES , null, layerThisTable , true , r->!r.iAttachedToANode()? null : (r.getHostNode().get().isDown()? Color.RED : null));
     }
 
     @Override

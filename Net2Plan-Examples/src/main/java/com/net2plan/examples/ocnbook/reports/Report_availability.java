@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.MulticastDemand;
@@ -37,7 +38,6 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.interfaces.simulation.IEventProcessor;
 import com.net2plan.interfaces.simulation.SimEvent;
@@ -64,7 +64,8 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  */
 public class Report_availability implements IReport
 {
-	private InputParameter provisioningAlgorithm = new InputParameter ("provisioningAlgorithm" , "#eventProcessor#" , "Algorithm to process failure events");
+	private InputParameter provisioningAlgorithm_evProc = new InputParameter ("provisioningAlgorithm_evProc" , "#eventProcessor#" , "Algorithm to process failure events, in the form of an event processor");
+	private InputParameter provisioningAlgorithm_algorithm = new InputParameter ("provisioningAlgorithm_algorithm" , "#algorithm#" , "Algorithm to process failure events, in the form of an IAlgorithm");
 	private InputParameter analyzeDoubleFailures = new InputParameter ("analyzeDoubleFailures" , true , "Indicates whether double failures are studied");
 	private InputParameter defaultMTTFInHours = new InputParameter ("defaultMTTFInHours" , (double) 8748 , "Default value for Mean Time To Fail (hours)" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter defaultMTTRInHours = new InputParameter ("defaultMTTRInHours" , (double) 12 , "Default value for Mean Time To Repair (hours)" , 0 , false , Double.MAX_VALUE , true);
@@ -77,7 +78,8 @@ public class Report_availability implements IReport
 	
 	private double pi_excess;
 
-	private IEventProcessor algorithm;
+	private IEventProcessor algorithm_evProc;
+	private IAlgorithm algorithm_alg;
 	private final static DecimalFormat dfAv = new DecimalFormat("#.#######");
 	private final static DecimalFormat df_6 = new DecimalFormat("#.######");
 	
@@ -88,12 +90,19 @@ public class Report_availability implements IReport
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, reportParameters);
 
-		String algorithmFile = reportParameters.get("provisioningAlgorithm_file");
-		String algorithmName = reportParameters.get("provisioningAlgorithm_classname");
-		String algorithmParam = reportParameters.get("provisioningAlgorithm_parameters");
-		if (algorithmFile.isEmpty() || algorithmName.isEmpty()) throw new Net2PlanException("A provisioning algorithm must be defined");
+		String algorithmFile_alg = reportParameters.get("provisioningAlgorithm_algorithm_file");
+		String algorithmName_alg = reportParameters.get("provisioningAlgorithm_algorithm_classname");
+		String algorithmParam_alg = reportParameters.get("provisioningAlgorithm_algorithm_parameters");
+		
+		String algorithmFile_evProc = reportParameters.get("provisioningAlgorithm_evProc_file");
+		String algorithmName_evProc = reportParameters.get("provisioningAlgorithm_evProc_classname");
+		String algorithmParam_evProc = reportParameters.get("provisioningAlgorithm_evProc_parameters");
+		final boolean algDefined = !algorithmFile_alg.isEmpty() && !algorithmName_alg.isEmpty();
+		final boolean evProcDefined = !algorithmFile_evProc.isEmpty() && !algorithmName_evProc.isEmpty();
+		if (!algDefined && !evProcDefined) throw new Net2PlanException("A provisioning algorithm or an event processor algorithm must be defined, but not both");
+		if (algDefined && evProcDefined) throw new Net2PlanException("A provisioning algorithm or an event processor algorithm must be defined, but not both");
 
-		Map<String, String> algorithmParameters = StringUtils.stringToMap(algorithmParam);
+		Map<String, String> algorithmParameters = StringUtils.stringToMap(algDefined? algorithmParam_alg : algorithmParam_evProc);
 		switch (failureModel.getString ())
 		{
 			case "SRGfromNetPlan":
@@ -144,7 +153,12 @@ public class Report_availability implements IReport
 		/* the up and oversubscribed links that were set as down, are set to up again */
 		if (!netPlan.getLinksDownAllLayers().isEmpty() || !netPlan.getNodesDown().isEmpty()) throw new RuntimeException ("Bad");
 
-		this.algorithm = ClassLoaderUtils.getInstance(new File(algorithmFile), algorithmName, IEventProcessor.class , null);
+		this.algorithm_alg = null;
+		this.algorithm_evProc = null;
+		if (evProcDefined)
+			this.algorithm_evProc = ClassLoaderUtils.getInstance(new File(algorithmFile_evProc), algorithmName_evProc, IEventProcessor.class , null);
+		else
+			this.algorithm_alg = ClassLoaderUtils.getInstance(new File(algorithmFile_alg), algorithmName_alg, IAlgorithm.class , null);
 
 		for (int failureState = 0 ; failureState < F_s.rows () ; failureState ++) // first failure state (no failure) was already considered
 		{
@@ -457,25 +471,49 @@ public class Report_availability implements IReport
 			srgCopy.setAsDown();
 		}
 
-		this.algorithm.initialize(auxNetPlan , algorithmParameters , reportParameters , net2planParameters);
+		if (this.algorithm_evProc != null)
+		{
+			this.algorithm_evProc.initialize(auxNetPlan , algorithmParameters , reportParameters , net2planParameters);
 
-		try
-		{
-			/* Apply the reaction algorithm */
-			algorithm.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , null));
+			try
+			{
+				/* Apply the reaction algorithm */
+				algorithm_evProc.processEvent(auxNetPlan, new SimEvent(0, SimEvent.DestinationModule.EVENT_PROCESSOR , -1 , null));
+			}
+			catch (Throwable e)
+			{
+				try { ((Closeable) algorithm_evProc.getClass().getClassLoader()).close();  }
+				catch (Throwable e1) { e.printStackTrace();}					
+				throw (e);
+			}
+			
+			/* Only close the class loader if it is a different one than this class. If problems: just do not close the class loader, and wait for garbage collection*/
+			if (!this.getClass().getClassLoader().equals(algorithm_evProc.getClass().getClassLoader()))
+			{
+				try { ((Closeable) algorithm_evProc.getClass().getClassLoader()).close();	} catch (Throwable e1) { }					
+			}
 		}
-		catch (Throwable e)
+		else if (this.algorithm_alg != null)
 		{
-			try { ((Closeable) algorithm.getClass().getClassLoader()).close();  }
-			catch (Throwable e1) { e.printStackTrace();}					
-			throw (e);
+
+			try
+			{
+				this.algorithm_alg.executeAlgorithm(auxNetPlan , algorithmParameters , net2planParameters);
+			}
+			catch (Throwable e)
+			{
+				try { ((Closeable) algorithm_alg.getClass().getClassLoader()).close();  }
+				catch (Throwable e1) { e.printStackTrace();}					
+				throw (e);
+			}
+			
+			/* Only close the class loader if it is a different one than this class. If problems: just do not close the class loader, and wait for garbage collection*/
+			if (!this.getClass().getClassLoader().equals(algorithm_alg.getClass().getClassLoader()))
+			{
+				try { ((Closeable) algorithm_alg.getClass().getClassLoader()).close();	} catch (Throwable e1) { }					
+			}
 		}
 		
-		/* Only close the class loader if it is a different one than this class. If problems: just do not close the class loader, and wait for garbage collection*/
-		if (!this.getClass().getClassLoader().equals(algorithm.getClass().getClassLoader()))
-		{
-			try { ((Closeable) algorithm.getClass().getClassLoader()).close();	} catch (Throwable e1) { }					
-		}
 		return auxNetPlan;
 	}
 	

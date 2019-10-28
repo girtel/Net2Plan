@@ -280,9 +280,7 @@ class ReaderNetPlanN2PVersion_6 implements IReaderNetPlan //extends NetPlanForma
             	final TrafficPredictor readTp = TrafficPredictor.createFromInitStrings(TRAFFICPREDICTORTYPE.valueOf(rows.get(0)), rows.get(1), rows.size() >= 3? Optional.of(rows.get(2)) : Optional.empty()).orElse(null);
                 if (readTp != null) newDemand.setTrafficPredictor(readTp);
         	}
-        } catch (Exception e) {}
-
-        
+        } catch (Exception e) {  }
         
 		if (routingType == null) newNpDemandsWithRoutingTypeNotDefined.add(newDemand);
 		final Demand bidirPairDemand = bidirectionalPairId == -1? null : netPlan.getDemandFromId(bidirectionalPairId); 

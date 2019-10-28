@@ -87,7 +87,7 @@ public class AdvancedJTable_route extends AdvancedJTable_networkElement<Route>
 {
     public AdvancedJTable_route(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.ROUTES , layerThisTable , true , r->r.isDown() && r.getCarriedTrafficInNoFailureState() > 0? Color.RED : null);
+        super(callback, AJTableType.ROUTES , null , layerThisTable , true , r->r.isDown() && r.getCarriedTrafficInNoFailureState() > 0? Color.RED : null);
     }
 
     @Override

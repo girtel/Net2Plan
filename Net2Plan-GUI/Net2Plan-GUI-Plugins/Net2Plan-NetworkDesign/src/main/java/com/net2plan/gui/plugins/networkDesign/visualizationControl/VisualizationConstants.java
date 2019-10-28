@@ -54,7 +54,10 @@ public final class VisualizationConstants
             "CPU", GUINetworkDesign.class.getResource("/resources/gui/figs/CPU.png"),
             "RAM", GUINetworkDesign.class.getResource("/resources/gui/figs/RAM.png"),
             "HD", GUINetworkDesign.class.getResource("/resources/gui/figs/HD.png"));
+    public final static URL FILTERLESS_ICON_URL = GUINetworkDesign.class.getResource("/resources/gui/figs/OADM_DW.png");
 
+    
+    
     public final static float SCALE_IN = 1.1f;
     public final static float SCALE_OUT = 1 / SCALE_IN;
 

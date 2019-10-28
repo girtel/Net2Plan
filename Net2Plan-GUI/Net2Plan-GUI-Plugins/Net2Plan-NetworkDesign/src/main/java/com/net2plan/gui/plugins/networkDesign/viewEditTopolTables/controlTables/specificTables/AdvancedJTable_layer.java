@@ -34,7 +34,7 @@ public class AdvancedJTable_layer extends AdvancedJTable_networkElement<NetworkL
     
     public AdvancedJTable_layer(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.LAYERS , layerThisTable , false , null);
+        super(callback, AJTableType.LAYERS , null , layerThisTable , false , null);
     }
 
 

@@ -34,6 +34,12 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.ElementSelection;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITableRowFilter.FilterCombinationType;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_demand;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_link;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_node;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_resource;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_route;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_srg;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.tableVisualizationFilters.TBFSelectionBased;
@@ -56,6 +62,12 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.internal.ErrorHandling;
+import com.net2plan.niw.WAbstractNetworkElement;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WIpLink;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants.WTYPE;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.Pair;
 
 
@@ -68,9 +80,9 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     protected final NetworkLayer layerThisTable;
     private boolean attributesAreCollapsedInOneColumn = true;
     
-	public AdvancedJTable_networkElement(GUINetworkDesign networkViewer, AJTableType ajtType , NetworkLayer layerThisTable , boolean hasAggregationRow , Function<T,Color> coloringFunctionForTheFullRowIfNotSelected)
+	public AdvancedJTable_networkElement(GUINetworkDesign networkViewer, AJTableType ajtType , String tableTitle , NetworkLayer layerThisTable , boolean hasAggregationRow , Function<T,Color> coloringFunctionForTheFullRowIfNotSelected)
     {
-        super(networkViewer, ajtType.getTabName() , 2 , hasAggregationRow , coloringFunctionForTheFullRowIfNotSelected);
+        super(networkViewer, tableTitle == null? ajtType.getTabName() : tableTitle, 2 , hasAggregationRow , coloringFunctionForTheFullRowIfNotSelected);
         this.ajtType = ajtType;
         this.layerThisTable = layerThisTable;
         updateView();
@@ -118,6 +130,25 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     @Override
     protected final List<T> getAllAbstractElementsInTable()
     {
+    	if (callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign())
+    	{
+    		/* Filters are de-activated */
+    		final WNet wNet = new WNet (callback.getDesign());
+
+    		if (this instanceof Niw_AdvancedJTable_demand)
+				return (List<T>) callback.getDesign().getDemands(this.layerThisTable).stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
+    		if (this instanceof Niw_AdvancedJTable_node)
+				return (List<T>) callback.getDesign().getNodes().stream().filter(e->wNet.getWElement(e).isPresent()).filter(e->!new WNode(e).isVirtualNode()).collect(Collectors.toList());
+    		if (this instanceof Niw_AdvancedJTable_link)
+				return (List<T>) callback.getDesign().getLinks(this.layerThisTable).stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
+    		if (this instanceof Niw_AdvancedJTable_route)
+				return (List<T>) callback.getDesign().getRoutes(this.layerThisTable).stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
+    		if (this instanceof Niw_AdvancedJTable_resource)
+				return (List<T>) callback.getDesign().getResources().stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
+    		if (this instanceof Niw_AdvancedJTable_srg)
+				return (List<T>) callback.getDesign().getSRGs().stream().filter(e->wNet.getWElement(e).isPresent()).collect(Collectors.toList());
+    	}
+    	
         final ITableRowFilter rf = callback.getVisualizationState().getTableRowFilter();
         return rf == null ? (List<T>) ITableRowFilter.getAllElements(callback.getDesign(), this.layerThisTable , ajtType) : (List<T>) rf.getVisibleElements(this.layerThisTable, ajtType);
     }
@@ -232,6 +263,7 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 		assert selection != null;
 		final NetPlan npCopy = this.callback.getDesign().copy();
 		final NetPlan np = callback.getDesign();
+		final boolean isNiwActive = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign();
 		try 
 		{
 			for (T es : selection) 
@@ -240,28 +272,84 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 				{
 					final NetworkElement e = (NetworkElement) es;
 					if (e.wasRemoved()) continue;
-					switch (e.getNeType())
+					if (isNiwActive)
 					{
-					case DEMAND: ((Demand) e).remove(); break; 
-					case LAYER: np.removeNetworkLayer((NetworkLayer) e); break;
-					case LINK: ((Link)e).remove(); break;
-					case MULTICAST_DEMAND: ((MulticastDemand)e).remove(); break;
-					case MULTICAST_TREE: ((MulticastTree)e).remove(); break;
-					case NODE: ((Node)e).remove(); break;
-					case RESOURCE: ((Resource)e).remove(); break;
-					case ROUTE: ((Route)e).remove(); break;
-					case SRG: ((SharedRiskGroup)e).remove(); break;
-					default: throw new  RuntimeException();
+						final WNet wNet = callback.getNiwInfo().getSecond();
+						final WTYPE type = wNet.getWType(e).orElse(null);
+						if (type == null) continue;
+						switch (type)
+						{
+						case WFiber: wNet.getWElement(e).get().getAsFiber().remove (); 
+							break;
+						case WIpLink:
+							wNet.getWElement(e).get().getAsIpLink().removeBidirectional();
+							break;
+						case WIpSourceRoutedConnection:
+							wNet.getWElement(e).get().getAsIpSourceRoutedConnection().remove();
+							break;
+						case WIpUnicastDemand:
+							wNet.getWElement(e).get().getAsIpUnicastDemand().remove();
+							break;
+						case WLayerIp:
+							wNet.removeIpLayer();
+							break;
+						case WLayerWdm:
+							wNet.removeWdmLayer();
+							break;
+						case WLightpath:
+							wNet.getWElement(e).get().getAsLightpath().remove();
+							break;
+						case WLightpathRequest:
+							wNet.getWElement(e).get().getAsLightpathRequest().remove();
+							break;
+						case WNet:
+							break;
+						case WNode:
+							wNet.getWElement(e).get().getAsNode().remove();
+							break;
+						case WServiceChain:
+							wNet.getWElement(e).get().getAsServiceChain().remove();
+							break;
+						case WServiceChainRequest:
+							wNet.getWElement(e).get().getAsServiceChainRequest().remove();
+							break;
+						case WSharedRiskGroup:
+							wNet.getWElement(e).get().getAsSrg().remove();
+							break;
+						case WVnfInstance:
+							wNet.getWElement(e).get().getAsVnfInstance().remove();
+							break;
+						default:
+							break;
+						
+						}
+					}
+					else
+					{
+						switch (e.getNeType())
+						{
+						case DEMAND: ((Demand) e).remove(); break; 
+						case LAYER: np.removeNetworkLayer((NetworkLayer) e); break;
+						case LINK: ((Link)e).remove(); break;
+						case MULTICAST_DEMAND: ((MulticastDemand)e).remove(); break;
+						case MULTICAST_TREE: ((MulticastTree)e).remove(); break;
+						case NODE: ((Node)e).remove(); break;
+						case RESOURCE: ((Resource)e).remove(); break;
+						case ROUTE: ((Route)e).remove(); break;
+						case SRG: ((SharedRiskGroup)e).remove(); break;
+						default: throw new  RuntimeException();
+						}
 					}
 				} 
 			}
+			callback.setDesignAndCallWhatIfSomethingModified(callback.getDesign());
 			callback.updateVisualizationAfterNewTopology();
 		} catch (Exception ex) 
 		{
 			
 			ErrorHandling.showErrorDialog(ex.getMessage(), "Error");
 			
-			callback.setDesign(npCopy);
+			callback.setDesignAndCallWhatIfSomethingModified(npCopy);
             callback.updateVisualizationAfterNewTopology();
 		} 
     }
@@ -369,6 +457,7 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     @Override
     protected final List<AjtColumnInfo<T>> getAllColumnsVisibleOrNot ()
     {
+    	final boolean isNiwOk = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign();
         final List<AjtColumnInfo<T>> completeListIncludingCommonColumns = new ArrayList<> ();
         if (!this.isForwardingRulesTable())
         {
@@ -379,16 +468,25 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 
         if (!this.isForwardingRulesTable())
         {
-        	completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Tags", "User-defined tags associated to this element", null , e->((NetworkElement)e).getTags() , AGTYPE.NOAGGREGATION , null));
-        	
+    		if (isNiwOk)
+    			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Tags", "User-defined tags associated to this element", null , e->((NetworkElement)e).getTags().stream().filter(ee->!ee.startsWith(WAbstractNetworkElement.NIWNAMEPREFIX)).collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
+    		else
+    			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Tags", "User-defined tags associated to this element", null , e->((NetworkElement)e).getTags().stream().collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
+    			
         	if (isAttributesAreCollapsedInOneColumn())       	
-        		completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Attributes", "User-defined attributes associated to this element", null , e->((NetworkElement)e).getAttributes() , AGTYPE.NOAGGREGATION , null));
+        	{
+        		if (isNiwOk)
+        			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Attributes", "User-defined attributes associated to this element", null , e->((NetworkElement)e).getAttributes().entrySet().stream().filter(ee->!ee.getKey().startsWith(WAbstractNetworkElement.NIWNAMEPREFIX)).collect(Collectors.toMap(ee->ee.getKey(), ee->ee.getValue())) , AGTYPE.NOAGGREGATION , null));
+        		else
+        			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Attributes", "User-defined attributes associated to this element", null , e->((NetworkElement)e).getAttributes() , AGTYPE.NOAGGREGATION , null));
+        	}
         	else
         	{
         		final Set<String> allAttributeKeys = new TreeSet<>();
         		this.getAllAbstractElementsInTable().forEach(e->allAttributeKeys.addAll(((NetworkElement)e).getAttributes().keySet()));
         		for (String attributeKey : allAttributeKeys)
         		{
+        			if (isNiwOk && attributeKey.startsWith(WAbstractNetworkElement.NIWNAMEPREFIX)) continue;
             		completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Att: " + attributeKey, "User-defined attribute '" + attributeKey + "' associated to this element", (e, o) -> 
             		{
             			final String value = (String) o;
@@ -500,7 +598,7 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
                     	for (NetworkElement ne : getSelectedNetworkElementsNorFr())
                     		ne.setAttribute(key, value);
                     });
-    		}, (a,b)->b==1 && !getSelectedNetworkElementsNorFr().first().getAttributes().isEmpty(), null) ,
+    		}, (a,b)->b==1 , null) ,
     		
     		new AjtRcMenu("Remove attribute of selected elements", e -> 
     		{

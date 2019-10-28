@@ -115,7 +115,7 @@ public class RunnableSelector extends JPanel {
         algorithmSelector = new WiderJComboBox();
         algorithmSelector.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent event) {
                 if (algorithmSelector.getItemCount() == 0 || algorithmSelector.getSelectedIndex() == -1) return;
 
                 try {

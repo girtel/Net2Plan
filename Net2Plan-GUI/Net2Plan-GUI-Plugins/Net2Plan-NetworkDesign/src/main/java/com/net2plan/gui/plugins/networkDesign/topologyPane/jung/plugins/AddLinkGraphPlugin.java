@@ -25,6 +25,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
@@ -33,7 +34,12 @@ import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUILink;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.GUINode;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
 import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.niw.WAbstractNetworkElement;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.Pair;
 
 import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
@@ -180,18 +186,34 @@ public class AddLinkGraphPlugin extends MouseAdapter implements ITopologyCanvasP
             {
             	if (guiNode.getLayer() == startVertex.getLayer ())
     			{
-        			boolean bidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
+        			final boolean isBidirectional = (e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK;
+                    final boolean isNiwOk = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign();
+                    final NetworkLayer layer = callback.getDesign().getNetworkLayerDefault();
         			final Link linkToPick;
-                    if (bidirectional) 
+                    if (isNiwOk)
                     {
-                    	linkToPick = node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNode(), node,0,0,200000,null).getFirst(); 
+                    	final WNet wNet = callback.getNiwInfo().getSecond();
+                    	final Function<NetworkLayer,Boolean> isIp = d -> { final WAbstractNetworkElement ee = wNet.getWElement(d).orElse(null); return ee == null? false : ee.isLayerIp(); };
+                    	final Function<NetworkLayer,Boolean> isWdm = d -> { final WAbstractNetworkElement ee = wNet.getWElement(d).orElse(null); return ee == null? false : ee.isLayerWdm(); };
+                    	if (isIp.apply(layer))
+                    		linkToPick = wNet.addIpLinkBidirectional(new WNode(startVertex.getAssociatedNode()), new WNode (node), 100.0).getFirst().getNe();
+                    	else if (isWdm.apply(layer))
+                    		linkToPick = wNet.addFiber(new WNode(startVertex.getAssociatedNode()), new WNode (node), WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES, -1.0, isBidirectional).getFirst().getNe();
+                    	else linkToPick = null;
                     }
                     else
-                    	linkToPick = node.getNetPlan().addLink(startVertex.getAssociatedNode(), node,0,0,200000,null);
+                    {
+                        if (isBidirectional) 
+                        	linkToPick = node.getNetPlan().addLinkBidirectional(startVertex.getAssociatedNode(), node,0,0,200000,null).getFirst(); 
+                        else
+                        	linkToPick = node.getNetPlan().addLink(startVertex.getAssociatedNode(), node,0,0,200000,null);
+                    }
+
+                    callback.setDesignAndCallWhatIfSomethingModified(callback.getDesign());
                     callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals(); // implies a reset picked
                     callback.updateVisualizationAfterChanges();
                     callback.addNetPlanChange();
-                    callback.getPickManager().pickElements(linkToPick);
+                    if (linkToPick != null) callback.getPickManager().pickElements(linkToPick);
                     callback.updateVisualizationAfterPick();
     			}
                 //if (node == startVertex.getAssociatedNode()) callback.resetPickedStateAndUpdateView();

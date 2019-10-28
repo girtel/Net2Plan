@@ -12,7 +12,22 @@
 
 package com.net2plan.gui.plugins.networkDesign.topologyPane.plugins;
 
-import com.google.common.collect.Sets;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Function;
+
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
+
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvasPlugin;
@@ -24,16 +39,10 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.internal.Constants.NetworkElementType;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.util.LinkedList;
-import java.util.List;
+import com.net2plan.niw.WAbstractNetworkElement;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.WNode;
 
 /**
  * Plugin for the popup menu of the canvas.
@@ -119,34 +128,83 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
     	final NetPlan netPlan = callback.getDesign();
         actions.add(new JMenuItem(new RemoveNodeAction("Remove node", node)));
 
-        if (netPlan.getNumberOfNodes() > 1)
+        final boolean isNiwOk = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign();
+        final NetworkLayer layer = netPlan.getNetworkLayerDefault();
+        
+        if (isNiwOk)
         {
-            actions.add(new JPopupMenu.Separator());
-            JMenu unidirectionalMenu = new JMenu("Create unidirectional link");
-            JMenu bidirectionalMenu = new JMenu("Create bidirectional link");
-
-            String nodeName = node.getName() == null ? "" : node.getName();
-            String nodeString = Long.toString(node.getId()) + (nodeName.isEmpty() ? "" : " (" + nodeName + ")");
-
-            final NetworkLayer layer = netPlan.getNetworkLayerDefault();
-            for (Node auxNode : netPlan.getNodes())
+            if (netPlan.getNumberOfNodes() > 1)
             {
-                if (auxNode == node) continue;
+                actions.add(new JPopupMenu.Separator());
+            	final WNet wNet = callback.getNiwInfo().getSecond();
+            	final WNode niwNode = new WNode (node);
+                JMenu unidirectionalMenu = null;
+                JMenu bidirectionalMenu = null;
+            	final Function<NetworkLayer,Boolean> isIp = d -> { final WAbstractNetworkElement ee = wNet.getWElement(d).orElse(null); return ee == null? false : ee.isLayerIp(); };
+            	final Function<NetworkLayer,Boolean> isWdm = d -> { final WAbstractNetworkElement ee = wNet.getWElement(d).orElse(null); return ee == null? false : ee.isLayerWdm(); };
+            	if (isIp.apply(layer))
+            	{
+                    unidirectionalMenu = null;
+                    bidirectionalMenu = new JMenu("Create bidirectional IP link");
+            	}
+            	else if (isWdm.apply(layer))
+            	{
+                    unidirectionalMenu = new JMenu("Create unidirectional WDM fiber");
+                    bidirectionalMenu = new JMenu("Create two opposite unidirectional WDM fibers");
+            	}
+                String nodeName = niwNode.getName();
+                String nodeString = Long.toString(niwNode.getId()) + (nodeName.isEmpty() ? "" : " (" + nodeName + ")");
 
-                String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
-                String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
+                for (WNode auxNode : wNet.getNodes())
+                {
+                    if (auxNode.getNe() == node) continue;
 
-                AbstractAction unidirectionalAction = new AddLinkAction(nodeString + " => " + auxNodeString, layer, node, auxNode);
-                unidirectionalMenu.add(unidirectionalAction);
+                    String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
+                    String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
 
-                AbstractAction bidirectionalAction = new AddLinkBidirectionalAction(nodeString + " <=> " + auxNodeString, layer, node, auxNode);
-                bidirectionalMenu.add(bidirectionalAction);
+                    if (unidirectionalMenu != null)
+                    	unidirectionalMenu.add(new AddLinkAction(nodeString + " => " + auxNodeString, layer, node, auxNode.getNe() , false));
+
+                    if (bidirectionalMenu != null)
+                    	bidirectionalMenu.add(new AddLinkAction(nodeString + " <=> " + auxNodeString, layer, node, auxNode.getNe() , true));
+                }
+
+                if (unidirectionalMenu != null) actions.add(unidirectionalMenu);
+                if (bidirectionalMenu != null) actions.add(bidirectionalMenu);
             }
-
-            actions.add(unidirectionalMenu);
-            actions.add(bidirectionalMenu);
+        	
         }
+        else
+        {
+            if (netPlan.getNumberOfNodes() > 1)
+            {
+            	
+                actions.add(new JPopupMenu.Separator());
+                JMenu unidirectionalMenu = new JMenu("Create unidirectional link");
+                JMenu bidirectionalMenu = new JMenu("Create bidirectional link");
 
+                String nodeName = node.getName() == null ? "" : node.getName();
+                String nodeString = Long.toString(node.getId()) + (nodeName.isEmpty() ? "" : " (" + nodeName + ")");
+
+                for (Node auxNode : netPlan.getNodes())
+                {
+                    if (auxNode == node) continue;
+
+                    String auxNodeName = auxNode.getName() == null ? "" : auxNode.getName();
+                    String auxNodeString = Long.toString(auxNode.getId()) + (auxNodeName.isEmpty() ? "" : " (" + auxNodeName + ")");
+
+                    AbstractAction unidirectionalAction = new AddLinkAction(nodeString + " => " + auxNodeString, layer, node, auxNode , false);
+                    unidirectionalMenu.add(unidirectionalAction);
+
+                    AbstractAction bidirectionalAction = new AddLinkAction(nodeString + " <=> " + auxNodeString, layer, node, auxNode , true);
+                    bidirectionalMenu.add(bidirectionalAction);
+                }
+
+                actions.add(unidirectionalMenu);
+                actions.add(bidirectionalMenu);
+            }
+        	
+        }
         return actions;
     }
 
@@ -168,48 +226,43 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         private final NetworkLayer layer;
         private final Node originNode;
         private final Node destinationNode;
-
-        public AddLinkAction(String name, NetworkLayer layer, Node originNode, Node destinationNode)
+        private final boolean isBidirectional;
+        public AddLinkAction(String name, NetworkLayer layer, Node originNode, Node destinationNode , boolean isBidirectional)
         {
             super(name);
             this.layer = layer;
             this.originNode = originNode;
             this.destinationNode = destinationNode;
+            this.isBidirectional = isBidirectional;
         }
 
         @Override
         public void actionPerformed(ActionEvent e)
         {
-        	originNode.getNetPlan().addLink(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
+            final boolean isNiwOk = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign();
+            if (isNiwOk)
+            {
+            	final WNet wNet = callback.getNiwInfo().getSecond();
+            	final Function<NetworkLayer,Boolean> isIp = d -> { final WAbstractNetworkElement ee = wNet.getWElement(d).orElse(null); return ee == null? false : ee.isLayerIp(); };
+            	final Function<NetworkLayer,Boolean> isWdm = d -> { final WAbstractNetworkElement ee = wNet.getWElement(d).orElse(null); return ee == null? false : ee.isLayerWdm(); };
+            	if (isIp.apply(layer))
+            		wNet.addIpLinkBidirectional(new WNode(originNode), new WNode (destinationNode), 100.0);
+            	else if (isWdm.apply(layer))
+            		wNet.addFiber(new WNode(originNode), new WNode (destinationNode), WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES, -1.0, this.isBidirectional);
+            }
+            else
+            {
+            	if (isBidirectional)
+            		callback.getDesign().addLinkBidirectional(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
+            	else
+            		callback.getDesign().addLink(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
+            }
+
+            callback.setDesignAndCallWhatIfSomethingModified(callback.getDesign());
         	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-            callback.updateVisualizationAfterChanges();
+        	callback.updateVisualizationAfterChanges();
             callback.addNetPlanChange();
         }
-    }
-
-    private class AddLinkBidirectionalAction extends AbstractAction
-    {
-        private final NetworkLayer layer;
-        private final Node originNode;
-        private final Node destinationNode;
-
-        public AddLinkBidirectionalAction(String name, NetworkLayer layer, Node originNode, Node destinationNode)
-        {
-            super(name);
-            this.layer = layer;
-            this.originNode = originNode;
-            this.destinationNode = destinationNode;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-        	originNode.getNetPlan().addLinkBidirectional(originNode , destinationNode , 0 , 0 , 200000 , null , layer);
-        	callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
-            callback.updateVisualizationAfterChanges();
-            callback.addNetPlanChange();
-        }
-
     }
 
     public List<JComponent> getCanvasActions(Point2D positionInNetPlanCoordinates)

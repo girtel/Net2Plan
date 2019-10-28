@@ -65,7 +65,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 	
     public AdvancedJTable_link(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.LINKS , layerThisTable , true , e->e.isUp()? null : Color.RED);
+        super(callback, AJTableType.LINKS , null , layerThisTable , true , e->e.isUp()? null : Color.RED);
     }
 
     @Override
@@ -86,13 +86,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
       res.add(new AjtColumnInfo<Link>(this , Boolean.class, null , "Up?", "", (d,val)->
       {
           final boolean isLinkUp = (Boolean) val;
-          try
-          {
-              if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                  callback.getWhatIfAnalysisPane().whatIfLinkNodesFailureStateChanged(null, null, isLinkUp ? Sets.newHashSet(d) : null, isLinkUp ? null : Sets.newHashSet(d));
-              else
-                  d.setFailureState(isLinkUp);
-          } catch (Throwable ee) { ee.printStackTrace(); throw new Net2PlanException (ee.getMessage()); }
+          d.setFailureState(isLinkUp);
       } , d->d.isUp() , AGTYPE.COUNTTRUE , e->e.isUp()? null : Color.RED));
       res.add(new AjtColumnInfo<Link>(this , String.class, null , "Trav. QoS types" , "The QoS types of the traversing trafffics", null , d->allLinksPerQosOccupationAndQosViolationMap.getOrDefault(d, new TreeMap<> ()).entrySet().stream().filter(ee->ee.getValue().getFirst() > 0).map(ee->ee.getKey()).collect(Collectors.joining(",")) , AGTYPE.SUMDOUBLE , null));
       res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Total QoS violation (" + layer.getLinkCapacityUnits() + ")" , "The total amount of link capacity that is being used outside the QoS contract, and thus the traffic using it would not be carried (and thus would be blocked) if the network applied a drop policy to it, or just if such extra capacity is not present in the link", null , d->allLinksPerQosOccupationAndQosViolationMap.getOrDefault(d, new TreeMap<> ()).values().stream().mapToDouble(ee->ee.getSecond()).sum() , AGTYPE.SUMDOUBLE , e->allLinksPerQosOccupationAndQosViolationMap.getOrDefault(e, new TreeMap<> ()).values().stream().mapToDouble(ee->ee.getSecond()).sum() == 0? null : Color.RED));

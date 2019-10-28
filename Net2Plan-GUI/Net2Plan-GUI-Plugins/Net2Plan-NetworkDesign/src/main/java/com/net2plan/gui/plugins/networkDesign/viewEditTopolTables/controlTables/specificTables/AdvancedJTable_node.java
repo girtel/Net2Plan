@@ -42,7 +42,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
 {
     public AdvancedJTable_node(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.NODES , layerThisTable , true , n->n.isDown()? Color.RED : null);
+        super(callback, AJTableType.NODES , null , layerThisTable , true , n->n.isDown()? Color.RED : null);
     }
 
     @Override
@@ -60,13 +60,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
       res.add(new AjtColumnInfo<Node>(this , Boolean.class, null , "Up?", "", (d,val)->
       {
           final boolean isNodeUp = (Boolean) val;
-          try
-          {
-              if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                  callback.getWhatIfAnalysisPane().whatIfLinkNodesFailureStateChanged(isNodeUp ? Sets.newHashSet(d) : null, isNodeUp ? null : Sets.newHashSet(d), null, null);
-              else
-                  d.setFailureState(isNodeUp);
-          } catch (Throwable ee) { ee.printStackTrace(); throw new Net2PlanException (ee.getMessage()); }
+          d.setFailureState(isNodeUp);
       } , d->d.isUp() , AGTYPE.COUNTTRUE , n->n.isUp()? null : Color.RED));
       res.add(new AjtColumnInfo<Node>(this , Double.class, null , "X-coord", "The X coordinate of the node in he current layout. Interpreted as geographical longitude in the map view", (d,val)->d.setXYPositionMap(new Point2D.Double((Double) val , d.getXYPositionMap(currentLauyout).getY()), currentLauyout) , d->d.getXYPositionMap(currentLauyout).getX() , AGTYPE.NOAGGREGATION , null));
       res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Y-coord", "The Y coordinate of the node in he current layout. Interpreted as geographical latitude in the map view", (d,val)->d.setXYPositionMap(new Point2D.Double(d.getXYPositionMap(currentLauyout).getX() , (Double) val), currentLauyout) , d->d.getXYPositionMap(currentLauyout).getY() , AGTYPE.NOAGGREGATION , null));

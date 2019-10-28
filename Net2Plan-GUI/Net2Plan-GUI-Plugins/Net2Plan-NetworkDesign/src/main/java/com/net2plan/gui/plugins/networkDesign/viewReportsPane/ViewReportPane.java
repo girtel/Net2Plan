@@ -11,14 +11,37 @@
 package com.net2plan.gui.plugins.networkDesign.viewReportsPane;
 
 
-import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
-import com.net2plan.gui.plugins.networkDesign.ReportBrowser;
-import com.net2plan.gui.utils.RunnableSelector;
-import com.net2plan.gui.plugins.networkDesign.ThreadExecutionController;
-import com.net2plan.gui.plugins.networkDesign.offlineExecPane.OfflineExecutionPanel;
-import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
-import com.net2plan.gui.utils.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.Closeable;
+import java.io.File;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+
+import org.apache.commons.collections15.BidiMap;
+
 import com.net2plan.gui.plugins.GUINetworkDesign;
+import com.net2plan.gui.plugins.networkDesign.ReportBrowser;
+import com.net2plan.gui.plugins.networkDesign.ThreadExecutionController;
+import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
+import com.net2plan.gui.utils.ParameterValueDescriptionPanel;
+import com.net2plan.gui.utils.ProportionalResizeJSplitPaneListener;
+import com.net2plan.gui.utils.RunnableSelector;
+import com.net2plan.gui.utils.TabIcon;
+import com.net2plan.gui.utils.WrapLayout;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -26,21 +49,10 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
-import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.niw.ReportNiw_wdm_lineEngineering;
+import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-
-import javax.swing.*;
-
-import org.apache.commons.collections15.BidiMap;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.io.Closeable;
-import java.io.File;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class ViewReportPane extends JSplitPane implements ThreadExecutionController.IThreadExecutionHandler
@@ -98,7 +110,8 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
         btn_show.setToolTipText("Show the report");
         btn_show.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e) 
+            {
                 reportController.execute();
             }
         });
@@ -139,26 +152,36 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
 	@Override
 	public Object execute(ThreadExecutionController controller) 
 	{
-        Triple<File, String, Class> report = reportSelector.getRunnable();
-        Map<String, String> reportParameters = reportSelector.getRunnableParameters();
-        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-        final NetPlan netPlan = mainWindow.getDesign().copy();
-        IReport instance = ClassLoaderUtils.getInstance(report.getFirst(), report.getSecond(), IReport.class , null);
-        String title = null;
-        try {
-            title = instance.getTitle();
-        } catch (UnsupportedOperationException ex) {
-        }
-        if (title == null) title = "Untitled";
-
-        Pair<String, ? extends JPanel> aux = Pair.of(title, new ReportBrowser(instance.executeReport(netPlan, reportParameters, net2planParameters)));
-        try {
-            ((Closeable) instance.getClass().getClassLoader()).close();
-        } catch (Throwable e) {
-        }
-        netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer((int) 0));
-        mainWindow.getDesign().assignFrom(netPlan); // do not update undo/redo here -> the visualization state should be updated before
+		/************** report test ***/
+        final NetPlan reportTestNetPlan = mainWindow.getDesign().copy();
+        IReport instance = new ReportNiw_wdm_lineEngineering();
+        Pair<String, ? extends JPanel> aux = Pair.of(instance.getTitle(), new ReportBrowser(instance.executeReport(reportTestNetPlan, InputParameter.getDefaultParameters(instance.getParameters()), Configuration.getNet2PlanOptions())));
+        reportTestNetPlan.setNetworkLayerDefault(reportTestNetPlan.getNetworkLayer((int) 0));
+        mainWindow.getDesign().assignFrom(reportTestNetPlan); // do not update undo/redo here -> the visualization state should be updated before
         return aux;
+		/************** end report test ***/
+		
+		
+//        Triple<File, String, Class> report = reportSelector.getRunnable();
+//        Map<String, String> reportParameters = reportSelector.getRunnableParameters();
+//        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
+//        final NetPlan netPlan = mainWindow.getDesign().copy();
+//        IReport instance = new ReportNiw_wdm_lineEngineering();
+//        String title = null;
+//        try {
+//            title = instance.getTitle();
+//        } catch (UnsupportedOperationException ex) {
+//        }
+//        if (title == null) title = "Untitled";
+//
+//        Pair<String, ? extends JPanel> aux = Pair.of(title, new ReportBrowser(instance.executeReport(netPlan, reportParameters, net2planParameters)));
+//        try {
+//            ((Closeable) instance.getClass().getClassLoader()).close();
+//        } catch (Throwable e) {
+//        }
+//        netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer((int) 0));
+//        mainWindow.getDesign().assignFrom(netPlan); // do not update undo/redo here -> the visualization state should be updated before
+//        return aux;
 	}
 	@Override
 	public void executionFinished(ThreadExecutionController controller, Object out) 

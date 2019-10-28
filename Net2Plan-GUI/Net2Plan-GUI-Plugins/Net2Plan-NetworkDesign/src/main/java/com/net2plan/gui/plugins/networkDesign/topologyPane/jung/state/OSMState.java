@@ -19,6 +19,7 @@ import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.internal.Constants;
+import com.net2plan.niw.WNode;
 import com.net2plan.utils.ImageUtils;
 import org.jxmapviewer.viewer.GeoPosition;
 
@@ -111,7 +112,12 @@ class OSMState implements ICanvasState
         }
 
         final NetPlan netPlan = callback.getDesign();
-        final Node node = netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), "Node" + netPlan.getNumberOfNodes(), null);
+        
+        final Node node;
+        if (callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign())
+        	node = callback.getNiwInfo().getSecond().addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), callback.getNiwInfo().getSecond().getUnusedValidNodeName (), "").getNe();
+        else
+        	node = netPlan.addNode(geoPosition.getLongitude(), geoPosition.getLatitude(), "Node" + netPlan.getNumberOfNodes(), null);
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges();
         mapController.refreshTopologyAlignment();
@@ -123,7 +129,10 @@ class OSMState implements ICanvasState
     @Override
     public void removeNode(Node node)
     {
-        node.remove();
+        if (callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign())
+        	new WNode(node).remove ();
+        else
+        	node.remove();
         callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
         callback.updateVisualizationAfterChanges();
         mapController.refreshTopologyAlignment();
