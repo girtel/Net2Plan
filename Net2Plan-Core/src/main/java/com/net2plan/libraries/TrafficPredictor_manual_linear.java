@@ -14,7 +14,7 @@ public class TrafficPredictor_manual_linear extends TrafficPredictor
 
     private TrafficPredictor_manual_linear(double intialDateConsidered , double coef_a , double coef_b , Statistics stat)
     {
-        super(TRAFFICPREDICTORTYPE.LINEARFIT , stat);
+        super(TRAFFICPREDICTORTYPE.LINEARMANUAL , stat);
         this.coef_a = coef_a;
         this.coef_b = coef_b;
         this.intialDateConsidered = intialDateConsidered;

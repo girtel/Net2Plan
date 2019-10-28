@@ -4,11 +4,12 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.SortedMap;
@@ -17,11 +18,11 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.niw.networkModel.ExcelImporterConstants.COLUMNS_FIBERSTAB;
-import com.net2plan.niw.networkModel.ExcelImporterConstants.COLUMNS_NODESTAB;
-import com.net2plan.niw.networkModel.ExcelImporterConstants.COLUMNS_PERNODEANDSERVICETIMEINTENSITYGBPS;
-import com.net2plan.niw.networkModel.ExcelImporterConstants.COLUMNS_USERSERVICES;
-import com.net2plan.niw.networkModel.ExcelImporterConstants.COLUMNS_VNFTYPES;
+import com.net2plan.niw.ExcelImporterConstants.COLUMNS_FIBERSTAB;
+import com.net2plan.niw.ExcelImporterConstants.COLUMNS_NODESTAB;
+import com.net2plan.niw.ExcelImporterConstants.COLUMNS_PERNODEANDSERVICETIMEINTENSITYGBPS;
+import com.net2plan.niw.ExcelImporterConstants.COLUMNS_USERSERVICES;
+import com.net2plan.niw.ExcelImporterConstants.COLUMNS_VNFTYPES;
 import com.net2plan.utils.Pair;
 
 /** This class is an importer for the metro network
@@ -35,7 +36,7 @@ public class ImportMetroNetwork
 	public static WNet importFromExcelFile (File excelFile)
     {
         final SortedMap<String, Object[][]> fileData = new TreeMap<>(ExcelReader.readFile(excelFile));
-        final WNet net = WNet.createEmptyDesign ();
+        final WNet net = WNet.createEmptyDesign (true , true);
         
         /* Nodes sheet */
         System.out.println("###################### Reading Nodes sheet ######################");
@@ -99,7 +100,7 @@ public class ImportMetroNetwork
         	System.out.println("LENGTH_KM loaded: "+LENGTH_KM);
         	final boolean ISBIDIRECTIONAL = readBoolean(thisRowData, COLUMNS_FIBERSTAB.ISBIDIRECTIONAL.ordinal()); 
         	System.out.println("ISBIDIRECTIONAL loaded: "+ISBIDIRECTIONAL);
-        	final List<Double> VALIDOPTICALSLOTRANGES = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.VALIDOPTICALSLOTRANGES.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES);
+        	final List<Double> VALIDOPTICALSLOTRANGES = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.VALIDOPTICALSLOTRANGES.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE);
         	System.out.println("VALIDOPTICALSLOTRANGES loaded: "+VALIDOPTICALSLOTRANGES);
         	final double FIBERATTENUATIONCOEFFICIENT_DBPERKM = readDouble (thisRowData , COLUMNS_FIBERSTAB.FIBERATTENUATIONCOEFFICIENT_DBPERKM.ordinal(), WNetConstants.WFIBER_DEFAULT_ATTCOEFFICIENTDBPERKM);
         	System.out.println("FIBERATTENUATIONCOEFFICIENT_DBPERKM loaded: "+FIBERATTENUATIONCOEFFICIENT_DBPERKM);
@@ -109,11 +110,11 @@ public class ImportMetroNetwork
         	System.out.println("FIBERLINKDESIGNVALUEPMD_PSPERSQRKM loaded: "+FIBERLINKDESIGNVALUEPMD_PSPERSQRKM);
         	final List<Double> AMPLIFIERSPOSITIONFROMORIGIN_KM = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERSPOSITIONFROMORIGIN_KM.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER,WNetConstants.WFIBER_DEFAULT_AMPLIFIERPOSITION);
         	System.out.println("AMPLIFIERSPOSITIONFROMORIGIN_KM loaded: "+AMPLIFIERSPOSITIONFROMORIGIN_KM);
-        	final List<Double> AMPLIFIERGAINS_DB = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERGAINS_DB.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER,WNetConstants.WFIBER_DEFAULT_AMPLIFIERGAIN_DB);
+        	final List<Double> AMPLIFIERGAINS_DB = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERGAINS_DB.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER,WNetConstants.WFIBER_DEFAULT_OLAGAIN_DB);
         	System.out.println("AMPLIFIERGAINS_DB loaded: "+AMPLIFIERGAINS_DB);
-        	final List<Double> AMPLIFIERNOISEFACTOR_DB = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERNOISEFACTOR_DB.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER,WNetConstants.WFIBER_DEFAULT_AMPLIFIERNOISEFACTOR_DB);
+        	final List<Double> AMPLIFIERNOISEFACTOR_DB = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERNOISEFACTOR_DB.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER,WNetConstants.WFIBER_DEFAULT_OLANOISEFACTOR_DB);
         	System.out.println("AMPLIFIER_NOISE FACTOR loaded: "+AMPLIFIERNOISEFACTOR_DB);
-        	final List<Double> AMPLIFIERPMD_PS = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERPMD_PS.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER, WNetConstants.WFIBER_DEFAULT_AMPLIFIERPMD_PS);
+        	final List<Double> AMPLIFIERPMD_PS = readDoubleList(thisRowData , COLUMNS_FIBERSTAB.AMPLIFIERPMD_PS.ordinal() , WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER, WNetConstants.WFIBER_DEFAULT_OLAPMD_PS);
         	System.out.println("AMPLIFIERPMD_PS loaded: "+AMPLIFIERPMD_PS);
         	final String arbitraryParamsString = readString (thisRowData , COLUMNS_FIBERSTAB.ARBITRARYPARAMS.ordinal() ,"");
         	System.out.println("arbitraryParamsString loaded: "+arbitraryParamsString);
@@ -121,7 +122,9 @@ public class ImportMetroNetwork
         	final WNode a = net.getNodeByName(ORIGINNODEUNIQUENAME).orElseThrow(()->new Net2PlanException ("Unkown node name: " + ORIGINNODEUNIQUENAME));
         	final WNode b = net.getNodeByName(DESTINATIONNODEUNIQUENAME).orElseThrow(()->new Net2PlanException ("Unkown node name: " + DESTINATIONNODEUNIQUENAME));
         	
-        	final List<Integer> validOpticalSlotRanges = VALIDOPTICALSLOTRANGES.stream().map(d->d.intValue()).collect(Collectors.toList());
+        	final List<Pair<Integer,Integer>> validOpticalSlotRanges = new ArrayList<> ();
+        	final Iterator<Double> it = VALIDOPTICALSLOTRANGES.iterator();
+        	while (it.hasNext()) { validOpticalSlotRanges.add(Pair.of(it.next().intValue() , it.next().intValue()));  } 
         	final Pair<WFiber,WFiber> pair = net.addFiber(a, b, validOpticalSlotRanges, LENGTH_KM, ISBIDIRECTIONAL);
         	for (WFiber e : Arrays.asList(pair.getFirst() , pair.getSecond()))
         	{
@@ -129,7 +132,7 @@ public class ImportMetroNetwork
             	e.setAttenuationCoefficient_dbPerKm(FIBERATTENUATIONCOEFFICIENT_DBPERKM);
             	e.setChromaticDispersionCoeff_psPerNmKm(FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM);
             	e.setPmdLinkDesignValueCoeff_psPerSqrtKm(FIBERLINKDESIGNVALUEPMD_PSPERSQRKM);
-            	e.setAmplifiersTraversedInfo(AMPLIFIERSPOSITIONFROMORIGIN_KM, AMPLIFIERGAINS_DB, AMPLIFIERNOISEFACTOR_DB, AMPLIFIERPMD_PS , null , null , null , null , null);
+            	e.setOlaTraversedInfo(AMPLIFIERSPOSITIONFROMORIGIN_KM, AMPLIFIERGAINS_DB, AMPLIFIERNOISEFACTOR_DB, AMPLIFIERPMD_PS , null , null , null , null , null);
             	e.setArbitraryParamString(arbitraryParamsString);
         	}
         }

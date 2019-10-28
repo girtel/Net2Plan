@@ -53,7 +53,7 @@ public class AdvancedJTable_forwardingRule extends AdvancedJTable_networkElement
 {
     public AdvancedJTable_forwardingRule(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.FORWARDINGRULES , layerThisTable , true , null);
+        super(callback, AJTableType.FORWARDINGRULES , null , layerThisTable , true , null);
     }
 
     @Override

@@ -13,13 +13,11 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.rightPanelTab
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -31,7 +29,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
@@ -55,10 +53,10 @@ public class NetPlanViewTableComponent_network extends JPanel {
     private JTextArea txt_networkDescription;
     private AdvancedJTable networkTagTable;
     private AdvancedJTable networkAttributeTable;
-    private AdvancedJTable_layer layerTable;
+    private AdvancedJTable_networkElement layerTable;
     private final GUINetworkDesign networkViewer;
 
-    public NetPlanViewTableComponent_network(final GUINetworkDesign networkViewer, AdvancedJTable_layer layerTable) {
+    public NetPlanViewTableComponent_network(final GUINetworkDesign networkViewer, AdvancedJTable_networkElement layerTable) {
         super(new MigLayout("", "[][grow]", "[][][grow][][][][][grow]"));
 
         this.layerTable = layerTable;

@@ -25,7 +25,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
-import javax.swing.JToggleButton;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.VisualizationState;
@@ -37,7 +36,9 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.internal.sim.SimKernel;
+import com.net2plan.niw.DefaultStatelessSimulator;
 import com.net2plan.utils.ClassLoaderUtils;
+import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
 /**
@@ -55,7 +56,7 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
     private Thread simThread;
     private ParameterValueDescriptionPanel simulationConfigurationPanel;
     private RunnableSelector statelessSimulatorPanel;
-    private final JCheckBox checkBox_whatIfActivated;
+    private final JCheckBox checkBox_whatIfActivated , checkBox_useDefaultNiwSimulator;
     private SimKernel simKernel;
 
     public WhatIfAnalysisPane(GUINetworkDesign callback)
@@ -67,7 +68,7 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
         ALGORITHMS_DIRECTORY = ALGORITHMS_DIRECTORY.isDirectory() ? ALGORITHMS_DIRECTORY : IGUIModule.CURRENT_DIR;
 
         statelessSimulatorPanel = new RunnableSelector(SimKernel.getEventProcessorLabel(), "File", IAlgorithm.class , ALGORITHMS_DIRECTORY, new ParameterValueDescriptionPanel());
-
+        
         simulationConfigurationPanel = new ParameterValueDescriptionPanel();
         simulationConfigurationPanel.setParameters(new ArrayList<> ());
 
@@ -76,11 +77,26 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
         checkBox_whatIfActivated.setToolTipText("Activate/Deactivate What-if analysis tool");
         checkBox_whatIfActivated.addActionListener(this);
         checkBox_whatIfActivated.setSelected(callback.getVisualizationState().isWhatIfAnalysisActive());
+        
+        checkBox_useDefaultNiwSimulator = new JCheckBox ("Use default NIW simulator when NIW framework is active");
+        checkBox_useDefaultNiwSimulator.setToolTipText("If the NIW framework is active, and what-if analysis is active, the default NIW algorithm is used instead of a user-selected one");
+        checkBox_useDefaultNiwSimulator.addActionListener(this);
+        checkBox_useDefaultNiwSimulator.setSelected(callback.getVisualizationState().isWhatIfAnalysisUseDefaultNiwSimulatorActive());
+
+        final boolean activePanel = checkBox_whatIfActivated.isSelected() &&
+        		(callback.getVisualizationState().isNiwDesignButtonActive()? checkBox_useDefaultNiwSimulator.isSelected() : true);
+        statelessSimulatorPanel.setEnabled(activePanel);
+
+        
         // Negate the last selection and run the listener.
 //        btn_whatIfActivated.doClick();
         upperButtonPlusLabelPanel.setLayout(new BorderLayout());
         upperButtonPlusLabelPanel.add(new JLabel ("  "), BorderLayout.NORTH);
-        upperButtonPlusLabelPanel.add(checkBox_whatIfActivated, BorderLayout.CENTER);
+        final JPanel midPanel = new JPanel ();
+        midPanel.setLayout(new BorderLayout());
+        midPanel.add(checkBox_whatIfActivated, BorderLayout.NORTH);
+        midPanel.add(checkBox_useDefaultNiwSimulator, BorderLayout.SOUTH);
+        upperButtonPlusLabelPanel.add(midPanel , BorderLayout.CENTER);
         upperButtonPlusLabelPanel.add(new JLabel ("  "), BorderLayout.SOUTH);
 
         final JTextArea upperText = new JTextArea();
@@ -114,33 +130,30 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
 
     public void whatIfSomethingModified() 
     {
-    	runSimulation();
-    }
-
-    /**
-     * Runs a short simulation to perform the what-if analysis. At the end, the resulting netplan is set
-     *
-     * @param eventToRun
-     */
-    private void runSimulation()
-    {
     	final NetPlan originalNpCopy = callback.getDesign().copy();
     	try
     	{
 	    	final NetPlan np = callback.getDesign();
 	        final Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-            final Triple<File, String, Class> aux = statelessSimulatorPanel.getRunnable();
-            System.out.println("To load: " + aux);
-            final IAlgorithm algorithmInstance = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), IAlgorithm.class , null);
-            Map<String, String> eventProcessorParameters = statelessSimulatorPanel.getRunnableParameters();
-            System.out.println("eventProcessorParameters: " + eventProcessorParameters);
-            algorithmInstance.executeAlgorithm(np, eventProcessorParameters, net2planParameters);
+	    	if (callback.getVisualizationState().isNiwDesignButtonActive() && callback.getVisualizationState().isWhatIfAnalysisUseDefaultNiwSimulatorActive())
+	    	{
+	            final IAlgorithm algorithmInstance = new DefaultStatelessSimulator();
+	            algorithmInstance.executeAlgorithm(np, InputParameter.getDefaultParameters(algorithmInstance.getParameters()), net2planParameters);
+	    	}
+	    	else
+	    	{
+	            final Triple<File, String, Class> aux = statelessSimulatorPanel.getRunnable();
+	            final IAlgorithm algorithmInstance = ClassLoaderUtils.getInstance(aux.getFirst(), aux.getSecond(), IAlgorithm.class , null);
+	            Map<String, String> eventProcessorParameters = statelessSimulatorPanel.getRunnableParameters();
+	            algorithmInstance.executeAlgorithm(np, eventProcessorParameters, net2planParameters);
+	    	}
         } catch (Throwable ex)
         {
         	ex.printStackTrace();
         	callback.getDesign().assignFrom(originalNpCopy);
         }
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e)
@@ -151,8 +164,22 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
             final VisualizationState vs = callback.getVisualizationState();
             if (callback.inOnlineSimulationMode()) checkBox_whatIfActivated.setSelected(false);
             vs.setWhatIfAnalysisActive(checkBox_whatIfActivated.isSelected());
-            statelessSimulatorPanel.setEnabled(checkBox_whatIfActivated.isSelected());
+            final boolean activePanel = checkBox_whatIfActivated.isSelected() &&
+            		(callback.getVisualizationState().isNiwDesignButtonActive()? checkBox_useDefaultNiwSimulator.isSelected() : true);
+            statelessSimulatorPanel.setEnabled(activePanel);
         }
+        else if (src == checkBox_useDefaultNiwSimulator)
+        {
+            final VisualizationState vs = callback.getVisualizationState();
+            vs.setIsActiveWhatIfAnalysisUseDefaultNiwSimulator(checkBox_useDefaultNiwSimulator.isSelected());
+            final boolean activePanel = checkBox_whatIfActivated.isSelected() &&
+            		(callback.getVisualizationState().isNiwDesignButtonActive()? checkBox_useDefaultNiwSimulator.isSelected() : true);
+            statelessSimulatorPanel.setEnabled(activePanel);
+        }
+        
+        if (callback.getVisualizationState().isWhatIfAnalysisActive())
+        	this.whatIfSomethingModified ();
+        
     }
 
 }

@@ -65,7 +65,7 @@ public class AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 	
     public AdvancedJTable_link(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.LINKS , layerThisTable , true , e->e.isUp()? null : Color.RED);
+        super(callback, AJTableType.LINKS , null , layerThisTable , true , e->e.isUp()? null : Color.RED);
     }
 
     @Override

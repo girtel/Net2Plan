@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +13,10 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.niw.WNetConstants.WTYPE;
 
 /** An instance of this class is a VNF instance hosted in a node, of a given type, with a given capacity. The characteristics of the 
  * VNF instance are:
@@ -82,6 +84,18 @@ public class WVnfInstance extends WAbstractNetworkElement
 	 * @return see above
 	 */
 	public double getOccupiedCapacityInGbps () { return r.getOccupiedCapacity(); }
+
+	/** The utilization of this VNF: occupied capacity vs. current capacity
+	 * @return see above
+	 */
+	public double getCurrentUtilization ()
+	{
+		final double cap = getCurrentCapacityInGbps();
+		final double occup = getOccupiedCapacityInGbps();
+		if (cap < Configuration.precisionFactor && occup < Configuration.precisionFactor) return 0.0;
+		if (cap == 0) return Double.MAX_VALUE;
+		return occup / cap;
+	}
 	
 	/** Returns the VNF capacity occupied by a given service chain, or zero if (i) the service chain is down, (ii) the service chain is not traversing this VNF instance.
 	 * The VNF capacity occupied is the service chain traffic at the input of the VNF   
@@ -99,13 +113,13 @@ public class WVnfInstance extends WAbstractNetworkElement
 	 * @param newOccupiedRam the amount of RAM in GBytes occupied by this instance
 	 * @param newOccupiedHd the amount of hard disk in Gbytes occupied by this instance
 	 */
-	public void setCapacityInGbpsOfInputTraffic (double newProcessingCapacityInGbps , double newOccupiedCpu , double newOccupiedRam , double newOccupiedHd)
+	public void setCapacityInGbpsOfInputTraffic (Optional<Double> newProcessingCapacityInGbps , Optional<Double> newOccupiedCpu , Optional<Double> newOccupiedRam , Optional<Double> newOccupiedHd)
 	{
 		final Map<Resource,Double> map = new HashMap<> ();
-		map.put (getHostingNode().getCpuBaseResource() , newOccupiedCpu);
-		map.put (getHostingNode().getRamBaseResource() , newOccupiedRam);
-		map.put (getHostingNode().getHdBaseResource() , newOccupiedHd);		
-		r.setCapacity(newProcessingCapacityInGbps, map);
+		map.put (getHostingNode().getCpuBaseResource() , newOccupiedCpu.orElse(getOccupiedCpus()));
+		map.put (getHostingNode().getRamBaseResource() , newOccupiedRam.orElse(getOccupiedRamInGB()));
+		map.put (getHostingNode().getHdBaseResource() , newOccupiedHd.orElse(getOccupiedHdInGB()));		
+		r.setCapacity(newProcessingCapacityInGbps.orElse(getCurrentCapacityInGbps()), map);
 	}
 
 	/** Sets the capacity of this VNF instance as well as the CPU, RAM, HD consumption, so the VNF capacity is the minimum multiple of the
@@ -119,7 +133,10 @@ public class WVnfInstance extends WAbstractNetworkElement
 		final double occupiedCapacityGbps = this.getOccupiedCapacityInGbps();
 		final double capacityOfEachSubinstance = vnfType.getMaxInputTrafficPerVnfInstance_Gbps();
 		final int numSubinstances = (int) Math.ceil(occupiedCapacityGbps / capacityOfEachSubinstance);
-		setCapacityInGbpsOfInputTraffic(numSubinstances * capacityOfEachSubinstance , numSubinstances * vnfType.getOccupCpu(), numSubinstances * vnfType.getOccupRamGBytes(), numSubinstances * vnfType.getOccupHdGBytes());
+		setCapacityInGbpsOfInputTraffic(Optional.of(numSubinstances * capacityOfEachSubinstance) , 
+				Optional.of(numSubinstances * vnfType.getOccupCpu()), 
+				Optional.of(numSubinstances * vnfType.getOccupRamGBytes()), 
+				Optional.of(numSubinstances * vnfType.getOccupHdGBytes()));
 	}
 	
 	/** Returns the current capacity of this VNF
@@ -175,5 +192,8 @@ public class WVnfInstance extends WAbstractNetworkElement
 		assert getHostingNode().getVnfInstances(this.getType()).contains(this);
 		assert getHostingNode().getVnfInstances().contains(this);
 	}
-	
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WVnfInstance; }
+
 }

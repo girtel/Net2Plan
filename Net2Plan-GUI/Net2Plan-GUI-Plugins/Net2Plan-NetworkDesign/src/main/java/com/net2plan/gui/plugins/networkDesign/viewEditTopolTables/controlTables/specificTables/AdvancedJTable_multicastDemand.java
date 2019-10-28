@@ -64,7 +64,7 @@ public class AdvancedJTable_multicastDemand extends AdvancedJTable_networkElemen
 {
     public AdvancedJTable_multicastDemand(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.MULTICAST_DEMANDS , layerThisTable , true , null);
+        super(callback, AJTableType.MULTICAST_DEMANDS , null , layerThisTable , true , null);
     }
 
     @Override

@@ -3,12 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
-
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
+package com.net2plan.niw;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,24 +11,45 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.niw.WNetConstants.WTYPE;
+
 /**
  * This base class is inherited by all the classes in the library representing relevant network elements. Provides some
  * base implementations for common methods. It wraps an underlying Net2Plan object, providing the baseline support.
  */
 public abstract class WAbstractNetworkElement implements Comparable<WAbstractNetworkElement>
 {
+	public static final String NIWNAMEPREFIX = "$$$";
+
 	/**
 	 * The Net2Plan object associated to this library object
 	 */
 	protected final NetworkElement associatedNpElement;
 	private final Optional<Integer> indexIfDummyElement;
 
+	public abstract WTYPE getWType (); 
 
 	protected WAbstractNetworkElement(NetworkElement associatedNpElement , Optional<Integer> indexIfDummyElement)
 	{
 		// if associated element == null, this is a dummy fiber, used in some graphs
 		this.associatedNpElement = associatedNpElement;
 		this.indexIfDummyElement = indexIfDummyElement;
+		if (this.getWType() != WTYPE.WNet)
+		{
+			final WTYPE type1 = getNet().getWType(associatedNpElement).orElse(null);
+			final WTYPE type2 = this.getWType();
+			if (type1 != type2) 
+			{
+				System.out.println("TYPE ACCORDING TO associtatedElement: " + type1 + " . According to this.getType(): " + type2);
+				System.out.println("associatedNpElement: " + associatedNpElement);
+			}
+			assert type1 == type2;
+			
+		}
 	}
 
 	/**
@@ -62,7 +78,7 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 * @param defaultValue see above
 	 * @return see above
 	 */
-	public boolean getAttributeAsBooleanOrDefault(String name, Boolean defaultValue)
+	public Boolean getAttributeAsBooleanOrDefault(String name, Boolean defaultValue)
 	{
 		final String s = associatedNpElement.getAttribute(name);
 		if (s == null) return defaultValue;
@@ -142,14 +158,16 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 		return res.stream().map(nn -> new Integer(nn.intValue())).collect(Collectors.toCollection(TreeSet::new));
 	}
 
-	NetworkLayer getIpNpLayer()
+	Optional<NetworkLayer> getIpNpLayer()
 	{
-		return associatedNpElement.getNetPlan().getNetworkLayer(1);
+		final WLayerIp ipLayer = getNet().getIpLayer().orElse(null);
+		return ipLayer == null? Optional.empty() : Optional.of(ipLayer.getNe());
 	}
 
-	NetworkLayer getWdmNpLayer()
+	Optional<NetworkLayer> getWdmNpLayer()
 	{
-		return associatedNpElement.getNetPlan().getNetworkLayer(0);
+		final WLayerWdm wdmLayer = getNet().getWdmLayer().orElse(null);
+		return wdmLayer == null? Optional.empty() : Optional.of(wdmLayer.getNe());
 	}
 
 	/**
@@ -219,6 +237,16 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	}
 
 	/**
+	 * Returns true if this element is an IP source routde connection
+	 * @return see above
+	 */
+	public boolean isIpConnection()
+	{
+		return this instanceof WIpSourceRoutedConnection;
+	}
+
+
+	/**
 	 * Returns true if this element is an IP layer
 	 * @return see above
 	 */
@@ -249,9 +277,9 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 * Returns true if this element is a lightpath unregenerated (without intermediate regenerations)
 	 * @return see above
 	 */
-	public boolean isLightpathUnregenerated()
+	public boolean isLightpath()
 	{
-		return this instanceof WLightpathUnregenerated;
+		return this instanceof WLightpath;
 	}
 
 	/**
@@ -270,6 +298,15 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	public boolean isServiceChainRequest()
 	{
 		return this instanceof WServiceChainRequest;
+	}
+
+	/**
+	 * Returns true if this element is a unicast IP demand
+	 * @return see above
+	 */
+	public boolean isWIpUnicastDemand()
+	{
+		return this instanceof WIpUnicastDemand;
 	}
 
 	/**
@@ -298,6 +335,16 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	{
 		return (WIpLink) this;
 	}
+
+	/**
+	 * Casts this element to a WIpSourceRoutedConnection object (fails if it is not an object of such type)
+	 * @return see above
+	 */
+	public WIpSourceRoutedConnection getAsIpSourceRoutedConnection()
+	{
+		return (WIpSourceRoutedConnection) this;
+	}
+
 
 	/**
 	 * Casts this element to a WLayerIp object (fails if it is not an object of such type)
@@ -330,9 +377,17 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 * Casts this element to a WLightpathUnregenerated object (fails if it is not an object of such type)
 	 * @return see above
 	 */
-	public WLightpathUnregenerated getAsLightpathUnregenerated()
+	public WLightpath getAsLightpath()
 	{
-		return (WLightpathUnregenerated) this;
+		return (WLightpath) this;
+	}
+	/**
+	 * Casts this element to a WSharedRiskGroup object (fails if it is not an object of such type)
+	 * @return see above
+	 */
+	public WSharedRiskGroup getAsSrg()
+	{
+		return (WSharedRiskGroup) this;
 	}
 
 	/**
@@ -361,6 +416,16 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	{
 		return (WServiceChainRequest) this;
 	}
+
+	/**
+	 * Casts this element to a WIpUnicastDemand
+	 * @return see above
+	 */
+	public WIpUnicastDemand getAsIpUnicastDemand()
+	{
+		return (WIpUnicastDemand) this;
+	}
+
 
 	/**
 	 * Casts this element to a WVnfInstance object (fails if it is not an object of such type)

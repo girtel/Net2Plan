@@ -3,9 +3,10 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,18 +23,22 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.StringUtils;
@@ -48,8 +53,8 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  */
 public class WNet extends WAbstractNetworkElement
 {
-	private static final String ATTNAME_VNFTYPELIST = "VnfTypeListMatrix";
-	private static final String ATTNAME_USERSERVICELIST = "userServiceListMatrix";
+	private static final String ATTNAME_VNFTYPELIST = NIWNAMEPREFIX + "VnfTypeListMatrix";
+	private static final String ATTNAME_USERSERVICELIST = NIWNAMEPREFIX + "userServiceListMatrix";
 
 	/** Creates a WNet object from a NetPlan object. Does not check its consistency as a valid NIW design
 	 * @param np see above
@@ -85,12 +90,12 @@ public class WNet extends WAbstractNetworkElement
 			if (!lpr.hasLightpathsAssigned()) continue;
 			if (!lpr.is11Protected())
 			{
-				final WLightpathUnregenerated lp = getLightpaths().get(0);
+				final WLightpath lp = getLightpaths().get(0);
 				lp.getNe().setCarriedTraffic(lp.isUp()? lpr.getLineRateGbps() : 0.0 , null);
 			}
 			else
 			{
-				final List<WLightpathUnregenerated> lps = getLightpaths();
+				final List<WLightpath> lps = getLightpaths();
 				if (lps.get(0).isUp()) 
 				{ 
 					lps.get(0).getNe().setCarriedTraffic(lpr.getLineRateGbps(), null);   
@@ -113,7 +118,7 @@ public class WNet extends WAbstractNetworkElement
 				{
 					assert e.getNe().getTraversingRoutes().size() == 1;
 					final Route r = e.getNe().getTraversingRoutes().first();
-					r.setCarriedTraffic(e.getNe().getCapacity(), e.getNe().getCapacity());
+					r.setCarriedTraffic(e.getNominalCapacityGbps(), e.getNominalCapacityGbps());
 				}
 			} 
 		}
@@ -127,7 +132,9 @@ public class WNet extends WAbstractNetworkElement
 			else
 				sc.getNe().setCarriedTraffic(0.0, Collections.nCopies(sc.getNe().getSeqOccupiedCapacitiesIfNotFailing ().size(), 0.0));
 		}
-		
+
+		/* Updates the worst case latency and length info of */
+		//for (WIpUnicastDemand d : this.getIpUnicastDemands())
 	}
 	
 	private final NetPlan np;
@@ -142,20 +149,43 @@ public class WNet extends WAbstractNetworkElement
 	 * Returns the object identifying the WDM layer
 	 * @return see above
 	 */
-	public WLayerWdm getWdmLayer()
+	public Optional<WLayerWdm> getWdmLayer()
 	{
-		return new WLayerWdm(np.getNetworkLayer(0));
+		return np.getNetworkLayers().stream().filter(e->e.getName().equals(WNetConstants.wdmLayerName)).map(e->new WLayerWdm(e)).findFirst();
 	}
 
 	/**
 	 * Returns the object identifying the IP layer
 	 * @return see above
 	 */
-	public WLayerIp getIpLayer()
+	public Optional<WLayerIp> getIpLayer()
 	{
-		return new WLayerIp(np.getNetworkLayer(1));
+		return np.getNetworkLayers().stream().filter(e->e.getName().equals(WNetConstants.ipLayerName)).map(e->new WLayerIp(e)).findFirst();
 	}
 
+	/** Add a SRG, with no associated failing elements, a MTTR of 12 hours, and MTTF of 1 year of 365 days
+	 * @return see above
+	 */
+	public WSharedRiskGroup addSharedRiskGroup ()
+	{
+		final SharedRiskGroup srg = getNe().addSRG(WNetConstants.DEFAULT_SRG_MTTFHOURS, WNetConstants.DEFAULT_SRG_MTTRHOURS, null);
+		return new WSharedRiskGroup(srg);
+	}
+
+	/**
+	 * Returns the list of defined shared risk groups, in increasing order according to its id
+	 * @return see above
+	 */
+	public List<WSharedRiskGroup> getSrgs ()
+	{
+		return np.getSRGs().stream().map(n -> new WSharedRiskGroup(n)).collect(Collectors.toCollection(ArrayList::new));
+	}
+	
+	/** Returns the number of nodes in the design, sa returned by getNodes
+	 * @return see above
+	 */
+	public int getNumberOfNodes () { return (int) np.getNodes().stream().map(n -> new WNode(n)).filter(n -> !n.isVirtualNode()).count (); }
+	
 	/**
 	 * Returns the list of network nodes, in increasing order according to its id
 	 * @return see above
@@ -171,7 +201,8 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WFiber> getFibers()
 	{
-		return np.getLinks(getWdmLayer().getNe()).stream().map(n -> new WFiber(n)).collect(Collectors.toCollection(ArrayList::new));
+		if (!isWithWdmLayer()) return new ArrayList<> ();
+		return np.getLinks(getWdmLayer().get().getNe()).stream().map(n -> new WFiber(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -180,16 +211,22 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WLightpathRequest> getLightpathRequests()
 	{
-		return np.getDemands(getWdmLayer().getNe()).stream().map(n -> new WLightpathRequest(n)).collect(Collectors.toCollection(ArrayList::new));
+		if (!isWithWdmLayer()) return new ArrayList<> ();
+		return np.getDemands(getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isLightpathRequest(); }).
+				map(n -> new WLightpathRequest(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
 	 * Returns the list of lightpaths, in increasing order according to its id
 	 * @return see above
 	 */
-	public List<WLightpathUnregenerated> getLightpaths()
+	public List<WLightpath> getLightpaths()
 	{
-		return np.getRoutes(getWdmLayer().getNe()).stream().map(n -> new WLightpathUnregenerated(n)).collect(Collectors.toCollection(ArrayList::new));
+		if (!isWithWdmLayer()) return new ArrayList<> ();
+		return np.getRoutes(getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(n -> new WLightpath(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -198,7 +235,10 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WIpLink> getIpLinks()
 	{
-		return np.getLinks(getIpLayer().getNe()).stream().map(n -> new WIpLink(n)).filter(e -> !e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
+		if (!isWithIpLayer ()) return new ArrayList<> ();
+		return np.getLinks(getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isIpLink(); }).
+				map(n -> new WIpLink(n)).filter(e -> !e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -207,10 +247,9 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WServiceChainRequest> getServiceChainRequests()
 	{
-		return np.getDemands(getIpLayer().getNe()).stream().
-				filter(d->!d.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE)).
-				filter(d->new WNode (d.getIngressNode()).isVirtualNode()).
-				filter(d->new WNode (d.getEgressNode()).isVirtualNode()).
+		if (!isWithIpLayer ()) return new ArrayList<> ();
+		return np.getDemands(getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isServiceChainRequest(); }).
 				map(n -> new WServiceChainRequest(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
@@ -220,10 +259,9 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WIpUnicastDemand> getIpUnicastDemands ()
 	{
-		return np.getDemands(getIpLayer().getNe()).stream().
-				filter(d->!d.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE)).
-				filter(d->!(new WNode (d.getIngressNode()).isVirtualNode())).
-				filter(d->!(new WNode (d.getEgressNode()).isVirtualNode())).
+		if (!isWithIpLayer ()) return new ArrayList<> ();
+		return np.getDemands(getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isIpUnicastDemand(); }).
 				map(n -> new WIpUnicastDemand(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
@@ -233,7 +271,22 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<WServiceChain> getServiceChains()
 	{
-		return np.getRoutes(getIpLayer().getNe()).stream().filter(r->!r.getDemand().hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE)).map(n -> new WServiceChain(n)).collect(Collectors.toCollection(ArrayList::new));
+		if (!isWithIpLayer ()) return new ArrayList<> ();
+		return np.getRoutes(getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(n -> new WServiceChain(n)).collect(Collectors.toCollection(ArrayList::new));
+	}
+
+	/**
+	 * Returns the list of IP source routed connections, in increasing order according to its id
+	 * @return see above
+	 */
+	public List<WIpSourceRoutedConnection> getIpSourceRoutedConnections()
+	{
+		if (!isWithIpLayer ()) return new ArrayList<> ();
+		return np.getRoutes(getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
+				map(n -> new WIpSourceRoutedConnection(n)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	/**
@@ -249,13 +302,20 @@ public class WNet extends WAbstractNetworkElement
 	 * Creates an empty design with no nodes, links etc.
 	 * @return see above
 	 */
-	public static WNet createEmptyDesign()
+	public static WNet createEmptyDesign(boolean withIpLayer , boolean withWdmLayer)
 	{
+		if (!withIpLayer && !withWdmLayer) throw new Net2PlanException ("The design must have at least one layer");
 		final NetPlan np = new NetPlan();
-		np.getNetworkLayerDefault().setName("WDM");
-		np.addLayer("IP", "IP Layer", "", "", null, null);
-		np.addNode(0, 0, WNetConstants.WNODE_NAMEOFANYCASTORIGINNODE, null).addTag(WNetConstants.TAGNODE_INDICATIONVIRTUALORIGINNODE);
-		np.addNode(0, 0, WNetConstants.WNODE_NAMEOFANYCASTDESTINATION, null).addTag(WNetConstants.TAGNODE_INDICATIONVIRTUALDESTINATIONNODE);
+		final NetworkLayer initialDefaultLayer = np.getNetworkLayerDefault();
+		if (withWdmLayer)
+			np.addLayer(WNetConstants.wdmLayerName, WNetConstants.wdmLayerName, "", "", null, null);
+		if (withIpLayer)
+		{
+			np.addLayer(WNetConstants.ipLayerName, WNetConstants.ipLayerName, "", "", null, null);
+			np.addNode(0, 0, WNetConstants.WNODE_NAMEOFANYCASTORIGINNODE, null).addTag(WNetConstants.TAGNODE_INDICATIONVIRTUALORIGINNODE);
+			np.addNode(0, 0, WNetConstants.WNODE_NAMEOFANYCASTDESTINATION, null).addTag(WNetConstants.TAGNODE_INDICATIONVIRTUALDESTINATIONNODE);
+		}
+		np.removeNetworkLayer(initialDefaultLayer);
 		final WNet res = new WNet(np);
 		return res;
 	}
@@ -269,6 +329,14 @@ public class WNet extends WAbstractNetworkElement
 	{
 		return new WNet(NetPlan.loadFromFile(f));
 	}
+
+	boolean isNpIpLayer (NetworkLayer layer) { final WLayerIp l = getIpLayer().orElse (null); return l == null? false : l.getNe().equals(layer); }
+	
+	boolean isNpWdmLayer (NetworkLayer layer) { final WLayerWdm l = getWdmLayer().orElse (null); return l == null? false : l.getNe().equals(layer); }
+
+	public boolean isWithWdmLayer () { return getWdmLayer().isPresent(); } 
+	
+	public boolean isWithIpLayer () { return getIpLayer().isPresent(); }
 
 	WNode getAnycastOriginNode()
 	{
@@ -292,6 +360,17 @@ public class WNet extends WAbstractNetworkElement
 		return new WNode (n);
 	}
 
+	public String getUnusedValidNodeName () 
+	{
+		int index = getNumberOfNodes();
+		while (true)
+		{
+			final String name = "Node" + index;
+			if (getNodes().stream().anyMatch(n -> n.getName().equals(name))) { index ++; continue; }
+			return name;
+		}
+	}
+	
 	/**
 	 * Adds a node to the design
 	 * @param xCoord the x coordinate
@@ -307,8 +386,16 @@ public class WNet extends WAbstractNetworkElement
 		if (getNodes().stream().anyMatch(n -> n.getName().equals(name))) ex("Names cannot be repeated");
 		final WNode n = new WNode(getNetPlan().addNode(xCoord, yCoord, name, null));
 		n.setType(type);
-		addIpLink(getAnycastOriginNode(), n, Double.MAX_VALUE, false);
-		addIpLink(n, getAnycastDestinationNode(), Double.MAX_VALUE, false);
+		
+		/* Add the virtual links from the anycast nodes to this node */ 
+		if (isWithIpLayer())
+		{
+			final Link anycastOriginToNode = getNetPlan().addLink(getAnycastOriginNode().getNe(), n.getNe(), Double.MAX_VALUE, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().get().getNe());
+			anycastOriginToNode.setAttribute(WIpLink.ATTNAMECOMMONPREFIX + WIpLink.ATTNAMESUFFIX_NOMINALCAPACITYGBPS, Double.MAX_VALUE);
+	
+			final Link nodeToAnycastDestination = getNetPlan().addLink(n.getNe(), getAnycastDestinationNode().getNe() , Double.MAX_VALUE, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().get().getNe());
+			nodeToAnycastDestination.setAttribute(WIpLink.ATTNAMECOMMONPREFIX + WIpLink.ATTNAMESUFFIX_NOMINALCAPACITYGBPS, Double.MAX_VALUE);
+		}
 		return n;
 	}
 
@@ -322,14 +409,16 @@ public class WNet extends WAbstractNetworkElement
 	 * @param isBidirectional indicates if the fiber to add is bidirectional
 	 * @return the first element of the pair is the fiber a- b, the second is b-a or null in non-bidirectional cases
 	 */
-	public Pair<WFiber, WFiber> addFiber(WNode a, WNode b, List<Integer> validOpticalSlotRanges, double lengthInKm, boolean isBidirectional)
+	public Pair<WFiber, WFiber> addFiber(WNode a, WNode b, List<Pair<Integer,Integer>> validOpticalSlotRanges, double lengthInKm, boolean isBidirectional)
 	{
+		if (!isWithWdmLayer ()) throw new Net2PlanException ("WDM layer does not exist");
 		checkInThisWNet(a, b);
+		if (validOpticalSlotRanges == null) validOpticalSlotRanges = WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES;
 		if (lengthInKm < 0) lengthInKm = getNetPlan().getNodePairHaversineDistanceInKm(a.getNe(), b.getNe());
 		final SortedSet<Integer> opticalSlots = WFiber.computeValidOpticalSlotIds(validOpticalSlotRanges);
 		if (isBidirectional)
 		{
-			final Pair<Link, Link> ee = getNetPlan().addLinkBidirectional(a.getNe(), b.getNe(), opticalSlots.size(), lengthInKm, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getWdmLayer().getNe());
+			final Pair<Link, Link> ee = getNetPlan().addLinkBidirectional(a.getNe(), b.getNe(), opticalSlots.size(), lengthInKm, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getWdmLayer().get().getNe());
 			WFiber fiber1 = new WFiber(ee.getFirst());
 			fiber1.setValidOpticalSlotRanges(validOpticalSlotRanges);
 			WFiber fiber2 = new WFiber(ee.getSecond());
@@ -337,7 +426,7 @@ public class WNet extends WAbstractNetworkElement
 			return Pair.of(fiber1, fiber2);
 		} else
 		{
-			final Link ee = getNetPlan().addLink(a.getNe(), b.getNe(), opticalSlots.size(), lengthInKm, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getWdmLayer().getNe());
+			final Link ee = getNetPlan().addLink(a.getNe(), b.getNe(), opticalSlots.size(), lengthInKm, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getWdmLayer().get().getNe());
 			WFiber fiber = new WFiber(ee);
 			fiber.setValidOpticalSlotRanges(validOpticalSlotRanges);
 			return Pair.of(fiber, null);
@@ -354,8 +443,9 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public WLightpathRequest addLightpathRequest(WNode a, WNode b, double lineRateGbps, boolean isToBe11Protected)
 	{
+		if (!isWithWdmLayer ()) throw new Net2PlanException ("WDM layer does not exist");
 		checkInThisWNet(a, b);
-		final WLightpathRequest lpReq = new WLightpathRequest(getNetPlan().addDemand(a.getNe(), b.getNe(), lineRateGbps, RoutingType.SOURCE_ROUTING, null, getWdmLayer().getNe()));
+		final WLightpathRequest lpReq = new WLightpathRequest(getNetPlan().addDemand(a.getNe(), b.getNe(), lineRateGbps, RoutingType.SOURCE_ROUTING, null, getWdmLayer().get().getNe()));
 		lpReq.setIsToBe11Protected(isToBe11Protected);
 		return lpReq;
 	}
@@ -370,6 +460,47 @@ public class WNet extends WAbstractNetworkElement
 		return getNodes().stream().filter(n -> n.isConnectedToNetworkCore()).collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	/** Removes the IP layer in the design, if any, and if not the only layer
+	 */
+	public void removeIpLayer ()
+	{
+		final NetPlan np = getNet().getNe(); 
+		if (np.getNumberOfLayers() == 1) return;
+		if (!isWithIpLayer()) return;
+		getAnycastOriginNode().remove();
+		getAnycastDestinationNode().remove();
+		np.removeNetworkLayer(getIpNpLayer().get());
+	}
+	
+	/** Removes the WDM layer in the design, if any, and if not the only layer
+	 */
+	public void removeWdmLayer ()
+	{
+		final NetPlan np = getNet().getNe(); 
+		if (np.getNumberOfLayers() == 1) return;
+		if (!isWithWdmLayer()) return;
+		np.removeNetworkLayer(getWdmNpLayer().get());
+	}
+	
+
+	/** Adds an IP layer to the design, if it does not have already one
+	 */
+	public void addIpLayer ()
+	{
+		if (this.isWithIpLayer()) return;
+		np.addLayer(WNetConstants.ipLayerName, WNetConstants.ipLayerName, "", "", null, null);
+		np.addNode(0, 0, WNetConstants.WNODE_NAMEOFANYCASTORIGINNODE, null).addTag(WNetConstants.TAGNODE_INDICATIONVIRTUALORIGINNODE);
+		np.addNode(0, 0, WNetConstants.WNODE_NAMEOFANYCASTDESTINATION, null).addTag(WNetConstants.TAGNODE_INDICATIONVIRTUALDESTINATIONNODE);
+	}
+	
+	/** Adds a WDM layer to the design, if it does not have already one
+	 */
+	public void addWdmLayer ()
+	{
+		if (this.isWithWdmLayer()) return;
+		np.addLayer(WNetConstants.wdmLayerName, WNetConstants.wdmLayerName, "", "", null, null);
+	}
+
 	/**
 	 * Adds a request for an upstream or downstream unidirectional service chain, for the given user service. The user
 	 * service will define the sequence of VNF types that the flow must traverse, and will indicate the set of potential end
@@ -382,32 +513,93 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public WServiceChainRequest addServiceChainRequest(WNode userInjectionNode, boolean isUpstream, WUserService userService)
 	{
+		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
 		checkInThisWNet(userInjectionNode);
-		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer());
+		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer().get());
 		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
-		scReq.setUserServiceName(userService.getUserServiceUniqueId());
+		final BiConsumer<Collection<WNode>,Boolean> setAttributeEndNodesOriginTrue = (stNames , isOrigin) ->
+		{
+			final String atName = isOrigin? WServiceChainRequest.ATTNAMECOMMONPREFIX + WServiceChainRequest.ATTNAMESUFFIX_VALIDINPUTNODENAMES : WServiceChainRequest.ATTNAMECOMMONPREFIX + WServiceChainRequest.ATTNAMESUFFIX_VALIDOUTPUTNODENAMES;
+			final List<String> resNames = stNames.stream().map(n -> n.getName()).collect(Collectors.toList());
+			scReq.getNe().setAttributeAsStringList(atName, resNames);
+		};
 		if (isUpstream)
 		{
+			/* Directly modify the attribute, if not an assert there breaks */
 			scNp.setServiceChainSequenceOfTraversedResourceTypes(userService.getListVnfTypesToTraverseUpstream());
 			scReq.setIsUpstream(true);
-			scReq.setPotentiallyValidOrigins(Sets.newTreeSet(Arrays.asList(userInjectionNode)));
-			if (userService.isEndingInCoreNode()) scReq.setPotentiallyValidDestinations(getNodesConnectedToCore());
-			else scReq.setPotentiallyValidDestinations(new TreeSet<>());
+			setAttributeEndNodesOriginTrue.accept(Arrays.asList(userInjectionNode), true);
+			if (userService.isEndingInCoreNode()) setAttributeEndNodesOriginTrue.accept(getNodesConnectedToCore() , false);
+			else setAttributeEndNodesOriginTrue.accept(new ArrayList<> () , false);
 			scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(userService.getSequenceTrafficExpansionFactorsRespectToBaseTrafficUpstream());
 			scReq.setListMaxLatencyFromInitialToVnfStart_ms(userService.getListMaxLatencyFromInitialToVnfStart_ms_upstream());
 		} else
 		{
 			scNp.setServiceChainSequenceOfTraversedResourceTypes(userService.getListVnfTypesToTraverseDownstream());
 			scReq.setIsUpstream(false);
-			scReq.setPotentiallyValidDestinations(Sets.newTreeSet(Arrays.asList(userInjectionNode)));
-			if (userService.isEndingInCoreNode()) scReq.setPotentiallyValidOrigins(getNodesConnectedToCore());
-			else scReq.setPotentiallyValidOrigins(new TreeSet<>());
+			setAttributeEndNodesOriginTrue.accept(Arrays.asList(userInjectionNode), false);
+			if (userService.isEndingInCoreNode()) setAttributeEndNodesOriginTrue.accept(getNodesConnectedToCore(), true);
+			else setAttributeEndNodesOriginTrue.accept(new ArrayList<> (), true);
 			scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(userService.getSequenceTrafficExpansionFactorsRespectToBaseTrafficDownstream());
 			scReq.setListMaxLatencyFromInitialToVnfStart_ms(userService.getListMaxLatencyFromInitialToVnfStart_ms_downstream());
 		}
 		return scReq;
 	}
 
+	/**
+	 * Adds a request for an upstream or downstream unidirectional service chain, for the given user service. The user
+	 * service will define the sequence of VNF types that the flow must traverse, and will indicate the set of potential end
+	 * nodes (for upstream flows) or potential initial nodes (for downstream flows).
+	 * @param userInjectionNode the node where the traffic starts (in upstream flows) or ends (in downstream flows)
+	 * @param isUpstream if true, the flow is supposed to start in the injection node, if false, the flow is supposed to end
+	 *        in the injection node
+	 * @param userService the user service defining this service chain request.
+	 * @return see above
+	 */
+	/**
+	 * Adds a request for an upstream or downstream unidirectional service chain, with the given characteristics. 
+	 * The user will define the sequence of VNF types that the flow must traverse, and will indicate the set of potential end
+	 * nodes (for upstream flows) or potential initial nodes (for downstream flows). Also the default sequence of expansion factors 
+	 * of the traffic when traversing the VNF, and the list with the maximum latency from the origin
+	 * node, to the input of the i-th VNF traversed. The last value of such list is the maximum latency from the origin node to
+	 * the end node for the service chains realizing this request. 
+	 * value for the 
+	 * @param originNodes see above
+	 * @param endNodes see above
+	 * @param vnfTypesToTraverse see above
+	 * @param isUpstream see above
+	 * @param defaultSequenceOfExpansionFactors see above
+	 * @param listMaxLatencyFromInitialToVnfStart_ms see above
+	 * @return  see above
+	 */
+	public WServiceChainRequest addServiceChainRequest(SortedSet<WNode> originNodes , SortedSet<WNode> endNodes , 
+			List<String> vnfTypesToTraverse , 
+			boolean isUpstream , 
+			Optional<List<Double>> defaultSequenceOfExpansionFactors , 
+			Optional<List<Double>> listMaxLatencyFromInitialToVnfStart_ms)
+	{
+		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
+		checkInThisWNetCol(originNodes);
+		checkInThisWNetCol(endNodes);
+		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer().get());
+		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
+		scNp.setServiceChainSequenceOfTraversedResourceTypes(vnfTypesToTraverse);
+		scReq.setIsUpstream(isUpstream);
+		scReq.setPotentiallyValidOrigins(originNodes);
+		scReq.setPotentiallyValidDestinations(endNodes);
+		final int numVnfs = vnfTypesToTraverse.size();
+		List<Double> defaultSeqExpFactor = defaultSequenceOfExpansionFactors.orElse(null);
+		if (defaultSeqExpFactor == null) defaultSeqExpFactor = Collections.nCopies(numVnfs, 1.0);
+		if (defaultSeqExpFactor.size() != numVnfs) defaultSeqExpFactor = Collections.nCopies(numVnfs, 1.0);
+		scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(defaultSeqExpFactor);
+		List<Double> actual_listMaxLatencyFromInitialToVnfStart_ms = listMaxLatencyFromInitialToVnfStart_ms.orElse(null);
+		if (actual_listMaxLatencyFromInitialToVnfStart_ms == null) actual_listMaxLatencyFromInitialToVnfStart_ms = Collections.nCopies(numVnfs + 1, Double.MAX_VALUE);
+		if (actual_listMaxLatencyFromInitialToVnfStart_ms.size() != numVnfs + 1) actual_listMaxLatencyFromInitialToVnfStart_ms = Collections.nCopies(numVnfs + 1, Double.MAX_VALUE);
+		scReq.setListMaxLatencyFromInitialToVnfStart_ms(actual_listMaxLatencyFromInitialToVnfStart_ms);
+		return scReq;
+	}
+
+	
 	/**
 	 * Adds a request for a unidirectional anycast service chain with hand picked initial and end nodes.
 	 * @param initialNodes list of nodes that can be the origin of this flow
@@ -428,11 +620,12 @@ public class WNet extends WAbstractNetworkElement
 	public WServiceChainRequest addServiceChainRequest(SortedSet<WNode> initialNodes, SortedSet<WNode> endNodes, List<String> listVnfTypes, List<Double> defaultSequenceOfExpansionFactorsRespectToInjection,
 			List<Double> maxLatencyFromInitialToVnfStartMs, boolean isUpstream, String userServiceIdString)
 	{
+		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
 		checkInThisWNetCol(initialNodes);
 		checkInThisWNetCol(endNodes);
-		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer());
+		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer().get());
 		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
-		scReq.setUserServiceName(userServiceIdString);
+		scReq.setQosType(userServiceIdString);
 		scNp.setServiceChainSequenceOfTraversedResourceTypes(listVnfTypes);
 		scReq.setPotentiallyValidOrigins(initialNodes);
 		scReq.setPotentiallyValidDestinations(endNodes);
@@ -448,9 +641,10 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public WIpUnicastDemand addIpUnicastDemand (WNode initialNode , WNode endNode , boolean isUpstream, boolean isHopByHopRouted)
 	{
+		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
 		checkInThisWNet(initialNode);
 		checkInThisWNet(endNode);
-		final Demand scNp = getNetPlan().addDemand(initialNode.getNe(), endNode.getNe(), 0.0, isHopByHopRouted? RoutingType.HOP_BY_HOP_ROUTING : RoutingType.SOURCE_ROUTING, null, getIpNpLayer());
+		final Demand scNp = getNetPlan().addDemand(initialNode.getNe(), endNode.getNe(), 0.0, isHopByHopRouted? RoutingType.HOP_BY_HOP_ROUTING : RoutingType.SOURCE_ROUTING, null, getIpNpLayer().get());
 		final WIpUnicastDemand scReq = new WIpUnicastDemand(scNp);
 		scReq.setIsUpstream(isUpstream);
 		return scReq;
@@ -461,23 +655,14 @@ public class WNet extends WAbstractNetworkElement
 	 * @param a The IP link origin node
 	 * @param b The IP lin kend node
 	 * @param nominalLineRateGbps The nominal line rate of the IP link in Gbps
-	 * @param isBidirectional An indication if the IP link to add should be a pair of two unidirectional IP links in
-	 *        opposite directions
-	 * @return the first element of the pair is the a-b IP link, the second is the b-a IP link or null if not bidirectional
-	 *         IP link is requested
+	 * @return the first element of the pair is the a-b IP link, the second is the b-a IP link 
 	 */
-	public Pair<WIpLink, WIpLink> addIpLink(WNode a, WNode b, double nominalLineRateGbps, boolean isBidirectional)
+	public Pair<WIpLink, WIpLink> addIpLinkBidirectional (WNode a, WNode b, double nominalLineRateGbps)
 	{
+		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
 		checkInThisWNet(a, b);
-		if (isBidirectional)
-		{
-			final Pair<Link, Link> ee = getNetPlan().addLinkBidirectional(a.getNe(), b.getNe(), nominalLineRateGbps, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
-			return Pair.of(WIpLink.createFromAdd(ee.getFirst(), nominalLineRateGbps), WIpLink.createFromAdd(ee.getSecond(), nominalLineRateGbps));
-		} else
-		{
-			final Link ee = getNetPlan().addLink(a.getNe(), b.getNe(), nominalLineRateGbps, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().getNe());
-			return Pair.of(WIpLink.createFromAdd(ee, nominalLineRateGbps), null);
-		}
+		final Pair<Link, Link> ee = getNetPlan().addLinkBidirectional(a.getNe(), b.getNe(), nominalLineRateGbps, 1, WNetConstants.WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC, null, getIpLayer().get().getNe());
+		return Pair.of(WIpLink.createFromAdd(ee.getFirst(), nominalLineRateGbps), WIpLink.createFromAdd(ee.getSecond(), nominalLineRateGbps));
 	}
 
 	/**
@@ -715,12 +900,13 @@ public class WNet extends WAbstractNetworkElement
 	public List<List<WAbstractNetworkElement>> getKShortestServiceChainInIpLayer(int k, WNode a, WNode b, List<String> sequenceOfVnfTypesToTraverse, Optional<Map<WIpLink, Double>> optionalCostMapOrElseLatency,
 			Optional<Map<WVnfInstance, Double>> optionalVnfCostMapOrElseLatency)
 	{
+		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
 		checkInThisWNet(a, b);
 		if (optionalCostMapOrElseLatency.isPresent()) checkInThisWNetCol(optionalCostMapOrElseLatency.get().keySet());
 		if (optionalVnfCostMapOrElseLatency.isPresent()) checkInThisWNetCol(optionalVnfCostMapOrElseLatency.get().keySet());
 		final Node anycastNode_a = getAnycastOriginNode().getNe();
 		final Node anycastNode_b = getAnycastDestinationNode().getNe();
-		final List<Link> npLinks = np.getLinks(getIpNpLayer()).stream().filter(e -> !e.getOriginNode().equals(anycastNode_a) && !e.getDestinationNode().equals(anycastNode_b)).collect(Collectors.toList());
+		final List<Link> npLinks = np.getLinks(getIpNpLayer().get()).stream().filter(e -> !e.getOriginNode().equals(anycastNode_a) && !e.getDestinationNode().equals(anycastNode_b)).collect(Collectors.toList());
 		final Node originNode = a.getNe();
 		final Node destinationNode = b.getNe();
 		final List<String> sequenceOfResourceTypesToTraverse = sequenceOfVnfTypesToTraverse;
@@ -785,12 +971,13 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public List<List<WFiber>> getKShortestWdmPath(int k, WNode a, WNode b, Optional<Map<WFiber, Double>> optionalCostMapOrElseLatency)
 	{
+		if (!isWithWdmLayer ()) throw new Net2PlanException ("WDM layer does not exist");
 		checkInThisWNet(a, b);
 		if (optionalCostMapOrElseLatency == null) optionalCostMapOrElseLatency = Optional.empty();
 		if (optionalCostMapOrElseLatency.isPresent()) checkInThisWNetCol(optionalCostMapOrElseLatency.get().keySet());
 
 		final List<Node> nodes = np.getNodes();
-		final List<Link> links = np.getLinks(getWdmNpLayer());
+		final List<Link> links = np.getLinks(getWdmNpLayer().get());
 		final Map<Link, Double> linkCostMap = new HashMap<>();
 		for (Link e : links)
 		{
@@ -806,6 +993,32 @@ public class WNet extends WAbstractNetworkElement
 		return res;
 	}
 
+
+	/**
+	 * Returns two maximally link disjoint WDM paths between the given nodes. If exactly one path exists, one path is returned. If no paths exist, no paths are returned.
+	 * @param a the origin node
+	 * @param b the end node
+	 * @param optionalCostMapOrElseLatency an optional map of the cost to assign to traversing each WFiber link, if none,
+	 *        the cost is assumed to be the WFiber latency
+	 * @return a list of up to k paths, where each path is a sequence of WFiber objects forming a path from a to b
+	 */
+	public List<List<WFiber>> getTwoMaximallyLinkAndNodeDisjointWdmPaths(WNode a, WNode b, Optional<Map<WFiber, Double>> optionalCostMapOrElseLatency)
+	{
+		final List<Node> nodes = getNodes().stream().map(e->e.getNe()).collect(Collectors.toList());
+		final List<Link> links = getFibers().stream().map(e->e.getNe()).collect(Collectors.toList());
+		final SortedMap<Link,Double> costMap = new TreeMap<> ();
+		for (Link e : links) 
+			if (optionalCostMapOrElseLatency.isPresent()) 
+				costMap.put(e, optionalCostMapOrElseLatency.get().get(new WFiber(e)));
+			else
+				costMap.put(e, (new WFiber(e)).getPropagationDelayInMs());
+		final List<List<Link>> sps = GraphUtils.getTwoMaximumLinkAndNodeDisjointPaths(nodes, links, a.getNe(), b.getNe(), costMap);
+		final List<List<WFiber>> res = new ArrayList<> ();
+		for (List<Link> ee : sps) res.add(ee.stream().map(e->new WFiber(e)).collect(Collectors.toList()));
+		return res;
+	}
+
+	
 	void checkInThisWNet(WAbstractNetworkElement... ne)
 	{
 		for (WAbstractNetworkElement e : ne)
@@ -849,6 +1062,30 @@ public class WNet extends WAbstractNetworkElement
 	}
 
 	/**
+	 * Adds an instance of the VNF of the given type, in the indicated host node, applying it the given name, and other info
+	 * @param hostNode  see above
+	 * @param name see above
+	 * @param type see above
+	 * @param capacityGbps see above
+	 * @param occupiedCpu see above
+	 * @param occupiedRamGB see above
+	 * @param occupiedHdGb see above
+	 * @param processingTimeMs see above
+	 * @return see above
+	 */
+	public WVnfInstance addVnfInstance(WNode hostNode, String name, String type , double capacityGbps , double occupiedCpu , double occupiedRamGB , double occupiedHdGb , double processingTimeMs)
+	{
+		if (name.contains(WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER)) throw new Net2PlanException("Names cannot contain the character: " + WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER);
+		final Map<Resource, Double> cpuRamHdOccupied = new HashMap<>();
+		cpuRamHdOccupied.put(hostNode.getCpuBaseResource(), occupiedCpu);
+		cpuRamHdOccupied.put(hostNode.getRamBaseResource(), occupiedRamGB);
+		cpuRamHdOccupied.put(hostNode.getHdBaseResource(), occupiedHdGb);
+		final Resource resource = np.addResource(type, name, Optional.of(hostNode.getNe()), capacityGbps, "Gbps", cpuRamHdOccupied, processingTimeMs, null);
+		return new WVnfInstance(resource);
+	}
+
+	
+	/**
 	 * Get the propagation delay given a list of Fibers to traverse.
 	 * @param fiberLinks see above
 	 * @return see above
@@ -872,19 +1109,28 @@ public class WNet extends WAbstractNetworkElement
 
 	public SortedSet<WIpLink> getNodePairIpLinks(WNode a, WNode b)
 	{
-		final Set<Link> links = getNe().getNodePairLinks(a.getNe(), b.getNe(), false, getIpLayer().getNe());
+		if (!isWithIpLayer ()) return new TreeSet<> ();
+		final Set<Link> links = getNe().getNodePairLinks(a.getNe(), b.getNe(), false, getIpLayer().get().getNe());
 		return links.stream().map(e -> new WIpLink(e)).collect(Collectors.toCollection(TreeSet::new));
 	}
 	public SortedSet<WFiber> getNodePairFibers (WNode a, WNode b)
 	{
-		final Set<Link> links = getNe().getNodePairLinks(a.getNe(), b.getNe(), false, getWdmLayer().getNe());
+		if (!isWithWdmLayer ()) return new TreeSet<> ();
+		final Set<Link> links = getNe().getNodePairLinks(a.getNe(), b.getNe(), false, getWdmLayer().get().getNe());
 		return links.stream().map(e -> new WFiber(e)).collect(Collectors.toCollection(TreeSet::new));
 	}
 	
 	@Override
 	public void checkConsistency()
 	{
-		getNodes().forEach(e->e.checkConsistency());
+    	final Function<NetworkLayer,Boolean> isIp = d -> { final WAbstractNetworkElement ee = getWElement(d).orElse(null); return ee == null? false : ee.isLayerIp(); };
+    	final Function<NetworkLayer,Boolean> isWdm = d -> { final WAbstractNetworkElement ee = getWElement(d).orElse(null); return ee == null? false : ee.isLayerWdm(); };
+    	final int numIpLayers = (int) getNe().getNetworkLayers().stream().filter(e->isIp.apply(e)).count ();
+    	final int numWdmLayers = (int) getNe().getNetworkLayers().stream().filter(e->isWdm.apply(e)).count ();
+    	if (numIpLayers > 1 || numWdmLayers > 1) throw new Net2PlanException ();
+    	if (numIpLayers + numWdmLayers != getNe().getNumberOfLayers()) throw new Net2PlanException ();
+
+    	getNodes().forEach(e->e.checkConsistency());
 		getFibers().forEach(e->e.checkConsistency());
 		getLightpaths().forEach(e->e.checkConsistency());
 		getLightpathRequests().forEach(e->e.checkConsistency());
@@ -893,8 +1139,193 @@ public class WNet extends WAbstractNetworkElement
 		getServiceChains().forEach(e->e.checkConsistency());
 		getServiceChainRequests().forEach(e->e.checkConsistency());
 		getVnfInstances().forEach(e->e.checkConsistency());
-		getIpLayer().checkConsistency();
-		getWdmLayer().checkConsistency();
+		if (getIpLayer().isPresent()) getIpLayer().get().checkConsistency();
+		if (getWdmLayer ().isPresent()) getWdmLayer().get().checkConsistency();
+		getSrgs().forEach(s->s.checkConsistency());
 	}
+
+	public Optional<WTYPE> getWType (NetworkElement e)
+	{
+		if (e.getNetPlan() != this.getNe()) return Optional.empty();
+		
+		if (e == getNe ()) return Optional.of (WTYPE.WNet);
+		
+		if (e instanceof Node) return Optional.of (WTYPE.WNode);
+		if (e instanceof Link)
+		{
+			final Link ee = (Link) e;
+			final boolean isIpLayer = ee.getLayer().getName ().equals(WNetConstants.ipLayerName);
+			final boolean isWdmLayer = ee.getLayer().getName ().equals(WNetConstants.wdmLayerName);
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer)
+			{
+				if (new WNode (ee.getOriginNode()).isVirtualNode()) return Optional.empty();
+				if (new WNode (ee.getDestinationNode()).isVirtualNode()) return Optional.empty();
+				return Optional.of (WTYPE.WIpLink);
+			}
+			if (isWdmLayer) return Optional.of (WTYPE.WFiber);
+		}
+		if (e instanceof Demand)
+		{
+			final Demand ee = (Demand) e;
+			final boolean isIpLayer = ee.getLayer().getName ().equals(WNetConstants.ipLayerName);
+			final boolean isWdmLayer = ee.getLayer().getName ().equals(WNetConstants.wdmLayerName);
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer && ee.isCoupled())
+			{
+				assert ee.isCoupledInSameLayer();
+				assert ee.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
+				return Optional.empty(); // bundles
+			}
+			if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
+				return Optional.of (WTYPE.WIpUnicastDemand);
+			if (isIpLayer && new WNode (ee.getIngressNode()).isVirtualNode())
+				return Optional.of (WTYPE.WServiceChainRequest);
+			if (isWdmLayer) return Optional.of (WTYPE.WLightpathRequest);
+		}
+		if (e instanceof Route)
+		{
+			final Route ee = (Route) e;
+			final boolean isIpLayer = ee.getLayer().getName ().equals(WNetConstants.ipLayerName);
+			final boolean isWdmLayer = ee.getLayer().getName ().equals(WNetConstants.wdmLayerName);
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer)
+			{
+				if (ee.getDemand().isCoupled()) return Optional.empty();
+				if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
+				{
+					assert new WNode (ee.getEgressNode()).isRegularNode();
+					return Optional.of (WTYPE.WIpSourceRoutedConnection);
+				}
+				assert new WNode (ee.getIngressNode()).isVirtualNode();
+				assert new WNode (ee.getEgressNode()).isVirtualNode();
+				return Optional.of (WTYPE.WServiceChain);
+			}
+			if (isWdmLayer) return Optional.of (WTYPE.WLightpath);
+		}
+		if (e instanceof Resource)
+		{
+			final Resource ee = (Resource) e;
+			return Optional.of (WTYPE.WVnfInstance);
+		}
+		if (e instanceof SharedRiskGroup)
+		{
+			final SharedRiskGroup ee = (SharedRiskGroup) e;
+			return Optional.of(WTYPE.WSharedRiskGroup);
+		}
+		if (e instanceof NetworkLayer)
+		{
+			final NetworkLayer ee = (NetworkLayer) e;
+			if (ee.getName().equals(WNetConstants.wdmLayerName)) return Optional.of (WTYPE.WLayerWdm);
+			if (ee.getName().equals(WNetConstants.ipLayerName)) return Optional.of (WTYPE.WLayerIp);
+		}
+		return Optional.empty();
+	}
+	
+	public Optional<WAbstractNetworkElement> getWElement (NetworkElement e)
+	{
+		if (e.getNetPlan() != this.getNe()) return Optional.empty();
+		
+		if (e == getNe ()) return Optional.of (this);
+		
+		if (e instanceof Node) return Optional.of (new WNode ((Node) e));
+		if (e instanceof Link)
+		{
+			final Link ee = (Link) e;
+			final boolean isIpLayer = ee.getLayer().getName ().equals(WNetConstants.ipLayerName);
+			final boolean isWdmLayer = ee.getLayer().getName ().equals(WNetConstants.wdmLayerName);
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer)
+			{
+				if (new WNode (ee.getOriginNode()).isVirtualNode()) return Optional.empty();
+				if (new WNode (ee.getDestinationNode()).isVirtualNode()) return Optional.empty();
+				return Optional.of (new WIpLink(ee));
+			}
+			if (isWdmLayer) return Optional.of (new WFiber(ee));
+		}
+		if (e instanceof Demand)
+		{
+			final Demand ee = (Demand) e;
+			final boolean isIpLayer = ee.getLayer().getName ().equals(WNetConstants.ipLayerName);
+			final boolean isWdmLayer = ee.getLayer().getName ().equals(WNetConstants.wdmLayerName);
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer && ee.isCoupled())
+			{
+				assert ee.isCoupledInSameLayer();
+				assert ee.hasTag(WNetConstants.TAGDEMANDIP_INDICATIONISBUNDLE);
+				return Optional.empty(); // bundles
+			}
+			if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
+				return Optional.of (new WIpUnicastDemand(ee));
+			if (isIpLayer && new WNode (ee.getIngressNode()).isVirtualNode())
+				return Optional.of (new WServiceChainRequest(ee));
+			if (isWdmLayer) return Optional.of (new WLightpathRequest(ee));
+		}
+		if (e instanceof Route)
+		{
+			final Route ee = (Route) e;
+			final boolean isIpLayer = ee.getLayer().getName ().equals(WNetConstants.ipLayerName);
+			final boolean isWdmLayer = ee.getLayer().getName ().equals(WNetConstants.wdmLayerName);
+			assert isIpLayer || isWdmLayer;
+			if (isIpLayer)
+			{
+				if (ee.getDemand().isCoupled()) return Optional.empty();
+				if (isIpLayer && new WNode (ee.getIngressNode()).isRegularNode())
+				{
+					assert new WNode (ee.getEgressNode()).isRegularNode();
+					return Optional.of (new WIpSourceRoutedConnection(ee));
+				}
+				assert new WNode (ee.getIngressNode()).isVirtualNode();
+				assert new WNode (ee.getEgressNode()).isVirtualNode();
+				return Optional.of (new WServiceChain(ee));
+			}
+			if (isWdmLayer) return Optional.of (new WLightpath(ee));
+		}
+		if (e instanceof Resource)
+		{
+			final Resource ee = (Resource) e;
+			return Optional.of (new WVnfInstance(ee));
+		}
+		if (e instanceof SharedRiskGroup)
+		{
+			final SharedRiskGroup ee = (SharedRiskGroup) e;
+			return Optional.of (new WSharedRiskGroup(ee));
+		}
+		if (e instanceof NetworkLayer)
+		{
+			final NetworkLayer ee = (NetworkLayer) e;
+			if (ee.getName().equals(WNetConstants.wdmLayerName)) return Optional.of(new WLayerWdm(ee));
+			if (ee.getName().equals(WNetConstants.ipLayerName)) return Optional.of(new WLayerIp(ee));
+		}
+		
+		return Optional.empty();
+	}
+	
+	/** Returns the node element with the given id, if any
+	 * @param id see above
+	 * @return see above
+	 */
+	public Optional<WNode> getNodeFromId (long id)
+	{
+		final Node n = getNe().getNodeFromId(id);
+		if (n == null) return Optional.empty();
+		if (getWType(n).equals (Optional.of(WTYPE.WNode))) return Optional.of(new WNode (n));
+		return Optional.empty();
+	}
+	
+	/** Returns the fiber element with the given id, if any
+	 * @param id see above
+	 * @return see above
+	 */
+	public Optional<WFiber> getFiberFromId (long id)
+	{
+		final Link n = getNe().getLinkFromId(id);
+		if (n == null) return Optional.empty();
+		if (getWType(n).equals (Optional.of(WTYPE.WFiber))) return Optional.of(new WFiber (n));
+		return Optional.empty();
+	}
+	
+	@Override
+	public WTYPE getWType() { return WTYPE.WNet; }
 
 }

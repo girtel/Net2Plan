@@ -42,7 +42,7 @@ public class AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
 {
     public AdvancedJTable_node(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.NODES , layerThisTable , true , n->n.isDown()? Color.RED : null);
+        super(callback, AJTableType.NODES , null , layerThisTable , true , n->n.isDown()? Color.RED : null);
     }
 
     @Override

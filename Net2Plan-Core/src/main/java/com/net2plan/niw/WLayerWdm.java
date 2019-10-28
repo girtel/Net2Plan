@@ -4,11 +4,12 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.Optional;
 
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.niw.WNetConstants.WTYPE;
 
 public class WLayerWdm extends WAbstractNetworkElement
 {
@@ -26,6 +27,14 @@ public class WLayerWdm extends WAbstractNetworkElement
 		
 	}
 	
-    
+	public String getName () { return getNe().getName(); }
+	
+	public String getDescription () { return getNe().getDescription(); }
+
+	public void setDescription (String description) { getNe ().setDescription(description); }
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WLayerWdm; }
+   
 	
 }

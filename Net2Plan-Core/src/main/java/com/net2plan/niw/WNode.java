@@ -3,7 +3,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.awt.geom.Point2D;
 import java.net.URL;
@@ -21,6 +21,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
+import com.net2plan.niw.WNetConstants.WTYPE;
 
 /**
  * This class represents a node in the network, capable of initiating or ending IP and WDM links, as well as lightpaths
@@ -83,7 +84,7 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	
-	private static final String ATTNAMECOMMONPREFIX = "Node_";
+	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Node_";
 	private static final String ATTNAMESUFFIX_TYPE = "type";
 	private static final String ATTNAMESUFFIX_ISCONNECTEDTOCORE = "isConnectedToNetworkCore";
 	private static final String RESOURCETYPE_CPU = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "CPU";
@@ -91,51 +92,10 @@ public class WNode extends WAbstractNetworkElement
 	private static final String RESOURCETYPE_HD = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "HD";
 	private static final String ATTNAMESUFFIX_ARBITRARYPARAMSTRING = "ArbitraryString";
 	private static final String ATTNAME_OPTICALSWITCHTYPE = "ATTNAME_OPTICALSWITCHTYPE";
-	private static final String ATTNAMESUFFIX_ADD_NOISEFIGUREDB = "addNoiseFigure_db";
-	private static final String ATTNAMESUFFIX_ADD_GAINDB = "addGain_db";
-	private static final String ATTNAMESUFFIX_ADD_PMD_PS = "addPmd_ps";
-	private static final String ATTNAMESUFFIX_DROP_NOISEFIGUREDB = "dropNoiseFigure_db";
-	private static final String ATTNAMESUFFIX_DROP_GAINDB = "dropGain_db";
-	private static final String ATTNAMESUFFIX_DROP_PMD_PS = "dropPmd_ps";
 	private static final String ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB = "expressNoiseFigure_db";
-	private static final String ATTNAMESUFFIX_EXPRESS_GAINDB = "expressGain_db";
-	private static final String ATTNAMESUFFIX_EXPRESS_PMD_PS = "expressPmd_ps";
-	private static final String ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED = "isOutputSpectrumEqualized";
-	private static final String ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ = "equalizationTarget_mwPerGhz";
+	private static final String ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB = "expressGain_db";
+	private static final String ATTNAMESUFFIX_OADMSWFABRICPMD_PS = "expressPmd_ps";
 
-	
-	/** Returns the spectral density for the output optical channels of this OADM, to be enforced, if the node is configered to equalize the output power
-	 * @return see above
-	 */
-	public Optional<Double> getOutputSpectrumEqualizationTarget_mwPerGhz ()
-	{
-		if (getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 0.0).equals (0.0)) return Optional.empty();
-		final Double val = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ, null);
-		return Optional.ofNullable(val);
-	}
-
-	/** Indicates if the node is configured to equalize the output power of the output (express and add) optical channels
-	 * @return see above
-	 */
-	public boolean isConfiguredToEqualizeOutput ()
-	{
-		return getOutputSpectrumEqualizationTarget_mwPerGhz().isPresent();
-	}
-
-	/** Sets the spectral density for the output optical channels of this OADM, to be enforced. If an optional empty is passed, the node is set to NOT equalize the output power
-	 * @return see above
-	 */
-	public void setOutputSpectrumEqualizationTarget_mwPerGhz (Optional<Double> valInMwPerGhz)
-	{
-		if (valInMwPerGhz.isPresent())
-		{
-			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 1);
-			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EQUALIZATIONTARGET_OUTPUTDSP_MWPERGHZ, valInMwPerGhz.get());
-		} else
-		{
-			getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISOUTPUTSPECTRUMEQUALIZED, 0);
-		}
-	}
 	
 	public void setArbitraryParamString(String s)
 	{
@@ -182,9 +142,14 @@ public class WNode extends WAbstractNetworkElement
 		return n.getResources(RESOURCETYPE_HD).iterator().next();
 	}
 
-	boolean isVirtualNode()
+	public boolean isVirtualNode()
 	{
 		return n.hasTag(WNetConstants.TAGNODE_INDICATIONVIRTUALORIGINNODE) || n.hasTag(WNetConstants.TAGNODE_INDICATIONVIRTUALDESTINATIONNODE);
+	}
+
+	public boolean isRegularNode()
+	{
+		return !isVirtualNode();
 	}
 
 	@Override
@@ -217,135 +182,35 @@ public class WNode extends WAbstractNetworkElement
 
 	
 	
-	/** Returns the noise factor observed by the added channels, in dB. Defaults to 5.0 dB
-	 * @return see above
-	 */
-	public double getAddNoiseFactor_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_NOISEFIGUREDB, 5.0);
-	}
-	/** Returns the noise factor observed by the dropped channels, in dB. Defaults to 5.0 dB
-	 * @return see above
-	 */
-	public double getDropNoiseFactor_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_NOISEFIGUREDB, 5.0);
-	}
-	/** Returns the noise factor observed by the express channels, in dB. Defaults to 5.0 dB
-	 * @return see above
-	 */
-	public double getExpressNoiseFactor_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB, 5.0);
-	}
-	/** Returns the gain observed by the added channels, in dB. Defaults to20.0 dB
-	 * @return see above
-	 */
-	public double getAddGain_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_GAINDB, 20.0);
-	}
-	/** Returns the gain observed by the dropped channels, in dB. Defaults to20.0 dB
-	 * @return see above
-	 */
-	public double getDropGain_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_GAINDB, 20.0);
-	}
 	/** Returns the gain observed by the express channels, in dB. Defaults to20.0 dB
 	 * @return see above
 	 */
-	public double getExpressGain_dB ()
+	public double getOadmSwitchFabricAttenuation_dB ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_GAINDB, 20.0);
-	}
-	/** Returns the PMD added to the added channels, in ps. Defaults to 0 ps
-	 * @return see above
-	 */
-	public double getAddPmd_ps ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_PMD_PS, 0.0);
-	}
-	/** Returns the PMD added to the drop channels, in ps. Defaults to 0 ps
-	 * @return see above
-	 */
-	public double getDropPmd_ps ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_PMD_PS, 0.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, WNetConstants.WNODE_DEFAULT_OPTICALSWITCHFABRIC_ATTENUATION_DB);
 	}
 	/** Returns the PMD added to the express channels, in ps. Defaults to 0 ps
 	 * @return see above
 	 */
-	public double getExpressPmd_ps ()
+	public double getOadmSwitchFabricPmd_ps ()
 	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_PMD_PS, 0.0);
+		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICPMD_PS, WNetConstants.WNODE_DEFAULT_OPTICALSWITCHFABRIC_PMD_PS);
 	}
 
-	/** Sets the noise factor observed by the added channels, in dB. 
-	 * @return see above
-	 */
-	public void setAddNoiseFactor_dB (double noiseFactor_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_NOISEFIGUREDB, noiseFactor_dB);
-	}
-	/** Sets the noise factor observed by the dropped channels, in dB. 
-	 * @return see above
-	 */
-	public void setDropNoiseFactor_dB (double noiseFactor_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_NOISEFIGUREDB, noiseFactor_dB);
-	}
-	/** Sets the noise factor observed by the express channels, in dB. 
-	 * @return see above
-	 */
-	public void setExpressNoiseFactor_dB (double noiseFactor_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB, noiseFactor_dB);
-	}
-	/** Sets the gain observed by the added channels, in dB. 
-	 * @return see above
-	 */
-	public void setAddGain_dB (double gain_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_GAINDB, gain_dB);
-	}
-	/** Sets the gain observed by the dropped channels, in dB. 
-	 * @return see above
-	 */
-	public void setDropGain_dB (double gain_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_GAINDB, gain_dB);
-	}
 	/** Sets the gain observed by the express channels, in dB. 
 	 * @return see above
 	 */
-	public void setExpressGain_dB (double gain_dB)
+	public void setOadmSwitchFabricAttenuation_dB (double gain_dB)
 	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_GAINDB, gain_dB);
-	}
-	/** Sets the PMD added observed by the added channels, in ps. 
-	 * @return see above
-	 */
-	public void setAddPmd_ps (double pmd_ps)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADD_PMD_PS, pmd_ps);
-	}
-	/** Sets the PMD added observed by the dropped channels, in ps. 
-	 * @return see above
-	 */
-	public void setDropPmd_ps (double pmd_ps)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROP_PMD_PS, pmd_ps);
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, gain_dB);
 	}
 	/** Sets the PMD added observed by the express channels, in ps. 
 	 * @return see above
 	 */
-	public void setExpressPmd_ps (double pmd_ps)
+	public void setOadmSwitchFabricPmd_ps (double pmd_ps)
 	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_EXPRESS_PMD_PS, pmd_ps);
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICPMD_PS, pmd_ps);
 	}
-	
-	
 	
 	
 	/**
@@ -355,7 +220,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public void setWdmIcon(URL urlIcon, double relativeSize)
 	{
-		getNe().setUrlNodeIcon(getWdmNpLayer(), urlIcon, relativeSize);
+		if (!getNet().isWithWdmLayer()) return;
+		getNe().setUrlNodeIcon(getWdmNpLayer().get(), urlIcon, relativeSize);
 	}
 
 	/**
@@ -365,25 +231,28 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public void setIpIcon(URL urlIcon, double relativeSize)
 	{
-		getNe().setUrlNodeIcon(getIpNpLayer(), urlIcon, relativeSize);
+		if (!getNet().isWithIpLayer()) return;
+		getNe().setUrlNodeIcon(getIpNpLayer().get(), urlIcon, relativeSize);
 	}
 
 	/**
 	 * Returns the url of the icon specified by the user for the WDM layer, or null if none
 	 * @return the url
 	 */
-	public URL getUrlNodeIconWdm()
+	public Optional<URL> getUrlNodeIconWdm()
 	{
-		return getNe().getUrlNodeIcon(getWdmNpLayer());
+		if (!getNet().isWithWdmLayer()) return Optional.empty();
+		return Optional.ofNullable(getNe().getUrlNodeIcon(getWdmNpLayer().get()));
 	}
 
 	/**
 	 * Returns the url of the icon specified by the user for the WDM layer, or null if none
 	 * @return the url
 	 */
-	public URL getUrlNodeIconIp()
+	public Optional<URL> getUrlNodeIconIp()
 	{
-		return getNe().getUrlNodeIcon(getIpNpLayer());
+		if (!getNet().isWithIpLayer()) return Optional.empty();
+		return Optional.ofNullable(getNe().getUrlNodeIcon(getIpNpLayer().get()));
 	}
 
 	/**
@@ -392,7 +261,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public double getIconRelativeSizeInWdm()
 	{
-		return getNe().getNodeIconRelativeSize(getWdmNpLayer());
+		if (!getNet().isWithWdmLayer()) return 1.0;
+		return getNe().getNodeIconRelativeSize(getWdmNpLayer().get());
 	}
 
 	/**
@@ -401,7 +271,8 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public double getIconRelativeSizeInIp()
 	{
-		return getNe().getNodeIconRelativeSize(getIpNpLayer());
+		if (!getNet().isWithIpLayer()) return 1.0;
+		return getNe().getNodeIconRelativeSize(getIpNpLayer().get());
 	}
 
 	/**
@@ -599,7 +470,10 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WFiber> getOutgoingFibers()
 	{
-		return n.getOutgoingLinks(getNet().getWdmLayer().getNe()).stream().map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getOutgoingLinks(getNet().getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isWFiber(); }).
+				map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -608,7 +482,10 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WFiber> getIncomingFibers()
 	{
-		return n.getIncomingLinks(getNet().getWdmLayer().getNe()).stream().map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getIncomingLinks(getNet().getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isWFiber(); }).
+				map(ee -> new WFiber(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -617,16 +494,45 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WIpLink> getOutgoingIpLinks()
 	{
-		return n.getOutgoingLinks(getNet().getIpLayer().getNe()).stream().map(ee -> new WIpLink(ee)).filter(e -> !e.isVirtualLink()).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getOutgoingLinks(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpLink(); }).
+				map(ee -> new WIpLink(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	/** Returns the IP connections, realizing IP unicast demands, that are initiated in this node 
+	 * @return see above
+	 */
+	public SortedSet<WIpSourceRoutedConnection> getOutgoingIpConnections ()
+	{
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getOutgoingRoutes(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
+				map(ee -> new WIpSourceRoutedConnection(ee)).collect(Collectors.toCollection(TreeSet::new));
+	}
+	
+	/** Returns the IP connections, realizing IP unicast demands, that are ended in this node 
+	 * @return see above
+	 */
+	public SortedSet<WIpSourceRoutedConnection> getIncomingIpConnections ()
+	{
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getIncomingRoutes(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpSourceRoutedConnection(); }).
+				map(ee -> new WIpSourceRoutedConnection(ee)).collect(Collectors.toCollection(TreeSet::new));
+	}
+	
+	
 	/**
 	 * Returns the set of incoming IP links to the node
 	 * @return see above
 	 */
 	public SortedSet<WIpLink> getIncomingIpLinks()
 	{
-		return n.getIncomingLinks(getNet().getIpLayer().getNe()).stream().map(ee -> new WIpLink(ee)).filter(e -> !e.isVirtualLink()).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getIncomingLinks(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpLink(); }).
+				map(ee -> new WIpLink(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -635,7 +541,10 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpathRequest> getOutgoingLigtpathRequests()
 	{
-		return n.getOutgoingDemands(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getOutgoingDemands(getNet().getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpathRequest(); }).
+				map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -644,34 +553,59 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpathRequest> getIncomingLigtpathRequests()
 	{
-		return n.getIncomingDemands(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getIncomingDemands(getNet().getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpathRequest(); }).
+				map(ee -> new WLightpathRequest(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
 	 * Returns the set of outgoing lightpaths of the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpathUnregenerated> getOutgoingLigtpaths()
+	public SortedSet<WLightpath> getOutgoingLigtpaths()
 	{
-		return n.getOutgoingRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathUnregenerated(ee)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getOutgoingRoutes(getNet().getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
 	 * Returns the set of incoming, outgoing and traversing lightpaths to the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpathUnregenerated> getInOutOrTraversingLigtpaths()
+	public SortedSet<WLightpath> getInOutOrTraversingLigtpaths()
 	{
-		return n.getAssociatedRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathUnregenerated(ee)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	/**
+	 * Returns the set of incoming, outgoing and traversing lightpaths to the node
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getExpressSwitchedLightpaths()
+	{
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(ee -> new WLightpath(ee)).filter(lp->lp.getNodesWhereThisLightpathIsExpressOpticallySwitched().contains(this)).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	
 	/**
 	 * Returns the set of incoming lightpaths to the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpathUnregenerated> getIncomingLigtpaths()
+	public SortedSet<WLightpath> getIncomingLigtpaths()
 	{
-		return n.getIncomingRoutes(getNet().getWdmLayer().getNe()).stream().map(ee -> new WLightpathUnregenerated(ee)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
+		return n.getIncomingRoutes(getNet().getWdmLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isLightpath(); }).
+				map(ee -> new WLightpath(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -685,12 +619,40 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	/**
+	 * Returns the set of outgoing unicast IP demands of the node: those which have the node as origin
+	 * @return see above
+	 */
+	public SortedSet<WIpUnicastDemand> getOutgoingIpUnicastDemands ()
+	{
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return getNe().getOutgoingDemands(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpUnicastDemand(); }).
+				map(d->new WIpUnicastDemand(d)).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/**
+	 * Returns the set of incoming unicast IP demands of the node: those which have the node as destination
+	 * @return see above
+	 */
+	public SortedSet<WIpUnicastDemand> getIncomingIpUnicastDemands ()
+	{
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return getNe().getIncomingDemands(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isIpUnicastDemand(); }).
+				map(d->new WIpUnicastDemand(d)).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+
+	
+	/**
 	 * Returns the set of incoming service chain requests of the node: those which have the node as a potential end node
 	 * @return see above
 	 */
 	public SortedSet<WServiceChainRequest> getIncomingServiceChainRequests()
 	{
-		return getNet().getServiceChainRequests().stream().filter(sc -> sc.getPotentiallyValidDestinations().contains(this)).collect(Collectors.toCollection(TreeSet::new));
+		return getNet().getServiceChainRequests().stream().
+				filter(sc -> sc.getPotentiallyValidDestinations().contains(this)).
+				collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -699,7 +661,11 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getOutgoingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().map(ee -> new WServiceChain(ee)).filter(sc -> sc.getA().equals(this)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(ee -> new WServiceChain(ee)).
+				filter(sc -> sc.getA().equals(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -708,7 +674,10 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getIncomingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().map(ee -> new WServiceChain(ee)).filter(sc -> sc.getB().equals(this)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(ee -> new WServiceChain(ee)).filter(sc -> sc.getB().equals(this)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
@@ -717,17 +686,22 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WServiceChain> getInOutOrTraversingServiceChains()
 	{
-		return n.getAssociatedRoutes(getNet().getIpLayer().getNe()).stream().map(ee -> new WServiceChain(ee)).collect(Collectors.toCollection(TreeSet::new));
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return n.getAssociatedRoutes(getNet().getIpLayer().get().getNe()).stream().
+				filter(d->{ WTYPE t = getNet().getWType(d).orElse(null); return t == null? false : t.isServiceChain(); }).
+				map(ee -> new WServiceChain(ee)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	Link getIncomingLinkFromAnycastOrigin()
 	{
-		return n.getNetPlan().getNodePairLinks(getNet().getAnycastOriginNode().getNe(), n, false, getIpNpLayer()).stream().findFirst().orElseThrow(() -> new RuntimeException());
+		assert getNet().isWithIpLayer();
+		return n.getNetPlan().getNodePairLinks(getNet().getAnycastOriginNode().getNe(), n, false, getIpNpLayer().get()).stream().findFirst().orElseThrow(() -> new RuntimeException());
 	}
 
 	Link getOutgoingLinkToAnycastDestination()
 	{
-		return n.getNetPlan().getNodePairLinks(n, getNet().getAnycastDestinationNode().getNe(), false, getIpNpLayer()).stream().findFirst().orElseThrow(() -> new RuntimeException());
+		assert getNet().isWithIpLayer();
+		return n.getNetPlan().getNodePairLinks(n, getNet().getAnycastDestinationNode().getNe(), false, getIpNpLayer().get()).stream().findFirst().orElseThrow(() -> new RuntimeException());
 	}
 
 	/**
@@ -809,16 +783,17 @@ public class WNode extends WAbstractNetworkElement
 	{
 		try
 		{
-			return OPTICALSWITCHTYPE.valueOf(this.getNe().getAttribute(ATTNAME_OPTICALSWITCHTYPE, null));
+			return OPTICALSWITCHTYPE.valueOf(this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, OPTICALSWITCHTYPE.getDefault().name()));
 		} catch (Exception exc) 
 		{
+			exc.printStackTrace();
 			return OPTICALSWITCHTYPE.getDefault();
 		}
 	}
 	
 	public void setOpticalSwitchType (OPTICALSWITCHTYPE type)
 	{
-		getNe().setAttribute(ATTNAME_OPTICALSWITCHTYPE, type.name());
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, type.name());
 	}
 	
 	@Override
@@ -827,6 +802,8 @@ public class WNode extends WAbstractNetworkElement
 		if (this.wasRemoved()) return;
 		assert getIncomingFibers().stream().allMatch(e->e.getB().equals(this));
 		assert getOutgoingFibers().stream().allMatch(e->e.getA().equals(this));
+		assert getIncomingIpConnections().stream().allMatch(e->e.getB().equals(this));
+		assert getOutgoingIpConnections().stream().allMatch(e->e.getA().equals(this));
 		assert getIncomingLigtpathRequests().stream().allMatch(e->e.getB().equals(this));
 		assert getOutgoingLigtpathRequests().stream().allMatch(e->e.getA().equals(this));
 		assert getIncomingLigtpaths().stream().allMatch(e->e.getB().equals(this));
@@ -843,4 +820,15 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	
+	/** Returns the SRGs that this node belongs to, i.e. the ones that make this node fail
+	 * @return see above
+	 */
+	public SortedSet<WSharedRiskGroup> getSrgsThisElementIsAssociatedTo ()
+	{
+		return getNe().getSRGs().stream().map(s->new WSharedRiskGroup(s)).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WNode; }
+
 }

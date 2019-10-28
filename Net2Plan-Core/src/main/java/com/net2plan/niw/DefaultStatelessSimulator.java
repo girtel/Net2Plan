@@ -1,4 +1,4 @@
-package com.net2plan.examples.niw.algorithms;
+package com.net2plan.niw;
 /*******************************************************************************
  * Copyright (c) 2017 Pablo Pavon Marino and others.
  * All rights reserved. This program and the accompanying materials
@@ -34,7 +34,6 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.IPUtils;
-import com.net2plan.niw.networkModel.WNet;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -59,7 +58,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
-public class StatelessSimulator_niw implements IAlgorithm
+public class DefaultStatelessSimulator implements IAlgorithm
 {
 	private InputParameter mplsTeTunnelType = new InputParameter ("mplsTeTunnelType", "#select# cspf-dynamic 1+1-FRR-link-disjoint" , "The type of path computation for MPLS-TE tunnels");
 
@@ -85,96 +84,101 @@ public class StatelessSimulator_niw implements IAlgorithm
 		
 		final WNet net = new WNet (np);
 		net.updateNetPlanObjectInternalState();
-		final NetworkLayer ipLayer = net.getIpLayer().getNe();
+		
+		if (net.isWithIpLayer())
+		{
+			final NetworkLayer ipLayer = net.getIpLayer().get().getNe();
 
-		final SortedSet<Demand> ospfRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpHopByHopRouted()).map(d->d.getNe()).collect(Collectors.toCollection(TreeSet::new));
-		final List<Demand> mplsTeRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpSourceRouted()).map(d->d.getNe()).collect(Collectors.toList());
-		
-		/* IP route according to MPLS-TE the demands that are like that */
-		if (!ospfRoutedDemands.isEmpty())
-		{
-			DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(np , ipLayer);
-			linkIGPWeightSetting.assign (np.getVectorLinkUpState(ipLayer) , new DoubleDoubleFunction () { @Override
-			public double apply (double x , double y) { return y == 1? x : Double.MAX_VALUE; }  } );
-			IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
-		}
-		
-		/* To account for the occupation of IP links because of MPLS-TE tunnels */
-		final int E = np.getNumberOfLinks(ipLayer);
-		final double [] occupiedBwPerLinks = new double [E]; 
-		final BiFunction<Collection<Link> , Double, Boolean> isEnoughNonReservedBwAvaialable = (l,t)->l.stream().allMatch(e->e.getCapacity() - occupiedBwPerLinks[e.getIndex ()] + Configuration.precisionFactor >= t);
-		final BiConsumer<Collection<Link> , Double> reserveBwInLinks = (l,t)->{ for (Link e : l) occupiedBwPerLinks[e.getIndex ()] += t; }; 
-		final boolean isCspf = mplsTeTunnelType.getString().equals("cspf-dynamic");
-		final boolean is11FrrLinkDisjoint = !isCspf;
-		/* Routing of MPLS-TE traffic */
-		for (Demand d : mplsTeRoutedDemands)
-		{
-			assert d.isSourceRouting();
-			final double bwtoReserve = d.getOfferedTraffic();
-			d.removeAllRoutes();
-			if (isCspf)
+			final SortedSet<Demand> ospfRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpHopByHopRouted()).map(d->d.getNe()).collect(Collectors.toCollection(TreeSet::new));
+			final List<Demand> mplsTeRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpSourceRouted()).map(d->d.getNe()).collect(Collectors.toList());
+			
+			/* IP route according to MPLS-TE the demands that are like that */
+			if (!ospfRoutedDemands.isEmpty())
 			{
-				final List<Link> linksValid = new ArrayList<> (E);
-				final Map<Link,Double> weightsValid = new HashMap<> ();
-				for (Link e : np.getLinks(ipLayer))
-				{
-					if (e.isDown() || e.getOriginNode().isDown() || e.getDestinationNode().isDown()) continue;
-					if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor < bwtoReserve) continue; 
-					linksValid.add(e); 
-					weightsValid.put(e, IPUtils.getLinkWeight(e)); 
-				}
-				final List<Link> sp = GraphUtils.getShortestPath(np.getNodes(), linksValid, d.getIngressNode(), d.getEgressNode(), weightsValid);
-				if (sp.isEmpty())
-				{
-					continue;
-				}
-				reserveBwInLinks.accept(sp, bwtoReserve);
-				np.addRoute(d, bwtoReserve, bwtoReserve, sp, null);
+				DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(np , ipLayer);
+				linkIGPWeightSetting.assign (np.getVectorLinkUpState(ipLayer) , new DoubleDoubleFunction () { @Override
+				public double apply (double x , double y) { return y == 1? x : Double.MAX_VALUE; }  } );
+				IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
 			}
-			else if (is11FrrLinkDisjoint)
+			
+			/* To account for the occupation of IP links because of MPLS-TE tunnels */
+			final int E = np.getNumberOfLinks(ipLayer);
+			final double [] occupiedBwPerLinks = new double [E]; 
+			final BiFunction<Collection<Link> , Double, Boolean> isEnoughNonReservedBwAvaialable = (l,t)->l.stream().allMatch(e->e.getCapacity() - occupiedBwPerLinks[e.getIndex ()] + Configuration.precisionFactor >= t);
+			final BiConsumer<Collection<Link> , Double> reserveBwInLinks = (l,t)->{ for (Link e : l) occupiedBwPerLinks[e.getIndex ()] += t; }; 
+			final boolean isCspf = mplsTeTunnelType.getString().equals("cspf-dynamic");
+			final boolean is11FrrLinkDisjoint = !isCspf;
+			/* Routing of MPLS-TE traffic */
+			for (Demand d : mplsTeRoutedDemands)
 			{
-				/* Make the tunnel paths. Fixed: does not matter the failed links */
-				final List<Link> linksValidControlPlaneEvenIfDownDataPlane = new ArrayList<> (E);
-				final SortedMap<Link,Double> weightsValid = new TreeMap<> ();
-				for (Link e : np.getLinks(ipLayer)) if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor >= bwtoReserve) { linksValidControlPlaneEvenIfDownDataPlane.add(e); weightsValid.put(e, IPUtils.getLinkWeight(e)); }
-				final List<List<Link>> sps = GraphUtils.getTwoMaximumLinkAndNodeDisjointPaths(np.getNodes(), linksValidControlPlaneEvenIfDownDataPlane, d.getIngressNode(), d.getEgressNode(), weightsValid);
-				if (sps.size() != 2) continue; 
+				assert d.isSourceRouting();
+				final double bwtoReserve = d.getOfferedTraffic();
+				d.removeAllRoutes();
+				if (isCspf)
+				{
+					final List<Link> linksValid = new ArrayList<> (E);
+					final Map<Link,Double> weightsValid = new HashMap<> ();
+					for (Link e : np.getLinks(ipLayer))
+					{
+						if (e.isDown() || e.getOriginNode().isDown() || e.getDestinationNode().isDown()) continue;
+						if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor < bwtoReserve) continue; 
+						linksValid.add(e); 
+						weightsValid.put(e, IPUtils.getLinkWeight(e)); 
+					}
+					final List<Link> sp = GraphUtils.getShortestPath(np.getNodes(), linksValid, d.getIngressNode(), d.getEgressNode(), weightsValid);
+					if (sp.isEmpty())
+					{
+						continue;
+					}
+					reserveBwInLinks.accept(sp, bwtoReserve);
+					np.addRoute(d, bwtoReserve, bwtoReserve, sp, null);
+				}
+				else if (is11FrrLinkDisjoint)
+				{
+					/* Make the tunnel paths. Fixed: does not matter the failed links */
+					final List<Link> linksValidControlPlaneEvenIfDownDataPlane = new ArrayList<> (E);
+					final SortedMap<Link,Double> weightsValid = new TreeMap<> ();
+					for (Link e : np.getLinks(ipLayer)) if (e.getCapacity() - occupiedBwPerLinks[e.getIndex()] + Configuration.precisionFactor >= bwtoReserve) { linksValidControlPlaneEvenIfDownDataPlane.add(e); weightsValid.put(e, IPUtils.getLinkWeight(e)); }
+					final List<List<Link>> sps = GraphUtils.getTwoMaximumLinkAndNodeDisjointPaths(np.getNodes(), linksValidControlPlaneEvenIfDownDataPlane, d.getIngressNode(), d.getEgressNode(), weightsValid);
+					if (sps.size() != 2) continue; 
 
-				final Route r1 = np.addRoute(d, bwtoReserve, bwtoReserve, sps.get(0), null);
-				final Route r2 = np.addRoute(d, 0, bwtoReserve, sps.get(1), null);
-				r1.addBackupRoute(r2);
-				
-				final boolean tunnelReserves = isEnoughNonReservedBwAvaialable.apply(r1.getSeqLinks(), bwtoReserve) && isEnoughNonReservedBwAvaialable.apply(r2.getSeqLinks(), bwtoReserve);
-				if (tunnelReserves)
-				{
-					reserveBwInLinks.accept(r1.getSeqLinks(), bwtoReserve);
-					reserveBwInLinks.accept(r2.getSeqLinks(), bwtoReserve);
-				}
-				final boolean r1Up = !r1.isDown() && !r1.isTraversingZeroCapLinks(); 
-				final boolean r2Up = !r2.isDown() && !r2.isTraversingZeroCapLinks(); 
-				if (r1Up && tunnelReserves)
-				{
-					r1.setCarriedTraffic(bwtoReserve, bwtoReserve);
-					r2.setCarriedTraffic(0, bwtoReserve);
-				}
-				else if (r2Up && tunnelReserves)
-				{
-					r1.setCarriedTraffic(0, bwtoReserve);
-					r2.setCarriedTraffic(bwtoReserve, bwtoReserve);
-				}
-				else
-				{
-					r1.setCarriedTraffic(0, bwtoReserve);
-					r2.setCarriedTraffic(0, bwtoReserve);
-				}
-			} else throw new RuntimeException ();
+					final Route r1 = np.addRoute(d, bwtoReserve, bwtoReserve, sps.get(0), null);
+					final Route r2 = np.addRoute(d, 0, bwtoReserve, sps.get(1), null);
+					r1.addBackupRoute(r2);
+					
+					final boolean tunnelReserves = isEnoughNonReservedBwAvaialable.apply(r1.getSeqLinks(), bwtoReserve) && isEnoughNonReservedBwAvaialable.apply(r2.getSeqLinks(), bwtoReserve);
+					if (tunnelReserves)
+					{
+						reserveBwInLinks.accept(r1.getSeqLinks(), bwtoReserve);
+						reserveBwInLinks.accept(r2.getSeqLinks(), bwtoReserve);
+					}
+					final boolean r1Up = !r1.isDown() && !r1.isTraversingZeroCapLinks(); 
+					final boolean r2Up = !r2.isDown() && !r2.isTraversingZeroCapLinks(); 
+					if (r1Up && tunnelReserves)
+					{
+						r1.setCarriedTraffic(bwtoReserve, bwtoReserve);
+						r2.setCarriedTraffic(0, bwtoReserve);
+					}
+					else if (r2Up && tunnelReserves)
+					{
+						r1.setCarriedTraffic(0, bwtoReserve);
+						r2.setCarriedTraffic(bwtoReserve, bwtoReserve);
+					}
+					else
+					{
+						r1.setCarriedTraffic(0, bwtoReserve);
+						r2.setCarriedTraffic(0, bwtoReserve);
+					}
+				} else throw new RuntimeException ();
+			}
 		}
+		
 		return "";
 	}
 
 	public static void run (WNet wNet , Optional<String> mplsTeTunnelType)
 	{
-		final StatelessSimulator_niw alg = new StatelessSimulator_niw(); 
+		final DefaultStatelessSimulator alg = new DefaultStatelessSimulator(); 
 		final Map<String,String> params = InputParameter.getDefaultParameters(alg.getParameters());
 		if (mplsTeTunnelType.isPresent()) params.put("mplsTeTunnelType", mplsTeTunnelType.get());
 		alg.executeAlgorithm(wNet.getNe(), params , new HashMap<> ());

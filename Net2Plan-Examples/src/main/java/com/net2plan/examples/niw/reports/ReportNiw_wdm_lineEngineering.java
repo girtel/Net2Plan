@@ -16,13 +16,13 @@ import java.util.Map;
 
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.niw.networkModel.OpticalSimulationModule;
-import com.net2plan.niw.networkModel.OpticalSpectrumManager;
-import com.net2plan.niw.networkModel.WFiber;
-import com.net2plan.niw.networkModel.WLightpathUnregenerated;
-import com.net2plan.niw.networkModel.WNet;
-import com.net2plan.niw.networkModel.WNetConstants;
-import com.net2plan.niw.networkModel.OpticalSimulationModule.PERLPINFOMETRICS;
+import com.net2plan.niw.OpticalSimulationModule;
+import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WLightpath;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -158,20 +158,20 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			append("<td>" + e.getNumberOfOpticalLineAmplifiersTraversed() + "</td>").
 			append("<td>" + e.getTraversingLps().size() + "</td>").
 			append("<td>" + osm.getOccupiedOpticalSlotIds(e).size() + " / " + e.getNumberOfValidOpticalChannels() + " (" + df_2.format(100.0 * osm.getOccupiedOpticalSlotIds(e).size() /  e.getNumberOfValidOpticalChannels())   + "%)</td>").
-			append("<td>" + df_2.format(e.getAccumulatedChromaticDispersion()) + "</td>").
-			append("<td>" + df_2.format(osim.getTotalPowerAtFiberEnds(e).getFirst()) + "</td>").
-			append("<td>" + df_2.format(osim.getTotalPowerAtFiberEnds(e).getSecond()) + "</td>");
+			append("<td>" + df_2.format(e.getAccumulatedChromaticDispersion_psPerNm()) + "</td>").
+			append("<td>" + df_2.format(osim.getTotalPowerAtFiberEnds_dBm(e).getFirst()) + "</td>").
+			append("<td>" + df_2.format(osim.getTotalPowerAtFiberEnds_dBm(e).getSecond()) + "</td>");
 			
 			final StringBuffer st = new StringBuffer ();
 			for (int contOla = 0; contOla < e.getNumberOfOpticalLineAmplifiersTraversed() ; contOla ++)
 			{
 				final double distKm = e.getAmplifierPositionsKmFromOrigin_km().get(contOla);
-				final double powerAtInput_dBm = osim.getTotalPowerAtAmplifierInput_dBm(e, contOla);
-				final double gain_dB = e.getAmplifierGains_dB().get(contOla);
-				if (powerAtInput_dBm < e.getAmplifierMinAcceptableInputPower_dBm().get(contOla) || powerAtInput_dBm > e.getAmplifierMaxAcceptableInputPower_dBm().get(contOla))
-					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Power at the input is " + df_2.format(powerAtInput_dBm) + " dBm. It should be between [" + df_2.format(e.getAmplifierMinAcceptableInputPower_dBm().get(contOla)) + ", " + df_2.format(e.getAmplifierMaxAcceptableInputPower_dBm().get(contOla)) + "] dBm</p>");
-				if (gain_dB < e.getAmplifierMinAcceptableGains_dB().get(contOla) || gain_dB > e.getAmplifierMaxAcceptableGains_dB().get(contOla))
-					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Gain is " + df_2.format(gain_dB) + " dB. It should be between [" + df_2.format(e.getAmplifierMinAcceptableGains_dB().get(contOla)) + ", " + df_2.format(e.getAmplifierMaxAcceptableGains_dB().get(contOla)) + "] dBm</p>");
+				final double powerAtOutput_dBm = osim.getTotalPowerAtAmplifierOutput_dBm(e, contOla);
+				final double gain_dB = e.getOlaGains_dB().get(contOla);
+				if (powerAtOutput_dBm < e.getOlaMinAcceptableOutputPower_dBm().get(contOla) || powerAtOutput_dBm > e.getOlaMaxAcceptableOutputPower_dBm().get(contOla))
+					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Power at the output is " + df_2.format(powerAtOutput_dBm) + " dBm. It should be between [" + df_2.format(e.getOlaMinAcceptableOutputPower_dBm().get(contOla)) + ", " + df_2.format(e.getOlaMaxAcceptableOutputPower_dBm().get(contOla)) + "] dBm</p>");
+				if (gain_dB < e.getOlaMinAcceptableGains_dB().get(contOla) || gain_dB > e.getOlaMaxAcceptableGains_dB().get(contOla))
+					st.append("<p>EDFA-" + contOla + " ("+ df_2.format(distKm) + " km)" + ": Gain is " + df_2.format(gain_dB) + " dB. It should be between [" + df_2.format(e.getOlaMinAcceptableGains_dB().get(contOla)) + ", " + df_2.format(e.getOlaMaxAcceptableGains_dB().get(contOla)) + "] dBm</p>");
 			}
 			out.append("<td>" + st.toString() + "</td>");
 			out.append("</tr>");
@@ -192,7 +192,7 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 				+ "<th><b>Rx. OSNR (dB)</b></th>"
 				+ "<th><b>Rx. PMD (ps)</b></th>"
 				+ "<th><b>Warnings</b></th></tr>");
-		for (WLightpathUnregenerated r : wNet.getLightpaths())
+		for (WLightpath r : wNet.getLightpaths())
 		{
 			final String st_a_e = r.getA().getName();
 			final String st_b_e = r.getB().getName();
@@ -204,12 +204,12 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			append("<td>" + r.getSeqFibers().stream().mapToInt(e->e.getNumberOfOpticalLineAmplifiersTraversed()).sum() + "</td>").
 			append("<td>" + (r.getSeqFibers().size()+1) + "</td>").
 			append("<td>" + df_2.format(r.getAddTransponderInjectionPower_dBm()) + "</td>");
-			final double powerReceiver_dBm = osim.getOpticalPerformanceAtTransponderReceiverEnd_dBm(r).get(PERLPINFOMETRICS.POWER_DBM);
-			final double cdReceiver_psPernm = osim.getOpticalPerformanceAtTransponderReceiverEnd_dBm(r).get(PERLPINFOMETRICS.CD_PERPERNM);
-			final double osnrReceiver_dB = osim.getOpticalPerformanceAtTransponderReceiverEnd_dBm(r).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW);
-			final double pmdReceiver_ps = Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd_dBm(r).get(PERLPINFOMETRICS.PMDSQUARED_PS2));
+			final double powerReceiver_dBm = osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.POWER_DBM);
+			final double cdReceiver_psPernm = osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.CD_PERPERNM);
+			final double osnrReceiver_dB = osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW);
+			final double pmdReceiver_ps = Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(r).get(PERLPINFOMETRICS.PMDSQUARED_PS2));
 			final boolean ok_powerReceiver = powerReceiver_dBm >= r.getTransponderMinimumTolerableReceptionPower_dBm() && powerReceiver_dBm <= r.getTransponderMinimumTolerableReceptionPower_dBm();
-			final boolean ok_cdReceiver = Math.abs(cdReceiver_psPernm) <= r.getTransponderMinimumTolerableCdInAbsoluteValue_perPerNm();
+			final boolean ok_cdReceiver = Math.abs(cdReceiver_psPernm) <= r.getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm();
 			final boolean ok_osnrReceiver = osnrReceiver_dB >= r.getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB();
 			final boolean ok_pmdReceiver = pmdReceiver_ps >= r.getTransponderMaximumTolerablePmd_ps();
 			out.append("<td bgcolor=\"" + (ok_powerReceiver?"PaleGreen":"Red") +"\">" + df_2.format(powerReceiver_dBm) + "</td>");
@@ -221,7 +221,7 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			if (!ok_powerReceiver)
 				st.append("<p>Rx power is " + df_2.format(powerReceiver_dBm) + " dBm. It should be between [" + df_2.format(r.getTransponderMinimumTolerableReceptionPower_dBm()) + ", " + df_2.format(r.getTransponderMinimumTolerableReceptionPower_dBm()) + "] dBm</p>");
 			if (!ok_cdReceiver)
-				st.append("<p>Rx CD is " + df_2.format(cdReceiver_psPernm) + " ps/nm. Absolute value should be below " + df_2.format(r.getTransponderMinimumTolerableCdInAbsoluteValue_perPerNm())+ "</p>");
+				st.append("<p>Rx CD is " + df_2.format(cdReceiver_psPernm) + " ps/nm. Absolute value should be below " + df_2.format(r.getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm())+ "</p>");
 			if (!ok_osnrReceiver)
 				st.append("<p>Rx OSNR is " + df_2.format(osnrReceiver_dB) + " dB. Should be over " + df_2.format(r.getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB())+ "</p>");
 			if (!ok_pmdReceiver)

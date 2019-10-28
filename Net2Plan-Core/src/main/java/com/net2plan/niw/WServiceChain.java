@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +17,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
 
 /** Instances of this class are service chains, realizing service chain requests. A service chain should start in one of the origin nodes of the service chain, and end in 
@@ -28,12 +29,11 @@ import com.net2plan.utils.Pair;
  */
 public class WServiceChain extends WAbstractNetworkElement
 {
-	static String ATTRIBUTE_CURRENTEXPANSIONFACTOR = "ATTRIBUTE_CURRENTEXPANSIONFACTOR";
+	static String ATTRIBUTE_CURRENTEXPANSIONFACTOR = NIWNAMEPREFIX + "ATTRIBUTE_CURRENTEXPANSIONFACTOR";
 	WServiceChain(Route r) 
 	{ 
 		super (r, Optional.empty()); 
 		this.r = r; 
-		assert r.getLayer().equals(getNet().getIpLayer().getNe());
 	}
 
 	final private Route r;
@@ -51,14 +51,17 @@ public class WServiceChain extends WAbstractNetworkElement
 	 */
 	public List<WIpLink> getSequenceOfTraversedIpLinks () 
 	{
-		return r.getSeqLinks().stream().map(ee->new WIpLink (ee)).filter(e->!e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
+		return r.getSeqLinks().stream().
+				filter(ee->getNet().getWElement(ee).equals(Optional.of(WTYPE.WIpLink))).
+				map(ee->new WIpLink (ee)).filter(e->!e.isVirtualLink()).collect(Collectors.toCollection(ArrayList::new));
 	}
 	/** Returns the sequence of traversed VNF instances, filtering out any IP link traversed
 	 * @return see above
 	 */
 	public List<WVnfInstance> getSequenceOfTraversedVnfInstances () 
 	{
-		return r.getSeqResourcesTraversed().stream().map(ee->new WVnfInstance (ee)).collect(Collectors.toCollection(ArrayList::new));
+		return r.getSeqResourcesTraversed().stream().
+				map(ee->new WVnfInstance (ee)).collect(Collectors.toCollection(ArrayList::new));
 	}
 	
 	public List<Double> getCurrentExpansionFactorApplied () 
@@ -91,7 +94,11 @@ public class WServiceChain extends WAbstractNetworkElement
 	 */
 	public List<? extends WAbstractNetworkElement> getSequenceOfLinksAndVnfs ()
 	{
-		return r.getPath().stream().map(ee->(ee instanceof Link? new WIpLink ((Link) ee) : new WVnfInstance ((Resource) ee))).filter(e->e.isWIpLink()? !e.getAsIpLink().isVirtualLink() : true).collect(Collectors.toCollection(ArrayList::new));
+		return r.getPath().stream().
+				filter(ee->getNet().getWElement(ee).isPresent()).
+				map(ee->getNet().getWElement(ee).get()).
+				filter(e->e.isWIpLink()? !e.getAsIpLink().isVirtualLink() : true).
+				collect(Collectors.toCollection(ArrayList::new));
 	}
 	/** Returns the traffic injected by the service chain origin node in Gbps
 	 * @return see above
@@ -198,6 +205,23 @@ public class WServiceChain extends WAbstractNetworkElement
 	 */
 	public void remove () { this.r.remove(); }
 
+	/** Returns the worst case length in km considering the traversed km in the transport layers
+	 * @return
+	 */
+	public double getWorstCaseLengthInKm ()
+	{
+		return this.getSequenceOfTraversedIpLinks().stream().mapToDouble(e->e.getWorstCaseLengthInKm()).sum();
+	}
+
+	/** Returns the worst case latency of this service chain, including propagation time in transport layers, and processing time at the traversed VNFs
+	 * @return see above
+	 */
+	public double getWorstCaseLatencyInMs ()
+	{
+		return this.getSequenceOfTraversedIpLinks().stream().mapToDouble(e->e.getWorstCasePropagationDelayInMs()).sum() + this.getSequenceOfTraversedVnfInstances().stream().mapToDouble(e->e.getProcessingTimeInMs()).sum();
+	}
+
+	
 	/** Returns the traffic carried in this service now, in the current network failure state
 	 * @return see above
 	 */
@@ -228,5 +252,7 @@ public class WServiceChain extends WAbstractNetworkElement
 		assert getSequenceOfTraversedVnfInstances().stream().allMatch(v->v.getTraversingServiceChains().contains(this));
 		assert getCurrentExpansionFactorApplied().size() == getSequenceOfTraversedVnfInstances().size();
 	}
+	@Override
+	public WTYPE getWType() { return WTYPE.WServiceChain; }
 	
 }

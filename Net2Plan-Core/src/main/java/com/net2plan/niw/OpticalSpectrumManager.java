@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +30,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.niw.networkModel.WNode.OPTICALSWITCHTYPE;
+import com.net2plan.niw.WNode.OPTICALSWITCHTYPE;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
@@ -46,9 +46,9 @@ import com.net2plan.utils.Triple;
  */
 public class OpticalSpectrumManager
 {
-	private final WNet wNet;
-	final private SortedMap<WFiber,SortedMap<Integer,SortedSet<WLightpathUnregenerated>>> occupation_f_s_ll = new TreeMap<> ();
-	final private SortedMap<WLightpathUnregenerated,SortedMap<WFiber,SortedSet<Integer>>> occupation_ll_f_s = new TreeMap<> ();
+	private WNet wNet;
+	final private SortedMap<WFiber,SortedMap<Integer,SortedSet<WLightpath>>> occupation_f_s_ll = new TreeMap<> ();
+	final private SortedMap<WLightpath,SortedMap<WFiber,SortedSet<Integer>>> occupation_ll_f_s = new TreeMap<> ();
 
 	private OpticalSpectrumManager (WNet wNet) { this.wNet = wNet; }
 	
@@ -59,12 +59,27 @@ public class OpticalSpectrumManager
 	public static OpticalSpectrumManager createFromRegularLps (WNet net)
     {
 		final OpticalSpectrumManager osm = new OpticalSpectrumManager(net);
-		for (WLightpathUnregenerated lp : net.getLightpaths())
+		for (WLightpath lp : net.getLightpaths())
 			osm.allocateOccupation(lp, lp.getSeqFibers(), lp.getOpticalSlotIds());
         return osm;
     }
 
-		/** Returns the set of the optical slots ids that are idle in ALL the fibers provided 
+	/** Resets this object, makes it associated to a given network and according to their lightpaths
+	 * @param net the network
+	 * @return see above
+	 */
+	public OpticalSpectrumManager resetFromRegularLps (WNet net)
+    {
+		this.wNet = net;
+		this.occupation_f_s_ll.clear();
+		this.occupation_ll_f_s.clear();
+		for (WLightpath lp : net.getLightpaths())
+			this.allocateOccupation(lp, lp.getSeqFibers(), lp.getOpticalSlotIds());
+        return this;
+    }
+
+
+	/** Returns the set of the optical slots ids that are idle in ALL the fibers provided 
      * @param wdmLinks the set of fibers
      * @return see above
      */
@@ -95,7 +110,7 @@ public class OpticalSpectrumManager
      * @param fiber the input fiber
      * @return see above
      */
-    public SortedMap<Integer,SortedSet<WLightpathUnregenerated>> getOccupiedResources (WFiber fiber)
+    public SortedMap<Integer,SortedSet<WLightpath>> getOccupiedResources (WFiber fiber)
     {
    	 checkSameWNet(fiber);
     	return this.occupation_f_s_ll.getOrDefault(fiber, new TreeMap<> ());
@@ -108,7 +123,7 @@ public class OpticalSpectrumManager
     public SortedSet<Integer> getOccupiedOpticalSlotIds (WFiber fiber)
     {
    	 checkSameWNet(fiber);
-		SortedMap<Integer,SortedSet<WLightpathUnregenerated>> occupiedSlotsPerLightpath = this.occupation_f_s_ll.get(fiber);
+		SortedMap<Integer,SortedSet<WLightpath>> occupiedSlotsPerLightpath = this.occupation_f_s_ll.get(fiber);
 		if(occupiedSlotsPerLightpath == null)
 			return new TreeSet<>();
     	return new TreeSet<> (occupiedSlotsPerLightpath.keySet());
@@ -135,7 +150,7 @@ public class OpticalSpectrumManager
      * @param lp the lightpath
      * @return see above
      */
-    public boolean isAlreadyAccounted (WLightpathUnregenerated lp) { checkSameWNet(lp); return this.occupation_ll_f_s.get(lp) != null; }
+    public boolean isAlreadyAccounted (WLightpath lp) { checkSameWNet(lp); return this.occupation_ll_f_s.get(lp) != null; }
 
     /** Accounts for the occupation of a lightpath, updating the information in the spectrum manager
      * @param lp the lightpath
@@ -145,7 +160,7 @@ public class OpticalSpectrumManager
      * @param slotIds the optical slot ids
      * @return see above
      */
-    public boolean allocateOccupation (WLightpathUnregenerated lp , Collection<WFiber> wdmLinks , SortedSet<Integer> slotIds)
+    public boolean allocateOccupation (WLightpath lp , Collection<WFiber> wdmLinks , SortedSet<Integer> slotIds)
     {
    	 checkSameWNet(wdmLinks);
    	 checkSameWNet(lp);
@@ -154,11 +169,11 @@ public class OpticalSpectrumManager
     	boolean clashesWithPreviousAllocations = false;
     	for (WFiber fiber : wdmLinks)
     	{
-    		SortedMap<Integer,SortedSet<WLightpathUnregenerated>> thisFiberInfo = this.occupation_f_s_ll.get(fiber);
+    		SortedMap<Integer,SortedSet<WLightpath>> thisFiberInfo = this.occupation_f_s_ll.get(fiber);
     		if (thisFiberInfo == null) { thisFiberInfo = new TreeMap<> (); this.occupation_f_s_ll.put(fiber, thisFiberInfo); }
     		for (int slotId : slotIds)
     		{
-    			SortedSet<WLightpathUnregenerated> currentCollidingLps = thisFiberInfo.get(slotId);
+    			SortedSet<WLightpath> currentCollidingLps = thisFiberInfo.get(slotId);
     			if (currentCollidingLps == null) { currentCollidingLps = new TreeSet<> (); thisFiberInfo.put(slotId, currentCollidingLps); }
     			if (!currentCollidingLps.isEmpty()) clashesWithPreviousAllocations = true;
     			currentCollidingLps.add(lp);
@@ -171,7 +186,7 @@ public class OpticalSpectrumManager
     /** Releases all the optical slots occupied for a given lightpath in this manager
      * @param lp the lightpath
      */
-    public void releaseOccupation (WLightpathUnregenerated lp)
+    public void releaseOccupation (WLightpath lp)
     {
    	 checkSameWNet(lp);
     	final SortedMap<WFiber,SortedSet<Integer>> occupiedResources = occupation_ll_f_s.get(lp);
@@ -182,11 +197,11 @@ public class OpticalSpectrumManager
     	{
     		final WFiber fiber = resource.getKey();
     		final SortedSet<Integer> slotIds = resource.getValue();
-    		SortedMap<Integer,SortedSet<WLightpathUnregenerated>> thisFiberInfo = this.occupation_f_s_ll.get(fiber);
+    		SortedMap<Integer,SortedSet<WLightpath>> thisFiberInfo = this.occupation_f_s_ll.get(fiber);
     		assert fiber != null;
     		for (int slotId : slotIds)
     		{
-    			final SortedSet<WLightpathUnregenerated> thisLpAndOthers = thisFiberInfo.get(slotId);
+    			final SortedSet<WLightpath> thisLpAndOthers = thisFiberInfo.get(slotId);
     			assert thisLpAndOthers != null;
     			assert thisLpAndOthers.contains(lp);
     			thisLpAndOthers.remove(lp);
@@ -398,7 +413,7 @@ public class OpticalSpectrumManager
         
         for (WFiber e : occupation_f_s_ll.keySet().stream().sorted((e1,e2)->Integer.compare(occupation_f_s_ll.get(e2).size (), occupation_f_s_ll.get(e1).size ())).collect(Collectors.toList()))
         {
-            final SortedMap<Integer,SortedSet<WLightpathUnregenerated>> occupThisLink = occupation_f_s_ll.get(e);
+            final SortedMap<Integer,SortedSet<WLightpath>> occupThisLink = occupation_f_s_ll.get(e);
             final int numOchSubpaths = occupThisLink.values().stream().flatMap(s->s.stream()).collect(Collectors.toSet()).size();
             final int numOccupSlots = occupThisLink.size();
             final boolean hasClashing = occupThisLink.values().stream().anyMatch(s->s.size() > 1);
@@ -413,13 +428,13 @@ public class OpticalSpectrumManager
      */
     public boolean isSpectrumOccupationOk ()
     {
-        for (Entry<WFiber,SortedMap<Integer,SortedSet<WLightpathUnregenerated>>> occup_e : occupation_f_s_ll.entrySet())
+        for (Entry<WFiber,SortedMap<Integer,SortedSet<WLightpath>>> occup_e : occupation_f_s_ll.entrySet())
         {
             final WFiber e = occup_e.getKey();
             assert e.isBidirectional();
-            final SortedMap<Integer,SortedSet<WLightpathUnregenerated>> occup = occup_e.getValue();
+            final SortedMap<Integer,SortedSet<WLightpath>> occup = occup_e.getValue();
             if (!e.getValidOpticalSlotIds().containsAll(occup.keySet())) return false;
-            for (Set<WLightpathUnregenerated> rs : occup.values())
+            for (Set<WLightpath> rs : occup.values())
                 if (rs.size() != 1) return false;
         }       
         return true;
@@ -428,15 +443,15 @@ public class OpticalSpectrumManager
     /** Returns true if the design is ok respect to spectrum occupation for that lightpath: all optical slots occupied are valid and with no clashing with other lightpaths
      * @return see above
      */
-    public boolean isSpectrumOccupationOk (WLightpathUnregenerated lp)
+    public boolean isSpectrumOccupationOk (WLightpath lp)
     {
    	 for (WFiber e : lp.getSeqFibers())
    	 {
 			 if (!e.getValidOpticalSlotIds().containsAll(lp.getOpticalSlotIds())) return false;
-			 final SortedMap<Integer,SortedSet<WLightpathUnregenerated>> occup_e = getOccupiedResources(e);
+			 final SortedMap<Integer,SortedSet<WLightpath>> occup_e = getOccupiedResources(e);
 			 for (int s : lp.getOpticalSlotIds())
    		 {
-				 final SortedSet<WLightpathUnregenerated> occupThisSlos = occup_e.getOrDefault(s , new TreeSet<> ());
+				 final SortedSet<WLightpath> occupThisSlos = occup_e.getOrDefault(s , new TreeSet<> ());
 				 assert occupThisSlos.contains(lp);
 				 if (occupThisSlos.size() > 1) return false;
    		 }
@@ -449,13 +464,13 @@ public class OpticalSpectrumManager
      */
     public void checkNetworkSlotOccupation ()
     {
-        for (Entry<WFiber,SortedMap<Integer,SortedSet<WLightpathUnregenerated>>> occup_e : occupation_f_s_ll.entrySet())
+        for (Entry<WFiber,SortedMap<Integer,SortedSet<WLightpath>>> occup_e : occupation_f_s_ll.entrySet())
         {
             final WFiber e = occup_e.getKey();
             assert e.isBidirectional();
-            final SortedMap<Integer,SortedSet<WLightpathUnregenerated>> occup = occup_e.getValue();
+            final SortedMap<Integer,SortedSet<WLightpath>> occup = occup_e.getValue();
             if (!e.getValidOpticalSlotIds().containsAll(occup.keySet())) throw new Net2PlanException ("The optical slots occupied at link " + e + " are outside the valid range");
-            for (Set<WLightpathUnregenerated> rs : occup.values())
+            for (Set<WLightpath> rs : occup.values())
                 if (rs.size() != 1) throw new Net2PlanException ("The optical slots occupation is not correct");
         }       
     }
@@ -479,6 +494,26 @@ public class OpticalSpectrumManager
 		final SortedSet<Integer> res = wdmLink.getValidOpticalSlotIds();
 		res.removeAll(getOccupiedOpticalSlotIds(wdmLink));
 		return res;
+	}
+
+	/** Returns the optical slots where there is wavelength clashing, i.e. more than one traversing lightpath is using this slot
+	 * @param wdmLink see above
+	 * @return  see above
+	 */
+	public SortedSet<Integer> getClashingOpticalSlotIds (WFiber wdmLink)
+	{
+		checkSameWNet(wdmLink);
+		return getOccupiedResources (wdmLink).entrySet().stream().filter(e->e.getValue().size() > 1).map(e->e.getKey()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the number optical slots where there is wavelength clashing, i.e. more than one traversing lightpath is using this slot
+	 * @param wdmLink see above
+	 * @return  see above
+	 */
+	public int getNumberOfClashingOpticalSlotIds (WFiber wdmLink)
+	{
+		checkSameWNet(wdmLink);
+		return (int) getOccupiedResources (wdmLink).entrySet().stream().filter(e->e.getValue().size() > 1).count();
 	}
 	
 	/** Returns the optical slots that are usable (valid and idle) in the given fiber

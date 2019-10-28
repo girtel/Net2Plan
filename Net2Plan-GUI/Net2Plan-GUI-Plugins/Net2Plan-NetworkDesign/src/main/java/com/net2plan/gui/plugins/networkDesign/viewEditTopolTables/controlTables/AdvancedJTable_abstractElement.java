@@ -92,7 +92,7 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
     private final Map<AjtColumnInfo,Pair<Integer,Integer>> widthAndGlobalViewIndexIfPreviouslyVisible = new HashMap<> ();
     private final Map<String, Boolean> columnShowHideValueByHeader = new HashMap<> ();
     private final Map<String, Integer> columnNumberOfDecimalsByHeader = new HashMap<> ();
-    private String control_currentViewTypeForColumns;
+//    private String control_currentViewTypeForColumns;
     private final boolean hasAggregationRow;
     private final String tableTitle;
     private final int fixedColumns;
@@ -111,7 +111,7 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
         super();
         this.hasAggregationRow = hasAggregationRow;
         this.callback = networkViewer;
-        this.control_currentViewTypeForColumns = null;
+//        this.control_currentViewTypeForColumns = null;
         this.tableScrollPane = new JScrollPane(this);
         this.tableTitle = tableTitle;
         this.addMouseListener(new AjTableMouseAdapter()); 
@@ -121,6 +121,8 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
 
     }
 
+    public String getTableTitle ( ) { return this.tableTitle; }
+    
     public Function<T,Color> getColoringFunctionForTheFullRowIfNotSelected () { return this.coloringFunctionForTheFullRowIfNotSelected; }
     
     /**
@@ -211,11 +213,8 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
         final List<AjtColumnInfo<T>> visibleTableColumnsToBeInUnifiedViewOrder = visibleTableColumnsInTableModelOrder.stream().
         		sorted((c1,c2)->
         		{
-//        		    System.out.println("-- Compare: " + c1 + " - " + c2);
                     final int indexView1 = widthAndGlobalViewIndexIfPreviouslyVisible.getOrDefault(c1 , Pair.of(-1, Integer.MAX_VALUE)).getSecond();
                     final int indexView2 = widthAndGlobalViewIndexIfPreviouslyVisible.getOrDefault(c2 , Pair.of(-1, Integer.MAX_VALUE)).getSecond();
-//                    System.out.println("indexView1: " + indexView1 + ", indexView2: " + indexView2);
-//                    System.out.println("indexUser1: " + c1.getColumnIndexOriginallyUserDefined() + ", indexUser2: " + c2.getColumnIndexOriginallyUserDefined());
                     final int comp1 = Integer.compare(indexView1, indexView2);
                     if (comp1 != 0) return comp1;
                     return Integer.compare(c1.getColumnIndexOriginallyUserDefined(), c2.getColumnIndexOriginallyUserDefined());
@@ -305,6 +304,7 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
                 if (element != null) elements.add(element);
             }
         }
+        assert elements.stream().filter(e->e instanceof NetworkElement).map(e->(NetworkElement) e).allMatch(e->e.getNetPlan().equals(callback.getDesign()));
         return elements;
     }
 
@@ -427,7 +427,7 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
         	if (!columnNumberOfDecimalsByHeader.containsKey(col.getHeader())) columnNumberOfDecimalsByHeader.put(col.getHeader(), 2);
 
             col.setColumnIndexOriginallyUserDefined(contVisibleOrNot ++);
-            final boolean couldBeVisible = col.isVisibleInView(this.control_currentViewTypeForColumns) && !isColumnHiddenByUser(col.getHeader()); 
+            final boolean couldBeVisible = col.isVisibleInView(callback.getVisibleColumnsInTables()) && !isColumnHiddenByUser(col.getHeader()); 
             if (onlyVisible && !couldBeVisible)
             {
                 col.setColumnIndexInTableModelWhenVissible(-1);
@@ -575,8 +575,7 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
                         newValueCastedOrParsed = newValue;
                     else throw new RuntimeException ();
                     columnInfo.getSetValueAtFunction().accept(ne , newValueCastedOrParsed);
-                    if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                        callback.getWhatIfAnalysisPane().whatIfSomethingModified();
+                    callback.setDesignAndCallWhatIfSomethingModified(callback.getDesign());
                     callback.updateVisualizationAfterChanges();
                     if (AdvancedJTable_abstractElement.this instanceof AdvancedJTable_networkElement)
                     {
@@ -592,14 +591,14 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
                 catch (Net2PlanException e)
                 {
                     e.printStackTrace();
-                    callback.setDesign(npCopy);
+                    callback.setDesignAndCallWhatIfSomethingModified(npCopy);
                     callback.updateVisualizationAfterNewTopology();
                     ErrorHandling.showErrorDialog(e.getMessage(), "Error modifying value");
                 }
                 catch (Throwable e)
                 {
                     e.printStackTrace();
-                    callback.setDesign(npCopy);
+                    callback.setDesignAndCallWhatIfSomethingModified(npCopy);
                     callback.updateVisualizationAfterNewTopology();
                     ErrorHandling.showErrorDialog(e.getMessage(), "Error modifying value");
                 }
@@ -665,15 +664,14 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
                     popupInfo.getActionListener().accept(e);
                 else
                     SwingUtilities.invokeLater(() -> popupInfo.getActionListener().accept(e));
-                if (callback.getVisualizationState().isWhatIfAnalysisActive())
-                    callback.getWhatIfAnalysisPane().whatIfSomethingModified();
+                callback.setDesignAndCallWhatIfSomethingModified(callback.getDesign());
                 callback.getVisualizationState().recomputeCanvasTopologyBecauseOfLinkOrNodeAdditionsOrRemovals();
                 callback.updateVisualizationAfterChanges();
                 
             } catch(Exception ex) 
             {
             	 ex.printStackTrace();
-                 callback.setDesign(npCopy);
+                 callback.setDesignAndCallWhatIfSomethingModified(npCopy);
                  callback.updateVisualizationAfterNewTopology();
                  
                  ErrorHandling.showErrorDialog(ex.getMessage(), "Error");
@@ -791,7 +789,13 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
         allOptions.addAll(viewTypesDefined);
         for (String viewTypeDefined : allOptions)
             submenus.add(new AjtRcMenu(viewTypeDefined == null? "Default view" : viewTypeDefined, 
-                    (e)-> { control_currentViewTypeForColumns = viewTypeDefined; }  , 
+                    (e)-> 
+            		{
+            			if (callback.getVisibleColumnsInTables().contains(viewTypeDefined))
+            				callback.removeVisibleColumnInTable(viewTypeDefined);
+            			else
+            				callback.addVisibleColumnInTable(viewTypeDefined); 
+            		}  , 
                     (a,b)->true, null));
         final AjtRcMenu res =  new AjtRcMenu("View", null, (a,b)->true, submenus);
         return Optional.of(res);

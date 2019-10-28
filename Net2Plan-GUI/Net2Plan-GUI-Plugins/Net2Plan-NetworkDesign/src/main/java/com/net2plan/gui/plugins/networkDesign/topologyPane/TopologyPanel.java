@@ -344,7 +344,9 @@ public class TopologyPanel extends JPanel
             
             NetPlan aux = fc_netPlan.readNetPlan();
 
-            callback.setDesign(aux);
+            callback.setDesignAndCallWhatIfSomethingModified(aux);
+            
+            
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));
@@ -376,7 +378,7 @@ public class TopologyPanel extends JPanel
             NetPlan netPlan = new NetPlan(file);
             fc_netPlan.setCurrentDirectory(file.getParentFile());
 
-            callback.setDesign(netPlan);
+            callback.setDesignAndCallWhatIfSomethingModified(netPlan);
             final VisualizationState vs = callback.getVisualizationState();
             Pair<BidiMap<NetworkLayer, Integer>, Map<NetworkLayer, Boolean>> res =
                     vs.suggestCanvasUpdatedVisualizationLayerInfoForNewDesign(new HashSet<>(callback.getDesign().getNetworkLayers()));

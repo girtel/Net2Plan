@@ -4,7 +4,7 @@
  * https://opensource.org/licenses/MIT
  *******************************************************************************/
 
-package com.net2plan.niw.networkModel;
+package com.net2plan.niw;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
+import com.net2plan.niw.WNetConstants.WTYPE;
 
 /** This class represents a request to establish a unidirectional lightpath between two nodes, for a given line rate. The 
  * lightpath request can be blocked (no lighptaths assigned), or relalizaed by one or two (1+1) lightpaths.
@@ -20,19 +21,15 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
  */
 public class WLightpathRequest extends WAbstractNetworkElement
 {
-	final private Demand d;
-	private static final String ATTNAMECOMMONPREFIX = "LightpathRequest_";
+	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "LightpathRequest_";
 	private static final String ATTNAMESUFFIX_ISTOBE11PROTECTED = "isToBe11Protected";
 
 	
-	WLightpathRequest (Demand d) 
+	public WLightpathRequest (Demand d) 
 	{ 
 		super (d, Optional.empty()); 
-		this.d = d; 
-		assert d.getLayer().equals(getNet().getWdmLayer().getNe());
-		assert d.getRoutes().size() <= 2; 
-		if (d.getRoutes().size() == 2) assert d.getRoutesAreBackup().size() == 1; 
-		assert !getA().isVirtualNode() && !getB().isVirtualNode();  
+		assert getNe().getRoutes().size() <= 2; 
+		if (getNe().getRoutes().size() == 2) assert getNe().getRoutesAreBackup().size() == 1; 
 	}
 	
 	@Override
@@ -54,7 +51,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** If the lightpath is part of a bidirectional pair, returns the opposite lightpath request, if not returns null 
 	 * @return see above
 	 */
-	public WLightpathRequest getBidirectionalPair () { assert this.isBidirectional(); return new WLightpathRequest(d.getBidirectionalPair()); }
+	public WLightpathRequest getBidirectionalPair () { assert this.isBidirectional(); return new WLightpathRequest(getNe().getBidirectionalPair()); }
 
 	/**
 	 * Sets the given lightpath request as the bidirectional pair of this request
@@ -72,19 +69,23 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Returns the set of lightpaths realizing this request. Typically one in unprotected ligtpaths, two in 1+1 settings
 	 * @return see above
 	 */
-	public List<WLightpathUnregenerated> getLightpaths () { return getNe().getRoutes().stream().map(r->new WLightpathUnregenerated(r)).collect(Collectors.toList()); }
+	public List<WLightpath> getLightpaths () { return getNe().getRoutes().stream().map(r->new WLightpath(r)).collect(Collectors.toList()); }
 	/** Returns the line rate of the lighptath request in Gbps
 	 * @return see above
 	 */
-	public double getLineRateGbps () { return d.getOfferedTraffic(); }
+	public double getLineRateGbps () { return getNe().getOfferedTraffic(); }
 	/** Sets the line rate of the lighptath request in Gbps
 	 * @param lineRateGbps see above
 	 */
-	public void setLineRateGbps (double lineRateGbps) { d.setOfferedTraffic(lineRateGbps); }
+	public void setLineRateGbps (double lineRateGbps) 
+	{
+		if (!this.getLightpaths().isEmpty()) throw new Net2PlanException ("This option is only possible when the lightpath request has no lightpaths realizing it");
+		getNe().setOfferedTraffic(lineRateGbps); 
+	}
 	/** Indicates if the lighptath request is supported by a 1+1 setting of two lightpaths 
 	 * @return see above
 	 */
-	public boolean is11Protected () { return !d.getRoutesAreBackup().isEmpty(); }
+	public boolean is11Protected () { return !getNe().getRoutesAreBackup().isEmpty(); }
 	/** Indicates if the user has requested this lightpath request to be realized by a 1+1 setting
 	 * @return see above
 	 */
@@ -92,7 +93,11 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Sets if this lightpath request has to be realized by a 1+1 setting or not
 	 * @param isToBe11Protected see above
 	 */
-	public void setIsToBe11Protected (boolean isToBe11Protected) { d.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISTOBE11PROTECTED , new Boolean (isToBe11Protected).toString()); }
+	public void setIsToBe11Protected (boolean isToBe11Protected) 
+	{
+		if (!this.getLightpaths().isEmpty()) throw new Net2PlanException ("This option is only possible when the lightpath request has no lightpaths realizing it");
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISTOBE11PROTECTED , new Boolean (isToBe11Protected).toString()); 
+	}
 	/** Returns the length of this lightpath request, as the physical length of fibers traversed by the lightpaths carrying this request. If the lightpath is 1+1 protected, 
 	 * the longest path length is returned. If the request has assigned no lighptaths, Double.MAX_VALUE is returned.
 	 * @return see above
@@ -113,7 +118,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Indicates if this lighptath request has lightpaths assigned
 	 * @return see above
 	 */
-	public boolean hasLightpathsAssigned () { return !d.getRoutes().isEmpty(); }
+	public boolean hasLightpathsAssigned () { return !getNe().getRoutes().isEmpty(); }
 	/** Indicates if the request is blocked, meaning (i) has no lightpaths assigned, or (ii) assigned lightpaths are all down
 	 * @return see above
 	 */
@@ -134,7 +139,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Removes this lightpath request. This automatically removes any lightpath realizing this request.
 	 * 
 	 */
-	public void remove () { d.remove(); }
+	public void remove () { getNe().remove(); }
 
 	
 	/** Adds a lightpath realizing this lightpath request. A demand can be assigned at most two lightpaths, one main and one backup.
@@ -143,7 +148,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	 * @param isBackupRoute indicates if this is a backup route (needs a main lightpath to be already added to the request).
 	 * @return see above
 	 */
-	public WLightpathUnregenerated addLightpathUnregenerated (List<WFiber> sequenceFibers , 
+	public WLightpath addLightpathUnregenerated (List<WFiber> sequenceFibers , 
 			SortedSet<Integer> occupiedSlots ,
 			boolean isBackupRoute)
 	{
@@ -154,7 +159,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 		if (numRoutesAlready == 1 && !this.isToBe11Protected()) throw new Net2PlanException ("Already one lightpath");
 		if (numRoutesAlready == 1 && !isBackupRoute) throw new Net2PlanException ("Not a backup lightpath");
 		if (numRoutesAlready == 0 && isBackupRoute) throw new Net2PlanException ("Not a main lightpath yet");
-		final WLightpathUnregenerated lp12 = new WLightpathUnregenerated(getNetPlan().addRoute(getNe(), 
+		final WLightpath lp12 = new WLightpath(getNetPlan().addRoute(getNe(), 
 				this.getLineRateGbps(), 
 				occupiedSlots.size(), sequenceFibers.stream().map(ee->ee.getNe()).collect(Collectors.toList()), 
 				null));
@@ -172,17 +177,17 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	/** Decouples this lightpath request to the IP link it was coupled to, if any
 	 * 
 	 */
-	public void decouple () { if (!d.isCoupled()) return; d.decouple(); }
+	public void decouple () { if (!getNe().isCoupled()) return; getNe().decouple(); }
 	
 	/** Indicates if the lightpath is coupled to an IP link
 	 * @return see above
 	 */
-	public boolean isCoupledToIpLink () { return d.isCoupled(); } 
+	public boolean isCoupledToIpLink () { return getNe().isCoupled(); } 
 	
 	/** Gets the coupled IP links, or raises an exception if none
 	 * @return see above
 	 */
-	public WIpLink getCoupledIpLink () { if (!isCoupledToIpLink()) throw new Net2PlanException ("Not coupled"); return new WIpLink(d.getCoupledLink()); }
+	public WIpLink getCoupledIpLink () { if (!isCoupledToIpLink()) throw new Net2PlanException ("Not coupled"); return new WIpLink(getNe().getCoupledLink()); }
 
 	
 	void updateNetPlanObjectAndPropagateUpwards ()
@@ -190,12 +195,12 @@ public class WLightpathRequest extends WAbstractNetworkElement
 		if (!hasLightpathsAssigned()) return;
 		if (!is11Protected())
 		{
-			final WLightpathUnregenerated lp = getLightpaths().get(0);
+			final WLightpath lp = getLightpaths().get(0);
 			lp.getNe().setCarriedTraffic(lp.isUp()? getLineRateGbps() : 0.0 , null);
 		}
 		else
 		{
-			final List<WLightpathUnregenerated> lps = getLightpaths();
+			final List<WLightpath> lps = getLightpaths();
 			if (lps.get(0).isUp()) 
 			{ 
 				lps.get(0).getNe().setCarriedTraffic(getLineRateGbps(), null);   
@@ -228,7 +233,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 		if (this.isCoupledToIpLink()) assert getCoupledIpLink().getCoupledLpRequest().equals(this);
 		if (this.isBidirectional()) assert this.getBidirectionalPair().getBidirectionalPair().equals(this);
 		if (getLightpaths().stream().anyMatch(lp->lp.isUp())) assert getCurrentCapacityGbps() == getLineRateGbps();
-		if (getLightpaths().stream().filter(lp->lp.isUp()).count() == 0) assert getCurrentCapacityGbps() == getLineRateGbps();
+		if (getLightpaths().stream().filter(lp->lp.isUp()).count() == 0) assert getCurrentCapacityGbps() == 0;
 	}
 
 	
@@ -241,5 +246,8 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	 * @param name
 	 */
 	public void setTransponderName (String name) { getNe ().setAttribute(WNetConstants.ATTNAME_LIGHTPATHUNREG_TRANSPONDERNAME, name); }
-	
+
+	@Override
+	public WTYPE getWType() { return WTYPE.WLightpathRequest; }
+
 }

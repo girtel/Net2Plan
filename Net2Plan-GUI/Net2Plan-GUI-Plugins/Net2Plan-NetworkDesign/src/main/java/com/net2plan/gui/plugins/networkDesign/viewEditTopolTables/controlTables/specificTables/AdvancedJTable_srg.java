@@ -56,7 +56,7 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement<SharedRisk
 {
     public AdvancedJTable_srg(GUINetworkDesign callback , NetworkLayer layerThisTable)
     {
-        super(callback, AJTableType.SRGS , layerThisTable , true , null);
+        super(callback, AJTableType.SRGS , null , layerThisTable , true , null);
     }
 
     @Override
@@ -106,6 +106,31 @@ public class AdvancedJTable_srg extends AdvancedJTable_networkElement<SharedRisk
                     );
         }, (a,b)->true, null));
 
+        res.add(new AjtRcMenu("Set selected SRGs failing nodes", e->
+        {
+            DialogBuilder.launch(
+            		"Set selected SRGs failing nodes", 
+                    "Please introduce the names of the failing nodes, space separated.", 
+                    "", 
+                    this, 
+                    Arrays.asList(
+                    		InputForDialog.inputTfCombo ("SRG creation scheme" , "Please introduce the scheme to follow when generating the SRGs" , 20 , SRGUtils.SharedRiskModel.PER_NODE ,Arrays.asList (SRGUtils.SharedRiskModel.values()) , Arrays.asList (SRGUtils.SharedRiskModel.values()).stream().map(ee->ee.toString ()).collect (Collectors.toList ()) ,null),
+                    		InputForDialog.inputTfDouble("MTTF (hours)", "Mean-Time-To-Fail in hours, to set for all the SRGs", 10, 365*24.0),
+                    		InputForDialog.inputTfDouble("MTTR (hours)", "Mean-Time-To-Repair in hours, to set for all the SRGs", 10, 12.0),
+                    		InputForDialog.inputCheckBox ("Remove existing SRGs?" , "Indicates if the existing SRGs should be removed before creating the new ones" , false , null)
+                    		),
+                    (list)->
+                    	{
+                    		final SRGUtils.SharedRiskModel srgModel = (SRGUtils.SharedRiskModel) list.get(0).get();
+                    		final double mttf = (Double) list.get(1).get();
+                    		final double mttr = (Double) list.get(2).get();
+                    		final boolean removeExistingSRGs = (Boolean) list.get(3).get();
+                            SRGUtils.configureSRGs(np, mttf, mttr, srgModel, removeExistingSRGs);
+                    	}
+                    );
+        }, (a,b)->true, null));
+
+        
         res.add(new AjtRcMenu("View/edit SRG", e->viewEditSRGGUI(callback, getSelectedElements ().first()) , (a,b)->b==1, null));
         res.add(new AjtRcMenu("Set MTTF to selected SRGs", e->
         {
