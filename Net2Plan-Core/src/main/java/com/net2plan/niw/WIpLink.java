@@ -102,7 +102,7 @@ public class WIpLink extends WAbstractNetworkElement
 	}
 	
 	/** Sets the IGP weight configured for this IP link
-	 * @return see above
+	 * @param newWeight see above
 	 */
 	public void setIgpWeight (double newWeight)
 	{
@@ -156,7 +156,7 @@ public class WIpLink extends WAbstractNetworkElement
 
 	/**
 	 * Sets the link nominal capacity in Gbps, a value used only when the link is not a bundle, and not coupled to a lightpath request. Negative values are truncated to zero.
-	 * @return see above
+	 * @param capacityGbps see above
 	 */
 	public void setNominalCapacityGbps(double capacityGbps)
 	{

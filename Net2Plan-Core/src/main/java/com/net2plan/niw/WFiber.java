@@ -416,7 +416,7 @@ public class WFiber extends WAbstractNetworkElement
 	}
 
 	/** Returns the net gain of the fiber, considering optical line amplifiers and fiber attenuation
-	 * @return
+	 * @return see above
 	 */
 	public double getNetGain_dB ()
 	{
@@ -575,6 +575,7 @@ public class WFiber extends WAbstractNetworkElement
 	
 	/**
 	 * Makes that this fiber to be tagged as the opposite one to other, and viceversa. 
+	 * @param fiber see above
 	 */
 	public void  setBidirectionalPair(WFiber fiber)
 	{
@@ -644,35 +645,35 @@ public class WFiber extends WAbstractNetworkElement
 		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_PMD_PS, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_PMD_PS));
 	}
 	/** Sets the noise factor of the booster amplifier at fiber origin end, in dB. 
-	 * @return see above
+	 * @param noiseFactor_dB see above
 	 */
 	public void setOriginBoosterAmplifierNoiseFactor_dB (double noiseFactor_dB)
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_NOISEFIGUREDB, noiseFactor_dB);
 	}
 	/** Sets the noise factor of the pre-amplifier at the end of the fiber, in dB. 
-	 * @return see above
+	 * @param noiseFactor_dB see above
 	 */
 	public void setDestinationPreAmplifierNoiseFactor_dB (double noiseFactor_dB)
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_NOISEFIGUREDB, noiseFactor_dB);
 	}
 	/** Sets the gain of the booster amplifier at fiber origin end, in dB. 
-	 * @return see above
+	 * @param gain_dB see above
 	 */
 	public void setOriginBoosterAmplifierGain_dB (double gain_dB)
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_GAINDB, gain_dB);
 	}
 	/** Sets the gain of the pre-amplifier at the end of the fiber, in dB. 
-	 * @return see above
+	 * @param gain_dB see above
 	 */
 	public void setDestinationPreAmplifierGain_dB (double gain_dB)
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_PREAMPLIFIER_GAINDB, gain_dB);
 	}
 	/** Sets the CD compensattion added of the destination amplifier at fiber end, in ps per nm. 
-	 * @return see above
+	 * @param cd_psPerNm see above
 	 */
 	public void setDestinationPreAmplifierCdCompensation_psPerNm (double cd_psPerNm)
 	{
@@ -688,14 +689,14 @@ public class WFiber extends WAbstractNetworkElement
 	}
 
 	/** Sets the PMD added of the booster amplifier at fiber origin end, in ps. 
-	 * @return see above
+	 * @param pmd_ps see above
 	 */
 	public void setOriginBoosterAmplifierPmd_ps (double pmd_ps)
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_PMD_PS, pmd_ps);
 	}
 	/** Sets the CD compensattion added of the booster amplifier at fiber origin end, in ps per nm. 
-	 * @return see above
+	 * @param cd_psPerNm see above
 	 */
 	public void setOriginBoosterAmplifierCdCompensation_psPerNm (double cd_psPerNm)
 	{
@@ -710,7 +711,7 @@ public class WFiber extends WAbstractNetworkElement
 		return Optional.of (getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_BOOSTERAMPLIFIER_CD_PSPERNM, WNetConstants.WFIBER_DEFAULT_BOOSTER_CD_PSPERNM));
 	}
 	/** Sets the PMD added of the pre-amplifier at the end of the fiber, in ps. 
-	 * @return see above
+	 * @param pmd_ps see above
 	 */
 	public void setDestinationPreAmplifierPmd_ps (double pmd_ps)
 	{
@@ -733,14 +734,14 @@ public class WFiber extends WAbstractNetworkElement
 		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ASIDE_EXISTSBOOSTERAMPLIFIER, 0.0) == 1;
 	}
 	/** Sets if exists a pre-amplifier exists at the OADM at the end of the fiber.
-	 * @return see above
+	 * @param exists see above
 	 */
 	public void setIsExistingPreamplifierAtDestinationOadm (boolean exists)
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_BSIDE_EXISTSPREAMPLIFIER, exists? 1 : 0);
 	}
 	/** Indicates if a booster-amplifier exists at the OADM at the start of the fiber.
-	 * @return see above
+	 * @param exists see above
 	 */
 	public void setIsExistingBoosterAmplifierAtOriginOadm (boolean exists)
 	{
@@ -766,7 +767,7 @@ public class WFiber extends WAbstractNetworkElement
 	}
 
 	/** Sets tthe spectral density enforced to all the channels by the origin OADM, right before the booster.
-	 * @return see above
+	 * @param valInMwPerGhz see above
 	 */
 	public void setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz (Optional<Double> valInMwPerGhz)
 	{

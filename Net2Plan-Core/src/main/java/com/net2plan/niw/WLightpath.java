@@ -111,13 +111,15 @@ public class WLightpath extends WAbstractNetworkElement
 	public double getTransponderMaximumTolerablePmd_ps () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS, WNetConstants.WLIGHTPATH_DEFAULT_MAXIMUMPMD_PS); }
 
 	/** Returns the tolerance of the receiver side in terms of chromatic dispersion value at the receiver, in absolute value. 
-	 * @return see above
+	 * @param cdTolerance_psPerNm see above
 	 */
 	public void setTransponderMaximumTolerableCdInAbsoluteValue_perPerNm (double cdTolerance_psPerNm) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM, cdTolerance_psPerNm); }
 	/** Sets the tolerance of the receiver side in terms of OSNR at a reference bandwidth of 12.5 GHz. 
+	 * @param osnrTolerance_dB see above
 	 */
 	public void setTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB (double osnrTolerance_dB) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMINIMUMOSNR_DB, osnrTolerance_dB); }
 	/** Sets the tolerance of the receiver side in terms of Polarization Mode Dispersion (PMD), in ps. 
+	 * @param pmdTolerance_ps see above
 	 */
 	public void setTransponderMaximumTolerablePmd_ps (double pmdTolerance_ps) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS, pmdTolerance_ps); }
 
@@ -139,12 +141,12 @@ public class WLightpath extends WAbstractNetworkElement
 	public double getTransponderMinimumTolerableReceptionPower_dBm () { return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMINIMUMPOWER_DBM, WNetConstants.WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLERECEPTIONPOWER_DBM); }
 
 	/** Sets the tolerance of the receiver side in terms of maximum power that can receive. 
-	 * @return see above
+	 * @param power_dBm see above
 	 */
 	public void setTransponderMaximumTolerableReceptionPower_dBm (double power_dBm) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMAXIMUMPOWER_DBM, power_dBm); }
 
 	/** Sets the tolerance of the receiver side in terms of minimum power that can receive. 
-	 * @return see above
+	 * @param power_dBm see above
 	 */
 	public void setTransponderMinimumTolerableReceptionPower_dBm (double power_dBm) { getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_RECEIVERMINIMUMPOWER_DBM, power_dBm); }
 	
@@ -168,7 +170,7 @@ public class WLightpath extends WAbstractNetworkElement
 	public void addBackupLightpath (WLightpath backup) { getNe().addBackupRoute(backup.getNe ()); }
 	
 	/** Returns the list of lightpath designated to be backup of this one
-	 * @param backup see above
+	 * @return see above
 	 */
 	public List<WLightpath> getBackupLightpaths () { return getNe().getBackupRoutes().stream().map(rr->new WLightpath(rr)).collect(Collectors.toList()); }
 	

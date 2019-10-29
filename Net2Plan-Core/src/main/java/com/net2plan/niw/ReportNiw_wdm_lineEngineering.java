@@ -48,7 +48,6 @@ import com.net2plan.utils.Triple;
  * at the receiver</li>
  * </ul>
  * 
- * @net2plan.keywords WDM, Multilayer
  * @author Pablo Pavon-Marino
  * @version 1.2, October 2017
  */

@@ -198,14 +198,14 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	/** Sets the gain observed by the express channels, in dB. 
-	 * @return see above
+	 * @param gain_dB see above
 	 */
 	public void setOadmSwitchFabricAttenuation_dB (double gain_dB)
 	{
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, gain_dB);
 	}
 	/** Sets the PMD added observed by the express channels, in ps. 
-	 * @return see above
+	 * @param pmd_ps see above
 	 */
 	public void setOadmSwitchFabricPmd_ps (double pmd_ps)
 	{
@@ -768,7 +768,6 @@ public class WNode extends WAbstractNetworkElement
 
 	/**
 	 * Returns all the VNF instances in this node, of the given type
-	 * @param type see above
 	 * @return see above
 	 */
 	public SortedSet<WVnfInstance> getVnfInstances()
@@ -777,7 +776,7 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	/** Indicates if this node has a filterless brodcast operation with the add, dropped and express lightpaths
-	 * @return
+	 * @return see above
 	 */
 	public OPTICALSWITCHTYPE getOpticalSwitchType ()
 	{

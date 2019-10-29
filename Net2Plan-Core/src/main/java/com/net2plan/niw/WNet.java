@@ -300,6 +300,8 @@ public class WNet extends WAbstractNetworkElement
 
 	/**
 	 * Creates an empty design with no nodes, links etc.
+	 * @param withIpLayer see above
+	 * @param withWdmLayer see above
 	 * @return see above
 	 */
 	public static WNet createEmptyDesign(boolean withIpLayer , boolean withWdmLayer)
@@ -637,6 +639,10 @@ public class WNet extends WAbstractNetworkElement
 
 	/**
 	 * Adds a new unicast IP demand Returns the list of IP unicast demands, in increasing order according to its id
+	 * @param initialNode see above
+	 * @param endNode see above
+	 * @param isUpstream see above
+	 * @param isHopByHopRouted see above
 	 * @return see above
 	 */
 	public WIpUnicastDemand addIpUnicastDemand (WNode initialNode , WNode endNode , boolean isUpstream, boolean isHopByHopRouted)

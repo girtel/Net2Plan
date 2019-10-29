@@ -117,6 +117,7 @@
                                 <include>com/net2plan/libraries/**</include>
                                 <include>com/net2plan/utils/**</include>
                                 <include>com/net2plan/research/**</include>
+                                <include>com/net2plan/niw/**</include>
                             </sourceFileIncludes>
                             <!-- Output directory -->
                             <additionalparam>-d ${project.build.directory}/apidocs/api</additionalparam>
@@ -183,7 +184,6 @@
                                 <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
                                 <include>com/net2plan/examples/ocnbook/reports/**</include>
                                 <include>com/net2plan/examples/smartCity/**</include>
-                                <include>com/net2plan/niw/**</include>
                             </sourceFileIncludes>
                             <sourceFileExcludes>
                                 <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>

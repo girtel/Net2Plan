@@ -19,6 +19,8 @@ import com.net2plan.utils.Pair;
 /**
  * <p>
  * This is an abstract class that has the common behavior of unicast IP demands, and anycast service chains<p>
+ * 
+ * @author Pablo Pavón Mariño
  * </p>
  */
 public abstract class WAbstractIpUnicastOrAnycastDemand extends WAbstractNetworkElement

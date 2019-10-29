@@ -54,8 +54,6 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  * </ul> 
  * 
  * See the technology conventions used in Net2Plan built-in algorithms and libraries to represent IP/OSPF networks. 
- * @net2plan.keywords IP/OSPF, Network recovery: restoration
- * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
 public class DefaultStatelessSimulator implements IAlgorithm
