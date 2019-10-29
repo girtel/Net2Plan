@@ -173,6 +173,7 @@
                             <dependencySourceIncludes>
                                 <!-- Net2Plan Examples-->
                                 <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                                <dependencySourceInclude>com.net2plan:net2plan-core</dependencySourceInclude>
                             </dependencySourceIncludes>
                             <sourceFileIncludes>
                                 <include>com/net2plan/examples/general/offline/**</include>
@@ -182,6 +183,7 @@
                                 <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
                                 <include>com/net2plan/examples/ocnbook/reports/**</include>
                                 <include>com/net2plan/examples/smartCity/**</include>
+                                <include>com/net2plan/niw/**</include>
                             </sourceFileIncludes>
                             <sourceFileExcludes>
                                 <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>

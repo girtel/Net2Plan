@@ -127,6 +127,7 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	 * such name, or not the appropriate type)
 	 * @param name the attribute name
 	 * @param defaultValue the default value
+	 * @return see above
 	 */
 	public double getAttributeAsDoubleOrDefault(String name, Double defaultValue)
 	{

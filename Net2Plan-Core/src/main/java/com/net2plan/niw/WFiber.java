@@ -327,7 +327,7 @@ public class WFiber extends WAbstractNetworkElement
 	 * @param gains_db for each amplifier, the gain in dB applied
 	 * @param noiseFactors_dB for each amplifier, the ASE noise factor added
 	 * @param pmd_ps for each amplifier, the PMD factor applied
-	 * @param cdCompensarion_psPerNm for each amplifier, the chromatic dispersion compensation in each amplifier
+	 * @param cdCompensation_psPerNm for each amplifier, the chromatic dispersion compensation in each amplifier
 	 * @param minimumGain_dB minimum gain in dB configurable for the amplifier
 	 * @param maximumGain_dB maximum gain in dB configurable for the amplifier
 	 * @param minimumInputPower_dBm minimum total input power at amplifier inputs acceptable for the amplifier

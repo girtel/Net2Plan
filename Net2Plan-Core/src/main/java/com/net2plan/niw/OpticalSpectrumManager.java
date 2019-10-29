@@ -219,9 +219,9 @@ public class OpticalSpectrumManager
      * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), this method searches for 
      * the lowest-id contiguous range of slots that are available in all the indicated fibers. Note that if the set of fibers 
      * passes more than once in the same fiber, no assignment is possible, and Optional.empty is returned
-     * @param seqFibers see above
+     * @param seqAdjacenciesFibers_ab see above
      * @param numContiguousSlotsRequired see above
-     * @param minimumInitialSlotId see above
+     * @param unusableSlots see above
      * @return see above. If no idle range is found, Optional.empty is returned. 
      */
     public Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> spectrumAssignment_firstFitForAdjacenciesBidi (Collection<Pair<WNode,WNode>> seqAdjacenciesFibers_ab, int numContiguousSlotsRequired , SortedSet<Integer> unusableSlots)
@@ -441,6 +441,7 @@ public class OpticalSpectrumManager
     }
 
     /** Returns true if the design is ok respect to spectrum occupation for that lightpath: all optical slots occupied are valid and with no clashing with other lightpaths
+     * @param lp see above
      * @return see above
      */
     public boolean isSpectrumOccupationOk (WLightpath lp)
@@ -518,6 +519,7 @@ public class OpticalSpectrumManager
 	
 	/** Returns the optical slots that are usable (valid and idle) in the given fiber
 	 * @param wdmLink see above
+	 * @param numContiguousSlots see above
 	 * @return  see above
 	 */
 	public SortedSet<Integer> getIdleOpticalSlotRangesInitialSlots (WFiber wdmLink , int numContiguousSlots)

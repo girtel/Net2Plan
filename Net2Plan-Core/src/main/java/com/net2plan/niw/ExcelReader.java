@@ -77,7 +77,7 @@ public final class ExcelReader
 	/**
 	 * Reads the Excel file and returns a map with key the sheet name, value the matrix of objects with the values of the
 	 * cells in the sheet
-	 * @param file see above
+	 * @param filePath see above
 	 * @return see above
 	 */
 	public static Map<String, Object[][]> readFile(String filePath)
