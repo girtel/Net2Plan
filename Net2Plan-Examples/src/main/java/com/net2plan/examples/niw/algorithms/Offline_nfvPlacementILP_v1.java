@@ -16,10 +16,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import com.jom.DoubleMatrixND;
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
@@ -28,6 +30,8 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.niw.DefaultStatelessSimulator;
+import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpSourceRoutedConnection;
 import com.net2plan.niw.WIpUnicastDemand;
 import com.net2plan.niw.WNet;
@@ -174,6 +178,7 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 			}
 		final int NUMANS = ans.size();
 		
+		/* Create the Eup links. Anycast origin to any augmented node, any augmented node to anycast destination, all-to-all augmented nodes, even with themselves */
 		final List<EupLink> eupLinks = new ArrayList<> (NUMANS * NUMANS - 2 * (NUMNFVTYPES * N)); 
 		final Map<Pair<AugmentedNode,AugmentedNode> , EupLink> mapAnPair2EupLink = new HashMap<> (); 
 		for (AugmentedNode an1 : ans)
@@ -191,6 +196,9 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		final List<WServiceChainRequest> index2scr = new ArrayList<> (wNet.getServiceChainRequests());
 		final SortedMap<WServiceChainRequest , Integer> scr2index = new TreeMap<> (); for (WServiceChainRequest scr : index2scr) scr2index.put (scr , scr2index.size ());
 		
+		final List<WIpLink> index2ipLink = new ArrayList<> (wNet.getIpLinks());
+		final SortedMap<WIpLink , Integer> ipLink2index = new TreeMap<> (); for (WIpLink ee : index2ipLink) ipLink2index.put (ee , ipLink2index.size ());
+
 		final DoubleMatrix2D A_an_eup = DoubleFactory2D.sparse.make (NUMANS , NUMEUPS);
 		for (EupLink e : eupLinks) A_an_eup.set(e.getA ().getIndexInIlp() , e.getIndexInIlp(), 1.0);
 		for (EupLink e : eupLinks) A_an_eup.set(e.getB ().getIndexInIlp() , e.getIndexInIlp(), -1.0);
@@ -198,7 +206,17 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		final DoubleMatrix2D A_an_scr = DoubleFactory2D.sparse.make (NUMANS , D);
 		A_an_scr.viewColumn(0).assign(1.0); // all SCRs start in anycast origin
 		A_an_scr.viewColumn(1).assign(-1.0); // all SCRs start in anycast destination
-		
+
+		final DoubleMatrix2D A_eup_eip = DoubleFactory2D.sparse.make (NUMEUPS ,E_ip);
+		final Map<Pair<WNode,WNode> , SortedMap<WIpLink,Double>> nodePair2linkNormalizedTraffic = getPotentialIgpBasedForwardingRulesNoFailureState (wNet);
+		for (EupLink e : eupLinks) 
+		{
+			final WNode a = e.getA().getNode();
+			final WNode b = e.getB().getNode();
+			for (Entry<WIpLink,Double> fraction : nodePair2linkNormalizedTraffic.get(Pair.of(a, b)).entrySet())
+				A_eup_eip.set(e.getIndexInIlp(), ipLink2index.get(fraction.getKey()), fraction.getValue());
+		}			
+
 		DoubleMatrix1D cpu_an = DoubleFactory1D.dense.make(NUMANS);
 		DoubleMatrix1D ram_an = DoubleFactory1D.dense.make(NUMANS);
 		DoubleMatrix1D hardDisk_an = DoubleFactory1D.dense.make(NUMANS);
@@ -246,52 +264,65 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		if (optimizationTarget.getString ().equals ("min-total-cost")) 
 		{
 			/* Forbiden SCR-EUPs: For each SCR only some */
-			final DoubleMatrix2D acceptable_scr_eup = DoubleFactory2D.sparse.make (D , NUMEUPS);
+			final DoubleMatrixND acceptable_scr_eup = new DoubleMatrixND(new int [] {D ,  NUMEUPS} , "sparse");
 			for (WServiceChainRequest scr : wNet.getServiceChainRequests())
 			{
 				final int indexScr = scr2index.get(scr);
 				final List<String> travTypes = new ArrayList<> (scr.getSequenceVnfTypes());
-				if (travTypes.isEmpty()) { acceptable_scr_eup.set(0, 1, 1.0);  continue; }
+				if (travTypes.isEmpty()) { acceptable_scr_eup.set(new int [] {0, 1}, 1.0);  continue; }
 				/* From anycast origin to initial node */
 				for (AugmentedNode an : type2ans.get(travTypes.get(0)))
 				{
 					final EupLink link = mapAnPair2EupLink.get(Pair.of(ans.get(0), an));
 					assert link != null;
-					acceptable_scr_eup.set(indexScr, link.getIndexInIlp(), 1.0);
+					acceptable_scr_eup.set(new int [] { indexScr, link.getIndexInIlp() }, 1.0);
 				}
-				/* From anycast origin to initial node */
-				for (AugmentedNode an : type2ans.get(travTypes.get(0)))
+				/* From a node to anycast destination node */
+				for (AugmentedNode an : type2ans.get(travTypes.get(travTypes.size()-1)))
 				{
-					final EupLink link = mapAnPair2EupLink.get(Pair.of(ans.get(0), an));
+					final EupLink link = mapAnPair2EupLink.get(Pair.of(an , ans.get(1)));
 					assert link != null;
-					acceptable_scr_eup.set(indexScr, link.getIndexInIlp(), 1.0);
+					acceptable_scr_eup.set(new int [] {indexScr, link.getIndexInIlp()}, 1.0);
 				}
-				for (int indexTypeToTraverse = 0 ; indexTypeToTraverse < travTypes.size() ; indexTypeToTraverse ++)
+				/* Only those acceptable type-type pairs that are acceptable */
+				for (int indexTypeToTraverse = 1 ; indexTypeToTraverse < travTypes.size() ; indexTypeToTraverse ++)
 				{
 					final String thisTypeToTraverse = travTypes.get(indexTypeToTraverse);
-					
+					final String previousTypeToTraverse = travTypes.get(indexTypeToTraverse-1);
+					for (AugmentedNode previousAn : type2ans.get(previousTypeToTraverse))
+					{
+						for (AugmentedNode thisAn : type2ans.get(thisTypeToTraverse))
+						{
+							final EupLink link = mapAnPair2EupLink.get(Pair.of(previousAn , thisAn));
+							assert link != null;
+							acceptable_scr_eup.set(new int [] {indexScr, link.getIndexInIlp()}, 1.0);
+						}
+					}
 				}
 			}
 			
+			op.addDecisionVariable("xx_scr_eup", true , new int[] { D, NUMEUPS}, new DoubleMatrixND (new int [] {D , NUMEUPS}, "sparse"),acceptable_scr_eup); /* number of times SCR passes up link EUP */
 			
-			op.addDecisionVariable("xx_scr_eup", true , new int[] { D, NUMEUPS}, 0, Double.MAX_VALUE); /* number of times SCR passes up link EUP */
-			
-			op.setInputParameter("A_an_scr", A_an_scr); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
-			op.setInputParameter("A_an_eup", A_an_eup); /* 1 in position (n,d) if demand d starts in n, -1 if it ends in n, 0 otherwise */
-			op.addConstraint("A_an_eup * (xx_scr_eup') == A_an_scr"); /* the flow-conservation constraints (NxD constraints) */
-
 			op.setObjectiveFunction("minimize", "sum (l_p .* h_p .* xx_p) + sum (y_nf * c_f') "); 
 
-			op.addConstraint(expression);
 			
-//			sum (scr, eup traversing eIp) traf(scr) * xscreup * A_eupeIP <= cap(eIP) for all eip
-//			sum (scr, eup ending in  n, and this is traversing vnf of type t) traf(scr * fraction goes through vnf type) * xscreup  <= cap(eIP) for all eip , for all node n and vnf type t
+			op.setInputParameter("traf_scr", index2scr.stream().map(e->e.getCurrentOfferedTrafficInGbps()).collect(Collectors.toList())  , "row"); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
+			op.setInputParameter("cap_eIp", index2ipLink.stream().map(e->e.getCurrentCapacityGbps()).collect(Collectors.toList())  , "row"); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
+			op.setInputParameter("A_an_scr", A_an_scr); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
+			op.setInputParameter("A_an_eup", A_an_eup); /* 1 in position (n,d) if demand d starts in n, -1 if it ends in n, 0 otherwise */
+			op.setInputParameter("A_eup_eip", A_eup_eip); /* Fraction of traffic of eup traversing ip link eipLink (according to OSPF) */
+			
+			op.addConstraint("A_an_eup * (xx_scr_eup') == A_an_scr"); /* SCRs are carried */
+			op.addConstraint("(traf_scr * xx_scr_eup) * A_eup_eip <= cap_eIp "); /* IP links are not oversubscribed */
+			op.addConstraint("(traf_scr * xx_scr_eup) * Acpu_eup_n <= cpu_n "); /* Enough CPUs */
+			op.addConstraint("(traf_scr * xx_scr_eup) * Aram_eup_n <= ram_n "); /* Enough RAM */
+			op.addConstraint("(traf_scr * xx_scr_eup) * Ahd_eup_n <= hd_n "); /* Enough HD */
+
+			Hacer los Ahd_eup_n
+			Chequear que nadie comprime
 			
 			
 			
-			
-			op.addConstraint("A_dp * xx_p' == 1"); /* for each demand, the 100% of the traffic is carried (summing the associated paths) */
-			op.addConstraint("A_ep * (h_p .* xx_p)' <= u_e'"); /* the traffic in each link cannot exceed its capacity  */
 			op.addConstraint("y_nf * cpu_f' <= cpu_n'"); /* the VFs instantiated in the node cannot consume more CPU than the node has */
 			op.addConstraint("y_nf * ram_f' <= ram_n'"); /* the VFs instantiated in the node cannot consume more RAM than the node has */
 			op.addConstraint("y_nf * hardDisk_f' <= hardDisk_n'"); /* the VFs instantiated in the node cannot consume more hard disk than the node has */
@@ -353,7 +384,25 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 	
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal() + ". Number routes = " + netPlan.getNumberOfRoutes();
 	}
-	
+
+	private static Map<Pair<WNode,WNode> , SortedMap<WIpLink,Double>> getPotentialIgpBasedForwardingRulesNoFailureState (WNet net)
+	{
+		assert net.getIpUnicastDemands().isEmpty();
+		for (WNode n1 : net.getNodes())
+			for (WNode n2 : net.getNodes())
+				net.addIpUnicastDemand(n1, n2, false, true).setCurrentOfferedTrafficInGbps(1.0);
+
+		final DefaultStatelessSimulator alg = new DefaultStatelessSimulator();
+		alg.executeAlgorithm(net.getNe(), InputParameter.getDefaultParameters(alg.getParameters()), new HashMap<> ());
+
+		final Map<Pair<WNode,WNode>,SortedMap<WIpLink,Double>> fractionOfTrafficFromOspf = new HashMap<> ();
+		for (WIpUnicastDemand d : net.getIpUnicastDemands())
+			fractionOfTrafficFromOspf.put(Pair.of(d.getA(), d.getB()), d.getTraversedIpLinksAndCarriedTraffic(true));
+		for (WIpUnicastDemand d : new ArrayList<> (net.getIpUnicastDemands())) d.remove();
+		assert net.getIpUnicastDemands().isEmpty();
+		return fractionOfTrafficFromOspf;
+	}
+
 	@Override
 	public String getDescription()
 	{
