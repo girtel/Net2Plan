@@ -74,7 +74,7 @@ import java.util.stream.Stream;
 		        									4, 						//RAM
 		        									20, 					//HD
 		        									1.0 , 					//Processing Time
-		        									null, 					//Instantiation nodes
+		        									Optional.empty(), 		//Instantiation nodes
 		        									"");					//Arbitrary Params
 		        	wNet.addOrUpdateVnfType(vnfType);
 		        	
