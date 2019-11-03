@@ -148,6 +148,18 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	}
 
 	/**
+	 * Returns the maximum latency from the origin node to the end node.
+	 * @return see above
+	 */
+	public double getMaxLatencyFromOriginEndNode_ms()
+	{
+		final List<Double> list = getListMaxLatencyFromOriginToVnStartAndToEndNode_ms();
+		return list.get(list.size() - 1);
+	}
+
+
+	
+	/**
 	 * Sets the information of the list of maximum latencies (in ms) specified for this service chain. See
 	 * getListMaxLatencyFromOriginToVnStartAndToEndNode_ms for an explanation
 	 * @param maxLatencyList_ms see above

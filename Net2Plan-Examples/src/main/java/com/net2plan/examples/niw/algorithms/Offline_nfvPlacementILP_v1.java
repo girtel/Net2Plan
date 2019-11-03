@@ -12,13 +12,15 @@ package com.net2plan.examples.niw.algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.jom.DoubleMatrixND;
@@ -27,10 +29,8 @@ import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.interfaces.networkDesign.Resource;
-import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.DefaultStatelessSimulator;
+import com.net2plan.niw.WAbstractNetworkElement;
 import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpSourceRoutedConnection;
 import com.net2plan.niw.WIpUnicastDemand;
@@ -75,9 +75,8 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  */
 public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 {
-	private InputParameter k = new InputParameter ("k", (int) 5 , "Maximum number of admissible service chain paths per demand" , 1 , Integer.MAX_VALUE);
 	private InputParameter shortestPathType = new InputParameter ("shortestPathType", "#select# hops km" , "Criteria to compute the shortest path. Valid values: 'hops' or 'km'");
-	private InputParameter nfvTypesInfo = new InputParameter ("nfvTypesInfo", "NAT 1 1 1 1 1 ; FW 1 1 1 1 1" , "Info of NFVs that could be placed, separated by ';'. Each NFV info has six space-separated parameters: 1) type, 2) cost (measured in same units as the cost of one BW unit in a link),  3) CPU use, 4) RAM use, 5) HD use, 6) capacity in same units as traffic");
+	private InputParameter nfvTypesInfo = new InputParameter ("nfvTypesInfo", "NAT 1 1 1 1.0 ; FW 1 1 1 1.0" , "Info of NFVs that could be placed, separated by ';'. Each NFV info has five space-separated parameters: 1) type, 2) CPU use per Gbps, 3) RAM use per Gbps, 4) HD use per Gbps, 5) processing time in ms");
 	private InputParameter overideBaseResourcesInfo = new InputParameter ("overideBaseResourcesInfo", true , "If true, the current resources in tne input n2p are removed, and for each node aone CPU, RAM and HD resources are created, with the capacities defined in input parameter defaultCPU_RAM_HD_Capacities");
 	private InputParameter defaultCPU_RAM_HD_Capacities = new InputParameter ("defaultCPU_RAM_HD_Capacities", "100 100 100" , "THe default capacity values (space separated) of CPU, RAM, HD");
 	private InputParameter overideSequenceTraversedNFVs = new InputParameter ("overideSequenceTraversedNFVs", true , "If true, all demands will reset the sequence of NFVs to traverse, to this (NFV types in this param are ; separated)");
@@ -86,7 +85,7 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "" , "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
 	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
 
-	private InputParameter optimizationTarget = new InputParameter ("optimizationTarget", "#select# min-total-cost" , "Type of optimization target. Choose among (i) minimize the link BW plus the cost of instantiated resources (assumed measured in cost units equal to the cost of one link BW unit)");
+	private InputParameter weightOf = new InputParameter ("optimizationTarget", "#select# min-total-cost" , "Type of optimization target. Choose among (i) minimize the link BW plus the cost of instantiated resources (assumed measured in cost units equal to the cost of one link BW unit)");
 	private InputParameter maxLengthInKmPerSubpath = new InputParameter ("maxLengthInKmPerSubpath", (double) -1 , "Subpaths (parts of the path split by resources) longer than this in km are considered not admissible. A non-positive number means this limit does not exist");
 	private InputParameter maxNumHopsPerSubpath = new InputParameter ("maxNumHopsPerSubpath", (int) -1 , "Subpaths (parts of the path split by resources) longer than this in number of hops are considered not admissible. A non-positive number means this limit does not exist");
 	private InputParameter maxPropDelayInMsPerSubpath = new InputParameter ("maxPropDelayInMsPerSubpath", (double) -1 , "Subpaths (parts of the path split by resources) longer than this in propagation delay (in ms) are considered not admissible. A non-positive number means this limit does not exist");
@@ -139,11 +138,10 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		String [] nfvsInfoArray_f = StringUtils.split(nfvTypesInfo.getString() , ";");
 		final int NUMNFVTYPES = nfvsInfoArray_f.length;
 		final List<String> nfvType_f = new ArrayList<String> ();
-		DoubleMatrix1D nfvCost_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
 		DoubleMatrix1D nfvCpu_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
 		DoubleMatrix1D nfvRam_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
 		DoubleMatrix1D nfvHardDisk_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
-		DoubleMatrix1D nfvCap_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
+		DoubleMatrix1D nfvProcTimeMs_f = DoubleFactory1D.dense.make(NUMNFVTYPES);
 		for (String nfvInfo : nfvsInfoArray_f)
 		{
 			final String [] fields = StringUtils.split(nfvInfo , " ");
@@ -152,11 +150,10 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 			if (nfvType_f.contains(type)) throw new Net2PlanException ("Wrong parameter format for NFV info: cannot repeat NFV types");
 			final int index = nfvType_f.size();
 			nfvType_f.add (type);
-			nfvCost_f.set(index, Double.parseDouble(fields [1]));
-			nfvCpu_f.set(index, Double.parseDouble(fields [2]));
-			nfvRam_f.set(index, Double.parseDouble(fields [3]));
-			nfvHardDisk_f.set(index, Double.parseDouble(fields [4]));
-			nfvCap_f.set(index, Double.parseDouble(fields [5]));
+			nfvCpu_f.set(index, Double.parseDouble(fields [1]));
+			nfvRam_f.set(index, Double.parseDouble(fields [2]));
+			nfvHardDisk_f.set(index, Double.parseDouble(fields [3]));
+			nfvProcTimeMs_f.set(index, Double.parseDouble(fields [4]));
 		}
 
 		/* Check all SCRs traverse VNF types as the ones provided */
@@ -170,28 +167,31 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		ans.add(new AugmentedNode(true, ans.size())); 
 		ans.add(new AugmentedNode(false, ans.size()));
 		for (int indexType = 0; indexType < NUMNFVTYPES ; indexType ++)
+		{
+			final String type = nfvType_f.get(indexType);
 			for (WNode n : wNet.getNodes())
 			{
 				final AugmentedNode an = new AugmentedNode(n, indexType, ans.size()); 
 				ans.add(an);
-				type2ans.get(nfvRam_f.get(indexType)).add(an);
+				type2ans.get(type).add(an);
 			}
+		}
 		final int NUMANS = ans.size();
 		
 		/* Create the Eup links. Anycast origin to any augmented node, any augmented node to anycast destination, all-to-all augmented nodes, even with themselves */
-		final List<EupLink> eupLinks = new ArrayList<> (NUMANS * NUMANS - 2 * (NUMNFVTYPES * N)); 
+		final List<EupLink> index2eup = new ArrayList<> (NUMANS * NUMANS - 2 * (NUMNFVTYPES * N)); 
 		final Map<Pair<AugmentedNode,AugmentedNode> , EupLink> mapAnPair2EupLink = new HashMap<> (); 
 		for (AugmentedNode an1 : ans)
 			for (AugmentedNode an2 : ans)
 			{
 				if (an1.isAnycastDestination ()) continue;
 				if (an2.isAnycastOrigin()) continue;
-				final EupLink e = new EupLink(an1 , an2, eupLinks.size()); 
-				eupLinks.add(e);
+				final EupLink e = new EupLink(an1 , an2, index2eup.size()); 
+				index2eup.add(e);
 				final EupLink prevLink = mapAnPair2EupLink.put(Pair.of(an1, an2), e);
 				assert prevLink == null;
 			}
-		final int NUMEUPS = eupLinks.size();
+		final int NUMEUPS = index2eup.size();
 
 		final List<WServiceChainRequest> index2scr = new ArrayList<> (wNet.getServiceChainRequests());
 		final SortedMap<WServiceChainRequest , Integer> scr2index = new TreeMap<> (); for (WServiceChainRequest scr : index2scr) scr2index.put (scr , scr2index.size ());
@@ -199,34 +199,62 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		final List<WIpLink> index2ipLink = new ArrayList<> (wNet.getIpLinks());
 		final SortedMap<WIpLink , Integer> ipLink2index = new TreeMap<> (); for (WIpLink ee : index2ipLink) ipLink2index.put (ee , ipLink2index.size ());
 
+		final List<WNode> index2wnode = new ArrayList<> (wNet.getNodes());
+		final SortedMap<WNode , Integer> wnode2index = new TreeMap<> (); for (WNode ee : index2wnode) wnode2index.put (ee , wnode2index.size ());
+
 		final DoubleMatrix2D A_an_eup = DoubleFactory2D.sparse.make (NUMANS , NUMEUPS);
-		for (EupLink e : eupLinks) A_an_eup.set(e.getA ().getIndexInIlp() , e.getIndexInIlp(), 1.0);
-		for (EupLink e : eupLinks) A_an_eup.set(e.getB ().getIndexInIlp() , e.getIndexInIlp(), -1.0);
+		for (EupLink e : index2eup) A_an_eup.set(e.getA ().getIndexInIlp() , e.getIndexInIlp(), 1.0);
+		for (EupLink e : index2eup) A_an_eup.set(e.getB ().getIndexInIlp() , e.getIndexInIlp(), -1.0);
 		
 		final DoubleMatrix2D A_an_scr = DoubleFactory2D.sparse.make (NUMANS , D);
 		A_an_scr.viewColumn(0).assign(1.0); // all SCRs start in anycast origin
 		A_an_scr.viewColumn(1).assign(-1.0); // all SCRs start in anycast destination
 
 		final DoubleMatrix2D A_eup_eip = DoubleFactory2D.sparse.make (NUMEUPS ,E_ip);
-		final Map<Pair<WNode,WNode> , SortedMap<WIpLink,Double>> nodePair2linkNormalizedTraffic = getPotentialIgpBasedForwardingRulesNoFailureState (wNet);
-		for (EupLink e : eupLinks) 
+		final DoubleMatrix1D latencyMs_eup = DoubleFactory1D.dense.make (NUMEUPS);
+//		final Pair<Map<Pair<WNode,WNode> , SortedMap<WIpLink,Double>> , Map<Pair<WNode,WNode> , Double>> infoRoutingIgp = getPotentialIpRoutingNormalizedCarrideTrafficAndMaxLatencyMsNoFailureState_ecmp (wNet);
+		final Pair<Map<Pair<WNode,WNode> , List<WIpLink>> , Map<Pair<WNode,WNode> , Double>> infoRoutingIgp = getPotentialIpRoutingNormalizedCarrideTrafficAndMaxLatencyMsNoFailureState_shortestPath(wNet, true);
+		final Map<Pair<WNode,WNode> , List<WIpLink>> nodePair2linkNormalizedTraffic = infoRoutingIgp.getFirst();
+		final Map<Pair<WNode,WNode> , Double> nodePair2WorstcaseLatencyMs = infoRoutingIgp.getSecond();
+		for (EupLink e : index2eup) 
 		{
 			final WNode a = e.getA().getNode();
 			final WNode b = e.getB().getNode();
-			for (Entry<WIpLink,Double> fraction : nodePair2linkNormalizedTraffic.get(Pair.of(a, b)).entrySet())
-				A_eup_eip.set(e.getIndexInIlp(), ipLink2index.get(fraction.getKey()), fraction.getValue());
+			for (WIpLink ipLink : nodePair2linkNormalizedTraffic.get(Pair.of(a, b)))
+				A_eup_eip.set(e.getIndexInIlp(), ipLink2index.get(ipLink), 1.0);
+			final double latencyIpLinksMs = nodePair2WorstcaseLatencyMs.get(Pair.of(a, b));
+			final double latencyEndVnfMs = nfvProcTimeMs_f.get(e.getB().getIndexType());
+			latencyMs_eup.set(e.getIndexInIlp(), latencyEndVnfMs + latencyIpLinksMs);
 		}			
 
-		DoubleMatrix1D cpu_an = DoubleFactory1D.dense.make(NUMANS);
-		DoubleMatrix1D ram_an = DoubleFactory1D.dense.make(NUMANS);
-		DoubleMatrix1D hardDisk_an = DoubleFactory1D.dense.make(NUMANS);
-		for (AugmentedNode an : ans)
+		final DoubleMatrix2D AcpuPerGbps_eup_n = DoubleFactory2D.sparse.make (NUMEUPS , N);
+		final DoubleMatrix2D AramPerGbps_eup_n = DoubleFactory2D.sparse.make (NUMEUPS , N);
+		final DoubleMatrix2D AhdPerGbps_eup_n = DoubleFactory2D.sparse.make (NUMEUPS , N);
+		for (EupLink e : index2eup) 
 		{
-			if (an.isAnycastOrigin || an.isAnycastDestination) continue;
-			final WNode n = an.getNode();
-			cpu_an.set(an.getIndexInIlp(), n.getTotalNumCpus());
-			ram_an.set(an.getIndexInIlp(), n.getTotalRamGB());
-			hardDisk_an.set(an.getIndexInIlp(), n.getTotalHdGB());
+			final WNode b = e.getB().getNode();
+			final int typeIndexOfDestination = e.getB().getIndexType();
+			final double cpuPerGbps = nfvCpu_f.get(typeIndexOfDestination);
+			final double ramPerGbps = nfvRam_f.get(typeIndexOfDestination);
+			final double hdPerGbps = nfvHardDisk_f.get(typeIndexOfDestination);
+			AcpuPerGbps_eup_n.set(e.getIndexInIlp(), wnode2index.get(b), cpuPerGbps);
+			AramPerGbps_eup_n.set(e.getIndexInIlp(), wnode2index.get(b), ramPerGbps);
+			AhdPerGbps_eup_n.set(e.getIndexInIlp(), wnode2index.get(b), hdPerGbps);
+		}			
+		
+		final DoubleMatrix2D A_an_n = DoubleFactory2D.sparse.make (NUMANS , N);
+		for (AugmentedNode an : ans)
+			if (!an.isAnycastDestination && !an.isAnycastOrigin)
+				A_an_n.set(an.getIndexInIlp(), wnode2index.get(an.getNode()), 1.0);
+		
+		final DoubleMatrix1D cpu_n = DoubleFactory1D.dense.make(N);
+		final DoubleMatrix1D ram_n = DoubleFactory1D.dense.make(N);
+		final DoubleMatrix1D hardDisk_n = DoubleFactory1D.dense.make(N);
+		for (WNode n : index2wnode)
+		{
+			cpu_n.set(wnode2index.get(n), n.getTotalNumCpus());
+			ram_n.set(wnode2index.get(n), n.getTotalRamGB());
+			hardDisk_n.set(wnode2index.get(n), n.getTotalHdGB());
 		}
 
 //		/* Instantiate "preliminary" NFV resources in the nodes, not consuming any base resource, and with a capacity as if one single instance existed. 
@@ -246,104 +274,87 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		OptimizationProblem op = new OptimizationProblem();
 	
 		/* Set some input parameters to the problem */
-		op.setInputParameter("u_ip", wNet.getIpLinks().stream().map(e->e.getCurrentCapacityGbps()).collect(Collectors.toList()), "row"); /* for each link, its unused capacity (the one not used by any mulitcast trees) */
-		op.setInputParameter("A_dp", netPlan.getMatrixDemand2RouteAssignment()); /* 1 in position (d,p) if demand d is served by path p, 0 otherwise */ 
-		op.setInputParameter("A_ep", netPlan.getMatrixLink2RouteAssignment()); /* 1 in position (e,p) if link e is traversed by path p, 0 otherwise */
-		op.setInputParameter("h_d", netPlan.getVectorDemandOfferedTraffic(), "row"); /* for each demand, its offered traffic */
-		op.setInputParameter("h_p", netPlan.getVectorRouteOfferedTrafficOfAssociatedDemand () , "row"); /* for each path, the offered traffic of its demand */
-		op.setInputParameter("c_f", nfvCost_f , "row"); /* for each NFV type, its cost */
 		op.setInputParameter("cpu_f", nfvCpu_f , "row"); /* for each NFV type, its CPU */
 		op.setInputParameter("ram_f", nfvRam_f , "row"); /* for each NFV type, its RAM */
 		op.setInputParameter("hardDisk_f", nfvHardDisk_f , "row"); /* for each NFV type, its HD */
-		op.setInputParameter("cap_f", nfvCap_f , "row"); /* for each NFV type, its capacity */
-		op.setInputParameter("cpu_an", cpu_an , "row"); /* for each node, CPU capacity  */
-		op.setInputParameter("ram_an", ram_an , "row"); /* for each node, RAM capacity  */
-		op.setInputParameter("hardDisk_an", hardDisk_an , "row"); /* for each node, HD capacity  */
+		op.setInputParameter("nfvProcTimeMs_f", nfvProcTimeMs_f , "row"); /* for each NFV type, its processing time in ms */
+		op.setInputParameter("cpu_n", cpu_n , "row"); /* for each node, CPU capacity  */
+		op.setInputParameter("ram_n", ram_n , "row"); /* for each node, RAM capacity  */
+		op.setInputParameter("hardDisk_n", hardDisk_n , "row"); /* for each node, HD capacity  */
 		
 		/* Write the problem formulations */
-		if (optimizationTarget.getString ().equals ("min-total-cost")) 
+		/* Forbiden SCR-EUPs: For each SCR only some */
+		final DoubleMatrixND acceptable_scr_eup = new DoubleMatrixND(new int [] {D ,  NUMEUPS} , "sparse");
+		final DoubleMatrixND expFactor_scr_eup = new DoubleMatrixND(new int [] {D ,  NUMEUPS} , "sparse");
+		for (WServiceChainRequest scr : wNet.getServiceChainRequests())
 		{
-			/* Forbiden SCR-EUPs: For each SCR only some */
-			final DoubleMatrixND acceptable_scr_eup = new DoubleMatrixND(new int [] {D ,  NUMEUPS} , "sparse");
-			for (WServiceChainRequest scr : wNet.getServiceChainRequests())
+			final int indexScr = scr2index.get(scr);
+			final List<String> travTypes = new ArrayList<> (scr.getSequenceVnfTypes());
+			if (travTypes.isEmpty()) 
+			{ 
+				acceptable_scr_eup.set(new int [] {0, 1}, 1.0);
+				expFactor_scr_eup.set(new int [] {0, 1}, 1.0);
+				continue; 
+			}
+			/* From anycast origin to initial node */
+			for (AugmentedNode an : type2ans.get(travTypes.get(0)))
 			{
-				final int indexScr = scr2index.get(scr);
-				final List<String> travTypes = new ArrayList<> (scr.getSequenceVnfTypes());
-				if (travTypes.isEmpty()) { acceptable_scr_eup.set(new int [] {0, 1}, 1.0);  continue; }
-				/* From anycast origin to initial node */
-				for (AugmentedNode an : type2ans.get(travTypes.get(0)))
+				final EupLink link = mapAnPair2EupLink.get(Pair.of(ans.get(0), an));
+				assert link != null;
+				acceptable_scr_eup.set(new int [] { indexScr, link.getIndexInIlp() }, 1.0);
+				expFactor_scr_eup.set(new int [] { indexScr, link.getIndexInIlp() }, 1.0);
+			}
+			/* From a node to anycast destination node */
+			for (AugmentedNode an : type2ans.get(travTypes.get(travTypes.size()-1)))
+			{
+				final EupLink link = mapAnPair2EupLink.get(Pair.of(an , ans.get(1)));
+				assert link != null;
+				acceptable_scr_eup.set(new int [] {indexScr, link.getIndexInIlp()}, 1.0);
+				expFactor_scr_eup.set(new int [] {indexScr, link.getIndexInIlp()}, scr.getDefaultSequenceOfExpansionFactorsRespectToInjection().get(scr.getDefaultSequenceOfExpansionFactorsRespectToInjection().size()-1)); /////
+			}
+			/* Only those acceptable type-type pairs that are acceptable */
+			for (int indexTypeToTraverse = 1 ; indexTypeToTraverse < travTypes.size() ; indexTypeToTraverse ++)
+			{
+				final String thisTypeToTraverse = travTypes.get(indexTypeToTraverse);
+				final String previousTypeToTraverse = travTypes.get(indexTypeToTraverse-1);
+				for (AugmentedNode previousAn : type2ans.get(previousTypeToTraverse))
 				{
-					final EupLink link = mapAnPair2EupLink.get(Pair.of(ans.get(0), an));
-					assert link != null;
-					acceptable_scr_eup.set(new int [] { indexScr, link.getIndexInIlp() }, 1.0);
-				}
-				/* From a node to anycast destination node */
-				for (AugmentedNode an : type2ans.get(travTypes.get(travTypes.size()-1)))
-				{
-					final EupLink link = mapAnPair2EupLink.get(Pair.of(an , ans.get(1)));
-					assert link != null;
-					acceptable_scr_eup.set(new int [] {indexScr, link.getIndexInIlp()}, 1.0);
-				}
-				/* Only those acceptable type-type pairs that are acceptable */
-				for (int indexTypeToTraverse = 1 ; indexTypeToTraverse < travTypes.size() ; indexTypeToTraverse ++)
-				{
-					final String thisTypeToTraverse = travTypes.get(indexTypeToTraverse);
-					final String previousTypeToTraverse = travTypes.get(indexTypeToTraverse-1);
-					for (AugmentedNode previousAn : type2ans.get(previousTypeToTraverse))
+					for (AugmentedNode thisAn : type2ans.get(thisTypeToTraverse))
 					{
-						for (AugmentedNode thisAn : type2ans.get(thisTypeToTraverse))
-						{
-							final EupLink link = mapAnPair2EupLink.get(Pair.of(previousAn , thisAn));
-							assert link != null;
-							acceptable_scr_eup.set(new int [] {indexScr, link.getIndexInIlp()}, 1.0);
-						}
+						final EupLink link = mapAnPair2EupLink.get(Pair.of(previousAn , thisAn));
+						assert link != null;
+						acceptable_scr_eup.set(new int [] {indexScr, link.getIndexInIlp()}, 1.0);
+						expFactor_scr_eup.set(new int [] {indexScr, link.getIndexInIlp()}, scr.getDefaultSequenceOfExpansionFactorsRespectToInjection().get(indexTypeToTraverse-1)); /////
 					}
 				}
 			}
-			
-			op.addDecisionVariable("xx_scr_eup", true , new int[] { D, NUMEUPS}, new DoubleMatrixND (new int [] {D , NUMEUPS}, "sparse"),acceptable_scr_eup); /* number of times SCR passes up link EUP */
-			
-			op.setObjectiveFunction("minimize", "sum (l_p .* h_p .* xx_p) + sum (y_nf * c_f') "); 
-
-			
-			op.setInputParameter("traf_scr", index2scr.stream().map(e->e.getCurrentOfferedTrafficInGbps()).collect(Collectors.toList())  , "row"); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
-			op.setInputParameter("cap_eIp", index2ipLink.stream().map(e->e.getCurrentCapacityGbps()).collect(Collectors.toList())  , "row"); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
-			op.setInputParameter("A_an_scr", A_an_scr); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
-			op.setInputParameter("A_an_eup", A_an_eup); /* 1 in position (n,d) if demand d starts in n, -1 if it ends in n, 0 otherwise */
-			op.setInputParameter("A_eup_eip", A_eup_eip); /* Fraction of traffic of eup traversing ip link eipLink (according to OSPF) */
-			
-			op.addConstraint("A_an_eup * (xx_scr_eup') == A_an_scr"); /* SCRs are carried */
-			op.addConstraint("(traf_scr * xx_scr_eup) * A_eup_eip <= cap_eIp "); /* IP links are not oversubscribed */
-			op.addConstraint("(traf_scr * xx_scr_eup) * Acpu_eup_n <= cpu_n "); /* Enough CPUs */
-			op.addConstraint("(traf_scr * xx_scr_eup) * Aram_eup_n <= ram_n "); /* Enough RAM */
-			op.addConstraint("(traf_scr * xx_scr_eup) * Ahd_eup_n <= hd_n "); /* Enough HD */
-
-			Hacer los Ahd_eup_n
-			Chequear que nadie comprime
-			
-			
-			
-			op.addConstraint("y_nf * cpu_f' <= cpu_n'"); /* the VFs instantiated in the node cannot consume more CPU than the node has */
-			op.addConstraint("y_nf * ram_f' <= ram_n'"); /* the VFs instantiated in the node cannot consume more RAM than the node has */
-			op.addConstraint("y_nf * hardDisk_f' <= hardDisk_n'"); /* the VFs instantiated in the node cannot consume more hard disk than the node has */
-			
-			for (int indexNFVType = 0 ; indexNFVType < NUMNFVTYPES ; indexNFVType ++)
-			{
-				final String type = nfvType_f.get(indexNFVType);
-				Pair<List<Resource>,DoubleMatrix2D> info = netPlan.getMatrixResource2RouteAssignment(type); 
-				op.setInputParameter("f", indexNFVType); /* K in position (res,p) if resource res is traversed by path p K times */
-				op.setInputParameter("A_nfvp", info.getSecond()); /* K in position (res,p) if resource res is traversed by path p K times */
-				op.setInputParameter("u_nfv", nfvCap_f.get(indexNFVType)); /* for each resource link, its unused capacity (the one not used by any mulitcast trees) */
-				op.addConstraint("A_nfvp * (h_p .* xx_p)' <= y_nf(all,f) * u_nfv"); /* the traffic in each link cannot exceed its capacity  */
-			}
 		}
-		else throw new Net2PlanException ("Unknown optimization target " + optimizationTarget.getString());
-	
 		
+		op.addDecisionVariable("xx_scr_eup", true , new int[] { D, NUMEUPS}, new DoubleMatrixND (new int [] {D , NUMEUPS}, "sparse"),acceptable_scr_eup); /* number of times SCR passes up link EUP */
+		
+		op.setObjectiveFunction("minimize", "sum ((traf_scr * (xx_scr_eup .* expFactor_scr_eup)) * A_eup_eip)"); // minimize the total consumed traffic in the IP links
+
+		op.setInputParameter("traf_scr", index2scr.stream().map(e->e.getCurrentOfferedTrafficInGbps()).collect(Collectors.toList())  , "row"); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
+		op.setInputParameter("maxLatencyMs_scr", index2scr.stream().map(e->e.getMaxLatencyFromOriginEndNode_ms()).collect(Collectors.toList())  , "row"); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
+		op.setInputParameter("cap_eIp", index2ipLink.stream().map(e->e.getCurrentCapacityGbps()).collect(Collectors.toList())  , "row"); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
+		op.setInputParameter("latencyMs_eup", latencyMs_eup  , "row"); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
+		op.setInputParameter("A_an_scr", A_an_scr); /* 1 in position (n,e) if link e starts in n, -1 if it ends in n, 0 otherwise */
+		op.setInputParameter("A_an_eup", A_an_eup); /* 1 in position (n,d) if demand d starts in n, -1 if it ends in n, 0 otherwise */
+		op.setInputParameter("A_eup_eip", A_eup_eip); /* Fraction of traffic of eup traversing ip link eipLink (according to OSPF) */
+		op.setInputParameter("AcpuPerGbps_eup_n", AcpuPerGbps_eup_n); /* Amount of CPU consumed in node n per GBps in eup */
+		op.setInputParameter("AramPerGbps_eup_n", AramPerGbps_eup_n); /* Amount of RAM consumed in node n per GBps in eup */
+		op.setInputParameter("AhdPerGbps_eup_n", AhdPerGbps_eup_n); /* Amount of HD consumed in node n per GBps in eup */
+		op.setInputParameter("expFactor_scr_eup", expFactor_scr_eup); /* For each SCR, and EUP traversed, the expansion factor: ration between Gbps in the EUP and Gbps injected */
+		
+		op.addConstraint("A_an_eup * (xx_scr_eup') == A_an_scr"); /* All SCRs are carried */
+		op.addConstraint("(traf_scr * (xx_scr_eup .* expFactor_scr_eup)) * A_eup_eip <= cap_eIp "); /* Enough capacity in the IP links */
+		op.addConstraint("(traf_scr * (xx_scr_eup .* expFactor_scr_eup)) * Acpu_eup_n <= cpu_n "); /* Enough CPUs */
+		op.addConstraint("(traf_scr * (xx_scr_eup .* expFactor_scr_eup)) * Aram_eup_n <= ram_n "); /* Enough RAM in the nodes */
+		op.addConstraint("(traf_scr * (xx_scr_eup .* expFactor_scr_eup)) * Ahd_eup_n <= hd_n "); /* Enough HD in the nodes */
+		op.addConstraint("xx_scr_eup * latencyMs_eup  <= maxLatencyMs_scr' "); /* End-to-end latency respected in all the service chain requests */
+	
 		System.out.println ("solverLibraryName: " +  solverLibraryName.getString ());
 		op.solve(solverName.getString (), "solverLibraryName", solverLibraryName.getString () , "maxSolverTimeInSeconds" , maxSolverTimeInSeconds.getDouble ());
-		//op.solve(solverName.getString (), "maxSolverTimeInSeconds" , maxSolverTimeInSeconds.getDouble ());
-	
 		System.out.println ("solverLibraryName: " +  solverLibraryName.getString ());
 	
 		/* If no solution is found, quit */
@@ -351,56 +362,98 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		if (!op.solutionIsFeasible()) throw new Net2PlanException("A feasible solution was not found");
 		
 		/* Save the solution found in the netPlan object */
-		final DoubleMatrix1D xx_p = op.getPrimalSolution("xx_p").view1D();
-		final DoubleMatrix2D y_nf = op.getPrimalSolution("y_nf").view2D();
-
-		for (Route r : netPlan.getRoutes())
-		{
-			final double carriedTrafficAndOccupiedLinkCapacity = Math.max(0 , xx_p.get(r.getIndex())) * r.getDemand().getOfferedTraffic();
-			r.setCarriedTraffic(carriedTrafficAndOccupiedLinkCapacity, carriedTrafficAndOccupiedLinkCapacity);
-		}
-
-		for (Node n : netPlan.getNodes())
-		{
-			final Resource cpu = n.getResources("CPU").iterator().next(); 
-			final Resource ram = n.getResources("RAM").iterator().next(); 
-			final Resource hd = n.getResources("HD").iterator().next(); 
-			for (int indexNFVType = 0 ; indexNFVType < NUMNFVTYPES ; indexNFVType ++)
+		final DoubleMatrix2D xx_scr_eup = op.getPrimalSolution("xx_scr_eup").view2D();
+		final Function<EupLink , List<WIpLink>> travIpLinks = e->nodePair2linkNormalizedTraffic.get (Pair.of(e.getA () , e.getB ()));
+		final Function<Collection<EupLink> , List<? extends WAbstractNetworkElement>> travIpLinksAndVnfs = eupLinks -> 
 			{
-				final String type = nfvType_f.get(indexNFVType);
-				if (n.getResources(type).isEmpty()) continue;
-				final Resource nfv = n.getResources(type).iterator().next();
-				final int this_ynf = (int) y_nf.get(n.getIndex(), indexNFVType);
-				if (this_ynf == 0) { nfv.remove(); continue; }
-				Map<Resource,Double> occupyInBaseResources = new HashMap<Resource,Double> ();
-				occupyInBaseResources.put(cpu, this_ynf * nfvCpu_f.get(indexNFVType));
-				occupyInBaseResources.put(ram, this_ynf * nfvRam_f.get(indexNFVType));
-				occupyInBaseResources.put(hd, this_ynf * nfvHardDisk_f.get(indexNFVType));
-				nfv.setCapacity(this_ynf * nfvCap_f.get(indexNFVType), occupyInBaseResources);
+				final List<? extends WAbstractNetworkElement> res = new ArrayList<> ();
+				final EupLink firstEup = eupLinks.stream().filter(an->an.isAnycastOrigin ()).findFirst().orElse(null);
+				assert firstEup != null;
+				res.add(firstEup);
+				if (eupLinks.size() == 1) return res;
+				EupLink currentEupLink = firstEup;
+				while (true) 
+				{
+					final AugmentedNode endNode = currentEupLink.getB();
+					final EupLink nextLink = eup
+				}
+				final EupLink lastEup = eupLinks.stream().filter(an->an.isAnycastOrigin ()).findFirst().orElse(null);
+				
+			};
+		
+		
+		for (int indexScr = 0 ; indexScr < D ; indexScr ++)
+		{
+			final WServiceChainRequest scr = index2scr.get(indexScr);
+			final List<EupLink> eupTraversedLinks = new ArrayList<> ();
+			for (int indexEup = 0; indexEup < NUMEUPS ; indexEup ++)
+				if (xx_scr_eup.get(indexScr , indexEup) > Configuration.precisionFactor) 
+					eupTraversedLinks.add(index2eup.get(indexEup));
+			eupTraversedLinks.get(0).getA().get
+			
+			
+			problemas para recuperar el orden!!!
+			
+			if (eupTraversedLinks.size() == 1)
+			{
+				final EupLink ee = eupTraversedLinks.get(0);
+				scr.addServiceChain(travIpLinks.apply(ee), scr.getCurrentOfferedTrafficInGbps());
 			}
+			else
+			{
+				
+			}
+				
+			
+			
+			
 		}
 		
-		netPlan.removeAllRoutesUnused(PRECISION_FACTOR); // routes with zero traffic (or close to zero, with PRECISION_FACTOR tolerance)
-	
+		
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal() + ". Number routes = " + netPlan.getNumberOfRoutes();
 	}
 
-	private static Map<Pair<WNode,WNode> , SortedMap<WIpLink,Double>> getPotentialIgpBasedForwardingRulesNoFailureState (WNet net)
+	private static Pair<Map<Pair<WNode,WNode> , SortedMap<WIpLink,Double>> , Map<Pair<WNode,WNode> , Double>> getPotentialIpRoutingNormalizedCarrideTrafficAndMaxLatencyMsNoFailureState_ecmp (WNet net)
 	{
 		assert net.getIpUnicastDemands().isEmpty();
 		for (WNode n1 : net.getNodes())
 			for (WNode n2 : net.getNodes())
-				net.addIpUnicastDemand(n1, n2, false, true).setCurrentOfferedTrafficInGbps(1.0);
+				if (!n1.equals(n2))
+					net.addIpUnicastDemand(n1, n2, false, true).setCurrentOfferedTrafficInGbps(1.0);
 
 		final DefaultStatelessSimulator alg = new DefaultStatelessSimulator();
 		alg.executeAlgorithm(net.getNe(), InputParameter.getDefaultParameters(alg.getParameters()), new HashMap<> ());
 
 		final Map<Pair<WNode,WNode>,SortedMap<WIpLink,Double>> fractionOfTrafficFromOspf = new HashMap<> ();
+		final Map<Pair<WNode,WNode>,Double> worstCaseLatencyMs = new HashMap<> ();
 		for (WIpUnicastDemand d : net.getIpUnicastDemands())
+		{
 			fractionOfTrafficFromOspf.put(Pair.of(d.getA(), d.getB()), d.getTraversedIpLinksAndCarriedTraffic(true));
+			worstCaseLatencyMs.put(Pair.of(d.getA(), d.getB()), d.getWorstCaseEndtoEndLatencyMs());
+		}
 		for (WIpUnicastDemand d : new ArrayList<> (net.getIpUnicastDemands())) d.remove();
 		assert net.getIpUnicastDemands().isEmpty();
-		return fractionOfTrafficFromOspf;
+		return Pair.of (fractionOfTrafficFromOspf , worstCaseLatencyMs );
+	}
+
+	private static Pair<Map<Pair<WNode,WNode> , List<WIpLink>> , Map<Pair<WNode,WNode> , Double>> getPotentialIpRoutingNormalizedCarrideTrafficAndMaxLatencyMsNoFailureState_shortestPath (WNet net , boolean trueIsMinimLatencyFalseMinimHops)
+	{
+		assert net.getIpUnicastDemands().isEmpty();
+		final Map<Pair<WNode,WNode>,List<WIpLink>> fractionOfTrafficFromOspf = new HashMap<> ();
+		final Map<Pair<WNode,WNode>,Double> worstCaseLatencyMs = new HashMap<> ();
+		final Map<WIpLink,Double> costMap = new HashMap<> ();
+		for (WIpLink e : net.getIpLinks()) costMap.put(e, trueIsMinimLatencyFalseMinimHops? e.getWorstCasePropagationDelayInMs() : 1.0);
+		
+		for (WNode n1 : net.getNodes())
+			for (WNode n2 : net.getNodes())
+			{
+				if (n1.equals(n2)) continue;
+				final List<List<WIpLink>> kPaths = net.getKShortestIpUnicastPath(1, net.getNodes(), net.getIpLinks(), n1, n2, Optional.of(costMap));
+				if (kPaths.isEmpty()) throw new Net2PlanException ("The IP toplology is not connected");
+				fractionOfTrafficFromOspf.put(Pair.of(n1, n2), kPaths.get(0));
+				worstCaseLatencyMs.put(Pair.of(n1, n2), kPaths.get(0).stream().mapToDouble(e->e.getWorstCasePropagationDelayInMs()).sum());
+			}
+		return Pair.of (fractionOfTrafficFromOspf , worstCaseLatencyMs );
 	}
 
 	@Override
@@ -437,8 +490,6 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		public int getIndexInIlp () { return indexInIlp; }
 		public AugmentedNode getA () { return a; }
 		public AugmentedNode getB () { return b; }
-		}
 	};
 
-	
 }
