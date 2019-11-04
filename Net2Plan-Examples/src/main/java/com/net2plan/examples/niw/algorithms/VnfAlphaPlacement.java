@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 			final int numServices = Integer.parseInt(algorithmParameters.get ("numServices"));
 			final String excelFile = algorithmParameters.get("excelFile");
 			final double alpha = Double.parseDouble(algorithmParameters.get("alpha"));
+			final int seed = Integer.parseInt(algorithmParameters.get("seed"));
 			
 			//First of all, initialize all parameters
 			InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
@@ -135,12 +136,7 @@ import java.util.stream.Stream;
 				for(WUserService service : wNet.getUserServicesInfo().values()) {
 					System.out.println("---------------------------------------------------------------");
 					System.out.println("Iteration "+node.getName() +" & "+ service.getUserServiceUniqueId());
-					
-					System.out.println("### Number of VNFs for service "+service.getUserServiceUniqueId()+": "+service.getListVnfTypesToTraverseUpstream().size());
-					double nVNFsInShortestPath = alpha * service.getListVnfTypesToTraverseUpstream().size(); 
-					System.out.println("### Number of VNFs to instantiate in the shortest path (alpha = "+alpha+"): "+nVNFsInShortestPath);
-
-					
+				
 					double serviceTraffic_Mbps = node.getPopulation()*Tmax_Mbps/greatestNode.getPopulation();
 					double serviceLatency_ms = service.getListMaxLatencyFromInitialToVnfStart_ms_upstream().get(0);
 					System.out.println(service.getUserServiceUniqueId()+" latency: "+truncate(serviceLatency_ms,2));
@@ -148,23 +144,56 @@ import java.util.stream.Stream;
 					WNode coreNode = getNearestCoreNode(netPlan, wNet, node).getAsNode();
 					System.out.println("Core Node selected: "+coreNode.getName());
 					System.out.println(node.getName()+" -> "+coreNode.getName());
+					
+					WServiceChainRequest serviceChainRequest = wNet.addServiceChainRequest(node, true, service);
+					final List<String> vnfsToTraverse = serviceChainRequest.getSequenceVnfTypes();
 
 					//first, if the node is a CoreNode the VNFS must be instantiated on it. It's the best solution possible.
 					//Case 1: The node is Core Node
 					if(coreNode.equals(node)) {
 						System.out.println("Case 1: The node is a Core Node!!");
 						System.out.println("Result: "+service.getUserServiceUniqueId()+" resources allocated in "+node.getName());
-						setServiceVNFSinNode(wNet, service, node);
-						
-						WServiceChainRequest serviceChainRequest = wNet.addServiceChainRequest(node, true, service);
-						final List<String> vnfsToTraverse = serviceChainRequest.getSequenceVnfTypes();
+						List<String> serviceVNFS = service.getListVnfTypesToTraverseUpstream();
+						setServiceVNFSInNode(wNet, serviceVNFS, node, service.getListVnfTypesToTraverseUpstream().size());
+					
 						final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, node, vnfsToTraverse, Optional.empty(), Optional.empty());
-						WServiceChain serviceChain = serviceChainRequest.addServiceChain(paths.get(0),serviceTraffic_Mbps/1000);
+						serviceChainRequest.addServiceChain(paths.get(0),serviceTraffic_Mbps/1000);
 
+					}else {
+						System.out.println("### Number of VNFs for service "+service.getUserServiceUniqueId()+": "+service.getListVnfTypesToTraverseUpstream().size());
+						int nVNFsInShortestPath = (int) Math.ceil(alpha * service.getListVnfTypesToTraverseUpstream().size()); 
+						System.out.println("### Number of VNFs to instantiate in the shortest path (alpha = "+alpha+"): "+nVNFsInShortestPath);
+						
+						List<List<WFiber>> kFiberLists = wNet.getKShortestWdmPath(K, node, coreNode, Optional.empty());
+						List<WFiber> fiberListk0 = kFiberLists.get(0);
+						
+						int numberOfHops = fiberListk0.size();
+						
+						// know nodes in shortest path as List<WNode>
+						List <WNode> nodesInShortestPath = getNodesInPath(fiberListk0);
+						
+						// VNFs allocation in the origin node of the SP.
+						List<String> serviceVNFS = service.getListVnfTypesToTraverseUpstream();
+						setServiceVNFSInNode(wNet, serviceVNFS, node, nVNFsInShortestPath);
+						
+						int numberOfVNFSAlreadyInstantiated = serviceVNFS.size() - nVNFsInShortestPath;
+						for (int i=0; i<numberOfVNFSAlreadyInstantiated; i++) serviceVNFS.remove(i); //delete VNFs already instantiated
+						
+						// Know valid nodes to instantiate VNFs out of the shortest path List<WNode>
+						List <WNode> candidateNodesOutOfTheSP = getNodesInRangeOutOfTheShortestPath(wNet, node, numberOfHops, nodesInShortestPath);
+						
+						// Set Service VNFs Randomnly in a candidate node.
+						Random rng = new Random (seed);		
+						for(int i=0; i<serviceVNFS.size(); i++) {
+								String vnfName = serviceVNFS.get(i);
+								wNet.addVnfInstance(candidateNodesOutOfTheSP.get(rng.nextInt(candidateNodesOutOfTheSP.size())), vnfName, wNet.getVnfType(vnfName).get());
+						}
+					
+						// IP Layer
+						final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, node, vnfsToTraverse, Optional.empty(), Optional.empty());
+						serviceChainRequest.addServiceChain(paths.get(0),serviceTraffic_Mbps/1000);
+						
 					}
-					/** MAGIA AQUÍ **/
-					
-					
 				}
 			}
 			
@@ -249,9 +278,22 @@ import java.util.stream.Stream;
 			param.add (Triple.of ("numServices" , "50" , "Number of services"));
 			param.add (Triple.of ("excelFile" , "MHTopology_Nodes_Links_95%.xlsx" , "Selection of the Excel spreadsheet"));
 			param.add (Triple.of ("alpha" , "0" , "Factor that determines the number of VNFs in the shortest path"));
+			param.add (Triple.of ("seed" , "1" , "Seed to generate random numbers"));
 
 			return param;
 		}
+		
+		public List<WNode> getNodesInPath(List<WFiber> fiberList){
+			List<WNode> nodeList = new ArrayList<WNode>();
+					
+			Iterator it = fiberList.iterator();
+			while(it.hasNext()) {
+				WNode node = (WNode) it.next();
+				nodeList.add(node);
+			}
+			return nodeList;
+		}
+		
 		
 		public double randomWithRange(double min, double max)
 		{
@@ -259,13 +301,39 @@ import java.util.stream.Stream;
 			return (Math.random() * range) + min;
 		}
 		
-		public void setServiceVNFSinNode(WNet wNet, WUserService service, WNode endingNode) {
-			List<String> serviceVNFS = service.getListVnfTypesToTraverseUpstream();
-			Iterator it = serviceVNFS.iterator();
-			while(it.hasNext()) {
-				String vnfName = it.next().toString();
+		public void setServiceVNFSInNode(WNet wNet, List<String> serviceVNFS, WNode endingNode, int numberOfVNFsToInstantiate) {
+			
+			for (int i=0; i<numberOfVNFsToInstantiate; i++) {
+				String vnfName = serviceVNFS.get(i);
 				wNet.addVnfInstance(endingNode, vnfName, wNet.getVnfType(vnfName).get());
 			}
+		}
+		
+		public void setServiceVNFSRandomnlyInNodeRange(WNet wNet, List<String> serviceVNFS, List<WNode> validNodes, int numberOfVNFsToInstantiate, Random rng) 
+		{
+			int numberOfVNFSAlreadyInstantiated = serviceVNFS.size() - numberOfVNFsToInstantiate;
+			for (int i=0; i<numberOfVNFSAlreadyInstantiated; i++) serviceVNFS.remove(i); //delete VNFs already instantiated
+			
+			for(int i=0; i<serviceVNFS.size(); i++) {
+					String vnfName = serviceVNFS.get(i);
+					wNet.addVnfInstance(validNodes.get(rng.nextInt(validNodes.size())), vnfName, wNet.getVnfType(vnfName).get());
+			}
+
+			
+		}
+		
+		public List<WNode> getNodesInRangeOutOfTheShortestPath(WNet wNet, WNode originNode, int maxNumberOfHops, List<WNode> nodesInShortestPath){
+			List <WNode> validNodes = new ArrayList<WNode>();
+			
+			for(WNode node : wNet.getNodes()) 
+			{
+				List<List<WFiber>> kFiberLists = wNet.getKShortestWdmPath(1, originNode, node, Optional.empty());
+				List<WFiber> fiberListk0 = kFiberLists.get(0);
+				
+				if(fiberListk0.size() <= maxNumberOfHops && !nodesInShortestPath.contains(node)) validNodes.add(node);
+			}
+			
+			return validNodes;
 		}
 		
 		public WNode getGreatestNode(WNet wNet) {
@@ -377,5 +445,19 @@ import java.util.stream.Stream;
 			} catch (Exception e) { e.printStackTrace(); if (of != null) of.close(); throw new Net2PlanException ("File error"); }
 			
 		}
-
+		
+		public static void main (String[]args) {
+			List<String> test = new ArrayList<String>();
+			
+			test.add("Hola");
+			test.add("Que");
+			test.add("Tal");
+			
+			System.out.println("###");
+			System.out.println(test.contains("Que"));
+			System.out.println(test.contains("Quea"));
+			System.out.println("###");
+			
+			for(String st : test) System.out.println(st);
+			}
 	}
