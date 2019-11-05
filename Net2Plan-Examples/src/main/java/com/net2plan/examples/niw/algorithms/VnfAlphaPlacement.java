@@ -225,7 +225,8 @@ import java.util.stream.Stream;
 									// Set Service VNFs randomly in a candidate node.	
 									for(int i=0; i<nVNFsRandom; i++) {
 										String vnfName = serviceVNFS.get(i);
-										wNet.addVnfInstance(candidateNodesOutOfTheSP.get(rng.nextInt(candidateNodesOutOfTheSP.size())), vnfName, wNet.getVnfType(vnfName).get());
+										WNode randomNode = candidateNodesOutOfTheSP.get(rng.nextInt(candidateNodesOutOfTheSP.size()));
+										wNet.addVnfInstance(randomNode, vnfName, wNet.getVnfType(vnfName).get());
 									}
 								}
 							}
