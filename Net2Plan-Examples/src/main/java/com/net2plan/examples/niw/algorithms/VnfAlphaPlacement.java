@@ -45,6 +45,7 @@ import java.util.stream.Stream;
 			netPlan.copyFrom(wNet.getNetPlan());
 			wNet = new WNet(netPlan);
 			final OpticalSpectrumManager osm = OpticalSpectrumManager.createFromRegularLps(wNet);
+			Random rng = new Random (seed);	
 			
 			double linerate_Gbps = 10;
 			int slotsPerLightpath = 4;
@@ -221,8 +222,7 @@ import java.util.stream.Stream;
 								}else
 								{
 									System.out.println("Instantiating VNFs randomly..");
-									// Set Service VNFs randomly in a candidate node.
-									Random rng = new Random (seed);		
+									// Set Service VNFs randomly in a candidate node.	
 									for(int i=0; i<nVNFsRandom; i++) {
 										String vnfName = serviceVNFS.get(i);
 										wNet.addVnfInstance(candidateNodesOutOfTheSP.get(rng.nextInt(candidateNodesOutOfTheSP.size())), vnfName, wNet.getVnfType(vnfName).get());
