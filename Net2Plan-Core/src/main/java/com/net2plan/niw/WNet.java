@@ -593,7 +593,9 @@ public class WNet extends WAbstractNetworkElement
 		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
 		scNp.setServiceChainSequenceOfTraversedResourceTypes(vnfTypesToTraverse);
 		scReq.setIsUpstream(isUpstream);
-		scReq.setPotentiallyValidOrigins(originNodes);
+		/* Set origin nodes directly */
+		scReq.getNe().setAttributeAsStringList(WServiceChainRequest.ATTNAMECOMMONPREFIX + WServiceChainRequest.ATTNAMESUFFIX_VALIDINPUTNODENAMES, originNodes.stream().map(n -> n.getName()).collect(Collectors.toList()));
+		//scReq.setPotentiallyValidOrigins(originNodes);
 		scReq.setPotentiallyValidDestinations(endNodes);
 		final int numVnfs = vnfTypesToTraverse.size();
 		List<Double> defaultSeqExpFactor = defaultSequenceOfExpansionFactors.orElse(null);

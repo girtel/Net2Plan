@@ -77,6 +77,7 @@ public class CreateHTMLKeywords
 		keywordDescriptionMap.put ("Wireless" , Pair.of ("An example focused on the design of a wireless network" , "wireless"));
 		keywordDescriptionMap.put ("WDM" , Pair.of ("An example where Wavelength Division Multiplexing (WDM) technology is used" , "wdm"));
 		keywordDescriptionMap.put ("NFV" , Pair.of ("An example in the context of Network Function Virtualizatin (NFV)" , "nfv"));
+		keywordDescriptionMap.put ("NIW" , Pair.of ("An example using the NIW framework (NFV over IP over WDM)" , "niw"));
 	}
 	static
 	{
@@ -158,7 +159,7 @@ public class CreateHTMLKeywords
 			for (String keyword : StringUtils.split(keywordsString , ","))
 			{
 				final String keywordName = keyword.trim ();
-				if (!keywordDescriptionMap.containsKey(keywordName)) throw new RuntimeException ("Bad: Keyword: " + keywordName + " in algorithm " + className + ", does not exist in the description");
+				if (!keywordDescriptionMap.containsKey(keywordName)) { System.out.print("Bad: Keyword: " + keywordName + " in algorithm " + className + ", does not exist in the description"); continue; }
 				if (!keywordsToAlgorithmsMap.containsKey(keywordName)) keywordsToAlgorithmsMap.put (keywordName , new LinkedList<String> ());
 				keywordsToAlgorithmsMap.get(keywordName).add (className);
 				algorithmToKeywordsMap.get (className).add (keywordName);
