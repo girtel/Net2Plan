@@ -278,7 +278,7 @@ public class ViewEditTopologyTablesPane extends JPanel
 
     public void resetPickedState()
     {
-    	for (NetworkLayer layer : callback.getDesign().getNetworkLayers())
+    	for (NetworkLayer layer : netPlanViewTable.keySet())
     		netPlanViewTable.get(layer).values().stream().filter(q -> q.getFirst() != null).forEach(q -> q.getFirst().clearSelection());
 
     	treePanel.restoreView();

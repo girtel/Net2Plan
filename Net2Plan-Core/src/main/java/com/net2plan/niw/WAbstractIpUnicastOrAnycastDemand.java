@@ -11,9 +11,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.utils.Pair;
 
 /**
@@ -202,6 +206,19 @@ public abstract class WAbstractIpUnicastOrAnycastDemand extends WAbstractNetwork
 	public final void setIsUpstream(boolean isUpstream)
 	{
 		setAttributeAsBoolean(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISUPSTREAM, isUpstream);
+	}
+
+   /** Returns a map with an entry for each traversed link, and associated to it the demand's traffic carried in that link. 
+    * If selected by the user, the carried traffic is given as a fraction respect to the demand offered traffic
+    * @param normalizedToOfferedTraffic see above
+	 * @return see above
+	 */
+	public SortedMap<WIpLink , Double> getTraversedIpLinksAndCarriedTraffic (final boolean normalizedToOfferedTraffic) 
+	{
+		final SortedMap<WIpLink , Double> res = new TreeMap<> ();
+		for (Entry<Link,Double> entry : getNe ().getTraversedLinksAndCarriedTraffic(normalizedToOfferedTraffic).entrySet())
+			res.put(new WIpLink(entry.getKey()), entry.getValue());
+		return res;
 	}
 
 	@Override

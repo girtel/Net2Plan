@@ -53,19 +53,6 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		super(sc);
 	}
 
-   /** Returns a map with an entry for each traversed link, and associated to it the demand's traffic carried in that link. 
-    * If selected by the user, the carried traffic is given as a fraction respect to the demand offered traffic
-    * @param normalizedToOfferedTraffic see above
-	 * @return see above
-	 */
-	public SortedMap<WIpLink , Double> getTraversedIpLinksAndCarriedTraffic (final boolean normalizedToOfferedTraffic) 
-	{
-		final SortedMap<WIpLink , Double> res = new TreeMap<> ();
-		for (Entry<Link,Double> entry : getNe ().getTraversedLinksAndCarriedTraffic(normalizedToOfferedTraffic).entrySet())
-			res.put(new WIpLink(entry.getKey()), entry.getValue());
-		return res;
-	}
-
 	/**
 	 * Adds a source routed IP connection to this unicast demand, in the case that it is of the source routed type
 	 * @param sequenceOfIpLinks the sequence of IP links traversed

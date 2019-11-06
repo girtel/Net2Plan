@@ -270,7 +270,7 @@ public class PopupMenuPlugin extends MouseAdapter implements ITopologyCanvasPlug
         final List<JComponent> actions = new LinkedList<>();
         final VisualizationState vs = callback.getVisualizationState();
         if (!vs.isNetPlanEditable()) return actions;
-        if (vs.isWhatIfAnalysisActive()) return actions;
+//        if (vs.isWhatIfAnalysisActive()) return actions;
         if (callback.inOnlineSimulationMode()) return actions;
 
 

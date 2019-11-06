@@ -51,7 +51,7 @@ import com.net2plan.utils.Triple;
  * @author Pablo Pavon-Marino
  * @version 1.2, October 2017
  */
-public class ReportNiw_wdm_lineEngineering implements IReport
+public class XXX_ReportNiw_wdm_lineEngineering implements IReport
 {
 	/* Input parameters */
 	private WNet wNet;
