@@ -21,11 +21,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class VnfAlphaPlacement implements IAlgorithm {
+public class DimensioningPlanning implements IAlgorithm {
 
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters,Map<String, String> net2planParameters) {
 
+		
+
+		
 		final Double Lmax = Double.parseDouble(algorithmParameters.get("Lmax"));
 		final File folder = new File ("Results");
 		if (folder.exists() && folder.isFile()) throw new Net2PlanException ("The folder is a file");
@@ -69,7 +72,7 @@ public class VnfAlphaPlacement implements IAlgorithm {
 			Comparator<WNode> comparator = new Comparator<WNode>() {
 			    @Override
 			    public int compare(WNode A, WNode B) {
-			        return (int) (B.getAllVnfInstances().size() - A.getAllVnfInstances().size());
+			        return (int) (B.getPopulation() - A.getPopulation());
 			    }
 			};
 			
@@ -82,8 +85,8 @@ public class VnfAlphaPlacement implements IAlgorithm {
 				summaryString.add(Double.toString(finalCost));
 			}
 			
-			writeFileInOneLine (new File (folder , "names_sortedByNumberOfVNFs"+ ".txt") , namesString);
-			writeFile (new File (folder , "sortedByNumberOfVNFs" + Lmax  + ".txt") , summaryString);
+			writeFileInOneLine (new File (folder , "names_sortedByPopulation"+ ".txt") , namesString);
+			writeFile (new File (folder , "sortedByPopulation" + Lmax  + ".txt") , summaryString);
 
 		return "Ok";
 	}
