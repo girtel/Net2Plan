@@ -53,7 +53,9 @@ public class WNode extends WAbstractNetworkElement
 		private final BiFunction<WFiber , WFiber , SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber;
 		private final Function<WFiber , SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber;
 		
-		private OPTICALSWITCHTYPE(Function<WFiber, SortedSet<WFiber>> outFibersIfAddToOutputFiber, Function<WFiber, SortedSet<WFiber>> outFibersIfDropFromInputFiber, BiFunction<WFiber, WFiber, SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber,
+		private OPTICALSWITCHTYPE(Function<WFiber, SortedSet<WFiber>> outFibersIfAddToOutputFiber, 
+				Function<WFiber, SortedSet<WFiber>> outFibersIfDropFromInputFiber, 
+				BiFunction<WFiber, WFiber, SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber,
 				Function<WFiber, SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber)
 		{
 			this.outFibersIfAddToOutputFiber = outFibersIfAddToOutputFiber;
