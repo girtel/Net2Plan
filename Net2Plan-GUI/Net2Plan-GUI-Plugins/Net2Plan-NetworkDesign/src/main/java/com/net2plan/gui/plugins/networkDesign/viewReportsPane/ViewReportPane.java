@@ -50,6 +50,7 @@ import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
 import com.net2plan.niw.ReportNiw_wdm_lineEngineering;
+import com.net2plan.niw.ReportNiw_wdm_routingSpectrumAndModulationAssignments;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -154,7 +155,8 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
 	{
 		/************** report test ***/
         final NetPlan reportTestNetPlan = mainWindow.getDesign().copy();
-        IReport instance = new ReportNiw_wdm_lineEngineering();
+//        IReport instance = new ReportNiw_wdm_lineEngineering();
+        IReport instance = new ReportNiw_wdm_routingSpectrumAndModulationAssignments();
         Pair<String, ? extends JPanel> aux = Pair.of(instance.getTitle(), new ReportBrowser(instance.executeReport(reportTestNetPlan, InputParameter.getDefaultParameters(instance.getParameters()), Configuration.getNet2PlanOptions())));
         reportTestNetPlan.setNetworkLayerDefault(reportTestNetPlan.getNetworkLayer((int) 0));
         mainWindow.getDesign().assignFrom(reportTestNetPlan); // do not update undo/redo here -> the visualization state should be updated before

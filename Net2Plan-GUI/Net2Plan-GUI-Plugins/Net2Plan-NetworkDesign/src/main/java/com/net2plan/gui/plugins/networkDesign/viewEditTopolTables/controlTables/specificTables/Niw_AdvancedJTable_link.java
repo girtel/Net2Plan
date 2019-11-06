@@ -462,7 +462,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(np.getNodePairEuclideanDistance(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
                     } , (a,b)->b>0, null) ,
             		
-            		new AjtRcMenu("As the harversine node pair distance", e->
+            		new AjtRcMenu("As the geographical node pair distance", e->
                     {
                 		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).filter(ee->!ee.isCoupledtoLpRequest()).forEach(ee->ee.setLengthIfNotCoupledInKm(np.getNodePairHaversineDistanceInKm(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
                     } , (a,b)->b>0, null)
@@ -642,7 +642,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                 		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(np.getNodePairEuclideanDistance(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
                     } , (a,b)->b>0, null) ,
             		
-            		new AjtRcMenu("As the harversine node pair distance", e->
+            		new AjtRcMenu("As the geographical node pair distance", e->
                     {
                 		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setLenghtInKm(np.getNodePairHaversineDistanceInKm(ee.getNe().getOriginNode(), ee.getNe().getDestinationNode())));
                     } , (a,b)->b>0, null)
