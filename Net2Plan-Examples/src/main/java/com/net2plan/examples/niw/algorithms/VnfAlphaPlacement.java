@@ -215,6 +215,8 @@ public class VnfAlphaPlacement implements IAlgorithm {
 				sorted((s1,s2)->Double.compare(s2.getCurrentOfferedTrafficInGbps(), s1.getCurrentOfferedTrafficInGbps())  ).
 				collect(Collectors.toList());
 		
+		int counter = 0;
+		
 		/* Iterate each ServiceChainRequest */
 		for (WServiceChainRequest scr : orderedServiceChainRequestsHigherToLowerTraffic)
 		{
@@ -228,6 +230,7 @@ public class VnfAlphaPlacement implements IAlgorithm {
 			
 			/*######################################### Some prints ############################################*/
 			System.out.println("---------------------------------------------------------------");
+			System.out.println("Iteration number "+ ++counter + " out of " +orderedServiceChainRequestsHigherToLowerTraffic.size());
 			System.out.println("totalTrafficInGbpsOfThisServiceInThisNodeGbps: "+totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 			//System.out.println("Iteration " + node.getName() + " & " + service.getUserServiceUniqueId());
 			System.out.println("Iteration " + node.getName() + " & " + scr.getId());
