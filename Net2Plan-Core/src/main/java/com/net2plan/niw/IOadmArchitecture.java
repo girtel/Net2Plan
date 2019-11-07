@@ -1,36 +1,65 @@
 package com.net2plan.niw;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
+import com.net2plan.utils.Quadruple;
 
 
 public interface IOadmArchitecture 
 {
 	public final static Class defaultClass = OadmArchitecture_roadm.class; 
-	
+	public final static List<IOadmArchitecture> availableRepresentatives = Arrays.asList(new OadmArchitecture_roadm ()); 
 	public abstract WNode getHostNode ();
-	public abstract boolean isRoadm ();
+	public default boolean isNeverCreatingWastedSpectrum () { return !isPotentiallyWastingSpectrum(); }
 	public abstract String getShortName ();
-	public abstract boolean isDropAndWaste ();
+	public abstract boolean isPotentiallyWastingSpectrum ();
 	public abstract SortedSet<WFiber> getOutFibersIfAddToOutputFiber(WFiber outputFiber);
 	public abstract SortedSet<WFiber> getOutFibersIfDropFromInputFiber(WFiber inputFiber);
 	public abstract SortedSet<WFiber> getOutFibersIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber);
 	public abstract SortedSet<WFiber> getOutFibersUnavoidablePropagationFromInputFiber(WFiber inputFiber);
-	public abstract void initialize (WNode node , String initString);
-	public abstract String getInitializationString ();
 
-	public abstract LpSignalState getOutLpStateForAddedLp (LpSignalState stateAtTheOutputOfTransponder , int inputAddModuleIndex , WFiber output);
+	public abstract void initialize (WNode node);
+	public abstract List<Quadruple<String,String,String,String>> getParametersInfo_name_default_shortDesc_longDesc ();
+	public default SortedMap<String,String> getDefaultParameters () 
+	{
+		final SortedMap<String,String> res = new TreeMap<> ();
+		getParametersInfo_name_default_shortDesc_longDesc().stream().forEach(e->res.put(e.getFirst(), e.getSecond())); 
+		return res;
+	}
+	public default Optional<SortedMap<String,String>> getCurrentParameters ()
+	{
+		final List<List<String>> initString = getHostNode().getNe().getAttributeAsStringMatrix(WNode.ATTNAMECOMMONPREFIX + WNode.ATTNAME_OPTICALSWITCHTYPEINITSTRING, null);
+		if (initString == null) 
+			return Optional.empty();
+		final SortedMap<String,String> initParam = new TreeMap<> ();
+		initString.stream().forEach(e->initParam.put(e.get(0), e.get(1)));
+		return Optional.of(initParam);
+	}
+	public default void updateCurrentParameters (SortedMap<String,String> param)
+	{
+		final List<List<String>> initString = new ArrayList<> ();
+		param.entrySet().stream().forEach(e->initString.add(Arrays.asList(e.getKey() , e.getValue())));
+		getHostNode().getNe().setAttributeAsStringMatrix(WNode.ATTNAMECOMMONPREFIX + WNode.ATTNAME_OPTICALSWITCHTYPEINITSTRING, initString);
+	}
+	
+	public abstract LpSignalState getOutLpStateForAddedLp (LpSignalState stateAtTheOutputOfTransponder , int inputAddModuleIndex , WFiber output , int numOpticalSlotsNeededIfEqualization);
 	public abstract LpSignalState getOutLpStateForDroppedLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , int inputDropModuleIndex);
 	public abstract LpSignalState getOutLpStateForExpressLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , WFiber outputFiber);
 
+	public abstract boolean isDirectionLess ();
+
+	public abstract boolean isColorless ();
 	
-	
+	public abstract boolean isFullyContentionless ();
+
 	
 //	public default Optional<Integer> getInputExpressPortIndex(WFiber e) 
 //	{

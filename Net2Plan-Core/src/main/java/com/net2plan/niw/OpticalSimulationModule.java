@@ -8,10 +8,7 @@ package com.net2plan.niw;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -86,9 +83,9 @@ public class OpticalSimulationModule
    public final static double constant_h = 6.62607004E-34; 
 	private final WNet wNet;
 	final private SortedMap<WLightpath,LpSignalState> perLpPerMetric_valAtDropTransponderEnd = new TreeMap<> ();
-	final private SortedMap<WFiber,SortedMap<WLightpath,Pair<LpSignalState,LpSignalState>>> perFiberPerLpPerMetric_valStartEnd = new TreeMap<> ();
+	final private SortedMap<WFiber,SortedMap<WLightpath,Pair<LpSignalState,LpSignalState>>> perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl = new TreeMap<> ();
 	final private SortedMap<WFiber,Quadruple<Double,Double,List<Double>,List<Double>>> perFiberTotalPower_valStartEndAndAtEachOlaInputOutput = new TreeMap<> ();
-	final private SortedMap<WFiber,SortedMap<WLightpath,SortedMap<Integer , Pair<LpSignalState,LpSignalState>>>> perFiberPerLpPerOlaIndexMetric_valStartEnd = new TreeMap<> ();
+	final private SortedMap<WFiber,SortedMap<WLightpath,SortedMap<Integer , Pair<LpSignalState,LpSignalState>>>> perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl = new TreeMap<> ();
 	
 	public OpticalSimulationModule (WNet wNet) 
 	{
@@ -126,10 +123,10 @@ public class OpticalSimulationModule
     	System.out.println("Update all performance info");
    	 for (WFiber e : wNet.getFibers())
    	 {
-   		 perFiberPerLpPerMetric_valStartEnd.put(e, new TreeMap<> ());
-   		 perFiberPerLpPerOlaIndexMetric_valStartEnd.put(e, new TreeMap <> ());
+   		 perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.put(e, new TreeMap<> ());
+   		 perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.put(e, new TreeMap <> ());
    		 for (WLightpath lp : e.getTraversingLps())
-   			perFiberPerLpPerOlaIndexMetric_valStartEnd.get(e).put(lp, new TreeMap<> ());
+   			perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.get(e).put(lp, new TreeMap<> ());
    	 }
    	 for (WLightpath lp : wNet.getLightpaths())
    	 {
@@ -143,129 +140,74 @@ public class OpticalSimulationModule
    	   		 final boolean firstFiber = contFiber == 0;
    			 final Pair<LpSignalState,LpSignalState> infoToAdd = Pair.of(new LpSignalState(), new LpSignalState());
    			 final SortedMap<Integer , Pair<LpSignalState,LpSignalState>> infoToAddPerOla = new TreeMap<> ();
-   			 perFiberPerLpPerMetric_valStartEnd.get(fiber).put(lp, infoToAdd);
-   			 perFiberPerLpPerOlaIndexMetric_valStartEnd.get(fiber).put(lp, infoToAddPerOla);
+   			 perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).put(lp, infoToAdd);
+   			 perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).put(lp, infoToAddPerOla);
    			
    			 final IOadmArchitecture oadm_a = fiber.getA().getOpticalSwitchingArchitecture();
-   			 final double totalJustFiberGain_dB = fiber.getOlaGains_dB().stream().mapToDouble(e->e).sum();
-   			 final double totalJustFiberAttenuation_dB = fiber.getAttenuationCoefficient_dbPerKm() * fiber.getLengthInKm();
-   			 final double totalJustFiberCdBalance_psPerNm = fiber.getChromaticDispersionCoeff_psPerNmKm() * fiber.getLengthInKm() + fiber.getOlaCdCompensation_psPerNm().stream().mapToDouble(e->e).sum();
-   			 final double totalJustFiberPmdSquaredBalance_ps2 = fiber.getLengthInKm() * Math.pow(fiber.getPmdLinkDesignValueCoeff_psPerSqrtKm() , 2) + fiber.getOlaPmd_ps().stream().mapToDouble(e->Math.pow(e, 2)).sum();
    			 final LpSignalState state_startFiberBeforeBooster;
    			 final WFiber previousFiber = contFiber == 0? null : lpSeqFibers.get(contFiber-1);
    			 if (firstFiber)
-   				state_startFiberBeforeBooster = oadm_a.getOutLpStateForAddedLp(new LpSignalState(lp.getAddTransponderInjectionPower_dBm() , 0.0, 0.0, Double.MAX_VALUE), lp.getAddModuleIndexInOrigin(), lp.getSeqFibers().get(0));
+   				state_startFiberBeforeBooster = oadm_a.getOutLpStateForAddedLp(new LpSignalState(lp.getAddTransponderInjectionPower_dBm() , 0.0, 0.0, Double.MAX_VALUE), lp.getAddModuleIndexInOrigin(), lp.getSeqFibers().get(0) , numOpticalSlots);
    			 else
-   				state_startFiberBeforeBooster = oadm_a.getOutLpStateForExpressLp(stateAtTheInputOfOadmAfterPreamplif, inputFiber, outputFiber)StateForAddedLp(new LpSignalState(lp.getAddTransponderInjectionPower_dBm() , 0.0, 0.0, Double.MAX_VALUE), lp.getAddModuleIndexInOrigin(), lp.getSeqFibers().get(0));
-   				 
-			 if (fiber.isOriginOadmConfiguredToEqualizeOutput()) 
-				startFiberBeforeBooster_powerLp_dBm = linear2dB(numOpticalSlots * fiber.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * WNetConstants.OPTICALSLOTSIZE_GHZ); 
-			 else
-				startFiberBeforeBooster_powerLp_dBm = 
-				(firstFiber? lp.getAddTransponderInjectionPower_dBm() - oadm_a.getAddModuleAttenuation_dB() : previousFiberInfo.get().getSecond().getPower_dbm() + previousFiber.getDestinationPreAmplifierGain_dB().orElse(0.0))
-				- oadm_a.getOadmSwitchFabricAttenuation_dB();
-   			 final LpSignalState startFiberAfterBooster_powerLp_dBm;
-
-			 startFiberAfterBooster_powerLp_dBm = startFiberBeforeBooster_powerLp_dBm + fiber.getOriginBoosterAmplifierGain_dB().orElse(0.0); 
-			 final double startFiberAfterBooster_cd_psPerNm = firstFiber? fiber.getOriginBoosterAmplifierCdCompensation_psPerNm().orElse(0.0) : previousFiberInfo.get().getSecond().getCd_psPerNm() + previousFiber.getDestinationPreAmplifierCdCompensation_psPerNm().orElse(0.0) + fiber.getOriginBoosterAmplifierCdCompensation_psPerNm().orElse(0.0);
-			 final double startFiberAfterBooster_pmd_ps2 = firstFiber? Math.pow(oadm_a.getOadmSwitchFabricPmd_ps(), 2) + Math.pow(fiber.getOriginBoosterAmplifierPmd_ps().orElse(0.0), 2) : 
-				 previousFiberInfo.get().getSecond().getPmdSquared_ps2() + Math.pow(previousFiber.getDestinationPreAmplifierPmd_ps().orElse(0.0), 2) + Math.pow(oadm_a.getOadmSwitchFabricPmd_ps(), 2) + Math.pow(fiber.getOriginBoosterAmplifierPmd_ps().orElse(0.0), 2);
-			 infoToAdd.getFirst().setPower_dbm(startFiberAfterBooster_powerLp_dBm);
-			 infoToAdd.getSecond().setPower_dbm(startFiberAfterBooster_powerLp_dBm + totalJustFiberGain_dB - totalJustFiberAttenuation_dB);
-			 infoToAdd.getFirst().setCd_psPerNm(startFiberAfterBooster_cd_psPerNm);
-			 infoToAdd.getSecond().setCd_psPerNm(startFiberAfterBooster_cd_psPerNm + totalJustFiberCdBalance_psPerNm);
-			 infoToAdd.getFirst().setPmdSquared_ps2(startFiberAfterBooster_pmd_ps2);
-			 infoToAdd.getSecond().setPmdSquared_ps2(startFiberAfterBooster_pmd_ps2 + totalJustFiberPmdSquaredBalance_ps2);
-//			 put(PERLPINFOMETRICS.POWER_DBM, Pair.of(startFiberAfterBooster_powerLp_dBm, startFiberAfterBooster_powerLp_dBm + totalJustFiberGain_dB - totalJustFiberAttenuation_dB));
-//			 infoToAdd.put(PERLPINFOMETRICS.CD_PERPERNM, Pair.of(startFiberAfterBooster_cd_psPerNm , startFiberAfterBooster_cd_psPerNm + totalJustFiberCdBalance_psPerNm));
-//			 infoToAdd.put(PERLPINFOMETRICS.PMDSQUARED_PS2, Pair.of(startFiberAfterBooster_pmd_ps2, startFiberAfterBooster_pmd_ps2 + totalJustFiberPmdSquaredBalance_ps2));
-			 final double osnrAtStartOfFiber_dB;
-			 /* OSNR at the start of fiber */
-			 if (firstFiber)
+   			 {
+   				 final LpSignalState beforePreviousFiberEndPreampl = previousFiberInfo.get().getSecond();
+   				 final LpSignalState afterPreviousFiberEndPreampl = previousFiber.isExistingPreamplifierAtDestinationOadm()? 
+   						getStateAfterOpticalAmplifier (centralFrequency_hz , beforePreviousFiberEndPreampl , previousFiber.getDestinationPreAmplifierGain_dB().get() , previousFiber.getDestinationPreAmplifierCdCompensation_psPerNm().get() , previousFiber.getDestinationPreAmplifierPmd_ps().get() , previousFiber.getDestinationPreAmplifierNoiseFactor_dB().get()) : 
+   							beforePreviousFiberEndPreampl.getCopy();
+				state_startFiberBeforeBooster = oadm_a.getOutLpStateForExpressLp(afterPreviousFiberEndPreampl, previousFiber, fiber);
+   			 }
+   			 final LpSignalState state_startFiberAfterBooster = fiber.isExistingBoosterAmplifierAtOriginOadm()? 
+	   						getStateAfterOpticalAmplifier (centralFrequency_hz , state_startFiberBeforeBooster , fiber.getOriginBoosterAmplifierGain_dB().get() , fiber.getOriginBoosterAmplifierCdCompensation_psPerNm().get() , fiber.getOriginBoosterAmplifierPmd_ps().get() , fiber.getOriginBoosterAmplifierNoiseFactor_dB().get()) : 
+	   							state_startFiberBeforeBooster.getCopy();
+	   		infoToAdd.setFirst(state_startFiberAfterBooster);
+			 LpSignalState stateOutputLastOlaOrInitialOadmAfterBooster = state_startFiberAfterBooster;
+			 final int numOlas = fiber.getNumberOfOpticalLineAmplifiersTraversed();
+			 for (int contOla = 0; contOla < numOlas ; contOla ++)
 			 {
-				 osnrAtStartOfFiber_dB = !fiber.isExistingBoosterAmplifierAtOriginOadm()? Double.MAX_VALUE : linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, fiber.getOriginBoosterAmplifierNoiseFactor_dB().get(), startFiberBeforeBooster_powerLp_dBm));
-			 }
-			 else
-			 {
-   				 final double powerAtEndOfLastFiber_dBm = previousFiberInfo.get().getSecond().getPower_dbm();
-   				 final double osnrAtEndOfLastFiber_dB = previousFiberInfo.get().getSecond ().getOsnrAt12_5GhzRefBw();
-   				 final double osnrContributedByOadmPreamplifier_dB = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, previousFiber.getDestinationPreAmplifierNoiseFactor_dB().orElse(-Double.MAX_VALUE), powerAtEndOfLastFiber_dBm));
-   				 final double osnrContributedByOadmBooster_dB = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, fiber.getOriginBoosterAmplifierNoiseFactor_dB().orElse(-Double.MAX_VALUE), startFiberBeforeBooster_powerLp_dBm));
-   				 osnrAtStartOfFiber_dB = osnrInDbUnitsAccummulation_dB (Arrays.asList(osnrAtEndOfLastFiber_dB , osnrContributedByOadmPreamplifier_dB , osnrContributedByOadmBooster_dB));
-			 }
-			 final List<Double> osnrAccumulation_db = new ArrayList<> ();
-			 osnrAccumulation_db.add(osnrAtStartOfFiber_dB);
-			 for (int contOla = 0; contOla < fiber.getOlaGains_dB().size() ; contOla ++)
-			 {
-				 final double noiseFactor_db = fiber.getOlaNoiseFactor_dB().get(contOla);
-				 final double kmFromStartFiber = fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla);
-				 final double sumGainsTraversedAmplifiersBeforeMe_db = IntStream.range(0, contOla).mapToDouble(olaIndex -> fiber.getOlaGains_dB().get(olaIndex)).sum();
-				 final double lpPowerAtInputOla_dBm = infoToAdd.getFirst().getPower_dbm() - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiersBeforeMe_db;
-				 final double lpCdAtInputOla_perPerNm = infoToAdd.getFirst().getCd_psPerNm() + fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) * fiber.getChromaticDispersionCoeff_psPerNmKm() + IntStream.range(0, contOla).mapToDouble(ee->fiber.getOlaCdCompensation_psPerNm().get(ee)).sum();
-				 final double lpPmdSquaredAtInputOla_perPerNm = infoToAdd.getFirst().getPmdSquared_ps2() + fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) * Math.pow(fiber.getPmdLinkDesignValueCoeff_psPerSqrtKm(),2) + IntStream.range(0, contOla).mapToDouble(ee->Math.pow(fiber.getOlaPmd_ps().get(ee) , 2)).sum();
-				 final double lpOsnrAtInputOla_dB = osnrInDbUnitsAccummulation_dB (osnrAccumulation_db);
-				 final double osnrContributionThisOla_db = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, noiseFactor_db, lpPowerAtInputOla_dBm));
-				 osnrAccumulation_db.add (osnrContributionThisOla_db); 
-				 final double lpOsnrAtOutputOla_dB = osnrInDbUnitsAccummulation_dB (osnrAccumulation_db);
-				 final Pair<LpSignalState,LpSignalState> infoThisOla = Pair.of(new LpSignalState(-1, -1, -1, -1), new LpSignalState(-1, -1, -1, -1));
-				 infoThisOla.getFirst().setPower_dbm(lpPowerAtInputOla_dBm);
-				 infoThisOla.getSecond().setPower_dbm(lpPowerAtInputOla_dBm + fiber.getOlaGains_dB().get(contOla));
-				 infoThisOla.getFirst().setCd_psPerNm(lpCdAtInputOla_perPerNm);
-				 infoThisOla.getSecond().setCd_psPerNm(lpCdAtInputOla_perPerNm + fiber.getOlaCdCompensation_psPerNm().get(contOla));
-				 infoThisOla.getFirst().setPmdSquared_ps2(lpPmdSquaredAtInputOla_perPerNm);
-				 infoThisOla.getSecond().setPmdSquared_ps2(lpPmdSquaredAtInputOla_perPerNm + Math.pow(1.0 ,2)); // ERROR?
-				 infoThisOla.getFirst().setOsnrAt12_5GhzRefBw(lpOsnrAtInputOla_dB);
-				 infoThisOla.getSecond().setOsnrAt12_5GhzRefBw(lpOsnrAtOutputOla_dB); 
-//				infoThisOla.put(PERLPINFOMETRICS.POWER_DBM, Pair.of (lpPowerAtInputOla_dBm , lpPowerAtInputOla_dBm + fiber.getOlaGains_dB().get(contOla)));
-//				infoThisOla.put(PERLPINFOMETRICS.CD_PERPERNM, Pair.of (lpCdAtInputOla_perPerNm , lpCdAtInputOla_perPerNm + fiber.getOlaCdCompensation_psPerNm().get(contOla)));
-//				infoThisOla.put(PERLPINFOMETRICS.PMDSQUARED_PS2, Pair.of (lpPmdSquaredAtInputOla_perPerNm , lpPmdSquaredAtInputOla_perPerNm + Math.pow(1.0 ,2)));
-//				infoThisOla.put(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW, Pair.of (lpOsnrAtInputOla_dB , lpOsnrAtOutputOla_dB));
+				 final double distFromLastOlaOrInitialOadm_km = fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) - (contOla == 0? 0 : fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla-1));
+				 assert distFromLastOlaOrInitialOadm_km >= 0;
+				 final LpSignalState stateBeforeTheOla = getStateAfterFiberKm (stateOutputLastOlaOrInitialOadmAfterBooster , fiber , distFromLastOlaOrInitialOadm_km);
+				 final LpSignalState stateAfterTheOla = getStateAfterOpticalAmplifier(centralFrequency_hz, stateBeforeTheOla, 
+						 fiber.getOlaGains_dB().get(contOla), 
+						 fiber.getOlaCdCompensation_psPerNm().get(contOla), 
+						 fiber.getOlaPmd_ps().get(contOla), 
+						 fiber.getOlaNoiseFactor_dB().get(contOla));
+				 final Pair<LpSignalState,LpSignalState> infoThisOla = Pair.of(stateBeforeTheOla, stateAfterTheOla);
 				infoToAddPerOla.put(contOla, infoThisOla);
+				stateOutputLastOlaOrInitialOadmAfterBooster = stateAfterTheOla;
 			 }
-			 final double osnrEndOfFiber_dB = osnrInDbUnitsAccummulation_dB (osnrAccumulation_db);
-			 infoToAdd.getFirst().setOsnrAt12_5GhzRefBw(Double.MAX_VALUE);
-			 infoToAdd.getSecond().setOsnrAt12_5GhzRefBw(osnrEndOfFiber_dB);
+			 final double distFromLastOlaOrInitialOadm_km = fiber.getLengthInKm() - (numOlas == 0? 0 : fiber.getAmplifierPositionsKmFromOrigin_km().get(numOlas-1));
+			 final LpSignalState stateAtTheEndOfFiberBeforePreamplifier = getStateAfterFiberKm (stateOutputLastOlaOrInitialOadmAfterBooster , fiber , distFromLastOlaOrInitialOadm_km);
+	   		infoToAdd.setSecond(stateAtTheEndOfFiberBeforePreamplifier);
    			 previousFiberInfo = Optional.of(infoToAdd);
    		 }
    	 }
    	 
-   	 assert perFiberPerLpPerOlaIndexMetric_valStartEnd.keySet().containsAll(wNet.getFibers());
-   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().equals(perFiberPerLpPerOlaIndexMetric_valStartEnd.get(e).keySet()));
-   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().stream().allMatch(lp->perFiberPerLpPerOlaIndexMetric_valStartEnd.get(e).get(lp).size() == e.getNumberOfOpticalLineAmplifiersTraversed()));
+   	 assert perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.keySet().containsAll(wNet.getFibers());
+   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().equals(perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.get(e).keySet()));
+   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().stream().allMatch(lp->perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.get(e).get(lp).size() == e.getNumberOfOpticalLineAmplifiersTraversed()));
    	 
    	 /* Update the per lp information at add and end */
    	 for (WLightpath lp : wNet.getLightpaths())
    	 {
    		 final double centralFrequency_hz = 1e12 * lp.getCentralFrequencyThz();
-   		 final LpSignalState vals = new LpSignalState(-1, -1, -1, -1);
    		 final WFiber lastFiber = lp.getSeqFibers().get(lp.getSeqFibers().size()-1);
    		 final WNode lastOadm = lastFiber.getB();
-   		 final double inputLastOadm_power_dBm = perFiberPerLpPerMetric_valStartEnd.get(lastFiber).get(lp).getSecond().getPower_dbm();
-   		 final double inputLastOadm_cd_psPerNm = perFiberPerLpPerMetric_valStartEnd.get(lastFiber).get(lp).getSecond().getCd_psPerNm();
-   		 final double inputLastOadm_pmdSquared_ps2 = perFiberPerLpPerMetric_valStartEnd.get(lastFiber).get(lp).getSecond().getPmdSquared_ps2();
-   		 final double inputLastOadm_onsnr_dB = perFiberPerLpPerMetric_valStartEnd.get(lastFiber).get(lp).getSecond().getOsnrAt12_5GhzRefBw();
-
-   		 final double drop_power_dBm = inputLastOadm_power_dBm + lastFiber.getDestinationPreAmplifierGain_dB().orElse(0.0) - lastOadm.getOadmSwitchFabricAttenuation_dB();
-   		 final double drop_cd_psPerNm = inputLastOadm_cd_psPerNm + lastFiber.getDestinationPreAmplifierCdCompensation_psPerNm().orElse(0.0);
-   		 final double drop_pmdSquared_ps2 = inputLastOadm_pmdSquared_ps2 + Math.pow(lastFiber.getDestinationPreAmplifierPmd_ps().orElse(0.0) ,2) + Math.pow(lastOadm.getOadmSwitchFabricPmd_ps(),2) ;
-   		 final double addedOsnrByDropOadm = osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, lastFiber.getDestinationPreAmplifierNoiseFactor_dB().orElse(-Double.MAX_VALUE), inputLastOadm_power_dBm);
-   		 final double drop_osnr12_5RefBw_dB = osnrInDbUnitsAccummulation_dB(Arrays.asList(inputLastOadm_onsnr_dB , addedOsnrByDropOadm));
-
-   		 vals.setPower_dbm(drop_power_dBm);
-   		 vals.setCd_psPerNm(drop_cd_psPerNm);
-   		 vals.setPmdSquared_ps2(drop_pmdSquared_ps2);
-   		 vals.setOsnrAt12_5GhzRefBw(drop_osnr12_5RefBw_dB);
-   		 
-   		 perLpPerMetric_valAtDropTransponderEnd.put(lp, vals);
+   		 final LpSignalState state_beforePreamplLastFiber = perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(lastFiber).get(lp).getSecond();
+		 final LpSignalState state_afterPreamplLastFiber = lastFiber.isExistingPreamplifierAtDestinationOadm()? 
+						getStateAfterOpticalAmplifier (centralFrequency_hz , state_beforePreamplLastFiber , lastFiber.getDestinationPreAmplifierGain_dB().get() , lastFiber.getDestinationPreAmplifierCdCompensation_psPerNm().get() , lastFiber.getDestinationPreAmplifierPmd_ps().get() , lastFiber.getDestinationPreAmplifierNoiseFactor_dB().get()) : 
+							state_beforePreamplLastFiber.getCopy();
+		final LpSignalState state_afterOadm = lastOadm.getOpticalSwitchingArchitecture().getOutLpStateForDroppedLp(state_afterPreamplLastFiber, lastFiber, lp.getDropModuleIndexInDestination());
+   		 perLpPerMetric_valAtDropTransponderEnd.put(lp, state_afterOadm);
    	 }
    	 
    	 
    	 /* Update the total power per fiber */
    	 for (WFiber fiber : wNet.getFibers())
    	 {
-   		 final double powerAtStart_dBm = linear2dB(fiber.getTraversingLps().stream().map(lp->perFiberPerLpPerMetric_valStartEnd.get(fiber).get(lp).getFirst().getPower_dbm()).
+   		 final double powerAtStart_dBm = linear2dB(fiber.getTraversingLps().stream().map(lp->perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp).getFirst().getPower_dbm()).
    				 mapToDouble (v->dB2linear(v)).sum ());
-   		 final double powerAtEnd_dBm = linear2dB(fiber.getTraversingLps().stream().map(lp->perFiberPerLpPerMetric_valStartEnd.get(fiber).get(lp).getSecond().getPower_dbm()).
+   		 final double powerAtEnd_dBm = linear2dB(fiber.getTraversingLps().stream().map(lp->perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp).getSecond().getPower_dbm()).
    				 mapToDouble (v->dB2linear(v)).sum ());
    		 
    		 final List<Double> powerInputOla_dBm = new ArrayList<> ();
@@ -305,9 +247,9 @@ public class OpticalSimulationModule
     }
     public Pair<LpSignalState,LpSignalState> getOpticalPerformanceOfLightpathAtFiberEnds (WFiber fiber , WLightpath lp)
     {
-   	 if (!perFiberPerLpPerMetric_valStartEnd.containsKey(fiber)) return null;
-   	 if (!perFiberPerLpPerMetric_valStartEnd.get(fiber).containsKey(lp)) return null;
-   	 return perFiberPerLpPerMetric_valStartEnd.get(fiber).get(lp);
+   	 if (!perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.containsKey(fiber)) return null;
+   	 if (!perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).containsKey(lp)) return null;
+   	 return perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp);
     }
     public Pair<Double,Double> getTotalPowerAtFiberEnds_dBm (WFiber fiber)
     {
@@ -324,7 +266,7 @@ public class OpticalSimulationModule
     {
     	if (olaIndex >= e.getNumberOfOpticalLineAmplifiersTraversed()) throw new Net2PlanException ("Wrong amplifier index");
     	if (!lp.getSeqFibers().contains(e)) throw new Net2PlanException ("Wrong amplifier fiber");
-    	final  Pair<LpSignalState,LpSignalState> res = perFiberPerLpPerOlaIndexMetric_valStartEnd.getOrDefault(e , new TreeMap<> ()).getOrDefault(lp, new TreeMap<> ()).get(olaIndex); 
+    	final  Pair<LpSignalState,LpSignalState> res = perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.getOrDefault(e , new TreeMap<> ()).getOrDefault(lp, new TreeMap<> ()).get(olaIndex); 
     	if (res == null) throw new Net2PlanException ("Unknown value");
     	return res;
     }
@@ -367,12 +309,14 @@ public class OpticalSimulationModule
     	final double pmdSquared_ps2 = initialState.getPmdSquared_ps2() + Math.pow(e.getPmdLinkDesignValueCoeff_psPerSqrtKm() , 2);
     	return new LpSignalState(power_dbm, cd_psPerNm, pmdSquared_ps2, initialState.getOsnrAt12_5GhzRefBw());
     }
-    private static LpSignalState getStateAfterOpticalAmplifier (LpSignalState initialState , double gain_db , double cdCompensation_psPerNm , double pmd_ps , double noiseFigure_dB)
+    private static LpSignalState getStateAfterOpticalAmplifier (double centralFrequency_hz , LpSignalState initialState , double gain_db , double cdCompensation_psPerNm , double pmd_ps , double noiseFigure_dB)
     {
     	final double power_dbm = initialState.getPower_dbm() - gain_db;
     	final double cd_psPerNm = initialState.getCd_psPerNm() + cdCompensation_psPerNm;
     	final double pmdSquared_ps2 = initialState.getPmdSquared_ps2() + Math.pow(pmd_ps , 2);
-    	return new LpSignalState(power_dbm, cd_psPerNm, pmdSquared_ps2, initialState.getOsnrAt12_5GhzRefBw());
+    	final double osnrContributedByAmplifier_dB = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, noiseFigure_dB, initialState.getPower_dbm()));
+    	final double osnrRefBw12_5_dB = osnrInDbUnitsAccummulation_dB (Arrays.asList(initialState.getOsnrAt12_5GhzRefBw() , osnrContributedByAmplifier_dB));
+    	return new LpSignalState(power_dbm, cd_psPerNm, pmdSquared_ps2, osnrRefBw12_5_dB);
     }
     
 }

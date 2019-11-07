@@ -143,8 +143,8 @@ public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implement
 		
 		out.append("<h2><a name=\"generalStats\"></a>GENERAL STATISTICS - Signal metrics at the input of end OADM</h2>");
 		out.append("<table border='1'>");
-		final int numFilterlessOadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchType().isDropAndWaste()).count();
-		final int numPureRoadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchType().isRoadm()).count();
+		final int numFilterlessOadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchingArchitecture().isPotentiallyWastingSpectrum()).count();
+		final int numPureRoadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum()).count();
 		out.append("<tr><th align=\"left\" colspan=\"2\"><b>OADM stats</b></th></tr>");
 		out.append("<tr><td align=\"left\">Number of OADMs (#total / #Non-blocking ROADM / #Filterless)</td><td>" + net.getNodes().size() + " / " + numPureRoadms + " / " + numFilterlessOadms  + "</td></tr>");
 		out.append("<tr><td align=\"left\">Number of OADMs</td><td>" + net.getNodes().size() + "</td></tr>");
@@ -308,7 +308,7 @@ public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implement
 			final int expressBackupLps = (int) n.getInOutOrTraversingLigtpaths().stream ().filter(e->!e.getA().equals(n) && !e.getB().equals(n)).filter(e -> e.isBackupLightpath()).count();
 			out.append("<tr>");
 			out.append("<td><a name=\"node" + n.getNe().getIndex() + "\">n" + n.getNe().getIndex() + " (" + n.getName() + ")" + "</a></td>");
-			out.append("<td>" + n.getOpticalSwitchType().getShortName() + "</td>");
+			out.append("<td>" + n.getOpticalSwitchingArchitecture().getShortName() + "</td>");
 			out.append("<td>" + n.getIncomingFibers().size() + "</td>");
 			out.append("<td>" + n.getOutgoingFibers().size() + "</td>");
 			out.append("<td>" + (addRegLps+addBackupLps) + "(" + addRegLps + " / " + addBackupLps + ")" + "</td>");

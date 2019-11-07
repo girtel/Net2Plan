@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -33,6 +34,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputF
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.niw.IOadmArchitecture;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNode;
@@ -107,7 +109,7 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
       }
       else if (isWdmLayer)
       {
-          res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Sw. type", "The switching type of the architecture. At this moment e.g. filterless (drop-and-waste), or non-blocking OADM", null , d->toWNode.apply(d).getOpticalSwitchType().getShortName() , AGTYPE.NOAGGREGATION, null));
+          res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Sw. type", "The switching type of the architecture. At this moment e.g. filterless (drop-and-waste), or non-blocking OADM", null , d->toWNode.apply(d).getOpticalSwitchingArchitecture().getShortName() , AGTYPE.NOAGGREGATION, null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Out LP requests", "The outgoing lightpath requests of the node", null , d->toWNode.apply(d).getOutgoingLigtpathRequests().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "In LP requests", "The incoming lightpath requests of the node", null , d->toWNode.apply(d).getIncomingLigtpathRequests().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "ADD LPs", "The outgoing lightpaths of the node", null , d->toWNode.apply(d).getAddedLigtpaths().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
@@ -118,8 +120,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "EXPRESS optical rate (Gbps)", "The sum of the line rates of the lightpaths express in this node", null , d->toWNode.apply(d).getExpressSwitchedLightpaths().stream().mapToDouble(n->n.getLightpathRequest().getLineRateGbps()).sum() , AGTYPE.SUMDOUBLE , null));
           
           /* Pending here all the OADM information about physical impairments */
-          res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Sw fabric loss (dB)", "The attenuation of the optical switch fabric", (d,val)->toWNode.apply(d).setOadmSwitchFabricAttenuation_dB((Double)val) , d->toWNode.apply(d).getOadmSwitchFabricAttenuation_dB(), AGTYPE.NOAGGREGATION , null));
-          res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Sw fabric PMD (ps)", "The PMD of the optical switch fabric", (d,val)->toWNode.apply(d).setOadmSwitchFabricPmd_ps((Double)val) , d->toWNode.apply(d).getOadmSwitchFabricPmd_ps(), AGTYPE.NOAGGREGATION , null));
+//          res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Sw fabric nominal loss (dB)", "The attenuation of the optical switch fabric", (d,val)->toWNode.apply(d).setOadmSwitchFabricAttenuation_dB((Double)val) , d->toWNode.apply(d).getOadmSwitchFabricAttenuation_dB(), AGTYPE.NOAGGREGATION , null));
+//          res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Sw fabric PMD (ps)", "The PMD of the optical switch fabric", (d,val)->toWNode.apply(d).setOadmSwitchFabricPmd_ps((Double)val) , d->toWNode.apply(d).getOadmSwitchFabricPmd_ps(), AGTYPE.NOAGGREGATION , null));
       }
       return res;
   }
@@ -179,42 +181,49 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
         
         if (isWdmLayer)
         {
-            res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null , (a,b)->b>0, Arrays.asList(
-            		new AjtRcMenu("As non-blocking OADM", e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.ROADM)) , (a,b)->b>0, null),
-            		new AjtRcMenu("As filterless drop and waste", e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS)) , (a,b)->b>0, null)
-            		)));
-            res.add(new AjtRcMenu("Set attenuation of optical switch fabric to selected OADMs", e->
-                DialogBuilder.launch(
-                        "Set attenuation of optical switch fabric to selected OADMs", 
-                        "Please introduce the requested data.",
-                        "", 
-                        this, 
-                        Arrays.asList(
-                                InputForDialog.inputTfDouble("OADM switch fabric attenuation (dB)", "Introduce the attenuation of the optical switch fabric", 10, 0.0)
-                                ),
-                        (list)->
-                            {
-                                final double att = ((Double) list.get(0).get());
-                                getSelectedElements().forEach(dd->toWNode.apply(dd).setOadmSwitchFabricAttenuation_dB(att));
-                            }
-                        )
-             , (a,b)->b>0, null));
-            res.add(new AjtRcMenu("Set PMD of optical switch fabric to selected OADMs", e->
-            DialogBuilder.launch(
-                    "Set PMD of optical switch fabric to selected OADMs", 
-                    "Please introduce the requested data.",
-                    "", 
-                    this, 
-                    Arrays.asList(
-                            InputForDialog.inputTfDouble("OADM switch fabric PMD (ps)", "Introduce the PMD added by the optical switch fabric", 10, 0.0)
-                            ),
-                    (list)->
-                        {
-                            final double pmd = ((Double) list.get(0).get());
-                            getSelectedElements().forEach(dd->toWNode.apply(dd).setOadmSwitchFabricPmd_ps(pmd));
-                        }
-                    )
-         , (a,b)->b>0, null));
+        	final List<AjtRcMenu> menusForEachOpticalSwitchType = new ArrayList<> ();
+        	for (IOadmArchitecture arc : IOadmArchitecture.availableRepresentatives)
+        		menusForEachOpticalSwitchType.add(new AjtRcMenu(arc.getShortName(), e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchArchitecture(arc.getClass ())) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null , (a,b)->b>0, menusForEachOpticalSwitchType));
+        	
+        	
+        	
+//            res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null , (a,b)->b>0, Arrays.asList(
+//            		new AjtRcMenu("As non-blocking OADM", e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.ROADM)) , (a,b)->b>0, null),
+//            		new AjtRcMenu("As filterless drop and waste", e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS)) , (a,b)->b>0, null)
+//            		)));
+//            res.add(new AjtRcMenu("Set attenuation of optical switch fabric to selected OADMs", e->
+//                DialogBuilder.launch(
+//                        "Set attenuation of optical switch fabric to selected OADMs", 
+//                        "Please introduce the requested data.",
+//                        "", 
+//                        this, 
+//                        Arrays.asList(
+//                                InputForDialog.inputTfDouble("OADM switch fabric attenuation (dB)", "Introduce the attenuation of the optical switch fabric", 10, 0.0)
+//                                ),
+//                        (list)->
+//                            {
+//                                final double att = ((Double) list.get(0).get());
+//                                getSelectedElements().forEach(dd->toWNode.apply(dd).setOadmSwitchFabricAttenuation_dB(att));
+//                            }
+//                        )
+//             , (a,b)->b>0, null));
+//            res.add(new AjtRcMenu("Set PMD of optical switch fabric to selected OADMs", e->
+//            DialogBuilder.launch(
+//                    "Set PMD of optical switch fabric to selected OADMs", 
+//                    "Please introduce the requested data.",
+//                    "", 
+//                    this, 
+//                    Arrays.asList(
+//                            InputForDialog.inputTfDouble("OADM switch fabric PMD (ps)", "Introduce the PMD added by the optical switch fabric", 10, 0.0)
+//                            ),
+//                    (list)->
+//                        {
+//                            final double pmd = ((Double) list.get(0).get());
+//                            getSelectedElements().forEach(dd->toWNode.apply(dd).setOadmSwitchFabricPmd_ps(pmd));
+//                        }
+//                    )
+//         , (a,b)->b>0, null));
         	
         }
         

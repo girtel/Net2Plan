@@ -30,7 +30,6 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.niw.WNode.OPTICALSWITCHTYPE;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
@@ -584,10 +583,10 @@ public class OpticalSpectrumManager
 
      	 for (WNode node : wNet.getNodes())
      	 {
-     		 final OPTICALSWITCHTYPE type = node.getOpticalSwitchType();
+     		 final IOadmArchitecture type = node.getOpticalSwitchingArchitecture();
      		 for (WFiber inFiber : node.getIncomingFibers())
      		 {
-     			 final SortedSet<WFiber> outFibersProp = type.getOutFibersUnavoidablePropagationFromInputFiber().apply(inFiber);
+     			 final SortedSet<WFiber> outFibersProp = type.getOutFibersUnavoidablePropagationFromInputFiber(inFiber);
      			 for (WFiber propFiber : outFibersProp)
      				 graphFiberToFiberPropagation.addEdge(inFiber , propFiber);
      		 }
@@ -610,7 +609,7 @@ public class OpticalSpectrumManager
    public static Triple<SortedSet<WFiber>,List<List<WFiber>>,Boolean> getPropagatingFibersLasingLoopsAndIsMultipathOk (List<WFiber> links)
     {
    	 if (links.isEmpty()) throw new Net2PlanException ("The path is empty");
-   	 if (getContinousSequenceOfNodes(links).stream().allMatch(n->n.getOpticalSwitchType().isRoadm())) return Triple.of(new TreeSet<> (links), new  ArrayList<> (), true);
+   	 if (getContinousSequenceOfNodes(links).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum())) return Triple.of(new TreeSet<> (links), new  ArrayList<> (), true);
    	 
    	 final WFiber dummyFiberAdd = WFiber.createDummyFiber(0);
    	 final WFiber dummyFiberDrop = WFiber.createDummyFiber(1);
@@ -631,7 +630,7 @@ public class OpticalSpectrumManager
    		 {
    			 /* Add lightpath dummy fiber */
    			 final WNode addNode = links.get(0).getA();
-      		 for (WFiber propFiber : addNode.getOpticalSwitchType().getOutFibersIfAddToOutputFiber().apply(links.get(0)))
+      		 for (WFiber propFiber : addNode.getOpticalSwitchingArchitecture().getOutFibersIfAddToOutputFiber(links.get(0)))
       		 {
       			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
       			 propagationGraph.addEdge(dummyFiberAdd, propFiber);
@@ -643,7 +642,7 @@ public class OpticalSpectrumManager
    		 } else
    		 {
    			 final WNode switchNode = fiberToProcess.getB();
-      		 for (WFiber propFiber : switchNode.getOpticalSwitchType().getOutFibersUnavoidablePropagationFromInputFiber().apply(fiberToProcess))
+      		 for (WFiber propFiber : switchNode.getOpticalSwitchingArchitecture().getOutFibersUnavoidablePropagationFromInputFiber(fiberToProcess))
       		 {
       			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
       			 propagationGraph.addEdge(fiberToProcess, propFiber);
@@ -658,7 +657,7 @@ public class OpticalSpectrumManager
       			 final WFiber outFiber = links.get(indexOfFiberInPath + 1);
       			 final WNode expressNode = outFiber.getA();
       			 assert expressNode.equals(inFiber.getB());
-         		 for (WFiber propFiber : expressNode.getOpticalSwitchType().getOutFibersIfExpressFromInputToOutputFiber().apply(inFiber , outFiber))
+         		 for (WFiber propFiber : expressNode.getOpticalSwitchingArchitecture().getOutFibersIfExpressFromInputToOutputFiber(inFiber , outFiber))
          		 {
          			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
          			 propagationGraph.addEdge(inFiber, propFiber);

@@ -10,12 +10,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Link;
@@ -86,7 +88,7 @@ public class WNode extends WAbstractNetworkElement
 //		}
 //	}
 
-	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Node_";
+	static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Node_";
 	private static final String ATTNAMESUFFIX_TYPE = "type";
 	private static final String ATTNAMESUFFIX_ISCONNECTEDTOCORE = "isConnectedToNetworkCore";
 	private static final String RESOURCETYPE_CPU = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "CPU";
@@ -94,10 +96,7 @@ public class WNode extends WAbstractNetworkElement
 	private static final String RESOURCETYPE_HD = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "HD";
 	private static final String ATTNAMESUFFIX_ARBITRARYPARAMSTRING = "ArbitraryString";
 	private static final String ATTNAME_OPTICALSWITCHTYPE = "ATTNAME_OPTICALSWITCHTYPE";
-	private static final String ATTNAME_OPTICALSWITCHTYPEINITSTRING = "ATTNAME_OPTICALSWITCHTYPE_INITSTRING";
-	private static final String ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB = "expressNoiseFigure_db";
-	private static final String ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB = "expressGain_db";
-	private static final String ATTNAMESUFFIX_OADMSWFABRICPMD_PS = "expressPmd_ps";
+	static final String ATTNAME_OPTICALSWITCHTYPEINITSTRING = "ATTNAME_OPTICALSWITCHTYPE_INITSTRING";
 	private static final String ATTNAMESUFFIX_OADMNUMADDMODULES = "oadmNumAddModules";
 	private static final String ATTNAMESUFFIX_OADMNUMDROPMODULES = "oadmNumDropModules";
 	
@@ -240,38 +239,6 @@ public class WNode extends WAbstractNetworkElement
 		n.setName(name);
 	}
 
-	
-	
-	/** Returns the gain observed by the express channels, in dB. Defaults to20.0 dB
-	 * @return see above
-	 */
-	public double getOadmSwitchFabricAttenuation_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, WNetConstants.WNODE_DEFAULT_OPTICALSWITCHFABRIC_ATTENUATION_DB);
-	}
-	/** Returns the PMD added to the express channels, in ps. Defaults to 0 ps
-	 * @return see above
-	 */
-	public double getOadmSwitchFabricPmd_ps ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICPMD_PS, WNetConstants.WNODE_DEFAULT_OPTICALSWITCHFABRIC_PMD_PS);
-	}
-
-	/** Sets the gain observed by the express channels, in dB. 
-	 * @param gain_dB see above
-	 */
-	public void setOadmSwitchFabricAttenuation_dB (double gain_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, gain_dB);
-	}
-	/** Sets the PMD added observed by the express channels, in ps. 
-	 * @param pmd_ps see above
-	 */
-	public void setOadmSwitchFabricPmd_ps (double pmd_ps)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICPMD_PS, pmd_ps);
-	}
-	
 	
 	/**
 	 * Sets the icon to show in Net2Plan GUI for node at the WDM layer, and the relative size respect to other nodes.
@@ -845,26 +812,24 @@ public class WNode extends WAbstractNetworkElement
 			final String classFullName = this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, "");
 			final Class classOfOadmArchit = Class.forName(classFullName);
 			final IOadmArchitecture arc = (IOadmArchitecture) classOfOadmArchit.getConstructor().newInstance();
-			final String initString = this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPEINITSTRING, "");
-			arc.initialize(this , initString);
+			arc.initialize(this);
 			return arc;
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) 
+		} catch (Exception e) 
 		{
 			e.printStackTrace();
 			final OadmArchitecture_roadm res = new OadmArchitecture_roadm();
-			res.initialize(this, "");
-			e.printStackTrace();
+			res.initialize(this);
 			return res;
 		}
 	}
 	
-	public void setOpticalSwitchTypeArchitecture (IOadmArchitecture arc)
+	public void setOpticalSwitchArchitecture (Class opticalArchitectureClass)
 	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, arc.getClass().getName());
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPEINITSTRING, arc.getInitializationString());
+		if (!opticalArchitectureClass.isInstance(IOadmArchitecture.class))
+			throw new Net2PlanException ("The architecture is not an instance of the appropriate class");
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, opticalArchitectureClass.getName());
 	}
-	
+
 	@Override
 	void checkConsistency()
 	{

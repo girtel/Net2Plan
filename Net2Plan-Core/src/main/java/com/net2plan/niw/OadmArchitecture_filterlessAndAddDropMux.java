@@ -10,10 +10,10 @@ import java.util.TreeSet;
 import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
 import com.net2plan.utils.Quadruple;
 
-public class OadmArchitecture_roadm implements IOadmArchitecture
+public class OadmArchitecture_filterlessAndAddDropMux implements IOadmArchitecture
 {
 	private WNode node;
-	public OadmArchitecture_roadm ()
+	public OadmArchitecture_filterlessAndAddDropMux ()
 	{
 	}
 	
@@ -23,13 +23,13 @@ public class OadmArchitecture_roadm implements IOadmArchitecture
 	@Override
 	public String getShortName() 
 	{
-		return "B&S ROADM";
+		return "Filterless D&W";
 	}
 
 	@Override
 	public boolean isPotentiallyWastingSpectrum() 
 	{
-		return false;
+		return true;
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class OadmArchitecture_roadm implements IOadmArchitecture
 		this.node = node;
 	}
 
-	private enum PARAMNAMES {isDirectionLess , isColorless , isRouteAndSelect , AddDropModuleMuxLoss_dB , AddDropModuleMuxPmd_ps , PerWssInsertionLoss_dB , PerWssPmd_ps}
+	private enum PARAMNAMES {AddDropModuleMuxLoss_dB , AddDropModuleMuxPmd_ps , PerWssInsertionLoss_dB , PerWssPmd_ps}
 
 	@Override
 	public List<Quadruple<String, String, String, String>> getParametersInfo_name_default_shortDesc_longDesc() 
