@@ -6,6 +6,7 @@
 package com.net2plan.niw;
 
 import java.awt.geom.Point2D;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,59 +34,58 @@ import com.net2plan.niw.WNetConstants.WTYPE;
  */
 public class WNode extends WAbstractNetworkElement
 {
-	public enum OPTICALSWITCHTYPE
-	{
-		ROADM (
-				e->new TreeSet<> (Arrays.asList(e)) , // add
-				e->new TreeSet<> (), // drop
-				(e1,e2)->new TreeSet<> (Arrays.asList(e2)), // express
-				e->new TreeSet<> () // unavoidable: propagates whatever you do
-				) 
-		, FILTERLESS_DROPANDWASTENOTDIRECTIONLESS (
-				e->new TreeSet<> (Arrays.asList(e)), // add
-				e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // drop
-				(e1,e2)->e1.getB().getOutgoingFibers().stream().filter(ee->e1.isBidirectional()? !ee.equals(e1.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // express
-				e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)) // unavoidable: propagates whatever you do
-				);
+//	public enum OPTICALSWITCHTYPE
+//	{
+//		ROADM (
+//				e->new TreeSet<> (Arrays.asList(e)) , // add
+//				e->new TreeSet<> (), // drop
+//				(e1,e2)->new TreeSet<> (Arrays.asList(e2)), // express
+//				e->new TreeSet<> () // unavoidable: propagates whatever you do
+//				) 
+//		, FILTERLESS_DROPANDWASTENOTDIRECTIONLESS (
+//				e->new TreeSet<> (Arrays.asList(e)), // add
+//				e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // drop
+//				(e1,e2)->e1.getB().getOutgoingFibers().stream().filter(ee->e1.isBidirectional()? !ee.equals(e1.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // express
+//				e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)) // unavoidable: propagates whatever you do
+//				);
+//
+//		private final Function<WFiber , SortedSet<WFiber>> outFibersIfAddToOutputFiber;
+//		private final Function<WFiber , SortedSet<WFiber>> outFibersIfDropFromInputFiber;
+//		private final BiFunction<WFiber , WFiber , SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber;
+//		private final Function<WFiber , SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber;
+//		
+//		private OPTICALSWITCHTYPE(Function<WFiber, SortedSet<WFiber>> outFibersIfAddToOutputFiber, 
+//				Function<WFiber, SortedSet<WFiber>> outFibersIfDropFromInputFiber, 
+//				BiFunction<WFiber, WFiber, SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber,
+//				Function<WFiber, SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber)
+//		{
+//			this.outFibersIfAddToOutputFiber = outFibersIfAddToOutputFiber;
+//			this.outFibersIfDropFromInputFiber = outFibersIfDropFromInputFiber;
+//			this.outFibersIfExpressFromInputToOutputFiber = outFibersIfExpressFromInputToOutputFiber;
+//			this.outFibersUnavoidablePropagationFromInputFiber = outFibersUnavoidablePropagationFromInputFiber;
+//		}
+//		public static OPTICALSWITCHTYPE getDefault () { return ROADM; }
+//		public boolean isRoadm () { return this == ROADM; }
+//		public String getShortName () { return isRoadm()? "ROADM" : "Filterless"; }
+//		public boolean isDropAndWaste () { return this == OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS; }
+//		public Function<WFiber, SortedSet<WFiber>> getOutFibersIfAddToOutputFiber()
+//		{
+//			return this.outFibersIfAddToOutputFiber;
+//		}
+//		public Function<WFiber, SortedSet<WFiber>> getOutFibersIfDropFromInputFiber()
+//		{
+//			return this.outFibersIfDropFromInputFiber;
+//		}
+//		public BiFunction<WFiber, WFiber, SortedSet<WFiber>> getOutFibersIfExpressFromInputToOutputFiber()
+//		{
+//			return this.outFibersIfExpressFromInputToOutputFiber;
+//		}
+//		public Function<WFiber, SortedSet<WFiber>> getOutFibersUnavoidablePropagationFromInputFiber()
+//		{
+//			return this.outFibersUnavoidablePropagationFromInputFiber;
+//		}
+//	}
 
-		private final Function<WFiber , SortedSet<WFiber>> outFibersIfAddToOutputFiber;
-		private final Function<WFiber , SortedSet<WFiber>> outFibersIfDropFromInputFiber;
-		private final BiFunction<WFiber , WFiber , SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber;
-		private final Function<WFiber , SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber;
-		
-		private OPTICALSWITCHTYPE(Function<WFiber, SortedSet<WFiber>> outFibersIfAddToOutputFiber, 
-				Function<WFiber, SortedSet<WFiber>> outFibersIfDropFromInputFiber, 
-				BiFunction<WFiber, WFiber, SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber,
-				Function<WFiber, SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber)
-		{
-			this.outFibersIfAddToOutputFiber = outFibersIfAddToOutputFiber;
-			this.outFibersIfDropFromInputFiber = outFibersIfDropFromInputFiber;
-			this.outFibersIfExpressFromInputToOutputFiber = outFibersIfExpressFromInputToOutputFiber;
-			this.outFibersUnavoidablePropagationFromInputFiber = outFibersUnavoidablePropagationFromInputFiber;
-		}
-		public static OPTICALSWITCHTYPE getDefault () { return ROADM; }
-		public boolean isRoadm () { return this == ROADM; }
-		public String getShortName () { return isRoadm()? "ROADM" : "Filterless"; }
-		public boolean isDropAndWaste () { return this == OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS; }
-		public Function<WFiber, SortedSet<WFiber>> getOutFibersIfAddToOutputFiber()
-		{
-			return this.outFibersIfAddToOutputFiber;
-		}
-		public Function<WFiber, SortedSet<WFiber>> getOutFibersIfDropFromInputFiber()
-		{
-			return this.outFibersIfDropFromInputFiber;
-		}
-		public BiFunction<WFiber, WFiber, SortedSet<WFiber>> getOutFibersIfExpressFromInputToOutputFiber()
-		{
-			return this.outFibersIfExpressFromInputToOutputFiber;
-		}
-		public Function<WFiber, SortedSet<WFiber>> getOutFibersUnavoidablePropagationFromInputFiber()
-		{
-			return this.outFibersUnavoidablePropagationFromInputFiber;
-		}
-	}
-
-	
 	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Node_";
 	private static final String ATTNAMESUFFIX_TYPE = "type";
 	private static final String ATTNAMESUFFIX_ISCONNECTEDTOCORE = "isConnectedToNetworkCore";
@@ -94,10 +94,12 @@ public class WNode extends WAbstractNetworkElement
 	private static final String RESOURCETYPE_HD = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "HD";
 	private static final String ATTNAMESUFFIX_ARBITRARYPARAMSTRING = "ArbitraryString";
 	private static final String ATTNAME_OPTICALSWITCHTYPE = "ATTNAME_OPTICALSWITCHTYPE";
+	private static final String ATTNAME_OPTICALSWITCHTYPEINITSTRING = "ATTNAME_OPTICALSWITCHTYPE_INITSTRING";
 	private static final String ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB = "expressNoiseFigure_db";
 	private static final String ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB = "expressGain_db";
 	private static final String ATTNAMESUFFIX_OADMSWFABRICPMD_PS = "expressPmd_ps";
-
+	private static final String ATTNAMESUFFIX_OADMNUMADDMODULES = "oadmNumAddModules";
+	private static final String ATTNAMESUFFIX_OADMNUMDROPMODULES = "oadmNumDropModules";
 	
 	public void setArbitraryParamString(String s)
 	{
@@ -159,6 +161,62 @@ public class WNode extends WAbstractNetworkElement
 	{
 		return (Node) associatedNpElement;
 	}
+
+	/** Returns the number of add modules in the OADM 
+	 * @return see above
+	 */
+	public int getOadmNumAddModules () 
+	{
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDMODULES, 1.0).intValue(); 
+		return index < 0? 0 : index; 
+	} 
+	
+	/** Returns the number of drop modules in the OADM 
+	 * @return see above
+	 */
+	public int getOadmNumDropModules () 
+	{
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMDROPMODULES, 1.0).intValue(); 
+		return index < 0? 0 : index; 
+	} 
+
+	/** Sets the number of add modules in the OADM (greater or equal to zero)
+	 * @param numModules see above
+	 */
+	public void setOadmNumAddModules (int numModules) 
+	{
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDMODULES, numModules < 0? 0 : numModules); 
+	} 
+	
+	/** Sets the number of drop modules in the OADM (greater or equal to zero)
+	 * @param numModules see above
+	 */
+	public void setOadmNumDropModules (int numModules) 
+	{
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMDROPMODULES, numModules < 0? 0 : numModules); 
+	} 
+
+
+	/** Returns the lightpaths added in this node, connected in the indicated add module index
+	 * @param addModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getAddedLightpaths (int addModuleIndex)
+	{
+		if (addModuleIndex < 0 || addModuleIndex > getOadmNumAddModules()) return new TreeSet<> ();
+		return getAddedLigtpaths().stream().filter(lp->lp.getAddModuleIndexInOrigin() == addModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the lightpaths added in this node, connected in the indicated add module index
+	 * @param addModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getDroppedLightpaths (int dropModuleIndex)
+	{
+		if (dropModuleIndex < 0 || dropModuleIndex > getOadmNumDropModules()) return new TreeSet<> ();
+		return getDroppedLigtpaths().stream().filter(lp->lp.getDropModuleIndexInDestination() == dropModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+	}
+
 
 	/**
 	 * Returns the node name, which must be unique among all the nodes
@@ -565,7 +623,7 @@ public class WNode extends WAbstractNetworkElement
 	 * Returns the set of outgoing lightpaths of the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpath> getOutgoingLigtpaths()
+	public SortedSet<WLightpath> getAddedLigtpaths()
 	{
 		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
 		return n.getOutgoingRoutes(getNet().getWdmLayer().get().getNe()).stream().
@@ -602,7 +660,7 @@ public class WNode extends WAbstractNetworkElement
 	 * Returns the set of incoming lightpaths to the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpath> getIncomingLigtpaths()
+	public SortedSet<WLightpath> getDroppedLigtpaths()
 	{
 		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
 		return n.getIncomingRoutes(getNet().getWdmLayer().get().getNe()).stream().
@@ -780,21 +838,31 @@ public class WNode extends WAbstractNetworkElement
 	/** Indicates if this node has a filterless brodcast operation with the add, dropped and express lightpaths
 	 * @return see above
 	 */
-	public OPTICALSWITCHTYPE getOpticalSwitchType ()
+	public IOadmArchitecture getOpticalSwitchingArchitecture ()
 	{
-		try
+		try 
 		{
-			return OPTICALSWITCHTYPE.valueOf(this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, OPTICALSWITCHTYPE.getDefault().name()));
-		} catch (Exception exc) 
+			final String classFullName = this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, "");
+			final Class classOfOadmArchit = Class.forName(classFullName);
+			final IOadmArchitecture arc = (IOadmArchitecture) classOfOadmArchit.getConstructor().newInstance();
+			final String initString = this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPEINITSTRING, "");
+			arc.initialize(this , initString);
+			return arc;
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) 
 		{
-			exc.printStackTrace();
-			return OPTICALSWITCHTYPE.getDefault();
+			e.printStackTrace();
+			final OadmArchitecture_roadm res = new OadmArchitecture_roadm();
+			res.initialize(this, "");
+			e.printStackTrace();
+			return res;
 		}
 	}
 	
-	public void setOpticalSwitchType (OPTICALSWITCHTYPE type)
+	public void setOpticalSwitchTypeArchitecture (IOadmArchitecture arc)
 	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, type.name());
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, arc.getClass().getName());
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPEINITSTRING, arc.getInitializationString());
 	}
 	
 	@Override
@@ -807,8 +875,8 @@ public class WNode extends WAbstractNetworkElement
 		assert getOutgoingIpConnections().stream().allMatch(e->e.getA().equals(this));
 		assert getIncomingLigtpathRequests().stream().allMatch(e->e.getB().equals(this));
 		assert getOutgoingLigtpathRequests().stream().allMatch(e->e.getA().equals(this));
-		assert getIncomingLigtpaths().stream().allMatch(e->e.getB().equals(this));
-		assert getOutgoingLigtpaths().stream().allMatch(e->e.getA().equals(this));
+		assert getDroppedLigtpaths().stream().allMatch(e->e.getB().equals(this));
+		assert getAddedLigtpaths().stream().allMatch(e->e.getA().equals(this));
 		assert getIncomingServiceChainRequests().stream().allMatch(e->e.getPotentiallyValidDestinations().contains(this));
 		assert getOutgoingServiceChainRequests().stream().allMatch(e->e.getPotentiallyValidOrigins().contains(this));
 		assert getIncomingServiceChains().stream().allMatch(e->e.getB().equals(this));

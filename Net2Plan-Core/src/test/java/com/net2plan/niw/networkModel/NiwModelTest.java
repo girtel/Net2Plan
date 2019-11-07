@@ -111,8 +111,8 @@ public class NiwModelTest extends TestCase
 		this.l41 = lr41.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
         this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		assertEquals(net.getLightpaths(), Arrays.asList(l12, l21, l13, l31, l14, l41));
-		assertEquals(n1.getIncomingLigtpaths(), new TreeSet<>(Arrays.asList(l21, l31, l41)));
-		assertEquals(n1.getOutgoingLigtpaths(), new TreeSet<>(Arrays.asList(l12, l13, l14)));
+		assertEquals(n1.getDroppedLigtpaths(), new TreeSet<>(Arrays.asList(l21, l31, l41)));
+		assertEquals(n1.getAddedLigtpaths(), new TreeSet<>(Arrays.asList(l12, l13, l14)));
 
 		assertTrue(!lr12.isCoupledToIpLink());
 		assertTrue(!i12.getFirst().isCoupledtoLpRequest());

@@ -17,11 +17,8 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -34,31 +31,22 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement.AGTYPE;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
 import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.OpticalSimulationModule;
-import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
 import com.net2plan.niw.OpticalSpectrumManager;
-import com.net2plan.niw.WFiber;
-import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpSourceRoutedConnection;
 import com.net2plan.niw.WLightpath;
-import com.net2plan.niw.WLightpathRequest;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
-import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.niw.WNode;
 import com.net2plan.niw.WServiceChain;
-import com.net2plan.utils.Pair;
 
 /**
  */
@@ -130,10 +118,10 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
             res.add(new AjtColumnInfo<Route>(this , String.class, null , "Transponder name", "Name of the transponder associated to the lightpath request of this lightpath", null , d->toLp.apply(d).getLightpathRequest().getTransponderName().orElse("--") , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , String.class, Arrays.asList("Optical signal") , "Modulation id", "Identifier of the modulation used in this lightpath", (d,val)->toLp.apply(d).setModulationId((String)val) , d->toLp.apply(d).getModulationId() , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp tx: injection power (dBm)", "The injection power of the lightpath, measured at the output of the transponder", (d,val)->toLp.apply(d).setAddTransponderInjectionPower_dBm((Double)val) , d->toLp.apply(d).getAddTransponderInjectionPower_dBm(), AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: power (dBm)", "The optical power at the input reception transponder end of the lightpath", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.POWER_DBM), AGTYPE.NOAGGREGATION , t-> { final double v = osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(t)).get(PERLPINFOMETRICS.POWER_DBM); if (v > toLp.apply(t).getTransponderMaximumTolerableReceptionPower_dBm()) return Color.red; if (v < toLp.apply(t).getTransponderMinimumTolerableReceptionPower_dBm()) return Color.red; return null; } ));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: OSNR (dB)", "The OSNR (at 12.5 GHz reference bandwidth) of the lightpath at the reception end", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW), AGTYPE.NOAGGREGATION , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW) < toLp.apply(d).getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB()? Color.red : null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: CD (ps/nm)", "The chromatic dispersion in ps/nm of the lightpath at the reception end", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.CD_PERPERNM), AGTYPE.NOAGGREGATION , d->Math.abs(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.CD_PERPERNM)) > toLp.apply(d).getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm()? Color.red : null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: PMS (ps)", "The polarization mode dispersion (PMD) in ps, of the lightpath at the reception end", null , d->Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.PMDSQUARED_PS2)), AGTYPE.NOAGGREGATION , d->Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.PMDSQUARED_PS2)) > toLp.apply(d).getTransponderMaximumTolerablePmd_ps()? Color.red : null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: power (dBm)", "The optical power at the input reception transponder end of the lightpath", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getPower_dbm(), AGTYPE.NOAGGREGATION , t-> { final double v = osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(t)).getPower_dbm(); if (v > toLp.apply(t).getTransponderMaximumTolerableReceptionPower_dBm()) return Color.red; if (v < toLp.apply(t).getTransponderMinimumTolerableReceptionPower_dBm()) return Color.red; return null; } ));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: OSNR (dB)", "The OSNR (at 12.5 GHz reference bandwidth) of the lightpath at the reception end", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getOsnrAt12_5GhzRefBw(), AGTYPE.NOAGGREGATION , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getOsnrAt12_5GhzRefBw() < toLp.apply(d).getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB()? Color.red : null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: CD (ps/nm)", "The chromatic dispersion in ps/nm of the lightpath at the reception end", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getCd_psPerNm(), AGTYPE.NOAGGREGATION , d->Math.abs(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getCd_psPerNm()) > toLp.apply(d).getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm()? Color.red : null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: PMS (ps)", "The polarization mode dispersion (PMD) in ps, of the lightpath at the reception end", null , d->Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getPmdSquared_ps2()), AGTYPE.NOAGGREGATION , d->Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getPmdSquared_ps2()) > toLp.apply(d).getTransponderMaximumTolerablePmd_ps()? Color.red : null));
 
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp: Min. rx power (dBm)", "The minimum reception power acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMinimumTolerableReceptionPower_dBm((Double)val) , d->toLp.apply(d).getTransponderMinimumTolerableReceptionPower_dBm(), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp: Max. rx power (dBm)", "The maximum reception power acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMaximumTolerableReceptionPower_dBm((Double)val) , d->toLp.apply(d).getTransponderMaximumTolerableReceptionPower_dBm(), AGTYPE.NOAGGREGATION , null));

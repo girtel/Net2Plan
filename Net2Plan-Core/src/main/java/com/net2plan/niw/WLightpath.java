@@ -32,13 +32,48 @@ public class WLightpath extends WAbstractNetworkElement
 	private static final String ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM = "receiverMaximumCdAbsoluteValue_psPerNM";
 	private static final String ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS = "receiverMaximumPmd_ps";
 	private static final String ATTNAMESUFFIX_RECEIVERMINIMUMOSNR_DB = "receiverMinimumOsnr_dB";
+	private static final String ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN = "addModuleIndexInOrigin";
+	private static final String ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION = "dropModuleIndexInDestination";
 
 	WLightpath (Route r) { super (r, Optional.empty());  }
 
 	@Override
 	public Route getNe () { return (Route) associatedNpElement; }
 
+	/** Returns the index of the add module in the origin OADM
+	 * @return see above
+	 */
+	public int getAddModuleIndexInOrigin () 
+	{
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, 0.0).intValue(); 
+		return index < 0? 0 : index; 
+	} 
+	
+	/** Returns the index of the drop module in the destination OADM
+	 * @return see above
+	 */
+	public int getDropModuleIndexInDestination () 
+	{  
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, 0.0).intValue(); 
+		return index < 0? 0 : index; 
+	} 
 
+	/** Sets the index of the add module used by the lightpath in the origin node. Negative indexes are set to zero
+	 * @param index
+	 */
+	public void setAddModuleIndexInOrigin (int index) 
+	{  
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, index < 0? 0 : index); 
+	} 
+	
+	/** Sets the index of the drop module used by the lightpath in the destination node. Negative indexes are set to zero
+	 * @param index
+	 */
+	public void setDropModuleIndexInDestination (int index) 
+	{  
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, index < 0? 0 : index); 
+	} 
+	
 	/** The origin node of the lighptath, that must the origin node of the associated lightpath request
 	 * @return see above
 	 */
@@ -250,8 +285,8 @@ public class WLightpath extends WAbstractNetworkElement
 	void checkConsistency()
 	{
 		if (this.wasRemoved()) return;
-		assert getA().getOutgoingLigtpaths().contains(this);
-		assert getB().getIncomingLigtpaths().contains(this);
+		assert getA().getAddedLigtpaths().contains(this);
+		assert getB().getDroppedLigtpaths().contains(this);
 		assert getLightpathRequest().getLightpaths().contains(this);
 		if (this.isBackupLightpath()) assert !this.getPrimaryLightpathsOfThisBackupLightpath().isEmpty(); 
 		if (this.isBackupLightpath()) assert this.getPrimaryLightpathsOfThisBackupLightpath().stream().allMatch(lp->lp.getBackupLightpaths().contains(this)); 

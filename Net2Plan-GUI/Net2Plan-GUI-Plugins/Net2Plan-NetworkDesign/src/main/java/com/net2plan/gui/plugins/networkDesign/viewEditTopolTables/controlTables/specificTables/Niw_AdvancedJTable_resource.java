@@ -22,32 +22,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement.AGTYPE;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
-import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.niw.OpticalSimulationModule;
-import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
-import com.net2plan.niw.OpticalSpectrumManager;
-import com.net2plan.niw.WIpSourceRoutedConnection;
-import com.net2plan.niw.WLightpath;
 import com.net2plan.niw.WNet;
-import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNode;
-import com.net2plan.niw.WServiceChain;
 import com.net2plan.niw.WVnfInstance;
 
 /**

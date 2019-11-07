@@ -305,11 +305,11 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 				+ "</tr>");
 		for (WNode n : net.getNodes())
 		{
-			final int addRegLps = (int) n.getOutgoingLigtpaths().stream ().filter(e -> !e.isBackupLightpath()).count();
-			final int dropRegLps = (int) n.getIncomingLigtpaths().stream ().filter(e -> !e.isBackupLightpath()).count();
+			final int addRegLps = (int) n.getAddedLigtpaths().stream ().filter(e -> !e.isBackupLightpath()).count();
+			final int dropRegLps = (int) n.getDroppedLigtpaths().stream ().filter(e -> !e.isBackupLightpath()).count();
 			final int expressRegLps = (int) n.getInOutOrTraversingLigtpaths().stream ().filter(e->!e.getA().equals(n) && !e.getB().equals(n)).filter(e -> !e.isBackupLightpath()).count();
-			final int addBackupLps = (int) n.getOutgoingLigtpaths().stream ().filter(e -> e.isBackupLightpath()).count();
-			final int dropBackupLps = (int) n.getIncomingLigtpaths().stream ().filter(e -> e.isBackupLightpath()).count();
+			final int addBackupLps = (int) n.getAddedLigtpaths().stream ().filter(e -> e.isBackupLightpath()).count();
+			final int dropBackupLps = (int) n.getDroppedLigtpaths().stream ().filter(e -> e.isBackupLightpath()).count();
 			final int expressBackupLps = (int) n.getInOutOrTraversingLigtpaths().stream ().filter(e->!e.getA().equals(n) && !e.getB().equals(n)).filter(e -> e.isBackupLightpath()).count();
 			out.append("<tr>");
 			out.append("<td><a name=\"node" + n.getNe().getIndex() + "\">n" + n.getNe().getIndex() + " (" + n.getName() + ")" + "</a></td>");
