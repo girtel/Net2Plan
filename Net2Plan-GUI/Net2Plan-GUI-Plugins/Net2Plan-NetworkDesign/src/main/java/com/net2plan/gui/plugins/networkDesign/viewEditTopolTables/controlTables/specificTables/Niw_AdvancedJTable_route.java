@@ -113,7 +113,7 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
     		final OpticalSimulationModule osim = callback.getNiwInfo().getFourth();
     		
             res.add(new AjtColumnInfo<Route>(this , Demand.class, null , "Lp request", "Associated lightpath request", null , d->toLp.apply(d).getLightpathRequest().getNe() , AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , Boolean.class, null , "Up?", "Indicates if this lightpath is up (not traversing any down node or fiber)", null , d->!toLp.apply(d).isDown() , AGTYPE.COUNTTRUE , null));
+            res.add(new AjtColumnInfo<Route>(this , Boolean.class, null , "Up?", "Indicates if this lightpath is up (not traversing any down node or fiber)", null , d->!toLp.apply(d).isDown() , AGTYPE.COUNTTRUE , d->toLp.apply(d).isDown()? Color.red : null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, null , "Target line rate (Gbps)", "Nominal line rate for this lightpath (its rate if up)", null , d->toLp.apply(d).getLightpathRequest().getLineRateGbps() , AGTYPE.SUMDOUBLE , null));
             res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# fibers", "Number of traversed fibers links", null , d->toLp.apply(d).getSeqFibers().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# OADMs", "Number of traversed OADM nodes", null , d->toLp.apply(d).getSeqNodes().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION , null));

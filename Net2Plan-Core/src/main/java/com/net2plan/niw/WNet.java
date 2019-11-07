@@ -38,13 +38,19 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.IPUtils;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
+import com.net2plan.utils.Constants;
 import com.net2plan.utils.Pair;
+import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.StringUtils;
 
+import cern.colt.function.tdouble.DoubleDoubleFunction;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
 
 /**
  * This class represents an IP over WDM network with potential VNF placement. This is the main model class, that gives
@@ -587,7 +593,9 @@ public class WNet extends WAbstractNetworkElement
 		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
 		scNp.setServiceChainSequenceOfTraversedResourceTypes(vnfTypesToTraverse);
 		scReq.setIsUpstream(isUpstream);
-		scReq.setPotentiallyValidOrigins(originNodes);
+		/* Set origin nodes directly */
+		scReq.getNe().setAttributeAsStringList(WServiceChainRequest.ATTNAMECOMMONPREFIX + WServiceChainRequest.ATTNAMESUFFIX_VALIDINPUTNODENAMES, originNodes.stream().map(n -> n.getName()).collect(Collectors.toList()));
+		//scReq.setPotentiallyValidOrigins(originNodes);
 		scReq.setPotentiallyValidDestinations(endNodes);
 		final int numVnfs = vnfTypesToTraverse.size();
 		List<Double> defaultSeqExpFactor = defaultSequenceOfExpansionFactors.orElse(null);
@@ -1134,7 +1142,7 @@ public class WNet extends WAbstractNetworkElement
     	final int numIpLayers = (int) getNe().getNetworkLayers().stream().filter(e->isIp.apply(e)).count ();
     	final int numWdmLayers = (int) getNe().getNetworkLayers().stream().filter(e->isWdm.apply(e)).count ();
     	if (numIpLayers > 1 || numWdmLayers > 1) throw new Net2PlanException ();
-    	if (numIpLayers + numWdmLayers != getNe().getNumberOfLayers()) throw new Net2PlanException ();
+    	if (numIpLayers + numWdmLayers != getNe().getNumberOfLayers()) throw new Net2PlanException ("Num IP layers: " + numIpLayers + ", num WDM layers: " + numWdmLayers + ", num layers: " + getNe().getNumberOfLayers());
 
     	getNodes().forEach(e->e.checkConsistency());
 		getFibers().forEach(e->e.checkConsistency());
@@ -1334,4 +1342,6 @@ public class WNet extends WAbstractNetworkElement
 	@Override
 	public WTYPE getWType() { return WTYPE.WNet; }
 
+	
+	
 }

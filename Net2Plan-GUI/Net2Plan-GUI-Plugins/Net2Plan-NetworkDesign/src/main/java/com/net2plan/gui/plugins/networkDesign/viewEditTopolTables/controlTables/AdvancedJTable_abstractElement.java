@@ -791,10 +791,10 @@ public abstract class AdvancedJTable_abstractElement<T> extends AdvancedJTable
             submenus.add(new AjtRcMenu(viewTypeDefined == null? "Default view" : viewTypeDefined, 
                     (e)-> 
             		{
-            			if (callback.getVisibleColumnsInTables().contains(viewTypeDefined))
-            				callback.removeVisibleColumnInTable(viewTypeDefined);
+            			if (callback.getVisibleColumnsInTables().contains(viewTypeDefined == null? "Default view" : viewTypeDefined))
+            				callback.removeVisibleColumnInTable(viewTypeDefined == null? "Default view" : viewTypeDefined);
             			else
-            				callback.addVisibleColumnInTable(viewTypeDefined); 
+            				callback.addVisibleColumnInTable(viewTypeDefined == null? "Default view" : viewTypeDefined); 
             		}  , 
                     (a,b)->true, null));
         final AjtRcMenu res =  new AjtRcMenu("View", null, (a,b)->true, submenus);
