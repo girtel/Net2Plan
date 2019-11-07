@@ -41,7 +41,6 @@ import com.net2plan.utils.Triple;
  * <p>This report is valid for the designs construcgted using the NIW library, which permits flexi-grid, and multi-modulation networks.
  * <p>The report provides a number of statistics regarding frequency slot occupation. It also warns about possible frequency slot clashing 
  *  two lightpaths using the same slot in the same fibers)</p>
- * @net2plan.keywords WDM
  * @author Pablo Pavon-Marino
  */ 
 public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IReport
