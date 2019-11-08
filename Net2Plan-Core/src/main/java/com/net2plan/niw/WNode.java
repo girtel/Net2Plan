@@ -203,7 +203,7 @@ public class WNode extends WAbstractNetworkElement
 	public SortedSet<WLightpath> getAddedLightpaths (int addModuleIndex)
 	{
 		if (addModuleIndex < 0 || addModuleIndex > getOadmNumAddModules()) return new TreeSet<> ();
-		return getAddedLigtpaths().stream().filter(lp->lp.getAddModuleIndexInOrigin() == addModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+		return getAddedLigtpaths().stream().filter(lp->lp.getAddModuleIndexInOriginIfDirectionless().orElse(-1) == addModuleIndex).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/** Returns the lightpaths added in this node, connected in the indicated add module index
@@ -213,7 +213,7 @@ public class WNode extends WAbstractNetworkElement
 	public SortedSet<WLightpath> getDroppedLightpaths (int dropModuleIndex)
 	{
 		if (dropModuleIndex < 0 || dropModuleIndex > getOadmNumDropModules()) return new TreeSet<> ();
-		return getDroppedLigtpaths().stream().filter(lp->lp.getDropModuleIndexInDestination() == dropModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+		return getDroppedLigtpaths().stream().filter(lp->lp.getDropModuleIndexInDestinationIfDirectionless().orElse(-1) == dropModuleIndex).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 

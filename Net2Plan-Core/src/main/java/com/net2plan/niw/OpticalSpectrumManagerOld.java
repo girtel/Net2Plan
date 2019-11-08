@@ -43,21 +43,21 @@ import com.net2plan.utils.Triple;
  * All optical slots are supposed to have the same width 12.5 GHz (see WNetConstants)
  *
  */
-public class OpticalSpectrumManager
+public class OpticalSpectrumManagerOld
 {
 	private WNet wNet;
 	final private SortedMap<WFiber,SortedMap<Integer,SortedSet<WLightpath>>> occupation_f_s_ll = new TreeMap<> ();
 	final private SortedMap<WLightpath,SortedMap<WFiber,SortedSet<Integer>>> occupation_ll_f_s = new TreeMap<> ();
 
-	private OpticalSpectrumManager (WNet wNet) { this.wNet = wNet; }
+	private OpticalSpectrumManagerOld (WNet wNet) { this.wNet = wNet; }
 	
 	/** Creates this object, asociated to a given network
 	 * @param net the network
 	 * @return see above
 	 */
-	public static OpticalSpectrumManager createFromRegularLps (WNet net)
+	public static OpticalSpectrumManagerOld createFromRegularLps (WNet net)
     {
-		final OpticalSpectrumManager osm = new OpticalSpectrumManager(net);
+		final OpticalSpectrumManagerOld osm = new OpticalSpectrumManagerOld(net);
 		for (WLightpath lp : net.getLightpaths())
 			osm.allocateOccupation(lp, lp.getSeqFibers(), lp.getOpticalSlotIds());
         return osm;
@@ -67,7 +67,7 @@ public class OpticalSpectrumManager
 	 * @param net the network
 	 * @return see above
 	 */
-	public OpticalSpectrumManager resetFromRegularLps (WNet net)
+	public OpticalSpectrumManagerOld resetFromRegularLps (WNet net)
     {
 		this.wNet = net;
 		this.occupation_f_s_ll.clear();
@@ -94,16 +94,6 @@ public class OpticalSpectrumManager
         return validSlotIds;
     }
     
-    /** Given a lightpath request, returns the optical slots occupied in the traversed fibers
-     * @param lp the lightpath request
-     * @return see above
-     */
-    public SortedMap<WFiber,SortedSet<Integer>> getOccupiedResources (WLightpathRequest lp)
-    {
-   	 checkSameWNet(lp);
-    	return this.occupation_ll_f_s.getOrDefault(lp, new TreeMap<> ());
-    }
-
     /** Given a fiber, returns a map with the occupied optical slot ids, mapped to the set of lightpaths that occupy it. 
      * Note that if more than one lightpath occupies a given slot, means that spectrum clashing occurs in that slot   
      * @param fiber the input fiber
@@ -459,24 +449,6 @@ public class OpticalSpectrumManager
         return true;
     }
     
-    /** Checks if the optical slot occupation --
-     * 
-     */
-    public void checkNetworkSlotOccupation ()
-    {
-        for (Entry<WFiber,SortedMap<Integer,SortedSet<WLightpath>>> occup_e : occupation_f_s_ll.entrySet())
-        {
-            final WFiber e = occup_e.getKey();
-            assert e.isBidirectional();
-            final SortedMap<Integer,SortedSet<WLightpath>> occup = occup_e.getValue();
-            if (!e.getValidOpticalSlotIds().containsAll(occup.keySet())) throw new Net2PlanException ("The optical slots occupied at link " + e + " are outside the valid range");
-            for (Set<WLightpath> rs : occup.values())
-                if (rs.size() != 1) throw new Net2PlanException ("The optical slots occupation is not correct");
-        }       
-    }
-    
-
-    
     private static boolean isValidOpticalSlotIdRange (SortedSet<Integer> validSlots , int initialSlot , int numContiguousSlots)
     {
         for (int cont = 0; cont < numContiguousSlots ; cont ++)
@@ -604,15 +576,6 @@ public class OpticalSpectrumManager
     */
    public static Triple<SortedSet<WFiber>,List<List<WFiber>>,Boolean> getPropagatingFibersLasingLoopsAndIsMultipathOk (List<WFiber> links)
     {
-	   Idea:
-		   - Devuelva solo waste
-		   - Multipath ok es que no haya un waste mio solape con legitimate mio
-		   - Incluya Pair<WNode,Integer> de drop modules en non-directionless, ocupados
-		   - El add module ocupado se supone que es iunicamente el de origen
-		   
-	   
-	   
-	   
    	 if (links.isEmpty()) throw new Net2PlanException ("The path is empty");
    	 if (getContinousSequenceOfNodes(links).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum())) return Triple.of(new TreeSet<> (links), new  ArrayList<> (), true);
    	 

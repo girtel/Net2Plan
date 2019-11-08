@@ -50,8 +50,8 @@ public interface IOadmArchitecture
 		getHostNode().getNe().setAttributeAsStringMatrix(WNode.ATTNAMECOMMONPREFIX + WNode.ATTNAME_OPTICALSWITCHTYPEINITSTRING, initString);
 	}
 	
-	public abstract LpSignalState getOutLpStateForAddedLp (LpSignalState stateAtTheOutputOfTransponder , int inputAddModuleIndex , WFiber output , int numOpticalSlotsNeededIfEqualization);
-	public abstract LpSignalState getOutLpStateForDroppedLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , int inputDropModuleIndex);
+	public abstract LpSignalState getOutLpStateForAddedLp (LpSignalState stateAtTheOutputOfTransponder , Optional<Integer> inputAddModuleIndex , WFiber output , int numOpticalSlotsNeededIfEqualization);
+	public abstract LpSignalState getOutLpStateForDroppedLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , Optional<Integer> inputDropModuleIndex);
 	public abstract LpSignalState getOutLpStateForExpressLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , WFiber outputFiber , int numOpticalSlotsNeededIfEqualization);
 
 	public abstract boolean isDirectionLess ();

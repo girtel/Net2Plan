@@ -40,38 +40,40 @@ public class WLightpath extends WAbstractNetworkElement
 	@Override
 	public Route getNe () { return (Route) associatedNpElement; }
 
-	/** Returns the index of the add module in the origin OADM
+	/** Returns the index of the add module in the origin OADM. Empty if origin node is not directionless, or if index stored is negative
 	 * @return see above
 	 */
-	public int getAddModuleIndexInOrigin () 
+	public Optional<Integer> getAddModuleIndexInOriginIfDirectionless () 
 	{
-		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, 0.0).intValue(); 
-		return index < 0? 0 : index; 
+		if (!getA().getOpticalSwitchingArchitecture().isDirectionLess()) return Optional.empty();
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, -1.0).intValue(); 
+		return index < 0? Optional.empty() : Optional.of(index); 
 	} 
 	
-	/** Returns the index of the drop module in the destination OADM
+	/** Returns the index of the drop module in the destination OADM. Empty if destination node is not directionless, or if index stored is negative
 	 * @return see above
 	 */
-	public int getDropModuleIndexInDestination () 
+	public Optional<Integer> getDropModuleIndexInDestinationIfDirectionless () 
 	{  
-		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, 0.0).intValue(); 
-		return index < 0? 0 : index; 
+		if (!getB().getOpticalSwitchingArchitecture().isDirectionLess()) return Optional.empty();
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, -1.0).intValue(); 
+		return index < 0? Optional.empty() : Optional.of(index); 
 	} 
 
-	/** Sets the index of the add module used by the lightpath in the origin node. Negative indexes are set to zero
+	/** Sets the index of the add module used by the lightpath in the origin node. Negative indexes mean no information
 	 * @param index
 	 */
-	public void setAddModuleIndexInOrigin (int index) 
+	public void setAddModuleIndexInOriginIfDirectionless (Optional<Integer> index) 
 	{  
-		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, index < 0? 0 : index); 
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, index.isPresent()? -1 : index.get()); 
 	} 
 	
-	/** Sets the index of the drop module used by the lightpath in the destination node. Negative indexes are set to zero
+	/** Sets the index of the drop module used by the lightpath in the destination node. Negative indexes mean no information
 	 * @param index
 	 */
-	public void setDropModuleIndexInDestination (int index) 
+	public void setDropModuleIndexInDestinationIfDirectionless (Optional<Integer> index) 
 	{  
-		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, index < 0? 0 : index); 
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, index.isPresent()? -1 : index.get()); 
 	} 
 	
 	/** The origin node of the lighptath, that must the origin node of the associated lightpath request

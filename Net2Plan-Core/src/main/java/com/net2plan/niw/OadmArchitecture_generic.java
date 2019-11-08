@@ -3,6 +3,7 @@ package com.net2plan.niw;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -43,19 +44,6 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		else
 			return new TreeSet<> (Arrays.asList(outputFiber)); // directed & filterless: only output fiber
 	}
-
-//	ROADM (
-//	e->new TreeSet<> (Arrays.asList(e)) , // add
-//	e->new TreeSet<> (), // drop
-//	(e1,e2)->new TreeSet<> (Arrays.asList(e2)), // express
-//	e->new TreeSet<> () // unavoidable: propagates whatever you do
-//	) 
-//, FILTERLESS_DROPANDWASTENOTDIRECTIONLESS (
-//	e->new TreeSet<> (Arrays.asList(e)), // add
-//	e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // drop
-//	(e1,e2)->e1.getB().getOutgoingFibers().stream().filter(ee->e1.isBidirectional()? !ee.equals(e1.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // express
-//	e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)) // unavoidable: propagates whatever you do
-//	);
 
 	@Override
 	public SortedSet<WFiber> getOutFibersIfDropFromInputFiber(WFiber inputFiber) 
@@ -108,9 +96,9 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	public List<Quadruple<String, String, String, String>> getParametersInfo_name_default_shortDesc_longDesc() 
 	{
 		return Arrays.asList(
-				Quadruple.of(PARAMNAMES.ArchitectureType.name (), "#select B&S R&S filterless", "Opt. Sw. Arch." , "Indication of the architecture type: R&S is route and select (WSS in the in degrees and out degrees), B&S is broadcast-and-select (coupler at the input degree, WSS at the output), filterless: means a coupler at the input and output degrees."),
-				Quadruple.of(PARAMNAMES.IsDirectionLess.name (), "1", "Directionless?" , "Indication is the architecture is directionless.  If so, each add/drop module has a similar structure (R&S, B&S, filterless) as a regular degree, so add/drop lightpaths can chage its in/out direction without manual reconfiguration. If not directionless, one add/drop module exist per regular degree, hosting the transponders of the ligtpaths add/dropped in that degree. Then, changing the in/out degree of an add/dropped lightpath, requires phisically moving the transponder to other module"),
-				Quadruple.of(PARAMNAMES.AddDropModuleType.name (), "#select Mux/Demux-based WSS-based", "Add/Drop type", "The optical element used to build the add/drop modules. Two options: 1) Mux/Demux means using a passive (de)multiplexer. This is not a colorless option, since to change the lightpath wavelength, we should phisically change the port of the transponder in the mux/demux. 2) WSS: a WSS for add and other for drop, remotely reconfigurable. This is a colorless option, so retuning a transponder can be made without the need of phisically changing its port in the WSS"),
+				Quadruple.of(PARAMNAMES.ArchitectureType.name (), "B&S", "Opt. Sw. Arch." , "Indication of the architecture type: R&S is route and select (WSS in the in degrees and out degrees), B&S is broadcast-and-select (coupler at the input degree, WSS at the output), filterless: means a coupler at the input and output degrees."),
+				Quadruple.of(PARAMNAMES.IsDirectionLess.name (), "0", "Directionless?" , "Indication is the architecture is directionless.  If so, each add/drop module has a similar structure (R&S, B&S, filterless) as a regular degree, so add/drop lightpaths can chage its in/out direction without manual reconfiguration. If not directionless, one add/drop module exist per regular degree, hosting the transponders of the ligtpaths add/dropped in that degree. Then, changing the in/out degree of an add/dropped lightpath, requires phisically moving the transponder to other module"),
+				Quadruple.of(PARAMNAMES.AddDropModuleType.name (), "Mux/Demux-based", "Add/Drop type", "The optical element used to build the add/drop modules. Two options: 1) Mux/Demux means using a passive (de)multiplexer. This is not a colorless option, since to change the lightpath wavelength, we should phisically change the port of the transponder in the mux/demux. 2) WSS: a WSS for add and other for drop, remotely reconfigurable. This is a colorless option, so retuning a transponder can be made without the need of phisically changing its port in the WSS"),
 				Quadruple.of(PARAMNAMES.MuxDemuxLoss_dB.name (), "6.0", "Mux/Demux loss (dB)", "The add/drop modules where the transponders are attached can be realized with a multiplexer/demultiplexer. This is the added attenuation in dB"),
 				Quadruple.of(PARAMNAMES.MuxDemuxPmd_ps.name (), "0.5", "Mux/Demux PMD (ps)", "The add/drop modules where the transponders are attached can be realized with a multiplexer/demultiplexer. This is the added PMD in ps"),
 				Quadruple.of(PARAMNAMES.WssLoss_dB.name (), "7.0", "WSS loss (dB)", "The add/drop modules and/or degrees can be realized with WSSa. This is the added attenuation in dB"),
@@ -190,7 +178,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 
 	
 	@Override
-	public LpSignalState getOutLpStateForAddedLp(LpSignalState stateAtTheOutputOfTransponder, int inputAddModuleIndex,
+	public LpSignalState getOutLpStateForAddedLp(LpSignalState stateAtTheOutputOfTransponder, Optional<Integer> inputAddModuleIndex,
 			WFiber output , int numOpticalSlotsNeededIfEqualization) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
@@ -247,7 +235,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 
 	@Override
 	public LpSignalState getOutLpStateForDroppedLp(LpSignalState stateAtTheInputOfOadmAfterPreamplif, WFiber inputFiber,
-			int inputDropModuleIndex) 
+			Optional<Integer> inputDropModuleIndex) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 
@@ -362,5 +350,4 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		return new Parameters(getCurrentParameters().orElse(getDefaultParameters())).isAddDropTypeWssBased();
 	}
 
-	
 }
