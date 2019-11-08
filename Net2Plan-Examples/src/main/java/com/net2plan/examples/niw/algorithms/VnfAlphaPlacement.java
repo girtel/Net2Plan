@@ -396,58 +396,25 @@ public class VnfAlphaPlacement implements IAlgorithm {
 
 						//Latency...
 						double propagationDelay = 0;
-						int numberOfNodes = 0;
+						int numberOfLinks = 0;
 						
-						if(randomNodeSequence.size() != 0) {
-							for(WNode n : randomNodeSequence) {
+						for(WAbstractNetworkElement ip : ipPath) {
+							if(ip.isWIpLink()) {
+								WIpLink ipLink = ip.getAsIpLink();
+								WNode A = ipLink.getA();
+								WNode B = ipLink.getB();
 								
-								if(randomNodeSequence.size() == 1) {
-									System.out.println("Random sequence size is 1");
-									List<WFiber> fiber = wNet.getKShortestWdmPath(1, node, n, Optional.empty()).get(0);
-									numberOfNodes += fiber.size();
-									System.out.println(fiber);
-									System.out.println("Fibers node->n: "+ fiber.size());
-									propagationDelay += wNet.getPropagationDelay(fiber);
-									fiber = wNet.getKShortestWdmPath(1, n, coreNode, Optional.empty()).get(0);
-									numberOfNodes += fiber.size();
-									System.out.println(fiber);
-									System.out.println("Fibers n->coreNode: "+ fiber.size());
-									propagationDelay += wNet.getPropagationDelay(fiber);
-									numberOfNodes++; //+= (2-1);
-									
-								}else {
-									if(randomNodeSequence.indexOf(n) == 0) { //first
-										List<WFiber> fiber = wNet.getKShortestWdmPath(1, node, n, Optional.empty()).get(0);
-										propagationDelay += wNet.getPropagationDelay(fiber);
-									}else if (randomNodeSequence.indexOf(n) == randomNodeSequence.size()-1){ //last
-										List<WFiber> fiber = wNet.getKShortestWdmPath(1, n, coreNode, Optional.empty()).get(0);
-										propagationDelay += wNet.getPropagationDelay(fiber);
-									}else {
-										int index = randomNodeSequence.indexOf(n);
-										List<WFiber> fiber = wNet.getKShortestWdmPath(1, randomNodeSequence.get(index-1), n, Optional.empty()).get(0);
-										propagationDelay += wNet.getPropagationDelay(fiber);
-									}
-									numberOfNodes = randomNodeSequence.size()+2;
-								}
-								
+								WFiber fiber = wNet.getKShortestWdmPath(1, A, B, Optional.empty()).get(0).get(0);
+								propagationDelay += fiber.getPropagationDelayInMs();
+								numberOfLinks++;
 							}
-							double latency = propagationDelay + 2 * 0.1 * numberOfNodes;
-							latencies.add(latency);
-							System.out.println("latency = propagationDelay + 2 * 0.1 * numberOfNodes");
-							System.out.println("latency = "+propagationDelay+" + 2 * 0.1 * "+numberOfNodes);
-							System.out.println("Latency in this iteration: "+latency);
-							
-						}else {
-							System.out.println("NO RANDOM NODES...");
-							System.out.println("Number of links to traverse (hops): " + firstFiberLinks.size());
-							propagationDelay = wNet.getPropagationDelay(firstFiberLinks);
-							double latency = propagationDelay + 2 * 0.1 * firstFiberLinks.size();
-							latencies.add(latency);
-							System.out.println("latency = propagationDelay + 2 * 0.1 * fibers.size()");
-							System.out.println("latency = "+propagationDelay+" + 2 * 0.1 * "+firstFiberLinks.size());
-							System.out.println("Latency in this iteration: "+latency);
 						}
-
+						double latency = propagationDelay + 2 * 0.1 * numberOfLinks;
+						latencies.add(latency);
+						System.out.println("latency = propagationDelay + 2 * 0.1 * fibers.size()");
+						System.out.println("latency = "+propagationDelay+" + 2 * 0.1 * "+numberOfLinks);
+						System.out.println("Latency in this iteration: "+latency);
+						
 						
 					} // else
 			}
