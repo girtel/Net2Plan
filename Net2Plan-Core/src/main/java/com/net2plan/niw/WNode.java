@@ -817,7 +817,7 @@ public class WNode extends WAbstractNetworkElement
 		} catch (Exception e) 
 		{
 			e.printStackTrace();
-			final OadmArchitecture_roadm res = new OadmArchitecture_roadm();
+			final OadmArchitecture_generic res = new OadmArchitecture_generic();
 			res.initialize(this);
 			return res;
 		}

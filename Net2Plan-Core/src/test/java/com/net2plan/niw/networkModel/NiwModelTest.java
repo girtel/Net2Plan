@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.net2plan.niw.OadmArchitecture_generic;
 import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
 import com.net2plan.niw.OpticalSpectrumManager;
@@ -184,11 +185,11 @@ public class NiwModelTest extends TestCase
 		assertEquals(n3.getVnfInstances(vnfType2.getVnfTypeName()).first().getTraversingServiceChains(), new TreeSet<>(Arrays.asList(sc13)));
 		net.checkConsistency();
 
-		n1.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-		n2.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-        n3.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-        n4.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-		n5.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
+		n1.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+		n2.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+        n3.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+        n4.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+		n5.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
 
         this.osm = OpticalSpectrumManager.createFromRegularLps(net);
         List<List<WFiber>> res = new ArrayList<>();

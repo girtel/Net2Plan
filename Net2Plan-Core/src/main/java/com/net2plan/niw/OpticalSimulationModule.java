@@ -154,7 +154,7 @@ public class OpticalSimulationModule
    				 final LpSignalState afterPreviousFiberEndPreampl = previousFiber.isExistingPreamplifierAtDestinationOadm()? 
    						getStateAfterOpticalAmplifier (centralFrequency_hz , beforePreviousFiberEndPreampl , previousFiber.getDestinationPreAmplifierGain_dB().get() , previousFiber.getDestinationPreAmplifierCdCompensation_psPerNm().get() , previousFiber.getDestinationPreAmplifierPmd_ps().get() , previousFiber.getDestinationPreAmplifierNoiseFactor_dB().get()) : 
    							beforePreviousFiberEndPreampl.getCopy();
-				state_startFiberBeforeBooster = oadm_a.getOutLpStateForExpressLp(afterPreviousFiberEndPreampl, previousFiber, fiber);
+				state_startFiberBeforeBooster = oadm_a.getOutLpStateForExpressLp(afterPreviousFiberEndPreampl, previousFiber, fiber , numOpticalSlots);
    			 }
    			 final LpSignalState state_startFiberAfterBooster = fiber.isExistingBoosterAmplifierAtOriginOadm()? 
 	   						getStateAfterOpticalAmplifier (centralFrequency_hz , state_startFiberBeforeBooster , fiber.getOriginBoosterAmplifierGain_dB().get() , fiber.getOriginBoosterAmplifierCdCompensation_psPerNm().get() , fiber.getOriginBoosterAmplifierPmd_ps().get() , fiber.getOriginBoosterAmplifierNoiseFactor_dB().get()) : 

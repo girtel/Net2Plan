@@ -15,8 +15,8 @@ import com.net2plan.utils.Quadruple;
 
 public interface IOadmArchitecture 
 {
-	public final static Class defaultClass = OadmArchitecture_roadm.class; 
-	public final static List<IOadmArchitecture> availableRepresentatives = Arrays.asList(new OadmArchitecture_roadm ()); 
+	public final static Class defaultClass = OadmArchitecture_generic.class; 
+	public final static List<IOadmArchitecture> availableRepresentatives = Arrays.asList(new OadmArchitecture_generic ()); 
 	public abstract WNode getHostNode ();
 	public default boolean isNeverCreatingWastedSpectrum () { return !isPotentiallyWastingSpectrum(); }
 	public abstract String getShortName ();
@@ -52,14 +52,12 @@ public interface IOadmArchitecture
 	
 	public abstract LpSignalState getOutLpStateForAddedLp (LpSignalState stateAtTheOutputOfTransponder , int inputAddModuleIndex , WFiber output , int numOpticalSlotsNeededIfEqualization);
 	public abstract LpSignalState getOutLpStateForDroppedLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , int inputDropModuleIndex);
-	public abstract LpSignalState getOutLpStateForExpressLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , WFiber outputFiber);
+	public abstract LpSignalState getOutLpStateForExpressLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , WFiber outputFiber , int numOpticalSlotsNeededIfEqualization);
 
 	public abstract boolean isDirectionLess ();
 
 	public abstract boolean isColorless ();
 	
-	public abstract boolean isFullyContentionless ();
-
 	
 //	public default Optional<Integer> getInputExpressPortIndex(WFiber e) 
 //	{
