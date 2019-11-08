@@ -22,13 +22,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DimensioningPlanning implements IAlgorithm {
+	
+	List<Double> latencies =  new ArrayList <Double>();
 
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters,Map<String, String> net2planParameters) {
 
-		
-
-		
 		final Double Lmax = Double.parseDouble(algorithmParameters.get("Lmax"));
 		final File folder = new File ("Results");
 		if (folder.exists() && folder.isFile()) throw new Net2PlanException ("The folder is a file");
@@ -37,6 +36,13 @@ public class DimensioningPlanning implements IAlgorithm {
 			
 			WNet wNet = runAlgorithm(netPlan, algorithmParameters);
 
+			
+			System.out.println("Max: "+Collections.max(latencies));
+			System.out.println("Min: "+Collections.min(latencies));
+			
+			double average = latencies.stream().mapToDouble(val -> val).average().orElse(0.0);
+			System.out.println("Average: "+average);
+			
 			/* Dimension the VNF instances, consuming the resources CPU, HD, RAM */
 			/*
 			 * for(WVnfInstance vnf : wNet.getVnfInstances())
@@ -49,30 +55,40 @@ public class DimensioningPlanning implements IAlgorithm {
 
 			
 			//SORTED BY NAME
+			double nodeCost = 0;
 			double finalCost = 0;
+			List<WLightpath> lpList = wNet.getLightpaths();
 			
 			final List<String> namesString =  new ArrayList<>();
+			final List<String> costString = new ArrayList<> ();
 			final List<String> summaryString = new ArrayList<> ();
 			
 			for(WNode node : wNet.getNodes()) {
 				namesString.add("'"+node.getName()+"' ");
-				finalCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
-				summaryString.add(Double.toString(finalCost));
+				nodeCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
+				finalCost += nodeCost;
+				costString.add(Double.toString(nodeCost));
 			}
-	
+			
+			summaryString.add(Double.toString(finalCost));
+			summaryString.add(Double.toString(lpList.size()));
+			for(String st : costString) summaryString.add(st);
+			
+			
 			writeFileInOneLine (new File (folder , "names_sortedByName"+ ".txt") , namesString);
 			writeFile (new File (folder , "sortedByName" + Lmax  + ".txt") , summaryString);
 
 			
-			//SORTED BY POPULATION
+			//SORTED BY NUMBER OF VNFS INSTANTIATED
 			namesString.clear();
+			costString.clear();
 			summaryString.clear();
 			finalCost = 0;
 
 			Comparator<WNode> comparator = new Comparator<WNode>() {
 			    @Override
 			    public int compare(WNode A, WNode B) {
-			        return (int) (B.getPopulation() - A.getPopulation());
+			        return (int) (B.getAllVnfInstances().size() - A.getAllVnfInstances().size());
 			    }
 			};
 			
@@ -81,12 +97,17 @@ public class DimensioningPlanning implements IAlgorithm {
 			
 			for(WNode node : nodesSortedByPopulation) {
 				namesString.add("'"+node.getName()+"' ");
-				finalCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
-				summaryString.add(Double.toString(finalCost));
+				nodeCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
+				finalCost += nodeCost;
+				costString.add(Double.toString(finalCost));
 			}
 			
-			writeFileInOneLine (new File (folder , "names_sortedByPopulation"+ ".txt") , namesString);
-			writeFile (new File (folder , "sortedByPopulation" + Lmax  + ".txt") , summaryString);
+			summaryString.add(Double.toString(finalCost));
+			summaryString.add(Double.toString(lpList.size()));
+			for(String st : costString) summaryString.add(st);
+			
+			writeFileInOneLine (new File (folder , "names_sortedByNumberOfVNFs"+ ".txt") , namesString);
+			writeFile (new File (folder , "sortedByNumberOfVNFs" + Lmax  + ".txt") , summaryString);
 
 		return "Ok";
 	}
@@ -121,6 +142,7 @@ public class DimensioningPlanning implements IAlgorithm {
 			sc.remove();
 
 		/* Create Services and VNFs */
+		int totalNumberOfVNFS = 0;
 		for (int i = 0; i < numServices; i++) {
 			int numberOfVNFsInThisService = (int) randomWithRange(rng , 1, 5);
 			List<String> vnfsUpstream = new ArrayList<String>();
@@ -156,9 +178,17 @@ public class DimensioningPlanning implements IAlgorithm {
 														""); // Arbitrary params
 			userService.setArbitraryParamString(trafficPerUserInGbps + "");
 			wNet.addOrUpdateUserService(userService);
+			
+			totalNumberOfVNFS += numberOfVNFsInThisService;
 		}
 		
 		
+		System.out.println("######################################################################################");
+		System.out.println("Total number of VNFs: "+totalNumberOfVNFS);
+		System.out.println("Total number of CPU: "+ (totalNumberOfVNFS*2));
+		System.out.println("Total number of RAM: "+ (totalNumberOfVNFS*4));
+		System.out.println("Total number of HD: "+ (totalNumberOfVNFS*20));
+		System.out.println("######################################################################################");
 		
 		/* Adding lightpaths */
 		for (WNode origin : wNet.getNodes()) {
@@ -219,6 +249,8 @@ public class DimensioningPlanning implements IAlgorithm {
 				collect(Collectors.toList());
 		
 		/* Iterate each ServiceChainRequest */
+		int it = 0;
+		int totalNumberOfIterations = orderedServiceChainRequestsHigherToLowerTraffic.size();
 		for (WServiceChainRequest scr : orderedServiceChainRequestsHigherToLowerTraffic)
 		{
 		
@@ -231,6 +263,7 @@ public class DimensioningPlanning implements IAlgorithm {
 			
 			/*######################################### Some prints ############################################*/
 			System.out.println("---------------------------------------------------------------");
+			System.out.println("Iteration number "+ ++it +" out of "+totalNumberOfIterations);
 			System.out.println("totalTrafficInGbpsOfThisServiceInThisNodeGbps: "+totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 			//System.out.println("Iteration " + node.getName() + " & " + service.getUserServiceUniqueId());
 			System.out.println("Iteration " + node.getName() + " & " + scr.getId());
@@ -256,6 +289,9 @@ public class DimensioningPlanning implements IAlgorithm {
 				System.out.println("#1 Allocating resources in the own node");
 				System.out.println(paths.get(0));
 				scr.addServiceChain(paths.get(0),totalTrafficInGbpsOfThisServiceInThisNodeGbps);
+				
+				latencies.add(0.2); //minimum latency
+				System.out.println("Latency in this iteration: "+0.2);
 
 				// else, we need to discover the option that meets the requirements.
 			} else 
@@ -275,7 +311,7 @@ public class DimensioningPlanning implements IAlgorithm {
 					/* Worst latency case in this fiber path*/
 					final double propagationDelay = wNet.getPropagationDelay(firstFiberLinks);
 					final double latency = propagationDelay + 2 * 0.1 * firstFiberLinks.size();
-
+					
 					/*######################################### Some prints ############################################*/
 					System.out.print(node.getName());
 					for(WFiber fiber : firstFiberLinks) {
@@ -325,7 +361,21 @@ public class DimensioningPlanning implements IAlgorithm {
 							if(ipList.size() != 0) finalIpPath.add(ipList.get(0)); else finalIpPath.add(null);	
 						}
 						
-							prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+							//prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+							List<String> serviceVNFS = scr.getSequenceVnfTypes();
+							for (String vnfName : serviceVNFS) {
+								WVnfInstance vnf = wNet.addVnfInstance(endingNode, vnfName, wNet.getVnfType(vnfName).get());
+							}
+							final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, endingNode, scr.getSequenceVnfTypes(), Optional.empty(), Optional.empty());
+							scr.addServiceChain(paths.get(0), totalTrafficInGbpsOfThisServiceInThisNodeGbps);
+							
+							double propagationDelay1 = wNet.getPropagationDelay(firstFiberLinks);
+							double latency1 = propagationDelay + 2 * 0.1 * firstFiberLinks.size();
+							latencies.add(latency1);
+							System.out.println("latency = propagationDelay + 2 * 0.1 * fibers.size()");
+							System.out.println("latency = "+propagationDelay1+" + 2 * 0.1 * "+firstFiberLinks.size());
+							System.out.println("Latency in this iteration: "+latency1);
+							
 							break;
 
 					}
@@ -374,7 +424,13 @@ public class DimensioningPlanning implements IAlgorithm {
 										System.out.println("Content in finalIpPath(0)"+ finalIpPath.get(0));
 										System.out.println("Content in finalIpPath(1)"+ finalIpPath.get(1));
 										
-										prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+										//prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+										List<String> serviceVNFS = scr.getSequenceVnfTypes();
+										for (String vnfName : serviceVNFS) {
+											WVnfInstance vnf = wNet.addVnfInstance(endingNode, vnfName, wNet.getVnfType(vnfName).get());
+										}
+										final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, endingNode, scr.getSequenceVnfTypes(), Optional.empty(), Optional.empty());
+										scr.addServiceChain(paths.get(0), totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 										done = true;
 										break;
 										
@@ -388,7 +444,13 @@ public class DimensioningPlanning implements IAlgorithm {
 									System.out.println("Content in finalIpPath(0)"+ finalIpPath.get(0));
 									System.out.println("Content in finalIpPath(1)"+ finalIpPath.get(1));
 									
-										prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+									//prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+									List<String> serviceVNFS = scr.getSequenceVnfTypes();
+									for (String vnfName : serviceVNFS) {
+										WVnfInstance vnf = wNet.addVnfInstance(endingNode, vnfName, wNet.getVnfType(vnfName).get());
+									}
+									final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, endingNode, scr.getSequenceVnfTypes(), Optional.empty(), Optional.empty());
+									scr.addServiceChain(paths.get(0), totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 										done = true;
 										break;
 
@@ -429,14 +491,26 @@ public class DimensioningPlanning implements IAlgorithm {
 								finalIpPath.set(0, ipLink.getFirst());
 								System.out.println("Content in finalIpPath(0)"+ finalIpPath.get(0));
 								
-								prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+								//prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+								List<String> serviceVNFS = scr.getSequenceVnfTypes();
+								for (String vnfName : serviceVNFS) {
+									WVnfInstance vnf = wNet.addVnfInstance(endingNode, vnfName, wNet.getVnfType(vnfName).get());
+								}
+								final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, endingNode, scr.getSequenceVnfTypes(), Optional.empty(), Optional.empty());
+								scr.addServiceChain(paths.get(0), totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 								break;
 								
 							}else
 								throw new Net2PlanException("Error. No spectrum available.");
 							
 						}else {
-								prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+							//prepareAndAddServiceChain(wNet, scr, finalIpPath, endingNode);
+							List<String> serviceVNFS = scr.getSequenceVnfTypes();
+							for (String vnfName : serviceVNFS) {
+								WVnfInstance vnf = wNet.addVnfInstance(endingNode, vnfName, wNet.getVnfType(vnfName).get());
+							}
+							final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, endingNode, scr.getSequenceVnfTypes(), Optional.empty(), Optional.empty());
+							scr.addServiceChain(paths.get(0), totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 								break;
 						}
 

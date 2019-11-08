@@ -22,11 +22,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VnfAlphaPlacement implements IAlgorithm {
+	
+	
+	List<Double> latencies =  new ArrayList <Double>();
 
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters,Map<String, String> net2planParameters) {
-
-		final Double Lmax = Double.parseDouble(algorithmParameters.get("Lmax"));
+		
+		final Double alpha = Double.parseDouble(algorithmParameters.get("alpha"));
+		final boolean concentration = Boolean.parseBoolean(algorithmParameters.get("concentration"));
 		final File folder = new File ("Results");
 		if (folder.exists() && folder.isFile()) throw new Net2PlanException ("The folder is a file");
 		if (!folder.exists()) folder.mkdirs();
@@ -46,23 +50,36 @@ public class VnfAlphaPlacement implements IAlgorithm {
 
 			
 			//SORTED BY NAME
+			double nodeCost = 0;
 			double finalCost = 0;
+			List<WLightpath> lpList = wNet.getLightpaths();
 			
 			final List<String> namesString =  new ArrayList<>();
+			final List<String> costString = new ArrayList<> ();
 			final List<String> summaryString = new ArrayList<> ();
 			
 			for(WNode node : wNet.getNodes()) {
 				namesString.add("'"+node.getName()+"' ");
-				finalCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
-				summaryString.add(Double.toString(finalCost));
+				nodeCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
+				finalCost += nodeCost;
+				costString.add(Double.toString(nodeCost));
 			}
-	
+			
+			summaryString.add(Double.toString(finalCost));
+			summaryString.add(Double.toString(lpList.size()));
+			summaryString.add(Double.toString(Collections.max(latencies)));
+			summaryString.add(Double.toString(Collections.min(latencies)));
+			summaryString.add(Double.toString(latencies.stream().mapToDouble(val -> val).average().orElse(0.0)));
+			for(String st : costString) summaryString.add(st);
+			
+			
 			writeFileInOneLine (new File (folder , "names_sortedByName"+ ".txt") , namesString);
-			writeFile (new File (folder , "sortedByName" + Lmax  + ".txt") , summaryString);
+			writeFile (new File (folder , alpha+"_"+concentration + ".txt") , summaryString);
 
 			
-			//SORTED BY POPULATION
-			namesString.clear();
+			//SORTED BY NUMBER OF VNFS INSTANTIATED
+			/*namesString.clear();
+			costString.clear();
 			summaryString.clear();
 			finalCost = 0;
 
@@ -78,12 +95,17 @@ public class VnfAlphaPlacement implements IAlgorithm {
 			
 			for(WNode node : nodesSortedByPopulation) {
 				namesString.add("'"+node.getName()+"' ");
-				finalCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
-				summaryString.add(Double.toString(finalCost));
+				nodeCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
+				finalCost += nodeCost;
+				costString.add(Double.toString(finalCost));
 			}
 			
+			summaryString.add(Double.toString(finalCost));
+			summaryString.add(Double.toString(lpList.size()));
+			for(String st : costString) summaryString.add(st);
+			
 			writeFileInOneLine (new File (folder , "names_sortedByNumberOfVNFs"+ ".txt") , namesString);
-			writeFile (new File (folder , "sortedByNumberOfVNFs" + Lmax  + ".txt") , summaryString);
+			writeFile (new File (folder , "sortedByNumberOfVNFs" + Lmax  + ".txt") , summaryString);*/
 
 		return "Ok";
 	}
@@ -123,6 +145,7 @@ public class VnfAlphaPlacement implements IAlgorithm {
 			sc.remove();
 
 		/* Create Services and VNFs */
+		int totalNumberOfVNFS = 0;
 		for (int i = 0; i < numServices; i++) {
 			int numberOfVNFsInThisService = (int) randomWithRange(rng , 1, 5);
 			List<String> vnfsUpstream = new ArrayList<String>();
@@ -137,7 +160,7 @@ public class VnfAlphaPlacement implements IAlgorithm {
 						"");					//Arbitrary Params
 				wNet.addOrUpdateVnfType(vnfType);
 
-				vnfsUpstream.add("VNF" + j + "_Service" + i);
+				vnfsUpstream.add("VNF"+j+"_Service"+i);
 			}
 			List<String> vnfsDownstream = Lists.reverse(vnfsUpstream);
 			final double trafficPerUserInGbps = randomWithRange(rng, 0.1, 1.0);
@@ -158,8 +181,16 @@ public class VnfAlphaPlacement implements IAlgorithm {
 														""); // Arbitrary params
 			userService.setArbitraryParamString(trafficPerUserInGbps + "");
 			wNet.addOrUpdateUserService(userService);
+			
+			totalNumberOfVNFS += numberOfVNFsInThisService;
 		}
 		
+		System.out.println("######################################################################################");
+		System.out.println("Total number of VNFs: "+totalNumberOfVNFS);
+		System.out.println("Total number of CPU: "+ (totalNumberOfVNFS*2));
+		System.out.println("Total number of RAM: "+ (totalNumberOfVNFS*4));
+		System.out.println("Total number of HD: "+ (totalNumberOfVNFS*20));
+		System.out.println("######################################################################################");
 		
 		
 		/* Adding lightpaths */
@@ -180,7 +211,6 @@ public class VnfAlphaPlacement implements IAlgorithm {
 							lpr.coupleToIpLink(ipLink.getFirst());
 						}
 					}
-
 				}
 			}
 		}
@@ -220,9 +250,9 @@ public class VnfAlphaPlacement implements IAlgorithm {
 				sorted((s1,s2)->Double.compare(s2.getCurrentOfferedTrafficInGbps(), s1.getCurrentOfferedTrafficInGbps())  ).
 				collect(Collectors.toList());
 		
-		int counter = 0;
-		
 		/* Iterate each ServiceChainRequest */
+		int it = 0;
+		int totalNumberOfIterations = orderedServiceChainRequestsHigherToLowerTraffic.size();
 		for (WServiceChainRequest scr : orderedServiceChainRequestsHigherToLowerTraffic)
 		{
 		
@@ -235,7 +265,7 @@ public class VnfAlphaPlacement implements IAlgorithm {
 			
 			/*######################################### Some prints ############################################*/
 			System.out.println("---------------------------------------------------------------");
-			System.out.println("Iteration number "+ ++counter + " out of " +orderedServiceChainRequestsHigherToLowerTraffic.size());
+			System.out.println("Iteration number "+ ++it +" out of "+totalNumberOfIterations);
 			System.out.println("totalTrafficInGbpsOfThisServiceInThisNodeGbps: "+totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 			//System.out.println("Iteration " + node.getName() + " & " + service.getUserServiceUniqueId());
 			System.out.println("Iteration " + node.getName() + " & " + scr.getId());
@@ -266,89 +296,67 @@ public class VnfAlphaPlacement implements IAlgorithm {
 				System.out.println(paths.get(0));
 				scr.addServiceChain(paths.get(0),totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 
+				latencies.add(0.2); //minimum latency
+				System.out.println("Latency in this iteration: "+0.2);
+				
 				// else, we need to discover the option that meets the requirements.
 			}else 
 			{
 				final Map<WFiber , Double> latencyInMsAssumingOeoInAllHops = wNet.getFibers().stream().collect(Collectors.toMap(e->e, e->0.2 + e.getLengthInKm () / 200.0 ));
 				final List<List<WFiber>> kFiberLists = wNet.getKShortestWdmPath(K, node, coreNode, Optional.of(latencyInMsAssumingOeoInAllHops));
-				final List<WFiber> firstFiberLinks = kFiberLists.get(0);
-				
-				//Worst latency case in this fiber path
-				final double propagationDelay = wNet.getPropagationDelay(firstFiberLinks);
-				final double latency = propagationDelay + 2 * 0.1 * firstFiberLinks.size();		
-				List<WAbstractNetworkElement> finalIpPath = new ArrayList<WAbstractNetworkElement>();
-				List<WAbstractNetworkElement> finalVnfPath = new ArrayList<WAbstractNetworkElement>();
-						
-					
-					
+				final List<WFiber> firstFiberLinks = kFiberLists.get(0);	
 					
 				 if(VNFsInMCENb) {
-		
-						System.out.println("VNFs in MCENb parameter enabled, all VNFs will be instantiated in: "+ coreNode.getName());
-						System.out.println("Result: " + scr.getId()+ " resources allocated in " + coreNode.getName());
-
-						/*for (WFiber fiber : firstFiberLinks) {							
-							List <WIpLink> ipLinksReady = wNet.getIpLinks().stream().filter(e->e.getCurrentCapacityGbps() - e.getCarriedTrafficGbps() >= totalTrafficInGbpsOfThisServiceInThisNodeGbps).collect(Collectors.toList());
-							List<WIpLink> ipList = ipLinksReady.stream().filter(e-> e.getA().equals(fiber.getA()) && e.getB().equals(fiber.getB())).collect(Collectors.toList());
-							if(ipList.size() != 0) finalIpPath.add(ipList.get(0)); else finalIpPath.add(null);	
-						}
-
-						if (!finalIpPath.contains(null)) {
-							//List<String> serviceVNFS = service.getListVnfTypesToTraverseUpstream();
+					 
 							List<String> serviceVNFS = scr.getSequenceVnfTypes();
 							for (String vnfName : serviceVNFS) {
-								WVnfInstance vnf = wNet.addVnfInstance(coreNode, vnfName, wNet.getVnfType(vnfName).get());
-								finalIpPath.add(vnf);
-							}*/
-						
-							for(String vnfName : vnfsToTraverse) {
 								wNet.addVnfInstance(coreNode, vnfName, wNet.getVnfType(vnfName).get());
-								System.out.println(vnfName+" allocated in "+coreNode.getName());
 							}
-							finalIpPath = wNet.getKShortestServiceChainInIpLayer(1, node, coreNode, vnfsToTraverse, Optional.empty(), Optional.empty()).get(0);
-
-							System.out.println("#4 Using the custom way...");
-							System.out.println(finalIpPath);
-							scr.addServiceChain(finalIpPath, totalTrafficInGbpsOfThisServiceInThisNodeGbps);
-						//}
-									
+							final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, coreNode, scr.getSequenceVnfTypes(), Optional.empty(), Optional.empty());
+							scr.addServiceChain(paths.get(0), totalTrafficInGbpsOfThisServiceInThisNodeGbps);	
+			
+							System.out.println("VNFs in MCENb parameter enabled, all VNFs of "+ scr.getId() +" will be instantiated in: "+ coreNode.getName());
+							System.out.print(node.getName());
+							for(WFiber fiber : firstFiberLinks) {
+								System.out.print(" #" + truncate(fiber.getLengthInKm(), 2) + "km,("
+										+ truncate(fiber.getNe().getPropagationDelayInMs(), 2) + "ms)# "
+										+ fiber.getB().getName());
+							}
+			
+							System.out.println("Number of links to traverse (hops): " + firstFiberLinks.size());
+							double propagationDelay = wNet.getPropagationDelay(firstFiberLinks);
+							double latency = propagationDelay + 2 * 0.1 * firstFiberLinks.size();
+							latencies.add(latency);
+							System.out.println("latency = propagationDelay + 2 * 0.1 * fibers.size()");
+							System.out.println("latency = "+propagationDelay+" + 2 * 0.1 * "+firstFiberLinks.size());
+							System.out.println("Latency in this iteration: "+latency);
+							
+							
 				}else
 					{
 					
-					int nVNFsInShortestPath = (int) Math.floor(alpha * numberOfVnfsToTraverse); 
-					int nVNFsRandom = numberOfVnfsToTraverse - nVNFsInShortestPath;
-					System.out.println("### Number of VNFs to instantiate in the shortest path (alpha = "+alpha+"): "+nVNFsInShortestPath);
-						
-						//######################################### Some prints ############################################
-						System.out.print(node.getName());
-						for(WFiber fiber : firstFiberLinks) {
-							System.out.print(" #" + truncate(fiber.getLengthInKm(), 2) + "km,("
-									+ truncate(fiber.getNe().getPropagationDelayInMs(), 2) + "ms)# "
-									+ fiber.getB().getName());
-						}
-		
-						System.out.println();
-						System.out.println("Number of links to traverse (hops): " + firstFiberLinks.size());
-						System.out.println("Propagation delay is: " + truncate(propagationDelay, 2));
-						System.out.println("Total latency between " + node.getName() + " and " + coreNode.getName()
-								+ " = " + truncate(latency, 2));
-						System.out.println(
-								"Latency with direct lightpath is: " + truncate(propagationDelay + 2 * 0.1, 2));
-						System.out.println("Service latency is: " + truncate(serviceLatency_ms, 2));
-						//##################################################################################################
-						
-						
+						List<WNode> randomNodeSequence = new ArrayList<WNode>();
+						int nVNFsInShortestPath = (int) Math.floor(alpha * numberOfVnfsToTraverse); 
+						int nVNFsRandom = numberOfVnfsToTraverse - nVNFsInShortestPath;
+						System.out.println("### Number of VNFs to instantiate in the shortest path (alpha = "+alpha+"): "+nVNFsInShortestPath);
+					
 						int numberOfHops = firstFiberLinks.size();
 						
 						// know nodes in shortest path as List<WNode>
 						List <WNode> nodesInShortestPath = getNodesInPath(firstFiberLinks);			
 						
-						int numberOfVNFsAlreadyInstantiated = 0;
+						// VNFs allocation in the destination node of the SP.
+						for (int i=0; i<nVNFsInShortestPath; i++) {
+							String vnfName = vnfsToTraverse.get(numberOfVnfsToTraverse-1 - i);
+							wNet.addVnfInstance(coreNode, vnfName, wNet.getVnfType(vnfName).get());
+							System.out.println(vnfName+" allocated in "+coreNode.getName());
+						}
+						
 						// Know valid nodes to instantiate VNFs out of the shortest path List<WNode>
 						if(nVNFsInShortestPath != numberOfVnfsToTraverse) 
 						{	
 							List<WNode> candidateNodesOutOfTheSP = getNodesInRangeOutOfTheShortestPath(wNet, node, numberOfHops, nodesInShortestPath);
-						
+							
 							if(concentration)
 							{
 								System.out.println("Instantiating VNFs depending on the previous concentration..");
@@ -360,74 +368,89 @@ public class VnfAlphaPlacement implements IAlgorithm {
 								WNode nodeToInstantiateVNF = candidateNodesOutOfTheSP.get(VNFsInNodes.indexOf(Collections.max(VNFsInNodes)));
 								
 								for(int i=0; i<nVNFsRandom; i++) {
-									String vnfName = vnfsToTraverse.get(i);
-									WVnfInstance vnf = wNet.addVnfInstance(nodeToInstantiateVNF, vnfName, wNet.getVnfType(vnfName).get());
-									finalVnfPath.add(vnf);
-									
-									//origin to concentration node selected
-									List<WFiber> n2mFiberList = wNet.getKShortestWdmPath(1, node, nodeToInstantiateVNF, Optional.empty()).get(0);
-									for (WFiber fiber : n2mFiberList) {		
-										List <WIpLink> ipLinksReady = wNet.getIpLinks().stream().filter(e->e.getCurrentCapacityGbps() - e.getCarriedTrafficGbps() >= totalTrafficInGbpsOfThisServiceInThisNodeGbps).collect(Collectors.toList());
-										List<WIpLink> ipList = ipLinksReady.stream().filter(e-> e.getA().equals(fiber.getA()) && e.getB().equals(fiber.getB())).collect(Collectors.toList());
-										if(ipList.size() != 0) finalIpPath.add(ipList.get(0)); else finalIpPath.add(null);	
-									}	
-									
-									// concentration node selected to destination
-									List<WFiber> m2dFiberList = wNet.getKShortestWdmPath(1, nodeToInstantiateVNF, coreNode, Optional.empty()).get(0);
-									for (WFiber fiber : m2dFiberList) {		
-										List <WIpLink> ipLinksReady = wNet.getIpLinks().stream().filter(e->e.getCurrentCapacityGbps() - e.getCarriedTrafficGbps() >= totalTrafficInGbpsOfThisServiceInThisNodeGbps).collect(Collectors.toList());
-										List<WIpLink> ipList = ipLinksReady.stream().filter(e-> e.getA().equals(fiber.getA()) && e.getB().equals(fiber.getB())).collect(Collectors.toList());
-										if(ipList.size() != 0) finalIpPath.add(ipList.get(0)); else finalIpPath.add(null);	
-									}	
-									
-									int hops = n2mFiberList.size();
+									String vnfName = scr.getSequenceVnfTypes().get(i);
+									wNet.addVnfInstance(nodeToInstantiateVNF, vnfName, wNet.getVnfType(vnfName).get());
+									randomNodeSequence.add(nodeToInstantiateVNF);
+									int hops = wNet.getKShortestWdmPath(1, node, nodeToInstantiateVNF, Optional.empty()).get(0).size();
 									System.out.println(vnfName+" allocated in "+nodeToInstantiateVNF.getName()+" ("+hops+" hops)");
-									
 								}
 								
-							}else //TODO
+							}else
 							{
 								System.out.println("Instantiating VNFs randomly..");
 								// Set Service VNFs randomly in a candidate node.	
 								for(int i=0; i<nVNFsRandom; i++) {
-									String vnfName = vnfsToTraverse.get(i);		
+									String vnfName = scr.getSequenceVnfTypes().get(i);		
 									WNode randomNode = candidateNodesOutOfTheSP.get((int)randomWithRange(rng, (double) candidateNodesOutOfTheSP.size(), 0.0));
-									//WNode randomNode = candidateNodesOutOfTheSP.get(rng.nextInt(candidateNodesOutOfTheSP.size()));
-									WVnfInstance vnf = wNet.addVnfInstance(randomNode, vnfName, wNet.getVnfType(vnfName).get());
-									finalVnfPath.add(vnf);
-									List<WFiber> n2dFiberList = wNet.getKShortestWdmPath(1, node, randomNode, Optional.empty()).get(0);
-									
-									for (WFiber fiber : n2dFiberList) {		
-										List <WIpLink> ipLinksReady = wNet.getIpLinks().stream().filter(e->e.getCurrentCapacityGbps() - e.getCarriedTrafficGbps() >= totalTrafficInGbpsOfThisServiceInThisNodeGbps).collect(Collectors.toList());
-										List<WIpLink> ipList = ipLinksReady.stream().filter(e-> e.getA().equals(fiber.getA()) && e.getB().equals(fiber.getB())).collect(Collectors.toList());
-										if(ipList.size() != 0) finalIpPath.add(ipList.get(0)); else finalIpPath.add(null);	
-									}	
-									int hops = n2dFiberList.size();
+									wNet.addVnfInstance(randomNode, vnfName, wNet.getVnfType(vnfName).get());
+									randomNodeSequence.add(randomNode);
+									int hops = wNet.getKShortestWdmPath(1, node, randomNode, Optional.empty()).get(0).size();
 									System.out.println(vnfName+" allocated in "+randomNode.getName()+" ("+hops+" hops)");
-								}
+								}					
 							}
 						}
-						
-						// VNFs allocation in the destination node of the SP.
-						for (int i=0; i<nVNFsInShortestPath; i++) {
-							String vnfName = vnfsToTraverse.get(numberOfVnfsToTraverse-1 - i);
-							WVnfInstance vnf = wNet.addVnfInstance(coreNode, vnfName, wNet.getVnfType(vnfName).get());
-							finalVnfPath.add(vnf);
-							
-							System.out.println(vnfName+" allocated in "+coreNode.getName());
-						}
-						
-						// Replace this line for the custom one.
-						//final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, coreNode, vnfsToTraverse, Optional.empty(), Optional.empty());			
-						System.out.println("Info about IP path");
-						finalIpPath.addAll(finalVnfPath);
-
-						//scr.addServiceChain(finalIpPath, totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 						final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, coreNode, vnfsToTraverse, Optional.empty(), Optional.empty());
-						scr.addServiceChain(paths.get(0), totalTrafficInGbpsOfThisServiceInThisNodeGbps);
+						List<WAbstractNetworkElement> ipPath = paths.get(0);
+						System.out.println(ipPath);
+						scr.addServiceChain(ipPath, totalTrafficInGbpsOfThisServiceInThisNodeGbps);
+
+						//Latency...
+						double propagationDelay = 0;
+						int numberOfNodes = 0;
+						
+						if(randomNodeSequence.size() != 0) {
+							for(WNode n : randomNodeSequence) {
+								
+								if(randomNodeSequence.size() == 1) {
+									System.out.println("Random sequence size is 1");
+									List<WFiber> fiber = wNet.getKShortestWdmPath(1, node, n, Optional.empty()).get(0);
+									numberOfNodes += fiber.size();
+									System.out.println(fiber);
+									System.out.println("Fibers node->n: "+ fiber.size());
+									propagationDelay += wNet.getPropagationDelay(fiber);
+									fiber = wNet.getKShortestWdmPath(1, n, coreNode, Optional.empty()).get(0);
+									numberOfNodes += fiber.size();
+									System.out.println(fiber);
+									System.out.println("Fibers n->coreNode: "+ fiber.size());
+									propagationDelay += wNet.getPropagationDelay(fiber);
+									numberOfNodes++; //+= (2-1);
+									
+								}else {
+									if(randomNodeSequence.indexOf(n) == 0) { //first
+										List<WFiber> fiber = wNet.getKShortestWdmPath(1, node, n, Optional.empty()).get(0);
+										propagationDelay += wNet.getPropagationDelay(fiber);
+									}else if (randomNodeSequence.indexOf(n) == randomNodeSequence.size()-1){ //last
+										List<WFiber> fiber = wNet.getKShortestWdmPath(1, n, coreNode, Optional.empty()).get(0);
+										propagationDelay += wNet.getPropagationDelay(fiber);
+									}else {
+										int index = randomNodeSequence.indexOf(n);
+										List<WFiber> fiber = wNet.getKShortestWdmPath(1, randomNodeSequence.get(index-1), n, Optional.empty()).get(0);
+										propagationDelay += wNet.getPropagationDelay(fiber);
+									}
+									numberOfNodes = randomNodeSequence.size()+2;
+								}
+								
+							}
+							double latency = propagationDelay + 2 * 0.1 * numberOfNodes;
+							latencies.add(latency);
+							System.out.println("latency = propagationDelay + 2 * 0.1 * numberOfNodes");
+							System.out.println("latency = "+propagationDelay+" + 2 * 0.1 * "+numberOfNodes);
+							System.out.println("Latency in this iteration: "+latency);
+							
+						}else {
+							System.out.println("NO RANDOM NODES...");
+							System.out.println("Number of links to traverse (hops): " + firstFiberLinks.size());
+							propagationDelay = wNet.getPropagationDelay(firstFiberLinks);
+							double latency = propagationDelay + 2 * 0.1 * firstFiberLinks.size();
+							latencies.add(latency);
+							System.out.println("latency = propagationDelay + 2 * 0.1 * fibers.size()");
+							System.out.println("latency = "+propagationDelay+" + 2 * 0.1 * "+firstFiberLinks.size());
+							System.out.println("Latency in this iteration: "+latency);
+						}
+
 						
 					} // else
-		}
+			}
 		}
 
 		/* ############################# */
