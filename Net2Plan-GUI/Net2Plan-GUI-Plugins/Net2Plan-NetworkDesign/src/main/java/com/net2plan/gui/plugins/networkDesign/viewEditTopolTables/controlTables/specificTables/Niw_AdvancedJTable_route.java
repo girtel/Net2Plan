@@ -114,10 +114,10 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
             
             res.add(new AjtColumnInfo<Route>(this , String.class, null , "# Occupied slots", "Number of occupied optical slots", null , d->toLp.apply(d).getOpticalSlotIds().size() , AGTYPE.SUMINT , null));
             res.add(new AjtColumnInfo<Route>(this , String.class, null , "Occupied slots", "Slots occupied", null , d->toLp.apply(d).getOpticalSlotIds().stream().map(ee->""+ee).collect(Collectors.joining(",")) , AGTYPE.SUMINT , null));
-            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Clashing?", "Slots occupied", null , d->ospec.isSpectrumOccupationOk(toLp.apply(d))? "No" : "Yes" , AGTYPE.COUNTTRUE , t->ospec.isSpectrumOccupationOk(toLp.apply(t))? null : Color.RED));
+            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Clashing?", "Indicates if there is spectrum clashing for this lightpath, so it traverses at least a fiber where it copropagates with a lighpath with overlapping spectrum", null , d->ospec.isSpectrumOccupationOk(toLp.apply(d))? "No" : "Yes" , AGTYPE.COUNTTRUE , t->ospec.isSpectrumOccupationOk(toLp.apply(t))? null : Color.RED));
             res.add(new AjtColumnInfo<Route>(this , String.class, null , "Transponder name", "Name of the transponder associated to the lightpath request of this lightpath", null , d->toLp.apply(d).getLightpathRequest().getTransponderName().orElse("--") , AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Add module", "The index of the add module in the origin OADM where the transponder is placed", (d,val)->toLp.apply(d).setAddModuleIndexInOriginIfDirectionless(((Double) val).intValue()) , d->toLp.apply(d).getAddModuleIndexInOriginIfDirectionless() , AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Drop module", "The index of the drop module in the destination OADM where the transponder is placed", (d,val)->toLp.apply(d).setDropModuleIndexInDestinationIfDirectionless(((Double) val).intValue()) , d->toLp.apply(d).getDropModuleIndexInDestinationIfDirectionless() , AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Add module", "The index of the directionless add module in the origin OADM where the transponder is placed, or a negative value meaning that is placed at the directed module placed in the out-degree", (d,val)->toLp.apply(d).setAddModuleIndexInOrigin(((Double) val).intValue() < 0? Optional.empty() : Optional.of(((Double) val).intValue())) , d->toLp.apply(d).getAddModuleIndexInOrigin().isPresent()? toLp.apply(d).getAddModuleIndexInOrigin().get () : ""  , AGTYPE.NOAGGREGATION , d->{ final int i = toLp.apply(d).getAddModuleIndexInOrigin().orElse(-1); final WNode n = toLp.apply(d).getA(); if (i < 0)  return n.isOadmWithDirectedAddDropModulesInTheDegrees()? null : Color.red; return i < n.getOadmNumAddDirectionlessModules()? null : Color.red;   }        ) );
+            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Drop module", "The index of the directionless drop module in the destination OADM where the transponder is placed, or a negative value meaning that is placed at the directed module placed in the in-degree", (d,val)->toLp.apply(d).setDropModuleIndexInDestination(((Double) val).intValue() < 0? Optional.empty() : Optional.of(((Double) val).intValue())) , d->toLp.apply(d).getDropModuleIndexInDestination().isPresent()? toLp.apply(d).getAddModuleIndexInOrigin().get () : ""  , AGTYPE.NOAGGREGATION , d->{ final int i = toLp.apply(d).getDropModuleIndexInDestination().orElse(-1); final WNode n = toLp.apply(d).getB(); if (i < 0)  return n.isOadmWithDirectedAddDropModulesInTheDegrees()? null : Color.red; return i < n.getOadmNumDropDirectionlessModules()? null : Color.red;   } ));
             res.add(new AjtColumnInfo<Route>(this , String.class, Arrays.asList("Optical signal") , "Modulation id", "Identifier of the modulation used in this lightpath", (d,val)->toLp.apply(d).setModulationId((String)val) , d->toLp.apply(d).getModulationId() , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp tx: injection power (dBm)", "The injection power of the lightpath, measured at the output of the transponder", (d,val)->toLp.apply(d).setAddTransponderInjectionPower_dBm((Double)val) , d->toLp.apply(d).getAddTransponderInjectionPower_dBm(), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: power (dBm)", "The optical power at the input reception transponder end of the lightpath", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getPower_dbm(), AGTYPE.NOAGGREGATION , t-> { final double v = osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(t)).getPower_dbm(); if (v > toLp.apply(t).getTransponderMaximumTolerableReceptionPower_dBm()) return Color.red; if (v < toLp.apply(t).getTransponderMinimumTolerableReceptionPower_dBm()) return Color.red; return null; } ));
@@ -236,11 +236,11 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
                     "Please introduce the requested information", 
                     "", 
                     this, 
-                    Arrays.asList(InputForDialog.inputTfInt("Index of the add module (>=0)", "Introduce the requested information", 10, 0)),
+                    Arrays.asList(InputForDialog.inputTfInt("Index of the add module (>=0 means directionless module, otherwise directed module)", "Introduce the requested information", 10, -1)),
                     (list)->
                     	{
                     		final Integer value = (Integer) list.get(0).get();
-                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setAddModuleIndexInOriginIfDirectionless(value));
+                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setAddModuleIndexInOrigin(value < 0? Optional.empty() : Optional.of(value)));
                     	}
                     ) , (a,b)->b>0, null));
             res.add(new AjtRcMenu("Set drop module index to selected lightpaths", e-> 
@@ -253,7 +253,7 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
                     (list)->
                     	{
                     		final Integer value = (Integer) list.get(0).get();
-                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setDropModuleIndexInDestinationIfDirectionless(value));
+                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setDropModuleIndexInDestination(value < 0? Optional.empty() : Optional.of(value)));
                     	}
                     ) , (a,b)->b>0, null));
 

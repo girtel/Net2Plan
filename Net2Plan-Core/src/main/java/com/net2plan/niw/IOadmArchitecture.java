@@ -54,8 +54,6 @@ public interface IOadmArchitecture
 	public abstract LpSignalState getOutLpStateForDroppedLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , Optional<Integer> inputDropModuleIndex);
 	public abstract LpSignalState getOutLpStateForExpressLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , WFiber outputFiber , int numOpticalSlotsNeededIfEqualization);
 
-	public abstract boolean isDirectionLess ();
-
 	public abstract boolean isColorless ();
 	
 	

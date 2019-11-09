@@ -99,6 +99,7 @@ public class WNode extends WAbstractNetworkElement
 	static final String ATTNAME_OPTICALSWITCHTYPEINITSTRING = "ATTNAME_OPTICALSWITCHTYPE_INITSTRING";
 	private static final String ATTNAMESUFFIX_OADMNUMADDMODULES = "oadmNumAddModules";
 	private static final String ATTNAMESUFFIX_OADMNUMDROPMODULES = "oadmNumDropModules";
+	private static final String ATTNAMESUFFIX_HASDIRECTEDMODULES = "oadmHasDirectedAddDropModules";
 	
 	public void setArbitraryParamString(String s)
 	{
@@ -161,59 +162,93 @@ public class WNode extends WAbstractNetworkElement
 		return (Node) associatedNpElement;
 	}
 
-	/** Returns the number of add modules in the OADM 
+	/** Returns the number of add modules that are directionless (and thus are implemented as regular degrees), in the OADM 
 	 * @return see above
 	 */
-	public int getOadmNumAddModules () 
+	public int getOadmNumAddDirectionlessModules () 
 	{
 		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDMODULES, 1.0).intValue(); 
 		return index < 0? 0 : index; 
 	} 
 	
-	/** Returns the number of drop modules in the OADM 
+	/** Indicates if this node architecture has directed add/drop modules in the degrees, where to place the lighpaths 
 	 * @return see above
 	 */
-	public int getOadmNumDropModules () 
+	public boolean isOadmWithDirectedAddDropModulesInTheDegrees () 
+	{
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_HASDIRECTEDMODULES, 1.0).intValue(); 
+		return index != 0; 
+	} 
+
+	
+	/** Indicates if this node architecture has directed add/drop modules in the degrees, where to place the lighpaths 
+	 * @return see above
+	 */
+	public void setIsOadmWithDirectedAddDropModulesInTheDegrees (boolean isWithDirectedAddDropModules) 
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_HASDIRECTEDMODULES, isWithDirectedAddDropModules? 1 : 0); 
+	} 
+	
+	/** Returns the number of drop modules that are directionless (and thus are implemented as regular degrees), in the OADM 
+	 * @return see above
+	 */
+	public int getOadmNumDropDirectionlessModules () 
 	{
 		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMDROPMODULES, 1.0).intValue(); 
 		return index < 0? 0 : index; 
 	} 
 
-	/** Sets the number of add modules in the OADM (greater or equal to zero)
+	/** Sets the number of add modules in the OADM that are directionless and thus are implemented as regular degrees (greater or equal to zero)
 	 * @param numModules see above
 	 */
-	public void setOadmNumAddModules (int numModules) 
+	public void setOadmNumAddDirectionlessModules (int numModules) 
 	{
 		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDMODULES, numModules < 0? 0 : numModules); 
 	} 
 	
-	/** Sets the number of drop modules in the OADM (greater or equal to zero)
+	/** Sets the number of drop modules in the OADM that are directioless, and thus are implemented as regular degrees (greater or equal to zero)
 	 * @param numModules see above
 	 */
-	public void setOadmNumDropModules (int numModules) 
+	public void setOadmNumDropDirectionlessModules (int numModules) 
 	{
 		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMDROPMODULES, numModules < 0? 0 : numModules); 
 	} 
 
 
-	/** Returns the lightpaths added in this node, connected in the indicated add module index
-	 * @param addModuleIndex see above
+	/** Returns the lightpaths added in this node, in directed (non-directionless) modules
 	 * @return see above
 	 */
-	public SortedSet<WLightpath> getAddedLightpaths (int addModuleIndex)
+	public SortedSet<WLightpath> getAddedLightpathsInDirectedModule ()
 	{
-		if (addModuleIndex < 0 || addModuleIndex > getOadmNumAddModules()) return new TreeSet<> ();
-		return getAddedLigtpaths().stream().filter(lp->lp.getAddModuleIndexInOriginIfDirectionless().orElse(-1) == addModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+		return getAddedLigtpaths().stream().filter(lp->!lp.getAddModuleIndexInOrigin().isPresent()).collect(Collectors.toCollection(TreeSet::new));
 	}
 
-	/** Returns the lightpaths added in this node, connected in the indicated add module index
+	/** Returns the lightpaths dropped in this node, in directed (non-directionless) modules
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getDroppedLightpathsInDirectedModule ()
+	{
+		return getDroppedLigtpaths().stream().filter(lp->!lp.getDropModuleIndexInDestination().isPresent()).collect(Collectors.toCollection(TreeSet::new));
+	}
+	
+	/** Returns the lightpaths added in this node, connected in the indicated add directionless module index
 	 * @param addModuleIndex see above
 	 * @return see above
 	 */
-	public SortedSet<WLightpath> getDroppedLightpaths (int dropModuleIndex)
+	public SortedSet<WLightpath> getAddedLightpathsInDirectionlessModule (int directionlessAddModuleIndex)
 	{
-		if (dropModuleIndex < 0 || dropModuleIndex > getOadmNumDropModules()) return new TreeSet<> ();
-		return getDroppedLigtpaths().stream().filter(lp->lp.getDropModuleIndexInDestinationIfDirectionless().orElse(-1) == dropModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+		if (directionlessAddModuleIndex < 0) return new TreeSet<> ();
+		return getAddedLigtpaths().stream().filter(lp->lp.getAddModuleIndexInOrigin().isPresent()).filter(lp->lp.getAddModuleIndexInOrigin().get() == directionlessAddModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the lightpaths added in this node, connected in the indicated drop directionless module index
+	 * @param addModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getDroppedLightpathsInDirectionlessModule (int directionlessDropModuleIndex)
+	{
+		if (directionlessDropModuleIndex < 0) return new TreeSet<> ();
+		return getDroppedLigtpaths().stream().filter(lp->lp.getDropModuleIndexInDestination().isPresent()).filter(lp->lp.getDropModuleIndexInDestination().get() == directionlessDropModuleIndex).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 

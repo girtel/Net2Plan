@@ -40,38 +40,39 @@ public class WLightpath extends WAbstractNetworkElement
 	@Override
 	public Route getNe () { return (Route) associatedNpElement; }
 
-	/** Returns the index of the add module in the origin OADM. Empty if origin node is not directionless, or if index stored is negative
+	/** Returns the index of the add module in the origin OADM. Empty or negative value if the lighpath is attached to directed add module in origin
 	 * @return see above
 	 */
-	public Optional<Integer> getAddModuleIndexInOriginIfDirectionless () 
+	public Optional<Integer> getAddModuleIndexInOrigin () 
 	{
-		if (!getA().getOpticalSwitchingArchitecture().isDirectionLess()) return Optional.empty();
 		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, -1.0).intValue(); 
 		return index < 0? Optional.empty() : Optional.of(index); 
 	} 
 	
-	/** Returns the index of the drop module in the destination OADM. Empty if destination node is not directionless, or if index stored is negative
+	/** Returns the index of the drop module in the origin OADM. Empty or negative value if the lighpath is attached to directed drop module in destination
 	 * @return see above
 	 */
-	public Optional<Integer> getDropModuleIndexInDestinationIfDirectionless () 
+	public Optional<Integer> getDropModuleIndexInDestination () 
 	{  
-		if (!getB().getOpticalSwitchingArchitecture().isDirectionLess()) return Optional.empty();
 		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, -1.0).intValue(); 
 		return index < 0? Optional.empty() : Optional.of(index); 
 	} 
 
-	/** Sets the index of the add module used by the lightpath in the origin node. Negative indexes mean no information
+	/** Sets the index of the add module used by the lightpath in the origin node. Negative indexes or optional empty means that the 
+	 * lightpath is placed directly in the non-directionless add module. If not, it refers to the index of the directionless add module it is attached to
 	 * @param index
 	 */
-	public void setAddModuleIndexInOriginIfDirectionless (Optional<Integer> index) 
+	public void setAddModuleIndexInOrigin (Optional<Integer> index) 
 	{  
 		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, index.isPresent()? -1 : index.get()); 
 	} 
 	
-	/** Sets the index of the drop module used by the lightpath in the destination node. Negative indexes mean no information
+
+	/** Sets the index of the drop module used by the lightpath in the destination node. Negative indexes or optional empty means that the 
+	 * lightpath is placed directly in the non-directionless drop module. If not, it refers to the index of the directionless drop module it is attached to
 	 * @param index
 	 */
-	public void setDropModuleIndexInDestinationIfDirectionless (Optional<Integer> index) 
+	public void setDropModuleIndexInDestination (Optional<Integer> index) 
 	{  
 		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, index.isPresent()? -1 : index.get()); 
 	} 
