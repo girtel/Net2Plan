@@ -9,6 +9,7 @@ package com.net2plan.niw;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,7 +48,11 @@ public class OpticalSpectrumManager
 {
 	private WNet wNet;
 	final private SortedMap<WFiber,SortedMap<Integer,SortedSet<WLightpath>>> occupation_f_s_ll = new TreeMap<> ();
+	final private Map<Pair<WNode,Integer>,SortedMap<Integer,SortedSet<WLightpath>>> directionlessAddOccupation_nm_s_ll = new HashMap<> ();
+	final private Map<Pair<WNode,Integer>,SortedMap<Integer,SortedSet<WLightpath>>> directionlessDropOccupation_nm_s_ll = new HashMap<> ();
 	final private SortedMap<WLightpath,SortedMap<WFiber,SortedSet<Integer>>> occupation_ll_f_s = new TreeMap<> ();
+	final private SortedMap<WLightpath,Triple<WNode,Integer,SortedSet<Integer>>> directionlessAddOccupation_ll_nms = new TreeMap<> ();
+	final private SortedMap<WLightpath,Triple<WNode,Integer,SortedSet<Integer>>> directionlessDropOccupation_ll_nms = new TreeMap<> ();
 
 	private OpticalSpectrumManager (WNet wNet) { this.wNet = wNet; }
 	
@@ -59,7 +64,14 @@ public class OpticalSpectrumManager
     {
 		final OpticalSpectrumManager osm = new OpticalSpectrumManager(net);
 		for (WLightpath lp : net.getLightpaths())
-			osm.allocateOccupation(lp, lp.getSeqFibers(), lp.getOpticalSlotIds());
+		{
+			final Optional<Integer> addDirectionlessModuleIndex = lp.getAddModuleIndexInOrigin();
+			final Optional<Integer> dropDirectionlessModuleIndex = lp.getDropModuleIndexInDestination();
+			osm.allocateOccupation(lp, 
+					addDirectionlessModuleIndex.isPresent()? Optional.of(Pair.of(lp.getA(), addDirectionlessModuleIndex.get())) : Optional.empty() , 
+					dropDirectionlessModuleIndex.isPresent()? Optional.of(Pair.of(lp.getB(), dropDirectionlessModuleIndex.get())) : Optional.empty() , 
+							lp.getSeqFibers(), lp.getOpticalSlotIds());
+		}
         return osm;
     }
 
@@ -72,36 +84,43 @@ public class OpticalSpectrumManager
 		this.wNet = net;
 		this.occupation_f_s_ll.clear();
 		this.occupation_ll_f_s.clear();
+		this.directionlessAddOccupation_nm_s_ll.clear();
+		this.directionlessDropOccupation_nm_s_ll.clear();
+		this.directionlessAddOccupation_ll_nms.clear();
+		this.directionlessDropOccupation_ll_nms.clear();
 		for (WLightpath lp : net.getLightpaths())
-			this.allocateOccupation(lp, lp.getSeqFibers(), lp.getOpticalSlotIds());
+		{
+			final Optional<Integer> addDirectionlessModuleIndex = lp.getAddModuleIndexInOrigin();
+			final Optional<Integer> dropDirectionlessModuleIndex = lp.getDropModuleIndexInDestination();
+			this.allocateOccupation(lp, 
+					addDirectionlessModuleIndex.isPresent()? Optional.of(Pair.of(lp.getA(), addDirectionlessModuleIndex.get())) : Optional.empty() , 
+					dropDirectionlessModuleIndex.isPresent()? Optional.of(Pair.of(lp.getB(), dropDirectionlessModuleIndex.get())) : Optional.empty() , 
+							lp.getSeqFibers(), lp.getOpticalSlotIds());
+		}
         return this;
     }
 
 
-	/** Returns the set of the optical slots ids that are idle in ALL the fibers provided 
+	/** Returns the set of the optical slots ids that are idle in ALL the fibers provided and also, if given, in the add and drop directionless modules
      * @param wdmLinks the set of fibers
+     * @param addNodeDirectionlessBank see above
+     * @param dropNodeDirectionlessBank see above
      * @return see above
      */
-    public SortedSet<Integer> getAvailableSlotIds (Collection<WFiber> wdmLinks)
+    public SortedSet<Integer> getAvailableSlotIds (Collection<WFiber> wdmLinks , Optional<Pair<WNode,Integer>> addNodeDirectionlessBank , Optional<Pair<WNode,Integer>> dropNodeDirectionlessBank) 
     {
-   	 checkSameWNet(wdmLinks);
+    	checkSameWNet(wdmLinks);
         if (wdmLinks.isEmpty()) throw new Net2PlanException ("No WDM links");
         final SortedSet<Integer> validSlotIds = this.getIdleOpticalSlotIds(wdmLinks.iterator().next());
         final Iterator<WFiber> itLink = wdmLinks.iterator();
         itLink.next();
         while (itLink.hasNext())
             validSlotIds.retainAll(this.getIdleOpticalSlotIds(itLink.next()));
+        if (addNodeDirectionlessBank.isPresent())
+            validSlotIds.removeAll(this.getOccupiedOpticalSlotIdsInDirectionlessAddModule(addNodeDirectionlessBank.get().getFirst() , addNodeDirectionlessBank.get().getSecond()));
+        if (dropNodeDirectionlessBank.isPresent())
+            validSlotIds.removeAll(this.getOccupiedOpticalSlotIdsInDirectionlessDropModule(dropNodeDirectionlessBank.get().getFirst() , dropNodeDirectionlessBank.get().getSecond()));
         return validSlotIds;
-    }
-    
-    /** Given a lightpath request, returns the optical slots occupied in the traversed fibers
-     * @param lp the lightpath request
-     * @return see above
-     */
-    public SortedMap<WFiber,SortedSet<Integer>> getOccupiedResources (WLightpathRequest lp)
-    {
-   	 checkSameWNet(lp);
-    	return this.occupation_ll_f_s.getOrDefault(lp, new TreeMap<> ());
     }
 
     /** Given a fiber, returns a map with the occupied optical slot ids, mapped to the set of lightpaths that occupy it. 
@@ -111,8 +130,30 @@ public class OpticalSpectrumManager
      */
     public SortedMap<Integer,SortedSet<WLightpath>> getOccupiedResources (WFiber fiber)
     {
-   	 checkSameWNet(fiber);
-    	return this.occupation_f_s_ll.getOrDefault(fiber, new TreeMap<> ());
+    	checkSameWNet(fiber);
+    	return Collections.unmodifiableSortedMap(this.occupation_f_s_ll.getOrDefault(fiber, new TreeMap<> ()));
+    }
+
+    /** Given a node and the index of the directionless add module, returns a map with the occupied optical slot ids, mapped to the set of lightpaths that occupy it.
+     * @param node see above
+     * @param directionlessModuleIndex  see above
+     * @return see above
+     */
+    public SortedMap<Integer,SortedSet<WLightpath>> getOccupiedResourcesInDirectionlessAddModule (WNode node , int directionlessModuleIndex)
+    {
+    	checkSameWNet(node);
+    	return Collections.unmodifiableSortedMap(this.directionlessAddOccupation_nm_s_ll.getOrDefault(Pair.of(node, directionlessModuleIndex) , new TreeMap<> ()));
+    }
+
+    /** Given a node and the index of the directionless drop module, returns a map with the occupied optical slot ids, mapped to the set of lightpaths that occupy it.
+     * @param node see above
+     * @param directionlessModuleIndex  see above
+     * @return see above
+     */
+    public SortedMap<Integer,SortedSet<WLightpath>> getOccupiedResourcesInDirectionlessDropModule (WNode node , int directionlessModuleIndex)
+    {
+    	checkSameWNet(node);
+    	return Collections.unmodifiableSortedMap(this.directionlessDropOccupation_nm_s_ll.getOrDefault(Pair.of(node, directionlessModuleIndex) , new TreeMap<> ()));
     }
 
     /** Given a fiber, returns the set of optical slots occupied by at least one traversing lightpath
@@ -128,41 +169,51 @@ public class OpticalSpectrumManager
     	return new TreeSet<> (occupiedSlotsPerLightpath.keySet());
     }
 
-    /** Given a set of fibers and a set of optical slots, returns true if ALL the optical slots are idle in ALL the fibers 
-     * @param wdmLinks the fibers
-     * @param slotIds the optical slots
+    /** Given a set of fibers and a set of optical slots, returns true if ALL the optical slots are idle in ALL the fibers and if given the add/drop directionless modules
+     * @param wdmLinks see above
+     * @param addDirectionlessModuleIndex see above
+     * @param dropDirectionlessModuleIndex see above
+     * @param slotIds see above
      * @return see above
      */
-    public boolean isAllocatable (Collection<WFiber> wdmLinks , SortedSet<Integer> slotIds)
+    public boolean isAllocatable (Collection<WFiber> wdmLinks , Optional<Pair<WNode,Integer>> addDirectionlessModuleIndex , Optional<Pair<WNode,Integer>> dropDirectionlessModuleIndex , SortedSet<Integer> slotIds)
     {
    	 checkSameWNet(wdmLinks);
         if (wdmLinks.size() != new HashSet<> (wdmLinks).size()) return false;
         for (WFiber e : wdmLinks)
             if (!this.isOpticalSlotIdsValidAndIdle(e , slotIds))
                 return false;
+        if (addDirectionlessModuleIndex.isPresent())
+        	if (!this.isOpticalSlotIdsValidAndIdleInAddDirectionlessModule(addDirectionlessModuleIndex.get().getFirst(), addDirectionlessModuleIndex.get().getSecond(), slotIds))
+        		return false;
+        if (dropDirectionlessModuleIndex.isPresent())
+        	if (!this.isOpticalSlotIdsValidAndIdleInDropDirectionlessModule(dropDirectionlessModuleIndex.get().getFirst(), dropDirectionlessModuleIndex.get().getSecond(), slotIds))
+        		return false;
         return true;
     }
 
     /** Returns true if the indicated lightpath is already accounted in this optical spectrm manager. This means that its occupation 
-     * of optical slots in the traversed fibers is accounted for. Note that if the lightpath ocupation was introduced, and then 
+     * of optical slots in the traversed fibers and add/drop directionless modules (if existing) is accounted for. Note that if the lightpath ocupation was introduced, and then 
      * its route is changed, the occupied resources should be updated by the user in optical spectrum manager.  
      * @param lp the lightpath
      * @return see above
      */
-    public boolean isAlreadyAccounted (WLightpath lp) { checkSameWNet(lp); return this.occupation_ll_f_s.get(lp) != null; }
+    public boolean isAlreadyAccounted (WLightpath lp) { checkSameWNet(lp); return this.occupation_ll_f_s.containsKey(lp); }
 
     /** Accounts for the occupation of a lightpath, updating the information in the spectrum manager
      * @param lp the lightpath
+     * @param addNodeDirectionlessBank if added in a directionless module, its index
+     * @param dropNodeDirectionlessBank if dropped in a directionless module, its index
      * @param wdmLinks the set of fibers where optical resources are occupied by this lightpath. This is typically the set of 
      * lightpath traversed fibers. In filterless technologies, this may also include other fibers not intentionally traversed, 
      * but where the spectrum is also occupied
      * @param slotIds the optical slot ids
      * @return see above
      */
-    public boolean allocateOccupation (WLightpath lp , Collection<WFiber> wdmLinks , SortedSet<Integer> slotIds)
+    public boolean allocateOccupation (WLightpath lp , Optional<Pair<WNode,Integer>> addNodeDirectionlessBank , Optional<Pair<WNode,Integer>> dropNodeDirectionlessBank , Collection<WFiber> wdmLinks , SortedSet<Integer> slotIds)
     {
-   	 checkSameWNet(wdmLinks);
-   	 checkSameWNet(lp);
+    	checkSameWNet(wdmLinks);
+   	 	checkSameWNet(lp);
     	if (isAlreadyAccounted(lp)) throw new Net2PlanException ("The lightpath has been already accounted for");
     	if (wdmLinks.isEmpty() || slotIds.isEmpty()) return false;
     	boolean clashesWithPreviousAllocations = false;
@@ -179,6 +230,35 @@ public class OpticalSpectrumManager
     		}
     	}
     	this.occupation_ll_f_s.put(lp, wdmLinks.stream().collect(Collectors.toMap(e->e, e->new TreeSet<> (slotIds) , (a,b)->b , TreeMap::new)));
+
+    	if (addNodeDirectionlessBank.isPresent())
+    	{
+    		SortedMap<Integer,SortedSet<WLightpath>> occup = this.directionlessAddOccupation_nm_s_ll.get(addNodeDirectionlessBank.get());
+    		if (occup == null) { occup = new TreeMap<> (); directionlessAddOccupation_nm_s_ll.put(addNodeDirectionlessBank.get(), occup); }
+    		for (int slotId : slotIds)
+    		{
+    			SortedSet<WLightpath> currentCollidingLps = occup.get(slotId);
+    			if (currentCollidingLps == null) { currentCollidingLps = new TreeSet<> (); occup.put(slotId, currentCollidingLps); }
+    			if (!currentCollidingLps.isEmpty()) clashesWithPreviousAllocations = true;
+    			currentCollidingLps.add(lp);
+    		}
+    		assert !this.directionlessAddOccupation_ll_nms.containsKey(lp);
+    		this.directionlessAddOccupation_ll_nms.put(lp, Triple.of(addNodeDirectionlessBank.get().getFirst(), addNodeDirectionlessBank.get().getSecond(), new TreeSet<> (slotIds)));
+    	} 
+    	if (dropNodeDirectionlessBank.isPresent())
+    	{
+    		SortedMap<Integer,SortedSet<WLightpath>> occup = this.directionlessDropOccupation_nm_s_ll.get(dropNodeDirectionlessBank.get());
+    		if (occup == null) { occup = new TreeMap<> (); directionlessDropOccupation_nm_s_ll.put(dropNodeDirectionlessBank.get(), occup); }
+    		for (int slotId : slotIds)
+    		{
+    			SortedSet<WLightpath> currentCollidingLps = occup.get(slotId);
+    			if (currentCollidingLps == null) { currentCollidingLps = new TreeSet<> (); occup.put(slotId, currentCollidingLps); }
+    			if (!currentCollidingLps.isEmpty()) clashesWithPreviousAllocations = true;
+    			currentCollidingLps.add(lp);
+    		}
+    		assert !this.directionlessDropOccupation_ll_nms.containsKey(lp);
+    		this.directionlessDropOccupation_ll_nms.put(lp, Triple.of(dropNodeDirectionlessBank.get().getFirst(), dropNodeDirectionlessBank.get().getSecond(), new TreeSet<> (slotIds)));
+    	} 
     	return clashesWithPreviousAllocations;
     }
 
@@ -187,10 +267,11 @@ public class OpticalSpectrumManager
      */
     public void releaseOccupation (WLightpath lp)
     {
-   	 checkSameWNet(lp);
+    	checkSameWNet(lp);
+    	if (!isAlreadyAccounted(lp)) return;
+
     	final SortedMap<WFiber,SortedSet<Integer>> occupiedResources = occupation_ll_f_s.get(lp);
-    	if (occupiedResources == null) return;
-    	occupation_ll_f_s.remove(lp);
+    	assert occupiedResources != null;
     	
     	for (Entry<WFiber,SortedSet<Integer>> resource : occupiedResources.entrySet())
     	{
@@ -211,8 +292,33 @@ public class OpticalSpectrumManager
     			}
     		}
     	}
-    }
+    	occupation_ll_f_s.remove(lp);
 
+    	/* Add drop directionless modules */
+    	for (boolean isAdd : new boolean [] {true , false})
+    	{
+    		final Map<Pair<WNode,Integer>,SortedMap<Integer,SortedSet<WLightpath>>> map_nm_s_ll = isAdd? directionlessAddOccupation_nm_s_ll : directionlessDropOccupation_nm_s_ll;
+    		final SortedMap<WLightpath,Triple<WNode,Integer,SortedSet<Integer>>> map_ll_nms = isAdd? directionlessAddOccupation_ll_nms : directionlessDropOccupation_ll_nms;
+    		final Triple<WNode,Integer,SortedSet<Integer>> occup = map_ll_nms.get(lp);
+    		if (occup == null) continue;
+    		assert occup.getFirst().equals(isAdd? lp.getA() : lp.getB());
+    		final Pair<WNode,Integer> module = Pair.of(occup.getFirst(), occup.getSecond());
+    		SortedMap<Integer,SortedSet<WLightpath>> occupInfo = map_nm_s_ll.get(module);
+    		for (int slotId : occup.getThird())
+    		{
+    			final SortedSet<WLightpath> thisLpAndOthers = occupInfo.get(slotId);
+    			assert thisLpAndOthers != null;
+    			assert thisLpAndOthers.contains(lp);
+    			thisLpAndOthers.remove(lp);
+    			if (thisLpAndOthers.isEmpty()) 
+    			{
+    				occupInfo.remove(slotId);
+    				if (occupInfo.isEmpty()) map_nm_s_ll.remove(module);
+    			}
+    		}
+    		map_ll_nms.remove(lp);
+    	}
+    }
 
     /** Searches for a first-fit assignment, where in each hop, one fiber is chosen. Given a set of hops (each hop with at least one fiber as an option), the number of contiguous optical slots needed, 
      * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), this method searches for 
@@ -225,6 +331,9 @@ public class OpticalSpectrumManager
      */
     public Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> spectrumAssignment_firstFitForAdjacenciesBidi (Collection<Pair<WNode,WNode>> seqAdjacenciesFibers_ab, int numContiguousSlotsRequired , SortedSet<Integer> unusableSlots)
     {
+    	
+    	PABLO: CONTINUA AQUI
+    	
    	 	assert !seqAdjacenciesFibers_ab.isEmpty();
    	 	assert numContiguousSlotsRequired > 0;
         /* If a fiber is traversed more than once, there is no possible assignment */
@@ -462,7 +571,7 @@ public class OpticalSpectrumManager
     /** Checks if the optical slot occupation --
      * 
      */
-    public void checkNetworkSlotOccupation ()
+    public void checkNetworkSlotOccupation () // PABLO
     {
         for (Entry<WFiber,SortedMap<Integer,SortedSet<WLightpath>>> occup_e : occupation_f_s_ll.entrySet())
         {
@@ -496,6 +605,29 @@ public class OpticalSpectrumManager
 		return res;
 	}
 
+	/** Returns the optical slots that are occupied (not used) in the given directionless add module
+	 * @param node see above
+	 * @param directionlessModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<Integer> getOccupiedOpticalSlotIdsInDirectionlessAddModule (WNode node , int directionlessModuleIndex)
+	{
+		checkSameWNet(node);
+		return new TreeSet<> (getOccupiedResourcesInDirectionlessAddModule(node, directionlessModuleIndex).keySet());
+	}
+
+	/** Returns the optical slots that are occupied (not used) in the given directionless drop module
+	 * @param node see above
+	 * @param directionlessModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<Integer> getOccupiedOpticalSlotIdsInDirectionlessDropModule (WNode node , int directionlessModuleIndex)
+	{
+		checkSameWNet(node);
+		return new TreeSet<> (getOccupiedResourcesInDirectionlessDropModule(node, directionlessModuleIndex).keySet());
+	}
+
+
 	/** Returns the optical slots where there is wavelength clashing, i.e. more than one traversing lightpath is using this slot
 	 * @param wdmLink see above
 	 * @return  see above
@@ -505,6 +637,27 @@ public class OpticalSpectrumManager
 		checkSameWNet(wdmLink);
 		return getOccupiedResources (wdmLink).entrySet().stream().filter(e->e.getValue().size() > 1).map(e->e.getKey()).collect(Collectors.toCollection(TreeSet::new));
 	}
+
+	/** Returns the optical slots where there is wavelength clashing in the directionless add module, i.e. more than one traversing lightpath is using this slot
+	 * @param wdmLink see above
+	 * @return  see above
+	 */
+	public SortedSet<Integer> getClashingOpticalSlotIdsInDirectionlessAddModule (WNode node , int addDirectionlessModule)
+	{
+		checkSameWNet(node);
+		return getOccupiedResources (wdmLink).entrySet().stream().filter(e->e.getValue().size() > 1).map(e->e.getKey()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the optical slots where there is wavelength clashing in the directionless add module, i.e. more than one traversing lightpath is using this slot
+	 * @param wdmLink see above
+	 * @return  see above
+	 */
+	public SortedSet<Integer> getClashingOpticalSlotIdsInDirectionlessDropModule (WNode node , int dropDirectionlessModule)
+	{
+		checkSameWNet(node);
+		return getOccupiedResources (wdmLink).entrySet().stream().filter(e->e.getValue().size() > 1).map(e->e.getKey()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
 
 	/** Returns the number optical slots where there is wavelength clashing, i.e. more than one traversing lightpath is using this slot
 	 * @param wdmLink see above
@@ -536,7 +689,6 @@ public class OpticalSpectrumManager
 	}
 
 		
-	
 	/** Indicates if the optical slots are usable (valid and idle) in the given fiber
 	 * @param wdmLink see above
 	 * @param slotsIds see above
@@ -548,7 +700,33 @@ public class OpticalSpectrumManager
 		return getIdleOpticalSlotIds(wdmLink).containsAll(slotsIds);
 	}
 	
-    /** For the provided collection of fibers, indicates the minimum and maximum optical slot id that is valid for all the 
+	/** Indicates if the optical slots are usable (valid and idle) in the given add directionless module index
+	 * @param node see above
+	 * @param directionlessModuleIndex see above
+	 * @param slotsIds see above
+	 * @return see above
+	 */
+	public boolean isOpticalSlotIdsValidAndIdleInAddDirectionlessModule (WNode node , int directionlessModuleIndex , SortedSet<Integer> slotsIds)
+	{
+		checkSameWNet(node);
+		return getOccupiedOpticalSlotIdsInDirectionlessAddModule(node, directionlessModuleIndex).stream().allMatch(slot->!slotsIds.contains(slot));
+	}
+	
+	/** Indicates if the optical slots are usable (valid and idle) in the given drop directionless module index
+	 * @param node see above
+	 * @param directionlessModuleIndex see above
+	 * @param slotsIds see above
+	 * @return see above
+	 */
+	public boolean isOpticalSlotIdsValidAndIdleInDropDirectionlessModule (WNode node , int directionlessModuleIndex , SortedSet<Integer> slotsIds)
+	{
+		checkSameWNet(node);
+		return getOccupiedOpticalSlotIdsInDirectionlessDropModule(node, directionlessModuleIndex).stream().allMatch(slot->!slotsIds.contains(slot));
+	}
+	
+
+	
+	/** For the provided collection of fibers, indicates the minimum and maximum optical slot id that is valid for all the 
      * fibers in the collection
      * @param wdmLinks see above
      * @return see above
@@ -604,11 +782,11 @@ public class OpticalSpectrumManager
     */
    public static Triple<SortedSet<WFiber>,List<List<WFiber>>,Boolean> getPropagatingFibersLasingLoopsAndIsMultipathOk (List<WFiber> links)
     {
-	   Idea:
-		   - Devuelva solo waste
-		   - Multipath ok es que no haya un waste mio solape con legitimate mio
-		   - Incluya Pair<WNode,Integer> de drop modules en non-directionless, ocupados
-		   - El add module ocupado se supone que es iunicamente el de origen
+//	   Idea:
+//		   - Devuelva solo waste
+//		   - Multipath ok es que no haya un waste mio solape con legitimate mio
+//		   - Incluya Pair<WNode,Integer> de drop modules en non-directionless, ocupados
+//		   - El add module ocupado se supone que es iunicamente el de origen
 		   
 	   
 	   
