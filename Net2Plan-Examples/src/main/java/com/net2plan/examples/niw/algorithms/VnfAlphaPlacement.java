@@ -149,6 +149,7 @@ public class VnfAlphaPlacement implements IAlgorithm {
 		for (int i = 0; i < numServices; i++) {
 			int numberOfVNFsInThisService = (int) randomWithRange(rng , 1, 5);
 			List<String> vnfsUpstream = new ArrayList<String>();
+			
 			for (int j = 0; j < numberOfVNFsInThisService; j++) {
 				WVnfType vnfType = new WVnfType("VNF"+j+"_Service"+i, 	//Name
 						100000000, 				//Capacity_Gbps
@@ -162,6 +163,7 @@ public class VnfAlphaPlacement implements IAlgorithm {
 
 				vnfsUpstream.add("VNF"+j+"_Service"+i);
 			}
+			
 			List<String> vnfsDownstream = Lists.reverse(vnfsUpstream);
 			final double trafficPerUserInGbps = randomWithRange(rng, 0.1, 1.0);
 			List<Double> trafficExpansion = Collections.nCopies(numberOfVNFsInThisService, 1.0);
@@ -326,16 +328,39 @@ public class VnfAlphaPlacement implements IAlgorithm {
 							System.out.println("Number of links to traverse (hops): " + firstFiberLinks.size());
 							double propagationDelay = wNet.getPropagationDelay(firstFiberLinks);
 							double latency = propagationDelay + 2 * 0.1 * firstFiberLinks.size();
-							latencies.add(latency);
+							//latencies.add(latency);
 							System.out.println("latency = propagationDelay + 2 * 0.1 * fibers.size()");
 							System.out.println("latency = "+propagationDelay+" + 2 * 0.1 * "+firstFiberLinks.size());
 							System.out.println("Latency in this iteration: "+latency);
+						
+							int numberOfLinks = 0;
+							//double propagationDelay = 0;
+							for(WAbstractNetworkElement ip : paths.get(0)) {
+								if(ip.isWIpLink()) {
+									WIpLink ipLink = ip.getAsIpLink();
+									System.out.println(ipLink);
+									WNode A = ipLink.getA();
+									WNode B = ipLink.getB();
+									
+									WFiber fiber = wNet.getKShortestWdmPath(1, A, B, Optional.empty()).get(0).get(0);
+									propagationDelay = propagationDelay + fiber.getPropagationDelayInMs();
+									numberOfLinks++;
+								}
+							}
+							latency = propagationDelay + 2 * 0.1 * numberOfLinks;
+							latencies.add(latency);
+							System.out.println("latency = propagationDelay + 2 * 0.1 * fibers.size()");
+							System.out.println("latency = "+propagationDelay+" + 2 * 0.1 * "+numberOfLinks);
+							System.out.println("Latency in this iteration: "+latency);
+							
+							
+							
 							
 							
 				}else
 					{
 					
-						List<WNode> randomNodeSequence = new ArrayList<WNode>();
+						//List<WNode> randomNodeSequence = new ArrayList<WNode>();
 						int nVNFsInShortestPath = (int) Math.floor(alpha * numberOfVnfsToTraverse); 
 						int nVNFsRandom = numberOfVnfsToTraverse - nVNFsInShortestPath;
 						System.out.println("### Number of VNFs to instantiate in the shortest path (alpha = "+alpha+"): "+nVNFsInShortestPath);
@@ -366,15 +391,25 @@ public class VnfAlphaPlacement implements IAlgorithm {
 									VNFsInNodes.add(candidateNode.getVnfInstances().size());
 								}
 								WNode nodeToInstantiateVNF = candidateNodesOutOfTheSP.get(VNFsInNodes.indexOf(Collections.max(VNFsInNodes)));
+								boolean isAlreadyInstantiatedInSP = false;
 								
 								for(int i=0; i<nVNFsRandom; i++) {
 									String vnfName = scr.getSequenceVnfTypes().get(i);
-									wNet.addVnfInstance(nodeToInstantiateVNF, vnfName, wNet.getVnfType(vnfName).get());
-									randomNodeSequence.add(nodeToInstantiateVNF);
-									int hops = wNet.getKShortestWdmPath(1, node, nodeToInstantiateVNF, Optional.empty()).get(0).size();
-									System.out.println(vnfName+" allocated in "+nodeToInstantiateVNF.getName()+" ("+hops+" hops)");
-								}
-								
+									
+									/*for (WNode n : nodesInShortestPath) {
+										String vnfs = n.getAllVnfInstances().toString();
+										System.out.println("Node "+n.getName()+" vnfs: "+vnfs);
+										System.out.println(vnfName+" is contained in vnfs?: "+vnfs.contains(vnfName));
+										if(vnfs.contains(vnfName)) isAlreadyInstantiatedInSP = true; break;
+									}
+									
+									if(!isAlreadyInstantiatedInSP) {*/
+										wNet.addVnfInstance(nodeToInstantiateVNF, vnfName, wNet.getVnfType(vnfName).get());
+										int hops = wNet.getKShortestWdmPath(1, node, nodeToInstantiateVNF, Optional.empty()).get(0).size();
+										System.out.println(vnfName+" allocated in "+nodeToInstantiateVNF.getName()+" ("+hops+" hops)");
+									//}else System.out.println("Some VNFs are already instantiated in the Shortest path in previous iterations.");
+									
+								}							
 							}else
 							{
 								System.out.println("Instantiating VNFs randomly..");
@@ -382,10 +417,19 @@ public class VnfAlphaPlacement implements IAlgorithm {
 								for(int i=0; i<nVNFsRandom; i++) {
 									String vnfName = scr.getSequenceVnfTypes().get(i);		
 									WNode randomNode = candidateNodesOutOfTheSP.get((int)randomWithRange(rng, (double) candidateNodesOutOfTheSP.size(), 0.0));
-									wNet.addVnfInstance(randomNode, vnfName, wNet.getVnfType(vnfName).get());
-									randomNodeSequence.add(randomNode);
-									int hops = wNet.getKShortestWdmPath(1, node, randomNode, Optional.empty()).get(0).size();
-									System.out.println(vnfName+" allocated in "+randomNode.getName()+" ("+hops+" hops)");
+									boolean isAlreadyInstantiatedInSP = false;
+
+									/*for (WNode n : nodesInShortestPath) {
+										String vnfs = n.getAllVnfInstances().toString();
+										System.out.println("Node "+n.getName()+" vnfs: "+vnfs);
+										System.out.println(vnfName+" is contained in vnfs?: "+vnfs.contains(vnfName));
+										if(vnfs.contains(vnfName)) isAlreadyInstantiatedInSP = true; break;
+									}
+									if(!isAlreadyInstantiatedInSP) {*/
+										wNet.addVnfInstance(randomNode, vnfName, wNet.getVnfType(vnfName).get());
+										int hops = wNet.getKShortestWdmPath(1, node, randomNode, Optional.empty()).get(0).size();
+										System.out.println(vnfName+" allocated in "+randomNode.getName()+" ("+hops+" hops)");
+									//}else System.out.println("Some VNFs are already instantiated in the Shortest path in previous iterations.");
 								}					
 							}
 						}
@@ -401,11 +445,12 @@ public class VnfAlphaPlacement implements IAlgorithm {
 						for(WAbstractNetworkElement ip : ipPath) {
 							if(ip.isWIpLink()) {
 								WIpLink ipLink = ip.getAsIpLink();
+								System.out.println(ipLink);
 								WNode A = ipLink.getA();
 								WNode B = ipLink.getB();
 								
 								WFiber fiber = wNet.getKShortestWdmPath(1, A, B, Optional.empty()).get(0).get(0);
-								propagationDelay += fiber.getPropagationDelayInMs();
+								propagationDelay = propagationDelay + fiber.getPropagationDelayInMs();
 								numberOfLinks++;
 							}
 						}

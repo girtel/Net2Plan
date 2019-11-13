@@ -88,7 +88,7 @@ public class DimensioningPlanning implements IAlgorithm {
 			Comparator<WNode> comparator = new Comparator<WNode>() {
 			    @Override
 			    public int compare(WNode A, WNode B) {
-			        return (int) (B.getAllVnfInstances().size() - A.getAllVnfInstances().size());
+			        return (int) (A.getPopulation() - B.getPopulation());
 			    }
 			};
 			
@@ -99,15 +99,15 @@ public class DimensioningPlanning implements IAlgorithm {
 				namesString.add("'"+node.getName()+"' ");
 				nodeCost = Math.sqrt((85/2000)*node.getOccupiedHdGB()+(70/2)*node.getOccupiedCpus()+(50/4)*node.getOccupiedRamGB());
 				finalCost += nodeCost;
-				costString.add(Double.toString(finalCost));
+				costString.add(Double.toString(nodeCost));
 			}
 			
 			summaryString.add(Double.toString(finalCost));
 			summaryString.add(Double.toString(lpList.size()));
 			for(String st : costString) summaryString.add(st);
 			
-			writeFileInOneLine (new File (folder , "names_sortedByNumberOfVNFs"+ ".txt") , namesString);
-			writeFile (new File (folder , "sortedByNumberOfVNFs" + Lmax  + ".txt") , summaryString);
+			writeFileInOneLine (new File (folder , "names_sortedByPopulation"+ ".txt") , namesString);
+			writeFile (new File (folder , "sortedByPopulation" + Lmax  + ".txt") , summaryString);
 
 		return "Ok";
 	}
@@ -369,8 +369,18 @@ public class DimensioningPlanning implements IAlgorithm {
 							final List<List<WAbstractNetworkElement>> paths = wNet.getKShortestServiceChainInIpLayer(K, node, endingNode, scr.getSequenceVnfTypes(), Optional.empty(), Optional.empty());
 							scr.addServiceChain(paths.get(0), totalTrafficInGbpsOfThisServiceInThisNodeGbps);
 							
-							double propagationDelay1 = wNet.getPropagationDelay(firstFiberLinks);
-							double latency1 = propagationDelay + 2 * 0.1 * firstFiberLinks.size();
+							double propagationDelay1 = 0;
+							for(WAbstractNetworkElement ipLink : paths.get(0)) {
+								if(ipLink.isWIpLink()) {
+									WIpLink ip = ipLink.getAsIpLink();
+									
+									WFiber fiber = wNet.getKShortestWdmPath(1, ip.getA(), ip.getB(), Optional.empty()).get(0).get(0);
+									propagationDelay1 = propagationDelay1 + fiber.getPropagationDelayInMs();
+								}
+							}
+							
+							//double propagationDelay1 = wNet.getPropagationDelay(firstFiberLinks);
+							double latency1 = propagationDelay1 + 2 * 0.1 * firstFiberLinks.size();
 							latencies.add(latency1);
 							System.out.println("latency = propagationDelay + 2 * 0.1 * fibers.size()");
 							System.out.println("latency = "+propagationDelay1+" + 2 * 0.1 * "+firstFiberLinks.size());
