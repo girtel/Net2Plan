@@ -15,6 +15,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Route;
+import com.net2plan.niw.OpticalSpectrumManager.LightpathSpectrumOccupationInformation;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -245,15 +246,6 @@ public class WLightpath extends WAbstractNetworkElement
 	 */
 	public List<WFiber> getSeqFibers () { return getNe().getSeqLinks().stream().map(e->new WFiber(e)).collect(Collectors.toList()); }
 
-	/** Returns the set of fibers, add modules in any node and drop modules in any node, with waste signal. 
-	 * @return see above
-	 */
-	public Triple<SortedSet<WFiber>,Set<Pair<WNode,Integer>> , Set<Pair<WNode,Integer>>>  getResourcesWithWasteSignal () 
-	{ 
-		return getNe().getSeqLinks().stream().map(e->new WFiber(e)).collect(Collectors.toList()); 
-	}
-
-	
 	/** Changes the sequence of fibers traversed by this lightpath
 	 * @param newSeqFibers see above
 	 */
@@ -314,4 +306,11 @@ public class WLightpath extends WAbstractNetworkElement
 	@Override
 	public WTYPE getWType() { return WTYPE.WLightpath; }
 
+	public LightpathSpectrumOccupationInformation getOpticalOccupationInformation ()
+	{
+		return new LightpathSpectrumOccupationInformation(getSeqFibers(), 
+				getDirectionlessAddModuleIndexInOrigin().isPresent()? Optional.of(Pair.of (getA() , getDirectionlessAddModuleIndexInOrigin().get())) : Optional.empty() ,
+				getDirectionlessDropModuleIndexInDestination().isPresent()? Optional.of(Pair.of (getB() , getDirectionlessDropModuleIndexInDestination().get())) : Optional.empty() ,
+				getOpticalSlotIds());
+	}
 }

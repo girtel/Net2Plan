@@ -29,6 +29,8 @@ import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.graph.DefaultDirectedGraph;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.utils.Pair;
@@ -51,9 +53,8 @@ public class OpticalSpectrumManager
 	private class SlotOccupationManager <T>
 	{
 		final private Map<T,SortedMap<Integer,SortedSet<WLightpath>>> occupation_element_s_ll = new HashMap<> ();
-		final private SortedMap<WLightpath,Map<T,SortedSet<Integer>>> occupation_ll_element_s = new TreeMap<> ();
 		public SlotOccupationManager() {}
-		public void clear () { occupation_element_s_ll.clear(); occupation_ll_element_s.clear(); }
+		public void clear () { occupation_element_s_ll.clear();  }
 		public Map<T,SortedMap<Integer,SortedSet<WLightpath>>> getFullPerElementOccupationMap () { return Collections.unmodifiableMap(occupation_element_s_ll); }
 		public SortedMap<Integer,SortedSet<WLightpath>> getOccupiedSlotIds (T element) 
 		{ 
@@ -87,24 +88,14 @@ public class OpticalSpectrumManager
     			if (!currentCollidingLps.isEmpty()) clashesWithPreviousAllocations = true;
     			currentCollidingLps.add(lp);
     		}
-    		Map<T,SortedSet<Integer>> alreadyAccountedOccupiedResourcesOfThisType = this.occupation_ll_element_s.get (lp);
-    		if (alreadyAccountedOccupiedResourcesOfThisType == null)
-    		{
-    			alreadyAccountedOccupiedResourcesOfThisType = new HashMap<> ();
-    			this.occupation_ll_element_s.put (lp , alreadyAccountedOccupiedResourcesOfThisType);
-    		}
-    		alreadyAccountedOccupiedResourcesOfThisType.put(element, slotIds);
 	    }
 
-	    public void releaseOccupation (WLightpath lp)
+	    public void releaseOccupation (WLightpath lp , Collection<T> occupiedResources)
 	    {
-	    	final Map<T,SortedSet<Integer>> occupiedResources = this.occupation_ll_element_s.get(lp);
 	    	if (occupiedResources == null) return;
-	    	for (Entry<T,SortedSet<Integer>> resource : occupiedResources.entrySet())
+    		final SortedSet<Integer> slotIds = lp.getOpticalSlotIds();
+	    	for (T element : occupiedResources)
 	    	{
-	    		final T element = resource.getKey();
-	    		final SortedSet<Integer> slotIds = resource.getValue();
-	    		assert element != null;
 	    		SortedMap<Integer,SortedSet<WLightpath>> thisFiberInfo = this.occupation_element_s_ll.get(element);
 	    		for (int slotId : slotIds)
 	    		{
@@ -119,11 +110,10 @@ public class OpticalSpectrumManager
 	    			}
 	    		}
 	    	}
-	    	occupation_ll_element_s.remove(lp);
 	    }
 	};
 
-	public class LightpathSpectrumOccupationInformation
+	public static class LightpathSpectrumOccupationInformation
 	{
 		private final List<WFiber> legitimate_seqLinks;
 		private final Optional<Pair<WNode,Integer>> legitimate_addDirlessModule;
@@ -142,6 +132,40 @@ public class OpticalSpectrumManager
 			this.legitimate_dropDirlessModule = legitimate_dropDirlessModule;
 			this.occupiedSlots = occupiedSlots;
 		}
+		
+		public boolean isMyLegitimateClashingWithLegitimateOrWasteSignalOf (LightpathSpectrumOccupationInformation otherLpInterferingMyLegitimate)
+		{
+			for (WFiber e : this.getSeqFibersLegitimateSignal())
+			{
+				if (otherLpInterferingMyLegitimate.getSeqFibersLegitimateSignal().contains(e))
+					return true;
+				if (otherLpInterferingMyLegitimate.getFibersWithWasteSignal().contains(e))
+					return true;
+			}
+			if (this.getDirectionlessAddModuleLegitimateSignal().isPresent())
+			{
+				if (this.getDirectionlessAddModuleLegitimateSignal().equals(otherLpInterferingMyLegitimate.getDirectionlessAddModuleLegitimateSignal())) 
+					return true;
+				if (otherLpInterferingMyLegitimate.getAddDirectionlessModulesWithWasteSignal().contains (this.getDirectionlessAddModuleLegitimateSignal().get()))
+					return true;
+			}
+			if (this.getDirectionlessDropModuleLegitimateSignal().isPresent())
+			{
+				if (this.getDirectionlessDropModuleLegitimateSignal().equals(otherLpInterferingMyLegitimate.getDirectionlessDropModuleLegitimateSignal())) 
+					return true;
+				if (otherLpInterferingMyLegitimate.getDropDirectionlessModulesWithWasteSignal().contains (this.getDirectionlessDropModuleLegitimateSignal().get()))
+					return true;
+			}
+			return false;
+		}
+
+		public boolean isMutuallyClashingFreeWith (LightpathSpectrumOccupationInformation otherLp)
+		{
+			if (this.isMyLegitimateClashingWithLegitimateOrWasteSignalOf (otherLp)) return false;
+			if (otherLp.isMyLegitimateClashingWithLegitimateOrWasteSignalOf (this)) return false;
+			return true;
+		}
+		
 		public void resetWasteOccupationInfo () { this.waste_addDirlessModules = null;  this.waste_dropDirlessModules = null; this.waste_fibers = null; }
 		public SortedSet<WFiber> getFibersWithWasteSignal () 
 		{
@@ -179,7 +203,7 @@ public class OpticalSpectrumManager
 					return true;
 			return false;
 		}
-		
+		public SortedSet<Integer> getOccupiedSlotIds () { return this.occupiedSlots; }
 		private void updateWasteOccupationInfo ()
 		{
 			
@@ -230,16 +254,12 @@ public class OpticalSpectrumManager
 		this.legitimateSignal_perFiberOccupation.clear();
 		this.legitimateSignal_directionlessAddOccupation.clear();
 		this.legitimateSignal_directionlessDropOccupation.clear();
+		this.lightpathsIncluded.clear();
 		for (WLightpath lp : net.getLightpaths())
 		{
 			final Optional<Integer> addDirectionlessModuleIndex = lp.getDirectionlessAddModuleIndexInOrigin();
 			final Optional<Integer> dropDirectionlessModuleIndex = lp.getDirectionlessDropModuleIndexInDestination();
-			this.allocateOccupationLegitimateSignal(lp, 
-					addDirectionlessModuleIndex.isPresent()? Optional.of(Pair.of(lp.getA(), addDirectionlessModuleIndex.get())) : Optional.empty() , 
-					dropDirectionlessModuleIndex.isPresent()? Optional.of(Pair.of(lp.getB(), dropDirectionlessModuleIndex.get())) : Optional.empty() , 
-							lp.getSeqFibers(), lp.getOpticalSlotIds());
-			final Triple<SortedSet<WFiber>,Set<Pair<WNode,Integer>> , Set<Pair<WNode,Integer>>> wasteOccupResources = lp.getResourcesWithWasteSignal();
-			this.allocateOccupationWasteSignal(lp, wasteOccupResources.getSecond(), wasteOccupResources.getThird(), wasteOccupResources.getFirst(), lp.getOpticalSlotIds());
+			this.allocateOccupation(lp,Optional.empty());
 		}
         return this;
     }
@@ -267,6 +287,30 @@ public class OpticalSpectrumManager
         return validSlotIds;
     }
 
+	/** FA: Returns the set of the optical slots ids that are idle in ALL the fibers provided and also, if given, in the add and drop directionless modules, so they are not occupied by legitimate or waste signals
+     * @param wdmLinks the set of fibers
+     * @param addNodeDirectionlessBank see above
+     * @param dropNodeDirectionlessBank see above
+     * @return see above
+     */
+    public SortedSet<Integer> getAvailableSlotIdsEmptyOrWithWaste (Collection<WFiber> wdmLinks , Optional<Pair<WNode,Integer>> addNodeDirectionlessBank , Optional<Pair<WNode,Integer>> dropNodeDirectionlessBank) 
+    {
+    	checkSameWNet(wdmLinks);
+        if (wdmLinks.isEmpty()) throw new Net2PlanException ("No WDM links");
+        final Iterator<WFiber> itLink = wdmLinks.iterator();
+        final WFiber firstLink = itLink.next();
+
+        final SortedSet<Integer> validSlotIds = this.getOpticalSlotIdsEmptyOrWithWaste(firstLink);
+        while (itLink.hasNext())
+            validSlotIds.retainAll(this.getOpticalSlotIdsEmptyOrWithWaste(itLink.next()));
+        if (addNodeDirectionlessBank.isPresent())
+            validSlotIds.removeAll(this.getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessAddModule(addNodeDirectionlessBank.get().getFirst() , addNodeDirectionlessBank.get().getSecond()));
+        if (dropNodeDirectionlessBank.isPresent())
+            validSlotIds.removeAll(this.getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessDropModule(dropNodeDirectionlessBank.get().getFirst() , dropNodeDirectionlessBank.get().getSecond()));
+        return validSlotIds;
+    }
+
+    
     /** FA: Given a fiber, returns a map with the occupied optical slot ids, both caused by legitimate signals, mapped to the set of lightpaths that occupy it. 
      * Note that if more than one lightpath occupies a given slot, means that spectrum clashing occurs in that slot   
      * @param fiber the input fiber
@@ -316,86 +360,106 @@ public class OpticalSpectrumManager
     	return res;
     }
 
-    
-    /** FA: Given a set of fibers and a set of optical slots, returns true if ALL the optical slots are idle in ALL the fibers and if given the add/drop directionless modules
-     * @param wdmLinks see above
-     * @param addDirectionlessModuleIndex see above
-     * @param dropDirectionlessModuleIndex see above
-     * @param slotIds see above
+    /** FA: Given a fiber, returns the set of optical slots occupied by at least one traversing lightpath in its legitimate signal path
+     * @param fiber see above
      * @return see above
      */
-    public boolean isAllocatable (List<WFiber> legitimatePath , Optional<Pair<WNode,Integer>> addDirectionlessModuleIndex , Optional<Pair<WNode,Integer>> dropDirectionlessModuleIndex , SortedSet<Integer> slotIds)
+    public SortedSet<Integer> getOpticalSlotIdsWithLegitimateSignal (WFiber fiber)
     {
-    	checkSameWNet(wdmLinks);
-        if (wdmLinks.size() != new HashSet<> (wdmLinks).size()) return false;
-        for (WFiber e : wdmLinks)
+    	checkSameWNet(fiber);
+    	return legitimateSignal_perFiberOccupation.getOccupiedOpticalSlotIds(fiber);
+    }
+
+    
+    /** FA: Given a potential lightpath occupation information, returns true if this lp would be allocatable, meaning that: 
+     * 1) It is not a self-clashing occupation: lightpaths traversing a fiber more than once, or where the its own waste signal overlaps the path of its legitimate signal
+     * 2) The sequence of fibers and add/drop dirless modules are idle (not occupied by aby waste or legitimate signal of other lightpaths)
+     * 3) The waste signal appearing in some fibers or add/drop directionless modules overlaps with other lightpath LEGITIMATE paths/modules. 
+     * Note that it is accepted that waste signals of different lightpaths clash between them
+     * @param occupationInformation see above
+     * @return see above
+     */
+    public boolean isAllocatable (LightpathSpectrumOccupationInformation occupationInformation)
+    {
+    	if (occupationInformation.isWithSelfClashing()) return false;
+    	final SortedSet<Integer> slotIds = occupationInformation.getOccupiedSlotIds();
+    	/* Legitimate fibers are fully free */
+        for (WFiber e : occupationInformation.getSeqFibersLegitimateSignal())
             if (!this.isOpticalSlotIdsValidAndIdle(e , slotIds))
                 return false;
-        if (addDirectionlessModuleIndex.isPresent())
-        	if (!this.isOpticalSlotIdsValidAndIdleInAddDirectionlessModule(addDirectionlessModuleIndex.get().getFirst(), addDirectionlessModuleIndex.get().getSecond(), slotIds))
+    	/* Legitimate ADD directionless module is fully free */
+        if (occupationInformation.getDirectionlessAddModuleLegitimateSignal().isPresent())
+        	if (!this.isOpticalSlotIdsValidAndIdleInAddDirectionlessModule(occupationInformation.getDirectionlessAddModuleLegitimateSignal().get().getFirst(), occupationInformation.getDirectionlessAddModuleLegitimateSignal().get().getSecond(), slotIds))
         		return false;
-        if (dropDirectionlessModuleIndex.isPresent())
-        	if (!this.isOpticalSlotIdsValidAndIdleInDropDirectionlessModule(dropDirectionlessModuleIndex.get().getFirst(), dropDirectionlessModuleIndex.get().getSecond(), slotIds))
+    	/* Legitimate DROP directionless module is fully free */
+        if (occupationInformation.getDirectionlessDropModuleLegitimateSignal().isPresent())
+        	if (!this.isOpticalSlotIdsValidAndIdleInDropDirectionlessModule(occupationInformation.getDirectionlessDropModuleLegitimateSignal().get().getFirst(), occupationInformation.getDirectionlessDropModuleLegitimateSignal().get().getSecond(), slotIds))
         		return false;
+        /* Fibers with waste spectrum are not occupied by legitimate signals */
+        for (WFiber e : occupationInformation.getFibersWithWasteSignal())
+        	for (int slotWithLegitimateSignalOtherLps : this.legitimateSignal_perFiberOccupation.getOccupiedOpticalSlotIds(e))
+        		if (slotIds.contains(slotWithLegitimateSignalOtherLps))
+        			return false;
+        /* Dirless add modules with waste spectrum are not occupied by legitimate signals */
+        for (Pair<WNode,Integer> e : occupationInformation.getAddDirectionlessModulesWithWasteSignal())
+        	for (int slotWithLegitimateSignalOtherLps : this.legitimateSignal_directionlessAddOccupation.getOccupiedOpticalSlotIds(e))
+        		if (slotIds.contains(slotWithLegitimateSignalOtherLps))
+        			return false;
+        /* Dirless drop modules with waste spectrum are not occupied by legitimate signals */
+        for (Pair<WNode,Integer> e : occupationInformation.getDropDirectionlessModulesWithWasteSignal())
+        	for (int slotWithLegitimateSignalOtherLps : this.legitimateSignal_directionlessDropOccupation.getOccupiedOpticalSlotIds(e))
+        		if (slotIds.contains(slotWithLegitimateSignalOtherLps))
+        			return false;
         return true;
     }
 
-    /** Accounts for the occupation of a lightpath, just for the legitimate signal (waste signal occupation is accounted in other function) updating the information in the spectrum manager
-     * @param lp the lightpath
-     * @param addNodeDirectionlessBank if added in a directionless module, its index
-     * @param dropNodeDirectionlessBank if dropped in a directionless module, its index
-     * @param wdmLinks the set of fibers where optical resources are occupied by this lightpath. This is typically the set of 
-     * lightpath traversed fibers. In filterless technologies, this may also include other fibers not intentionally traversed, 
-     * but where the spectrum is also occupied
-     * @param slotIds the optical slot ids
+    /** Indicates if this lightpath has already been accounted for
+     * @param lp see above
      * @return see above
      */
-    public void allocateOccupationLegitimateSignal (WLightpath lp , Optional<Pair<WNode,Integer>> addNodeDirectionlessBank , Optional<Pair<WNode,Integer>> dropNodeDirectionlessBank , Collection<WFiber> wdmLinks , SortedSet<Integer> slotIds)
-    {
-    	checkSameWNet(wdmLinks);
-   	 	checkSameWNet(lp);
-    	if (slotIds.isEmpty()) return;
-    	for (WFiber fiber : wdmLinks)
-    		legitimateSignal_perFiberOccupation.allocateOccupation(fiber, lp, slotIds);
-    	if (addNodeDirectionlessBank.isPresent())
-    		legitimateSignal_directionlessAddOccupation.allocateOccupation(addNodeDirectionlessBank.get(), lp, slotIds);
-    	if (dropNodeDirectionlessBank.isPresent())
-    		legitimateSignal_directionlessDropOccupation.allocateOccupation(dropNodeDirectionlessBank.get(), lp, slotIds);
-    }
-
-    /** Accounts for the occupation of a lightpath regarding to the waste signal, updating the information in the spectrum manager
-     * @param lp the lightpath
-     * @param addNodeDirectionlessBank if added in a directionless module, its index
-     * @param dropNodeDirectionlessBank if dropped in a directionless module, its index
-     * @param wdmLinks the set of fibers where optical resources are occupied by this lightpath. This is typically the set of 
-     * lightpath traversed fibers. In filterless technologies, this may also include other fibers not intentionally traversed, 
-     * but where the spectrum is also occupied
-     * @param slotIds the optical slot ids
-     */
-    public void allocateOccupationWasteSignal (WLightpath lp , Collection<Pair<WNode,Integer>> addNodeDirectionlessBanks , Collection<Pair<WNode,Integer>> dropNodeDirectionlessBanks , Collection<WFiber> wdmLinks , SortedSet<Integer> slotIds)
-    {
-    	checkSameWNet(wdmLinks);
-   	 	checkSameWNet(lp);
-    	if (slotIds.isEmpty()) return;
-    	boolean clashesWithPreviousAllocations = false;
-    	for (WFiber fiber : wdmLinks)
-    		wasteSignal_perFiberOccupation.allocateOccupation(fiber, lp, slotIds);
-    	for (Pair<WNode,Integer> dirlessBank : addNodeDirectionlessBanks)
-    		wasteSignal_directionlessAddOccupation.allocateOccupation(dirlessBank, lp, slotIds);
-    	for (Pair<WNode,Integer> dirlessBank : dropNodeDirectionlessBanks)
-    		wasteSignal_directionlessDropOccupation.allocateOccupation(dirlessBank, lp, slotIds);
-    }
-
+    public boolean isAlreadyAllocated (WLightpath lp) { return this.lightpathsIncluded.containsKey(lp); }
     
+    /** Accounts for the occupation of a lightpath, accounting for both the occupation caused by the legitimate optical path, and for the wasted spectrum caused by filterless switching in the nodes
+     * @param lp the lightpath
+     * @param optionalOccupationInformation the lightpath occupation information. If not present, it is automatically computed from the current lightpath information
+     */
+    public void allocateOccupation (WLightpath lp , Optional<LightpathSpectrumOccupationInformation> optionalOccupationInformation)
+    {
+   	 	checkSameWNet(lp);
+   	 	if (isAlreadyAllocated(lp)) throw new Net2PlanException ("This lightpath has already been allocated. Release it first. ");
+   	 	final LightpathSpectrumOccupationInformation occupationInformation = optionalOccupationInformation.orElse(lp.getOpticalOccupationInformation ());
+    	final SortedSet<Integer> slotIds = occupationInformation.getOccupiedSlotIds();
+    	if (slotIds.isEmpty()) return;
+    	for (WFiber fiber : occupationInformation.getSeqFibersLegitimateSignal())
+    		legitimateSignal_perFiberOccupation.allocateOccupation(fiber, lp, slotIds);
+    	if (occupationInformation.getDirectionlessAddModuleLegitimateSignal().isPresent())
+    		legitimateSignal_directionlessAddOccupation.allocateOccupation(occupationInformation.getDirectionlessAddModuleLegitimateSignal().get(), lp, slotIds);
+    	if (occupationInformation.getDirectionlessDropModuleLegitimateSignal().isPresent())
+    		legitimateSignal_directionlessDropOccupation.allocateOccupation(occupationInformation.getDirectionlessDropModuleLegitimateSignal().get(), lp, slotIds);
+    	for (WFiber fiber : occupationInformation.getFibersWithWasteSignal())
+    		wasteSignal_perFiberOccupation.allocateOccupation(fiber, lp, slotIds);
+    	for (Pair<WNode,Integer> module : occupationInformation.getAddDirectionlessModulesWithWasteSignal())
+    		wasteSignal_directionlessAddOccupation.allocateOccupation(module , lp, slotIds);
+    	for (Pair<WNode,Integer> module : occupationInformation.getDropDirectionlessModulesWithWasteSignal())
+    		wasteSignal_directionlessDropOccupation.allocateOccupation(module , lp, slotIds);
+    }
+
     /** Releases all the optical slots occupied for a given lightpath in this manager
      * @param lp the lightpath
      */
     public void releaseOccupation (WLightpath lp)
     {
     	checkSameWNet(lp);
-    	perFiberOccupation.releaseOccupation(lp);
-    	directionlessAddOccupation.releaseOccupation(lp);
-    	directionlessDropOccupation.releaseOccupation(lp);
+    	final LightpathSpectrumOccupationInformation occup = this.lightpathsIncluded.get(lp);
+    	if (occup == null) return;
+		legitimateSignal_perFiberOccupation.releaseOccupation(lp, occup.getSeqFibersLegitimateSignal()); 
+    	if (occup.getDirectionlessAddModuleLegitimateSignal().isPresent())
+    		legitimateSignal_directionlessAddOccupation.releaseOccupation(lp , Arrays.asList(occup.getDirectionlessAddModuleLegitimateSignal().get()));
+    	if (occup.getDirectionlessDropModuleLegitimateSignal().isPresent())
+    		legitimateSignal_directionlessDropOccupation.releaseOccupation(lp , Arrays.asList(occup.getDirectionlessDropModuleLegitimateSignal().get()));
+		wasteSignal_perFiberOccupation.releaseOccupation(lp, occup.getFibersWithWasteSignal());
+		wasteSignal_directionlessAddOccupation.releaseOccupation(lp, occup.getAddDirectionlessModulesWithWasteSignal());
+		wasteSignal_directionlessDropOccupation.releaseOccupation(lp, occup.getDropDirectionlessModulesWithWasteSignal());
     }
 
     /** Searches for a first-fit assignment, where in each hop, one fiber is chosen. Given a set of hops (each hop with at least one fiber as an option),
@@ -414,10 +478,8 @@ public class OpticalSpectrumManager
      * @return see above. If no idle range is found, Optional.empty is returned. 
      */
     public Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> spectrumAssignment_firstFitForAdjacenciesBidi (Collection<Pair<WNode,WNode>> seqAdjacenciesFibers_ab,
-    		Optional<Pair<WNode,Integer>> directionlessAddModuleAb , 
-    		Optional<Pair<WNode,Integer>> directionlessDropModuleAb , 
-    		Optional<Pair<WNode,Integer>> directionlessAddModuleBa , 
-    		Optional<Pair<WNode,Integer>> directionlessDropModuleBa , 
+    		Optional<Pair<WNode,Integer>> directionlessAddModuleAbDropModuleBa , 
+    		Optional<Pair<WNode,Integer>> directionlessAddModuleBaDropModuleAb , 
     		int numContiguousSlotsRequired , SortedSet<Integer> unusableSlots)
     {
    	 	assert !seqAdjacenciesFibers_ab.isEmpty();
@@ -467,7 +529,137 @@ public class OpticalSpectrumManager
    	   	  {
    	   	   	  for (boolean isAdd : new boolean [] {true,false})
    	   	   	  {
-   	   	   		  final SlotOccupationManager<Pair<WNode,Integer>> manager = isAdd? directionlessAddOccupation : directionlessDropOccupation; 
+   	   	   		  final SlotOccupationManager<Pair<WNode,Integer>> manager = isAdd? legitimateSignal_directionlessAddOccupation : legitimateSignal_directionlessDropOccupation; 
+   	   	   		  final Pair<WNode,Integer> dirlessModule = (isAdd? (isAb? directionlessAddModuleAbDropModuleBa : directionlessAddModuleBaDropModuleAb) : (isAb? directionlessAddModuleBaDropModuleAb : directionlessAddModuleAbDropModuleBa)).orElse(null);
+   	   	   		  if (dirlessModule == null) continue;
+   	   	   		  final SortedMap<Integer,SortedSet<WLightpath>> occupiedSlots = manager.getOccupiedSlotIds(dirlessModule); 
+   	   	   		  for (int i = 0; i < numContiguousSlotsRequired ; i ++)
+   	   	   			  if (occupiedSlots.containsKey(potentiallyValidFirstSlotId + i)) { isOk = false; break; }
+   	   	   	  }
+   	   	   	  if (!isOk) break;
+   	   	  }
+   	   	  if (isOk) { firstSlotToReturn = potentiallyValidFirstSlotId; break; }
+   	  }
+   	  if (firstSlotToReturn == null) return Optional.empty();
+   	  
+   	  final SortedSet<Integer> res_rangetoReturn = new TreeSet<> (); for (int i = 0; i < numContiguousSlotsRequired ; i ++) res_rangetoReturn.add(firstSlotToReturn + i);
+   	  final List<Pair<WFiber,WFiber>> res_fibersUsed = new ArrayList<> (); 
+   	  for (Pair<WNode,WNode> hop_ab :  seqAdjacenciesFibers_ab)
+   	  {
+   		  final List<Pair<WFiber,WFiber>> fibersThisHop = mapInfoConsideringAllBidi.get(hop_ab).getSecond();
+   		  for (Pair<WFiber,WFiber> bidiPair : fibersThisHop)
+   		  {
+   			  final WFiber ab = bidiPair.getFirst();
+   			  final WFiber ba = bidiPair.getSecond();
+   			  if (this.isOpticalSlotIdsValidAndIdle(ab, res_rangetoReturn) && this.isOpticalSlotIdsValidAndIdle(ba, res_rangetoReturn))
+   			  	{ res_fibersUsed.add(bidiPair); break; }
+   		  }
+   	  }
+   	  assert res_fibersUsed.size() == seqAdjacenciesFibers_ab.size();
+   	  return Optional.of(Pair.of(res_fibersUsed , res_rangetoReturn));
+    }
+
+    /** Searches for a first-fit assignment, where in each hop, one fiber is chosen. Given a set of hops (each hop with at least one fiber as an option),
+     * optional directionless add and drop module to occupy,  
+     * the number of contiguous optical slots needed, 
+     * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), this method searches for 
+     * the lowest-id contiguous range of slots that are available in all the indicated fibers and directionless modules. Note that if the set of fibers 
+     * passes more than once in the same fiber, no assignment is possible, and Optional.empty is returned
+     * @param seqAdjacenciesFibers_ab see above
+     * @param directionlessAddModuleAb see above
+     * @param directionlessDropModuleAb see above
+     * @param directionlessAddModuleBa see above
+     * @param directionlessDropModuleBa see above
+     * @param numContiguousSlotsRequired see above
+     * @param unusableSlots see above
+     * @return see above. If no idle range is found, Optional.empty is returned. 
+     */
+    public Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> spectrumAssignment_firstFitForAdjacenciesBidiFilterlessAware (Collection<Pair<WNode,WNode>> seqAdjacenciesFibers_ab,
+    		WNode a , WNode b , Optional<Integer> directionlessAddModuleAbDropModuleBa , Optional<Integer> directionlessAddModuleBaDropModuleAb , 
+    		int numContiguousSlotsRequired , SortedSet<Integer> unusableSlots)
+    {
+   	 	assert !seqAdjacenciesFibers_ab.isEmpty();
+   	 	assert numContiguousSlotsRequired > 0;
+   	 	
+   	 	/* If loops in the travsersed nodes => we do not allow that */
+   	 	final List<SortedSet<WNode>> seqBidiAdjacencies_ab = seqAdjacenciesFibers_ab.stream().map(p->new TreeSet<>(Arrays.asList(p.getFirst() , p.getSecond()))).collect (Collectors.toList());
+   	 	if (seqBidiAdjacencies_ab.size() != new HashSet<> (seqBidiAdjacencies_ab).size()) throw new Net2PlanException ("Paths with cycles in traversed adjacencies are not allowed");
+   	 	
+   	 	/* Get valid fibers and first slots ids to return, according to the fibers */
+        /* If a fiber is traversed more than once, there is no possible assignment */
+   	 	final List<List<WFiber>> validFibersAb = seqAdjacenciesFibers_ab.stream().
+   	 			map(p->wNet.getNodePairFibers(p.getFirst(), p.getSecond()).stream().filter(e->e.isBidirectional()).collect(Collectors.toList())).
+   	 			collect (Collectors.toList());
+   	 	final List<List<WFiber>> possiblePathsAb = Lists.cartesianProduct(validFibersAb);
+   	 	for (List<WFiber> pathAb : possiblePathsAb)
+   	 	{
+   	 		final List<WFiber> pathAbBa = new ArrayList<> (pathAb);
+   	 		for (WFiber ab : pathAb) pathAbBa.add(ab.getBidirectionalPair());
+   	 		final LightpathSpectrumOccupationInformation lpOccupationAbbA = new LightpathSpectrumOccupationInformation(pathAbBa, 
+   	 				directionlessAddModuleAbDropModuleBa.isPresent()? Optional.of(Pair.of(a, directionlessAddModuleAbDropModuleBa.get())) : Optional.empty(), 
+   	 					directionlessAddModuleBaDropModuleAb.isPresent()? Optional.of(Pair.of(b, directionlessAddModuleBaDropModuleAb.get())) : Optional.empty(), 
+   	 					new TreeSet<> (Arrays.asList((int) 0)));
+   	 		final SortedSet<Integer> forbidenSlotsBecauseOfAddAndDropBa = new TreeSet<> ();
+   	 		final Integer addModuleBa = directionlessAddModuleBaDropModuleAb.orElse(null);
+   	 		final Integer dropModuleBa = directionlessAddModuleAbDropModuleBa.orElse(null);
+   	 		if (addModuleBa != null)
+   	 		forbidenSlotsBecauseOfAddAndDropBa.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessAddModule(b, addModuleBa));
+   	 		if (dropModuleBa != null)
+   	 		forbidenSlotsBecauseOfAddAndDropBa.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessDropModule(a, dropModuleBa));
+   	 		final Optional<SortedSet<Integer>> res = spectrumAssignment_firstFitFilterlessAware(lpOccupationAbbA, numContiguousSlotsRequired, Optional.empty(), forbidenSlotsBecauseOfAddAndDropBa);
+   	 		
+   	 		PABLO: CONTINUA AQUI!!!
+   	 		
+   	 		if (res.isPresent()) return res;
+   	 	}
+   	 	
+   	 	//final Sets.cartesianProduct(validFibersAb)
+   	 	
+   	 	
+   	  final Map<Pair<WNode,WNode> , Pair<SortedSet<Integer> , List<Pair<WFiber,WFiber>>>> mapInfoConsideringAllBidi = new HashMap<> ();
+   	  final SortedSet<WFiber> allFibersToCheckRepetitions = new TreeSet<> ();
+   	  for (Pair<WNode,WNode> nn : seqAdjacenciesFibers_ab)
+   	  {
+			  final WNode a = nn.getFirst();
+			  final WNode b = nn.getSecond();
+			  final SortedSet<WFiber> fibersAb = wNet.getNodePairFibers(a, b);
+			  final SortedSet<WFiber> fibersBa = wNet.getNodePairFibers(b , a);
+			  if (fibersAb.stream().anyMatch(f->!f.isBidirectional())) throw new Net2PlanException ("All fibers must be bidirectional");
+			  if (fibersBa.stream().anyMatch(f->!f.isBidirectional())) throw new Net2PlanException ("All fibers must be bidirectional");
+			  final List<Pair<WFiber,WFiber>> abBa = new ArrayList<> ();
+			  final SortedSet<Integer> idleOpticalSlotRangesInitialSlots = new TreeSet<> ();
+			  for (WFiber ab : fibersAb)
+			  {
+				  if (allFibersToCheckRepetitions.contains(ab)) throw new Net2PlanException ("A fiber appears more than once in an option");
+				  if (allFibersToCheckRepetitions.contains(ab.getBidirectionalPair())) throw new Net2PlanException ("A fiber appears more than once in an option");
+				  allFibersToCheckRepetitions.add(ab);
+				  allFibersToCheckRepetitions.add(ab.getBidirectionalPair());
+				  abBa.add(Pair.of(ab, ab.getBidirectionalPair()));
+		   		  SortedSet<Integer> optionsAb = getIdleOpticalSlotRangesInitialSlots(ab, numContiguousSlotsRequired);
+		   		  SortedSet<Integer> optionsBa = getIdleOpticalSlotRangesInitialSlots(ab.getBidirectionalPair(), numContiguousSlotsRequired);
+		   		  optionsAb.removeAll(unusableSlots);
+		   		  optionsBa.removeAll(unusableSlots);
+		   		  idleOpticalSlotRangesInitialSlots.addAll(Sets.intersection(optionsAb, optionsBa));
+			  }
+			  mapInfoConsideringAllBidi.put(nn, Pair.of(idleOpticalSlotRangesInitialSlots, abBa));
+   	  }
+   	  SortedSet<Integer> validSlotIdsToReturn = null;
+   	  for (Pair<WNode,WNode> nn : seqAdjacenciesFibers_ab)
+   	  {
+           final SortedSet<Integer> validSlotIdsThisHop = mapInfoConsideringAllBidi.get(nn).getFirst();
+           if (validSlotIdsToReturn == null) validSlotIdsToReturn = validSlotIdsThisHop; else validSlotIdsToReturn.retainAll(validSlotIdsThisHop);
+   	  }
+
+   	  /* Filter out valid options Get valid fibers and first slots ids to return, according to the fibers */
+   	  Integer firstSlotToReturn = null;
+   	  for (int potentiallyValidFirstSlotId : validSlotIdsToReturn)
+   	  {
+   		  boolean isOk = true;
+   	   	  for (boolean isAb : new boolean [] {true,false})
+   	   	  {
+   	   	   	  for (boolean isAdd : new boolean [] {true,false})
+   	   	   	  {
+   	   	   		  final SlotOccupationManager<Pair<WNode,Integer>> manager = isAdd? legitimateSignal_directionlessAddOccupation : legitimateSignal_directionlessDropOccupation; 
    	   	   		  final Pair<WNode,Integer> dirlessModule = (isAdd? (isAb? directionlessAddModuleAb : directionlessAddModuleBa) : (isAb? directionlessDropModuleAb : directionlessDropModuleBa)).orElse(null);
    	   	   		  if (dirlessModule == null) continue;
    	   	   		  final SortedMap<Integer,SortedSet<WLightpath>> occupiedSlots = manager.getOccupiedSlotIds(dirlessModule); 
@@ -497,6 +689,7 @@ public class OpticalSpectrumManager
    	  return Optional.of(Pair.of(res_fibersUsed , res_rangetoReturn));
     }
 
+    
     
     /** Searches for a first-fit assignment. Given a set of fibers to occupy, the optional add and drop directionless modules used, the number of contiguous optical slots needed, 
      * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), this method searches for 
@@ -538,6 +731,144 @@ public class OpticalSpectrumManager
         return Optional.empty();
     }
 
+    /** Searches for a first-fit assignment. Given a set of fibers to occupy, the optional add and drop directionless modules used, the number of contiguous optical slots needed, 
+     * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), this method searches for 
+     * the lowest-id contiguous range of slots that are available in all the indicated fibers and directionless modules. Note that if the set of fibers 
+     * passes more than once in the same fiber, no assignment is possible, and Optional.empty is returned
+     * @param lpOccupation see above
+     * @param numContiguousSlotsRequired see above
+     * @param minimumInitialSlotId see above
+     * @return see above
+     */
+    public Optional<SortedSet<Integer>> spectrumAssignment_firstFitFilterlessAware (LightpathSpectrumOccupationInformation lpOccupation , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds)
+    {
+    	assert !lpOccupation.getSeqFibersLegitimateSignal().isEmpty();
+        assert numContiguousSlotsRequired > 0;
+
+        /* If a fiber is traversed more than once, there is no possible assignment */
+        if (lpOccupation.isWithSelfClashing()) return Optional.empty();
+
+        /* Empty slots for legitimate fibers, and add/drop dirless modules  */
+        final SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(lpOccupation.getSeqFibersLegitimateSignal() , lpOccupation.getDirectionlessAddModuleLegitimateSignal() , lpOccupation.getDirectionlessDropModuleLegitimateSignal());
+        /* Retain slots without legitimate signal in wasted fibers */
+        intersectionValidSlots.retainAll(getAvailableSlotIdsEmptyOrWithWaste(lpOccupation.getFibersWithWasteSignal() , Optional.empty() , Optional.empty()));
+        /* Remove slots with legitimate signal in any of the wasted add dirless ports */
+        for (Pair<WNode,Integer> module : lpOccupation.getAddDirectionlessModulesWithWasteSignal())
+        	intersectionValidSlots.removeAll(this.getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessAddModule(module.getFirst(), module.getSecond()));
+        /* Remove slots with legitimate signal in any of the wasted drop dirless ports */
+        for (Pair<WNode,Integer> module : lpOccupation.getDropDirectionlessModulesWithWasteSignal())
+        	intersectionValidSlots.removeAll(this.getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessDropModule(module.getFirst(), module.getSecond()));
+        /* Remove invalid slots below the mandated threshold */
+        if (minimumInitialSlotId.isPresent())
+        	intersectionValidSlots = intersectionValidSlots.tailSet(minimumInitialSlotId.get());
+        /* Remove forbiden slot ids */
+        intersectionValidSlots.removeAll(forbidenSlotIds);
+        if (intersectionValidSlots.size() < numContiguousSlotsRequired) return Optional.empty();
+
+        final LinkedList<Integer> lastXValidSlots = new LinkedList<> ();
+        for (int slotId : intersectionValidSlots)
+        {
+        	if (lastXValidSlots.size() >= numContiguousSlotsRequired) lastXValidSlots.remove(0);
+        	lastXValidSlots.add(slotId);
+        	if (lastXValidSlots.size() != numContiguousSlotsRequired) continue;
+        	if (lastXValidSlots.getLast() - lastXValidSlots.getFirst() == numContiguousSlotsRequired-1) 
+        		return Optional.of(new TreeSet<>(lastXValidSlots));
+        }
+        return Optional.empty();
+    }
+
+    
+    
+    /** Returns the set of all the initial optical slots of a range of the given size, so that all the slots in a range are usable for allocation considering that: i) 
+     * the fibers and add/drop modules of the legitimate path are empty, and ii) the fibers and add/drop modules with waste signal do not overlap with the legitimate signal of this or other path. 
+     * If the lightpath occupation has potentially self-clashing (e.g. traverses a fiber more than once in its legitimate path or its waste signal clashes with its legitimate path), returns an empty set. 
+     * @param lpOccupation see above
+     * @param numContiguousSlotsRequired see above
+     * @param minimumInitialSlotId see above
+     * @return see above
+     */
+    public SortedSet<Integer> spectrumAssignment_getAllPotentialFirstSlotsFilterlessAware (LightpathSpectrumOccupationInformation lpOccupation , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId)
+    {
+    	assert !lpOccupation.getSeqFibersLegitimateSignal().isEmpty();
+        assert numContiguousSlotsRequired > 0;
+
+        /* If a fiber is traversed more than once, there is no possible assignment */
+        if (lpOccupation.isWithSelfClashing()) return new TreeSet<> ();
+
+        /* Empty slots for legitimate fibers, and add/drop dirless modules  */
+        final SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(lpOccupation.getSeqFibersLegitimateSignal() , lpOccupation.getDirectionlessAddModuleLegitimateSignal() , lpOccupation.getDirectionlessDropModuleLegitimateSignal());
+        /* Retain slots without legitimate signal in wasted fibers */
+        intersectionValidSlots.retainAll(getAvailableSlotIdsEmptyOrWithWaste(lpOccupation.getFibersWithWasteSignal() , Optional.empty() , Optional.empty()));
+        /* Remove slots with legitimate signal in any of the wasted add dirless ports */
+        for (Pair<WNode,Integer> module : lpOccupation.getAddDirectionlessModulesWithWasteSignal())
+        	intersectionValidSlots.removeAll(this.getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessAddModule(module.getFirst(), module.getSecond()));
+        /* Remove slots with legitimate signal in any of the wasted drop dirless ports */
+        for (Pair<WNode,Integer> module : lpOccupation.getDropDirectionlessModulesWithWasteSignal())
+        	intersectionValidSlots.removeAll(this.getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessDropModule(module.getFirst(), module.getSecond()));
+        /* Remove invalid slots below the mandated threshold */
+        if (minimumInitialSlotId.isPresent())
+        	intersectionValidSlots = intersectionValidSlots.tailSet(minimumInitialSlotId.get());
+        if (intersectionValidSlots.size() < numContiguousSlotsRequired) return new TreeSet<> ();
+
+        final SortedSet<Integer> validFirstSlotsOfContiguousRanges = new TreeSet<> ();
+        
+        final LinkedList<Integer> lastXValidSlots = new LinkedList<> ();
+        for (int slotId : intersectionValidSlots)
+        {
+        	if (lastXValidSlots.size() >= numContiguousSlotsRequired) lastXValidSlots.remove(0);
+        	lastXValidSlots.add(slotId);
+        	if (lastXValidSlots.size() != numContiguousSlotsRequired) continue;
+        	if (lastXValidSlots.getLast() - lastXValidSlots.getFirst() == numContiguousSlotsRequired-1) 
+        		validFirstSlotsOfContiguousRanges.add(lastXValidSlots.getFirst());
+        }
+        return validFirstSlotsOfContiguousRanges;
+    }
+
+    /** Searches for a first-fit assignment for the two given paths, so optical slots can be different for each. 
+     * Given two sets of fibers to occupy (paths), the optinal add/drop modules to occupy in each case, the number of contiguous optical slots needed in each, 
+     * this method searches for the two lowest-id contiguous ranges of slots, so the first range is available in the first path,
+     * the second range is available in the second path. Note that if any path contains a fiber more than once, no allocation is 
+     * possible. Note that if path1 and path2 have common fibers, the optical slots returned will always be disjoint. In contrast, the add modules of the two paths or the drop modules of the two paths could be the same 
+     * @param seqFibers_1 see above
+     * @param seqFibers_2 see above
+     * @param directionlessAddModule_1 see above
+     * @param directionlessDropModule_1 see above
+     * @param directionlessAddModule_2 see above
+     * @param directionlessDropModule_2 see above
+     * @param numContiguousSlotsRequired see above
+     * @return see above. If no idle range is found, Optional.empty is returned. 
+     */
+    public Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> spectrumAssignment_firstFitTwoRoutesFilterlessAware (LightpathSpectrumOccupationInformation lp1, LightpathSpectrumOccupationInformation lp2 , int numContiguousSlotsRequired)
+    {
+        /* If a fiber is traversed more than once in any path, there is no possible assignment */
+    	if (lp1.isWithSelfClashing()) return Optional.empty();
+    	if (lp2.isWithSelfClashing()) return Optional.empty();
+        final boolean mutuallyClashingFree = lp1.isMutuallyClashingFreeWith(lp2);
+        if (mutuallyClashingFree)
+        {
+            final Optional<SortedSet<Integer>> firstRouteInitialSlot = spectrumAssignment_firstFitFilterlessAware(lp1 , numContiguousSlotsRequired, Optional.empty());
+            if (!firstRouteInitialSlot.isPresent()) return Optional.empty();
+            final Optional<SortedSet<Integer>> secondRouteInitialSlot = spectrumAssignment_firstFitFilterlessAware(lp2 , numContiguousSlotsRequired, Optional.empty());
+            if (!secondRouteInitialSlot.isPresent()) return Optional.empty();
+            return Optional.of(Pair.of(firstRouteInitialSlot.get(), secondRouteInitialSlot.get()));
+        }
+
+        /* With links in common */
+        final SortedSet<Integer> fistPathValidSlots = spectrumAssignment_getAllPotentialFirstSlotsFilterlessAware(lp1, numContiguousSlotsRequired, Optional.empty());
+        final SortedSet<Integer> secondPathValidSlots = spectrumAssignment_getAllPotentialFirstSlotsFilterlessAware(lp2, numContiguousSlotsRequired, Optional.empty());
+        for(int initialSlot_1 :  fistPathValidSlots)
+            for(int initialSlot_2 :  secondPathValidSlots)
+            {
+                if (Math.abs(initialSlot_1 - initialSlot_2) < numContiguousSlotsRequired) continue;
+                final SortedSet<Integer> range1 = new TreeSet<> ();
+                final SortedSet<Integer> range2 = new TreeSet<> ();
+                for (int cont = 0; cont < numContiguousSlotsRequired ; cont ++) { range1.add(initialSlot_1 + cont);  range2.add(initialSlot_2+cont); } 
+                return Optional.of(Pair.of(range1, range2));
+            }           
+        return Optional.empty();
+    }
+
+    
     /** Searches for a first-fit assignment for the two given paths, so optical slots can be different for each. 
      * Given two sets of fibers to occupy (paths), the optinal add/drop modules to occupy in each case, the number of contiguous optical slots needed in each, 
      * this method searches for the two lowest-id contiguous ranges of slots, so the first range is available in the first path,
@@ -559,8 +890,8 @@ public class OpticalSpectrumManager
     		Optional<Pair<WNode,Integer>> directionlessDropModule_2 , 
     		int numContiguousSlotsRequired)
     {
-   	 checkSameWNet(seqFibers_1);
-   	 checkSameWNet(seqFibers_2);
+    	checkSameWNet(seqFibers_1);
+   	 	checkSameWNet(seqFibers_2);
         /* If a fiber is traversed more than once in any path, there is no possible assignment */
         if (!(seqFibers_1 instanceof Set)) if (new HashSet<> (seqFibers_1).size() != seqFibers_1.size()) return Optional.empty();
         if (!(seqFibers_2 instanceof Set)) if (new HashSet<> (seqFibers_2).size() != seqFibers_2.size()) return Optional.empty();
@@ -762,6 +1093,18 @@ public class OpticalSpectrumManager
 		return res;
 	}
 
+	/** FA: Returns the optical slots that are empty, or occupied just by waste signals, but not by a legitimate signal of a lightpath, in the given fiber
+	 * @param wdmLink see above
+	 * @return  see above
+	 */
+	public SortedSet<Integer> getOpticalSlotIdsEmptyOrWithWaste (WFiber wdmLink)
+	{
+		checkSameWNet(wdmLink);
+		final SortedSet<Integer> res = wdmLink.getValidOpticalSlotIds();
+		res.removeAll(getOpticalSlotIdsWithLegitimateSignal(wdmLink));
+		return res;
+	}
+
 	/** FA: Returns the optical slots that are occupied (by waste or legitimate signals) in the given directionless add module
 	 * @param node see above
 	 * @param directionlessModuleIndex see above
@@ -775,6 +1118,29 @@ public class OpticalSpectrumManager
 		return res;
 	}
 
+	/** FA: Returns the optical slots that are occupied by a legitimate signals in the given directionless add module
+	 * @param node see above
+	 * @param directionlessModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<Integer> getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessAddModule (WNode node , int directionlessModuleIndex)
+	{
+		checkSameWNet(node);
+		return new TreeSet<> (getOccupiedResourcesInDirectionlessAddModule(node, directionlessModuleIndex , OpticalSignalOccupationType.LEGITIMATESIGNAL).keySet());
+	}
+
+	/** FA: Returns the optical slots that are occupied by a legitimate signals in the given directionless drop module
+	 * @param node see above
+	 * @param directionlessModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<Integer> getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessDropModule (WNode node , int directionlessModuleIndex)
+	{
+		checkSameWNet(node);
+		return new TreeSet<> (getOccupiedResourcesInDirectionlessDropModule(node, directionlessModuleIndex , OpticalSignalOccupationType.LEGITIMATESIGNAL).keySet());
+	}
+
+	
 	/** FA: Returns the optical slots that are occupied (by waste or legitimate signals) in the given directionless add module
 	 * @param node see above
 	 * @param directionlessModuleIndex see above
