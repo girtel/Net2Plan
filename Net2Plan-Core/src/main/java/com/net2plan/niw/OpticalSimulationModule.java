@@ -147,7 +147,7 @@ public class OpticalSimulationModule
    			 final LpSignalState state_startFiberBeforeBooster;
    			 final WFiber previousFiber = contFiber == 0? null : lpSeqFibers.get(contFiber-1);
    			 if (firstFiber)
-   				state_startFiberBeforeBooster = oadm_a.getOutLpStateForAddedLp(new LpSignalState(lp.getAddTransponderInjectionPower_dBm() , 0.0, 0.0, Double.MAX_VALUE), lp.getAddModuleIndexInOriginIfDirectionless(), lp.getSeqFibers().get(0) , numOpticalSlots);
+   				state_startFiberBeforeBooster = oadm_a.getOutLpStateForAddedLp(new LpSignalState(lp.getAddTransponderInjectionPower_dBm() , 0.0, 0.0, Double.MAX_VALUE), lp.getDirectionlessAddModuleIndexInOrigin(), lp.getSeqFibers().get(0) , numOpticalSlots);
    			 else
    			 {
    				 final LpSignalState beforePreviousFiberEndPreampl = previousFiberInfo.get().getSecond();
@@ -197,7 +197,7 @@ public class OpticalSimulationModule
 		 final LpSignalState state_afterPreamplLastFiber = lastFiber.isExistingPreamplifierAtDestinationOadm()? 
 						getStateAfterOpticalAmplifier (centralFrequency_hz , state_beforePreamplLastFiber , lastFiber.getDestinationPreAmplifierGain_dB().get() , lastFiber.getDestinationPreAmplifierCdCompensation_psPerNm().get() , lastFiber.getDestinationPreAmplifierPmd_ps().get() , lastFiber.getDestinationPreAmplifierNoiseFactor_dB().get()) : 
 							state_beforePreamplLastFiber.getCopy();
-		final LpSignalState state_afterOadm = lastOadm.getOpticalSwitchingArchitecture().getOutLpStateForDroppedLp(state_afterPreamplLastFiber, lastFiber, lp.getDropModuleIndexInDestinationIfDirectionless());
+		final LpSignalState state_afterOadm = lastOadm.getOpticalSwitchingArchitecture().getOutLpStateForDroppedLp(state_afterPreamplLastFiber, lastFiber, lp.getDirectionlessDropModuleIndexInDestination());
    		 perLpPerMetric_valAtDropTransponderEnd.put(lp, state_afterOadm);
    	 }
    	 

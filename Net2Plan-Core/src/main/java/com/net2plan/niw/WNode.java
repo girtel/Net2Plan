@@ -220,7 +220,7 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getAddedLightpathsInDirectedModule ()
 	{
-		return getAddedLigtpaths().stream().filter(lp->!lp.getAddModuleIndexInOrigin().isPresent()).collect(Collectors.toCollection(TreeSet::new));
+		return getAddedLigtpaths().stream().filter(lp->!lp.getDirectionlessAddModuleIndexInOrigin().isPresent()).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/** Returns the lightpaths dropped in this node, in directed (non-directionless) modules
@@ -228,7 +228,7 @@ public class WNode extends WAbstractNetworkElement
 	 */
 	public SortedSet<WLightpath> getDroppedLightpathsInDirectedModule ()
 	{
-		return getDroppedLigtpaths().stream().filter(lp->!lp.getDropModuleIndexInDestination().isPresent()).collect(Collectors.toCollection(TreeSet::new));
+		return getDroppedLigtpaths().stream().filter(lp->!lp.getDirectionlessDropModuleIndexInDestination().isPresent()).collect(Collectors.toCollection(TreeSet::new));
 	}
 	
 	/** Returns the lightpaths added in this node, connected in the indicated add directionless module index
@@ -238,7 +238,7 @@ public class WNode extends WAbstractNetworkElement
 	public SortedSet<WLightpath> getAddedLightpathsInDirectionlessModule (int directionlessAddModuleIndex)
 	{
 		if (directionlessAddModuleIndex < 0) return new TreeSet<> ();
-		return getAddedLigtpaths().stream().filter(lp->lp.getAddModuleIndexInOrigin().isPresent()).filter(lp->lp.getAddModuleIndexInOrigin().get() == directionlessAddModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+		return getAddedLigtpaths().stream().filter(lp->lp.getDirectionlessAddModuleIndexInOrigin().isPresent()).filter(lp->lp.getDirectionlessAddModuleIndexInOrigin().get() == directionlessAddModuleIndex).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/** Returns the lightpaths added in this node, connected in the indicated drop directionless module index
@@ -248,7 +248,7 @@ public class WNode extends WAbstractNetworkElement
 	public SortedSet<WLightpath> getDroppedLightpathsInDirectionlessModule (int directionlessDropModuleIndex)
 	{
 		if (directionlessDropModuleIndex < 0) return new TreeSet<> ();
-		return getDroppedLigtpaths().stream().filter(lp->lp.getDropModuleIndexInDestination().isPresent()).filter(lp->lp.getDropModuleIndexInDestination().get() == directionlessDropModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+		return getDroppedLigtpaths().stream().filter(lp->lp.getDirectionlessDropModuleIndexInDestination().isPresent()).filter(lp->lp.getDirectionlessDropModuleIndexInDestination().get() == directionlessDropModuleIndex).collect(Collectors.toCollection(TreeSet::new));
 	}
 
 

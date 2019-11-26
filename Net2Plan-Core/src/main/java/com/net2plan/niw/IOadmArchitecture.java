@@ -21,8 +21,8 @@ public interface IOadmArchitecture
 	public default boolean isNeverCreatingWastedSpectrum () { return !isPotentiallyWastingSpectrum(); }
 	public abstract String getShortName ();
 	public abstract boolean isPotentiallyWastingSpectrum ();
-	public abstract SortedSet<WFiber> getOutFibersIfAddToOutputFiber(WFiber outputFiber);
-	public abstract SortedSet<WFiber> getOutFibersIfDropFromInputFiber(WFiber inputFiber);
+	public abstract SortedSet<WFiber> getOutFibersIfAddToOutputFiber(WFiber outputFiber , boolean usingDirectionlessAddModule);
+	public abstract SortedSet<WFiber> getOutFibersIfDropFromInputFiber(WFiber inputFiber , boolean usingDirectionlessDropModule);
 	public abstract SortedSet<WFiber> getOutFibersIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber);
 	public abstract SortedSet<WFiber> getOutFibersUnavoidablePropagationFromInputFiber(WFiber inputFiber);
 

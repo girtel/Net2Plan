@@ -339,12 +339,6 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 	@Override
-	public boolean isDirectionLess() 
-	{
-		return new Parameters(getCurrentParameters().orElse(getDefaultParameters())).isDirectionless();
-	}
-
-	@Override
 	public boolean isColorless() 
 	{
 		return new Parameters(getCurrentParameters().orElse(getDefaultParameters())).isAddDropTypeWssBased();

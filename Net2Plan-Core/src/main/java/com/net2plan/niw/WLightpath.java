@@ -9,12 +9,15 @@ package com.net2plan.niw;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.WNetConstants.WTYPE;
+import com.net2plan.utils.Pair;
+import com.net2plan.utils.Triple;
 
 /** This class represents a unidirectional lightpath of a given line rate, being a main path or backup path of a lightpath request.
  * The lighptath is unregenerated, and has no wavelength conversion: the same set of optical slot are occupied in all the 
@@ -40,39 +43,39 @@ public class WLightpath extends WAbstractNetworkElement
 	@Override
 	public Route getNe () { return (Route) associatedNpElement; }
 
-	/** Returns the index of the add module in the origin OADM. Empty or negative value if the lighpath is attached to directed add module in origin
+	/** Returns the index of the directionless add module in the origin OADM, or empty if the lighpath is attached to directed add module in origin
 	 * @return see above
 	 */
-	public Optional<Integer> getAddModuleIndexInOrigin () 
+	public Optional<Integer> getDirectionlessAddModuleIndexInOrigin () 
 	{
 		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, -1.0).intValue(); 
 		return index < 0? Optional.empty() : Optional.of(index); 
 	} 
 	
-	/** Returns the index of the drop module in the origin OADM. Empty or negative value if the lighpath is attached to directed drop module in destination
+	/** Returns the index of the directionless drop module in the destination OADM, or empty if the lighpath is attached to directed drop module in destination
 	 * @return see above
 	 */
-	public Optional<Integer> getDropModuleIndexInDestination () 
+	public Optional<Integer> getDirectionlessDropModuleIndexInDestination () 
 	{  
 		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, -1.0).intValue(); 
 		return index < 0? Optional.empty() : Optional.of(index); 
 	} 
 
-	/** Sets the index of the add module used by the lightpath in the origin node. Negative indexes or optional empty means that the 
+	/** Sets the index of the directionless add module used by the lightpath in the origin node. Negative indexes or optional empty means that the 
 	 * lightpath is placed directly in the non-directionless add module. If not, it refers to the index of the directionless add module it is attached to
 	 * @param index
 	 */
-	public void setAddModuleIndexInOrigin (Optional<Integer> index) 
+	public void setDirectionlessAddModuleIndexInOrigin (Optional<Integer> index) 
 	{  
 		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, index.isPresent()? -1 : index.get()); 
 	} 
 	
 
-	/** Sets the index of the drop module used by the lightpath in the destination node. Negative indexes or optional empty means that the 
+	/** Sets the index of the directionless drop module used by the lightpath in the destination node. Negative indexes or optional empty means that the 
 	 * lightpath is placed directly in the non-directionless drop module. If not, it refers to the index of the directionless drop module it is attached to
 	 * @param index
 	 */
-	public void setDropModuleIndexInDestination (Optional<Integer> index) 
+	public void setDirectionlessDropModuleIndexInDestination (Optional<Integer> index) 
 	{  
 		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, index.isPresent()? -1 : index.get()); 
 	} 
@@ -241,6 +244,16 @@ public class WLightpath extends WAbstractNetworkElement
 	 * @return see above
 	 */
 	public List<WFiber> getSeqFibers () { return getNe().getSeqLinks().stream().map(e->new WFiber(e)).collect(Collectors.toList()); }
+
+	/** Returns the set of fibers, add modules in any node and drop modules in any node, with waste signal. 
+	 * @return see above
+	 */
+	public Triple<SortedSet<WFiber>,Set<Pair<WNode,Integer>> , Set<Pair<WNode,Integer>>>  getResourcesWithWasteSignal () 
+	{ 
+		return getNe().getSeqLinks().stream().map(e->new WFiber(e)).collect(Collectors.toList()); 
+	}
+
+	
 	/** Changes the sequence of fibers traversed by this lightpath
 	 * @param newSeqFibers see above
 	 */
