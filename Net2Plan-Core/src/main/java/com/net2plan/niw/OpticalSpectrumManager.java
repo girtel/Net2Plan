@@ -293,12 +293,12 @@ public class OpticalSpectrumManager
             if (!this.isOpticalSlotIdsValidAndIdle(e , slotIds))
                 return false;
     	/* Legitimate ADD directionless module is fully free */
-        if (occupationInformation.getDirectionlessAddModuleLegitimateSignal().isPresent())
-        	if (!this.isOpticalSlotIdsValidAndIdleInAddDirectionlessModule(occupationInformation.getDirectionlessAddModuleLegitimateSignal().get().getFirst(), occupationInformation.getDirectionlessAddModuleLegitimateSignal().get().getSecond(), slotIds))
+        if (occupationInformation.getDirectionlessAddModule().isPresent())
+        	if (!this.isOpticalSlotIdsValidAndIdleInAddDirectionlessModule(occupationInformation.getDirectionlessAddModule().get().getFirst(), occupationInformation.getDirectionlessAddModule().get().getSecond(), slotIds))
         		return false;
     	/* Legitimate DROP directionless module is fully free */
-        if (occupationInformation.getDirectionlessDropModuleLegitimateSignal().isPresent())
-        	if (!this.isOpticalSlotIdsValidAndIdleInDropDirectionlessModule(occupationInformation.getDirectionlessDropModuleLegitimateSignal().get().getFirst(), occupationInformation.getDirectionlessDropModuleLegitimateSignal().get().getSecond(), slotIds))
+        if (occupationInformation.getDirectionlessDropModule().isPresent())
+        	if (!this.isOpticalSlotIdsValidAndIdleInDropDirectionlessModule(occupationInformation.getDirectionlessDropModule().get().getFirst(), occupationInformation.getDirectionlessDropModule().get().getSecond(), slotIds))
         		return false;
         /* Fibers with waste spectrum are not occupied by legitimate signals */
         for (WFiber e : occupationInformation.getFibersWithWasteSignal())
@@ -337,10 +337,10 @@ public class OpticalSpectrumManager
     	if (slotIds.isEmpty()) return;
     	for (WFiber fiber : occupationInformation.getSeqFibersLegitimateSignal())
     		legitimateSignal_perFiberOccupation.allocateOccupation(fiber, lp, slotIds);
-    	if (occupationInformation.getDirectionlessAddModuleLegitimateSignal().isPresent())
-    		legitimateSignal_directionlessAddOccupation.allocateOccupation(occupationInformation.getDirectionlessAddModuleLegitimateSignal().get(), lp, slotIds);
-    	if (occupationInformation.getDirectionlessDropModuleLegitimateSignal().isPresent())
-    		legitimateSignal_directionlessDropOccupation.allocateOccupation(occupationInformation.getDirectionlessDropModuleLegitimateSignal().get(), lp, slotIds);
+    	if (occupationInformation.getDirectionlessAddModule().isPresent())
+    		legitimateSignal_directionlessAddOccupation.allocateOccupation(occupationInformation.getDirectionlessAddModule().get(), lp, slotIds);
+    	if (occupationInformation.getDirectionlessDropModule().isPresent())
+    		legitimateSignal_directionlessDropOccupation.allocateOccupation(occupationInformation.getDirectionlessDropModule().get(), lp, slotIds);
     	for (WFiber fiber : occupationInformation.getFibersWithWasteSignal())
     		wasteSignal_perFiberOccupation.allocateOccupation(fiber, lp, slotIds);
     	for (Pair<WNode,Integer> module : occupationInformation.getAddDirectionlessModulesWithWasteSignal())
@@ -358,10 +358,10 @@ public class OpticalSpectrumManager
     	final OsmLightpathOccupationInfo occup = this.lightpathsIncluded.get(lp);
     	if (occup == null) return;
 		legitimateSignal_perFiberOccupation.releaseOccupation(lp, occup.getSeqFibersLegitimateSignal()); 
-    	if (occup.getDirectionlessAddModuleLegitimateSignal().isPresent())
-    		legitimateSignal_directionlessAddOccupation.releaseOccupation(lp , Arrays.asList(occup.getDirectionlessAddModuleLegitimateSignal().get()));
-    	if (occup.getDirectionlessDropModuleLegitimateSignal().isPresent())
-    		legitimateSignal_directionlessDropOccupation.releaseOccupation(lp , Arrays.asList(occup.getDirectionlessDropModuleLegitimateSignal().get()));
+    	if (occup.getDirectionlessAddModule().isPresent())
+    		legitimateSignal_directionlessAddOccupation.releaseOccupation(lp , Arrays.asList(occup.getDirectionlessAddModule().get()));
+    	if (occup.getDirectionlessDropModule().isPresent())
+    		legitimateSignal_directionlessDropOccupation.releaseOccupation(lp , Arrays.asList(occup.getDirectionlessDropModule().get()));
 		wasteSignal_perFiberOccupation.releaseOccupation(lp, occup.getFibersWithWasteSignal());
 		wasteSignal_directionlessAddOccupation.releaseOccupation(lp, occup.getAddDirectionlessModulesWithWasteSignal());
 		wasteSignal_directionlessDropOccupation.releaseOccupation(lp, occup.getDropDirectionlessModulesWithWasteSignal());
@@ -586,7 +586,7 @@ public class OpticalSpectrumManager
         if (lpOccupation.isWithSelfClashing()) return Optional.empty();
 
         /* Empty slots for legitimate fibers, and add/drop dirless modules  */
-        SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(lpOccupation.getSeqFibersLegitimateSignal() , lpOccupation.getDirectionlessAddModuleLegitimateSignal() , lpOccupation.getDirectionlessDropModuleLegitimateSignal());
+        SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(lpOccupation.getSeqFibersLegitimateSignal() , lpOccupation.getDirectionlessAddModule() , lpOccupation.getDirectionlessDropModule());
         /* Retain slots without legitimate signal in wasted fibers */
         intersectionValidSlots.retainAll(getAvailableSlotIdsEmptyOrWithWaste(lpOccupation.getFibersWithWasteSignal() , Optional.empty() , Optional.empty()));
         /* Remove slots with legitimate signal in any of the wasted add dirless ports */
@@ -634,7 +634,7 @@ public class OpticalSpectrumManager
         if (lpOccupation.isWithSelfClashing()) return new TreeSet<> ();
 
         /* Empty slots for legitimate fibers, and add/drop dirless modules  */
-        SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(lpOccupation.getSeqFibersLegitimateSignal() , lpOccupation.getDirectionlessAddModuleLegitimateSignal() , lpOccupation.getDirectionlessDropModuleLegitimateSignal());
+        SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(lpOccupation.getSeqFibersLegitimateSignal() , lpOccupation.getDirectionlessAddModule() , lpOccupation.getDirectionlessDropModule());
         /* Retain slots without legitimate signal in wasted fibers */
         intersectionValidSlots.retainAll(getAvailableSlotIdsEmptyOrWithWaste(lpOccupation.getFibersWithWasteSignal() , Optional.empty() , Optional.empty()));
         /* Remove slots with legitimate signal in any of the wasted add dirless ports */
@@ -1199,104 +1199,104 @@ public class OpticalSpectrumManager
    	return cycleDetector.findSimpleCycles();
     }
     
-    /** Given a contigous path, candidate to be assigned to a unicast lightpath, computes
-     *
-     * 1) the fibers where the signal would propagate (this includes e.g. fibers where signal propagates if traversing filterless nodes),
-     * 2) the list of cycles occurring (if any) that would result in laser loops,
-     * 3) an indication if the path is multipath-free. A lightpath is not multipath free when any fiber in the
-     * legitimate path is receiving the output power of the signal more than once, coming from different paths, and thus destroying the signal.
-     *
-     *
-    * @param links the sequence of fibers to be traversed. Must be a contigous path.
-    * @return see above
-    */
-   public static Triple<SortedSet<WFiber>,List<List<WFiber>>,Boolean> getPropagatingFibersLasingLoopsAndIsMultipathOk (List<WFiber> links)
-    {
-//	   Idea:
-//		   - Devuelva solo waste
-//		   - Multipath ok es que no haya un waste mio solape con legitimate mio
-//		   - Incluya Pair<WNode,Integer> de drop modules en non-directionless, ocupados
-//		   - El add module ocupado se supone que es iunicamente el de origen
-		   
-	   
-	   
-	   
-   	 if (links.isEmpty()) throw new Net2PlanException ("The path is empty");
-   	 if (getContinousSequenceOfNodes(links).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum())) return Triple.of(new TreeSet<> (links), new  ArrayList<> (), true);
-   	 
-   	 final WFiber dummyFiberAdd = WFiber.createDummyFiber(0);
-   	 final WFiber dummyFiberDrop = WFiber.createDummyFiber(1);
-   	 
-   	 /* Construct a graph starting from add fiber. Stop when all fibers have been processed */
-   	 final SortedSet<WFiber> fibersPendingToProcess = new TreeSet<> ();
-   	 fibersPendingToProcess.add(dummyFiberAdd);
-   	 final SortedSet<WFiber> fibersAlreadyProcessed = new TreeSet<> ();
-   	 final DefaultDirectedGraph<WFiber , Object> propagationGraph = new DefaultDirectedGraph<> (Object.class);
-		 propagationGraph.addVertex(dummyFiberAdd);
-   	 while (!fibersPendingToProcess.isEmpty())
-   	 {
-   		 final WFiber fiberToProcess = fibersPendingToProcess.first();
-   		 if (fibersAlreadyProcessed.contains(fiberToProcess)) { fibersPendingToProcess.remove(fiberToProcess); continue; }
-   		 assert propagationGraph.containsVertex(fiberToProcess);
-   		 /* process the fiber */
-   		 if (fiberToProcess.equals(dummyFiberAdd))
-   		 {
-   			 /* Add lightpath dummy fiber */
-   			 final WNode addNode = links.get(0).getA();
-      		 for (WFiber propFiber : addNode.getOpticalSwitchingArchitecture().getOutFibersIfAddToOutputFiber(links.get(0)))
-      		 {
-      			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
-      			 propagationGraph.addEdge(dummyFiberAdd, propFiber);
-      			 fibersPendingToProcess.add(propFiber);
-      		 }
-   		 } else if (fiberToProcess.equals(dummyFiberDrop))
-   		 {
-   			 /* Drop lightpath dummy fiber => do nothing */
-   		 } else
-   		 {
-   			 final WNode switchNode = fiberToProcess.getB();
-      		 for (WFiber propFiber : switchNode.getOpticalSwitchingArchitecture().getOutFibersUnavoidablePropagationFromInputFiber(fiberToProcess))
-      		 {
-      			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
-      			 propagationGraph.addEdge(fiberToProcess, propFiber);
-      			 fibersPendingToProcess.add(propFiber);
-      		 }
-      		 final int indexOfFiberInPath = links.indexOf(fiberToProcess);
-   			 final boolean isExpress = indexOfFiberInPath >= 0 && (indexOfFiberInPath < links.size()-1);
-   			 final boolean isDrop = indexOfFiberInPath == links.size() - 1;
-   			 if (isExpress)
-   			 {
-      			 final WFiber inFiber = links.get(indexOfFiberInPath); assert inFiber.equals(fiberToProcess);
-      			 final WFiber outFiber = links.get(indexOfFiberInPath + 1);
-      			 final WNode expressNode = outFiber.getA();
-      			 assert expressNode.equals(inFiber.getB());
-         		 for (WFiber propFiber : expressNode.getOpticalSwitchingArchitecture().getOutFibersIfExpressFromInputToOutputFiber(inFiber , outFiber))
-         		 {
-         			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
-         			 propagationGraph.addEdge(inFiber, propFiber);
-         			 fibersPendingToProcess.add(propFiber);
-         		 }
-   			 } else if (isDrop)
-   			 {
-      			 if (!propagationGraph.containsVertex(dummyFiberDrop)) propagationGraph.addVertex(dummyFiberDrop);
-      			 propagationGraph.addEdge(fiberToProcess, dummyFiberDrop);
-      			 fibersPendingToProcess.add(dummyFiberDrop);
-   			 }
-   		 }
-   		fibersAlreadyProcessed.add (fiberToProcess);
-   		 fibersPendingToProcess.remove(fiberToProcess);
-   	 }
-   	 
-   	 if (!propagationGraph.containsVertex(dummyFiberDrop)) throw new Net2PlanException ("The signal of this lightpath is not reaching the drop node");
-
-   	 final SortedSet<WFiber> propagatedNonDummyFibers = propagationGraph.vertexSet().stream().filter(e->!e.equals(dummyFiberDrop) && !e.equals(dummyFiberAdd)).collect(Collectors.toCollection(TreeSet::new));
-   	 
-   	 boolean multipathFree = links.stream().allMatch(v->propagationGraph.incomingEdgesOf(v).size() == 1);
-   	 multipathFree &= propagationGraph.incomingEdgesOf(dummyFiberDrop).size() == 1;
-   	 final DirectedSimpleCycles<WFiber,Object> cycleDetector = new JohnsonSimpleCycles<> (propagationGraph); 
-   	 final List<List<WFiber>> lasingCycles = cycleDetector.findSimpleCycles();
-   	 return Triple.of(propagatedNonDummyFibers , lasingCycles, multipathFree);
-    }
+//    /** Given a contigous path, candidate to be assigned to a unicast lightpath, computes
+//     *
+//     * 1) the fibers where the signal would propagate (this includes e.g. fibers where signal propagates if traversing filterless nodes),
+//     * 2) the list of cycles occurring (if any) that would result in laser loops,
+//     * 3) an indication if the path is multipath-free. A lightpath is not multipath free when any fiber in the
+//     * legitimate path is receiving the output power of the signal more than once, coming from different paths, and thus destroying the signal.
+//     *
+//     *
+//    * @param links the sequence of fibers to be traversed. Must be a contigous path.
+//    * @return see above
+//    */
+//   public static Triple<SortedSet<WFiber>,List<List<WFiber>>,Boolean> getPropagatingFibersLasingLoopsAndIsMultipathOk (List<WFiber> links)
+//    {
+////	   Idea:
+////		   - Devuelva solo waste
+////		   - Multipath ok es que no haya un waste mio solape con legitimate mio
+////		   - Incluya Pair<WNode,Integer> de drop modules en non-directionless, ocupados
+////		   - El add module ocupado se supone que es iunicamente el de origen
+//		   
+//	   
+//	   
+//	   
+//   	 if (links.isEmpty()) throw new Net2PlanException ("The path is empty");
+//   	 if (getContinousSequenceOfNodes(links).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum())) return Triple.of(new TreeSet<> (links), new  ArrayList<> (), true);
+//   	 
+//   	 final WFiber dummyFiberAdd = WFiber.createDummyFiber(0);
+//   	 final WFiber dummyFiberDrop = WFiber.createDummyFiber(1);
+//   	 
+//   	 /* Construct a graph starting from add fiber. Stop when all fibers have been processed */
+//   	 final SortedSet<WFiber> fibersPendingToProcess = new TreeSet<> ();
+//   	 fibersPendingToProcess.add(dummyFiberAdd);
+//   	 final SortedSet<WFiber> fibersAlreadyProcessed = new TreeSet<> ();
+//   	 final DefaultDirectedGraph<WFiber , Object> propagationGraph = new DefaultDirectedGraph<> (Object.class);
+//		 propagationGraph.addVertex(dummyFiberAdd);
+//   	 while (!fibersPendingToProcess.isEmpty())
+//   	 {
+//   		 final WFiber fiberToProcess = fibersPendingToProcess.first();
+//   		 if (fibersAlreadyProcessed.contains(fiberToProcess)) { fibersPendingToProcess.remove(fiberToProcess); continue; }
+//   		 assert propagationGraph.containsVertex(fiberToProcess);
+//   		 /* process the fiber */
+//   		 if (fiberToProcess.equals(dummyFiberAdd))
+//   		 {
+//   			 /* Add lightpath dummy fiber */
+//   			 final WNode addNode = links.get(0).getA();
+//      		 for (WFiber propFiber : addNode.getOpticalSwitchingArchitecture().getOutFibersIfAddToOutputFiber(links.get(0)))
+//      		 {
+//      			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
+//      			 propagationGraph.addEdge(dummyFiberAdd, propFiber);
+//      			 fibersPendingToProcess.add(propFiber);
+//      		 }
+//   		 } else if (fiberToProcess.equals(dummyFiberDrop))
+//   		 {
+//   			 /* Drop lightpath dummy fiber => do nothing */
+//   		 } else
+//   		 {
+//   			 final WNode switchNode = fiberToProcess.getB();
+//      		 for (WFiber propFiber : switchNode.getOpticalSwitchingArchitecture().getOutFibersUnavoidablePropagationFromInputFiber(fiberToProcess))
+//      		 {
+//      			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
+//      			 propagationGraph.addEdge(fiberToProcess, propFiber);
+//      			 fibersPendingToProcess.add(propFiber);
+//      		 }
+//      		 final int indexOfFiberInPath = links.indexOf(fiberToProcess);
+//   			 final boolean isExpress = indexOfFiberInPath >= 0 && (indexOfFiberInPath < links.size()-1);
+//   			 final boolean isDrop = indexOfFiberInPath == links.size() - 1;
+//   			 if (isExpress)
+//   			 {
+//      			 final WFiber inFiber = links.get(indexOfFiberInPath); assert inFiber.equals(fiberToProcess);
+//      			 final WFiber outFiber = links.get(indexOfFiberInPath + 1);
+//      			 final WNode expressNode = outFiber.getA();
+//      			 assert expressNode.equals(inFiber.getB());
+//         		 for (WFiber propFiber : expressNode.getOpticalSwitchingArchitecture().getOutFibersIfExpressFromInputToOutputFiber(inFiber , outFiber))
+//         		 {
+//         			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
+//         			 propagationGraph.addEdge(inFiber, propFiber);
+//         			 fibersPendingToProcess.add(propFiber);
+//         		 }
+//   			 } else if (isDrop)
+//   			 {
+//      			 if (!propagationGraph.containsVertex(dummyFiberDrop)) propagationGraph.addVertex(dummyFiberDrop);
+//      			 propagationGraph.addEdge(fiberToProcess, dummyFiberDrop);
+//      			 fibersPendingToProcess.add(dummyFiberDrop);
+//   			 }
+//   		 }
+//   		fibersAlreadyProcessed.add (fiberToProcess);
+//   		 fibersPendingToProcess.remove(fiberToProcess);
+//   	 }
+//   	 
+//   	 if (!propagationGraph.containsVertex(dummyFiberDrop)) throw new Net2PlanException ("The signal of this lightpath is not reaching the drop node");
+//
+//   	 final SortedSet<WFiber> propagatedNonDummyFibers = propagationGraph.vertexSet().stream().filter(e->!e.equals(dummyFiberDrop) && !e.equals(dummyFiberAdd)).collect(Collectors.toCollection(TreeSet::new));
+//   	 
+//   	 boolean multipathFree = links.stream().allMatch(v->propagationGraph.incomingEdgesOf(v).size() == 1);
+//   	 multipathFree &= propagationGraph.incomingEdgesOf(dummyFiberDrop).size() == 1;
+//   	 final DirectedSimpleCycles<WFiber,Object> cycleDetector = new JohnsonSimpleCycles<> (propagationGraph); 
+//   	 final List<List<WFiber>> lasingCycles = cycleDetector.findSimpleCycles();
+//   	 return Triple.of(propagatedNonDummyFibers , lasingCycles, multipathFree);
+//    }
     
     
     private void checkSameWNet (WAbstractNetworkElement...abstractNetworkElements)

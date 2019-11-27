@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -36,22 +35,30 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 	@Override
-	public SortedSet<OsmOpticalSignalPropagationElement> getOutElements(OsmOpticalSignalPropagationElement inputElement , OsmOpticalSignalPropagationElement outputElement)
+	public SortedSet<OsmOpticalSignalPropagationElement> getOutElements(OsmOpticalSignalPropagationElement inputElement , Optional<OsmOpticalSignalPropagationElement> outputElement)
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 		if (inputElement.isDirfulAdd())
 		{
 			assert this.getHostNode().isOadmWithDirectedAddDropModulesInTheDegrees();
-			assert outputElement.isFiber();
-			assert outputElement.getFiber().getA().equals(this.getHostNode());
-			return new TreeSet<> (Arrays.asList(outputElement));
+			if (outputElement.isPresent())
+			{
+				assert outputElement.get().isFiber();
+				assert outputElement.get().getFiber().getA().equals(this.getHostNode());
+				return new TreeSet<> (Arrays.asList(outputElement.get()));
+			}
+			else
+				return new TreeSet<> ();
 		}
 		if (inputElement.isDirlessAdd())
 		{
-			assert outputElement.isFiber();
-			assert outputElement.getFiber().getA().equals(this.getHostNode());
+			if (outputElement.isPresent())
+			{
+				assert outputElement.get().isFiber();
+				assert outputElement.get().getFiber().getA().equals(this.getHostNode());
+			}
 			if (!p.isFilterless())
-				return new TreeSet<> (Arrays.asList(outputElement));
+				return outputElement.isPresent()? new TreeSet<> (Arrays.asList(outputElement.get())) : new TreeSet<> ();
 			/* Filterless & directionless => all out fibers and dirless drop modules, but my opposite drop module  */
 			final SortedSet<OsmOpticalSignalPropagationElement> res = new TreeSet<> ();
 			for (WFiber e : getHostNode().getOutgoingFibers())
@@ -64,10 +71,10 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (inputElement.isFiber())
 		{
 			assert inputElement.getFiber().getB().equals(this.getHostNode());
-			if (outputElement.isFiber()) assert outputElement.getFiber().getA().equals(this.getHostNode());
+			if (outputElement.isPresent()) if (outputElement.get().isFiber()) assert outputElement.get().getFiber().getA().equals(this.getHostNode());
 
 			if (!p.isFilterless())
-				return new TreeSet<> (Arrays.asList(outputElement));
+				return outputElement.isPresent()? new TreeSet<> (Arrays.asList(outputElement.get())) : new TreeSet<> ();
 
 			/* Filterless: in directionless or not is the same: the dirful drop (if the node has), all the output fibers but the input fiber opposite, and all the dirless drops */
 			final SortedSet<OsmOpticalSignalPropagationElement> res = new TreeSet<> ();
@@ -91,7 +98,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 	@Override
-	public SortedSet<WFiber> getOutElementsUnavoidablePropagationFromInputFiber(WFiber inputFiber) 
+	public SortedSet<WFiber> getOutFibersUnavoidablePropagationFromInputFiber(WFiber inputFiber) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 		if (!p.isFilterless())
@@ -226,7 +233,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		{
 			// out degree is coupler based
 			final int numInputsOfOutDegreeCoupler = p.isDirectionless()? 
-					getHostNode().getOadmNumAddModules() + getHostNode().getIncomingFibers().size() - 1: // all add/drop modules, and all in degrees but me 
+					getHostNode().getOadmNumAddDropDirectionlessModules() + getHostNode().getIncomingFibers().size() - 1: // all add/drop modules, and all in degrees but me 
 					1 + getHostNode().getIncomingFibers().size() - 1; // add/drop module, and all in degrees but myself
 			lossOutDegreePart_dB = 10 * Math.log(numInputsOfOutDegreeCoupler);
 			pmdOutDegreePart_ps2 = 0.0;
@@ -270,7 +277,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		{
 			// in degree is coupler based
 			final int numOutputOfInDegreeSplitter = p.isDirectionless()? 
-					getHostNode().getOadmNumDropModules() + getHostNode().getOutgoingFibers().size() - 1: // all add/drop modules, and all out degrees but me 
+					getHostNode().getOadmNumAddDropDirectionlessModules() + getHostNode().getOutgoingFibers().size() - 1: // all add/drop modules, and all out degrees but me 
 					1 + getHostNode().getOutgoingFibers().size() - 1; // add/drop module, and all out degrees but myself
 			lossInDegreePart_dB = 10 * Math.log(numOutputOfInDegreeSplitter);
 			pmdInDegreePart_ps2 = 0.0;
@@ -320,7 +327,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		{
 			// in degree is coupler based
 			final int numOutputOfInDegreeSplitter = p.isDirectionless()? 
-					getHostNode().getOadmNumDropModules() + getHostNode().getOutgoingFibers().size() - 1: // all add/drop modules, and all out degrees but me 
+					getHostNode().getOadmNumAddDropDirectionlessModules() + getHostNode().getOutgoingFibers().size() - 1: // all add/drop modules, and all out degrees but me 
 					1 + getHostNode().getOutgoingFibers().size() - 1; // add/drop module, and all out degrees but myself
 			lossInDegreePart_dB = 10 * Math.log(numOutputOfInDegreeSplitter);
 			pmdInDegreePart_ps2 = 0.0;
@@ -332,7 +339,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		{
 			// out degree is coupler based
 			final int numInputsOfOutDegreeCoupler = p.isDirectionless()? 
-					getHostNode().getOadmNumAddModules() + getHostNode().getIncomingFibers().size() - 1: // all add/drop modules, and all in degrees but me 
+					getHostNode().getOadmNumAddDropDirectionlessModules() + getHostNode().getIncomingFibers().size() - 1: // all add/drop modules, and all in degrees but me 
 					1 + getHostNode().getIncomingFibers().size() - 1; // add/drop module, and all in degrees but myself
 			lossOutDegreePart_dB = 10 * Math.log(numInputsOfOutDegreeCoupler);
 			pmdOutDegreePart_ps2 = 0.0;

@@ -21,12 +21,12 @@ public interface IOadmArchitecture
 	public abstract String getShortName ();
 	public abstract boolean isPotentiallyWastingSpectrum ();
 
-	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElements(OsmOpticalSignalPropagationElement inputElement , OsmOpticalSignalPropagationElement outputElement);
+	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElements(OsmOpticalSignalPropagationElement inputElement , Optional<OsmOpticalSignalPropagationElement> outputElement);
 
 //	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElements(WFiber outputFiber , boolean usingDirectionlessAddModule);
 //	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElementsIfDropFromInputFiber(WFiber inputFiber , boolean usingDirectionlessDropModule);
 //	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElementsIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber);
-	public abstract SortedSet<WFiber> getOutElementsUnavoidablePropagationFromInputFiber(WFiber inputFiber);
+	public abstract SortedSet<WFiber> getOutFibersUnavoidablePropagationFromInputFiber(WFiber inputFiber);
 
 	public abstract void initialize (WNode node);
 	public abstract List<Quadruple<String,String,String,String>> getParametersInfo_name_default_shortDesc_longDesc ();
