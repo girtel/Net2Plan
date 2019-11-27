@@ -97,8 +97,7 @@ public class WNode extends WAbstractNetworkElement
 	private static final String ATTNAMESUFFIX_ARBITRARYPARAMSTRING = "ArbitraryString";
 	private static final String ATTNAME_OPTICALSWITCHTYPE = "ATTNAME_OPTICALSWITCHTYPE";
 	static final String ATTNAME_OPTICALSWITCHTYPEINITSTRING = "ATTNAME_OPTICALSWITCHTYPE_INITSTRING";
-	private static final String ATTNAMESUFFIX_OADMNUMADDMODULES = "oadmNumAddModules";
-	private static final String ATTNAMESUFFIX_OADMNUMDROPMODULES = "oadmNumDropModules";
+	private static final String ATTNAMESUFFIX_OADMNUMADDDROPMODULES = "oadmNumAddDropModules";
 	private static final String ATTNAMESUFFIX_HASDIRECTEDMODULES = "oadmHasDirectedAddDropModules";
 	
 	public void setArbitraryParamString(String s)
@@ -162,12 +161,12 @@ public class WNode extends WAbstractNetworkElement
 		return (Node) associatedNpElement;
 	}
 
-	/** Returns the number of add modules that are directionless (and thus are implemented as regular degrees), in the OADM 
+	/** Returns the number of add/drop modules that are directionless (and thus are implemented as regular degrees), in the OADM 
 	 * @return see above
 	 */
-	public int getOadmNumAddDirectionlessModules () 
+	public int getOadmNumAddDropDirectionlessModules () 
 	{
-		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDMODULES, 1.0).intValue(); 
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDDROPMODULES, 1.0).intValue(); 
 		return index < 0? 0 : index; 
 	} 
 	
@@ -189,32 +188,14 @@ public class WNode extends WAbstractNetworkElement
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_HASDIRECTEDMODULES, isWithDirectedAddDropModules? 1 : 0); 
 	} 
 	
-	/** Returns the number of drop modules that are directionless (and thus are implemented as regular degrees), in the OADM 
-	 * @return see above
-	 */
-	public int getOadmNumDropDirectionlessModules () 
-	{
-		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMDROPMODULES, 1.0).intValue(); 
-		return index < 0? 0 : index; 
-	} 
-
-	/** Sets the number of add modules in the OADM that are directionless and thus are implemented as regular degrees (greater or equal to zero)
+	/** Sets the number of add/drop modules in the OADM that are directionless and thus are implemented as regular degrees (greater or equal to zero)
 	 * @param numModules see above
 	 */
-	public void setOadmNumAddDirectionlessModules (int numModules) 
+	public void setOadmNumAddDropDirectionlessModules (int numModules) 
 	{
-		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDMODULES, numModules < 0? 0 : numModules); 
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDDROPMODULES, numModules < 0? 0 : numModules); 
 	} 
 	
-	/** Sets the number of drop modules in the OADM that are directioless, and thus are implemented as regular degrees (greater or equal to zero)
-	 * @param numModules see above
-	 */
-	public void setOadmNumDropDirectionlessModules (int numModules) 
-	{
-		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMDROPMODULES, numModules < 0? 0 : numModules); 
-	} 
-
-
 	/** Returns the lightpaths added in this node, in directed (non-directionless) modules
 	 * @return see above
 	 */

@@ -9,16 +9,13 @@ package com.net2plan.niw;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Route;
-import com.net2plan.niw.OpticalSpectrumManager.LightpathSpectrumOccupationInformation;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
 
 /** This class represents a unidirectional lightpath of a given line rate, being a main path or backup path of a lightpath request.
  * The lighptath is unregenerated, and has no wavelength conversion: the same set of optical slot are occupied in all the 
@@ -306,9 +303,9 @@ public class WLightpath extends WAbstractNetworkElement
 	@Override
 	public WTYPE getWType() { return WTYPE.WLightpath; }
 
-	public LightpathSpectrumOccupationInformation getOpticalOccupationInformation ()
+	public OsmLightpathOccupationInfo getOpticalOccupationInformation ()
 	{
-		return new LightpathSpectrumOccupationInformation(getSeqFibers(), 
+		return new OsmLightpathOccupationInfo(getSeqFibers(), 
 				getDirectionlessAddModuleIndexInOrigin().isPresent()? Optional.of(Pair.of (getA() , getDirectionlessAddModuleIndexInOrigin().get())) : Optional.empty() ,
 				getDirectionlessDropModuleIndexInDestination().isPresent()? Optional.of(Pair.of (getB() , getDirectionlessDropModuleIndexInDestination().get())) : Optional.empty() ,
 				getOpticalSlotIds());

@@ -3,14 +3,12 @@ package com.net2plan.niw;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
 import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
-import com.net2plan.niw.OpticalSpectrumManager.WFiberOrAddDropModule;
 import com.net2plan.utils.Quadruple;
 
 
@@ -22,10 +20,13 @@ public interface IOadmArchitecture
 	public default boolean isNeverCreatingWastedSpectrum () { return !isPotentiallyWastingSpectrum(); }
 	public abstract String getShortName ();
 	public abstract boolean isPotentiallyWastingSpectrum ();
-	public abstract SortedSet<WFiberOrAddDropModule> getOutElementsIfAddToOutputFiber(WFiber outputFiber , boolean usingDirectionlessAddModule);
-	public abstract SortedSet<WFiberOrAddDropModule> getOutElementsIfDropFromInputFiber(WFiber inputFiber , boolean usingDirectionlessDropModule);
-	public abstract SortedSet<WFiberOrAddDropModule> getOutElementsIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber);
-	public abstract SortedSet<WFiberOrAddDropModule> getOutElementsUnavoidablePropagationFromInputFiber(WFiber inputFiber);
+
+	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElements(OsmOpticalSignalPropagationElement inputElement , OsmOpticalSignalPropagationElement outputElement);
+
+//	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElements(WFiber outputFiber , boolean usingDirectionlessAddModule);
+//	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElementsIfDropFromInputFiber(WFiber inputFiber , boolean usingDirectionlessDropModule);
+//	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElementsIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber);
+	public abstract SortedSet<WFiber> getOutElementsUnavoidablePropagationFromInputFiber(WFiber inputFiber);
 
 	public abstract void initialize (WNode node);
 	public abstract List<Quadruple<String,String,String,String>> getParametersInfo_name_default_shortDesc_longDesc ();

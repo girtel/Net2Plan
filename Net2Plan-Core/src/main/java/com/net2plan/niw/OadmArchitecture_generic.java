@@ -4,11 +4,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
-import com.net2plan.niw.OpticalSpectrumManager.WFiberOrAddDropModule;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Quadruple;
 
 public class OadmArchitecture_generic implements IOadmArchitecture
@@ -34,46 +36,62 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 	@Override
-	public Set<WFiberOrAddDropModule> getOutElementsIfAddToOutputFiber(WFiber outputFiber) 
+	public SortedSet<OsmOpticalSignalPropagationElement> getOutElements(OsmOpticalSignalPropagationElement inputElement , OsmOpticalSignalPropagationElement outputElement)
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
-		if (!p.isFilterless())
-			return new TreeSet<> (Arrays.asList(outputFiber));
-		/* Filterless */
-		if (p.isDirectionless())
-			return new TreeSet<> (getHostNode().getOutgoingFibers()); // directionless & filterless: to all output fibers
-		else
-			return new TreeSet<> (Arrays.asList(outputFiber)); // directed & filterless: only output fiber
-	}
+		if (inputElement.isDirfulAdd())
+		{
+			assert this.getHostNode().isOadmWithDirectedAddDropModulesInTheDegrees();
+			assert outputElement.isFiber();
+			assert outputElement.getFiber().getA().equals(this.getHostNode());
+			return new TreeSet<> (Arrays.asList(outputElement));
+		}
+		if (inputElement.isDirlessAdd())
+		{
+			assert outputElement.isFiber();
+			assert outputElement.getFiber().getA().equals(this.getHostNode());
+			if (!p.isFilterless())
+				return new TreeSet<> (Arrays.asList(outputElement));
+			/* Filterless & directionless => all out fibers and dirless drop modules, but my opposite drop module  */
+			final SortedSet<OsmOpticalSignalPropagationElement> res = new TreeSet<> ();
+			for (WFiber e : getHostNode().getOutgoingFibers())
+				res.add(OsmOpticalSignalPropagationElement.asFiber(e));
+			for (int module = 0 ; module < this.getHostNode().getOadmNumAddDropDirectionlessModules() ; module ++)
+				if (module != inputElement.getDirlessAddModule().getSecond())
+					res.add(OsmOpticalSignalPropagationElement.asDropDirless(Pair.of(this.getHostNode(), module)));
+			return res;
+		}
+		if (inputElement.isFiber())
+		{
+			assert inputElement.getFiber().getB().equals(this.getHostNode());
+			if (outputElement.isFiber()) assert outputElement.getFiber().getA().equals(this.getHostNode());
 
-	@Override
-	public Set<WFiberOrAddDropModule> getOutElementsIfDropFromInputFiber(WFiber inputFiber) 
-	{
-		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
-		if (!p.isFilterless())
+			if (!p.isFilterless())
+				return new TreeSet<> (Arrays.asList(outputElement));
+
+			/* Filterless: in directionless or not is the same: the dirful drop (if the node has), all the output fibers but the input fiber opposite, and all the dirless drops */
+			final SortedSet<OsmOpticalSignalPropagationElement> res = new TreeSet<> ();
+			if (this.getHostNode().isOadmWithDirectedAddDropModulesInTheDegrees())
+				res.add(OsmOpticalSignalPropagationElement.asDropDirful(inputElement.getFiber()));
+			for (WFiber e : getHostNode().getOutgoingFibers())
+				if (e.isBidirectional())
+					if (!e.getBidirectionalPair().equals(inputElement.getFiber()))
+						res.add(OsmOpticalSignalPropagationElement.asFiber(e));
+			for (int module = 0 ; module < this.getHostNode().getOadmNumAddDropDirectionlessModules() ; module ++)
+				res.add(OsmOpticalSignalPropagationElement.asDropDirless(Pair.of(this.getHostNode(), module)));
+			return res;
+		}
+
+		if (inputElement.isDirfulDrop()) assert this.getHostNode().isOadmWithDirectedAddDropModulesInTheDegrees();
+
+		if (inputElement.isDirfulDrop() || inputElement.isDirlessDrop()) // input is drop element => output empty
 			return new TreeSet<> ();
-		/* Filterless: in directionless or not is the same: all the output fibers but the input fiber opposite */
-		final SortedSet<WFiber> affectedFibers = new TreeSet<> (getHostNode().getOutgoingFibers());
-		if (inputFiber.isBidirectional())
-			affectedFibers.remove(inputFiber.getBidirectionalPair());
-		return affectedFibers;
+		
+		throw new Net2PlanException ("Unkown optical element");
 	}
 
 	@Override
-	public Set<WFiberOrAddDropModule> getOutElementsIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber) 
-	{
-		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
-		if (!p.isFilterless())
-			return new TreeSet<> (Arrays.asList(outputFiber));
-		/* Filterless: in directionless or not is the same: all the output fibers but the input fiber opposite */
-		final SortedSet<WFiber> affectedFibers = new TreeSet<> (getHostNode().getOutgoingFibers());
-		if (inputFiber.isBidirectional())
-			affectedFibers.remove(inputFiber.getBidirectionalPair());
-		return affectedFibers;
-	}
-
-	@Override
-	public Set<WFiberOrAddDropModule> getOutElementsUnavoidablePropagationFromInputFiber(WFiber inputFiber) 
+	public SortedSet<WFiber> getOutElementsUnavoidablePropagationFromInputFiber(WFiber inputFiber) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 		if (!p.isFilterless())

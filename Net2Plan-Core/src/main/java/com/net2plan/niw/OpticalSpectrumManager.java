@@ -48,7 +48,7 @@ import com.net2plan.utils.Triple;
  */
 public class OpticalSpectrumManager
 {
-	public enum OpticalSignalOccupationType { LEGITIMATESIGNAL , WASTESIGNAL; public boolean isWaste() { return this == OpticalSignalOccupationType.WASTESIGNAL;} public boolean isLegitimate () { return this == OpticalSignalOccupationType.LEGITIMATESIGNAL;  }  };
+	public enum OpticalSignalOccupationType { LEGITIMATESIGNAL , WASTESIGNAL; public boolean isWaste() { return this == OpticalSignalOccupationType.WASTESIGNAL;} public boolean isLegitimate () { return this == OpticalSignalOccupationType.LEGITIMATESIGNAL;  }  }
 	
 	private class SlotOccupationManager <T>
 	{
@@ -111,268 +111,9 @@ public class OpticalSpectrumManager
 	    		}
 	    	}
 	    }
-	};
-
-	public static class WFiberOrAddDropModule
-	{
-		private WFiber fiber = null;
-		private Pair<WNode,Integer> dirlessAddModule = null, dirlessDropModule = null;
-		private boolean isDirfulAdd = false, isDirfulDrop = false;
-		public static WFiberOrAddDropModule asFiber (WFiber e) { WFiberOrAddDropModule res = new WFiberOrAddDropModule (); res.fiber = e; return res; }
-		public static WFiberOrAddDropModule asAddDirless (Pair<WNode,Integer> e) { WFiberOrAddDropModule res = new WFiberOrAddDropModule (); res.dirlessAddModule = e; return res;  }
-		public static WFiberOrAddDropModule asDropDirless (Pair<WNode,Integer> e) { WFiberOrAddDropModule res = new WFiberOrAddDropModule (); res.dirlessDropModule = e; return res;  }
-		public static WFiberOrAddDropModule asAddDirful() { WFiberOrAddDropModule res = new WFiberOrAddDropModule (); res.isDirfulAdd = true; return res; }
-		public static WFiberOrAddDropModule asDropDirful() { WFiberOrAddDropModule res = new WFiberOrAddDropModule (); res.isDirfulDrop = true; return res; }
-		
-		public WFiber getFiber() { return fiber; }
-		public Pair<WNode, Integer> getDirlessAddModule() { return dirlessAddModule; }
-		public Pair<WNode, Integer> getDirlessDropModule() { return dirlessDropModule; }
-		public boolean isDirfulAdd() { return isDirfulAdd; }
-		public boolean isDirfulDrop() { return isDirfulDrop; }
-		public boolean isDirlessAdd() { return dirlessAddModule != null; }
-		public boolean isDirlessDrop() { return dirlessDropModule != null; }
-		public boolean isFiber() { return fiber != null; }
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((dirlessAddModule == null) ? 0 : dirlessAddModule.hashCode());
-			result = prime * result + ((dirlessDropModule == null) ? 0 : dirlessDropModule.hashCode());
-			result = prime * result + ((fiber == null) ? 0 : fiber.hashCode());
-			result = prime * result + (isDirfulAdd ? 1231 : 1237);
-			result = prime * result + (isDirfulDrop ? 1231 : 1237);
-			return result;
-		}
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			WFiberOrAddDropModule other = (WFiberOrAddDropModule) obj;
-			if (dirlessAddModule == null) {
-				if (other.dirlessAddModule != null)
-					return false;
-			} else if (!dirlessAddModule.equals(other.dirlessAddModule))
-				return false;
-			if (dirlessDropModule == null) {
-				if (other.dirlessDropModule != null)
-					return false;
-			} else if (!dirlessDropModule.equals(other.dirlessDropModule))
-				return false;
-			if (fiber == null) {
-				if (other.fiber != null)
-					return false;
-			} else if (!fiber.equals(other.fiber))
-				return false;
-			if (isDirfulAdd != other.isDirfulAdd)
-				return false;
-			if (isDirfulDrop != other.isDirfulDrop)
-				return false;
-			return true;
-		}
-	};
+	}
 
 	
-	public static class LightpathSpectrumOccupationInformation
-	{
-		private final List<WFiber> legitimate_seqLinks;
-		private final Optional<Pair<WNode,Integer>> legitimate_addDirlessModule;
-		private final Optional<Pair<WNode,Integer>> legitimate_dropDirlessModule;
-		private final SortedSet<Integer> occupiedSlots;
-		private List<Pair<WNode,Integer>> waste_addDirlessModules = null;
-		private List<Pair<WNode,Integer>> waste_dropDirlessModules = null;
-		private SortedSet<WFiber> waste_fibers = null;
-		public LightpathSpectrumOccupationInformation(List<WFiber> legitimate_seqLinks,
-				Optional<Pair<WNode, Integer>> legitimate_addDirlessModule,
-				Optional<Pair<WNode, Integer>> legitimate_dropDirlessModule,
-				SortedSet<Integer> occupiedSlots) 
-		{
-			this.legitimate_seqLinks = legitimate_seqLinks;
-			this.legitimate_addDirlessModule = legitimate_addDirlessModule;
-			this.legitimate_dropDirlessModule = legitimate_dropDirlessModule;
-			this.occupiedSlots = occupiedSlots;
-		}
-		
-		public boolean isMyLegitimateClashingWithLegitimateOrWasteSignalOf (LightpathSpectrumOccupationInformation otherLpInterferingMyLegitimate)
-		{
-			for (WFiber e : this.getSeqFibersLegitimateSignal())
-			{
-				if (otherLpInterferingMyLegitimate.getSeqFibersLegitimateSignal().contains(e))
-					return true;
-				if (otherLpInterferingMyLegitimate.getFibersWithWasteSignal().contains(e))
-					return true;
-			}
-			if (this.getDirectionlessAddModuleLegitimateSignal().isPresent())
-			{
-				if (this.getDirectionlessAddModuleLegitimateSignal().equals(otherLpInterferingMyLegitimate.getDirectionlessAddModuleLegitimateSignal())) 
-					return true;
-				if (otherLpInterferingMyLegitimate.getAddDirectionlessModulesWithWasteSignal().contains (this.getDirectionlessAddModuleLegitimateSignal().get()))
-					return true;
-			}
-			if (this.getDirectionlessDropModuleLegitimateSignal().isPresent())
-			{
-				if (this.getDirectionlessDropModuleLegitimateSignal().equals(otherLpInterferingMyLegitimate.getDirectionlessDropModuleLegitimateSignal())) 
-					return true;
-				if (otherLpInterferingMyLegitimate.getDropDirectionlessModulesWithWasteSignal().contains (this.getDirectionlessDropModuleLegitimateSignal().get()))
-					return true;
-			}
-			return false;
-		}
-
-		public boolean isMutuallyClashingFreeWith (LightpathSpectrumOccupationInformation otherLp)
-		{
-			if (this.isMyLegitimateClashingWithLegitimateOrWasteSignalOf (otherLp)) return false;
-			if (otherLp.isMyLegitimateClashingWithLegitimateOrWasteSignalOf (this)) return false;
-			return true;
-		}
-		
-		public void resetWasteOccupationInfo () { this.waste_addDirlessModules = null;  this.waste_dropDirlessModules = null; this.waste_fibers = null; }
-		public SortedSet<WFiber> getFibersWithWasteSignal () 
-		{
-			if (waste_fibers == null) this.updateWasteOccupationInfo();
-			return Collections.unmodifiableSortedSet(this.waste_fibers);
-		}
-		public List<Pair<WNode,Integer>> getAddDirectionlessModulesWithWasteSignal () 
-		{
-			if (waste_fibers == null) this.updateWasteOccupationInfo();
-			return Collections.unmodifiableList(this.waste_addDirlessModules);
-		}
-		public List<Pair<WNode,Integer>> getDropDirectionlessModulesWithWasteSignal () 
-		{
-			if (waste_fibers == null) this.updateWasteOccupationInfo();
-			return Collections.unmodifiableList(this.waste_dropDirlessModules);
-		}
-		public List<WFiber> getSeqFibersLegitimateSignal () { return Collections.unmodifiableList(this.legitimate_seqLinks); }
-		public Optional<Pair<WNode,Integer>> getDirectionlessAddModuleLegitimateSignal () { return this.legitimate_addDirlessModule; }
-		public Optional<Pair<WNode,Integer>> getDirectionlessDropModuleLegitimateSignal () { return this.legitimate_dropDirlessModule; }
-
-		public boolean isWithFiberCyclesInLegitimateSignal ()
-		{
-			return legitimate_seqLinks.size() != new HashSet<> (legitimate_seqLinks).size();
-		}
-		public boolean isWithSelfClashing ()
-		{
-			if (isWithFiberCyclesInLegitimateSignal()) return true;
-			final SortedSet<WFiber> wasteFibers = getFibersWithWasteSignal();
-			for (WFiber e : getSeqFibersLegitimateSignal()) if (wasteFibers.contains(e)) return true;
-			if (getDirectionlessAddModuleLegitimateSignal().isPresent())
-				if (getAddDirectionlessModulesWithWasteSignal().contains(getDirectionlessAddModuleLegitimateSignal().get()))
-					return true;
-			if (getDirectionlessDropModuleLegitimateSignal().isPresent())
-				if (getDropDirectionlessModulesWithWasteSignal().contains(getDirectionlessDropModuleLegitimateSignal().get()))
-					return true;
-			return false;
-		}
-		public SortedSet<Integer> getOccupiedSlotIds () { return this.occupiedSlots; }
-		private void updateWasteOccupationInfo ()
-		{
-	   		this.waste_addDirlessModules = new ArrayList<> ();
-	   		this.waste_dropDirlessModules = new ArrayList<>();
-	   		this.waste_fibers = new TreeSet<> ();
-	   		
-			final List<WFiber> leg_fibers = new ArrayList<> (getSeqFibersLegitimateSignal());
-			if (leg_fibers.isEmpty()) throw new Net2PlanException ("The path is empty");
-		   	if (getContinousSequenceOfNodes(leg_fibers).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum()))
-		   		return; // all empty
-		   	 
-		   	 final WFiberOrAddDropModule dummyFiberAdd = this.getDirectionlessAddModuleLegitimateSignal().isPresent()? WFiberOrAddDropModule.asAddDirless(this.getDirectionlessAddModuleLegitimateSignal().get()) : WFiberOrAddDropModule.asAddDirful();
-		   	 final WFiberOrAddDropModule dummyFiberDrop = this.getDirectionlessDropModuleLegitimateSignal().isPresent()? WFiberOrAddDropModule.asDropDirless(this.getDirectionlessDropModuleLegitimateSignal().get()) : WFiberOrAddDropModule.asDropDirful();
-		   	 
-		   	 /* Construct a graph starting from add fiber. Stop when all fibers have been processed */
-		   	 final Set<WFiberOrAddDropModule> elementsPendingToProcess = new HashSet<> ();
-		   	elementsPendingToProcess.add(dummyFiberAdd);
-		   	 final Set<WFiberOrAddDropModule> elementsAlreadyProcessed = new HashSet<> ();
-		   	 final DirectedMultigraph<WFiberOrAddDropModule , Boolean> propagationGraph = new DirectedMultigraph<> (Boolean.class); // the boolean in the link indicates "is legitimate". 
-		   	 propagationGraph.addVertex(dummyFiberAdd);
-		   	 while (!elementsPendingToProcess.isEmpty())
-		   	 {
-		   		 final WFiberOrAddDropModule fiberToProcess = elementsPendingToProcess.iterator().next();
-		   		 if (elementsAlreadyProcessed.contains(fiberToProcess)) { elementsPendingToProcess.remove(fiberToProcess); continue; }
-		   		 assert propagationGraph.containsVertex(fiberToProcess);
-		   		 /* process the fiber */
-		   		 if (fiberToProcess.equals(dummyFiberAdd))
-		   		 {
-		   			 /* Add lightpath dummy fiber */
-		   			 final WNode addNode = leg_fibers.get(0).getA();
-		      		 for (WFiber propFiber : addNode.getOpticalSwitchingArchitecture().getOutFibersIfAddToOutputFiber(leg_fibers.get(0) , this.getDirectionlessAddModuleLegitimateSignal().isPresent()))
-		      		 {
-		      			final WFiberOrAddDropModule propFiberAsElement = WFiberOrAddDropModule.asFiber(propFiber);
-		      			 if (!propagationGraph.containsVertex(propFiberAsElement)) propagationGraph.addVertex(propFiberAsElement);
-		      			 final boolean nextFiberIsLegitimatePropagation = propFiber.equals(this.getSeqFibersLegitimateSignal().get(0));
-		      			 propagationGraph.addEdge(dummyFiberAdd, propFiberAsElement , nextFiberIsLegitimatePropagation);
-		      			 elementsPendingToProcess.add(propFiberAsElement);
-		      		 }
-		      		 for (Pair<WNode,Integer> propDropModule : addNode.getOpticalSwitchingArchitecture().getOutFibersIfAddToOutputFiber(leg_fibers.get(0) , this.getDirectionlessAddModuleLegitimateSignal().isPresent()))
-		      		 {
-		      			final WFiberOrAddDropModule propFiberAsElement = WFiberOrAddDropModule.asFiber(propFiber);
-		      			 if (!propagationGraph.containsVertex(propFiberAsElement)) propagationGraph.addVertex(propFiberAsElement);
-		      			 final boolean nextFiberIsLegitimatePropagation = propFiber.equals(this.getSeqFibersLegitimateSignal().get(0));
-		      			 propagationGraph.addEdge(dummyFiberAdd, propFiberAsElement , nextFiberIsLegitimatePropagation);
-		      			 elementsPendingToProcess.add(propFiberAsElement);
-		      		 }
-		      		 
-		      		 
-		      		 
-		   		 } else if (fiberToProcess.equals(dummyFiberDrop))
-		   		 {
-		   			 /* Drop lightpath dummy fiber => do nothing */
-		   		 } else
-		   		 {
-		   			 final WNode switchNode = fiberToProcess.getB();
-		      		 for (WFiber propFiber : switchNode.getOpticalSwitchingArchitecture().getOutFibersUnavoidablePropagationFromInputFiber(fiberToProcess))
-		      		 {
-		      			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
-		      			 propagationGraph.addEdge(fiberToProcess, propFiber);
-		      			 fibersPendingToProcess.add(propFiber);
-		      		 }
-		      		 final int indexOfFiberInPath = leg_fibers.indexOf(fiberToProcess);
-		   			 final boolean isExpress = indexOfFiberInPath >= 0 && (indexOfFiberInPath < leg_fibers.size()-1);
-		   			 final boolean isDrop = indexOfFiberInPath == leg_fibers.size() - 1;
-		   			 if (isExpress)
-		   			 {
-		      			 final WFiber inFiber = leg_fibers.get(indexOfFiberInPath); assert inFiber.equals(fiberToProcess);
-		      			 final WFiber outFiber = leg_fibers.get(indexOfFiberInPath + 1);
-		      			 final WNode expressNode = outFiber.getA();
-		      			 assert expressNode.equals(inFiber.getB());
-		         		 for (WFiber propFiber : expressNode.getOpticalSwitchingArchitecture().getOutFibersIfExpressFromInputToOutputFiber(inFiber , outFiber))
-		         		 {
-		         			 if (!propagationGraph.containsVertex(propFiber)) propagationGraph.addVertex(propFiber);
-		         			 propagationGraph.addEdge(inFiber, propFiber);
-		         			 fibersPendingToProcess.add(propFiber);
-		         		 }
-		   			 } else if (isDrop)
-		   			 {
-		      			 if (!propagationGraph.containsVertex(dummyFiberDrop)) propagationGraph.addVertex(dummyFiberDrop);
-		      			 propagationGraph.addEdge(fiberToProcess, dummyFiberDrop);
-		      			 fibersPendingToProcess.add(dummyFiberDrop);
-		   			 }
-		   		 }
-		   		fibersAlreadyProcessed.add (fiberToProcess);
-		   		 fibersPendingToProcess.remove(fiberToProcess);
-		   	 }
-		   	 
-		   	 if (!propagationGraph.containsVertex(dummyFiberDrop)) throw new Net2PlanException ("The signal of this lightpath is not reaching the drop node");
-
-		   	 final SortedSet<WFiber> propagatedNonDummyFibers = propagationGraph.vertexSet().stream().filter(e->!e.equals(dummyFiberDrop) && !e.equals(dummyFiberAdd)).collect(Collectors.toCollection(TreeSet::new));
-		   	 
-		   	 
-		   	 boolean multipathFree = links.stream().allMatch(v->propagationGraph.incomingEdgesOf(v).size() == 1);
-		   	 multipathFree &= propagationGraph.incomingEdgesOf(dummyFiberDrop).size() == 1;
-		   	 final DirectedSimpleCycles<WFiberOrAddDropModule,Boolean> cycleDetector = new JohnsonSimpleCycles<> (propagationGraph); 
-		   	 final List<List<WFiber>> lasingCycles = cycleDetector.findSimpleCycles();
-		   	 return Triple.of(propagatedNonDummyFibers , lasingCycles, multipathFree);
-
-			
-			
-			
-			
-			
-			
-		}
-	}
 	
 	
 	private WNet wNet;
@@ -382,7 +123,7 @@ public class OpticalSpectrumManager
 	final private SlotOccupationManager<WFiber> wasteSignal_perFiberOccupation = new SlotOccupationManager<>();
 	final private SlotOccupationManager<Pair<WNode,Integer>> wasteSignal_directionlessAddOccupation = new SlotOccupationManager<>();
 	final private SlotOccupationManager<Pair<WNode,Integer>> wasteSignal_directionlessDropOccupation = new SlotOccupationManager<>();
-	final private SortedMap<WLightpath , LightpathSpectrumOccupationInformation> lightpathsIncluded = new TreeMap<> ();
+	final private SortedMap<WLightpath , OsmLightpathOccupationInfo> lightpathsIncluded = new TreeMap<> ();
 	
 	
 	//	
@@ -543,7 +284,7 @@ public class OpticalSpectrumManager
      * @param occupationInformation see above
      * @return see above
      */
-    public boolean isAllocatable (LightpathSpectrumOccupationInformation occupationInformation)
+    public boolean isAllocatable (OsmLightpathOccupationInfo occupationInformation)
     {
     	if (occupationInformation.isWithSelfClashing()) return false;
     	final SortedSet<Integer> slotIds = occupationInformation.getOccupiedSlotIds();
@@ -587,11 +328,11 @@ public class OpticalSpectrumManager
      * @param lp the lightpath
      * @param optionalOccupationInformation the lightpath occupation information. If not present, it is automatically computed from the current lightpath information
      */
-    public void allocateOccupation (WLightpath lp , Optional<LightpathSpectrumOccupationInformation> optionalOccupationInformation)
+    public void allocateOccupation (WLightpath lp , Optional<OsmLightpathOccupationInfo> optionalOccupationInformation)
     {
    	 	checkSameWNet(lp);
    	 	if (isAlreadyAllocated(lp)) throw new Net2PlanException ("This lightpath has already been allocated. Release it first. ");
-   	 	final LightpathSpectrumOccupationInformation occupationInformation = optionalOccupationInformation.orElse(lp.getOpticalOccupationInformation ());
+   	 	final OsmLightpathOccupationInfo occupationInformation = optionalOccupationInformation.orElse(lp.getOpticalOccupationInformation ());
     	final SortedSet<Integer> slotIds = occupationInformation.getOccupiedSlotIds();
     	if (slotIds.isEmpty()) return;
     	for (WFiber fiber : occupationInformation.getSeqFibersLegitimateSignal())
@@ -614,7 +355,7 @@ public class OpticalSpectrumManager
     public void releaseOccupation (WLightpath lp)
     {
     	checkSameWNet(lp);
-    	final LightpathSpectrumOccupationInformation occup = this.lightpathsIncluded.get(lp);
+    	final OsmLightpathOccupationInfo occup = this.lightpathsIncluded.get(lp);
     	if (occup == null) return;
 		legitimateSignal_perFiberOccupation.releaseOccupation(lp, occup.getSeqFibersLegitimateSignal()); 
     	if (occup.getDirectionlessAddModuleLegitimateSignal().isPresent())
@@ -762,7 +503,7 @@ public class OpticalSpectrumManager
    	 	{
    	 		final List<WFiber> pathAbBa = new ArrayList<> ();
    	 		for (WFiber ab : pathAb) { pathAbBa.add(ab); pathAbBa.add(ab.getBidirectionalPair()); }
-   	 		final LightpathSpectrumOccupationInformation lpOccupationAbbA = new LightpathSpectrumOccupationInformation(pathAbBa, 
+   	 		final OsmLightpathOccupationInfo lpOccupationAbbA = new OsmLightpathOccupationInfo(pathAbBa, 
    	 				directionlessAddModuleAb.isPresent()? Optional.of(Pair.of(a, directionlessAddModuleAb.get())) : Optional.empty(), 
    	 					directionlessDropModuleAb.isPresent()? Optional.of(Pair.of(b, directionlessDropModuleAb.get())) : Optional.empty(), 
    	 					new TreeSet<> (Arrays.asList((int) 0)));
@@ -836,7 +577,7 @@ public class OpticalSpectrumManager
      * @param forbidenSlotIds see above
      * @return see above
      */
-    public Optional<SortedSet<Integer>> spectrumAssignment_firstFit (LightpathSpectrumOccupationInformation lpOccupation , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds)
+    public Optional<SortedSet<Integer>> spectrumAssignment_firstFit (OsmLightpathOccupationInfo lpOccupation , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds)
     {
     	assert !lpOccupation.getSeqFibersLegitimateSignal().isEmpty();
         assert numContiguousSlotsRequired > 0;
@@ -884,7 +625,7 @@ public class OpticalSpectrumManager
      * @param forbidenSlotIds see above
      * @return see above
      */
-    public SortedSet<Integer> spectrumAssignment_getAllPotentialFirstSlots (LightpathSpectrumOccupationInformation lpOccupation , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds)
+    public SortedSet<Integer> spectrumAssignment_getAllPotentialFirstSlots (OsmLightpathOccupationInfo lpOccupation , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds)
     {
     	assert !lpOccupation.getSeqFibersLegitimateSignal().isEmpty();
         assert numContiguousSlotsRequired > 0;
@@ -936,7 +677,7 @@ public class OpticalSpectrumManager
      * @param forbidenSlotIds see above
      * @return see above. If no idle range is found, Optional.empty is returned. 
      */
-    public Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> spectrumAssignment_firstFitTwoRoutes (LightpathSpectrumOccupationInformation lp1, LightpathSpectrumOccupationInformation lp2 , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds)
+    public Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> spectrumAssignment_firstFitTwoRoutes (OsmLightpathOccupationInfo lp1, OsmLightpathOccupationInfo lp2 , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds)
     {
         /* If a fiber is traversed more than once in any path, there is no possible assignment */
     	if (lp1.isWithSelfClashing()) return Optional.empty();
@@ -1569,7 +1310,7 @@ public class OpticalSpectrumManager
 
     private static boolean isContinuousUnicastPath (List<WFiber> path) { WFiber prevLink = null; for (WFiber e : path) { if (prevLink != null) { if (!prevLink.getB().equals(e.getA())) return false; } prevLink = e; } return true; }
     private static boolean isPassingSameNodeMoreThanOnce (List<WFiber> path) { final SortedSet<WNode> nodes = new TreeSet<> (); nodes.add(path.get(0).getA()); for (WFiber e : path) { if (nodes.contains(e.getB())) return true; nodes.add(e.getB()); } return false; }
-    private static List<WNode> getContinousSequenceOfNodes (List<WFiber> path) { if (path.isEmpty()) return new ArrayList<> (); final List<WNode> res = new ArrayList<> (path.size() + 1); res.add(path.get(0).getA()); for (WFiber e : path) { if (!e.getA ().equals(res.get(res.size()-1))) throw new Net2PlanException ("Not contiguous"); res.add(e.getB()); }  return res; }
+    public static List<WNode> getContinousSequenceOfNodes (List<WFiber> path) { if (path.isEmpty()) return new ArrayList<> (); final List<WNode> res = new ArrayList<> (path.size() + 1); res.add(path.get(0).getA()); for (WFiber e : path) { if (!e.getA ().equals(res.get(res.size()-1))) throw new Net2PlanException ("Not contiguous"); res.add(e.getB()); }  return res; }
 
 
     
