@@ -8,6 +8,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
+import com.net2plan.niw.OpticalSpectrumManager.WFiberOrAddDropModule;
 import com.net2plan.utils.Quadruple;
 
 public class OadmArchitecture_generic implements IOadmArchitecture
@@ -33,7 +34,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 	@Override
-	public SortedSet<WFiber> getOutFibersIfAddToOutputFiber(WFiber outputFiber) 
+	public Set<WFiberOrAddDropModule> getOutElementsIfAddToOutputFiber(WFiber outputFiber) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 		if (!p.isFilterless())
@@ -46,7 +47,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 	@Override
-	public SortedSet<WFiber> getOutFibersIfDropFromInputFiber(WFiber inputFiber) 
+	public Set<WFiberOrAddDropModule> getOutElementsIfDropFromInputFiber(WFiber inputFiber) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 		if (!p.isFilterless())
@@ -59,7 +60,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 	@Override
-	public SortedSet<WFiber> getOutFibersIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber) 
+	public Set<WFiberOrAddDropModule> getOutElementsIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 		if (!p.isFilterless())
@@ -72,7 +73,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 	@Override
-	public SortedSet<WFiber> getOutFibersUnavoidablePropagationFromInputFiber(WFiber inputFiber) 
+	public Set<WFiberOrAddDropModule> getOutElementsUnavoidablePropagationFromInputFiber(WFiber inputFiber) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 		if (!p.isFilterless())

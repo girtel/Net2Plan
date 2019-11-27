@@ -10,6 +10,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 
 import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
+import com.net2plan.niw.OpticalSpectrumManager.WFiberOrAddDropModule;
 import com.net2plan.utils.Quadruple;
 
 
@@ -21,10 +22,10 @@ public interface IOadmArchitecture
 	public default boolean isNeverCreatingWastedSpectrum () { return !isPotentiallyWastingSpectrum(); }
 	public abstract String getShortName ();
 	public abstract boolean isPotentiallyWastingSpectrum ();
-	public abstract SortedSet<WFiber> getOutFibersIfAddToOutputFiber(WFiber outputFiber , boolean usingDirectionlessAddModule);
-	public abstract SortedSet<WFiber> getOutFibersIfDropFromInputFiber(WFiber inputFiber , boolean usingDirectionlessDropModule);
-	public abstract SortedSet<WFiber> getOutFibersIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber);
-	public abstract SortedSet<WFiber> getOutFibersUnavoidablePropagationFromInputFiber(WFiber inputFiber);
+	public abstract SortedSet<WFiberOrAddDropModule> getOutElementsIfAddToOutputFiber(WFiber outputFiber , boolean usingDirectionlessAddModule);
+	public abstract SortedSet<WFiberOrAddDropModule> getOutElementsIfDropFromInputFiber(WFiber inputFiber , boolean usingDirectionlessDropModule);
+	public abstract SortedSet<WFiberOrAddDropModule> getOutElementsIfExpressFromInputToOutputFiber(WFiber inputFiber, WFiber outputFiber);
+	public abstract SortedSet<WFiberOrAddDropModule> getOutElementsUnavoidablePropagationFromInputFiber(WFiber inputFiber);
 
 	public abstract void initialize (WNode node);
 	public abstract List<Quadruple<String,String,String,String>> getParametersInfo_name_default_shortDesc_longDesc ();
@@ -56,28 +57,5 @@ public interface IOadmArchitecture
 
 	public abstract boolean isColorless ();
 	
-	
-//	public default Optional<Integer> getInputExpressPortIndex(WFiber e) 
-//	{
-//		int cont = 0;
-//		for (WFiber f : getHostNode().getIncomingFibers())
-//		{
-//			if (e.equals(f)) return Optional.of(cont);
-//			cont ++;
-//		}
-//		return Optional.empty();
-//	}
-//
-//	public default Optional<Integer> getOutputExpressPortIndex(WFiber e) 
-//	{
-//		int cont = 0;
-//		for (WFiber f : getHostNode().getIncomingFibers())
-//		{
-//			if (e.equals(f)) return Optional.of(cont);
-//			cont ++;
-//		}
-//		return Optional.empty();
-//	}
-//
 	
 }
