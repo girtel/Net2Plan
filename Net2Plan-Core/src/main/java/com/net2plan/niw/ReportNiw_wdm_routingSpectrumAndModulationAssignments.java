@@ -45,7 +45,7 @@ import com.net2plan.utils.Triple;
  * @net2plan.keywords WDM
  * @author Pablo Pavon-Marino
  */ 
-public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IReport
+public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IReport
 {
 	/* Input parameters */
 
