@@ -15,6 +15,7 @@ import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.graph.DirectedMultigraph;
 
+import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
@@ -24,14 +25,12 @@ public class OsmLightpathOccupationInfo
 	private final List<WFiber> legitimate_seqLinks;
 	private final Optional<Pair<WNode,Integer>> legitimate_addDirlessModule;
 	private final Optional<Pair<WNode,Integer>> legitimate_dropDirlessModule;
-	private final SortedSet<Integer> occupiedSlots;
-	private List<Pair<WNode,Integer>> waste_addDirlessModules = null;
-	private List<Pair<WNode,Integer>> waste_dropDirlessModules = null;
-	private SortedSet<WFiber> waste_fibers = null;
+	private final Optional<SortedSet<Integer>> occupiedSlots;
+	private SortedSet<OsmOpticalSignalPropagationElement> waste_elements = null;
 	public OsmLightpathOccupationInfo(List<WFiber> legitimate_seqLinks,
 			Optional<Pair<WNode, Integer>> legitimate_addDirlessModule,
 			Optional<Pair<WNode, Integer>> legitimate_dropDirlessModule,
-			SortedSet<Integer> occupiedSlots) 
+			Optional<SortedSet<Integer>> occupiedSlots) 
 	{
 		if (legitimate_seqLinks.size() != new HashSet<> (legitimate_seqLinks).size()) throw new Net2PlanException ("Invalid lightpath path");
 		this.legitimate_seqLinks = legitimate_seqLinks;
@@ -39,7 +38,7 @@ public class OsmLightpathOccupationInfo
 		this.legitimate_dropDirlessModule = legitimate_dropDirlessModule;
 		this.occupiedSlots = occupiedSlots;
 	}
-	
+
 	public List<OsmOpticalSignalPropagationElement> getLegitimateSequenceOfTraversedOpticalElements ()
 	{
 		final List<OsmOpticalSignalPropagationElement> res =  new ArrayList<> (legitimate_seqLinks.size() + 2);
@@ -93,22 +92,40 @@ public class OsmLightpathOccupationInfo
 		return true;
 	}
 	
-	public void resetWasteOccupationInfo () { this.waste_addDirlessModules = null;  this.waste_dropDirlessModules = null; this.waste_fibers = null; }
+	public void resetWasteOccupationInfo () { this.waste_elements = null;  }
+	
+	public SortedSet<OsmOpticalSignalPropagationElement> getOpticalElementsWithWasteSignal () 
+	{
+		if (waste_elements == null) this.updateWasteOccupationInfo();
+		return Collections.unmodifiableSortedSet(this.waste_elements); 
+	}
+	
 	public SortedSet<WFiber> getFibersWithWasteSignal () 
 	{
-		if (waste_fibers == null) this.updateWasteOccupationInfo();
-		return Collections.unmodifiableSortedSet(this.waste_fibers);
+		if (waste_elements == null) this.updateWasteOccupationInfo();
+		return waste_elements.stream().filter(e->e.isFiber()).map(e->e.getFiber()).collect(Collectors.toCollection(TreeSet::new));
 	}
 	public List<Pair<WNode,Integer>> getAddDirectionlessModulesWithWasteSignal () 
 	{
-		if (waste_fibers == null) this.updateWasteOccupationInfo();
-		return Collections.unmodifiableList(this.waste_addDirlessModules);
+		if (waste_elements == null) this.updateWasteOccupationInfo();
+		return waste_elements.stream().filter(e->e.isDirlessAdd()).map(e->e.getDirlessAddModule()).collect(Collectors.toList());
 	}
 	public List<Pair<WNode,Integer>> getDropDirectionlessModulesWithWasteSignal () 
 	{
-		if (waste_fibers == null) this.updateWasteOccupationInfo();
-		return Collections.unmodifiableList(this.waste_dropDirlessModules);
+		if (waste_elements == null) this.updateWasteOccupationInfo();
+		return waste_elements.stream().filter(e->e.isDirlessDrop()).map(e->e.getDirlessDropModule()).collect(Collectors.toList());
 	}
+	public List<WFiber> getAddDirectionfulModulesWithWasteSignal () 
+	{
+		if (waste_elements == null) this.updateWasteOccupationInfo();
+		return waste_elements.stream().filter(e->e.isDirfulAdd()).map(e->e.getDirfulAddOutFiber()).collect(Collectors.toList());
+	}
+	public List<WFiber> getDropDirectionfulModulesWithWasteSignal () 
+	{
+		if (waste_elements == null) this.updateWasteOccupationInfo();
+		return waste_elements.stream().filter(e->e.isDirfulDrop()).map(e->e.getDirfulDropInFiber()).collect(Collectors.toList());
+	}
+	
 	public List<WFiber> getSeqFibersLegitimateSignal () { return Collections.unmodifiableList(this.legitimate_seqLinks); }
 	public Optional<Pair<WNode,Integer>> getDirectionlessAddModule () { return this.legitimate_addDirlessModule; }
 	public Optional<Pair<WNode,Integer>> getDirectionlessDropModule () { return this.legitimate_dropDirlessModule; }
@@ -134,13 +151,9 @@ public class OsmLightpathOccupationInfo
 				return true;
 		return false;
 	}
-	public SortedSet<Integer> getOccupiedSlotIds () { return this.occupiedSlots; }
+	public Optional<SortedSet<Integer>> getOccupiedSlotIds () { return this.occupiedSlots; }
 	private void updateWasteOccupationInfo ()
 	{
-   		this.waste_addDirlessModules = new ArrayList<> ();
-   		this.waste_dropDirlessModules = new ArrayList<>();
-   		this.waste_fibers = new TreeSet<> ();
-   		
 		final List<WFiber> leg_fibers = new ArrayList<> (getSeqFibersLegitimateSignal());
 		if (leg_fibers.isEmpty()) throw new Net2PlanException ("The path is empty");
 	   	if (OpticalSpectrumManager.getContinousSequenceOfNodes(leg_fibers).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum()))
@@ -155,7 +168,7 @@ public class OsmLightpathOccupationInfo
 	   	 final Set<OsmOpticalSignalPropagationElement> elementsPendingToProcess = new HashSet<> ();
 	   	 elementsPendingToProcess.add(legitimateAddModule);
 	   	 final Set<OsmOpticalSignalPropagationElement> elementsAlreadyProcessed = new HashSet<> ();
-	   	 final DirectedMultigraph<OsmOpticalSignalPropagationElement , Boolean> propagationGraph = new DirectedMultigraph<> (Boolean.class); // the boolean in the link indicates "is legitimate". 
+	   	 final DirectedMultigraph<OsmOpticalSignalPropagationElement , Object> propagationGraph = new DirectedMultigraph<> (Object.class); // the boolean in the link indicates "is legitimate". 
 	   	 propagationGraph.addVertex(legitimateAddModule);
 	   	 while (!elementsPendingToProcess.isEmpty())
 	   	 {
@@ -195,8 +208,7 @@ public class OsmLightpathOccupationInfo
       		 for (OsmOpticalSignalPropagationElement nextElement : outElements)
       		 {
       			 if (!propagationGraph.containsVertex(nextElement)) propagationGraph.addVertex(nextElement);
-      			 final boolean nextFiberIsLegitimatePropagation = nextElement.equals(legitimateFirstFiber);
-      			 propagationGraph.addEdge(legitimateAddModule, nextElement , nextFiberIsLegitimatePropagation);
+      			 propagationGraph.addEdge(legitimateAddModule, nextElement);
       			 elementsPendingToProcess.add(nextElement);
       		 }
       		elementsAlreadyProcessed.add (elementToProcess);
@@ -267,19 +279,15 @@ public class OsmLightpathOccupationInfo
 	   	 for (WFiber e : this.getSeqFibersLegitimateSignal())
 		   	 if (!propagationGraph.containsVertex(OsmOpticalSignalPropagationElement.asFiber(e))) throw new Net2PlanException ("The signal of this lightpath is not traversing the legitimate paths");
 
-	   	 PABLO: continua aqui
-	   	 1) meter en el waste elements (sea un unico set de elementos) -> todos los que NO son legitimate. 
-	   	 2) Ver el primer legitimate al que le entran dos o mas => uno de ellos waste --> todos los legitimate a partir de ahi tb son waste
-//	   	 
-//	   	 
-//	   	 final SortedSet<WFiber> propagatedNonDummyFibers = propagationGraph.vertexSet().stream().filter(e->!e.equals(legitimateDropModule) && !e.equals(legitimateAddModule)).collect(Collectors.toCollection(TreeSet::new));
-//	   	 
-//	   	 
-//	   	 boolean multipathFree = links.stream().allMatch(v->propagationGraph.incomingEdgesOf(v).size() == 1);
-//	   	 multipathFree &= propagationGraph.incomingEdgesOf(legitimateDropModule).size() == 1;
-//	   	 final DirectedSimpleCycles<OsmOpticalSignalPropagationElement,Boolean> cycleDetector = new JohnsonSimpleCycles<> (propagationGraph); 
-//	   	 final List<List<WFiber>> lasingCycles = cycleDetector.findSimpleCycles();
-//	   	 return Triple.of(propagatedNonDummyFibers , lasingCycles, multipathFree);
+	   	 this.waste_elements = new TreeSet<> ();
+	   	 this.waste_elements.addAll(propagationGraph.vertexSet());
+	   	 this.waste_elements.removeAll(this.getLegitimateSequenceOfTraversedOpticalElements ());
+	   	 boolean alreadyALegitimateElementWithWaste = false;
+	   	 for (OsmOpticalSignalPropagationElement oe : this.getLegitimateSequenceOfTraversedOpticalElements ())
+	   	 {
+	   		 alreadyALegitimateElementWithWaste |= this.waste_elements.contains(oe);
+	   		 if (alreadyALegitimateElementWithWaste) this.waste_elements.add(oe); 
+	   	 }
 	}
 
 

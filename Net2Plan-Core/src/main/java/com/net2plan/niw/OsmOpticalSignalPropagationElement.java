@@ -1,6 +1,8 @@
 package com.net2plan.niw;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import com.net2plan.utils.Pair;
 
@@ -97,6 +99,15 @@ public class OsmOpticalSignalPropagationElement implements Comparator<OsmOptical
 		assert o1.isFiber() && o2.isFiber();
 		return o1.fiber.compareTo(o2.fiber);
 	}
-	
+
+	public static List<OsmOpticalSignalPropagationElement> fromFiberPathDirfulAddDrop (List<WFiber> fiberPath)
+	{
+		if (fiberPath.isEmpty()) return new ArrayList<> ();
+		final List<OsmOpticalSignalPropagationElement> res = new ArrayList<> ();
+		res.add(OsmOpticalSignalPropagationElement.asAddDirful(fiberPath.get(0)));
+		fiberPath.forEach(f->res.add(OsmOpticalSignalPropagationElement.asFiber(f)));
+		res.add(OsmOpticalSignalPropagationElement.asDropDirful(fiberPath.get(fiberPath.size()-1)));
+		return res;
+	}
 
 }

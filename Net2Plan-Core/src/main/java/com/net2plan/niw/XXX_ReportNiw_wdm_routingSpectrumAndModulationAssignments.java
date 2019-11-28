@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.niw.OpticalSpectrumManager.OpticalSignalOccupationType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -195,7 +196,7 @@ public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implement
 		
 		for (WFiber e : net.getFibers())
 		{
-		   final SortedMap<Integer,SortedSet<WLightpath>> occupiedResources_e = osm.getOccupiedResources (e);
+		   final SortedMap<Integer,SortedSet<WLightpath>> occupiedResources_e = osm.getOccupiedResources (e , OpticalSignalOccupationType.LEGITIMATESIGNAL);
 		   final SortedSet<Integer> validOpticalSlotsIds_e = e.getValidOpticalSlotIds();
 		   
 			out.append("<tr>");

@@ -286,8 +286,9 @@ public class OpticalSpectrumManager
      */
     public boolean isAllocatable (OsmLightpathOccupationInfo occupationInformation)
     {
+    	if (!occupationInformation.getOccupiedSlotIds().isPresent()) throw new Net2PlanException ("Please provide spectrum occupation"); 
     	if (occupationInformation.isWithSelfClashing()) return false;
-    	final SortedSet<Integer> slotIds = occupationInformation.getOccupiedSlotIds();
+    	final SortedSet<Integer> slotIds = occupationInformation.getOccupiedSlotIds().get();
     	/* Legitimate fibers are fully free */
         for (WFiber e : occupationInformation.getSeqFibersLegitimateSignal())
             if (!this.isOpticalSlotIdsValidAndIdle(e , slotIds))
@@ -333,7 +334,8 @@ public class OpticalSpectrumManager
    	 	checkSameWNet(lp);
    	 	if (isAlreadyAllocated(lp)) throw new Net2PlanException ("This lightpath has already been allocated. Release it first. ");
    	 	final OsmLightpathOccupationInfo occupationInformation = optionalOccupationInformation.orElse(lp.getOpticalOccupationInformation ());
-    	final SortedSet<Integer> slotIds = occupationInformation.getOccupiedSlotIds();
+    	if (!occupationInformation.getOccupiedSlotIds().isPresent()) throw new Net2PlanException ("Please provide spectrum occupation"); 
+    	final SortedSet<Integer> slotIds = occupationInformation.getOccupiedSlotIds().get();
     	if (slotIds.isEmpty()) return;
     	for (WFiber fiber : occupationInformation.getSeqFibersLegitimateSignal())
     		legitimateSignal_perFiberOccupation.allocateOccupation(fiber, lp, slotIds);
@@ -506,7 +508,7 @@ public class OpticalSpectrumManager
    	 		final OsmLightpathOccupationInfo lpOccupationAbbA = new OsmLightpathOccupationInfo(pathAbBa, 
    	 				directionlessAddModuleAb.isPresent()? Optional.of(Pair.of(a, directionlessAddModuleAb.get())) : Optional.empty(), 
    	 					directionlessDropModuleAb.isPresent()? Optional.of(Pair.of(b, directionlessDropModuleAb.get())) : Optional.empty(), 
-   	 					new TreeSet<> (Arrays.asList((int) 0)));
+   	 					Optional.empty());
    	 		final SortedSet<Integer> forbidenSlotsBecauseOfAddAndDropBaAndUsable = new TreeSet<> (unusableSlots);
    	 		final Integer addModuleBa = directionlessDropModuleAb.orElse(null);
    	 		final Integer dropModuleBa = directionlessAddModuleAb.orElse(null);

@@ -308,6 +308,6 @@ public class WLightpath extends WAbstractNetworkElement
 		return new OsmLightpathOccupationInfo(getSeqFibers(), 
 				getDirectionlessAddModuleIndexInOrigin().isPresent()? Optional.of(Pair.of (getA() , getDirectionlessAddModuleIndexInOrigin().get())) : Optional.empty() ,
 				getDirectionlessDropModuleIndexInDestination().isPresent()? Optional.of(Pair.of (getB() , getDirectionlessDropModuleIndexInDestination().get())) : Optional.empty() ,
-				getOpticalSlotIds());
+				Optional.of(getOpticalSlotIds()));
 	}
 }

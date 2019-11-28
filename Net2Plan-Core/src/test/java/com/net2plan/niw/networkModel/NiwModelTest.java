@@ -21,6 +21,8 @@ import com.net2plan.niw.OadmArchitecture_generic;
 import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
 import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.OsmLightpathOccupationInfo;
+import com.net2plan.niw.OsmOpticalSignalPropagationElement;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpUnicastDemand;
@@ -94,22 +96,22 @@ public class NiwModelTest extends TestCase
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		List<WFiber> fiberPath;
 		fiberPath = net.getKShortestWdmPath(1, n1, n2, null).get(0);
-		this.l12 = lr12.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l12 = lr12.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n2, n1, null).get(0);
-		this.l21 = lr21.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l21 = lr21.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n1, n3, null).get(0);
-		this.l13 = lr13.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l13 = lr13.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n3, n1, null).get(0);
-		this.l31 = lr31.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l31 = lr31.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n1, n4, null).get(0);
-		this.l14 = lr14.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l14 = lr14.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n4, n1, null).get(0);
-		this.l41 = lr41.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l41 = lr41.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
         this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		assertEquals(net.getLightpaths(), Arrays.asList(l12, l21, l13, l31, l14, l41));
 		assertEquals(n1.getDroppedLigtpaths(), new TreeSet<>(Arrays.asList(l21, l31, l41)));
@@ -302,7 +304,17 @@ public class NiwModelTest extends TestCase
 		final WFiber bc = net.addFiber(b, c, null, 160.0, false).getFirst();
 		final List<WFiber> fibers = Arrays.asList(ab , bc);
 		final List<WNode> nodes = Arrays.asList(a , b , c);
-		nodes.forEach(e->e.setOadmSwitchFabricAttenuation_dB(6.0));
+		//nodes.forEach(e->e.setOadmSwitchFabricAttenuation_dB(6.0));
+		for (WNode n : nodes)
+		{
+			final OadmArchitecture_generic arq = (OadmArchitecture_generic) n.getOpticalSwitchingArchitecture();
+			final OadmArchitecture_generic.Parameters param = arq.getParameters();
+			PABLO: CONTINUA AQUI --> REHACER EJEMPLO Y EMPEZAR A TESTEAR EL CORE
+			
+			arq.updateParameters(newParameters);
+		}
+		
+		nodes.forEach(e->e.getOpticalSwitchingArchitecture().updateCurrentParameters(e.getOpticalSwitchingArchitecture().getA));
 		nodes.forEach(e->e.setOadmSwitchFabricPmd_ps(0.5));
 		fibers.forEach(e->e.setAttenuationCoefficient_dbPerKm(0.25));
 		fibers.forEach(e->e.setChromaticDispersionCoeff_psPerNmKm(15.0));

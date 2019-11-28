@@ -1,10 +1,13 @@
 package com.net2plan.niw;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
@@ -116,7 +119,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		this.node = node;
 	}
 
-	private enum PARAMNAMES {ArchitectureType , IsDirectionLess , AddDropModuleType , MuxDemuxLoss_dB , MuxDemuxPmd_ps , WssLoss_dB , WssPmd_ps}
+	public enum PARAMNAMES {ArchitectureType , IsDirectionLess , AddDropModuleType , MuxDemuxLoss_dB , MuxDemuxPmd_ps , WssLoss_dB , WssPmd_ps}
 
 	@Override
 	public List<Quadruple<String, String, String, String>> getParametersInfo_name_default_shortDesc_longDesc() 
@@ -131,8 +134,27 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 				Quadruple.of(PARAMNAMES.WssPmd_ps.name (), "0.5", "WSS PMD (ps)", "The add/drop modules and/or degrees can be realized with WSSa. This is the added PMD in ps")
 				);
 	}
+
+	public void updateParameters (Parameters newParameters)
+	{
+		final SortedMap<String,String> param = new TreeMap<> ();
+		param.put(PARAMNAMES.ArchitectureType.name(), newParameters.getArchitectureType());
+		param.put(PARAMNAMES.IsDirectionLess.name(), newParameters.isDirectionless()? "1" : "0");
+		param.put(PARAMNAMES.AddDropModuleType.name(), newParameters.getAddDropModuleType());
+		param.put(PARAMNAMES.MuxDemuxLoss_dB.name(), newParameters.getMuxDemuxLoss_dB() + "");
+		param.put(PARAMNAMES.MuxDemuxPmd_ps.name(), newParameters.getMuxDemuxPmd_ps() + "");
+		param.put(PARAMNAMES.WssLoss_dB.name(), newParameters.getWssLoss_dB() + "");
+		param.put(PARAMNAMES.WssPmd_ps.name(), newParameters.getWssPmd_ps() + "");
+		this.updateCurrentParameters(param);
+	}
 	
-	private class Parameters
+	public Parameters getParameters ()
+	{
+		return new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
+	}
+	
+
+	public class Parameters
 	{
 		private String architectureType;
 		private boolean isDirectionless;
@@ -142,7 +164,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		private double wssLoss_dB;
 		private double wssPmd_ps;
 		
-		Parameters (Map<String,String> params)
+		private Parameters (Map<String,String> params)
 		{
 			try
 			{
@@ -166,34 +188,25 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 				this.wssPmd_ps = 0.5;
 			}
 		}
+		
+		public Parameters setArchitectureTypeAsBroadcastAndSelect () { this.architectureType = "B&S"; return this; }
+		public Parameters setArchitectureTypeAsRouteAndSelect () { this.architectureType = "R&S"; return this; }
+		public Parameters setArchitectureTypeAsFilterless () { this.architectureType = "filterless"; return this; }
+		public Parameters setIsDirectionless (boolean isDirectionless) { this.isDirectionless = isDirectionless; return this; }
+		public Parameters setAddDropModuleTypeAsMuxBased () { this.addDropModuleType = "Mux/Demux-based"; return this; }
+		public Parameters setAddDropModuleTypeAsWssBased () { this.addDropModuleType = "Wss-based"; return this; }
+		public Parameters setMuxDemuxLoss_dB (double lossInDb) { this.muxDemuxLoss_dB = lossInDb; return this; }
+		public Parameters setMuxDemuxPmd_ps (double pmd_ps) { this.muxDemuxPmd_ps = pmd_ps; return this; }
+		public Parameters setWssLoss_dB (double lossInDb) { this.wssLoss_dB = lossInDb; return this; }
+		public Parameters setWssPmd_ps (double pmd_ps) { this.wssPmd_ps = pmd_ps; return this; }
 
-		public String getArchitectureType() {
-			return architectureType;
-		}
-
-		public boolean isDirectionless() {
-			return isDirectionless;
-		}
-
-		public String getAddDropModuleType() {
-			return addDropModuleType;
-		}
-
-		public double getMuxDemuxLoss_dB() {
-			return muxDemuxLoss_dB;
-		}
-
-		public double getMuxDemuxPmd_ps() {
-			return muxDemuxPmd_ps;
-		}
-
-		public double getWssLoss_dB() {
-			return wssLoss_dB;
-		}
-
-		public double getWssPmd_ps() {
-			return wssPmd_ps;
-		}
+		public String getArchitectureType() {return architectureType; }
+		public boolean isDirectionless() { return isDirectionless; }
+		public String getAddDropModuleType() { return addDropModuleType; }
+		public double getMuxDemuxLoss_dB() { return muxDemuxLoss_dB; }
+		public double getMuxDemuxPmd_ps() { return muxDemuxPmd_ps; }
+		public double getWssLoss_dB() { return wssLoss_dB; }
+		public double getWssPmd_ps() { return wssPmd_ps; }
 
 		public boolean isRouteAndSelect () { return getArchitectureType().equals("R&S"); }
 		public boolean isBroadcastAndSelect () { return getArchitectureType().equals("B&S"); }
