@@ -590,7 +590,8 @@ public class OpticalSpectrumManager
         /* Empty slots for legitimate fibers, and add/drop dirless modules  */
         SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(lpOccupation.getSeqFibersLegitimateSignal() , lpOccupation.getDirectionlessAddModule() , lpOccupation.getDirectionlessDropModule());
         /* Retain slots without legitimate signal in wasted fibers */
-        intersectionValidSlots.retainAll(getAvailableSlotIdsEmptyOrWithWaste(lpOccupation.getFibersWithWasteSignal() , Optional.empty() , Optional.empty()));
+        if (!lpOccupation.getFibersWithWasteSignal().isEmpty())
+        	intersectionValidSlots.retainAll(getAvailableSlotIdsEmptyOrWithWaste(lpOccupation.getFibersWithWasteSignal() , Optional.empty() , Optional.empty()));
         /* Remove slots with legitimate signal in any of the wasted add dirless ports */
         for (Pair<WNode,Integer> module : lpOccupation.getAddDirectionlessModulesWithWasteSignal())
         	intersectionValidSlots.removeAll(this.getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessAddModule(module.getFirst(), module.getSecond()));
@@ -638,7 +639,8 @@ public class OpticalSpectrumManager
         /* Empty slots for legitimate fibers, and add/drop dirless modules  */
         SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(lpOccupation.getSeqFibersLegitimateSignal() , lpOccupation.getDirectionlessAddModule() , lpOccupation.getDirectionlessDropModule());
         /* Retain slots without legitimate signal in wasted fibers */
-        intersectionValidSlots.retainAll(getAvailableSlotIdsEmptyOrWithWaste(lpOccupation.getFibersWithWasteSignal() , Optional.empty() , Optional.empty()));
+        if (!lpOccupation.getFibersWithWasteSignal().isEmpty())
+        	intersectionValidSlots.retainAll(getAvailableSlotIdsEmptyOrWithWaste(lpOccupation.getFibersWithWasteSignal() , Optional.empty() , Optional.empty()));
         /* Remove slots with legitimate signal in any of the wasted add dirless ports */
         for (Pair<WNode,Integer> module : lpOccupation.getAddDirectionlessModulesWithWasteSignal())
         	intersectionValidSlots.removeAll(this.getOccupiedWithLegitimateSignalOpticalSlotIdsInDirectionlessAddModule(module.getFirst(), module.getSecond()));

@@ -36,6 +36,13 @@ public class OpticalSimulationModule
 		private double cd_psPerNm;
 		private double pmdSquared_ps2;
 		private double osnrAt12_5GhzRefBw;
+		
+		@Override
+		public String toString() 
+		{
+			return "LpSignalState [power_dbm=" + power_dbm + ", cd_psPerNm=" + cd_psPerNm + ", pmdSquared_ps2="
+					+ pmdSquared_ps2 + ", osnrAt12_5GhzRefBw=" + osnrAt12_5GhzRefBw + "]";
+		}
 		public LpSignalState(double power_dbm, double cd_psPerNm, double pmdSquared_ps2, double osnrAt12_5GhzRefBw) {
 			super();
 			this.power_dbm = power_dbm;
@@ -306,12 +313,12 @@ public class OpticalSimulationModule
     {
     	final double power_dbm = initialState.getPower_dbm() - e.getAttenuationCoefficient_dbPerKm() * kmOfFiberTraversed;
     	final double cd_psPerNm = initialState.getCd_psPerNm() + e.getChromaticDispersionCoeff_psPerNmKm() * kmOfFiberTraversed;
-    	final double pmdSquared_ps2 = initialState.getPmdSquared_ps2() + Math.pow(e.getPmdLinkDesignValueCoeff_psPerSqrtKm() , 2);
+    	final double pmdSquared_ps2 = initialState.getPmdSquared_ps2() + Math.pow(e.getPmdLinkDesignValueCoeff_psPerSqrtKm() , 2) * kmOfFiberTraversed;
     	return new LpSignalState(power_dbm, cd_psPerNm, pmdSquared_ps2, initialState.getOsnrAt12_5GhzRefBw());
     }
     private static LpSignalState getStateAfterOpticalAmplifier (double centralFrequency_hz , LpSignalState initialState , double gain_db , double cdCompensation_psPerNm , double pmd_ps , double noiseFigure_dB)
     {
-    	final double power_dbm = initialState.getPower_dbm() - gain_db;
+    	final double power_dbm = initialState.getPower_dbm() + gain_db;
     	final double cd_psPerNm = initialState.getCd_psPerNm() + cdCompensation_psPerNm;
     	final double pmdSquared_ps2 = initialState.getPmdSquared_ps2() + Math.pow(pmd_ps , 2);
     	final double osnrContributedByAmplifier_dB = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, noiseFigure_dB, initialState.getPower_dbm()));

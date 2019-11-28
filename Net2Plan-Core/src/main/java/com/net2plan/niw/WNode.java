@@ -841,7 +841,7 @@ public class WNode extends WAbstractNetworkElement
 	
 	public void setOpticalSwitchArchitecture (Class opticalArchitectureClass)
 	{
-		if (!opticalArchitectureClass.isInstance(IOadmArchitecture.class))
+		if (!IOadmArchitecture.class.isAssignableFrom(opticalArchitectureClass))
 			throw new Net2PlanException ("The architecture is not an instance of the appropriate class");
 		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, opticalArchitectureClass.getName());
 	}

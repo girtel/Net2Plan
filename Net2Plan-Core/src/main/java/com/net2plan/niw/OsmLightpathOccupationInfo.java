@@ -157,7 +157,10 @@ public class OsmLightpathOccupationInfo
 		final List<WFiber> leg_fibers = new ArrayList<> (getSeqFibersLegitimateSignal());
 		if (leg_fibers.isEmpty()) throw new Net2PlanException ("The path is empty");
 	   	if (OpticalSpectrumManager.getContinousSequenceOfNodes(leg_fibers).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum()))
+	   	{
+	   		this.waste_elements = new TreeSet<> ();
 	   		return; // all empty
+	   	}
 	   	 
 	   	 final OsmOpticalSignalPropagationElement legitimateAddModule = this.isAddedInDirectionlessModule()? OsmOpticalSignalPropagationElement.asAddDirless(this.getDirectionlessAddModule().get()) : OsmOpticalSignalPropagationElement.asAddDirful(leg_fibers.get(0));
 	   	 final OsmOpticalSignalPropagationElement legitimateDropModule = this.isDroppedInDirectionlessModule()? OsmOpticalSignalPropagationElement.asDropDirless(this.getDirectionlessDropModule().get()) : OsmOpticalSignalPropagationElement.asDropDirful(leg_fibers.get(leg_fibers.size()-1));

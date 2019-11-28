@@ -1,6 +1,5 @@
 package com.net2plan.niw;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +8,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
@@ -215,28 +215,73 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		public boolean isAddDropTypeWssBased () { return !isAddDropTypeMuxBased (); }
 }
 
-	
+
+	private Pair<Integer,Integer> getNumInputsOutputsOfInDegreeCouplerNotPermitingConnectiontoOppositeFiber (WFiber inFiber , Parameters p)
+	{
+		int outputs = 0;
+		assert inFiber.getB().equals(this.getHostNode());
+		outputs += getHostNode().getOutgoingFibers().size(); // one for each non-opposite output fiber
+		if (inFiber.isBidirectional()) outputs -= 1;
+		if (getHostNode().isOadmWithDirectedAddDropModulesInTheDegrees()) outputs += 1; // the DROP dirful module
+		if (p.isDirectionless()) outputs += getHostNode().getOadmNumAddDropDirectionlessModules(); // one for each directionless drops
+		final int inputs = 1;
+		return Pair.of(inputs, outputs);
+	}
+	private Pair<Integer,Integer> getNumInputsOutputsOfOutDegreeCouplerNotPermitingConnectiontoOppositeFiber (WFiber outFiber , Parameters p)
+	{
+		assert outFiber.getA().equals(this.getHostNode());
+		int inputs = 0;
+		inputs += getHostNode().getIncomingFibers().size(); // one for each non-opposite output fiber
+		if (outFiber.isBidirectional()) inputs -= 1;
+		if (getHostNode().isOadmWithDirectedAddDropModulesInTheDegrees()) inputs += 1; // the drop dirful module
+		if (p.isDirectionless()) inputs += getHostNode().getOadmNumAddDropDirectionlessModules(); // one for each directionless add
+		final int outputs = 1; // the output fiber
+		return Pair.of(inputs, outputs);
+	}
+	private Pair<Integer,Integer> getNumInputsOutputsOfAddDirectionlessModuleNotPermitingConnectiontoOppositeDrop (Parameters p)
+	{
+		assert p.isDirectionless();
+		int outputs = 0;
+		outputs += getHostNode().getOutgoingFibers().size(); // one for each output fiber
+		outputs += getHostNode().getOadmNumAddDropDirectionlessModules() - 1; // one for each directionless drops but one (the opposite)
+		final int inputs = 1;
+		return Pair.of(inputs, outputs);
+	}
+	private Pair<Integer,Integer> getNumInputsOutputsOfDropDirectionlessModuleNotPermitingConnectiontoOppositeAdd (Parameters p)
+	{
+		assert p.isDirectionless();
+		final int outputs = 1;
+		int inputs = 0;
+		inputs += getHostNode().getIncomingFibers().size(); // one for each input fiber
+		inputs += getHostNode().getOadmNumAddDropDirectionlessModules() - 1; // one for each directionless drops but one
+		return Pair.of(inputs, outputs);
+	}
+
+	private double getCouplerAttenuation_dB (Pair<Integer,Integer> inout) { return 10 * Math.log10 (inout.getFirst () * inout.getSecond ()); }
+
 	@Override
 	public LpSignalState getOutLpStateForAddedLp(LpSignalState stateAtTheOutputOfTransponder, Optional<Integer> inputAddModuleIndex,
 			WFiber output , int numOpticalSlotsNeededIfEqualization) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
-
+		
 		final double lossesAddPart_dB;
 		final double pmdAddPart_ps2;
-		if (p.isDirectionless()) 
+		
+		if (inputAddModuleIndex.isPresent()) 
 		{
 			// A/D is like another degree
+			assert p.isDirectionless ();
 			final double justAddPart_dB = p.isAddDropTypeMuxBased()? p.getMuxDemuxLoss_dB() : p.getWssLoss_dB();
 			final double justAddPart_ps2 = Math.pow(p.isAddDropTypeMuxBased()? p.getMuxDemuxPmd_ps() : p.getWssPmd_ps() , 2);
-			final double addDegreePart_dB = p.isRouteAndSelect()? p.getWssLoss_dB() : 10 * Math.log10(getHostNode().getOutgoingFibers().size());
+			final double addDegreePart_dB = p.isRouteAndSelect()? p.getWssLoss_dB() : getCouplerAttenuation_dB(getNumInputsOutputsOfAddDirectionlessModuleNotPermitingConnectiontoOppositeDrop(p));
 			final double addDegreePart_ps2 = p.isRouteAndSelect()? p.getWssPmd_ps() : 0.0;
 			lossesAddPart_dB = justAddPart_dB + addDegreePart_dB;
 			pmdAddPart_ps2 = justAddPart_ps2 + addDegreePart_ps2;
 		}
 		else
 		{
-			// A/D directly connectec to output degree
+			// A/D directly connected to output degree
 			lossesAddPart_dB = p.isAddDropTypeMuxBased()? p.getMuxDemuxLoss_dB() : p.getWssLoss_dB();
 			pmdAddPart_ps2 = Math.pow(p.isAddDropTypeMuxBased()? p.getMuxDemuxPmd_ps() : p.getWssPmd_ps() , 2);
 		}
@@ -245,10 +290,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (p.isFilterless())
 		{
 			// out degree is coupler based
-			final int numInputsOfOutDegreeCoupler = p.isDirectionless()? 
-					getHostNode().getOadmNumAddDropDirectionlessModules() + getHostNode().getIncomingFibers().size() - 1: // all add/drop modules, and all in degrees but me 
-					1 + getHostNode().getIncomingFibers().size() - 1; // add/drop module, and all in degrees but myself
-			lossOutDegreePart_dB = 10 * Math.log(numInputsOfOutDegreeCoupler);
+			lossOutDegreePart_dB = getCouplerAttenuation_dB(getNumInputsOutputsOfOutDegreeCouplerNotPermitingConnectiontoOppositeFiber(output, p));
 			pmdOutDegreePart_ps2 = 0.0;
 		}
 		else
@@ -261,7 +303,9 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		final double outputPowerWithoutEqualization_dBm = stateAtTheOutputOfTransponder.getPower_dbm() - 
 				lossesAddPart_dB - 
 				lossOutDegreePart_dB; 
-		final double outputPowerIfEqualized_dBm = 10 * Math.log10(numOpticalSlotsNeededIfEqualization * output.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * WNetConstants.OPTICALSLOTSIZE_GHZ); 
+		final double outputPowerIfEqualized_dBm = output.isOriginOadmConfiguredToEqualizeOutput()?
+				10 * Math.log10(numOpticalSlotsNeededIfEqualization * output.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * WNetConstants.OPTICALSLOTSIZE_GHZ):
+					-Double.MAX_VALUE;
 		if (output.isOriginOadmConfiguredToEqualizeOutput())
 			if (outputPowerWithoutEqualization_dBm < outputPowerIfEqualized_dBm)
 				System.out.println("Warning: the VOAs in the WSS would need to apply a negative attenuation to equalize");
@@ -274,7 +318,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 
 	@Override
 	public LpSignalState getOutLpStateForDroppedLp(LpSignalState stateAtTheInputOfOadmAfterPreamplif, WFiber inputFiber,
-			Optional<Integer> inputDropModuleIndex) 
+			Optional<Integer> directionlessDropModuleIndex) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
 
@@ -289,18 +333,16 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		else
 		{
 			// in degree is coupler based
-			final int numOutputOfInDegreeSplitter = p.isDirectionless()? 
-					getHostNode().getOadmNumAddDropDirectionlessModules() + getHostNode().getOutgoingFibers().size() - 1: // all add/drop modules, and all out degrees but me 
-					1 + getHostNode().getOutgoingFibers().size() - 1; // add/drop module, and all out degrees but myself
-			lossInDegreePart_dB = 10 * Math.log(numOutputOfInDegreeSplitter);
+			lossInDegreePart_dB = getCouplerAttenuation_dB (getNumInputsOutputsOfInDegreeCouplerNotPermitingConnectiontoOppositeFiber(inputFiber, p));
 			pmdInDegreePart_ps2 = 0.0;
 		}
 		
 		final double lossesDropPart_dB;
 		final double pmdDropPart_ps2;
-		if (p.isDirectionless()) // A/D directly connectec to output degree
+		if (directionlessDropModuleIndex.isPresent()) // A/D directly connectec to output degree
 		{
-			final double dropDegreePart_dB = p.isFilterless()? 10 * Math.log10(getHostNode().getIncomingFibers().size()) : p.getWssLoss_dB();
+			assert p.isDirectionless ();
+			final double dropDegreePart_dB = p.isFilterless()? getCouplerAttenuation_dB(getNumInputsOutputsOfDropDirectionlessModuleNotPermitingConnectiontoOppositeAdd(p)) : p.getWssLoss_dB();
 			final double dropDegreePart_ps2 = p.isFilterless()? 0.0 : p.getWssPmd_ps();
 			final double justDropPart_dB = p.isAddDropTypeMuxBased()? p.getMuxDemuxLoss_dB() : p.getWssLoss_dB();
 			final double justDropPart_ps2 = Math.pow(p.isAddDropTypeMuxBased()? p.getMuxDemuxPmd_ps() : p.getWssPmd_ps() , 2);
@@ -339,10 +381,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		else
 		{
 			// in degree is coupler based
-			final int numOutputOfInDegreeSplitter = p.isDirectionless()? 
-					getHostNode().getOadmNumAddDropDirectionlessModules() + getHostNode().getOutgoingFibers().size() - 1: // all add/drop modules, and all out degrees but me 
-					1 + getHostNode().getOutgoingFibers().size() - 1; // add/drop module, and all out degrees but myself
-			lossInDegreePart_dB = 10 * Math.log(numOutputOfInDegreeSplitter);
+			lossInDegreePart_dB = getCouplerAttenuation_dB(getNumInputsOutputsOfInDegreeCouplerNotPermitingConnectiontoOppositeFiber(inputFiber, p));
 			pmdInDegreePart_ps2 = 0.0;
 		}
 		
@@ -351,10 +390,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (p.isFilterless())
 		{
 			// out degree is coupler based
-			final int numInputsOfOutDegreeCoupler = p.isDirectionless()? 
-					getHostNode().getOadmNumAddDropDirectionlessModules() + getHostNode().getIncomingFibers().size() - 1: // all add/drop modules, and all in degrees but me 
-					1 + getHostNode().getIncomingFibers().size() - 1; // add/drop module, and all in degrees but myself
-			lossOutDegreePart_dB = 10 * Math.log(numInputsOfOutDegreeCoupler);
+			lossOutDegreePart_dB = getCouplerAttenuation_dB(getNumInputsOutputsOfOutDegreeCouplerNotPermitingConnectiontoOppositeFiber(outputFiber, p));
 			pmdOutDegreePart_ps2 = 0.0;
 		}
 		else
@@ -366,7 +402,9 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		final double outputPowerWithoutEqualization_dBm = stateAtTheInputOfOadmAfterPreamplif.getPower_dbm() - 
 				lossInDegreePart_dB - 
 				lossOutDegreePart_dB; 
-		final double outputPowerIfEqualized_dBm = 10 * Math.log10(numOpticalSlotsNeededIfEqualization * outputFiber.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * WNetConstants.OPTICALSLOTSIZE_GHZ); 
+		final double outputPowerIfEqualized_dBm = outputFiber.isOriginOadmConfiguredToEqualizeOutput()?
+				10 * Math.log10(numOpticalSlotsNeededIfEqualization * outputFiber.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * WNetConstants.OPTICALSLOTSIZE_GHZ) :
+					-Double.MAX_VALUE;
 		if (outputFiber.isOriginOadmConfiguredToEqualizeOutput())
 			if (outputPowerWithoutEqualization_dBm < outputPowerIfEqualized_dBm)
 				System.out.println("Warning: the VOAs in the WSS would need to apply a negative attenuation to equalize");
