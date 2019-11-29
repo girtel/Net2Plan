@@ -308,7 +308,6 @@ public class NiwModelTest extends TestCase
 			final OadmArchitecture_generic.Parameters param = arq.getParameters();
 			param.setArchitectureTypeAsFilterless();
 			param.setAddDropModuleTypeAsMuxBased();
-			param.setIsDirectionless(false);
 			param.setMuxDemuxLoss_dB(6.0);
 			param.setMuxDemuxPmd_ps(0.5);
 			n.setIsOadmWithDirectedAddDropModulesInTheDegrees(true);

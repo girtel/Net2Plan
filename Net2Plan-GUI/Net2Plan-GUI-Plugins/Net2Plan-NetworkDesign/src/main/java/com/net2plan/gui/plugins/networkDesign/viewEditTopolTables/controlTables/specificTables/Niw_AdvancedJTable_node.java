@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -36,6 +37,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.niw.IOadmArchitecture;
+import com.net2plan.niw.OadmArchitecture_generic;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
@@ -212,45 +214,52 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
     				new AjtRcMenu("OADMs without directionful modules", ee->getSelectedElements().stream().forEach(n->toWNode.apply(n).setIsOadmWithDirectedAddDropModulesInTheDegrees(false)) , (a,b)->b>0, null)
     				)));
 
-        	
-        	
-//            res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null , (a,b)->b>0, Arrays.asList(
-//            		new AjtRcMenu("As non-blocking OADM", e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.ROADM)) , (a,b)->b>0, null),
-//            		new AjtRcMenu("As filterless drop and waste", e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS)) , (a,b)->b>0, null)
-//            		)));
-//            res.add(new AjtRcMenu("Set attenuation of optical switch fabric to selected OADMs", e->
-//                DialogBuilder.launch(
-//                        "Set attenuation of optical switch fabric to selected OADMs", 
-//                        "Please introduce the requested data.",
-//                        "", 
-//                        this, 
-//                        Arrays.asList(
-//                                InputForDialog.inputTfDouble("OADM switch fabric attenuation (dB)", "Introduce the attenuation of the optical switch fabric", 10, 0.0)
-//                                ),
-//                        (list)->
-//                            {
-//                                final double att = ((Double) list.get(0).get());
-//                                getSelectedElements().forEach(dd->toWNode.apply(dd).setOadmSwitchFabricAttenuation_dB(att));
-//                            }
-//                        )
-//             , (a,b)->b>0, null));
-//            res.add(new AjtRcMenu("Set PMD of optical switch fabric to selected OADMs", e->
-//            DialogBuilder.launch(
-//                    "Set PMD of optical switch fabric to selected OADMs", 
-//                    "Please introduce the requested data.",
-//                    "", 
-//                    this, 
-//                    Arrays.asList(
-//                            InputForDialog.inputTfDouble("OADM switch fabric PMD (ps)", "Introduce the PMD added by the optical switch fabric", 10, 0.0)
-//                            ),
-//                    (list)->
-//                        {
-//                            final double pmd = ((Double) list.get(0).get());
-//                            getSelectedElements().forEach(dd->toWNode.apply(dd).setOadmSwitchFabricPmd_ps(pmd));
-//                        }
-//                    )
-//         , (a,b)->b>0, null));
-        	
+    		res.add(new AjtRcMenu("Set parameters of selected OADMs", e-> 
+    		{
+    			DialogBuilder.launch(
+                        "Set parameters of selected OADMs" , 
+                        "Please introduce the requested information.", 
+                        "", 
+                        this, 
+                        Arrays.asList(
+                        		InputForDialog.inputTfCombo("Architecture type", "The type of optical switching architecture", 10, "Broadcast-and-select" , Arrays.asList("Broadcast-and-select" , "Route-and-select" , "Filterless") , null , null),
+                        		InputForDialog.inputTfCombo("Add/drop module type", "The type of add/drop module: based on mux/demux or on WSS", 10, "Mux/Demux-based" , Arrays.asList("Mux/Demux-based" , "Wss-based") , null , null),
+                        		InputForDialog.inputTfDouble("Mux/demux attenuation (dB)", "The attenuation to apply by the multiplexer/demultiplexer of the add/drop module, if of this type", 10, 6.0),
+                        		InputForDialog.inputTfDouble("WSS attenuation (dB)", "The attenuation to apply by the WSS of the add/drop module, if of this type", 10, 6.0),
+                        		InputForDialog.inputTfDouble("Mux/demux PMD (ps)", "The Polarization Mode Dierpsion (PMD) to apply, caused by the multiplexer/demultiplexer of the add/drop module, if of this type", 10, 0.5),
+                        		InputForDialog.inputTfDouble("WSS PMD (ps)", "The Polarization Mode Dierpsion (PMD) to apply, caused by the WSS of the add/drop module, if of this type", 10, 0.5)
+                        		),
+                        (list)->
+                        	{
+                        		final int indexArqType = Arrays.asList("Broadcast-and-select" , "Route-and-select" , "Filterless").indexOf((String) list.get(0).get());
+                        		final int indexAdType = Arrays.asList("Mux/Demux-based" , "Wss-based").indexOf((String) list.get(1).get());
+                        		if (indexAdType < 0 || indexAdType < 0) throw new RuntimeException ();
+                        		final String arqType = Arrays.asList("B&S" , "R&S" , "Filterless").get(indexArqType);
+                        		final String adType = Arrays.asList("Mux/Demux-based" , "Wss-based").get(indexAdType);
+                        		final double muxDemuxAttDb = (Double) list.get(2).get();
+                        		final double wssAttDb = (Double) list.get(3).get();
+                        		final double muxDemuxPmdPs = (Double) list.get(4).get();
+                        		final double wssPmdPs = (Double) list.get(5).get();
+                        		for (WNode node : getSelectedElements().stream().map(ee->toWNode.apply(ee)).collect(Collectors.toList()))
+                        		{
+                        			if (!(node.getOpticalSwitchingArchitecture() instanceof OadmArchitecture_generic)) continue;
+                        			final OadmArchitecture_generic oadm = (OadmArchitecture_generic) node.getOpticalSwitchingArchitecture();
+                        			final OadmArchitecture_generic.Parameters param = oadm.getParameters();
+                        			if (indexArqType == 0) param.setArchitectureTypeAsBroadcastAndSelect(); 
+                        			else if (indexArqType == 1) param.setArchitectureTypeAsRouteAndSelect();
+                        			else if (indexArqType == 2) param.setArchitectureTypeAsFilterless();
+                        			if (indexAdType == 0) param.setAddDropModuleTypeAsMuxBased();
+                        			else if (indexAdType == 1) param.setAddDropModuleTypeAsWssBased();
+                        			param.setMuxDemuxLoss_dB(muxDemuxAttDb);
+                        			param.setMuxDemuxPmd_ps(muxDemuxPmdPs);
+                        			param.setWssLoss_dB(wssAttDb);
+                        			param.setWssPmd_ps(wssPmdPs);
+                        			oadm.updateParameters(param);
+                        		}
+                        	}
+                        );
+    		}
+    		, (a,b)->b>0, null));
         }
         
         return res;

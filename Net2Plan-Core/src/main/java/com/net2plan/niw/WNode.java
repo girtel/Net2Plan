@@ -825,7 +825,8 @@ public class WNode extends WAbstractNetworkElement
 	{
 		try 
 		{
-			final String classFullName = this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, "");
+			final String classFullName = this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, null);
+			if (classFullName == null) throw new RuntimeException ();
 			final Class classOfOadmArchit = Class.forName(classFullName);
 			final IOadmArchitecture arc = (IOadmArchitecture) classOfOadmArchit.getConstructor().newInstance();
 			arc.initialize(this);
@@ -834,6 +835,7 @@ public class WNode extends WAbstractNetworkElement
 		{
 			e.printStackTrace();
 			final OadmArchitecture_generic res = new OadmArchitecture_generic();
+			this.getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, OadmArchitecture_generic.class.getName());
 			res.initialize(this);
 			return res;
 		}

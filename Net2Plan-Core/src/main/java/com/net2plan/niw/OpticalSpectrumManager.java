@@ -1351,6 +1351,7 @@ public class OpticalSpectrumManager
     private static boolean isContinuousUnicastPath (List<WFiber> path) { WFiber prevLink = null; for (WFiber e : path) { if (prevLink != null) { if (!prevLink.getB().equals(e.getA())) return false; } prevLink = e; } return true; }
     private static boolean isPassingSameNodeMoreThanOnce (List<WFiber> path) { final SortedSet<WNode> nodes = new TreeSet<> (); nodes.add(path.get(0).getA()); for (WFiber e : path) { if (nodes.contains(e.getB())) return true; nodes.add(e.getB()); } return false; }
     public static List<WNode> getContinousSequenceOfNodes (List<WFiber> path) { if (path.isEmpty()) return new ArrayList<> (); final List<WNode> res = new ArrayList<> (path.size() + 1); res.add(path.get(0).getA()); for (WFiber e : path) { if (!e.getA ().equals(res.get(res.size()-1))) throw new Net2PlanException ("Not contiguous"); res.add(e.getB()); }  return res; }
+    public static SortedSet<WNode> getPathNodes (List<WFiber> path) { if (path.isEmpty()) return new TreeSet<> (); final SortedSet<WNode> res = new TreeSet<> (); res.add(path.get(0).getA()); for (WFiber e : path) res.add(e.getB()); return res; }
 
 
     

@@ -171,7 +171,7 @@ public class OsmLightpathOccupationInfo
 	{
 		final List<WFiber> leg_fibers = new ArrayList<> (getSeqFibersLegitimateSignal());
 		if (leg_fibers.isEmpty()) throw new Net2PlanException ("The path is empty");
-	   	if (OpticalSpectrumManager.getContinousSequenceOfNodes(leg_fibers).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum()))
+	   	if (OpticalSpectrumManager.getPathNodes(leg_fibers).stream().allMatch(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum()))
 	   	{
 	   		this.waste_elements = new TreeSet<> ();
 	   		return; // all empty

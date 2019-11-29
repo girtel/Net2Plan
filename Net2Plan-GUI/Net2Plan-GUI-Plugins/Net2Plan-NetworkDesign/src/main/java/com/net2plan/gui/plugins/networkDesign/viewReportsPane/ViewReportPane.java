@@ -153,7 +153,7 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
 		/************** report test ***/
 //        final NetPlan reportTestNetPlan = mainWindow.getDesign().copy();
 ////        IReport instance = new ReportNiw_wdm_lineEngineering();
-//        IReport instance = new XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments();
+//        IReport instance = new ReportNiw_wdm_routingSpectrumAndModulationAssignments();
 //        Pair<String, ? extends JPanel> aux = Pair.of(instance.getTitle(), new ReportBrowser(instance.executeReport(reportTestNetPlan, InputParameter.getDefaultParameters(instance.getParameters()), Configuration.getNet2PlanOptions())));
 //        reportTestNetPlan.setNetworkLayerDefault(reportTestNetPlan.getNetworkLayer((int) 0));
 //        mainWindow.getDesign().assignFrom(reportTestNetPlan); // do not update undo/redo here -> the visualization state should be updated before
