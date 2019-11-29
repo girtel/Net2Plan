@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.assertj.core.error.OptionalShouldBeEmpty;
+
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
@@ -51,6 +55,7 @@ import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.OsmLightpathOccupationInfo;
 import com.net2plan.niw.WAbstractIpUnicastOrAnycastDemand;
 import com.net2plan.niw.WAbstractNetworkElement;
 import com.net2plan.niw.WFiber;
@@ -574,7 +579,8 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                                 this, 
                                 Arrays.asList(
                                 		InputForDialog.inputCheckBox("Shortest path in optical latency?", "If checked, the shortest path is computed considering optical latency as link cost, if not, the shortest patrh minimizes the number of traversed fibers", true, null),
-                                		InputForDialog.inputTfInt("Number of optical slots (" + df.format(WNetConstants.OPTICALSLOTSIZE_GHZ) + " GHz each)", "Introduce the number of optical slots to reserve for each lightpath", 10, 4)
+                                		InputForDialog.inputTfInt("Number of optical slots (" + df.format(WNetConstants.OPTICALSLOTSIZE_GHZ) + " GHz each)", "Introduce the number of optical slots to reserve for each lightpath", 10, 4),
+                                		InputForDialog.inputCheckBox("Use directionless ADD/DROP modules", "If checked, the lightpath will be added in an idle directionless add module in the origin OADM, and a directionless drop module in the dropped OADM. If not available, the lightpath is not placed. If not checked, the lightpath is attached to directionful modules in the add and drop OADMs. If the OADMs are not configured with these elemnts, the lightpath cannot be allocated.", false, null)
                                 		),
                                 (list)->
                                 	{
@@ -582,99 +588,132 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                                 		assert callback.getNiwInfo().getSecond().getNe().equals(callback.getDesign());
                                 		final Boolean spLatency = (Boolean) list.get(0).get();
                                 		final Integer numContiguousSlots = (Integer) list.get(1).get();
+                                		final Boolean dirlessModules = (Boolean) list.get(2).get();
                             			final List<WLightpathRequest> ds = getSelectedElements().stream().filter(ee->wNet.getWType(ee).equals(Optional.of(WTYPE.WLightpathRequest))).map(ee->wNet.getWElement(ee).get().getAsLightpathRequest()).collect(Collectors.toList());
                             			final Map<WFiber , Double> costMap = new HashMap<> ();
                             			for (WFiber ee : wNet.getFibers()) costMap.put(ee, spLatency? ee.getPropagationDelayInMs() : 1.0);
                             			for (WLightpathRequest dd : ds)
                             			{
                             				if (!dd.getLightpaths().isEmpty()) continue;
+                            				final List<List<WFiber>> oneOrTwoPathsToUse;
+                            				final boolean isTwoRoutesAllocation;
+                            				final boolean isBidirectionalAllocation;
                             				if (dd.isToBe11Protected())
                             				{
-                                				final List<List<WFiber>> sps = wNet.getTwoMaximallyLinkAndNodeDisjointWdmPaths(dd.getA(), dd.getB(), Optional.of(costMap));
-                                				if (sps.isEmpty()) continue;
-                                				final List<WFiber> seqFibersAbMain = sps.get(0); 
-                                				final List<WFiber> seqFibersAbBackup = sps.size() == 1? null : sps.get(1); 
-                                				final boolean twoRoutes = seqFibersAbBackup != null;
-                                				boolean isBidirectional = dd.isBidirectional() && seqFibersAbMain.stream().allMatch(ee->ee.isBidirectional());
-                                				if (twoRoutes) isBidirectional &= seqFibersAbBackup.stream().allMatch(ee->ee.isBidirectional()); 
-                            					if (isBidirectional)
-                            					{ 
-                            						if (!dd.getBidirectionalPair().getLightpaths().isEmpty()) continue;
-                                    				final List<WFiber> seqFibersBaMain = Lists.reverse(seqFibersAbMain.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
-                                    				final List<WFiber> seqFibersBaBackup = seqFibersAbBackup == null? null : Lists.reverse(seqFibersAbBackup.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
-                                    				final List<WFiber> seqFibersAbbAMain = new ArrayList<> (seqFibersAbMain); seqFibersAbbAMain.addAll(seqFibersBaMain);
-                                    				final List<WFiber> seqFibersAbbABackup = seqFibersAbBackup == null? null : new ArrayList<> (seqFibersAbBackup); seqFibersAbbABackup.addAll(seqFibersBaBackup);
-                                    				if (twoRoutes)
-                                    				{ // 1+1 bidirectional 2 routes
-                                    					final Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> slotsTwoRoutes = osm.spectrumAssignment_firstFitTwoRoutes(seqFibersAbbAMain, seqFibersAbbABackup, numContiguousSlots); 
-                                        				if (!slotsTwoRoutes.isPresent()) continue;
-                                        				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slotsTwoRoutes.get().getFirst(), false);
-                                        				final WLightpath lpBaMain = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaMain, slotsTwoRoutes.get().getFirst(), false);
-                                        				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slotsTwoRoutes.get().getFirst());
-                                        				osm.allocateOccupation(lpBaMain, seqFibersBaMain, slotsTwoRoutes.get().getFirst());
-                                        				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), true);
-                                        				final WLightpath lpBaBackup = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaBackup, slotsTwoRoutes.get().getSecond(), true);
-                                        				osm.allocateOccupation(lpAbBackup, seqFibersAbBackup, slotsTwoRoutes.get().getSecond());
-                                        				osm.allocateOccupation(lpBaBackup, seqFibersBaBackup, slotsTwoRoutes.get().getSecond());
-                                    				}
-                                    				else
-                                    				{ // 1+1 bidirectional , but one route
-                                    					final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAbbAMain, numContiguousSlots , Optional.empty()); 
-                                        				if (!slots.isPresent()) continue;
-                                        				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slots.get(), false);
-                                        				final WLightpath lpBaMain = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaMain, slots.get(), false);
-                                        				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slots.get());
-                                        				osm.allocateOccupation(lpBaMain, seqFibersBaMain, slots.get());
-                                    				}
-                            					}
-                            					else
-                            					{
-                            						// 1+1 not bidirectional  
-                                    				if (twoRoutes)
-                                    				{ // 1+1 not bidirectional, two routes
-                                    					final Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> slotsTwoRoutes = osm.spectrumAssignment_firstFitTwoRoutes(seqFibersAbMain, seqFibersAbBackup, numContiguousSlots); 
-                                        				if (!slotsTwoRoutes.isPresent()) continue;
-                                        				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slotsTwoRoutes.get().getFirst(), false);
-                                        				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slotsTwoRoutes.get().getFirst());
-                                        				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), true);
-                                        				osm.allocateOccupation(lpAbBackup, seqFibersAbBackup, slotsTwoRoutes.get().getSecond());
-                                    				}
-                                    				else
-                                    				{// 1+1 not bidirectional, one route
-                                    					final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAbMain, numContiguousSlots , Optional.empty()); 
-                                        				if (!slots.isPresent()) continue;
-                                        				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slots.get(), false);
-                                        				osm.allocateOccupation(lpAbMain, seqFibersAbMain, slots.get());
-                                    				}
-                            					}
+                            					oneOrTwoPathsToUse = wNet.getTwoMaximallyLinkAndNodeDisjointWdmPaths(dd.getA(), dd.getB(), Optional.of(costMap));
+                                				final List<WFiber> seqFibersAbMain = oneOrTwoPathsToUse.get(0); 
+                                				final List<WFiber> seqFibersAbBackup = oneOrTwoPathsToUse.size() == 1? null : oneOrTwoPathsToUse.get(1); 
+                                				boolean twoRoutesAb = seqFibersAbBackup != null;
+                                				boolean isBidirectionalMain = dd.isBidirectional() && seqFibersAbMain.stream().allMatch(ee->ee.isBidirectional());
+                                				boolean isBidirectionalBackup = dd.isBidirectional() && (twoRoutesAb? seqFibersAbBackup.stream().allMatch(ee->ee.isBidirectional()) : false);
+                                				boolean twoRoutesBa = dd.isBidirectional()? twoRoutesAb && isBidirectionalMain && isBidirectionalBackup : false; 
+                                				isTwoRoutesAllocation = dd.isBidirectional()? twoRoutesAb && twoRoutesBa : twoRoutesAb; 
+                                				isBidirectionalAllocation = dd.isBidirectional()? (isTwoRoutesAllocation? isBidirectionalMain && isBidirectionalBackup : isBidirectionalMain) : false;
                             				}
                             				else
                             				{
-                                				final List<List<WFiber>> sps = wNet.getKShortestWdmPath(1, dd.getA(), dd.getB(), Optional.of(costMap));
-                                				if (sps.size() != 1) continue;
-                                				final List<WFiber> seqFibersAb = sps.get(0); 
-                            					if (dd.isBidirectional() && seqFibersAb.stream().allMatch(ee->ee.isBidirectional()))
+                            					oneOrTwoPathsToUse = wNet.getKShortestWdmPath(1, dd.getA(), dd.getB(), Optional.of(costMap));
+                                				if (oneOrTwoPathsToUse.size() != 1) continue;
+                                				isTwoRoutesAllocation = false;
+                                				isBidirectionalAllocation = dd.isBidirectional() && oneOrTwoPathsToUse.get(0).stream().allMatch(f->f.isBidirectional ());
+                            				}
+                            				if (oneOrTwoPathsToUse.isEmpty()) continue;
+                            				
+                            				if (isTwoRoutesAllocation)
+                            				{ // 2 routes --> bidirectional or not
+                            					final List<WFiber> seqFibersAbMain = oneOrTwoPathsToUse.get(0);
+                            					final List<WFiber> seqFibersAbBackup = oneOrTwoPathsToUse.get(1);
+                                				Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> slotsTwoRoutes = Optional.empty();
+                            					//OsmLightpathOccupationInfo lp1, OsmLightpathOccupationInfo lp2 , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds
+                            					if (dirlessModules)
                             					{
-                            						// not protected, bidirectional
-                            						if (!dd.getBidirectionalPair().getLightpaths().isEmpty()) continue;
-                                    				final List<WFiber> seqFibersBa = Lists.reverse(seqFibersAb.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
-                                    				final List<WFiber> seqFibersAbbA = new ArrayList<> (seqFibersAb); seqFibersAbbA.addAll(seqFibersBa);
-                                    				final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAbbA, numContiguousSlots, Optional.empty());
-                                    				if (!slots.isPresent()) continue;
-                                    				final WLightpath lpAb = dd.addLightpathUnregenerated(seqFibersAb, slots.get(), false);
-                                    				final WLightpath lpBa = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBa, slots.get(), false);
-                                    				osm.allocateOccupation(lpAb, seqFibersAb, slots.get());
-                                    				osm.allocateOccupation(lpBa, seqFibersBa, slots.get());
+                            						final int numDirlessA = dd.getA().getOadmNumAddDropDirectionlessModules();
+                            						final int numDirlessB = dd.getB().getOadmNumAddDropDirectionlessModules();
+                            						for (int moduleMainA = 0; moduleMainA < (isBidirectionalAllocation? Math.min(numDirlessA , numDirlessB) : numDirlessA) ; moduleMainA ++)
+                            						{
+                            							if (slotsTwoRoutes.isPresent()) break;
+                                						for (int moduleMainB = 0; moduleMainB < (isBidirectionalAllocation? Math.min(numDirlessA , numDirlessB) : numDirlessB) ; moduleMainB ++)
+                                						{
+                                							if (slotsTwoRoutes.isPresent()) break;
+                                    						for (int moduleBackupA = 0; moduleBackupA < (isBidirectionalAllocation? Math.min(numDirlessA , numDirlessB) : numDirlessA) ; moduleBackupA ++)
+                                    						{
+                                    							if (slotsTwoRoutes.isPresent()) break;
+                                        						for (int moduleBackupB = 0; moduleBackupB < (isBidirectionalAllocation? Math.min(numDirlessA , numDirlessB) : numDirlessB) ; moduleBackupB ++)
+                                        						{
+                                        							final OsmLightpathOccupationInfo lpMainAb = new OsmLightpathOccupationInfo(seqFibersAbMain, Optional.of(Pair.of (dd.getA() , moduleMainA)), Optional.of(Pair.of (dd.getB() , moduleMainB)), Optional.empty());
+                                        							final OsmLightpathOccupationInfo lpBackupAb = new OsmLightpathOccupationInfo(seqFibersAbBackup, Optional.of(Pair.of (dd.getA() , moduleBackupA)), Optional.of(Pair.of (dd.getB() , moduleBackupB)), Optional.empty());
+                                    								slotsTwoRoutes = isBidirectionalAllocation? 
+                                    										osm.spectrumAssignment_firstFitTwoRoutesBidi (lpMainAb, lpBackupAb , numContiguousSlots , Optional.empty() , new TreeSet<> ()) : 
+                                    										osm.spectrumAssignment_firstFitTwoRoutes (lpMainAb, lpBackupAb , numContiguousSlots , Optional.empty() , new TreeSet<> ()); 
+                                        							if (slotsTwoRoutes.isPresent()) break;
+                                        						}
+                                    						}
+                                						}
+                            						}
                             					}
                             					else
-                            					{ // not protected, unidirectional
-                                    				final Optional<SortedSet<Integer>> slots = osm.spectrumAssignment_firstFit(seqFibersAb, numContiguousSlots, Optional.empty());
-                                    				if (!slots.isPresent()) continue;
-                                    				final WLightpath lp = dd.addLightpathUnregenerated(seqFibersAb, slots.get(), false);
-                                    				osm.allocateOccupation(lp, seqFibersAb, slots.get());
+                            					{
+                        							final OsmLightpathOccupationInfo lpMainAb = new OsmLightpathOccupationInfo(seqFibersAbMain, Optional.empty(), Optional.empty(), Optional.empty());
+                        							final OsmLightpathOccupationInfo lpBackupAb = new OsmLightpathOccupationInfo(seqFibersAbBackup, Optional.empty(), Optional.empty(), Optional.empty());
+                    								slotsTwoRoutes = isBidirectionalAllocation? 
+                    										osm.spectrumAssignment_firstFitTwoRoutesBidi (lpMainAb, lpBackupAb , numContiguousSlots , Optional.empty() , new TreeSet<> ()) : 
+                    										osm.spectrumAssignment_firstFitTwoRoutes (lpMainAb, lpBackupAb , numContiguousSlots , Optional.empty() , new TreeSet<> ()); 
                             					}
+                                				if (!slotsTwoRoutes.isPresent()) continue;
+                                				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAbMain, slotsTwoRoutes.get().getFirst(), false);
+                                				final WLightpath lpAbBackup = dd.addLightpathUnregenerated(seqFibersAbBackup, slotsTwoRoutes.get().getSecond(), true);
+                                				osm.allocateOccupation(lpAbMain, Optional.empty());
+                                				osm.allocateOccupation(lpAbBackup, Optional.empty());
+                                				if (isBidirectionalAllocation)
+                                				{
+                                    				final List<WFiber> seqFibersBaMain = Lists.reverse(seqFibersAbMain.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
+                                    				final List<WFiber> seqFibersBaBackup = seqFibersAbBackup == null? null : Lists.reverse(seqFibersAbBackup.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
+                                    				final WLightpath lpBaMain = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaMain, slotsTwoRoutes.get().getFirst(), false);
+                                    				final WLightpath lpBaBackup = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaBackup, slotsTwoRoutes.get().getSecond(), true);
+                                    				osm.allocateOccupation(lpBaMain, Optional.empty());
+                                    				osm.allocateOccupation(lpBaBackup, Optional.empty());
+                                				}
                             				}
-                            			}
+                            				else
+                            				{
+                            					final List<WFiber> seqFibersAb = oneOrTwoPathsToUse.get(0);
+                                				Optional<SortedSet<Integer>> slotsOneRoute = Optional.empty();
+                            					if (dirlessModules)
+                            					{
+                            						final int numDirlessA = dd.getA().getOadmNumAddDropDirectionlessModules();
+                            						final int numDirlessB = dd.getB().getOadmNumAddDropDirectionlessModules();
+                            						final int minNumDirlessModulesAB = Math.min(numDirlessA , numDirlessB);
+                            						for (int moduleMainA = 0; moduleMainA < (isBidirectionalAllocation? Math.min(numDirlessA , numDirlessB) : numDirlessA) ; moduleMainA ++)
+                            						{
+                            							if (slotsOneRoute.isPresent()) break;
+                                						for (int moduleMainB = 0; moduleMainB < (isBidirectionalAllocation? Math.min(numDirlessA , numDirlessB) : numDirlessB) ; moduleMainB ++)
+                                						{
+                                							final OsmLightpathOccupationInfo lpMainAb = new OsmLightpathOccupationInfo(seqFibersAb, Optional.of(Pair.of (dd.getA() , moduleMainA)), Optional.of(Pair.of (dd.getB() , moduleMainB)), Optional.empty());
+                                							slotsOneRoute = isBidirectionalAllocation? 
+                            										osm.spectrumAssignment_firstFitBidi (lpMainAb, numContiguousSlots , Optional.empty() , new TreeSet<> ()) : 
+                            										osm.spectrumAssignment_firstFit (lpMainAb, numContiguousSlots , Optional.empty() , new TreeSet<> ()); 
+                                							if (slotsOneRoute.isPresent()) break;
+                                						}
+                            						}
+                            					}
+                            					else
+                            					{
+                        							final OsmLightpathOccupationInfo lpMainAb = new OsmLightpathOccupationInfo(seqFibersAb, Optional.empty(), Optional.empty(), Optional.empty());
+                        							slotsOneRoute = isBidirectionalAllocation? 
+                    										osm.spectrumAssignment_firstFitBidi (lpMainAb , numContiguousSlots , Optional.empty() , new TreeSet<> ()) : 
+                    										osm.spectrumAssignment_firstFit (lpMainAb , numContiguousSlots , Optional.empty() , new TreeSet<> ()); 
+                            					}
+                                				if (!slotsOneRoute.isPresent()) continue;
+                                				final WLightpath lpAbMain = dd.addLightpathUnregenerated(seqFibersAb, slotsOneRoute.get(), false);
+                                				osm.allocateOccupation(lpAbMain, Optional.empty());
+                                				if (isBidirectionalAllocation)
+                                				{
+                                    				final List<WFiber> seqFibersBaMain = Lists.reverse(seqFibersAb.stream().map(ee->ee.getBidirectionalPair()).collect(Collectors.toList()));
+                                    				final WLightpath lpBaMain = dd.getBidirectionalPair().addLightpathUnregenerated(seqFibersBaMain, slotsOneRoute.get(), false);
+                                    				osm.allocateOccupation(lpBaMain, Optional.empty());
+                                				}
+                            				}
+                            			}                            				
                                 	}
                                 );
             		} , (a, b)->true, null))));

@@ -15,6 +15,7 @@ import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.graph.DirectedMultigraph;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.utils.Pair;
@@ -39,6 +40,18 @@ public class OsmLightpathOccupationInfo
 		this.occupiedSlots = occupiedSlots;
 	}
 
+	public Optional<OsmLightpathOccupationInfo> getBidirectionalPair ()
+	{
+		if (!this.getSeqFibersLegitimateSignal().stream().allMatch(f->f.isBidirectional())) return Optional.empty();
+		final List<WFiber> ba = Lists.reverse(getSeqFibersLegitimateSignal().stream().map(e->e.getBidirectionalPair()).collect(Collectors.toList())); 
+		return Optional.of(new OsmLightpathOccupationInfo(ba, 
+				this.getDirectionlessDropModule(), 
+				this.getDirectionlessAddModule(), 
+				this.getOccupiedSlotIds()));
+	}
+	
+	public boolean isWithAllLegitimateFibersBidirectional () { return this.getSeqFibersLegitimateSignal().stream().allMatch(f->f.isBidirectional()); }
+	
 	public List<OsmOpticalSignalPropagationElement> getLegitimateSequenceOfTraversedOpticalElements ()
 	{
 		final List<OsmOpticalSignalPropagationElement> res =  new ArrayList<> (legitimate_seqLinks.size() + 2);
@@ -129,6 +142,8 @@ public class OsmLightpathOccupationInfo
 	public List<WFiber> getSeqFibersLegitimateSignal () { return Collections.unmodifiableList(this.legitimate_seqLinks); }
 	public Optional<Pair<WNode,Integer>> getDirectionlessAddModule () { return this.legitimate_addDirlessModule; }
 	public Optional<Pair<WNode,Integer>> getDirectionlessDropModule () { return this.legitimate_dropDirlessModule; }
+	public Optional<Integer> getDirectionlessAddModuleIndex () { return this.legitimate_addDirlessModule.isPresent()? Optional.of(legitimate_addDirlessModule.get().getSecond()) : Optional.empty(); }
+	public Optional<Integer> getDirectionlessDropModuleIndex () { return this.legitimate_dropDirlessModule.isPresent()? Optional.of(legitimate_dropDirlessModule.get().getSecond()) : Optional.empty(); }
 	public boolean isAddedInDirectionlessModule () { return this.getDirectionlessAddModule().isPresent(); }
 	public boolean isDroppedInDirectionlessModule () { return this.getDirectionlessDropModule().isPresent(); }
 	public boolean isAddedInDirectionfullModule () { return !this.isAddedInDirectionlessModule(); }

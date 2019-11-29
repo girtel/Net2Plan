@@ -18,6 +18,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +36,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.niw.IOadmArchitecture;
+import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNode;
@@ -110,9 +112,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
       else if (isWdmLayer)
       {
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Sw. type", "The switching type of the architecture. At this moment e.g. filterless (drop-and-waste), or non-blocking OADM", null , d->toWNode.apply(d).getOpticalSwitchingArchitecture().getShortName() , AGTYPE.NOAGGREGATION, null));
-          res.add(new AjtColumnInfo<Node>(this , Integer.class, null , "# Dirless Add", "Number of directionless add modules. These modules are implemented as regular degrees by the switching architecture.", (d,val)->toWNode.apply(d).setOadmNumAddDirectionlessModules((Integer) val) , d->toWNode.apply(d).getOadmNumAddDirectionlessModules() , AGTYPE.SUMINT, null));
-          res.add(new AjtColumnInfo<Node>(this , Integer.class, null , "# Dirless Drop", "Number of directionless drop modules. These modules are implemented as regular degrees by the switching architecture.", (d,val)->toWNode.apply(d).setOadmNumDropDirectionlessModules((Integer) val) , d->toWNode.apply(d).getOadmNumDropDirectionlessModules() , AGTYPE.SUMINT, null));
-          res.add(new AjtColumnInfo<Node>(this , Boolean.class, null , "Has dir. AD modules?", "Indicates if this node, aside of the potential directionless add/drop modules, also has directed modules directly attached to the in/out degrees.", (d,val)->toWNode.apply(d).setIsOadmWithDirectedAddDropModulesInTheDegrees((Boolean) val) , d->toWNode.apply(d).isOadmWithDirectedAddDropModulesInTheDegrees() , AGTYPE.COUNTTRUE, null));
+          res.add(new AjtColumnInfo<Node>(this , Integer.class, null , "# Dirless Add/Drop", "Number of directionless add/drop modules. These modules are implemented as regular degrees by the switching architecture.", (d,val)->toWNode.apply(d).setOadmNumAddDropDirectionlessModules((Integer) val) , d->toWNode.apply(d).getOadmNumAddDropDirectionlessModules() , AGTYPE.SUMINT, null));
+          res.add(new AjtColumnInfo<Node>(this , Boolean.class, null , "Has dirful. AD modules?", "Indicates if this node, aside of the potential directionless add/drop modules, also has directed modules directly attached to the in/out degrees.", (d,val)->toWNode.apply(d).setIsOadmWithDirectedAddDropModulesInTheDegrees((Boolean) val) , d->toWNode.apply(d).isOadmWithDirectedAddDropModulesInTheDegrees() , AGTYPE.COUNTTRUE, null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "Out LP requests", "The outgoing lightpath requests of the node", null , d->toWNode.apply(d).getOutgoingLigtpathRequests().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "In LP requests", "The incoming lightpath requests of the node", null , d->toWNode.apply(d).getIncomingLigtpathRequests().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "ADD LPs", "The outgoing lightpaths of the node", null , d->toWNode.apply(d).getAddedLigtpaths().stream().map(n->n.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
@@ -188,7 +189,29 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
         	for (IOadmArchitecture arc : IOadmArchitecture.availableRepresentatives)
         		menusForEachOpticalSwitchType.add(new AjtRcMenu(arc.getShortName(), e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchArchitecture(arc.getClass ())) , (a,b)->b>0, null));
             res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null , (a,b)->b>0, menusForEachOpticalSwitchType));
-        	
+    		res.add(new AjtRcMenu("Set number of add/drop directionless modules to selected nodes", e-> 
+    		{
+    			DialogBuilder.launch(
+                        "Set number of add/drop directionless modules to selected nodes" , 
+                        "Please introduce the requested information.", 
+                        "", 
+                        this, 
+                        Arrays.asList(InputForDialog.inputTfInt("Number of directionless Add/Drop modules in each node", "The number of directionless add/drop modules in each OADM", 10, 2)),
+                        (list)->
+                        	{
+                        		Integer numADs = (Integer) list.get(0).get();
+                        		if (numADs < 0) numADs = 0; 
+                        		for (WNode node : getSelectedElements().stream().map(ee->toWNode.apply(ee)).collect(Collectors.toList()))
+                        			node.setOadmNumAddDropDirectionlessModules (numADs);
+                        	}
+                        );
+    		}
+    		, (a,b)->b>0, null));
+    		res.add(new AjtRcMenu("Set existence of directionful ADD/DROP modules in the node", null , (a,b)->b>0, Arrays.asList(
+    				new AjtRcMenu("OADMs with directionful modules", ee->getSelectedElements().stream().forEach(n->toWNode.apply(n).setIsOadmWithDirectedAddDropModulesInTheDegrees(true)) , (a,b)->b>0, null),
+    				new AjtRcMenu("OADMs without directionful modules", ee->getSelectedElements().stream().forEach(n->toWNode.apply(n).setIsOadmWithDirectedAddDropModulesInTheDegrees(false)) , (a,b)->b>0, null)
+    				)));
+
         	
         	
 //            res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null , (a,b)->b>0, Arrays.asList(

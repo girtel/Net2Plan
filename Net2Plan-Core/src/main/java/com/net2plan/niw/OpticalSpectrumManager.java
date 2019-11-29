@@ -503,71 +503,59 @@ public class OpticalSpectrumManager
    	 	List<WFiber> acceptablePathAb = null;
    	 	for (List<WFiber> pathAb : possiblePathsAb)
    	 	{
-   	 		final List<WFiber> pathAbBa = new ArrayList<> ();
-   	 		for (WFiber ab : pathAb) { pathAbBa.add(ab); pathAbBa.add(ab.getBidirectionalPair()); }
-   	 		final OsmLightpathOccupationInfo lpOccupationAbbA = new OsmLightpathOccupationInfo(pathAbBa, 
-   	 				directionlessAddModuleAb.isPresent()? Optional.of(Pair.of(a, directionlessAddModuleAb.get())) : Optional.empty(), 
-   	 					directionlessDropModuleAb.isPresent()? Optional.of(Pair.of(b, directionlessDropModuleAb.get())) : Optional.empty(), 
-   	 					Optional.empty());
-   	 		final SortedSet<Integer> forbidenSlotsBecauseOfAddAndDropBaAndUsable = new TreeSet<> (unusableSlots);
-   	 		final Integer addModuleBa = directionlessDropModuleAb.orElse(null);
-   	 		final Integer dropModuleBa = directionlessAddModuleAb.orElse(null);
-   	 		if (addModuleBa != null)
-   	 		forbidenSlotsBecauseOfAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessAddModule(b, addModuleBa));
-   	 		if (dropModuleBa != null)
-   	 		forbidenSlotsBecauseOfAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessDropModule(a, dropModuleBa));
-   	 		acceptableRange = spectrumAssignment_firstFit(lpOccupationAbbA, numContiguousSlotsRequired, minimumInitialSlotId, forbidenSlotsBecauseOfAddAndDropBaAndUsable).orElse(null);
+   	 		final OsmLightpathOccupationInfo lpInfoAb = new OsmLightpathOccupationInfo(pathAb, 
+   	 				directionlessAddModuleAb.isPresent()? Optional.of(Pair.of (a , directionlessAddModuleAb.get())) : Optional.empty() , 
+   	    	 				directionlessDropModuleAb.isPresent()? Optional.of(Pair.of (a , directionlessDropModuleAb.get())) : Optional.empty() , 
+   	    	 						Optional.empty());
+   	 		acceptableRange = spectrumAssignment_firstFitBidi (lpInfoAb , numContiguousSlotsRequired , minimumInitialSlotId , unusableSlots).orElse(null);
    	 		if (acceptableRange != null) { acceptablePathAb = pathAb; break; }
    	 	}
-   	 	
    	 	if (acceptableRange == null) return Optional.empty();
 	   	final List<Pair<WFiber,WFiber>> res_fibersUsed = acceptablePathAb.stream().map(e->Pair.of(e, e.getBidirectionalPair())).collect(Collectors.toList());
 	   	assert res_fibersUsed.size() == seqAdjacenciesFibers_ab.size();
 	   	return Optional.of(Pair.of(res_fibersUsed , acceptableRange));
     }
     
-    
-//    /** Searches for a first-fit assignment. Given a set of fibers to occupy, the optional add and drop directionless modules used, the number of contiguous optical slots needed, 
-//     * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), this method searches for 
-//     * the lowest-id contiguous range of slots that are available in all the indicated fibers and directionless modules. Note that if the set of fibers 
-//     * passes more than once in the same fiber, no assignment is possible, and Optional.empty is returned
-//     * @param seqFibers see above
-//     * @param directionlessAddModule see above
-//     * @param directionlessDropModule see above
-//     * @param numContiguousSlotsRequired see above
-//     * @param minimumInitialSlotId see above
-//     * @param forbidenSlotIds see above
-//     * @return see above. If no idle range is found, Optional.empty is returned. 
-//     */
-//    public Optional<SortedSet<Integer>> spectrumAssignment_firstFit(Collection<WFiber> seqFibers, 	
-//    		Optional<Pair<WNode,Integer>> directionlessAddModule , 
-//    		Optional<Pair<WNode,Integer>> directionlessDropModule , 
-//    		int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId  , SortedSet<Integer> forbidenSlotIds)
-//    {
-//    	checkSameWNet(seqFibers);
-//        assert !seqFibers.isEmpty();
-//        assert numContiguousSlotsRequired > 0;
-//        
-//        /* If a fiber is traversed more than once, there is no possible assignment */
-//        if (!(seqFibers instanceof Set)) if (new HashSet<> (seqFibers).size() != seqFibers.size()) return Optional.empty();
-//        SortedSet<Integer> intersectionValidSlots = getAvailableSlotIds(seqFibers , directionlessAddModule , directionlessDropModule);
-//        if (minimumInitialSlotId.isPresent())
-//            intersectionValidSlots = intersectionValidSlots.tailSet(minimumInitialSlotId.get());
-//        intersectionValidSlots.removeAll(forbidenSlotIds);
-//        if (intersectionValidSlots.size() < numContiguousSlotsRequired) return Optional.empty();
-//        
-//        final LinkedList<Integer> rangeValid = new LinkedList<> ();
-//        for (int slotId : intersectionValidSlots)
-//        {
-//            if (!rangeValid.isEmpty())
-//                if (rangeValid.getLast() != slotId - 1)
-//                    rangeValid.clear();
-//            rangeValid.add(slotId);
-//            assert rangeValid.size() <= numContiguousSlotsRequired;
-//            if (rangeValid.size() == numContiguousSlotsRequired) return Optional.of(new TreeSet<> (rangeValid));
-//        }
-//        return Optional.empty();
-//    }
+    /** Searches for a first-fit assignment where the same spectrum is used in the path a-b and the opposite path b-a (so all given fibers must be bidirectional). 
+     * Optional directionless add and drop module to occupy are given, as well as the the number of contiguous optical slots needed, 
+     * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), and potentially forbidden slots. Then, this method searches for 
+     * the lowest-id contiguous range of slots that are available in all the indicated fibers and bidrectional pairs and directionless modules. Note that if the set of fibers 
+     * passes more than once in the same fiber, no assignment is possible, and Optional.empty is returned
+     * @param seqFibers_ab see above
+     * @param directionlessAddModuleAb see above
+     * @param directionlessDropModuleAb see above
+     * @param numContiguousSlotsRequired see above
+     * @param minimumInitialSlotId see above
+     * @param unusableSlots see above
+     * @return see above
+     */
+    public Optional<SortedSet<Integer>> spectrumAssignment_firstFitBidi (OsmLightpathOccupationInfo lpInfo, int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> unusableSlots)
+    {
+    	final List<WFiber> seqFibers_ab = lpInfo.getSeqFibersLegitimateSignal();
+    	final Optional<Integer> directionlessAddModuleAb = lpInfo.getDirectionlessAddModuleIndex();
+    	final Optional<Integer> directionlessDropModuleAb = lpInfo.getDirectionlessDropModuleIndex();
+    	if (seqFibers_ab.isEmpty()) throw new Net2PlanException ("Empty path");
+    	if (numContiguousSlotsRequired <= 0) throw new Net2PlanException ("Empty spectrum requested");
+   	 	if (seqFibers_ab.stream().anyMatch(e->!e.isBidirectional())) throw new Net2PlanException ("All fibers must be bidirectional");
+
+   	 	/* If loops in the travsersed nodes => we do not allow that */
+    	final WNode a = seqFibers_ab.get(0).getA();
+    	final WNode b = seqFibers_ab.get(seqFibers_ab.size()-1).getB();
+ 		final List<WFiber> pathAbBa = new ArrayList<> ();
+ 		for (WFiber ab : seqFibers_ab) { pathAbBa.add(ab); pathAbBa.add(ab.getBidirectionalPair()); }
+ 		final OsmLightpathOccupationInfo lpOccupationAbbA = new OsmLightpathOccupationInfo(pathAbBa, 
+ 				directionlessAddModuleAb.isPresent()? Optional.of(Pair.of(a, directionlessAddModuleAb.get())) : Optional.empty(), 
+ 					directionlessDropModuleAb.isPresent()? Optional.of(Pair.of(b, directionlessDropModuleAb.get())) : Optional.empty(), 
+ 					Optional.empty());
+ 		final SortedSet<Integer> forbidenSlotsBecauseOfAddAndDropBaAndUsable = new TreeSet<> (unusableSlots);
+ 		final Integer addModuleBa = directionlessDropModuleAb.orElse(null);
+ 		final Integer dropModuleBa = directionlessAddModuleAb.orElse(null);
+ 		if (addModuleBa != null)
+ 		forbidenSlotsBecauseOfAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessAddModule(b, addModuleBa));
+ 		if (dropModuleBa != null)
+ 		forbidenSlotsBecauseOfAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessDropModule(a, dropModuleBa));
+ 		return spectrumAssignment_firstFit(lpOccupationAbbA, numContiguousSlotsRequired, minimumInitialSlotId, forbidenSlotsBecauseOfAddAndDropBaAndUsable);
+    }
 
     /** Searches for a first-fit assignment. Given a set of fibers to occupy, the optional add and drop directionless modules used, the number of contiguous optical slots needed, 
      * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), this method searches for 
@@ -711,6 +699,54 @@ public class OpticalSpectrumManager
         return Optional.empty();
     }
 
+    /** Searches for a first-fit assignment for the two given paths, so optical slots can be different for each. 
+     * Given two sets of fibers to occupy (paths), the optinal add/drop modules to occupy in each case, the number of contiguous optical slots needed in each, 
+     * this method searches for the two lowest-id contiguous ranges of slots, so the first range is available in the first path,
+     * the second range is available in the second path. Note that if any path contains a fiber more than once, no allocation is 
+     * possible. Note that if path1 and path2 have common fibers, the optical slots returned will always be disjoint. In contrast, the add modules of the two paths or the drop modules of the two paths could be the same 
+     * @param lp1 see above
+     * @param lp2 see above
+     * @param numContiguousSlotsRequired see above
+     * @param minimumInitialSlotId see above
+     * @param forbidenSlotIds see above
+     * @return see above. If no idle range is found, Optional.empty is returned. 
+     */
+    public Optional<Pair<SortedSet<Integer>,SortedSet<Integer>>> spectrumAssignment_firstFitTwoRoutesBidi (OsmLightpathOccupationInfo lpMainAb, OsmLightpathOccupationInfo lpBackupAb , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , SortedSet<Integer> forbidenSlotIds)
+    {
+        /* If a fiber is traversed more than once in any path, there is no possible assignment */
+    	if (!lpMainAb.isWithAllLegitimateFibersBidirectional()) return Optional.empty();
+    	if (!lpBackupAb.isWithAllLegitimateFibersBidirectional()) return Optional.empty();
+    	if (lpMainAb.isWithSelfClashing()) return Optional.empty();
+    	if (lpBackupAb.isWithSelfClashing()) return Optional.empty();
+        final boolean mutuallyClashingFree = lpMainAb.isMutuallyClashingFreeWith(lpBackupAb);
+        if (mutuallyClashingFree)
+        {
+            final Optional<SortedSet<Integer>> firstRouteInitialSlot = spectrumAssignment_firstFitBidi (lpMainAb , numContiguousSlotsRequired, minimumInitialSlotId , forbidenSlotIds);
+            if (!firstRouteInitialSlot.isPresent()) return Optional.empty();
+            final Optional<SortedSet<Integer>> secondRouteInitialSlot = spectrumAssignment_firstFitBidi (lpBackupAb , numContiguousSlotsRequired, minimumInitialSlotId , forbidenSlotIds);
+            if (!secondRouteInitialSlot.isPresent()) return Optional.empty();
+            return Optional.of(Pair.of(firstRouteInitialSlot.get(), secondRouteInitialSlot.get()));
+        }
+
+        /* With links in common */
+        final SortedSet<Integer> fistPathValidSlotsAbbA = spectrumAssignment_getAllPotentialFirstSlots(lpMainAb, numContiguousSlotsRequired, minimumInitialSlotId , forbidenSlotIds);
+        fistPathValidSlotsAbbA.retainAll(spectrumAssignment_getAllPotentialFirstSlots(lpMainAb.getBidirectionalPair().get(), numContiguousSlotsRequired, minimumInitialSlotId , forbidenSlotIds));
+        final SortedSet<Integer> secondPathValidSlotsAbbA = spectrumAssignment_getAllPotentialFirstSlots(lpBackupAb, numContiguousSlotsRequired, minimumInitialSlotId , forbidenSlotIds);
+        secondPathValidSlotsAbbA.retainAll(spectrumAssignment_getAllPotentialFirstSlots(lpBackupAb.getBidirectionalPair().get(), numContiguousSlotsRequired, minimumInitialSlotId , forbidenSlotIds));
+        for(int initialSlot_1 :  fistPathValidSlotsAbbA)
+            for(int initialSlot_2 :  secondPathValidSlotsAbbA)
+            {
+                if (Math.abs(initialSlot_1 - initialSlot_2) < numContiguousSlotsRequired) continue;
+                final SortedSet<Integer> range1 = new TreeSet<> ();
+                final SortedSet<Integer> range2 = new TreeSet<> ();
+                for (int cont = 0; cont < numContiguousSlotsRequired ; cont ++) { range1.add(initialSlot_1 + cont);  range2.add(initialSlot_2+cont); } 
+                return Optional.of(Pair.of(range1, range2));
+            }           
+        return Optional.empty();
+    }
+
+    
+    
     
 //    /** Searches for a first-fit assignment for the two given paths, so optical slots can be different for each. 
 //     * Given two sets of fibers to occupy (paths), the optinal add/drop modules to occupy in each case, the number of contiguous optical slots needed in each, 
