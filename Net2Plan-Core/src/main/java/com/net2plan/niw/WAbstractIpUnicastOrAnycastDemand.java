@@ -217,7 +217,11 @@ public abstract class WAbstractIpUnicastOrAnycastDemand extends WAbstractNetwork
 	{
 		final SortedMap<WIpLink , Double> res = new TreeMap<> ();
 		for (Entry<Link,Double> entry : getNe ().getTraversedLinksAndCarriedTraffic(normalizedToOfferedTraffic).entrySet())
-			res.put(new WIpLink(entry.getKey()), entry.getValue());
+		{
+			final WIpLink e = new WIpLink(entry.getKey());
+			if (e.isBundleMember()) continue;
+			res.put(e, entry.getValue());
+		}
 		return res;
 	}
 

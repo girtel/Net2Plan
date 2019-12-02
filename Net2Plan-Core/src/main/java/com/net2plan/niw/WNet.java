@@ -120,11 +120,11 @@ public class WNet extends WAbstractNetworkElement
 		{
 			if (ipLink.isBundleOfIpLinks())
 			{
-				for (WIpLink e : ipLink.getBundledIpLinks())
+				for (WIpLink member : ipLink.getBundledIpLinks())
 				{
-					assert e.getNe().getTraversingRoutes().size() == 1;
-					final Route r = e.getNe().getTraversingRoutes().first();
-					r.setCarriedTraffic(e.getNominalCapacityGbps(), e.getNominalCapacityGbps());
+					assert member.getNe().getTraversingRoutes().size() == 1;
+					final Route r = member.getNe().getTraversingRoutes().first();
+					r.setCarriedTraffic(member.getNominalCapacityGbps(), member.getNominalCapacityGbps());
 				}
 			} 
 		}
