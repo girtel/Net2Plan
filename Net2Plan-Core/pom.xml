@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan</artifactId>
-        <version>0.6.4.0</version>
+        <version>0.6.4.1</version>
     </parent>
 
     <build>

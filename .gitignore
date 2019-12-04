@@ -30,3 +30,7 @@ doc/gen/
 *.stackdump
 
 # Test
+Net2Plan-Core/src/main/java/com/net2plan/niw/XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments_BACKUP_15484.java
+Net2Plan-Core/src/main/java/com/net2plan/niw/XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments_BASE_15484.java
+Net2Plan-Core/src/main/java/com/net2plan/niw/XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments_LOCAL_15484.java
+Net2Plan-Core/src/main/java/com/net2plan/niw/XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments_REMOTE_15484.java
