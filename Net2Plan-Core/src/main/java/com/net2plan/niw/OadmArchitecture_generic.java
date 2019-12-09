@@ -120,17 +120,18 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	}
 
 //	public enum PARAMNAMES {ArchitectureType , IsDirectionLess , AddDropModuleType , MuxDemuxLoss_dB , MuxDemuxPmd_ps , WssLoss_dB , WssPmd_ps}
-	public enum PARAMNAMES {ArchitectureType , AddDropModuleType , MuxDemuxLoss_dB , MuxDemuxPmd_ps , WssLoss_dB , WssPmd_ps}
+	public enum PARAMNAMES {ArchitectureType , AddDropModuleType , MuxDemuxLoss_dB , MuxDemuxPmd_ps , DegreeSplitterCombinerOptionalLoss_dB , DirlessAddDropSplitterCombinerOptionalLoss_dB , WssLoss_dB , WssPmd_ps}
 
 	@Override
 	public List<Quadruple<String, String, String, String>> getParametersInfo_name_default_shortDesc_longDesc() 
 	{
 		return Arrays.asList(
 				Quadruple.of(PARAMNAMES.ArchitectureType.name (), "B&S", "Opt. Sw. Arch." , "Indication of the architecture type: R&S is route and select (WSS in the in degrees and out degrees), B&S is broadcast-and-select (coupler at the input degree, WSS at the output), filterless: means a coupler at the input and output degrees."),
-//				Quadruple.of(PARAMNAMES.IsDirectionLess.name (), "0", "Directionless?" , "Indication is the architecture is directionless.  If so, each add/drop module has a similar structure (R&S, B&S, filterless) as a regular degree, so add/drop lightpaths can chage its in/out direction without manual reconfiguration. If not directionless, one add/drop module exist per regular degree, hosting the transponders of the ligtpaths add/dropped in that degree. Then, changing the in/out degree of an add/dropped lightpath, requires phisically moving the transponder to other module"),
 				Quadruple.of(PARAMNAMES.AddDropModuleType.name (), "Mux/Demux-based", "Add/Drop type", "The optical element used to build the add/drop modules. Two options: 1) Mux/Demux means using a passive (de)multiplexer. This is not a colorless option, since to change the lightpath wavelength, we should phisically change the port of the transponder in the mux/demux. 2) WSS: a WSS for add and other for drop, remotely reconfigurable. This is a colorless option, so retuning a transponder can be made without the need of phisically changing its port in the WSS"),
 				Quadruple.of(PARAMNAMES.MuxDemuxLoss_dB.name (), "6.0", "Mux/Demux loss (dB)", "The add/drop modules where the transponders are attached can be realized with a multiplexer/demultiplexer. This is the added attenuation in dB"),
 				Quadruple.of(PARAMNAMES.MuxDemuxPmd_ps.name (), "0.5", "Mux/Demux PMD (ps)", "The add/drop modules where the transponders are attached can be realized with a multiplexer/demultiplexer. This is the added PMD in ps"),
+				Quadruple.of(PARAMNAMES.DegreeSplitterCombinerOptionalLoss_dB.name (), "" , "[Optional] Degree Splitter/combiner loss (dB)", "Loss of each splitter/combiner used in the in/out degrees. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)"),
+				Quadruple.of(PARAMNAMES.DirlessAddDropSplitterCombinerOptionalLoss_dB.name (), "" , "[Optional] Splitter/combiner loss (dB)", "Loss of each splitter/combiner used in the directionless add/drop modules, if any. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)"),
 				Quadruple.of(PARAMNAMES.WssLoss_dB.name (), "7.0", "WSS loss (dB)", "The add/drop modules and/or degrees can be realized with WSSa. This is the added attenuation in dB"),
 				Quadruple.of(PARAMNAMES.WssPmd_ps.name (), "0.5", "WSS PMD (ps)", "The add/drop modules and/or degrees can be realized with WSSa. This is the added PMD in ps")
 				);
@@ -143,6 +144,8 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		param.put(PARAMNAMES.AddDropModuleType.name(), newParameters.getAddDropModuleType());
 		param.put(PARAMNAMES.MuxDemuxLoss_dB.name(), newParameters.getMuxDemuxLoss_dB() + "");
 		param.put(PARAMNAMES.MuxDemuxPmd_ps.name(), newParameters.getMuxDemuxPmd_ps() + "");
+		param.put(PARAMNAMES.DegreeSplitterCombinerOptionalLoss_dB.name (), newParameters.getDegreeSplitterCombinerLoss_dB().orElse (-100.0) + "");
+		param.put(PARAMNAMES.DirlessAddDropSplitterCombinerOptionalLoss_dB.name (), newParameters.getDirlessAddDropSplitterCombinerLoss_dB().orElse (-100.0) + "");
 		param.put(PARAMNAMES.WssLoss_dB.name(), newParameters.getWssLoss_dB() + "");
 		param.put(PARAMNAMES.WssPmd_ps.name(), newParameters.getWssPmd_ps() + "");
 		this.updateCurrentParameters(param);
@@ -157,48 +160,53 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 	public class Parameters
 	{
 		private String architectureType;
-//		private boolean isDirectionless;
 		private String addDropModuleType;
 		private double muxDemuxLoss_dB;
 		private double muxDemuxPmd_ps;
 		private double wssLoss_dB;
 		private double wssPmd_ps;
+		private Optional<Double> degreeSplitterCombinerLoss_dB;
+		private Optional<Double> dirlessAddDropSplitterCombinerLoss_dB;
 		
 		private Parameters (Map<String,String> params)
 		{
 			try
 			{
-//				final Map<String,String> param = getCurrentParameters().orElse(getDefaultParameters());
 				this.architectureType = params.getOrDefault(PARAMNAMES.ArchitectureType.name() , "B&S");
-//				this.isDirectionless = Double.parseDouble(params.getOrDefault(PARAMNAMES.IsDirectionLess.name(), "0")) != 0;
 				this.addDropModuleType = params.getOrDefault(PARAMNAMES.AddDropModuleType.name() , "Mux/Demux-based");
 				this.muxDemuxLoss_dB = Double.parseDouble(params.getOrDefault(PARAMNAMES.MuxDemuxLoss_dB.name() , "6.0"));
 				this.muxDemuxPmd_ps = Double.parseDouble(params.getOrDefault(PARAMNAMES.MuxDemuxPmd_ps.name() , "0.5"));
 				this.wssLoss_dB = Double.parseDouble(params.getOrDefault(PARAMNAMES.WssLoss_dB.name() , "7.0"));
 				this.wssPmd_ps = Double.parseDouble(params.getOrDefault(PARAMNAMES.WssPmd_ps.name() , "0.5"));
+				final double degree_valSplitCombinerLoss_dB = Double.parseDouble(params.getOrDefault(PARAMNAMES.DegreeSplitterCombinerOptionalLoss_dB.name() , "-100"));
+				this.degreeSplitterCombinerLoss_dB = degree_valSplitCombinerLoss_dB < 0? Optional.empty() : Optional.of(degree_valSplitCombinerLoss_dB);
+				final double dirlessAd_valSplitCombinerLoss_dB = Double.parseDouble(params.getOrDefault(PARAMNAMES.DirlessAddDropSplitterCombinerOptionalLoss_dB.name() , "-100"));
+				this.dirlessAddDropSplitterCombinerLoss_dB = dirlessAd_valSplitCombinerLoss_dB < 0? Optional.empty() : Optional.of(dirlessAd_valSplitCombinerLoss_dB);
 			} catch (Exception e)
 			{
 				e.printStackTrace();
 				this.architectureType = "B&S";
-//				this.isDirectionless = false;
 				this.addDropModuleType = "Mux/Demux-based";
 				this.muxDemuxLoss_dB = 6.0;
 				this.muxDemuxPmd_ps = 0.5;
 				this.wssLoss_dB = 7.0;
 				this.wssPmd_ps = 0.5;
+				this.degreeSplitterCombinerLoss_dB = Optional.empty();
+				this.dirlessAddDropSplitterCombinerLoss_dB = Optional.empty();
 			}
 		}
 		
 		public Parameters setArchitectureTypeAsBroadcastAndSelect () { this.architectureType = "B&S"; return this; }
 		public Parameters setArchitectureTypeAsRouteAndSelect () { this.architectureType = "R&S"; return this; }
 		public Parameters setArchitectureTypeAsFilterless () { this.architectureType = "filterless"; return this; }
-//		public Parameters setIsDirectionless (boolean isDirectionless) { this.isDirectionless = isDirectionless; return this; }
 		public Parameters setAddDropModuleTypeAsMuxBased () { this.addDropModuleType = "Mux/Demux-based"; return this; }
 		public Parameters setAddDropModuleTypeAsWssBased () { this.addDropModuleType = "Wss-based"; return this; }
 		public Parameters setMuxDemuxLoss_dB (double lossInDb) { this.muxDemuxLoss_dB = lossInDb; return this; }
 		public Parameters setMuxDemuxPmd_ps (double pmd_ps) { this.muxDemuxPmd_ps = pmd_ps; return this; }
 		public Parameters setWssLoss_dB (double lossInDb) { this.wssLoss_dB = lossInDb; return this; }
 		public Parameters setWssPmd_ps (double pmd_ps) { this.wssPmd_ps = pmd_ps; return this; }
+		public Parameters setDegreeSplitterCombinerLoss_dB (Optional<Double> val) { this.degreeSplitterCombinerLoss_dB = val; return this; }
+		public Parameters setDirlessAddDropSplitterCombinerLoss_dB (Optional<Double> val) { this.dirlessAddDropSplitterCombinerLoss_dB = val; return this; }
 
 		public String getArchitectureType() {return architectureType; }
 //		public boolean isDirectionless() { return isDirectionless; }
@@ -207,6 +215,8 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		public double getMuxDemuxPmd_ps() { return muxDemuxPmd_ps; }
 		public double getWssLoss_dB() { return wssLoss_dB; }
 		public double getWssPmd_ps() { return wssPmd_ps; }
+		public Optional<Double> getDegreeSplitterCombinerLoss_dB () { return degreeSplitterCombinerLoss_dB.orElse(-100.0) < 0? Optional.empty() : degreeSplitterCombinerLoss_dB; }
+		public Optional<Double> getDirlessAddDropSplitterCombinerLoss_dB () { return dirlessAddDropSplitterCombinerLoss_dB.orElse(-100.0) < 0? Optional.empty() : dirlessAddDropSplitterCombinerLoss_dB; }
 
 		public boolean isRouteAndSelect () { return getArchitectureType().equalsIgnoreCase("R&S"); }
 		public boolean isBroadcastAndSelect () { return getArchitectureType().equalsIgnoreCase("B&S"); }
@@ -216,7 +226,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 }
 
 
-	private Pair<Integer,Integer> getNumInputsOutputsOfInDegreeCouplerNotPermitingConnectiontoOppositeFiber (WFiber inFiber , Parameters p)
+	private int getNumOutputsOfInDegreeSplitter (WFiber inFiber , Parameters p)
 	{
 		int outputs = 0;
 		assert inFiber.getB().equals(this.getHostNode());
@@ -224,10 +234,9 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (inFiber.isBidirectional()) outputs -= 1;
 		if (getHostNode().isOadmWithDirectedAddDropModulesInTheDegrees()) outputs += 1; // the DROP dirful module
 		outputs += getHostNode().getOadmNumAddDropDirectionlessModules(); // one for each directionless drops
-		final int inputs = 1;
-		return Pair.of(inputs, outputs);
+		return outputs;
 	}
-	private Pair<Integer,Integer> getNumInputsOutputsOfOutDegreeCouplerNotPermitingConnectiontoOppositeFiber (WFiber outFiber , Parameters p)
+	private int getNumInputsOfOutDegreeCoupler (WFiber outFiber , Parameters p)
 	{
 		assert outFiber.getA().equals(this.getHostNode());
 		int inputs = 0;
@@ -235,29 +244,23 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (outFiber.isBidirectional()) inputs -= 1;
 		if (getHostNode().isOadmWithDirectedAddDropModulesInTheDegrees()) inputs += 1; // the drop dirful module
 		inputs += getHostNode().getOadmNumAddDropDirectionlessModules(); // one for each directionless add
-		final int outputs = 1; // the output fiber
-		return Pair.of(inputs, outputs);
+		return inputs;
 	}
-	private Pair<Integer,Integer> getNumInputsOutputsOfAddDirectionlessModuleNotPermitingConnectiontoOppositeDrop (Parameters p)
+	private int getNumOutputsOfAddDirectionlessModule (Parameters p)
 	{
-		assert getHostNode().getOadmNumAddDropDirectionlessModules() > 0;
 		int outputs = 0;
 		outputs += getHostNode().getOutgoingFibers().size(); // one for each output fiber
-		outputs += getHostNode().getOadmNumAddDropDirectionlessModules() - 1; // one for each directionless drops but one (the opposite)
-		final int inputs = 1;
-		return Pair.of(inputs, outputs);
+		return outputs;
 	}
-	private Pair<Integer,Integer> getNumInputsOutputsOfDropDirectionlessModuleNotPermitingConnectiontoOppositeAdd (Parameters p)
+	private int getNumInputsOfDropDirectionlessModule (Parameters p)
 	{
 		assert getHostNode().getOadmNumAddDropDirectionlessModules() > 0;
-		final int outputs = 1;
 		int inputs = 0;
 		inputs += getHostNode().getIncomingFibers().size(); // one for each input fiber
-		inputs += getHostNode().getOadmNumAddDropDirectionlessModules() - 1; // one for each directionless drops but one
-		return Pair.of(inputs, outputs);
+		return inputs;
 	}
 
-	private double getCouplerAttenuation_dB (Pair<Integer,Integer> inout) { return 10 * Math.log10 (inout.getFirst () * inout.getSecond ()); }
+	private double getIdealCouplerAttenuation_dB (int inout) { return 10 * Math.log10 (inout); }
 
 	@Override
 	public LpSignalState getOutLpStateForAddedLp(LpSignalState stateAtTheOutputOfTransponder, Optional<Integer> inputAddModuleIndex,
@@ -274,7 +277,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 			assert getHostNode().getOadmNumAddDropDirectionlessModules() > 0;
 			final double justAddPart_dB = p.isAddDropTypeMuxBased()? p.getMuxDemuxLoss_dB() : p.getWssLoss_dB();
 			final double justAddPart_ps2 = Math.pow(p.isAddDropTypeMuxBased()? p.getMuxDemuxPmd_ps() : p.getWssPmd_ps() , 2);
-			final double addDegreePart_dB = p.isRouteAndSelect()? p.getWssLoss_dB() : getCouplerAttenuation_dB(getNumInputsOutputsOfAddDirectionlessModuleNotPermitingConnectiontoOppositeDrop(p));
+			final double addDegreePart_dB = p.isRouteAndSelect()? p.getWssLoss_dB() : p.getDirlessAddDropSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumOutputsOfAddDirectionlessModule(p)));
 			final double addDegreePart_ps2 = p.isRouteAndSelect()? p.getWssPmd_ps() : 0.0;
 			lossesAddPart_dB = justAddPart_dB + addDegreePart_dB;
 			pmdAddPart_ps2 = justAddPart_ps2 + addDegreePart_ps2;
@@ -290,7 +293,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (p.isFilterless())
 		{
 			// out degree is coupler based
-			lossOutDegreePart_dB = getCouplerAttenuation_dB(getNumInputsOutputsOfOutDegreeCouplerNotPermitingConnectiontoOppositeFiber(output, p));
+			lossOutDegreePart_dB = p.getDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(output, p)));
 			pmdOutDegreePart_ps2 = 0.0;
 		}
 		else
@@ -333,7 +336,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		else
 		{
 			// in degree is coupler based
-			lossInDegreePart_dB = getCouplerAttenuation_dB (getNumInputsOutputsOfInDegreeCouplerNotPermitingConnectiontoOppositeFiber(inputFiber, p));
+			lossInDegreePart_dB = p.getDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB (getNumOutputsOfInDegreeSplitter(inputFiber, p)));
 			pmdInDegreePart_ps2 = 0.0;
 		}
 		
@@ -341,8 +344,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		final double pmdDropPart_ps2;
 		if (directionlessDropModuleIndex.isPresent()) // A/D directly connectec to output degree
 		{
-			assert getHostNode().getOadmNumAddDropDirectionlessModules() > 0;
-			final double dropDegreePart_dB = p.isFilterless()? getCouplerAttenuation_dB(getNumInputsOutputsOfDropDirectionlessModuleNotPermitingConnectiontoOppositeAdd(p)) : p.getWssLoss_dB();
+			final double dropDegreePart_dB = p.isFilterless()? p.getDirlessAddDropSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfDropDirectionlessModule(p))) : p.getWssLoss_dB();
 			final double dropDegreePart_ps2 = p.isFilterless()? 0.0 : p.getWssPmd_ps();
 			final double justDropPart_dB = p.isAddDropTypeMuxBased()? p.getMuxDemuxLoss_dB() : p.getWssLoss_dB();
 			final double justDropPart_ps2 = Math.pow(p.isAddDropTypeMuxBased()? p.getMuxDemuxPmd_ps() : p.getWssPmd_ps() , 2);
@@ -381,7 +383,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		else
 		{
 			// in degree is coupler based
-			lossInDegreePart_dB = getCouplerAttenuation_dB(getNumInputsOutputsOfInDegreeCouplerNotPermitingConnectiontoOppositeFiber(inputFiber, p));
+			lossInDegreePart_dB = p.getDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumOutputsOfInDegreeSplitter(inputFiber, p)));
 			pmdInDegreePart_ps2 = 0.0;
 		}
 		
@@ -390,7 +392,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (p.isFilterless())
 		{
 			// out degree is coupler based
-			lossOutDegreePart_dB = getCouplerAttenuation_dB(getNumInputsOutputsOfOutDegreeCouplerNotPermitingConnectiontoOppositeFiber(outputFiber, p));
+			lossOutDegreePart_dB = p.getDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(outputFiber, p)));
 			pmdOutDegreePart_ps2 = 0.0;
 		}
 		else

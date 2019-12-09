@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.niw.OpticalSpectrumManager.OpticalSignalOccupationType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -142,8 +143,8 @@ public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implement
 		
 		out.append("<h2><a name=\"generalStats\"></a>GENERAL STATISTICS - Signal metrics at the input of end OADM</h2>");
 		out.append("<table border='1'>");
-		final int numFilterlessOadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchType().isDropAndWaste()).count();
-		final int numPureRoadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchType().isRoadm()).count();
+		final int numFilterlessOadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchingArchitecture().isPotentiallyWastingSpectrum()).count();
+		final int numPureRoadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum()).count();
 		out.append("<tr><th align=\"left\" colspan=\"2\"><b>OADM stats</b></th></tr>");
 		out.append("<tr><td align=\"left\">Number of OADMs (#total / #Non-blocking ROADM / #Filterless)</td><td>" + net.getNodes().size() + " / " + numPureRoadms + " / " + numFilterlessOadms  + "</td></tr>");
 		out.append("<tr><td align=\"left\">Number of OADMs</td><td>" + net.getNodes().size() + "</td></tr>");
@@ -178,10 +179,9 @@ public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implement
 		out.append("<p>This table shows information for each fiber. In particular, the slots occupied, with a link to the lightpaths occupying it, either for regular lightpaths (L), or backup lightpaths in a 1+1 pair (P) that reserve slots:</p>");
 		out.append("<ul>");
 		out.append("<li>Black: The slot number is invalid for the link, and is not assigned to any lightpath.</li>");
-		out.append("<li>White: The slot is a valid spectrum for the fiber, but is not assigned to any lightpath.</li>");
-		out.append("<li>Green: The slot is a valid spectrum for the fiber, and is occupied by one regular lightpath (not backup).</li>");
-		out.append("<li>Yellow: The slot is a valid spectrum for the fiber, and is occupied by one backup lightpath.</li>");
-		out.append("<li>Red: The slot is within the fiber capacity, and is occupied by more than one lightpath (summing regular and backup), or is outside the link capacity and is assigned to at leastone lightpath.</li>");
+		out.append("<li>White: The slot is a valid spectrum for the fiber, but is not assigned to any legitimate lightpath (although it may be occupied by waste spectrum from other lightpaths (in filterless networks)).</li>");
+		out.append("<li>Green: The slot is a valid spectrum for the fiber, and is occupied by one lightpath, not clashing with other lightpaths legitimate signal, or wasted spectrum of other lightpaths (in filterless networks).</li>");
+		out.append("<li>Red: The slot is outside the fiber capacity, or is occupied by more than one lightpath, or by one lightpath clashing with wasted spectrum of other lightpaths (filterless networks).</li>");
 		out.append("</ul>");
 		out.append("<table border='1'>");
 		out.append("<tr><th><b>Fiber #</b></th><th><b>Origin node</b></th><th><b>Dest. node</b></th><th><b>% slots used</b></th><th><b>Ok?</b></th>");
@@ -194,7 +194,8 @@ public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implement
 		
 		for (WFiber e : net.getFibers())
 		{
-		   final SortedMap<Integer,SortedSet<WLightpath>> occupiedResources_e = osm.getOccupiedResources (e);
+		   final SortedMap<Integer,SortedSet<WLightpath>> occupiedResourcesLegitimate_e = osm.getOccupiedResources (e , OpticalSignalOccupationType.LEGITIMATESIGNAL);
+		   final SortedMap<Integer,SortedSet<WLightpath>> occupiedResourcesWaste_e = osm.getOccupiedResources (e , OpticalSignalOccupationType.WASTESIGNAL);
 		   final SortedSet<Integer> validOpticalSlotsIds_e = e.getValidOpticalSlotIds();
 		   
 			out.append("<tr>");
@@ -207,20 +208,23 @@ public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implement
 			{
 				String color = "";
 				final boolean inFiberCapacity = validOpticalSlotsIds_e.contains(s); 
-				final SortedSet<WLightpath> lps = occupiedResources_e.getOrDefault(s, new TreeSet<> ());
-				final int numLpsBackup = (int) lps.stream().filter(ee -> ee.isBackupLightpath()).count();
-				final int numLpsPrimary = lps.size() - numLpsBackup;
-				if (!inFiberCapacity && (numLpsPrimary + numLpsBackup == 0)) color = "black";
-				else if (!inFiberCapacity && (numLpsPrimary + numLpsBackup > 0)) { color = "red"; everythingOk = false; }
-				else if (inFiberCapacity && (numLpsPrimary + numLpsBackup == 0)) color = "white";
-				else if (inFiberCapacity && (numLpsPrimary == 1) && (numLpsBackup == 0)) color = "PaleGreen";
-				else if (inFiberCapacity && (numLpsPrimary == 0) && (numLpsBackup == 1)) color = "yellow";
+				final SortedSet<WLightpath> lpsLegitimate = occupiedResourcesLegitimate_e.getOrDefault(s, new TreeSet<> ());
+				final SortedSet<WLightpath> lpsWaste = occupiedResourcesWaste_e.getOrDefault(s, new TreeSet<> ());
+				final int numLpsLegitimate = (int) lpsLegitimate.size ();
+				final int numLpsWaste = (int) lpsWaste.size ();
+				if (!inFiberCapacity && (numLpsLegitimate + numLpsWaste == 0)) color = "black";
+				else if (!inFiberCapacity && (numLpsLegitimate > 0)) { color = "red"; everythingOk = false; }
+				else if (inFiberCapacity && (numLpsLegitimate == 0)) color = "white";
+				else if (inFiberCapacity && (numLpsLegitimate == 1) && (numLpsWaste == 0)) color = "PaleGreen";
+				else if (inFiberCapacity && (numLpsLegitimate == 1) && (numLpsWaste > 0)) color = "red";
+				else if (inFiberCapacity && (numLpsLegitimate > 1)) color = "red";
 				else { color = "red"; everythingOk = false; }
 				thisLine.append("<td bgcolor=\"" + color + "\">");
-				for (WLightpath r : lps) thisLine.append("<a href=\"#lp" + r.getNe().getIndex() + "\">L" + r.getNe().getIndex() + " </a>");
+				for (WLightpath r : lpsLegitimate) thisLine.append("<a href=\"#lp" + r.getNe().getIndex() + "\">L" + r.getNe().getIndex() + " </a>");
+				for (WLightpath r : lpsWaste) thisLine.append("<a href=\"#lp" + r.getNe().getIndex() + "\">W" + r.getNe().getIndex() + " </a>");
 				thisLine.append("</td>");
 			}
-			out.append("<td>" + (occupiedResources_e.size()) / ((double) validOpticalSlotsIds_e.size()) + "</td>");
+			out.append("<td>" + (occupiedResourcesLegitimate_e.size()) / ((double) validOpticalSlotsIds_e.size()) + "</td>");
 			out.append("<td bfcolor=\"" + (everythingOk? "PaleGreen" : "red")   +"\">" + (everythingOk? "Yes" : "No") +  "</td>");
 			out.append(thisLine.toString());
 			out.append("</tr>");
@@ -307,7 +311,7 @@ public class XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments implement
 			final int expressBackupLps = (int) n.getInOutOrTraversingLigtpaths().stream ().filter(e->!e.getA().equals(n) && !e.getB().equals(n)).filter(e -> e.isBackupLightpath()).count();
 			out.append("<tr>");
 			out.append("<td><a name=\"node" + n.getNe().getIndex() + "\">n" + n.getNe().getIndex() + " (" + n.getName() + ")" + "</a></td>");
-			out.append("<td>" + n.getOpticalSwitchType().getShortName() + "</td>");
+			out.append("<td>" + n.getOpticalSwitchingArchitecture().getShortName() + "</td>");
 			out.append("<td>" + n.getIncomingFibers().size() + "</td>");
 			out.append("<td>" + n.getOutgoingFibers().size() + "</td>");
 			out.append("<td>" + (addRegLps+addBackupLps) + "(" + addRegLps + " / " + addBackupLps + ")" + "</td>");

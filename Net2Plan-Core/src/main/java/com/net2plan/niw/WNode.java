@@ -591,6 +591,25 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	/**
+	 * Returns the set of outgoing lightpaths of the node
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getOutgoingLigtpaths()
+	{
+		return getOutgoingLigtpathRequests().stream().map(e->e.getLightpaths()).flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/**
+	 * Returns the set of incoming lightpaths of the node
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getIncomingLigtpaths()
+	{
+		return getIncomingLigtpathRequests().stream().map(e->e.getLightpaths()).flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	
+	/**
 	 * Returns the set of incoming lightpath requests to the node
 	 * @return see above
 	 */

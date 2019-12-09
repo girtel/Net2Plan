@@ -227,7 +227,9 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                         		InputForDialog.inputTfDouble("Mux/demux attenuation (dB)", "The attenuation to apply by the multiplexer/demultiplexer of the add/drop module, if of this type", 10, 6.0),
                         		InputForDialog.inputTfDouble("WSS attenuation (dB)", "The attenuation to apply by the WSS of the add/drop module, if of this type", 10, 6.0),
                         		InputForDialog.inputTfDouble("Mux/demux PMD (ps)", "The Polarization Mode Dierpsion (PMD) to apply, caused by the multiplexer/demultiplexer of the add/drop module, if of this type", 10, 0.5),
-                        		InputForDialog.inputTfDouble("WSS PMD (ps)", "The Polarization Mode Dierpsion (PMD) to apply, caused by the WSS of the add/drop module, if of this type", 10, 0.5)
+                        		InputForDialog.inputTfDouble("WSS PMD (ps)", "The Polarization Mode Dierpsion (PMD) to apply, caused by the WSS of the add/drop module, if of this type", 10, 0.5),
+                        		InputForDialog.inputTfDouble("[Optional] Degree splitter/coupler loss (dB)", "Loss of each splitter/combiner used in the in/out degrees. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)", 10, -1.0),
+                        		InputForDialog.inputTfDouble("[Optional] Directionless Add/drop module splitter/coupler loss (dB)", "Loss of each splitter/combiner used in the add/drop directionless modules, if any. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)", 10, -1.0)
                         		),
                         (list)->
                         	{
@@ -240,6 +242,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                         		final double wssAttDb = (Double) list.get(3).get();
                         		final double muxDemuxPmdPs = (Double) list.get(4).get();
                         		final double wssPmdPs = (Double) list.get(5).get();
+                        		final double degreeSplitterCombinerLoss_dB = (Double) list.get(6).get();
+                        		final double dirlessAdSplitterCombinerLoss_dB = (Double) list.get(7).get();
                         		for (WNode node : getSelectedElements().stream().map(ee->toWNode.apply(ee)).collect(Collectors.toList()))
                         		{
                         			if (!(node.getOpticalSwitchingArchitecture() instanceof OadmArchitecture_generic)) continue;
@@ -254,6 +258,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                         			param.setMuxDemuxPmd_ps(muxDemuxPmdPs);
                         			param.setWssLoss_dB(wssAttDb);
                         			param.setWssPmd_ps(wssPmdPs);
+                        			param.setDegreeSplitterCombinerLoss_dB(degreeSplitterCombinerLoss_dB < 0? Optional.empty() : Optional.of(degreeSplitterCombinerLoss_dB));
+                        			param.setDirlessAddDropSplitterCombinerLoss_dB(dirlessAdSplitterCombinerLoss_dB < 0? Optional.empty() : Optional.of(dirlessAdSplitterCombinerLoss_dB));
                         			oadm.updateParameters(param);
                         		}
                         	}
