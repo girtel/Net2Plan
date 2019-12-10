@@ -158,7 +158,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Net gain (dB)" , "Net gain of this fiber link, considering effect of line amplifiers and fiber attenuation, but not considering booster or pre-amplifiers", null , d->toWFiber.apply(d).getNetGain_dB() , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Net CD (ps/nm)" , "Net accummulated chromatic dispersion in the WDM link, considering fiber CD coefficient, and potnetial compensation in the line amplifiers, but not considering any effect of booster or pre-amplifiers", null , d->toWFiber.apply(d).getAccumulatedChromaticDispersion_psPerNm() , AGTYPE.NOAGGREGATION , null));
     	
-              res.add(new AjtColumnInfo<Link>(this , String.class, Arrays.asList("Amplifiers") , "WSS eq. power (mW/GHz)", "If set, means that the power at the start of the fiber es equalized by the WSS associated to this degree in the origin OADM. Then, here we indicate the power density enforced by the WDD inside the OADM switch fabric for this degree, and thus before the booster amplifier. The power is expressed as mW per GHz", null , d->toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().isPresent()? toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() : "--", AGTYPE.NOAGGREGATION , null));
+              res.add(new AjtColumnInfo<Link>(this , String.class, null , "WSS eq. power (mW/GHz)", "If set, means that the power at the start of the fiber es equalized by the WSS associated to this degree in the origin OADM. Then, here we indicate the power density enforced by the WDD inside the OADM switch fabric for this degree, and thus before the booster amplifier. The power is expressed as mW per GHz", null , d->toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().isPresent()? toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() : "--", AGTYPE.NOAGGREGATION , null));
               res.add(new AjtColumnInfo<Link>(this , Boolean.class, Arrays.asList("Amplifiers") , "Booster?", "Indicates if exists a booster amplifier at the start of this fiber", (d,val)->toWFiber.apply(d).setIsExistingBoosterAmplifierAtOriginOadm((Boolean)val) , d->toWFiber.apply(d).isExistingBoosterAmplifierAtOriginOadm(), AGTYPE.COUNTTRUE , null));
               res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "Booster gain (dB)", "The gain of the booster amplifier at the start of the fiber", (d,val)->toWFiber.apply(d).setOriginBoosterAmplifierGain_dB((Double)val) , d->toWFiber.apply(d).isExistingBoosterAmplifierAtOriginOadm()? toWFiber.apply(d).getOriginBoosterAmplifierGain_dB().get() : "--", AGTYPE.NOAGGREGATION , null));
               res.add(new AjtColumnInfo<Link>(this , Double.class, Arrays.asList("Amplifiers") , "Booster noise factor (dB)", "The noise factor of the booster amplifier at the start of the fiber", (d,val)->toWFiber.apply(d).setOriginBoosterAmplifierNoiseFactor_dB((Double)val) , d->toWFiber.apply(d).isExistingBoosterAmplifierAtOriginOadm()? toWFiber.apply(d).getOriginBoosterAmplifierNoiseFactor_dB().get () : "--", AGTYPE.NOAGGREGATION , null));
@@ -736,88 +736,113 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                     	}
                     ) , (a,b)->b>0, null));
 
-
-            res.add(new AjtRcMenu("Set fiber initial node booster amplification info to selected fibers", e->
+            res.add(new AjtRcMenu("Set fiber origin OADM pre-booster power equalization", e->
             {
             	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
             	if (firstFiber == null) return;
             	DialogBuilder.launch(
-                    "Set fiber initial node booster amplification info to selected fibers" , 
+                    "SSet fiber origin OADM pre-booster power equalization to selected fibers" , 
                     "Please introduce the requested information." , 
                     "", 
                     this, 
                     Arrays.asList(
-                    		InputForDialog.inputCheckBox("Optical equalization applied?", "Indicate if the optical equalization should be applied", true , null),
-                    		InputForDialog.inputTfDouble("Pre-booster power density (mW per GHz)", "If the previous option is checked, the power density of the channels to be enforced for this degree by the origin OADM, right before the booster amplifier", 10, 1.0/50.0),
-                    		InputForDialog.inputCheckBox("Booster amplifier exists?", "Indicate if a booster amplifier exists at the start of this fiber", true , null),
-                    		InputForDialog.inputTfDouble("Booster gain (dB)", "The gain of the booster amplifier, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_GAIN_DB),
-                    		InputForDialog.inputTfDouble("Booster noise factor (dB)", "The noise factor of the booster amplifier in dB, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_NF_DB),
-                    		InputForDialog.inputTfDouble("Booster CD compensation (ps/nm)", "The chromatic dispersion compensation of the booster amplifier in ps/nm, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_CD_PSPERNM),
-                    		InputForDialog.inputTfDouble("Booster PMD (ps)", "The PMD added by the booster amplifier in ps, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_PMD_PS)
+                    		InputForDialog.inputCheckBox("Optical equalization applied?", "Indicate if the optical equalization should be applied", false , null),
+                    		InputForDialog.inputTfDouble("Pre-booster power density (mW per GHz)", "If the previous option is checked, the power density of the channels to be enforced for this degree by the origin OADM, right before the booster amplifier", 10, 1.0/50.0)
                     	),
                     (list)->
                     	{
                     		final Boolean equalize = (Boolean) list.get(0).get();
                     		final Double powerDensity = (Double) list.get(1).get();
-                    		final Boolean boosterExists = (Boolean) list.get(2).get();
-                    		final Double boosterGainDb = (Double) list.get(3).get();
-                    		final Double boosterNfDb = (Double) list.get(4).get();
-                    		final Double boosterCdPsNm = (Double) list.get(5).get();
-                    		final Double boosterPmdPs = (Double) list.get(6).get();
                     		if (equalize)
                     			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz(Optional.of(powerDensity)));
                     		else
                     			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz(Optional.empty()));
-                    		if (boosterExists)
-                    		{
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(true));
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierGain_dB(boosterGainDb));
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierNoiseFactor_dB(boosterNfDb));
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierCdCompensation_psPerNm(boosterCdPsNm));
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierPmd_ps(boosterPmdPs));
-                    		}
-                    		else
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(false));
                     	}
                     ); 
             } , (a,b)->b>0, null));
             
-            res.add(new AjtRcMenu("Set fiber end node pre-amplification info to selected fibers", e->
-            {
-            	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
-            	if (firstFiber == null) return;
-            	DialogBuilder.launch(
-                    "Set fiber end node pre-amplification info to selected fibers" , 
-                    "Please introduce the requested information." , 
-                    "", 
-                    this, 
-                    Arrays.asList(
-                    		InputForDialog.inputCheckBox("Pre-amplifer exists?", "Indicate if a pre-amplifer exists at the OADM at the end of this fiber", true , null),
-                    		InputForDialog.inputTfDouble("Pre-amplifer gain (dB)", "The gain of the pre-amplifer, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_GAIN_DB),
-                    		InputForDialog.inputTfDouble("Pre-amplifer noise factor (dB)", "The noise factor of the pre-amplifer in dB, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_NF_DB),
-                    		InputForDialog.inputTfDouble("Pre-amplifer chromatic disperions compensation (ps/nm)", "The CD compensation at the pre-amplifer in ps/nm, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_CD_PSPERNM),
-                    		InputForDialog.inputTfDouble("Pre-amplifer PMD (ps)", "The PMD added by the pre-amplifer in ps, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_PMD_PS)
-                    	),
-                    (list)->
-                    	{
-                    		final Boolean preamplifierExists = (Boolean) list.get(0).get();
-                    		final Double preamplifierGainDb = (Double) list.get(1).get();
-                    		final Double preamplifierNfDb = (Double) list.get(2).get();
-                    		final Double preamplifierCdPsNm = (Double) list.get(3).get();
-                    		final Double preamplifierPmdPs = (Double) list.get(4).get();
-                    		if (preamplifierExists)
-                    		{
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingPreamplifierAtDestinationOadm(true));
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierGain_dB(preamplifierGainDb));
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierNoiseFactor_dB(preamplifierNfDb));
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierCdCompensation_psPerNm(preamplifierCdPsNm));
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierPmd_ps(preamplifierPmdPs));
-                    		}
-                    		else
-                    			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingPreamplifierAtDestinationOadm(false));
-                    	}
-                    ); 
-            } , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set fiber initial booster amplifier", null , (a,b)->b>0, Arrays.asList(
+            		new AjtRcMenu("place a booster amplifier", e->getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(true)) , (a,b)->b>0, null),
+            		new AjtRcMenu("remove booster amplifier (if any)", e->getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(false)) , (a,b)->b>0, null),
+            		new AjtRcMenu("set booster amplification info to selected fibers", e->
+                    {
+                    	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
+                    	if (firstFiber == null) return;
+                    	DialogBuilder.launch(
+                            "Set fiber initial node booster amplification info to selected fibers" , 
+                            "Please introduce the requested information." , 
+                            "", 
+                            this, 
+                            Arrays.asList(
+                            		InputForDialog.inputCheckBox("Booster amplifier exists?", "Indicate if a booster amplifier exists at the start of this fiber", true , null),
+                            		InputForDialog.inputTfDouble("Booster gain (dB)", "The gain of the booster amplifier, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_GAIN_DB),
+                            		InputForDialog.inputTfDouble("Booster noise factor (dB)", "The noise factor of the booster amplifier in dB, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_NF_DB),
+                            		InputForDialog.inputTfDouble("Booster CD compensation (ps/nm)", "The chromatic dispersion compensation of the booster amplifier in ps/nm, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_CD_PSPERNM),
+                            		InputForDialog.inputTfDouble("Booster PMD (ps)", "The PMD added by the booster amplifier in ps, if exists", 10, WNetConstants.WFIBER_DEFAULT_BOOSTER_PMD_PS)
+                            	),
+                            (list)->
+                            	{
+                            		final Boolean boosterExists = (Boolean) list.get(0).get();
+                            		final Double boosterGainDb = (Double) list.get(1).get();
+                            		final Double boosterNfDb = (Double) list.get(2).get();
+                            		final Double boosterCdPsNm = (Double) list.get(3).get();
+                            		final Double boosterPmdPs = (Double) list.get(4).get();
+                            		if (boosterExists)
+                            		{
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(true));
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierGain_dB(boosterGainDb));
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierNoiseFactor_dB(boosterNfDb));
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierCdCompensation_psPerNm(boosterCdPsNm));
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setOriginBoosterAmplifierPmd_ps(boosterPmdPs));
+                            		}
+                            		else
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(false));
+                            	}
+                            ); 
+                    } , (a,b)->b>0, null)
+            		)));
+
+            res.add(new AjtRcMenu("Set fiber end node pre-amplification", null , (a,b)->b>0, Arrays.asList(
+            		new AjtRcMenu("place a pre-amplifier", e->getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingPreamplifierAtDestinationOadm(true)) , (a,b)->b>0, null),
+            		new AjtRcMenu("remove pre-amplifier (if any)", e->getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingPreamplifierAtDestinationOadm(false)) , (a,b)->b>0, null),
+            		new AjtRcMenu("set pre-amplification info to selected fibers", e->
+                    {
+                    	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);
+                    	if (firstFiber == null) return;
+                    	DialogBuilder.launch(
+                            "Set fiber end node pre-amplification info to selected fibers" , 
+                            "Please introduce the requested information." , 
+                            "", 
+                            this, 
+                            Arrays.asList(
+                            		InputForDialog.inputCheckBox("Pre-amplifer exists?", "Indicate if a pre-amplifer exists at the OADM at the end of this fiber", true , null),
+                            		InputForDialog.inputTfDouble("Pre-amplifer gain (dB)", "The gain of the pre-amplifer, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_GAIN_DB),
+                            		InputForDialog.inputTfDouble("Pre-amplifer noise factor (dB)", "The noise factor of the pre-amplifer in dB, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_NF_DB),
+                            		InputForDialog.inputTfDouble("Pre-amplifer chromatic disperions compensation (ps/nm)", "The CD compensation at the pre-amplifer in ps/nm, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_CD_PSPERNM),
+                            		InputForDialog.inputTfDouble("Pre-amplifer PMD (ps)", "The PMD added by the pre-amplifer in ps, if exists", 10, WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_PMD_PS)
+                            	),
+                            (list)->
+                            	{
+                            		final Boolean preamplifierExists = (Boolean) list.get(0).get();
+                            		final Double preamplifierGainDb = (Double) list.get(1).get();
+                            		final Double preamplifierNfDb = (Double) list.get(2).get();
+                            		final Double preamplifierCdPsNm = (Double) list.get(3).get();
+                            		final Double preamplifierPmdPs = (Double) list.get(4).get();
+                            		if (preamplifierExists)
+                            		{
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingPreamplifierAtDestinationOadm(true));
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierGain_dB(preamplifierGainDb));
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierNoiseFactor_dB(preamplifierNfDb));
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierCdCompensation_psPerNm(preamplifierCdPsNm));
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setDestinationPreAmplifierPmd_ps(preamplifierPmdPs));
+                            		}
+                            		else
+                            			getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingPreamplifierAtDestinationOadm(false));
+                            	}
+                            ); 
+                    } , (a,b)->b>0, null)
+            		)));
+            
             
             res.add(new AjtRcMenu("Optical line amplifiers", null , (a,b)->true, Arrays.asList(
 

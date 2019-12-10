@@ -119,7 +119,6 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		this.node = node;
 	}
 
-//	public enum PARAMNAMES {ArchitectureType , IsDirectionLess , AddDropModuleType , MuxDemuxLoss_dB , MuxDemuxPmd_ps , WssLoss_dB , WssPmd_ps}
 	public enum PARAMNAMES {ArchitectureType , AddDropModuleType , MuxDemuxLoss_dB , MuxDemuxPmd_ps , DegreeSplitterCombinerOptionalLoss_dB , DirlessAddDropSplitterCombinerOptionalLoss_dB , WssLoss_dB , WssPmd_ps}
 
 	@Override
@@ -130,7 +129,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 				Quadruple.of(PARAMNAMES.AddDropModuleType.name (), "Mux/Demux-based", "Add/Drop type", "The optical element used to build the add/drop modules. Two options: 1) Mux/Demux means using a passive (de)multiplexer. This is not a colorless option, since to change the lightpath wavelength, we should phisically change the port of the transponder in the mux/demux. 2) WSS: a WSS for add and other for drop, remotely reconfigurable. This is a colorless option, so retuning a transponder can be made without the need of phisically changing its port in the WSS"),
 				Quadruple.of(PARAMNAMES.MuxDemuxLoss_dB.name (), "6.0", "Mux/Demux loss (dB)", "The add/drop modules where the transponders are attached can be realized with a multiplexer/demultiplexer. This is the added attenuation in dB"),
 				Quadruple.of(PARAMNAMES.MuxDemuxPmd_ps.name (), "0.5", "Mux/Demux PMD (ps)", "The add/drop modules where the transponders are attached can be realized with a multiplexer/demultiplexer. This is the added PMD in ps"),
-				Quadruple.of(PARAMNAMES.DegreeSplitterCombinerOptionalLoss_dB.name (), "" , "[Optional] Degree Splitter/combiner loss (dB)", "Loss of each splitter/combiner used in the in/out degrees. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)"),
+				Quadruple.of(PARAMNAMES.DegreeSplitterCombinerOptionalLoss_dB.name (), "-100.0" , "[Optional] Degree Splitter/combiner loss (dB)", "Loss of each splitter/combiner used in the in/out degrees. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)"),
 				Quadruple.of(PARAMNAMES.DirlessAddDropSplitterCombinerOptionalLoss_dB.name (), "" , "[Optional] Splitter/combiner loss (dB)", "Loss of each splitter/combiner used in the directionless add/drop modules, if any. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)"),
 				Quadruple.of(PARAMNAMES.WssLoss_dB.name (), "7.0", "WSS loss (dB)", "The add/drop modules and/or degrees can be realized with WSSa. This is the added attenuation in dB"),
 				Quadruple.of(PARAMNAMES.WssPmd_ps.name (), "0.5", "WSS PMD (ps)", "The add/drop modules and/or degrees can be realized with WSSa. This is the added PMD in ps")
@@ -184,7 +183,6 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 				this.dirlessAddDropSplitterCombinerLoss_dB = dirlessAd_valSplitCombinerLoss_dB < 0? Optional.empty() : Optional.of(dirlessAd_valSplitCombinerLoss_dB);
 			} catch (Exception e)
 			{
-				e.printStackTrace();
 				this.architectureType = "B&S";
 				this.addDropModuleType = "Mux/Demux-based";
 				this.muxDemuxLoss_dB = 6.0;

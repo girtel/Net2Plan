@@ -63,6 +63,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
     	assert callback.getNiwInfo().getFirst();
     	final WNet wNet = callback.getNiwInfo().getSecond(); 
     	final Function<Node,WNode> toWNode = n -> { final WNode nn = new WNode (n); assert !nn.isVirtualNode();  return nn; };
+    	final Function<Node,Boolean> isOadmGeneric = n -> { return toWNode.apply(n).getOpticalSwitchingArchitecture() instanceof OadmArchitecture_generic; };
+    	final Function<Node,OadmArchitecture_generic> toOadmGeneric = n -> { return (OadmArchitecture_generic) new WNode (n).getOpticalSwitchingArchitecture(); };
     	final boolean isIpLayer = getTableNetworkLayer().getName ().equals(WNetConstants.ipLayerName);
     	final boolean isWdmLayer = getTableNetworkLayer().getName ().equals(WNetConstants.wdmLayerName);
     	assert isIpLayer || isWdmLayer;
@@ -124,10 +126,14 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "ADD optical rate (Gbps)", "The sum of the line rates of the lightpaths added in this node", null , d->toWNode.apply(d).getAddedLigtpaths().stream().mapToDouble(n->n.getLightpathRequest().getLineRateGbps()).sum() , AGTYPE.SUMDOUBLE , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "DROP optical rate (Gbps)", "The sum of the line rates of the lightpaths dropped in this node", null , d->toWNode.apply(d).getDroppedLigtpaths().stream().mapToDouble(n->n.getLightpathRequest().getLineRateGbps()).sum() , AGTYPE.SUMDOUBLE , null));
           res.add(new AjtColumnInfo<Node>(this , Collection.class, null , "EXPRESS optical rate (Gbps)", "The sum of the line rates of the lightpaths express in this node", null , d->toWNode.apply(d).getExpressSwitchedLightpaths().stream().mapToDouble(n->n.getLightpathRequest().getLineRateGbps()).sum() , AGTYPE.SUMDOUBLE , null));
-          
-          /* Pending here all the OADM information about physical impairments */
-//          res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Sw fabric nominal loss (dB)", "The attenuation of the optical switch fabric", (d,val)->toWNode.apply(d).setOadmSwitchFabricAttenuation_dB((Double)val) , d->toWNode.apply(d).getOadmSwitchFabricAttenuation_dB(), AGTYPE.NOAGGREGATION , null));
-//          res.add(new AjtColumnInfo<Node>(this , Double.class, null , "Sw fabric PMD (ps)", "The PMD of the optical switch fabric", (d,val)->toWNode.apply(d).setOadmSwitchFabricPmd_ps((Double)val) , d->toWNode.apply(d).getOadmSwitchFabricPmd_ps(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("Generic OADM model params") , "Architecture type", "The type of optical switching architecture", null , d->toOadmGeneric.apply(d).getParameters().getArchitectureType(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("Generic OADM model params") , "Add/drop module type", "The type of add/drop module: based on mux/demux or on WSS", null , d->toOadmGeneric.apply(d).getParameters().getAddDropModuleType(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("Generic OADM model params") , "Mux/demux attenuation (dB)", "The attenuation to apply by the multiplexer/demultiplexer of the add/drop module, if of this type", null , d->toOadmGeneric.apply(d).getParameters().getMuxDemuxLoss_dB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("Generic OADM model params") , "Mux/demux PMD (ps)", "The Polarization Mode Dierpsion (PMD) to apply, caused by the multiplexer/demultiplexer of the add/drop module, if of this type", null , d->toOadmGeneric.apply(d).getParameters().getMuxDemuxPmd_ps(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("Generic OADM model params") , "WSS attenuation (dB)", "The attenuation to apply by the WSS of the add/drop module, if of this type", null , d->toOadmGeneric.apply(d).getParameters().getWssLoss_dB(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("Generic OADM model params") , "WSS PMD (ps)", "The Polarization Mode Dierpsion (PMD) to apply, caused by the WSS of the add/drop module, if of this type", null , d->toOadmGeneric.apply(d).getParameters().getWssPmd_ps(), AGTYPE.NOAGGREGATION , null));
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("Generic OADM model params") , "[Optional] Degree splitter/coupler loss (dB)", "Loss of each splitter/combiner used in the in/out degrees. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)", null , d->{ final double val = toOadmGeneric.apply(d).getParameters().getDegreeSplitterCombinerLoss_dB().orElse(-1.0); return val < 0? "--" : val; }, AGTYPE.NOAGGREGATION , null)); 
+          res.add(new AjtColumnInfo<Node>(this , Double.class, Arrays.asList("Generic OADM model params") , "[Optional] Directionless Add/drop module splitter/coupler loss (dB)", "Loss of each splitter/combiner used in the add/drop directionless modules, if any. If not present, or a negative value, the loss is assumed to be the one of an ideal 1xN or Nx1 splitter/combiner (10 Log N)", null , d->{ final double val = toOadmGeneric.apply(d).getParameters().getDirlessAddDropSplitterCombinerLoss_dB().orElse(-1.0); return val < 0? "--" : val; }, AGTYPE.NOAGGREGATION , null)); 
       }
       return res;
   }
@@ -213,6 +219,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
     				new AjtRcMenu("OADMs with directionful modules", ee->getSelectedElements().stream().forEach(n->toWNode.apply(n).setIsOadmWithDirectedAddDropModulesInTheDegrees(true)) , (a,b)->b>0, null),
     				new AjtRcMenu("OADMs without directionful modules", ee->getSelectedElements().stream().forEach(n->toWNode.apply(n).setIsOadmWithDirectedAddDropModulesInTheDegrees(false)) , (a,b)->b>0, null)
     				)));
+
+
 
     		res.add(new AjtRcMenu("Set parameters of selected OADMs", e-> 
     		{
