@@ -158,32 +158,30 @@ public class OpticalSimulationModule
    			 else
    			 {
    				 final LpSignalState beforePreviousFiberEndPreampl = previousFiberInfo.get().getSecond();
-   				 final LpSignalState afterPreviousFiberEndPreampl = previousFiber.isExistingPreamplifierAtDestinationOadm()? 
-   						getStateAfterOpticalAmplifier (centralFrequency_hz , beforePreviousFiberEndPreampl , previousFiber.getDestinationPreAmplifierGain_dB().get() , previousFiber.getDestinationPreAmplifierCdCompensation_psPerNm().get() , previousFiber.getDestinationPreAmplifierPmd_ps().get() , previousFiber.getDestinationPreAmplifierNoiseFactor_dB().get()) : 
+   				 final LpSignalState afterPreviousFiberEndPreampl = previousFiber.getDestinationPreAmplifierInfo().isPresent()? 
+   						getStateAfterOpticalAmplifier (centralFrequency_hz , beforePreviousFiberEndPreampl , previousFiber.getDestinationPreAmplifierInfo().get()) : 
    							beforePreviousFiberEndPreampl.getCopy();
 				state_startFiberBeforeBooster = oadm_a.getOutLpStateForExpressLp(afterPreviousFiberEndPreampl, previousFiber, fiber , numOpticalSlots);
    			 }
-   			 final LpSignalState state_startFiberAfterBooster = fiber.isExistingBoosterAmplifierAtOriginOadm()? 
-	   						getStateAfterOpticalAmplifier (centralFrequency_hz , state_startFiberBeforeBooster , fiber.getOriginBoosterAmplifierGain_dB().get() , fiber.getOriginBoosterAmplifierCdCompensation_psPerNm().get() , fiber.getOriginBoosterAmplifierPmd_ps().get() , fiber.getOriginBoosterAmplifierNoiseFactor_dB().get()) : 
+   			 final LpSignalState state_startFiberAfterBooster = fiber.getOriginBoosterAmplifierInfo().isPresent()? 
+	   						getStateAfterOpticalAmplifier (centralFrequency_hz , state_startFiberBeforeBooster , fiber.getOriginBoosterAmplifierInfo().get()) : 
 	   							state_startFiberBeforeBooster.getCopy();
 	   		infoToAdd.setFirst(state_startFiberAfterBooster);
 			 LpSignalState stateOutputLastOlaOrInitialOadmAfterBooster = state_startFiberAfterBooster;
-			 final int numOlas = fiber.getNumberOfOpticalLineAmplifiersTraversed();
+			 final List<OpticalAmplifierInfo> olasTraversed = fiber.getOpticalLineAmplifiersInfo();
+			 final int numOlas = olasTraversed.size();
 			 for (int contOla = 0; contOla < numOlas ; contOla ++)
 			 {
-				 final double distFromLastOlaOrInitialOadm_km = fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla) - (contOla == 0? 0 : fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla-1));
+				 final OpticalAmplifierInfo thisOla = olasTraversed.get(contOla);
+				 final double distFromLastOlaOrInitialOadm_km = thisOla.getOlaPositionInKm().get() - (contOla == 0? 0 : olasTraversed.get(contOla-1).getOlaPositionInKm().get());
 				 assert distFromLastOlaOrInitialOadm_km >= 0;
 				 final LpSignalState stateBeforeTheOla = getStateAfterFiberKm (stateOutputLastOlaOrInitialOadmAfterBooster , fiber , distFromLastOlaOrInitialOadm_km);
-				 final LpSignalState stateAfterTheOla = getStateAfterOpticalAmplifier(centralFrequency_hz, stateBeforeTheOla, 
-						 fiber.getOlaGains_dB().get(contOla), 
-						 fiber.getOlaCdCompensation_psPerNm().get(contOla), 
-						 fiber.getOlaPmd_ps().get(contOla), 
-						 fiber.getOlaNoiseFactor_dB().get(contOla));
+				 final LpSignalState stateAfterTheOla = getStateAfterOpticalAmplifier(centralFrequency_hz, stateBeforeTheOla, thisOla);
 				 final Pair<LpSignalState,LpSignalState> infoThisOla = Pair.of(stateBeforeTheOla, stateAfterTheOla);
 				infoToAddPerOla.put(contOla, infoThisOla);
 				stateOutputLastOlaOrInitialOadmAfterBooster = stateAfterTheOla;
 			 }
-			 final double distFromLastOlaOrInitialOadm_km = fiber.getLengthInKm() - (numOlas == 0? 0 : fiber.getAmplifierPositionsKmFromOrigin_km().get(numOlas-1));
+			 final double distFromLastOlaOrInitialOadm_km = fiber.getLengthInKm() - (numOlas == 0? 0 : olasTraversed.get(numOlas-1).getOlaPositionInKm().get());
 			 final LpSignalState stateAtTheEndOfFiberBeforePreamplifier = getStateAfterFiberKm (stateOutputLastOlaOrInitialOadmAfterBooster , fiber , distFromLastOlaOrInitialOadm_km);
 	   		infoToAdd.setSecond(stateAtTheEndOfFiberBeforePreamplifier);
    			 previousFiberInfo = Optional.of(infoToAdd);
@@ -201,8 +199,8 @@ public class OpticalSimulationModule
    		 final WFiber lastFiber = lp.getSeqFibers().get(lp.getSeqFibers().size()-1);
    		 final WNode lastOadm = lastFiber.getB();
    		 final LpSignalState state_beforePreamplLastFiber = perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(lastFiber).get(lp).getSecond();
-		 final LpSignalState state_afterPreamplLastFiber = lastFiber.isExistingPreamplifierAtDestinationOadm()? 
-						getStateAfterOpticalAmplifier (centralFrequency_hz , state_beforePreamplLastFiber , lastFiber.getDestinationPreAmplifierGain_dB().get() , lastFiber.getDestinationPreAmplifierCdCompensation_psPerNm().get() , lastFiber.getDestinationPreAmplifierPmd_ps().get() , lastFiber.getDestinationPreAmplifierNoiseFactor_dB().get()) : 
+		 final LpSignalState state_afterPreamplLastFiber = lastFiber.getDestinationPreAmplifierInfo().isPresent()? 
+						getStateAfterOpticalAmplifier (centralFrequency_hz , state_beforePreamplLastFiber , lastFiber.getDestinationPreAmplifierInfo().get()) : 
 							state_beforePreamplLastFiber.getCopy();
 		final LpSignalState state_afterOadm = lastOadm.getOpticalSwitchingArchitecture().getOutLpStateForDroppedLp(state_afterPreamplLastFiber, lastFiber, lp.getDirectionlessDropModuleIndexInDestination());
    		 perLpPerMetric_valAtDropTransponderEnd.put(lp, state_afterOadm);
@@ -219,15 +217,16 @@ public class OpticalSimulationModule
    		 
    		 final List<Double> powerInputOla_dBm = new ArrayList<> ();
    		 final List<Double> powerOutputOla_dBm = new ArrayList<> ();
-			 for (int contOla = 0; contOla < fiber.getOlaGains_dB().size() ; contOla ++)
-			 {
-				 final double kmFromStartFiber = fiber.getAmplifierPositionsKmFromOrigin_km().get(contOla);
-				 final double sumGainsTraversedAmplifiersBeforeThisOla_db = IntStream.range(0, contOla).mapToDouble(olaIndex -> fiber.getOlaGains_dB().get(olaIndex)).sum();
-				 final double powerAtInputThisOla_dBm = powerAtStart_dBm - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiersBeforeThisOla_db;
-				 final double powerAtOutputThisOla_dBm = powerAtInputThisOla_dBm + fiber.getOlaGains_dB().get(contOla);
-				 powerInputOla_dBm.add(powerAtInputThisOla_dBm);
-				 powerOutputOla_dBm.add(powerAtOutputThisOla_dBm);
-			 }
+   		 final List<OpticalAmplifierInfo> olas = fiber.getOpticalLineAmplifiersInfo();
+		 for (int contOla = 0; contOla < olas.size() ; contOla ++)
+		 {
+			 final double kmFromStartFiber = olas.get(contOla).getOlaPositionInKm().get();
+			 final double sumGainsTraversedAmplifiersBeforeThisOla_db = IntStream.range(0, contOla).mapToDouble(olaIndex -> olas.get(olaIndex).getGainDb()).sum();
+			 final double powerAtInputThisOla_dBm = powerAtStart_dBm - kmFromStartFiber * fiber.getAttenuationCoefficient_dbPerKm() + sumGainsTraversedAmplifiersBeforeThisOla_db;
+			 final double powerAtOutputThisOla_dBm = powerAtInputThisOla_dBm + olas.get(contOla).getGainDb();
+			 powerInputOla_dBm.add(powerAtInputThisOla_dBm);
+			 powerOutputOla_dBm.add(powerAtOutputThisOla_dBm);
+		 }
    		 perFiberTotalPower_valStartEndAndAtEachOlaInputOutput.put(fiber, Quadruple.of(powerAtStart_dBm, powerAtEnd_dBm , powerInputOla_dBm , powerOutputOla_dBm));
    	 }
    	 
@@ -298,13 +297,12 @@ public class OpticalSimulationModule
     
     public boolean isOkOpticalPowerAtAmplifierInputAllOlas (WFiber e)
     {
-		final List<Double> minOutputPowerDbm = e.getOlaMinAcceptableOutputPower_dBm();
-		final List<Double> maxOutputPowerDbm = e.getOlaMaxAcceptableOutputPower_dBm();
-		for (int cont = 0; cont < minOutputPowerDbm.size() ; cont ++)
+    	final List<OpticalAmplifierInfo> olas = e.getOpticalLineAmplifiersInfo();
+		for (int cont = 0; cont < olas.size() ; cont ++)
 		{
 			final double outputPowerDbm = this.getTotalPowerAtAmplifierOutput_dBm(e, cont);
-			if (outputPowerDbm < minOutputPowerDbm.get(cont)) return false;
-			if (outputPowerDbm > maxOutputPowerDbm.get(cont)) return false;
+			if (outputPowerDbm < olas.get(cont).getMinAcceptableOutputPower_dBm()) return false;
+			if (outputPowerDbm > olas.get(cont).getMaxAcceptableOutputPower_dBm()) return false;
 		}
 		return true;
     }
@@ -316,12 +314,12 @@ public class OpticalSimulationModule
     	final double pmdSquared_ps2 = initialState.getPmdSquared_ps2() + Math.pow(e.getPmdLinkDesignValueCoeff_psPerSqrtKm() , 2) * kmOfFiberTraversed;
     	return new LpSignalState(power_dbm, cd_psPerNm, pmdSquared_ps2, initialState.getOsnrAt12_5GhzRefBw());
     }
-    private static LpSignalState getStateAfterOpticalAmplifier (double centralFrequency_hz , LpSignalState initialState , double gain_db , double cdCompensation_psPerNm , double pmd_ps , double noiseFigure_dB)
+    private static LpSignalState getStateAfterOpticalAmplifier (double centralFrequency_hz , LpSignalState initialState , OpticalAmplifierInfo oa)
     {
-    	final double power_dbm = initialState.getPower_dbm() + gain_db;
-    	final double cd_psPerNm = initialState.getCd_psPerNm() + cdCompensation_psPerNm;
-    	final double pmdSquared_ps2 = initialState.getPmdSquared_ps2() + Math.pow(pmd_ps , 2);
-    	final double osnrContributedByAmplifier_dB = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, noiseFigure_dB, initialState.getPower_dbm()));
+    	final double power_dbm = initialState.getPower_dbm() + oa.getGainDb();
+    	final double cd_psPerNm = initialState.getCd_psPerNm() + oa.getCdCompensationPsPerNm();
+    	final double pmdSquared_ps2 = initialState.getPmdSquared_ps2() + Math.pow(oa.getPmdPs() , 2);
+    	final double osnrContributedByAmplifier_dB = linear2dB(osnrContributionEdfaRefBw12dot5GHz_linear(centralFrequency_hz, oa.getNoiseFigureDb(), initialState.getPower_dbm()));
     	final double osnrRefBw12_5_dB = osnrInDbUnitsAccummulation_dB (Arrays.asList(initialState.getOsnrAt12_5GhzRefBw() , osnrContributedByAmplifier_dB));
     	return new LpSignalState(power_dbm, cd_psPerNm, pmdSquared_ps2, osnrRefBw12_5_dB);
     }

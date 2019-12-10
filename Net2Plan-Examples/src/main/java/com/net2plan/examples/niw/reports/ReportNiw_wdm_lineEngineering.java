@@ -16,8 +16,11 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import org.apache.poi.dev.OOXMLPrettyPrint;
+
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.niw.OpticalAmplifierInfo;
 import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.WFiber;
@@ -170,16 +173,17 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			append("<td>" + df.apply(osim.getTotalPowerAtFiberEnds_dBm(e).getSecond()) + "</td>");
 			
 			final StringBuffer st = new StringBuffer ();
-			for (int contOla = 0; contOla < e.getNumberOfOpticalLineAmplifiersTraversed() ; contOla ++)
+			final List<OpticalAmplifierInfo> olas = e.getOpticalLineAmplifiersInfo();
+			for (int contOla = 0; contOla < olas.size() ; contOla ++)
 			{
-				final double distKm = e.getAmplifierPositionsKmFromOrigin_km().get(contOla);
-				final double gain_dB = e.getOlaGains_dB().get(contOla);
+				final OpticalAmplifierInfo ola = olas.get(contOla);
+				final double distKm = ola.getOlaPositionInKm().get();
+				final double gain_dB = ola.getGainDb();
 				final double powerAtOutput_dBm = osim.getTotalPowerAtAmplifierOutput_dBm(e, contOla);
-				
-				if (powerAtOutput_dBm < e.getOlaMinAcceptableOutputPower_dBm().get(contOla) || powerAtOutput_dBm > e.getOlaMaxAcceptableOutputPower_dBm().get(contOla))
-					st.append("<p>EDFA-" + contOla + " ("+ df.apply(distKm) + " km)" + ": Power at the output is " + df.apply(powerAtOutput_dBm) + " dBm. It should be between [" + df.apply(e.getOlaMinAcceptableOutputPower_dBm().get(contOla)) + ", " + df.apply(e.getOlaMaxAcceptableOutputPower_dBm().get(contOla)) + "] dBm</p>");
-				if (gain_dB < e.getOlaMinAcceptableGains_dB().get(contOla) || gain_dB > e.getOlaMaxAcceptableGains_dB().get(contOla))
-					st.append("<p>EDFA-" + contOla + " ("+ df.apply(distKm) + " km)" + ": Gain is " + df.apply(gain_dB) + " dB. It should be between [" + df.apply(e.getOlaMinAcceptableGains_dB().get(contOla)) + ", " + df.apply(e.getOlaMaxAcceptableGains_dB().get(contOla)) + "] dBm</p>");
+				if (powerAtOutput_dBm < ola.getMinAcceptableOutputPower_dBm() || powerAtOutput_dBm > ola.getMaxAcceptableOutputPower_dBm())
+					st.append("<p>EDFA-" + contOla + " ("+ df.apply(distKm) + " km)" + ": Power at the output is " + df.apply(powerAtOutput_dBm) + " dBm. It should be between [" + df.apply(ola.getMinAcceptableOutputPower_dBm()) + ", " + df.apply(ola.getMaxAcceptableOutputPower_dBm()) + "] dBm</p>");
+				if (!ola.isOkGainBetweenMargins())
+					st.append("<p>EDFA-" + contOla + " ("+ df.apply(distKm) + " km)" + ": Gain is " + df.apply(gain_dB) + " dB. It should be between [" + df.apply(ola.getMinAcceptableGainDb()) + ", " + df.apply(ola.getMaxAcceptableGainDb()) + "] dBm</p>");
 			}
 			out.append("<td>" + st.toString() + "</td>");
 			out.append("</tr>");
@@ -283,13 +287,14 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 					final int numOlas = e.getNumberOfOpticalLineAmplifiersTraversed();
 					final boolean lastFiber = contFiber == seqFibers.size() - 1;
 					final WFiber nextFiber = lastFiber ? null : seqFibers.get(contFiber + 1);
+					final List<OpticalAmplifierInfo> olas = e.getOpticalLineAmplifiersInfo();
 					for (int olaIndex = 0; olaIndex < numOlas ; olaIndex ++)
 					{
 						out.
 						append("<tr>").
 						append("<td>" + "OLA " + olaIndex + "</td>").
 						append("<td>" + "OLA " + "</td>").
-						append("<td>" + distanceAfterTravXFibers.apply(contFiber) + e.getAmplifierPositionsKmFromOrigin_km().get(olaIndex)  +"</td>").
+						append("<td>" + distanceAfterTravXFibers.apply(contFiber) + olas.get(olaIndex).getOlaPositionInKm().get() +"</td>").
 						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getPower_dbm()) + " dBm" + "</td>").
 						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getPower_dbm()) + " dBm" + "</td>").
 						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").

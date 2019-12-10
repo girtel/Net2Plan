@@ -18,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.net2plan.niw.OadmArchitecture_generic;
+import com.net2plan.niw.OpticalAmplifierInfo;
 import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.OsmLightpathOccupationInfo;
@@ -322,17 +323,26 @@ public class NiwModelTest extends TestCase
 		fibers.forEach(e->e.setIsExistingBoosterAmplifierAtOriginOadm(true));
 		fibers.forEach(e->e.setIsExistingPreamplifierAtDestinationOadm(true));
 		fibers.forEach(e->e.setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz(Optional.empty()));
-		fibers.forEach(e->e.setOriginBoosterAmplifierGain_dB(6.0));
-		fibers.forEach(e->e.setDestinationPreAmplifierGain_dB(20.0));
-		fibers.forEach(e->e.setOriginBoosterAmplifierNoiseFactor_dB(6.0));
-		fibers.forEach(e->e.setDestinationPreAmplifierNoiseFactor_dB(6.0));
-		fibers.forEach(e->e.setOriginBoosterAmplifierCdCompensation_psPerNm(-10.0));
-		fibers.forEach(e->e.setDestinationPreAmplifierCdCompensation_psPerNm(-10.0));
-		fibers.forEach(e->e.setOriginBoosterAmplifierPmd_ps(0.5));
-		fibers.forEach(e->e.setDestinationPreAmplifierPmd_ps(0.5));
+		final OpticalAmplifierInfo booster = OpticalAmplifierInfo.getDefaultBooster();
+		booster.setGainDb(6.0);
+		booster.setNoiseFigureDb(6.0);
+		booster.setCdCompensationPsPerNm(-10.0);
+		booster.setPmdPs(0.5);
+		fibers.forEach(e->e.setOriginBoosterAmplifierInfo(booster));
+		final OpticalAmplifierInfo pream = OpticalAmplifierInfo.getDefaultPreamplifier();
+		pream.setGainDb(20.0);
+		pream.setNoiseFigureDb(6.0);
+		pream.setCdCompensationPsPerNm(-10.0);
+		pream.setPmdPs(0.5);
+		fibers.forEach(e->e.setDestinationPreAmplifierInfo(pream));
 		final double olasPmd_ps = 0.5;
 		final double olasCdCompensation_psPerNm = -100.0;
-		fibers.forEach(e->e.setOlaTraversedInfo(Arrays.asList (80.0), Arrays.asList (20.0), Arrays.asList (6.0), Arrays.asList(olasPmd_ps), Arrays.asList(olasCdCompensation_psPerNm), null, null, null, null));
+		final OpticalAmplifierInfo ola = OpticalAmplifierInfo.getDefaultOla(80.0);
+		ola.setGainDb(20.0);
+		ola.setNoiseFigureDb(6.0);
+		ola.setCdCompensationPsPerNm(olasCdCompensation_psPerNm);
+		ola.setPmdPs(olasPmd_ps);
+		fibers.forEach(e->e.setOlaTraversedInfo(Arrays.asList (ola)));
 		for (int cont = 0 ; cont < 10 ; cont ++)
 		{
 			final WLightpathRequest lpr = net.addLightpathRequest(a, c, 100.0, false);

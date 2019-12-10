@@ -132,7 +132,17 @@ public class ImportMetroNetwork
             	e.setAttenuationCoefficient_dbPerKm(FIBERATTENUATIONCOEFFICIENT_DBPERKM);
             	e.setChromaticDispersionCoeff_psPerNmKm(FIBERCHROMATICDISPERSIONCOEFFICIENT_PSPERNMPERKM);
             	e.setPmdLinkDesignValueCoeff_psPerSqrtKm(FIBERLINKDESIGNVALUEPMD_PSPERSQRKM);
-            	e.setOlaTraversedInfo(AMPLIFIERSPOSITIONFROMORIGIN_KM, AMPLIFIERGAINS_DB, AMPLIFIERNOISEFACTOR_DB, AMPLIFIERPMD_PS , null , null , null , null , null);
+            	final List<OpticalAmplifierInfo> olasInfo = new ArrayList<> ();
+            	for (int cont = 0 ; cont < AMPLIFIERSPOSITIONFROMORIGIN_KM.size() ; cont ++)
+            	{
+            		final OpticalAmplifierInfo info = OpticalAmplifierInfo.getDefaultOla(1.0);
+            		info.setOlaPositionInKm(AMPLIFIERSPOSITIONFROMORIGIN_KM.get(cont));
+            		info.setGainDb(AMPLIFIERGAINS_DB.get(cont));
+            		info.setNoiseFigureDb(AMPLIFIERNOISEFACTOR_DB.get(cont));
+            		info.setPmdPs(AMPLIFIERPMD_PS.get(cont));
+            		olasInfo.add(info);
+            	}
+            	e.setOlaTraversedInfo(olasInfo);
             	e.setArbitraryParamString(arbitraryParamsString);
         	}
         }
