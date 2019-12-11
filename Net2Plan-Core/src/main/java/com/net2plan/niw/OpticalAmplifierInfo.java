@@ -107,10 +107,10 @@ public class OpticalAmplifierInfo
 	public static OpticalAmplifierInfo getDefaultPreamplifier ()
 	{
 		return new OpticalAmplifierInfo(-1.0, 
-				WNetConstants.WFIBER_DEFAULT_BOOSTER_GAIN_DB, 
-				WNetConstants.WFIBER_DEFAULT_BOOSTER_NF_DB, 
-				WNetConstants.WFIBER_DEFAULT_BOOSTER_CD_PSPERNM, 
-				WNetConstants.WFIBER_DEFAULT_BOOSTER_PMD_PS, 
+				WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_GAIN_DB, 
+				WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_NF_DB, 
+				WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_CD_PSPERNM, 
+				WNetConstants.WFIBER_DEFAULT_PREAMPLIFIER_PMD_PS, 
 				WNetConstants.WFIBER_DEFAULT_OLAMINGAIN_DB.get(0), 
 				WNetConstants.WFIBER_DEFAULT_OLAMAXGAIN_DB.get(0),
 				WNetConstants.WFIBER_DEFAULT_OLAMINOUTPUTPOWER_DBM.get(0), 

@@ -42,9 +42,6 @@ public class WNetConstants
 	public static final double WNODE_DEFAULT_RAM = 15;
 	public static final double WNODE_DEFAULT_HD = 15;
 	
-	public static final double WNODE_DEFAULT_OPTICALSWITCHFABRIC_ATTENUATION_DB = 10.0;
-	public static final double WNODE_DEFAULT_OPTICALSWITCHFABRIC_PMD_PS = 0.0;
-
 	public static final double WLIGHTPATH_DEFAULT_TRANSPONDERADDINJECTIONPOWER_DBM = 0.0;
 	public static final double WLIGHTPATH_DEFAULT_MINIMUMACCEPTABLERECEPTIONPOWER_DBM = -20.0;
 	public static final double WLIGHTPATH_DEFAULT_MAXIMUMACCEPTABLERECEPTIONPOWER_DBM = 10.0;
@@ -63,7 +60,7 @@ public class WNetConstants
 	public static final List<Double> WFIBER_DEFAULT_OLAMAXGAIN_DB = Arrays.asList(30.0);
 	public static final List<Double> WFIBER_DEFAULT_OLAMINOUTPUTPOWER_DBM = Arrays.asList(-6.0);
 	public static final List<Double> WFIBER_DEFAULT_OLAMAXOUTPUTPOWER_DBM = Arrays.asList(19.0);
-	public static final double WFIBER_DEFAULT_BOOSTER_GAIN_DB = WNODE_DEFAULT_OPTICALSWITCHFABRIC_ATTENUATION_DB;
+	public static final double WFIBER_DEFAULT_BOOSTER_GAIN_DB = 10.0;
 	public static final double WFIBER_DEFAULT_PREAMPLIFIER_GAIN_DB = 20.0;
 	public static final double WFIBER_DEFAULT_BOOSTER_NF_DB = 6.0;
 	public static final double WFIBER_DEFAULT_PREAMPLIFIER_NF_DB = 6.0;
@@ -71,7 +68,7 @@ public class WNetConstants
 	public static final double WFIBER_DEFAULT_BOOSTER_CD_PSPERNM = 0.0;
 	public static final double WFIBER_DEFAULT_PREAMPLIFIER_PMD_PS = 0.5;
 	public static final double WFIBER_DEFAULT_PREAMPLIFIER_CD_PSPERNM = 0.0;
-	public static final double WFIBER_DEFAULT_PREBOOSTER_OUTPUTEQUALIZATION_MWPERGHZ = OpticalSimulationModule.dB2linear(WLIGHTPATH_DEFAULT_TRANSPONDERADDINJECTIONPOWER_DBM - WNODE_DEFAULT_OPTICALSWITCHFABRIC_ATTENUATION_DB) / 50.0; // equalize add and express channels make it equal to ADD channel power at booster input
+	public static final double WFIBER_DEFAULT_PREBOOSTER_OUTPUTEQUALIZATION_MWPERGHZ = OpticalSimulationModule.dB2linear(WLIGHTPATH_DEFAULT_TRANSPONDERADDINJECTIONPOWER_DBM - 10.0) / 50.0; // equalize add and express channels make it equal to ADD channel power at booster input
 
 	static final double WFIBER_DEFAULT_PROPAGATIONSPEEDKMPERSEC = 200000;
 	public static final List<Double> WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE = Arrays.asList(1.0,320.0);

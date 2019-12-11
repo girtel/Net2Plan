@@ -224,7 +224,10 @@ public class OpticalSpectrumManager
     public SortedMap<Integer,SortedSet<WLightpath>> getOccupiedResources (WFiber fiber , OpticalSignalOccupationType signalOccupationType)
     {
     	checkSameWNet(fiber);
-    	return this.legitimateSignal_perFiberOccupation.getOccupiedSlotIds(fiber);
+    	if (signalOccupationType.isLegitimate())
+    		return this.legitimateSignal_perFiberOccupation.getOccupiedSlotIds(fiber);
+    	else 
+    		return this.wasteSignal_perFiberOccupation.getOccupiedSlotIds(fiber);
     }
 
     /** FA: Given a node and the index of the directionless add module, and the type of optical signal of interest (waste or legitimate), returns a map with the occupied optical slot ids, mapped to the set of lightpaths that occupy it.
