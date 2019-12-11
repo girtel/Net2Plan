@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.stream.IntStream;
 
@@ -233,6 +234,24 @@ public class OpticalSimulationModule
    	 return this;
     }
         
+	public Optional<Double> getMaxtoMinPerPowerDensityRatioAmongTraversingLightpathsAtFiberInput_dB (WFiber fiber)
+	{
+		final SortedSet<WLightpath> lps = fiber.getTraversingLps();
+		if (lps.isEmpty()) return Optional.empty();
+		Double minDensity_mwPerGHz = null;
+		Double maxDensity_mwPerGHz = null;
+		for (WLightpath lp : lps)
+		{
+			final double density_mwPerGHz = dB2linear(this.getOpticalPerformanceOfLightpathAtFiberEnds(fiber, lp).getFirst().getPower_dbm()) / (lp.getOpticalSlotIds().size() * WNetConstants.OPTICALSLOTSIZE_GHZ);
+			if (minDensity_mwPerGHz == null) minDensity_mwPerGHz = density_mwPerGHz; else minDensity_mwPerGHz = Math.min(density_mwPerGHz, minDensity_mwPerGHz);
+			if (maxDensity_mwPerGHz == null) maxDensity_mwPerGHz = density_mwPerGHz; else maxDensity_mwPerGHz = Math.max(density_mwPerGHz, maxDensity_mwPerGHz);
+		}
+		return minDensity_mwPerGHz <= 0? Optional.empty() : Optional.of(linear2dB(maxDensity_mwPerGHz / minDensity_mwPerGHz));
+	}
+	
+
+    
+    
     public List<Double> getTotalPowerAtAmplifierInputs_dBm (WFiber fiber)
     {
     	return perFiberTotalPower_valStartEndAndAtEachOlaInputOutput.get(fiber).getThird();

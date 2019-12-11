@@ -46,6 +46,9 @@ import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkElement;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.niw.IOadmArchitecture;
+import com.net2plan.niw.OadmArchitecture_generic;
+import com.net2plan.niw.OadmArchitecture_generic.Parameters;
 import com.net2plan.niw.OpticalAmplifierInfo;
 import com.net2plan.niw.OpticalSimulationModule;
 import com.net2plan.niw.OpticalSpectrumManager;
@@ -156,6 +159,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Idle slots", "Number of idle slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) in this fiber", null , d->ospec.getIdleOpticalSlotIds(toWFiber.apply(d)).size() , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Clashing slots", "Number of slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) occupied by two or more lightpaths, whose signal would be destroyed", null , d->ospec.getNumberOfClashingOpticalSlotIds(toWFiber.apply(d)) , AGTYPE.NOAGGREGATION , d->ospec.getNumberOfClashingOpticalSlotIds(toWFiber.apply(d)) > 0? Color.RED : null));
               res.add(new AjtColumnInfo<Link>(this , String.class, null , "Out power equalization (mW/GHz)", "If set, means that the power at the start of the fiber (before the booster, if any) is equalized by the WSS associated to this degree in the origin OADM. Then, here we indicate the power density enforced by the WSS inside the OADM switch fabric for this degree, and thus before the booster amplifier. The power is expressed as mW per GHz", null , d->toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().isPresent()? toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() : "No equalization", AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Max. to min. lp power density ratio (dB)", "The ratio between the highest and the lowest power density among the traversing lightpaths, measured at the start of this fiber (after the booster). If the fiber and amplifiers affect equally all the wavelengths, this ratio is supposed to be constant along the fiber", null , d->{ final Double v = osim.getMaxtoMinPerPowerDensityRatioAmongTraversingLightpathsAtFiberInput_dB(toWFiber.apply(d)).orElse(null); return v ==null? "--" : df2.apply(v); } , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Net gain (dB)" , "Net gain of this fiber link, considering effect of line amplifiers and fiber attenuation, but not considering booster or pre-amplifiers", null , d->toWFiber.apply(d).getNetGain_dB() , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Net CD (ps/nm)" , "Net accummulated chromatic dispersion in the WDM link, considering fiber CD coefficient, and potnetial compensation in the line amplifiers, but not considering any effect of booster or pre-amplifiers", null , d->toWFiber.apply(d).getAccumulatedChromaticDispersion_psPerNm() , AGTYPE.NOAGGREGATION , null));
     	
@@ -778,6 +782,20 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
             res.add(new AjtRcMenu("Set fiber initial booster amplifier", null , (a,b)->b>0, Arrays.asList(
             		new AjtRcMenu("place a booster amplifier", e->getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(true)) , (a,b)->b>0, null),
             		new AjtRcMenu("remove booster amplifier (if any)", e->getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setIsExistingBoosterAmplifierAtOriginOadm(false)) , (a,b)->b>0, null),
+            		new AjtRcMenu("set booster gain (if any) to compensate OADM attenuation for express lightpaths", e->
+    				{
+    					for (WFiber ee: getSelectedElements().stream().map(ee->toWFiber.apply(ee)).filter(ee->ee.getOriginBoosterAmplifierInfo().isPresent()).collect(Collectors.toList()))
+    					{
+    						final OpticalAmplifierInfo info = ee.getOriginBoosterAmplifierInfo().get();
+    						if (!(ee.getA ().getOpticalSwitchingArchitecture() instanceof OadmArchitecture_generic)) continue;
+    						final Parameters oadmParam = ((OadmArchitecture_generic) ee.getA ().getOpticalSwitchingArchitecture()).getParameters();
+    						final Double attenuatationExpressInputModule_dB = oadmParam.getExpressAttenuationForFiber0ToFiber0_dB().orElse(null);
+    						if (attenuatationExpressInputModule_dB == null) continue;
+    						info.setGainDb(attenuatationExpressInputModule_dB);
+    						ee.setOriginBoosterAmplifierInfo(info);
+    					}
+    				}
+   				 , (a,b)->b>0, null),
             		new AjtRcMenu("set booster amplification info to selected fibers", e->
                     {
                     	final WFiber firstFiber = getSelectedElements().stream().map(ee->toWFiber.apply(ee)).findFirst().orElse(null);

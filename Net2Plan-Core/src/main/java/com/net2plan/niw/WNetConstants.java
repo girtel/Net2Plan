@@ -56,7 +56,7 @@ public class WNetConstants
 	public static final List<Double> WFIBER_DEFAULT_OLAPMD_PS = Arrays.asList(15.0);
 	public static final List<Double> WFIBER_DEFAULT_OLACDCOMPENSATION = Arrays.asList(0.0);
 	public static final List<Double> WFIBER_DEFAULT_OLANOISEFACTOR_DB = Arrays.asList(6.0);
-	public static final List<Double> WFIBER_DEFAULT_OLAMINGAIN_DB = Arrays.asList(15.0);
+	public static final List<Double> WFIBER_DEFAULT_OLAMINGAIN_DB = Arrays.asList(9.0);
 	public static final List<Double> WFIBER_DEFAULT_OLAMAXGAIN_DB = Arrays.asList(30.0);
 	public static final List<Double> WFIBER_DEFAULT_OLAMINOUTPUTPOWER_DBM = Arrays.asList(-6.0);
 	public static final List<Double> WFIBER_DEFAULT_OLAMAXOUTPUTPOWER_DBM = Arrays.asList(19.0);

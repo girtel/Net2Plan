@@ -143,7 +143,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		param.put(PARAMNAMES.AddDropModuleType.name(), newParameters.getAddDropModuleType());
 		param.put(PARAMNAMES.MuxDemuxLoss_dB.name(), newParameters.getMuxDemuxLoss_dB() + "");
 		param.put(PARAMNAMES.MuxDemuxPmd_ps.name(), newParameters.getMuxDemuxPmd_ps() + "");
-		param.put(PARAMNAMES.DegreeSplitterCombinerOptionalLoss_dB.name (), newParameters.getDegreeSplitterCombinerLoss_dB().orElse (-100.0) + "");
+		param.put(PARAMNAMES.DegreeSplitterCombinerOptionalLoss_dB.name (), newParameters.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse (-100.0) + "");
 		param.put(PARAMNAMES.DirlessAddDropSplitterCombinerOptionalLoss_dB.name (), newParameters.getDirlessAddDropSplitterCombinerLoss_dB().orElse (-100.0) + "");
 		param.put(PARAMNAMES.WssLoss_dB.name(), newParameters.getWssLoss_dB() + "");
 		param.put(PARAMNAMES.WssPmd_ps.name(), newParameters.getWssPmd_ps() + "");
@@ -213,9 +213,21 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		public double getMuxDemuxPmd_ps() { return muxDemuxPmd_ps; }
 		public double getWssLoss_dB() { return wssLoss_dB; }
 		public double getWssPmd_ps() { return wssPmd_ps; }
-		public Optional<Double> getDegreeSplitterCombinerLoss_dB () { return degreeSplitterCombinerLoss_dB.orElse(-100.0) < 0? Optional.empty() : degreeSplitterCombinerLoss_dB; }
+		public Optional<Double> getManuallySettledDegreeSplitterCombinerLoss_dB () { return degreeSplitterCombinerLoss_dB.orElse(-100.0) < 0? Optional.empty() : degreeSplitterCombinerLoss_dB; }
 		public Optional<Double> getDirlessAddDropSplitterCombinerLoss_dB () { return dirlessAddDropSplitterCombinerLoss_dB.orElse(-100.0) < 0? Optional.empty() : dirlessAddDropSplitterCombinerLoss_dB; }
 
+		public Optional<Double> getExpressAttenuationForFiber0ToFiber0_dB ()
+		{
+			final WNode node = OadmArchitecture_generic.this.getHostNode();
+			final SortedSet<WFiber> inFibers = node.getIncomingFibers();
+			final SortedSet<WFiber> outFibers = node.getOutgoingFibers();
+			if (inFibers.isEmpty() || outFibers.isEmpty()) return Optional.empty();
+			final double inModuleAttenuation_dB = this.isRouteAndSelect()? this.getWssLoss_dB() : this.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumOutputsOfInDegreeSplitter(inFibers.first(), this)));
+			final double outModuleAttenuation_dB = this.isFilterless()? this.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(outFibers.first(), this))) : this.getWssLoss_dB();
+			return Optional.of(inModuleAttenuation_dB + outModuleAttenuation_dB);
+		}
+		
+		
 		public boolean isRouteAndSelect () { return getArchitectureType().equalsIgnoreCase("R&S"); }
 		public boolean isBroadcastAndSelect () { return getArchitectureType().equalsIgnoreCase("B&S"); }
 		public boolean isFilterless () { return getArchitectureType().equalsIgnoreCase("Filterless"); }
@@ -291,7 +303,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (p.isFilterless())
 		{
 			// out degree is coupler based
-			lossOutDegreePart_dB = p.getDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(output, p)));
+			lossOutDegreePart_dB = p.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(output, p)));
 			pmdOutDegreePart_ps2 = 0.0;
 		}
 		else
@@ -334,7 +346,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		else
 		{
 			// in degree is coupler based
-			lossInDegreePart_dB = p.getDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB (getNumOutputsOfInDegreeSplitter(inputFiber, p)));
+			lossInDegreePart_dB = p.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB (getNumOutputsOfInDegreeSplitter(inputFiber, p)));
 			pmdInDegreePart_ps2 = 0.0;
 		}
 		
@@ -381,7 +393,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		else
 		{
 			// in degree is coupler based
-			lossInDegreePart_dB = p.getDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumOutputsOfInDegreeSplitter(inputFiber, p)));
+			lossInDegreePart_dB = p.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumOutputsOfInDegreeSplitter(inputFiber, p)));
 			pmdInDegreePart_ps2 = 0.0;
 		}
 		
@@ -390,7 +402,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		if (p.isFilterless())
 		{
 			// out degree is coupler based
-			lossOutDegreePart_dB = p.getDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(outputFiber, p)));
+			lossOutDegreePart_dB = p.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(outputFiber, p)));
 			pmdOutDegreePart_ps2 = 0.0;
 		}
 		else
