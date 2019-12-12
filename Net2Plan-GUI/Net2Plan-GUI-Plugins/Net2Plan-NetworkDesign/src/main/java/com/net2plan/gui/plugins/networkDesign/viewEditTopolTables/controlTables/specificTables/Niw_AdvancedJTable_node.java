@@ -39,6 +39,7 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.niw.IOadmArchitecture;
 import com.net2plan.niw.OadmArchitecture_generic;
 import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WLightpathRequest;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNode;
@@ -196,7 +197,43 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
         	final List<AjtRcMenu> menusForEachOpticalSwitchType = new ArrayList<> ();
         	for (IOadmArchitecture arc : IOadmArchitecture.availableRepresentatives)
         		menusForEachOpticalSwitchType.add(new AjtRcMenu(arc.getShortName(), e->getSelectedElements().forEach(ee->toWNode.apply(ee).setOpticalSwitchArchitecture(arc.getClass ())) , (a,b)->b>0, null));
-            res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null , (a,b)->b>0, menusForEachOpticalSwitchType));
+
+    		res.add(new AjtRcMenu("Add full-mesh of bidirectional lightpath requests among selected nodes", e->
+            {
+                DialogBuilder.launch(
+                        "Add full-mesh of lightpath requests" , 
+                        "Please introduce the required data", 
+                        "", 
+                        this, 
+                        Arrays.asList(
+                        		InputForDialog.inputTfDouble ("Line rate (Gbps)", "Introduce the line rate of the lightpaths realizing this request", 20, 100.0),
+                        		InputForDialog.inputCheckBox("1+1 protected?", "Indicate if this lighptath request has to be realized by a 1+1 arrangement of two lightpaths", false , null),
+                        		InputForDialog.inputTfInt("Number of lightpath requests for each node pair", "Number of lightpath requests to create", 10, 1)
+                        		),
+                        (list)->
+                        	{
+                        		final Double lineRateGbps = (Double) list.get(0).get();
+                        		final Boolean isToBe11Protected = (Boolean) list.get(1).get();
+                        		final Integer numRequests = (Integer) list.get(2).get();
+                        		for (WNode a : getSelectedElements().stream().map(n->toWNode.apply(n)).collect(Collectors.toList()))
+                        		{
+                            		for (WNode b : getSelectedElements().stream().map(n->toWNode.apply(n)).collect(Collectors.toList()))
+                            		{
+                            			if (a.getId() <= b.getId()) continue;
+                                		for (int cont = 0; cont < numRequests ; cont ++)
+                                		{
+                                    		final WLightpathRequest lprAb = wNet.addLightpathRequest(a, b, lineRateGbps, isToBe11Protected);
+                                    		final WLightpathRequest lprBa = wNet.addLightpathRequest(b,a, lineRateGbps, isToBe11Protected);
+                                			lprAb.setBidirectionalPair(lprBa);
+                                		}
+                            		}
+                        		}
+                        	}
+                        );
+            } , (a,b)->true, null));
+
+        	
+        	res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null , (a,b)->b>0, menusForEachOpticalSwitchType));
     		res.add(new AjtRcMenu("Set number of add/drop directionless modules to selected nodes", e-> 
     		{
     			DialogBuilder.launch(
