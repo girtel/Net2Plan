@@ -78,11 +78,10 @@ public class NetPlanViewTableComponent_network extends JPanel {
                 	{
                 		final double val = Double.parseDouble(txt_niwOpticalSlotSizeGHz.getText());
                 		if (val > 0)
-                		{
                 			networkViewer.getNiwInfo().getSecond().setWdmOpticalSlotSizeInGHz(val);
-                		}
-                	} catch (Exception ee) { txt_niwOpticalSlotSizeGHz.setText("" + networkViewer.getNiwInfo().getSecond().getWdmOpticalSlotSizeInGHz());}
-    			}
+                	} catch (Exception ee) { }
+                	txt_niwOpticalSlotSizeGHz.setText("" + networkViewer.getNiwInfo().getSecond().getWdmOpticalSlotSizeInGHz());
+                }
     		});
         	
         }
@@ -188,11 +187,14 @@ public class NetPlanViewTableComponent_network extends JPanel {
         auxPanel.add(txt_currentDate , BorderLayout.CENTER); 
         auxPanel.add(updateDate, BorderLayout.EAST);
         this.add(auxPanel, "grow, wrap"); 
-        this.add(new JLabel("WDM layer optical slot size (GHz)"), "grow");
-        final JPanel auxPanel2 = new JPanel (new BorderLayout()); 
-        auxPanel2.add(txt_niwOpticalSlotSizeGHz , BorderLayout.CENTER); 
-        auxPanel2.add(update_niwOpticalSlotSizeGHz, BorderLayout.EAST);
-        this.add(auxPanel2, "grow, wrap"); 
+        if (isNiwActive)
+        {
+            this.add(new JLabel("WDM layer optical slot size (GHz)"), "grow");
+            final JPanel auxPanel2 = new JPanel (new BorderLayout()); 
+            auxPanel2.add(txt_niwOpticalSlotSizeGHz , BorderLayout.CENTER); 
+            auxPanel2.add(update_niwOpticalSlotSizeGHz, BorderLayout.EAST);
+            this.add(auxPanel2, "grow, wrap"); 
+        }
         //        this.add(new JLabel("Click this button to update the tables"), "grow");
 //        this.add(updateTables, "grow, wrap");
         this.add(new JLabel("Layer information"), "grow, spanx2, wrap");
