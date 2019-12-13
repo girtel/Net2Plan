@@ -105,7 +105,9 @@ public class NetPlanViewTableComponent_layer extends JPanel
         txt_layerDescription.setEditable(false);
         txt_layerDemandTrafficUnits = new JTextField();
         txt_layerDemandTrafficUnits.setEditable(false);
+        txt_layerDemandTrafficUnits.setText(networkViewer.getDesign().getDemandTrafficUnitsName(layerThisTable));
         txt_layerLinkCapacityUnits = new JTextField();
+        txt_layerLinkCapacityUnits.setText(networkViewer.getDesign().getLinkCapacityUnitsName(layerThisTable));
         txt_layerLinkCapacityUnits.setEditable(false);
 
         /*txt_layerName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
