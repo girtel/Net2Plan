@@ -111,7 +111,7 @@ public class WLightpath extends WAbstractNetworkElement
 	public double getCentralFrequencyThz ()
 	{
 		final double centralSlot = (getOpticalSlotIds().first() + getOpticalSlotIds().last())/2.0;
-		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + getNet().getWdmOpticalSlotSizeInGHz() * 1e-3 * centralSlot; 
 	}
 	
 	/** Returns the lowest frequency of this lightpath in THz
@@ -119,8 +119,8 @@ public class WLightpath extends WAbstractNetworkElement
 	 */
 	public double getLowestFrequencyThz ()
 	{
-		final double centralSlot = getOpticalSlotIds().first() - WNetConstants.OPTICALSLOTSIZE_GHZ *0.5;
-		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+		final double centralSlot = getOpticalSlotIds().first() - getNet().getWdmOpticalSlotSizeInGHz() *0.5;
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + getNet().getWdmOpticalSlotSizeInGHz() * 1e-3 * centralSlot; 
 	}
 	
 	/** Returns the highest frequency of this lightpath in THz
@@ -128,8 +128,8 @@ public class WLightpath extends WAbstractNetworkElement
 	 */
 	public double getHighestFrequencyThz ()
 	{
-		final double centralSlot = getOpticalSlotIds().last() + WNetConstants.OPTICALSLOTSIZE_GHZ *0.5;
-		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+		final double centralSlot = getOpticalSlotIds().last() + getNet().getWdmOpticalSlotSizeInGHz() *0.5;
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + getNet().getWdmOpticalSlotSizeInGHz() * 1e-3 * centralSlot; 
 	}
 
 	//	private static final String ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS = "receiverMaximumPmd_ps";

@@ -49,7 +49,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
     private final static String[] tagTableTip = StringUtils.arrayOf("Name of the tag");
 
     private JTextField txt_networkName, txt_numLayers, txt_numNodes, txt_numSRGs , txt_currentDate;
-    private JButton updateTables;
+    private JButton updateDate;
     private JTextArea txt_networkDescription;
     private AdvancedJTable networkTagTable;
     private AdvancedJTable networkAttributeTable;
@@ -61,9 +61,9 @@ public class NetPlanViewTableComponent_network extends JPanel {
 
         this.layerTable = layerTable;
         this.networkViewer = networkViewer;
-        updateTables = new JButton ("Update");
-        updateTables.setEnabled(true);
-        updateTables.addActionListener(new ActionListener() 
+        updateDate = new JButton ("Update");
+        updateDate.setEnabled(true);
+        updateDate.addActionListener(new ActionListener() 
         {
 			@Override
 			public void actionPerformed(ActionEvent e) 
@@ -184,7 +184,7 @@ public class NetPlanViewTableComponent_network extends JPanel {
         this.add(new JLabel("Current date (yyyy-MM-dd HH:mm:ss)"), "grow");
         final JPanel auxPanel = new JPanel (new BorderLayout()); 
         auxPanel.add(txt_currentDate , BorderLayout.CENTER); 
-        auxPanel.add(updateTables, BorderLayout.EAST);
+        auxPanel.add(updateDate, BorderLayout.EAST);
         this.add(auxPanel, "grow, wrap"); 
 //        this.add(new JLabel("Click this button to update the tables"), "grow");
 //        this.add(updateTables, "grow, wrap");

@@ -277,6 +277,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 			WFiber output , int numOpticalSlotsNeededIfEqualization) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
+		final WNet net = output.getNet();
 		
 		final double lossesAddPart_dB;
 		final double pmdAddPart_ps2;
@@ -317,7 +318,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 				lossesAddPart_dB - 
 				lossOutDegreePart_dB; 
 		final double outputPowerIfEqualized_dBm = output.isOriginOadmConfiguredToEqualizeOutput()?
-				10 * Math.log10(numOpticalSlotsNeededIfEqualization * output.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * WNetConstants.OPTICALSLOTSIZE_GHZ):
+				10 * Math.log10(numOpticalSlotsNeededIfEqualization * output.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * net.getWdmOpticalSlotSizeInGHz()):
 					-Double.MAX_VALUE;
 		if (output.isOriginOadmConfiguredToEqualizeOutput())
 			if (outputPowerWithoutEqualization_dBm < outputPowerIfEqualized_dBm)
@@ -381,7 +382,8 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 			WFiber outputFiber , int numOpticalSlotsNeededIfEqualization) 
 	{
 		final Parameters p = new Parameters(getCurrentParameters().orElse(getDefaultParameters()));
-
+		final WNet net = outputFiber.getNet();
+		
 		final double lossInDegreePart_dB;
 		final double pmdInDegreePart_ps2;
 		if (p.isRouteAndSelect())
@@ -415,7 +417,7 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 				lossInDegreePart_dB - 
 				lossOutDegreePart_dB; 
 		final double outputPowerIfEqualized_dBm = outputFiber.isOriginOadmConfiguredToEqualizeOutput()?
-				10 * Math.log10(numOpticalSlotsNeededIfEqualization * outputFiber.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * WNetConstants.OPTICALSLOTSIZE_GHZ) :
+				10 * Math.log10(numOpticalSlotsNeededIfEqualization * outputFiber.getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() * net.getWdmOpticalSlotSizeInGHz()) :
 					-Double.MAX_VALUE;
 		if (outputFiber.isOriginOadmConfiguredToEqualizeOutput())
 			if (outputPowerWithoutEqualization_dBm < outputPowerIfEqualized_dBm)

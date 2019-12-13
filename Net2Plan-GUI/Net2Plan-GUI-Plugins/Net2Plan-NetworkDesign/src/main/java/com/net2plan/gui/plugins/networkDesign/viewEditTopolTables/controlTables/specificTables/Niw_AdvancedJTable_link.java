@@ -138,26 +138,26 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 		          if (isLinkUp) toWFiber.apply(d).setAsUp(); else toWFiber.apply(d).setAsDown(); 
 		      } , d->toWFiber.apply(d).isUp() , AGTYPE.COUNTTRUE , e->e.isUp()? null : Color.RED));
 		      //fibras..
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Freq. ranges (THz)", "The ranges of the frequencies that are valid in this fiber, e.g. because of affecting amplifiers limits and/or fiber limits", null , d->
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Freq. ranges (THz)", "The ranges of the frequencies that are valid in this fiber, e.g. because of affecting amplifiers limits and/or fiber limits. We print the central frequencies of the first (lowest frequency) and last (highest frequency) optical slots that are valid in this fiber.", null , d->
     	      {
     	    	  return toWFiber.apply(d).getValidOpticalSlotRanges().stream().
-    	    			  map(p->df2.apply(OpticalSimulationModule.getLowestFreqfSlotTHz(p.getFirst())) + " - " + df2.apply(OpticalSimulationModule.getHighestFreqfSlotTHz(p.getSecond()))).
+    	    			  map(p->df2.apply(OpticalSimulationModule.getCentralFreqfSlotTHz(p.getFirst() , net)) + " - " + df2.apply(OpticalSimulationModule.getCentralFreqfSlotTHz(p.getSecond() , net))).
     	    			  collect(Collectors.joining(", "));
     	      }, AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Spectrum (THz)", "The total available spectrum in the fiber to be used by WDM channels", null , d->
     	      {
     	    	  final int numChannels = toWFiber.apply(d).getNumberOfValidOpticalChannels();
-    	    	  return df2.apply(numChannels * WNetConstants.OPTICALSLOTSIZE_GHZ / 1000.0);
+    	    	  return df2.apply(numChannels * net.getWdmOpticalSlotSizeInGHz() / 1000.0);
     	      }, AGTYPE.NOAGGREGATION , null));
 		      res.add(new AjtColumnInfo<Link>(this , Boolean.class, null , "In lasing loop?", "", null , d->fibersInLasingLoops.contains(toWFiber.apply(d)) , AGTYPE.COUNTTRUE , e->fibersInLasingLoops.contains(toWFiber.apply(e))? Color.RED : null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Coef. CD ps/nm/km", "Chromatic disperion coefficient in ps/nm/km, assumed to be the same in all the wavelengths", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setChromaticDispersionCoeff_psPerNmKm((Double)val); }, d->toWFiber.apply(d).getChromaticDispersionCoeff_psPerNmKm() , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Coef. PMD-Q ps/sqrt(km)", "PMD fiber coefficient, typically called Link Design Value, or PMD-Q. Measured in ps per square root of km of fiber", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setPmdLinkDesignValueCoeff_psPerSqrtKm((Double)val); }, d->toWFiber.apply(d).getPmdLinkDesignValueCoeff_psPerSqrtKm() , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Coef. Attenuation dB/km", "Fiber attenuation coefficient, measured in dB/km, assumed to be the same for all the wavelengths", (d,val)->{ final WFiber e = toWFiber.apply(d); e.setAttenuationCoefficient_dbPerKm((Double)val); }, d->toWFiber.apply(d).getAttenuationCoefficient_dbPerKm() , AGTYPE.NOAGGREGATION , null));
 
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Valid slots", "Number of valid slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) in this fiber", null , d->toWFiber.apply(d).getValidOpticalSlotIds().size() , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Occupied slots", "Number of occupied slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) in this fiber", null , d->ospec.getOccupiedOpticalSlotIds(toWFiber.apply(d)).size() , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Idle slots", "Number of idle slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) in this fiber", null , d->ospec.getIdleOpticalSlotIds(toWFiber.apply(d)).size() , AGTYPE.NOAGGREGATION , null));
-    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Clashing slots", "Number of slots (each of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz) occupied by two or more lightpaths, whose signal would be destroyed", null , d->ospec.getNumberOfClashingOpticalSlotIds(toWFiber.apply(d)) , AGTYPE.NOAGGREGATION , d->ospec.getNumberOfClashingOpticalSlotIds(toWFiber.apply(d)) > 0? Color.RED : null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Valid slots", "Number of valid optical slots (each of " + net.getWdmOpticalSlotSizeInGHz() + " GHz) in this fiber", null , d->toWFiber.apply(d).getValidOpticalSlotIds().size() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Occupied slots", "Number of optical occupied slots (each of " + net.getWdmOpticalSlotSizeInGHz() + " GHz) in this fiber", null , d->ospec.getOccupiedOpticalSlotIds(toWFiber.apply(d)).size() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Idle slots", "Number of idle optical slots (each of " + net.getWdmOpticalSlotSizeInGHz() + " GHz) in this fiber", null , d->ospec.getIdleOpticalSlotIds(toWFiber.apply(d)).size() , AGTYPE.NOAGGREGATION , null));
+    	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "# Clashing slots", "Number of optical slots (each of " + net.getWdmOpticalSlotSizeInGHz() + " GHz) occupied by two or more lightpaths, whose signal would be destroyed", null , d->ospec.getNumberOfClashingOpticalSlotIds(toWFiber.apply(d)) , AGTYPE.NOAGGREGATION , d->ospec.getNumberOfClashingOpticalSlotIds(toWFiber.apply(d)) > 0? Color.RED : null));
               res.add(new AjtColumnInfo<Link>(this , String.class, null , "Out power equalization (mW/GHz)", "If set, means that the power at the start of the fiber (before the booster, if any) is equalized by the WSS associated to this degree in the origin OADM. Then, here we indicate the power density enforced by the WSS inside the OADM switch fabric for this degree, and thus before the booster amplifier. The power is expressed as mW per GHz", null , d->toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().isPresent()? toWFiber.apply(d).getOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz().get() : "No equalization", AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Max. to min. lp power density ratio (dB)", "The ratio between the highest and the lowest power density among the traversing lightpaths, measured at the start of this fiber (after the booster). If the fiber and amplifiers affect equally all the wavelengths, this ratio is supposed to be constant along the fiber", null , d->{ final Double v = osim.getMaxtoMinPerPowerDensityRatioAmongTraversingLightpathsAtFiberInput_dB(toWFiber.apply(d)).orElse(null); return v ==null? "--" : df2.apply(v); } , AGTYPE.NOAGGREGATION , null));
     	      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "Net gain (dB)" , "Net gain of this fiber link, considering effect of line amplifiers and fiber attenuation, but not considering booster or pre-amplifiers", null , d->toWFiber.apply(d).getNetGain_dB() , AGTYPE.NOAGGREGATION , null));
@@ -730,29 +730,33 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                     	}
                     ) , (a,b)->b>0, null));
             res.add(new AjtRcMenu("Set valid optical slot ranges to selected fibers", e-> 
-            DialogBuilder.launch(
-                    "Set valid optical slot ranges " , 
-                    "Please introduce the requested information. Each slot has a size of " + WNetConstants.OPTICALSLOTSIZE_GHZ + " GHz. Slot zero is centered at the frequency of " + WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + " THz", 
-                    "", 
-                    this, 
-                    Arrays.asList(InputForDialog.inputTfString("Space-separated indexes of the initial and final slots", "An even number of integers separated by spaces. Each pair of integers is the initial and end slot of a range of frequencies that is usable in this fiber.", 10, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE.stream().map(ee->""+ee.intValue()).collect (Collectors.joining(" ")))),
-                    (list)->
-                    	{
-                    		final String auxListSt = (String) list.get(0).get();
-                    		final List<Integer> auxList = Stream.of(auxListSt.split(" ")).map(ee->Integer.parseInt(ee)).collect(Collectors.toList());
-                    		final Iterator<Integer> it = auxList.iterator();
-                    		final List<Pair<Integer,Integer>> listSlotsRanges = new ArrayList<> ();
-                    		while (it.hasNext())
-                    		{
-                    			final int startRange = it.next();
-                    			if (!it.hasNext()) throw new Net2PlanException("Invalid optical slot ranges");
-                    			final int endRange = it.next();
-                    			if (endRange < startRange) throw new Net2PlanException("Invalid optical slot ranges");
-                    			listSlotsRanges.add(Pair.of(startRange, endRange));
-                    		}
-                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setValidOpticalSlotRanges(listSlotsRanges));
-                    	}
-                    ) , (a,b)->b>0, null));
+            {
+            	final WNet net = callback.getNiwInfo().getSecond();
+	            DialogBuilder.launch(
+	                    "Set valid optical slot ranges " , 
+	                    "Please introduce the requested information. Each slot has a size of " + net.getWdmOpticalSlotSizeInGHz () + " GHz. Slot zero is centered at the frequency of " + WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + " THz", 
+	                    "", 
+	                    this, 
+	                    Arrays.asList(InputForDialog.inputTfString("Space-separated indexes of the initial and final slots", "An even number of integers separated by spaces. Each pair of integers is the initial and end slot of a range of frequencies that is usable in this fiber.", 10, WNetConstants.WFIBER_DEFAULT_VALIDOPTICALSLOTRANGES_LISTDOUBLE.stream().map(ee->""+ee.intValue()).collect (Collectors.joining(" ")))),
+	                    (list)->
+	                    	{
+	                    		final String auxListSt = (String) list.get(0).get();
+	                    		final List<Integer> auxList = Stream.of(auxListSt.split(" ")).map(ee->Integer.parseInt(ee)).collect(Collectors.toList());
+	                    		final Iterator<Integer> it = auxList.iterator();
+	                    		final List<Pair<Integer,Integer>> listSlotsRanges = new ArrayList<> ();
+	                    		while (it.hasNext())
+	                    		{
+	                    			final int startRange = it.next();
+	                    			if (!it.hasNext()) throw new Net2PlanException("Invalid optical slot ranges");
+	                    			final int endRange = it.next();
+	                    			if (endRange < startRange) throw new Net2PlanException("Invalid optical slot ranges");
+	                    			listSlotsRanges.add(Pair.of(startRange, endRange));
+	                    		}
+	                    		getSelectedElements().stream().map(ee->toWFiber.apply(ee)).forEach(ee->ee.setValidOpticalSlotRanges(listSlotsRanges));
+	                    	}
+                    ); 
+	            }
+	            , (a,b)->b>0, null));
 
             res.add(new AjtRcMenu("Set fiber origin OADM pre-booster power equalization", e->
             {

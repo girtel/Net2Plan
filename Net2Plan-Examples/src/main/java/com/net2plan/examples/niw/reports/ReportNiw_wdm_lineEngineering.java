@@ -212,7 +212,7 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			out.append("<tr>").
 			append("<td>Id " + r.getId() + ". " + st_a_e + " --> " + st_b_e + "</td>").
 			append("<td>" + df.apply(r.getLengthInKm()) + "</td>").
-			append("<td>" + r.getOpticalSlotIds().size() + " (" + df.apply(r.getOpticalSlotIds().size()*WNetConstants.OPTICALSLOTSIZE_GHZ) + " GHz)" + "</td>").
+			append("<td>" + r.getOpticalSlotIds().size() + " (" + df.apply(r.getOpticalSlotIds().size()*r.getNet().getWdmOpticalSlotSizeInGHz()) + " GHz)" + "</td>").
 			append("<td>" + r.getSeqFibers().stream().mapToInt(e->e.getNumberOfOpticalLineAmplifiersTraversed()).sum() + "</td>").
 			append("<td>" + (r.getSeqFibers().size()+1) + "</td>").
 			append("<td>" + df.apply(r.getAddTransponderInjectionPower_dBm()) + "</td>");

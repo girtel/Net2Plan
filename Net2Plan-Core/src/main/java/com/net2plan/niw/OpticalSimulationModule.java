@@ -25,8 +25,8 @@ import com.net2plan.utils.Quadruple;
  * using this object methods to check if routing and spectrum assignments (RSAs) of new lightpaths are valid. Also, this object 
  * includes some methods for simple RSA recommendations, e.g. first-fit assignments
  * (occupy idle and valid resources)
- * Occupation is represented by optical slots, each defined by an integer. The central frequency of optical slot i is 193.1+i*0.0125 THz.
- * All optical slots are supposed to have the same width 12.5 GHz (see WNetConstants)
+ * Occupation is represented by optical slots, each defined by an integer. The central frequency of optical slot i is 193.1+i*slotSizeTHz THz.
+ * All optical slots are supposed to have the same width (slot size), returned by the (WNet) getWdmOpticalSlotSizeInGHz. 
  *
  */
 public class OpticalSimulationModule
@@ -237,12 +237,13 @@ public class OpticalSimulationModule
 	public Optional<Double> getMaxtoMinPerPowerDensityRatioAmongTraversingLightpathsAtFiberInput_dB (WFiber fiber)
 	{
 		final SortedSet<WLightpath> lps = fiber.getTraversingLps();
+		final WNet net = fiber.getNet();
 		if (lps.isEmpty()) return Optional.empty();
 		Double minDensity_mwPerGHz = null;
 		Double maxDensity_mwPerGHz = null;
 		for (WLightpath lp : lps)
 		{
-			final double density_mwPerGHz = dB2linear(this.getOpticalPerformanceOfLightpathAtFiberEnds(fiber, lp).getFirst().getPower_dbm()) / (lp.getOpticalSlotIds().size() * WNetConstants.OPTICALSLOTSIZE_GHZ);
+			final double density_mwPerGHz = dB2linear(this.getOpticalPerformanceOfLightpathAtFiberEnds(fiber, lp).getFirst().getPower_dbm()) / (lp.getOpticalSlotIds().size() * net.getWdmOpticalSlotSizeInGHz());
 			if (minDensity_mwPerGHz == null) minDensity_mwPerGHz = density_mwPerGHz; else minDensity_mwPerGHz = Math.min(density_mwPerGHz, minDensity_mwPerGHz);
 			if (maxDensity_mwPerGHz == null) maxDensity_mwPerGHz = density_mwPerGHz; else maxDensity_mwPerGHz = Math.max(density_mwPerGHz, maxDensity_mwPerGHz);
 		}
@@ -305,13 +306,17 @@ public class OpticalSimulationModule
     {
     	return constant_c / (1000 * freqInThz);
     }
-    public static double getLowestFreqfSlotTHz (int slot)
+    public static double getLowestFreqfSlotTHz (int slot , WNet net)
     {
-    	return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + (slot - 0.5)  * (WNetConstants.OPTICALSLOTSIZE_GHZ/1000);
+    	return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + (slot - 0.5)  * (net.getWdmOpticalSlotSizeInGHz()/1000);
     }
-    public static double getHighestFreqfSlotTHz (int slot)
+    public static double getHighestFreqfSlotTHz (int slot , WNet net)
     {
-    	return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + (slot + 0.5)  * (WNetConstants.OPTICALSLOTSIZE_GHZ/1000);
+    	return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + (slot + 0.5)  * (net.getWdmOpticalSlotSizeInGHz()/1000);
+    }
+    public static double getCentralFreqfSlotTHz (int slot , WNet net)
+    {
+    	return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + slot * (net.getWdmOpticalSlotSizeInGHz()/1000);
     }
     
     public boolean isOkOpticalPowerAtAmplifierInputAllOlas (WFiber e)

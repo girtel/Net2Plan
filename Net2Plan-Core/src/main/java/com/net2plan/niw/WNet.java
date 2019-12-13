@@ -61,6 +61,7 @@ public class WNet extends WAbstractNetworkElement
 {
 	private static final String ATTNAME_VNFTYPELIST = NIWNAMEPREFIX + "VnfTypeListMatrix";
 	private static final String ATTNAME_USERSERVICELIST = NIWNAMEPREFIX + "userServiceListMatrix";
+	private static final String ATTNAME_WDMOPTICALSLOTSIZEGHZ = NIWNAMEPREFIX + "wdmOpticalSlotSizeGhz";
 
 	/** Creates a WNet object from a NetPlan object. Does not check its consistency as a valid NIW design
 	 * @param np see above
@@ -71,6 +72,18 @@ public class WNet extends WAbstractNetworkElement
 		this.np = np;
 	}
 	
+	/** Returns the size in GHz to be considered as the optical slot size in the system. Typically, 100 GHz, 50 GHz or 12.5 GHz.
+	 * Attending to the ITU conventions, central frequency (in THz) of slot n is given by 193.1 + (n * slotSizeInGhz/1000) 
+	 * @return see above
+	 */
+	public double getWdmOpticalSlotSizeInGHz () { final double val = getNe().getAttributeAsDouble(ATTNAME_WDMOPTICALSLOTSIZEGHZ, WNetConstants.DEFAULT_OPTICALSLOTSIZE_GHZ); return val <= 0? WNetConstants.DEFAULT_OPTICALSLOTSIZE_GHZ : val; }
+
+	/** Sets the size in GHz to be considered as the optical slot size in the system. Typically, 100 GHz, 50 GHz or 12.5 GHz.
+	 * Attending to the ITU conventions, central frequency (in THz) of slot n is given by 193.1 + (n * slotSizeInGhz/1000) 
+	 * @param slotSizeInGHz see above
+	 */
+	public void setWdmOpticalSlotSizeInGHz (double slotSizeInGHz) { getNe().setAttribute(ATTNAME_WDMOPTICALSLOTSIZEGHZ, slotSizeInGHz); }
+
 	/** Indicates if the NetPlan object is a valid NIW-readable design
 	 * @param np see above
 	 * @return see above

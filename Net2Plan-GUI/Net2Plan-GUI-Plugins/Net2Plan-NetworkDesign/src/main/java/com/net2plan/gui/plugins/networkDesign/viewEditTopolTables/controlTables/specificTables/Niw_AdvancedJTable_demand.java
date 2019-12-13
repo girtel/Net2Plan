@@ -570,6 +570,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             res.add(new AjtRcMenu("Add lightpath to selected requests", null , (a, b)->true, Arrays.asList( 
             		new AjtRcMenu("as shortest path, first-fit", e->
             		{
+            			final WNet net = callback.getNiwInfo().getSecond();
                         DialogBuilder.launch(
                                 "Add lightpath to selected requests" , 
                                 "Please introduce the required data", 
@@ -577,7 +578,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                                 this, 
                                 Arrays.asList(
                                 		InputForDialog.inputCheckBox("Shortest path in optical latency?", "If checked, the shortest path is computed considering optical latency as link cost, if not, the shortest patrh minimizes the number of traversed fibers", true, null),
-                                		InputForDialog.inputTfInt("Number of optical slots (" + df.format(WNetConstants.OPTICALSLOTSIZE_GHZ) + " GHz each)", "Introduce the number of optical slots to reserve for each lightpath", 10, 4),
+                                		InputForDialog.inputTfInt("Number of optical slots (" + df.format(net.getWdmOpticalSlotSizeInGHz()) + " GHz each)", "Introduce the number of optical slots to reserve for each lightpath", 10, 4),
                                 		InputForDialog.inputCheckBox("Use directionless ADD/DROP modules", "If checked, the lightpath will be added in an idle directionless add module in the origin OADM, and a directionless drop module in the dropped OADM. If not available, the lightpath is not placed. If not checked, the lightpath is attached to directionful modules in the add and drop OADMs. If the OADMs are not configured with these elemnts, the lightpath cannot be allocated.", false, null)
                                 		),
                                 (list)->
