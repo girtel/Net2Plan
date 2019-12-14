@@ -356,22 +356,22 @@ public class NiwModelTest extends TestCase
 		{
 			assertEquals (lp.getAddTransponderInjectionPower_dBm() ,  0.0 , 1e-3);
 			// -10log(2) from output degree combiner 
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(ab, lp).getFirst().getPower_dbm() ,  -3.0 , 1e-1);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(ab, lp).getSecond().getPower_dbm() ,  -23.0 , 1e-1);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(bc, lp).getFirst().getPower_dbm() ,  -3.0 , 1e-1);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(bc, lp).getSecond().getPower_dbm() ,  -23.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(ab, lp).getFirst().getPower_dbm() ,  -3.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(ab, lp).getSecond().getPower_dbm() ,  -23.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(bc, lp).getFirst().getPower_dbm() ,  -3.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(bc, lp).getSecond().getPower_dbm() ,  -23.0 , 1e-1);
 			assertEquals (osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).getPower_dbm() ,  -23.0 + 20 - 3  - 6.0, 1e-1);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, ab, 0).getFirst().getPower_dbm() ,  -23.0 , 1e-1);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, ab, 0).getSecond().getPower_dbm() ,  -3.0 , 1e-1);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, bc, 0).getFirst().getPower_dbm() ,  -23.0  , 1e-1);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, bc, 0).getSecond().getPower_dbm() ,  -3.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, ab, 0).getFirst().getPower_dbm() ,  -23.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, ab, 0).getSecond().getPower_dbm() ,  -3.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, bc, 0).getFirst().getPower_dbm() ,  -23.0  , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, bc, 0).getSecond().getPower_dbm() ,  -3.0 , 1e-1);
 		}
 		for (WFiber e : net.getFibers())
 		{
-			assertEquals (osm.getTotalPowerAtAmplifierInput_dBm(e, 0) , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, e, 0).getFirst().getPower_dbm())).sum ()) , 1e-1);
-			assertEquals (osm.getTotalPowerAtAmplifierOutput_dBm(e, 0) , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, e, 0).getSecond().getPower_dbm())).sum ()) , 1e-1);
-			assertEquals (osm.getTotalPowerAtFiberEnds_dBm(e).getFirst() , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtFiberEnds(e , lp).getFirst().getPower_dbm())).sum ()) , 1e-1);
-			assertEquals (osm.getTotalPowerAtFiberEnds_dBm(e).getSecond() , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtFiberEnds(e , lp).getSecond().getPower_dbm())).sum ()) , 1e-1);
+			assertEquals (osm.getTotalPowerAtLineAmplifierInput_dBm(e, 0) , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, e, 0).getFirst().getPower_dbm())).sum ()) , 1e-1);
+			assertEquals (osm.getTotalPowerAtLineAmplifierOutput_dBm(e, 0) , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, e, 0).getSecond().getPower_dbm())).sum ()) , 1e-1);
+			assertEquals (osm.getTotalPowerAtFiberEndsAfterBoosterBeforePreamplifier_dBm(e).getFirst() , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(e , lp).getFirst().getPower_dbm())).sum ()) , 1e-1);
+			assertEquals (osm.getTotalPowerAtFiberEndsAfterBoosterBeforePreamplifier_dBm(e).getSecond() , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(e , lp).getSecond().getPower_dbm())).sum ()) , 1e-1);
 		}
 		
 		for (WLightpath lp : net.getLightpaths())

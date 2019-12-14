@@ -91,9 +91,11 @@ public class OpticalSimulationModule
    public final static double constant_h = 6.62607004E-34; 
 	private final WNet wNet;
 	final private SortedMap<WLightpath,LpSignalState> perLpPerMetric_valAtDropTransponderEnd = new TreeMap<> ();
-	final private SortedMap<WFiber,SortedMap<WLightpath,Pair<LpSignalState,LpSignalState>>> perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl = new TreeMap<> ();
+	final private SortedMap<WFiber,SortedMap<WLightpath,Pair<LpSignalState,LpSignalState>>> perFiberPerLp_valStartAfterBoosterEndBeforePreampl = new TreeMap<> ();
 	final private SortedMap<WFiber,Quadruple<Double,Double,List<Double>,List<Double>>> perFiberTotalPower_valStartEndAndAtEachOlaInputOutput = new TreeMap<> ();
-	final private SortedMap<WFiber,SortedMap<WLightpath,SortedMap<Integer , Pair<LpSignalState,LpSignalState>>>> perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl = new TreeMap<> ();
+	final private SortedMap<WFiber,SortedMap<WLightpath,SortedMap<Integer , Pair<LpSignalState,LpSignalState>>>> perFiberPerLpPerOla_valInputOutputOla = new TreeMap<> ();
+	final private SortedMap<WFiber,SortedMap<WLightpath,Optional<LpSignalState>>> perFiberPerLp_valInputBooster = new TreeMap<> ();
+	final private SortedMap<WFiber,SortedMap<WLightpath,Optional<LpSignalState>>> perFiberPerLp_valOutputPreamplifier = new TreeMap<> ();
 	
 	public OpticalSimulationModule (WNet wNet) 
 	{
@@ -131,10 +133,12 @@ public class OpticalSimulationModule
     	System.out.println("Update all performance info");
    	 for (WFiber e : wNet.getFibers())
    	 {
-   		 perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.put(e, new TreeMap<> ());
-   		 perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.put(e, new TreeMap <> ());
+   		 perFiberPerLp_valStartAfterBoosterEndBeforePreampl.put(e, new TreeMap<> ());
+   		 perFiberPerLpPerOla_valInputOutputOla.put(e, new TreeMap <> ());
+   		perFiberPerLp_valInputBooster.put(e , new TreeMap<> ());
+   		perFiberPerLp_valOutputPreamplifier.put(e , new TreeMap<> ());
    		 for (WLightpath lp : e.getTraversingLps())
-   			perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.get(e).put(lp, new TreeMap<> ());
+   			perFiberPerLpPerOla_valInputOutputOla.get(e).put(lp, new TreeMap<> ());
    	 }
    	 for (WLightpath lp : wNet.getLightpaths())
    	 {
@@ -148,8 +152,8 @@ public class OpticalSimulationModule
    	   		 final boolean firstFiber = contFiber == 0;
    			 final Pair<LpSignalState,LpSignalState> infoToAdd = Pair.of(new LpSignalState(), new LpSignalState());
    			 final SortedMap<Integer , Pair<LpSignalState,LpSignalState>> infoToAddPerOla = new TreeMap<> ();
-   			 perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).put(lp, infoToAdd);
-   			 perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).put(lp, infoToAddPerOla);
+   			 perFiberPerLp_valStartAfterBoosterEndBeforePreampl.get(fiber).put(lp, infoToAdd);
+   			 perFiberPerLpPerOla_valInputOutputOla.get(fiber).put(lp, infoToAddPerOla);
    			
    			 final IOadmArchitecture oadm_a = fiber.getA().getOpticalSwitchingArchitecture();
    			 final LpSignalState state_startFiberBeforeBooster;
@@ -164,8 +168,10 @@ public class OpticalSimulationModule
    							beforePreviousFiberEndPreampl.getCopy();
 				state_startFiberBeforeBooster = oadm_a.getOutLpStateForExpressLp(afterPreviousFiberEndPreampl, previousFiber, fiber , numOpticalSlots);
    			 }
-   			 final LpSignalState state_startFiberAfterBooster = fiber.getOriginBoosterAmplifierInfo().isPresent()? 
-	   						getStateAfterOpticalAmplifier (centralFrequency_hz , state_startFiberBeforeBooster , fiber.getOriginBoosterAmplifierInfo().get()) : 
+   			 final Optional<OpticalAmplifierInfo> boosterAmplifierInfo = fiber.getOriginBoosterAmplifierInfo();
+   			 perFiberPerLp_valInputBooster.get(fiber).put(lp, boosterAmplifierInfo.isPresent()? Optional.of(state_startFiberBeforeBooster) : Optional.empty());
+   			 final LpSignalState state_startFiberAfterBooster = boosterAmplifierInfo.isPresent()? 
+	   						getStateAfterOpticalAmplifier (centralFrequency_hz , state_startFiberBeforeBooster , boosterAmplifierInfo.get()) : 
 	   							state_startFiberBeforeBooster.getCopy();
 	   		infoToAdd.setFirst(state_startFiberAfterBooster);
 			 LpSignalState stateOutputLastOlaOrInitialOadmAfterBooster = state_startFiberAfterBooster;
@@ -184,14 +190,19 @@ public class OpticalSimulationModule
 			 }
 			 final double distFromLastOlaOrInitialOadm_km = fiber.getLengthInKm() - (numOlas == 0? 0 : olasTraversed.get(numOlas-1).getOlaPositionInKm().get());
 			 final LpSignalState stateAtTheEndOfFiberBeforePreamplifier = getStateAfterFiberKm (stateOutputLastOlaOrInitialOadmAfterBooster , fiber , distFromLastOlaOrInitialOadm_km);
-	   		infoToAdd.setSecond(stateAtTheEndOfFiberBeforePreamplifier);
+   			 infoToAdd.setSecond(stateAtTheEndOfFiberBeforePreamplifier);
+   			 final Optional<OpticalAmplifierInfo> preamlInfo = fiber.getDestinationPreAmplifierInfo();
+   			 final LpSignalState state_afterPreampl = preamlInfo.isPresent()? 
+						getStateAfterOpticalAmplifier (centralFrequency_hz , stateAtTheEndOfFiberBeforePreamplifier , fiber.getDestinationPreAmplifierInfo().get()) : 
+							stateAtTheEndOfFiberBeforePreamplifier.getCopy();
+   			 this.perFiberPerLp_valOutputPreamplifier.get(fiber).put(lp, preamlInfo.isPresent()? Optional.of(state_afterPreampl) : Optional.empty());
    			 previousFiberInfo = Optional.of(infoToAdd);
    		 }
    	 }
    	 
-   	 assert perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.keySet().containsAll(wNet.getFibers());
-   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().equals(perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.get(e).keySet()));
-   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().stream().allMatch(lp->perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.get(e).get(lp).size() == e.getNumberOfOpticalLineAmplifiersTraversed()));
+   	 assert perFiberPerLpPerOla_valInputOutputOla.keySet().containsAll(wNet.getFibers());
+   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().equals(perFiberPerLpPerOla_valInputOutputOla.get(e).keySet()));
+   	 assert wNet.getFibers().stream().allMatch(e->e.getTraversingLps().stream().allMatch(lp->perFiberPerLpPerOla_valInputOutputOla.get(e).get(lp).size() == e.getNumberOfOpticalLineAmplifiersTraversed()));
    	 
    	 /* Update the per lp information at add and end */
    	 for (WLightpath lp : wNet.getLightpaths())
@@ -199,7 +210,7 @@ public class OpticalSimulationModule
    		 final double centralFrequency_hz = 1e12 * lp.getCentralFrequencyThz();
    		 final WFiber lastFiber = lp.getSeqFibers().get(lp.getSeqFibers().size()-1);
    		 final WNode lastOadm = lastFiber.getB();
-   		 final LpSignalState state_beforePreamplLastFiber = perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(lastFiber).get(lp).getSecond();
+   		 final LpSignalState state_beforePreamplLastFiber = perFiberPerLp_valStartAfterBoosterEndBeforePreampl.get(lastFiber).get(lp).getSecond();
 		 final LpSignalState state_afterPreamplLastFiber = lastFiber.getDestinationPreAmplifierInfo().isPresent()? 
 						getStateAfterOpticalAmplifier (centralFrequency_hz , state_beforePreamplLastFiber , lastFiber.getDestinationPreAmplifierInfo().get()) : 
 							state_beforePreamplLastFiber.getCopy();
@@ -211,9 +222,9 @@ public class OpticalSimulationModule
    	 /* Update the total power per fiber */
    	 for (WFiber fiber : wNet.getFibers())
    	 {
-   		 final double powerAtStart_dBm = linear2dB(fiber.getTraversingLps().stream().map(lp->perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp).getFirst().getPower_dbm()).
+   		 final double powerAtStart_dBm = linear2dB(fiber.getTraversingLps().stream().map(lp->perFiberPerLp_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp).getFirst().getPower_dbm()).
    				 mapToDouble (v->dB2linear(v)).sum ());
-   		 final double powerAtEnd_dBm = linear2dB(fiber.getTraversingLps().stream().map(lp->perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp).getSecond().getPower_dbm()).
+   		 final double powerAtEnd_dBm = linear2dB(fiber.getTraversingLps().stream().map(lp->perFiberPerLp_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp).getSecond().getPower_dbm()).
    				 mapToDouble (v->dB2linear(v)).sum ());
    		 
    		 final List<Double> powerInputOla_dBm = new ArrayList<> ();
@@ -243,7 +254,7 @@ public class OpticalSimulationModule
 		Double maxDensity_mwPerGHz = null;
 		for (WLightpath lp : lps)
 		{
-			final double density_mwPerGHz = dB2linear(this.getOpticalPerformanceOfLightpathAtFiberEnds(fiber, lp).getFirst().getPower_dbm()) / (lp.getOpticalSlotIds().size() * net.getWdmOpticalSlotSizeInGHz());
+			final double density_mwPerGHz = dB2linear(this.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(fiber, lp).getFirst().getPower_dbm()) / (lp.getOpticalSlotIds().size() * net.getWdmOpticalSlotSizeInGHz());
 			if (minDensity_mwPerGHz == null) minDensity_mwPerGHz = density_mwPerGHz; else minDensity_mwPerGHz = Math.min(density_mwPerGHz, minDensity_mwPerGHz);
 			if (maxDensity_mwPerGHz == null) maxDensity_mwPerGHz = density_mwPerGHz; else maxDensity_mwPerGHz = Math.max(density_mwPerGHz, maxDensity_mwPerGHz);
 		}
@@ -253,31 +264,31 @@ public class OpticalSimulationModule
 
     
     
-    public List<Double> getTotalPowerAtAmplifierInputs_dBm (WFiber fiber)
+    public List<Double> getTotalPowerAtLineAmplifierInputs_dBm (WFiber fiber)
     {
     	return perFiberTotalPower_valStartEndAndAtEachOlaInputOutput.get(fiber).getThird();
     }
-    public List<Double> getTotalPowerAtAmplifierOutputs_dBm (WFiber fiber)
+    public List<Double> getTotalPowerAtLineAmplifierOutputs_dBm (WFiber fiber)
     {
     	return perFiberTotalPower_valStartEndAndAtEachOlaInputOutput.get(fiber).getFourth();
     }
-    public double getTotalPowerAtAmplifierInput_dBm (WFiber fiber , int indexAmplifierInFiber)
+    public double getTotalPowerAtLineAmplifierInput_dBm (WFiber fiber , int indexAmplifierInFiber)
     {
    	 if (indexAmplifierInFiber < 0 || indexAmplifierInFiber >= fiber.getNumberOfOpticalLineAmplifiersTraversed()) throw new Net2PlanException ("Wrong index");
    	 return perFiberTotalPower_valStartEndAndAtEachOlaInputOutput.get(fiber).getThird().get(indexAmplifierInFiber);
     }
-    public double getTotalPowerAtAmplifierOutput_dBm (WFiber fiber , int indexAmplifierInFiber)
+    public double getTotalPowerAtLineAmplifierOutput_dBm (WFiber fiber , int indexAmplifierInFiber)
     {
    	 if (indexAmplifierInFiber < 0 || indexAmplifierInFiber >= fiber.getNumberOfOpticalLineAmplifiersTraversed()) throw new Net2PlanException ("Wrong index");
    	 return perFiberTotalPower_valStartEndAndAtEachOlaInputOutput.get(fiber).getFourth().get(indexAmplifierInFiber);
     }
-    public Pair<LpSignalState,LpSignalState> getOpticalPerformanceOfLightpathAtFiberEnds (WFiber fiber , WLightpath lp)
+    public Pair<LpSignalState,LpSignalState> getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier (WFiber fiber , WLightpath lp)
     {
-   	 if (!perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.containsKey(fiber)) return null;
-   	 if (!perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).containsKey(lp)) return null;
-   	 return perFiberPerLpPerMetric_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp);
+   	 if (!perFiberPerLp_valStartAfterBoosterEndBeforePreampl.containsKey(fiber)) return null;
+   	 if (!perFiberPerLp_valStartAfterBoosterEndBeforePreampl.get(fiber).containsKey(lp)) return null;
+   	 return perFiberPerLp_valStartAfterBoosterEndBeforePreampl.get(fiber).get(lp);
     }
-    public Pair<Double,Double> getTotalPowerAtFiberEnds_dBm (WFiber fiber)
+    public Pair<Double,Double> getTotalPowerAtFiberEndsAfterBoosterBeforePreamplifier_dBm (WFiber fiber)
     {
    	 if (!perFiberTotalPower_valStartEndAndAtEachOlaInputOutput.containsKey(fiber)) return null;
    	 return Pair.of(
@@ -288,15 +299,38 @@ public class OpticalSimulationModule
     {
     	return perLpPerMetric_valAtDropTransponderEnd.get(lp);
     }
-    public Pair<LpSignalState,LpSignalState> getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput (WLightpath lp , WFiber e , int olaIndex)
+    public Pair<LpSignalState,LpSignalState> getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput (WLightpath lp , WFiber e , int olaIndex)
     {
     	if (olaIndex >= e.getNumberOfOpticalLineAmplifiersTraversed()) throw new Net2PlanException ("Wrong amplifier index");
     	if (!lp.getSeqFibers().contains(e)) throw new Net2PlanException ("Wrong amplifier fiber");
-    	final  Pair<LpSignalState,LpSignalState> res = perFiberPerLpPerOlaIndexMetric_valStartAfterBoosterEndBeforePreampl.getOrDefault(e , new TreeMap<> ()).getOrDefault(lp, new TreeMap<> ()).get(olaIndex); 
+    	final  Pair<LpSignalState,LpSignalState> res = perFiberPerLpPerOla_valInputOutputOla.getOrDefault(e , new TreeMap<> ()).getOrDefault(lp, new TreeMap<> ()).get(olaIndex); 
     	if (res == null) throw new Net2PlanException ("Unknown value");
     	return res;
     }
-    
+
+    /** Returns the signal performances at the input and the output of the booster amplifier (if exists), of the given fiber, for the given lightpath.
+     * @param lp see above
+     * @param e see above
+     * @return see above
+     */
+    public Optional<Pair<LpSignalState,LpSignalState>> getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput (WLightpath lp , WFiber e)
+    {
+    	if (!e.getOriginBoosterAmplifierInfo().isPresent()) return Optional.empty();
+    	if (!e.getTraversingLps().contains(lp)) return Optional.empty();
+    	return Optional.of (Pair.of(this.perFiberPerLp_valInputBooster.get(e).get(lp).get(), this.perFiberPerLp_valStartAfterBoosterEndBeforePreampl.get(e).get(lp).getFirst()));
+    }
+
+    /** Returns the signal performances at the input and the output of the pre-amplifier (if exists), of the given fiber, for the given lightpath.
+     * @param lp see above
+     * @param e see above
+     * @return see above
+     */
+    public Optional<Pair<LpSignalState,LpSignalState>> getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput (WLightpath lp , WFiber e)
+    {
+    	if (!e.getDestinationPreAmplifierInfo().isPresent()) return Optional.empty();
+    	if (!e.getTraversingLps().contains(lp)) return Optional.empty();
+    	return Optional.of (Pair.of(this.perFiberPerLp_valStartAfterBoosterEndBeforePreampl.get(e).get(lp).getSecond() , this.perFiberPerLp_valOutputPreamplifier.get(e).get(lp).get()));
+    }
 
     public static double nm2thz (double wavelengthInNm)
     {
@@ -324,7 +358,7 @@ public class OpticalSimulationModule
     	final List<OpticalAmplifierInfo> olas = e.getOpticalLineAmplifiersInfo();
 		for (int cont = 0; cont < olas.size() ; cont ++)
 		{
-			final double outputPowerDbm = this.getTotalPowerAtAmplifierOutput_dBm(e, cont);
+			final double outputPowerDbm = this.getTotalPowerAtLineAmplifierOutput_dBm(e, cont);
 			if (outputPowerDbm < olas.get(cont).getMinAcceptableOutputPower_dBm()) return false;
 			if (outputPowerDbm > olas.get(cont).getMaxAcceptableOutputPower_dBm()) return false;
 		}

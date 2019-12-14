@@ -18,7 +18,7 @@ public class WNetConstants
 	 */
 	public static final double CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ = 193.1;
 	/**
-	 * The optical slot size in GHz 
+	 * The default optical slot size in GHz 
 	 */
 	public static final double DEFAULT_OPTICALSLOTSIZE_GHZ = 12.5;
 	
@@ -59,7 +59,7 @@ public class WNetConstants
 	public static final List<Double> WFIBER_DEFAULT_OLAMINGAIN_DB = Arrays.asList(9.0);
 	public static final List<Double> WFIBER_DEFAULT_OLAMAXGAIN_DB = Arrays.asList(30.0);
 	public static final List<Double> WFIBER_DEFAULT_OLAMINOUTPUTPOWER_DBM = Arrays.asList(-6.0);
-	public static final List<Double> WFIBER_DEFAULT_OLAMAXOUTPUTPOWER_DBM = Arrays.asList(19.0);
+	public static final List<Double> WFIBER_DEFAULT_OLAMAXOUTPUTPOWER_DBM = Arrays.asList(20.0);
 	public static final double WFIBER_DEFAULT_BOOSTER_GAIN_DB = 10.0;
 	public static final double WFIBER_DEFAULT_PREAMPLIFIER_GAIN_DB = 20.0;
 	public static final double WFIBER_DEFAULT_BOOSTER_NF_DB = 6.0;

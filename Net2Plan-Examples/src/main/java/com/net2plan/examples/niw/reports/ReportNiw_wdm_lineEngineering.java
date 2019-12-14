@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.apache.poi.dev.OOXMLPrettyPrint;
+import org.jgrapht.alg.util.Pair;
 
 import com.net2plan.interfaces.networkDesign.IReport;
 import com.net2plan.interfaces.networkDesign.NetPlan;
@@ -26,7 +26,7 @@ import com.net2plan.niw.OpticalSpectrumManager;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WLightpath;
 import com.net2plan.niw.WNet;
-import com.net2plan.niw.WNetConstants;
+import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -56,7 +56,7 @@ import com.net2plan.utils.Triple;
  * </ul>
  * 
  * @author Pablo Pavon-Marino
- * @version 1.2, October 2017
+ * @version 1.0, 2019
  */
 public class ReportNiw_wdm_lineEngineering implements IReport
 {
@@ -169,8 +169,8 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 			append("<td>" + e.getTraversingLps().size() + "</td>").
 			append("<td>" + osm.getOccupiedOpticalSlotIds(e).size() + " / " + e.getNumberOfValidOpticalChannels() + " (" + df.apply(100.0 * osm.getOccupiedOpticalSlotIds(e).size() /  e.getNumberOfValidOpticalChannels())   + "%)</td>").
 			append("<td>" + df.apply(e.getAccumulatedChromaticDispersion_psPerNm()) + "</td>").
-			append("<td>" + df.apply(osim.getTotalPowerAtFiberEnds_dBm(e).getFirst()) + "</td>").
-			append("<td>" + df.apply(osim.getTotalPowerAtFiberEnds_dBm(e).getSecond()) + "</td>");
+			append("<td>" + df.apply(osim.getTotalPowerAtFiberEndsAfterBoosterBeforePreamplifier_dBm(e).getFirst()) + "</td>").
+			append("<td>" + df.apply(osim.getTotalPowerAtFiberEndsAfterBoosterBeforePreamplifier_dBm(e).getSecond()) + "</td>");
 			
 			final StringBuffer st = new StringBuffer ();
 			final List<OpticalAmplifierInfo> olas = e.getOpticalLineAmplifiersInfo();
@@ -179,7 +179,7 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 				final OpticalAmplifierInfo ola = olas.get(contOla);
 				final double distKm = ola.getOlaPositionInKm().get();
 				final double gain_dB = ola.getGainDb();
-				final double powerAtOutput_dBm = osim.getTotalPowerAtAmplifierOutput_dBm(e, contOla);
+				final double powerAtOutput_dBm = osim.getTotalPowerAtLineAmplifierOutput_dBm(e, contOla);
 				if (powerAtOutput_dBm < ola.getMinAcceptableOutputPower_dBm() || powerAtOutput_dBm > ola.getMaxAcceptableOutputPower_dBm())
 					st.append("<p>EDFA-" + contOla + " ("+ df.apply(distKm) + " km)" + ": Power at the output is " + df.apply(powerAtOutput_dBm) + " dBm. It should be between [" + df.apply(ola.getMinAcceptableOutputPower_dBm()) + ", " + df.apply(ola.getMaxAcceptableOutputPower_dBm()) + "] dBm</p>");
 				if (!ola.isOkGainBetweenMargins())
@@ -267,23 +267,42 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 				final WFiber firstFiber = lp.getSeqFibers().get(0);
 				out.
 				append("<tr>").
-				append("<td>" + lp.getA().getName() + "</td>").
+				append("<td>" + lp.getA().getName() + "Tp. injection</td>").
 				append("<td>" + "OADM " + "</td>").
 				append("<td>" + "0.0"  +"</td>").
 				append("<td>" + df.apply(lp.getAddTransponderInjectionPower_dBm()) + " dBm" + "</td>").
-				append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtFiberEnds(firstFiber , lp).getFirst().getPower_dbm()) + "</td>").
+				append("<td>" + "--" + "</td>").
 				append("<td> -- </td>").
-				append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtFiberEnds(firstFiber , lp).getFirst().getOsnrAt12_5GhzRefBw()) + "</td>").
-				append("<td> 0.0 </td>").
-				append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtFiberEnds(firstFiber , lp).getFirst().getCd_psPerNm()) + "</td>").
-				append("<td> 0.0 </td>").
-				append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtFiberEnds(firstFiber , lp).getFirst().getPmdSquared_ps2())) + "</td>").
+				append("<td> -- </td>").
+				append("<td> 0.0</td>").
+				append("<td> 0.0</td>").
+				append("<td> 0.0</td>").
+				append("<td> 0.0</td>").
 				append("</tr>");
 				final List<WFiber> seqFibers = lp.getSeqFibers();
 				final Function<Integer,Double> distanceAfterTravXFibers = f -> IntStream.range(0,f).mapToDouble(i->seqFibers.get(i).getLengthInKm()).sum () ;
 				for (int contFiber = 0; contFiber < seqFibers.size() ; contFiber ++)
 				{
 					final WFiber e = seqFibers.get(contFiber);
+					/* Booster */
+					if (e.getOriginBoosterAmplifierInfo().isPresent())
+					{
+						out.
+						append("<tr>").
+						append("<td>" + e.getA().getName() + "-Booster </td>").
+						append("<td>" + "OADM-Booster" + "</td>").
+						append("<td>" + df.apply(distanceAfterTravXFibers.apply(contFiber)) +" km</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp , e).get().getFirst().getPower_dbm()) + " dBm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp , e).get().getSecond().getPower_dbm()) + " dBm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp , e).get().getFirst().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp , e).get().getSecond().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp , e).get().getFirst().getCd_psPerNm()) + " ps/nm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp , e).get().getSecond().getCd_psPerNm()) + " ps/nm" + "</td>").
+						append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp , e).get().getFirst().getPmdSquared_ps2())) + " ps" + "</td>").
+						append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp , e).get().getSecond().getPmdSquared_ps2())) + " ps" + "</td>").
+						append("</tr>");
+					}
+					
 					final int numOlas = e.getNumberOfOpticalLineAmplifiersTraversed();
 					final boolean lastFiber = contFiber == seqFibers.size() - 1;
 					final WFiber nextFiber = lastFiber ? null : seqFibers.get(contFiber + 1);
@@ -294,32 +313,59 @@ public class ReportNiw_wdm_lineEngineering implements IReport
 						append("<tr>").
 						append("<td>" + "OLA " + olaIndex + "</td>").
 						append("<td>" + "OLA " + "</td>").
-						append("<td>" + distanceAfterTravXFibers.apply(contFiber) + olas.get(olaIndex).getOlaPositionInKm().get() +"</td>").
-						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getPower_dbm()) + " dBm" + "</td>").
-						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getPower_dbm()) + " dBm" + "</td>").
-						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").
-						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").
-						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getCd_psPerNm()) + " ps/nm" + "</td>").
-						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getCd_psPerNm()) + " ps/nm" + "</td>").
-						append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getPmdSquared_ps2())) + " ps" + "</td>").
-						append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getPmdSquared_ps2())) + " ps" + "</td>").
+						append("<td>" + df.apply(distanceAfterTravXFibers.apply(contFiber) + olas.get(olaIndex).getOlaPositionInKm().get()) +" km</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getPower_dbm()) + " dBm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getPower_dbm()) + " dBm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getCd_psPerNm()) + " ps/nm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getCd_psPerNm()) + " ps/nm" + "</td>").
+						append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp , e, olaIndex).getFirst().getPmdSquared_ps2())) + " ps" + "</td>").
+						append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp , e, olaIndex).getSecond().getPmdSquared_ps2())) + " ps" + "</td>").
+						append("</tr>");
+					}
+
+					/* Booster */
+					if (e.getDestinationPreAmplifierInfo().isPresent())
+					{
+						out.
+						append("<tr>").
+						append("<td>" + e.getB().getName() + "-Preamplifier </td>").
+						append("<td>" + "OADM-Preamplifier " + "</td>").
+						append("<td>" + df.apply(distanceAfterTravXFibers.apply(contFiber+1)) +" km</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp , e).get().getFirst().getPower_dbm()) + " dBm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp , e).get().getSecond().getPower_dbm()) + " dBm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp , e).get().getFirst().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp , e).get().getSecond().getOsnrAt12_5GhzRefBw()) + " dB" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp , e).get().getFirst().getCd_psPerNm()) + " ps/nm" + "</td>").
+						append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp , e).get().getSecond().getCd_psPerNm()) + " ps/nm" + "</td>").
+						append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp , e).get().getFirst().getPmdSquared_ps2())) + " ps" + "</td>").
+						append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp , e).get().getSecond().getPmdSquared_ps2())) + " ps" + "</td>").
 						append("</tr>");
 					}
 					
+					final LpSignalState signalAtInput = e.getDestinationPreAmplifierInfo().isPresent()? 
+							osim.getOpticalPerformanceOfLightpathAtPreAmplifierInputAndOutput(lp, e).get().getSecond() : 
+								osim.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(e, lp).getSecond();
+					final LpSignalState signalAtOutputIfNotLastFiber = lastFiber? null : nextFiber.getOriginBoosterAmplifierInfo().isPresent()? 
+							osim.getOpticalPerformanceOfLightpathAtBoosterAmplifierInputAndOutput(lp, nextFiber).get().getFirst() : 
+								osim.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(nextFiber, lp).getFirst();
 					out.
 					append("<tr>").
 					append("<td>" + e.getB().getName() + "</td>").
-					append("<td>" + "OADM " + "</td>").
-					append("<td>" + distanceAfterTravXFibers.apply(contFiber+1) +"</td>").
-					append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtFiberEnds(e , lp).getSecond().getPower_dbm())  +"</td>").
-					append("<td>" + df.apply(lastFiber? osim.getOpticalPerformanceAtTransponderReceiverEnd(lp).getPower_dbm() : osim.getOpticalPerformanceOfLightpathAtFiberEnds(nextFiber , lp).getFirst().getPower_dbm())  +"</td>").
-					append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtFiberEnds(e , lp).getSecond().getOsnrAt12_5GhzRefBw())  +"</td>").
-					append("<td>" + df.apply(lastFiber? osim.getOpticalPerformanceAtTransponderReceiverEnd(lp).getOsnrAt12_5GhzRefBw() : osim.getOpticalPerformanceOfLightpathAtFiberEnds(nextFiber , lp).getFirst().getOsnrAt12_5GhzRefBw())  +"</td>").
-					append("<td>" + df.apply(osim.getOpticalPerformanceOfLightpathAtFiberEnds(e , lp).getSecond().getCd_psPerNm())  +"</td>").
-					append("<td>" + df.apply(lastFiber? osim.getOpticalPerformanceAtTransponderReceiverEnd(lp).getCd_psPerNm() : osim.getOpticalPerformanceOfLightpathAtFiberEnds(nextFiber , lp).getFirst().getCd_psPerNm())  +"</td>").
-					append("<td>" + df.apply(Math.sqrt(osim.getOpticalPerformanceOfLightpathAtFiberEnds(e , lp).getSecond().getPmdSquared_ps2()))  +"</td>").
-					append("<td>" + df.apply(Math.sqrt(lastFiber? osim.getOpticalPerformanceAtTransponderReceiverEnd(lp).getPmdSquared_ps2() : osim.getOpticalPerformanceOfLightpathAtFiberEnds(nextFiber , lp).getFirst().getPmdSquared_ps2()))  +"</td>").
+					append("<td>" + (lastFiber? "OADM (output is tp. receiver)" : "OADM") + "</td>").
+					append("<td>" + df.apply(distanceAfterTravXFibers.apply(contFiber+1)) +" km</td>").
+					append("<td>" + df.apply(signalAtInput.getPower_dbm())  +" dbm</td>").
+					append("<td>" + df.apply(lastFiber? osim.getOpticalPerformanceAtTransponderReceiverEnd(lp).getPower_dbm() : signalAtOutputIfNotLastFiber.getPower_dbm())  +" dBm</td>").
+					append("<td>" + df.apply(signalAtInput.getOsnrAt12_5GhzRefBw())  +" dB</td>").
+					append("<td>" + df.apply(lastFiber? osim.getOpticalPerformanceAtTransponderReceiverEnd(lp).getOsnrAt12_5GhzRefBw() : signalAtOutputIfNotLastFiber.getOsnrAt12_5GhzRefBw())  +" dB</td>").
+					append("<td>" + df.apply(signalAtInput.getCd_psPerNm())  +" ps/nm</td>").
+					append("<td>" + df.apply(lastFiber? osim.getOpticalPerformanceAtTransponderReceiverEnd(lp).getCd_psPerNm() : signalAtOutputIfNotLastFiber.getCd_psPerNm())  +" ps/nm</td>").
+					append("<td>" + df.apply(Math.sqrt(signalAtInput.getPmdSquared_ps2()))  +" ps</td>").
+					append("<td>" + df.apply(Math.sqrt(lastFiber? osim.getOpticalPerformanceAtTransponderReceiverEnd(lp).getPmdSquared_ps2() : signalAtOutputIfNotLastFiber.getPmdSquared_ps2()))  +" ps</td>").
 					append("</tr>");
+
+							
 				}
 				out.append("</table>");
 			}
