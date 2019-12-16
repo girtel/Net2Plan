@@ -226,7 +226,13 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 			final double outModuleAttenuation_dB = this.isFilterless()? this.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(outFibers.first(), this))) : this.getWssLoss_dB();
 			return Optional.of(inModuleAttenuation_dB + outModuleAttenuation_dB);
 		}
-		
+		public double getDropAttenuationFromFiber0ToDirectionFul_dB  ()
+		{
+			final SortedSet<WFiber> inFibers = node.getIncomingFibers();
+			final double inModuleAttenuation_dB = this.isRouteAndSelect()? this.getWssLoss_dB() : this.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumOutputsOfInDegreeSplitter(inFibers.first(), this)));
+			final double dropModuleAttenuation_dB = this.isAddDropTypeMuxBased()? this.getMuxDemuxLoss_dB() : this.getWssLoss_dB();
+			return inModuleAttenuation_dB + dropModuleAttenuation_dB;
+		}
 		
 		public boolean isRouteAndSelect () { return getArchitectureType().equalsIgnoreCase("R&S"); }
 		public boolean isBroadcastAndSelect () { return getArchitectureType().equalsIgnoreCase("B&S"); }
