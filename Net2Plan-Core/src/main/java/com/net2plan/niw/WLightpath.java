@@ -61,7 +61,7 @@ public class WLightpath extends WAbstractNetworkElement
 
 	/** Sets the index of the directionless add module used by the lightpath in the origin node. Negative indexes or optional empty means that the 
 	 * lightpath is placed directly in the non-directionless add module. If not, it refers to the index of the directionless add module it is attached to
-	 * @param index
+	 * @param index see above
 	 */
 	public void setDirectionlessAddModuleIndexInOrigin (Optional<Integer> index) 
 	{  
@@ -71,7 +71,7 @@ public class WLightpath extends WAbstractNetworkElement
 
 	/** Sets the index of the directionless drop module used by the lightpath in the destination node. Negative indexes or optional empty means that the 
 	 * lightpath is placed directly in the non-directionless drop module. If not, it refers to the index of the directionless drop module it is attached to
-	 * @param index
+	 * @param index see above
 	 */
 	public void setDirectionlessDropModuleIndexInDestination (Optional<Integer> index) 
 	{  

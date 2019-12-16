@@ -181,7 +181,7 @@ public class WNode extends WAbstractNetworkElement
 
 	
 	/** Indicates if this node architecture has directed add/drop modules in the degrees, where to place the lighpaths 
-	 * @return see above
+	 * @param isWithDirectedAddDropModules see above
 	 */
 	public void setIsOadmWithDirectedAddDropModulesInTheDegrees (boolean isWithDirectedAddDropModules) 
 	{
@@ -213,7 +213,7 @@ public class WNode extends WAbstractNetworkElement
 	}
 	
 	/** Returns the lightpaths added in this node, connected in the indicated add directionless module index
-	 * @param addModuleIndex see above
+	 * @param directionlessAddModuleIndex see above
 	 * @return see above
 	 */
 	public SortedSet<WLightpath> getAddedLightpathsInDirectionlessModule (int directionlessAddModuleIndex)
@@ -223,7 +223,7 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	/** Returns the lightpaths added in this node, connected in the indicated drop directionless module index
-	 * @param addModuleIndex see above
+	 * @param directionlessDropModuleIndex see above
 	 * @return see above
 	 */
 	public SortedSet<WLightpath> getDroppedLightpathsInDirectionlessModule (int directionlessDropModuleIndex)

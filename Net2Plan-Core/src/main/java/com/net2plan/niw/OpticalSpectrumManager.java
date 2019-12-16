@@ -219,6 +219,7 @@ public class OpticalSpectrumManager
     /** FA: Given a fiber, returns a map with the occupied optical slot ids, both caused by legitimate signals, mapped to the set of lightpaths that occupy it. 
      * Note that if more than one lightpath occupies a given slot, means that spectrum clashing occurs in that slot   
      * @param fiber the input fiber
+     * @param signalOccupationType see above
      * @return see above
      */
     public SortedMap<Integer,SortedSet<WLightpath>> getOccupiedResources (WFiber fiber , OpticalSignalOccupationType signalOccupationType)
@@ -524,9 +525,7 @@ public class OpticalSpectrumManager
      * and (optionally) an initial optical slot (so optical slots of lower id are not consiedered), and potentially forbidden slots. Then, this method searches for 
      * the lowest-id contiguous range of slots that are available in all the indicated fibers and bidrectional pairs and directionless modules. Note that if the set of fibers 
      * passes more than once in the same fiber, no assignment is possible, and Optional.empty is returned
-     * @param seqFibers_ab see above
-     * @param directionlessAddModuleAb see above
-     * @param directionlessDropModuleAb see above
+     * @param lpInfo see above
      * @param numContiguousSlotsRequired see above
      * @param minimumInitialSlotId see above
      * @param unusableSlots see above
@@ -707,8 +706,8 @@ public class OpticalSpectrumManager
      * this method searches for the two lowest-id contiguous ranges of slots, so the first range is available in the first path,
      * the second range is available in the second path. Note that if any path contains a fiber more than once, no allocation is 
      * possible. Note that if path1 and path2 have common fibers, the optical slots returned will always be disjoint. In contrast, the add modules of the two paths or the drop modules of the two paths could be the same 
-     * @param lp1 see above
-     * @param lp2 see above
+     * @param lpMainAb see above
+     * @param lpBackupAb see above
      * @param numContiguousSlotsRequired see above
      * @param minimumInitialSlotId see above
      * @param forbidenSlotIds see above
@@ -1090,7 +1089,8 @@ public class OpticalSpectrumManager
 	}
 
 	/** FA: Returns the optical slots where there is wavelength clashing in the directionless add module, i.e. a LEGITIMATE lightpath signal is occupying it, together with the waste or legitimate signal of this or other lightpath
-	 * @param wdmLink see above
+	 * @param node see above
+	 * @param addDirectionlessModule see above
 	 * @return  see above
 	 */
 	public SortedSet<Integer> getClashingOpticalSlotIdsInDirectionlessAddModule (WNode node , int addDirectionlessModule)
@@ -1111,7 +1111,8 @@ public class OpticalSpectrumManager
 	}
 
 	/** FA: Returns the optical slots where there is wavelength clashing in the directionless drop module, i.e. a LEGITIMATE lightpath signal is occupying it, together with the waste or legitimate signal of this or other lightpath
-	 * @param wdmLink see above
+	 * @param node see above
+	 * @param dropDirectionlessModule see above
 	 * @return  see above
 	 */
 	public SortedSet<Integer> getClashingOpticalSlotIdsInDirectionlessDropModule (WNode node , int dropDirectionlessModule)

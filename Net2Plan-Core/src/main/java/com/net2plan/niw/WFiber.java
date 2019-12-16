@@ -215,7 +215,7 @@ public class WFiber extends WAbstractNetworkElement
 
 	
 	/** Returns the information associated to the optical line amplifiers in this fiber
-	 * @return
+	 * @return see above
 	 */
 	public List<OpticalAmplifierInfo> getOpticalLineAmplifiersInfo ()
 	{
@@ -479,7 +479,7 @@ public class WFiber extends WAbstractNetworkElement
 		return Optional.of (info);
 	}
 	/** Sets the information of the booster amplifier at fiber origin.
-	 * @return see above
+	 * @param info see above
 	 */
 	public void setOriginBoosterAmplifierInfo (OpticalAmplifierInfo info)
 	{
@@ -487,7 +487,7 @@ public class WFiber extends WAbstractNetworkElement
 	}
 	
 	/** Returns the information of the preamplifier in the link, if exists
-	 * @return
+	 * @return see above
 	 */
 	public Optional<OpticalAmplifierInfo> getDestinationPreAmplifierInfo ()
 	{
@@ -497,7 +497,7 @@ public class WFiber extends WAbstractNetworkElement
 		return Optional.of (info);
 	}
 	/** Sets the information of the preamplifier amplifier at fiber destination.
-	 * @return see above
+	 * @param info see above
 	 */
 	public void setDestinationPreAmplifierInfo (OpticalAmplifierInfo info)
 	{

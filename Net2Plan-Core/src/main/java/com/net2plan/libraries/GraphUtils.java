@@ -1281,10 +1281,11 @@ public class GraphUtils
 	 * egress node (assuming there is traffic between the end nodes). If the traffic does not arrive to the destination, 
 	 * Double.MAX_VALUE is returned. The function assumes that the routing has no cycles (open nor closed). If that is not 
 	 * the case, results can be invalid
-	 * @param frs forwarding rules to apply
-	 * @param outFrs if not null, provides information on the forwarding rules that can exist outgoing from each node (useful for improving the running time)
-	 * @param ingressNode ingress node
-	 * @param egressNode egress node
+	 * @param typeOfMetric_0Latemcy_1Length_2Hops see above
+	 * @param frs see above
+	 * @param outFrs see above
+	 * @param ingressNode see above
+	 * @param egressNode see above
 	 * @return see above
 	 */
 	public static double computeWorstCasePropagationDelayAndLengthInKmMsForLoopLess (int typeOfMetric_0Latemcy_1Length_2Hops , SortedMap<Link,Double> frs , SortedMap<Node,SortedSet<Link>> outFrs , Node ingressNode , Node egressNode)
