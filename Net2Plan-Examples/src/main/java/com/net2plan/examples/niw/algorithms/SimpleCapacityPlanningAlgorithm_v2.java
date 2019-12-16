@@ -36,6 +36,7 @@ import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.OsmLightpathOccupationInfo;
 import com.net2plan.niw.DefaultStatelessSimulator;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WIpLink;
@@ -333,7 +334,9 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 			for (int numLp = 0; numLp < numLpsEachPathOrThePathOfOnlyOne ; numLp ++)
 			{
 				/* Assignment with both bidi-directions using the same slots */
-				Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> assignment = this.osm.spectrumAssignment_firstFitForAdjacenciesBidi (spAbNodeSeq_baIsReversePath, numSlotsPerLp , new TreeSet<> ());
+				Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> assignment = this.osm.spectrumAssignment_firstFitForAdjacenciesBidi 
+						(spAbNodeSeq_baIsReversePath, ipBidiLink.getA() , ipBidiLink.getB() , 
+								Optional.empty() , Optional.empty() , numSlotsPerLp , Optional.empty() , new TreeSet<> ()); 
 				if (!assignment.isPresent()) throw new Net2PlanException ("Not enough bandwidth, nor available new fiber for a lightpath");
 				
 				final List<WFiber> seqFibersAb = assignment.get().getFirst().stream().map(p->p.getFirst()).collect(Collectors.toList ());
@@ -347,8 +350,8 @@ public class SimpleCapacityPlanningAlgorithm_v2 implements IAlgorithm
 				lprAb.setTransponderName(choiceOfTransponderForThisRateAndReach.getFirst());
 				lprBa.setTransponderName(choiceOfTransponderForThisRateAndReach.getFirst());
 				lpsCreatedAb.add(lprAb);
-				this.osm.allocateOccupation(lpAb, seqFibersAb, assignment.get().getSecond());
-				this.osm.allocateOccupation(lpBa, seqFibersBa, assignment.get().getSecond());
+				this.osm.allocateOccupation(lpAb, Optional.empty());
+				this.osm.allocateOccupation(lpBa, Optional.empty());
 			}
 		}
 

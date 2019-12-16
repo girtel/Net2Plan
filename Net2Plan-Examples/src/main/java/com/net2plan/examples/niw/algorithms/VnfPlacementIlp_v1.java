@@ -10,6 +10,7 @@ package com.net2plan.examples.niw.algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -335,7 +336,10 @@ public class VnfPlacementIlp_v1 implements IAlgorithm
 			for (int numLp = 0; numLp < numLpsEachPathOrThePathOfOnlyOne ; numLp ++)
 			{
 				/* Assignment with both bidi-directions using the same slots */
-				Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> assignment = this.osm.spectrumAssignment_firstFitForAdjacenciesBidi (spAbNodeSeq_baIsReversePath, numSlotsPerLp , new TreeSet<> ());
+				Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> assignment = this.osm.spectrumAssignment_firstFitForAdjacenciesBidi 
+						(spAbNodeSeq_baIsReversePath, ipBidiLink.getA(), ipBidiLink.getB() ,
+								Optional.empty() , Optional.empty() , 
+								numSlotsPerLp , Optional.empty() , new TreeSet<> ());
 				if (!assignment.isPresent()) throw new Net2PlanException ("Not enough bandwidth, nor available new fiber for a lightpath");
 				
 				final List<WFiber> seqFibersAb = assignment.get().getFirst().stream().map(p->p.getFirst()).collect(Collectors.toList ());
@@ -349,8 +353,8 @@ public class VnfPlacementIlp_v1 implements IAlgorithm
 				lprAb.setTransponderName(choiceOfTransponderForThisRateAndReach.getFirst());
 				lprBa.setTransponderName(choiceOfTransponderForThisRateAndReach.getFirst());
 				lpsCreatedAb.add(lprAb);
-				this.osm.allocateOccupation(lpAb, seqFibersAb, assignment.get().getSecond());
-				this.osm.allocateOccupation(lpBa, seqFibersBa, assignment.get().getSecond());
+				this.osm.allocateOccupation(lpAb , Optional.empty());
+				this.osm.allocateOccupation(lpBa, Optional.empty());
 			}
 		}
 

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.WNetConstants.WTYPE;
+import com.net2plan.utils.Pair;
 
 /** This class represents a unidirectional lightpath of a given line rate, being a main path or backup path of a lightpath request.
  * The lighptath is unregenerated, and has no wavelength conversion: the same set of optical slot are occupied in all the 
@@ -32,13 +33,51 @@ public class WLightpath extends WAbstractNetworkElement
 	private static final String ATTNAMESUFFIX_RECEIVERMAXIMUMCDABSOLUTEVALUE_PSPERNM = "receiverMaximumCdAbsoluteValue_psPerNM";
 	private static final String ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS = "receiverMaximumPmd_ps";
 	private static final String ATTNAMESUFFIX_RECEIVERMINIMUMOSNR_DB = "receiverMinimumOsnr_dB";
+	private static final String ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN = "addModuleIndexInOrigin";
+	private static final String ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION = "dropModuleIndexInDestination";
 
 	WLightpath (Route r) { super (r, Optional.empty());  }
 
 	@Override
 	public Route getNe () { return (Route) associatedNpElement; }
 
+	/** Returns the index of the directionless add module in the origin OADM, or empty if the lighpath is attached to directed add module in origin
+	 * @return see above
+	 */
+	public Optional<Integer> getDirectionlessAddModuleIndexInOrigin () 
+	{
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, -1.0).intValue(); 
+		return index < 0? Optional.empty() : Optional.of(index); 
+	} 
+	
+	/** Returns the index of the directionless drop module in the destination OADM, or empty if the lighpath is attached to directed drop module in destination
+	 * @return see above
+	 */
+	public Optional<Integer> getDirectionlessDropModuleIndexInDestination () 
+	{  
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, -1.0).intValue(); 
+		return index < 0? Optional.empty() : Optional.of(index); 
+	} 
 
+	/** Sets the index of the directionless add module used by the lightpath in the origin node. Negative indexes or optional empty means that the 
+	 * lightpath is placed directly in the non-directionless add module. If not, it refers to the index of the directionless add module it is attached to
+	 * @param index
+	 */
+	public void setDirectionlessAddModuleIndexInOrigin (Optional<Integer> index) 
+	{  
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ADDMODULEINDEXINORIGIN, index.isPresent()? -1 : index.get()); 
+	} 
+	
+
+	/** Sets the index of the directionless drop module used by the lightpath in the destination node. Negative indexes or optional empty means that the 
+	 * lightpath is placed directly in the non-directionless drop module. If not, it refers to the index of the directionless drop module it is attached to
+	 * @param index
+	 */
+	public void setDirectionlessDropModuleIndexInDestination (Optional<Integer> index) 
+	{  
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_DROPMODULEINDEXINDESTINATION, index.isPresent()? -1 : index.get()); 
+	} 
+	
 	/** The origin node of the lighptath, that must the origin node of the associated lightpath request
 	 * @return see above
 	 */
@@ -72,7 +111,7 @@ public class WLightpath extends WAbstractNetworkElement
 	public double getCentralFrequencyThz ()
 	{
 		final double centralSlot = (getOpticalSlotIds().first() + getOpticalSlotIds().last())/2.0;
-		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + getNet().getWdmOpticalSlotSizeInGHz() * 1e-3 * centralSlot; 
 	}
 	
 	/** Returns the lowest frequency of this lightpath in THz
@@ -80,8 +119,8 @@ public class WLightpath extends WAbstractNetworkElement
 	 */
 	public double getLowestFrequencyThz ()
 	{
-		final double centralSlot = getOpticalSlotIds().first() - WNetConstants.OPTICALSLOTSIZE_GHZ *0.5;
-		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+		final double centralSlot = getOpticalSlotIds().first() - getNet().getWdmOpticalSlotSizeInGHz() *0.5;
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + getNet().getWdmOpticalSlotSizeInGHz() * 1e-3 * centralSlot; 
 	}
 	
 	/** Returns the highest frequency of this lightpath in THz
@@ -89,8 +128,8 @@ public class WLightpath extends WAbstractNetworkElement
 	 */
 	public double getHighestFrequencyThz ()
 	{
-		final double centralSlot = getOpticalSlotIds().last() + WNetConstants.OPTICALSLOTSIZE_GHZ *0.5;
-		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + WNetConstants.OPTICALSLOTSIZE_GHZ * 1e-3 * centralSlot; 
+		final double centralSlot = getOpticalSlotIds().last() + getNet().getWdmOpticalSlotSizeInGHz() *0.5;
+		return WNetConstants.CENTRALFREQUENCYOFOPTICALSLOTZERO_THZ + getNet().getWdmOpticalSlotSizeInGHz() * 1e-3 * centralSlot; 
 	}
 
 	//	private static final String ATTNAMESUFFIX_RECEIVERMAXIMUMPMD_PS = "receiverMaximumPmd_ps";
@@ -203,6 +242,7 @@ public class WLightpath extends WAbstractNetworkElement
 	 * @return see above
 	 */
 	public List<WFiber> getSeqFibers () { return getNe().getSeqLinks().stream().map(e->new WFiber(e)).collect(Collectors.toList()); }
+
 	/** Changes the sequence of fibers traversed by this lightpath
 	 * @param newSeqFibers see above
 	 */
@@ -250,8 +290,8 @@ public class WLightpath extends WAbstractNetworkElement
 	void checkConsistency()
 	{
 		if (this.wasRemoved()) return;
-		assert getA().getOutgoingLigtpaths().contains(this);
-		assert getB().getIncomingLigtpaths().contains(this);
+		assert getA().getAddedLigtpaths().contains(this);
+		assert getB().getDroppedLigtpaths().contains(this);
 		assert getLightpathRequest().getLightpaths().contains(this);
 		if (this.isBackupLightpath()) assert !this.getPrimaryLightpathsOfThisBackupLightpath().isEmpty(); 
 		if (this.isBackupLightpath()) assert this.getPrimaryLightpathsOfThisBackupLightpath().stream().allMatch(lp->lp.getBackupLightpaths().contains(this)); 
@@ -263,4 +303,11 @@ public class WLightpath extends WAbstractNetworkElement
 	@Override
 	public WTYPE getWType() { return WTYPE.WLightpath; }
 
+	public OsmLightpathOccupationInfo getOpticalOccupationInformation ()
+	{
+		return new OsmLightpathOccupationInfo(getSeqFibers(), 
+				getDirectionlessAddModuleIndexInOrigin().isPresent()? Optional.of(Pair.of (getA() , getDirectionlessAddModuleIndexInOrigin().get())) : Optional.empty() ,
+				getDirectionlessDropModuleIndexInDestination().isPresent()? Optional.of(Pair.of (getB() , getDirectionlessDropModuleIndexInDestination().get())) : Optional.empty() ,
+				Optional.of(getOpticalSlotIds()));
+	}
 }

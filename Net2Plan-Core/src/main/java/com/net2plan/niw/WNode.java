@@ -6,15 +6,18 @@
 package com.net2plan.niw;
 
 import java.awt.geom.Point2D;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.net2plan.interfaces.networkDesign.Link;
@@ -33,60 +36,59 @@ import com.net2plan.niw.WNetConstants.WTYPE;
  */
 public class WNode extends WAbstractNetworkElement
 {
-	public enum OPTICALSWITCHTYPE
-	{
-		ROADM (
-				e->new TreeSet<> (Arrays.asList(e)) , // add
-				e->new TreeSet<> (), // drop
-				(e1,e2)->new TreeSet<> (Arrays.asList(e2)), // express
-				e->new TreeSet<> () // unavoidable: propagates whatever you do
-				) 
-		, FILTERLESS_DROPANDWASTENOTDIRECTIONLESS (
-				e->new TreeSet<> (Arrays.asList(e)), // add
-				e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // drop
-				(e1,e2)->e1.getB().getOutgoingFibers().stream().filter(ee->e1.isBidirectional()? !ee.equals(e1.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // express
-				e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)) // unavoidable: propagates whatever you do
-				);
+//	public enum OPTICALSWITCHTYPE
+//	{
+//		ROADM (
+//				e->new TreeSet<> (Arrays.asList(e)) , // add
+//				e->new TreeSet<> (), // drop
+//				(e1,e2)->new TreeSet<> (Arrays.asList(e2)), // express
+//				e->new TreeSet<> () // unavoidable: propagates whatever you do
+//				) 
+//		, FILTERLESS_DROPANDWASTENOTDIRECTIONLESS (
+//				e->new TreeSet<> (Arrays.asList(e)), // add
+//				e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // drop
+//				(e1,e2)->e1.getB().getOutgoingFibers().stream().filter(ee->e1.isBidirectional()? !ee.equals(e1.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)), // express
+//				e->e.getB().getOutgoingFibers().stream().filter(ee->e.isBidirectional()? !ee.equals(e.getBidirectionalPair())    : true).collect(Collectors.toCollection(TreeSet::new)) // unavoidable: propagates whatever you do
+//				);
+//
+//		private final Function<WFiber , SortedSet<WFiber>> outFibersIfAddToOutputFiber;
+//		private final Function<WFiber , SortedSet<WFiber>> outFibersIfDropFromInputFiber;
+//		private final BiFunction<WFiber , WFiber , SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber;
+//		private final Function<WFiber , SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber;
+//		
+//		private OPTICALSWITCHTYPE(Function<WFiber, SortedSet<WFiber>> outFibersIfAddToOutputFiber, 
+//				Function<WFiber, SortedSet<WFiber>> outFibersIfDropFromInputFiber, 
+//				BiFunction<WFiber, WFiber, SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber,
+//				Function<WFiber, SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber)
+//		{
+//			this.outFibersIfAddToOutputFiber = outFibersIfAddToOutputFiber;
+//			this.outFibersIfDropFromInputFiber = outFibersIfDropFromInputFiber;
+//			this.outFibersIfExpressFromInputToOutputFiber = outFibersIfExpressFromInputToOutputFiber;
+//			this.outFibersUnavoidablePropagationFromInputFiber = outFibersUnavoidablePropagationFromInputFiber;
+//		}
+//		public static OPTICALSWITCHTYPE getDefault () { return ROADM; }
+//		public boolean isRoadm () { return this == ROADM; }
+//		public String getShortName () { return isRoadm()? "ROADM" : "Filterless"; }
+//		public boolean isDropAndWaste () { return this == OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS; }
+//		public Function<WFiber, SortedSet<WFiber>> getOutFibersIfAddToOutputFiber()
+//		{
+//			return this.outFibersIfAddToOutputFiber;
+//		}
+//		public Function<WFiber, SortedSet<WFiber>> getOutFibersIfDropFromInputFiber()
+//		{
+//			return this.outFibersIfDropFromInputFiber;
+//		}
+//		public BiFunction<WFiber, WFiber, SortedSet<WFiber>> getOutFibersIfExpressFromInputToOutputFiber()
+//		{
+//			return this.outFibersIfExpressFromInputToOutputFiber;
+//		}
+//		public Function<WFiber, SortedSet<WFiber>> getOutFibersUnavoidablePropagationFromInputFiber()
+//		{
+//			return this.outFibersUnavoidablePropagationFromInputFiber;
+//		}
+//	}
 
-		private final Function<WFiber , SortedSet<WFiber>> outFibersIfAddToOutputFiber;
-		private final Function<WFiber , SortedSet<WFiber>> outFibersIfDropFromInputFiber;
-		private final BiFunction<WFiber , WFiber , SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber;
-		private final Function<WFiber , SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber;
-		
-		private OPTICALSWITCHTYPE(Function<WFiber, SortedSet<WFiber>> outFibersIfAddToOutputFiber, 
-				Function<WFiber, SortedSet<WFiber>> outFibersIfDropFromInputFiber, 
-				BiFunction<WFiber, WFiber, SortedSet<WFiber>> outFibersIfExpressFromInputToOutputFiber,
-				Function<WFiber, SortedSet<WFiber>> outFibersUnavoidablePropagationFromInputFiber)
-		{
-			this.outFibersIfAddToOutputFiber = outFibersIfAddToOutputFiber;
-			this.outFibersIfDropFromInputFiber = outFibersIfDropFromInputFiber;
-			this.outFibersIfExpressFromInputToOutputFiber = outFibersIfExpressFromInputToOutputFiber;
-			this.outFibersUnavoidablePropagationFromInputFiber = outFibersUnavoidablePropagationFromInputFiber;
-		}
-		public static OPTICALSWITCHTYPE getDefault () { return ROADM; }
-		public boolean isRoadm () { return this == ROADM; }
-		public String getShortName () { return isRoadm()? "ROADM" : "Filterless"; }
-		public boolean isDropAndWaste () { return this == OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS; }
-		public Function<WFiber, SortedSet<WFiber>> getOutFibersIfAddToOutputFiber()
-		{
-			return this.outFibersIfAddToOutputFiber;
-		}
-		public Function<WFiber, SortedSet<WFiber>> getOutFibersIfDropFromInputFiber()
-		{
-			return this.outFibersIfDropFromInputFiber;
-		}
-		public BiFunction<WFiber, WFiber, SortedSet<WFiber>> getOutFibersIfExpressFromInputToOutputFiber()
-		{
-			return this.outFibersIfExpressFromInputToOutputFiber;
-		}
-		public Function<WFiber, SortedSet<WFiber>> getOutFibersUnavoidablePropagationFromInputFiber()
-		{
-			return this.outFibersUnavoidablePropagationFromInputFiber;
-		}
-	}
-
-	
-	private static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Node_";
+	static final String ATTNAMECOMMONPREFIX = NIWNAMEPREFIX + "Node_";
 	private static final String ATTNAMESUFFIX_TYPE = "type";
 	private static final String ATTNAMESUFFIX_ISCONNECTEDTOCORE = "isConnectedToNetworkCore";
 	private static final String RESOURCETYPE_CPU = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "CPU";
@@ -94,10 +96,9 @@ public class WNode extends WAbstractNetworkElement
 	private static final String RESOURCETYPE_HD = WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER + "HD";
 	private static final String ATTNAMESUFFIX_ARBITRARYPARAMSTRING = "ArbitraryString";
 	private static final String ATTNAME_OPTICALSWITCHTYPE = "ATTNAME_OPTICALSWITCHTYPE";
-	private static final String ATTNAMESUFFIX_EXPRESS_NOISEFIGUREDB = "expressNoiseFigure_db";
-	private static final String ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB = "expressGain_db";
-	private static final String ATTNAMESUFFIX_OADMSWFABRICPMD_PS = "expressPmd_ps";
-
+	static final String ATTNAME_OPTICALSWITCHTYPEINITSTRING = "ATTNAME_OPTICALSWITCHTYPE_INITSTRING";
+	private static final String ATTNAMESUFFIX_OADMNUMADDDROPMODULES = "oadmNumAddDropModules";
+	private static final String ATTNAMESUFFIX_HASDIRECTEDMODULES = "oadmHasDirectedAddDropModules";
 	
 	public void setArbitraryParamString(String s)
 	{
@@ -160,6 +161,78 @@ public class WNode extends WAbstractNetworkElement
 		return (Node) associatedNpElement;
 	}
 
+	/** Returns the number of add/drop modules that are directionless (and thus are implemented as regular degrees), in the OADM 
+	 * @return see above
+	 */
+	public int getOadmNumAddDropDirectionlessModules () 
+	{
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDDROPMODULES, 1.0).intValue(); 
+		return index < 0? 0 : index; 
+	} 
+	
+	/** Indicates if this node architecture has directed add/drop modules in the degrees, where to place the lighpaths 
+	 * @return see above
+	 */
+	public boolean isOadmWithDirectedAddDropModulesInTheDegrees () 
+	{
+		final int index = getNe().getAttributeAsDouble (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_HASDIRECTEDMODULES, 1.0).intValue(); 
+		return index != 0; 
+	} 
+
+	
+	/** Indicates if this node architecture has directed add/drop modules in the degrees, where to place the lighpaths 
+	 * @return see above
+	 */
+	public void setIsOadmWithDirectedAddDropModulesInTheDegrees (boolean isWithDirectedAddDropModules) 
+	{
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_HASDIRECTEDMODULES, isWithDirectedAddDropModules? 1 : 0); 
+	} 
+	
+	/** Sets the number of add/drop modules in the OADM that are directionless and thus are implemented as regular degrees (greater or equal to zero)
+	 * @param numModules see above
+	 */
+	public void setOadmNumAddDropDirectionlessModules (int numModules) 
+	{
+		getNe().setAttribute (ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMNUMADDDROPMODULES, numModules < 0? 0 : numModules); 
+	} 
+	
+	/** Returns the lightpaths added in this node, in directed (non-directionless) modules
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getAddedLightpathsInDirectedModule ()
+	{
+		return getAddedLigtpaths().stream().filter(lp->!lp.getDirectionlessAddModuleIndexInOrigin().isPresent()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the lightpaths dropped in this node, in directed (non-directionless) modules
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getDroppedLightpathsInDirectedModule ()
+	{
+		return getDroppedLigtpaths().stream().filter(lp->!lp.getDirectionlessDropModuleIndexInDestination().isPresent()).collect(Collectors.toCollection(TreeSet::new));
+	}
+	
+	/** Returns the lightpaths added in this node, connected in the indicated add directionless module index
+	 * @param addModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getAddedLightpathsInDirectionlessModule (int directionlessAddModuleIndex)
+	{
+		if (directionlessAddModuleIndex < 0) return new TreeSet<> ();
+		return getAddedLigtpaths().stream().filter(lp->lp.getDirectionlessAddModuleIndexInOrigin().isPresent()).filter(lp->lp.getDirectionlessAddModuleIndexInOrigin().get() == directionlessAddModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/** Returns the lightpaths added in this node, connected in the indicated drop directionless module index
+	 * @param addModuleIndex see above
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getDroppedLightpathsInDirectionlessModule (int directionlessDropModuleIndex)
+	{
+		if (directionlessDropModuleIndex < 0) return new TreeSet<> ();
+		return getDroppedLigtpaths().stream().filter(lp->lp.getDirectionlessDropModuleIndexInDestination().isPresent()).filter(lp->lp.getDirectionlessDropModuleIndexInDestination().get() == directionlessDropModuleIndex).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+
 	/**
 	 * Returns the node name, which must be unique among all the nodes
 	 * @return see above
@@ -182,38 +255,6 @@ public class WNode extends WAbstractNetworkElement
 		n.setName(name);
 	}
 
-	
-	
-	/** Returns the gain observed by the express channels, in dB. Defaults to20.0 dB
-	 * @return see above
-	 */
-	public double getOadmSwitchFabricAttenuation_dB ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, WNetConstants.WNODE_DEFAULT_OPTICALSWITCHFABRIC_ATTENUATION_DB);
-	}
-	/** Returns the PMD added to the express channels, in ps. Defaults to 0 ps
-	 * @return see above
-	 */
-	public double getOadmSwitchFabricPmd_ps ()
-	{
-		return getNe().getAttributeAsDouble(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICPMD_PS, WNetConstants.WNODE_DEFAULT_OPTICALSWITCHFABRIC_PMD_PS);
-	}
-
-	/** Sets the gain observed by the express channels, in dB. 
-	 * @param gain_dB see above
-	 */
-	public void setOadmSwitchFabricAttenuation_dB (double gain_dB)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICATTENUATION_DB, gain_dB);
-	}
-	/** Sets the PMD added observed by the express channels, in ps. 
-	 * @param pmd_ps see above
-	 */
-	public void setOadmSwitchFabricPmd_ps (double pmd_ps)
-	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_OADMSWFABRICPMD_PS, pmd_ps);
-	}
-	
 	
 	/**
 	 * Sets the icon to show in Net2Plan GUI for node at the WDM layer, and the relative size respect to other nodes.
@@ -550,6 +591,25 @@ public class WNode extends WAbstractNetworkElement
 	}
 
 	/**
+	 * Returns the set of outgoing lightpaths of the node
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getOutgoingLigtpaths()
+	{
+		return getOutgoingLigtpathRequests().stream().map(e->e.getLightpaths()).flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/**
+	 * Returns the set of incoming lightpaths of the node
+	 * @return see above
+	 */
+	public SortedSet<WLightpath> getIncomingLigtpaths()
+	{
+		return getIncomingLigtpathRequests().stream().map(e->e.getLightpaths()).flatMap(e->e.stream()).collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	
+	/**
 	 * Returns the set of incoming lightpath requests to the node
 	 * @return see above
 	 */
@@ -565,7 +625,7 @@ public class WNode extends WAbstractNetworkElement
 	 * Returns the set of outgoing lightpaths of the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpath> getOutgoingLigtpaths()
+	public SortedSet<WLightpath> getAddedLigtpaths()
 	{
 		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
 		return n.getOutgoingRoutes(getNet().getWdmLayer().get().getNe()).stream().
@@ -602,7 +662,7 @@ public class WNode extends WAbstractNetworkElement
 	 * Returns the set of incoming lightpaths to the node
 	 * @return see above
 	 */
-	public SortedSet<WLightpath> getIncomingLigtpaths()
+	public SortedSet<WLightpath> getDroppedLigtpaths()
 	{
 		if (!getNet().isWithWdmLayer()) return new TreeSet<> ();
 		return n.getIncomingRoutes(getNet().getWdmLayer().get().getNe()).stream().
@@ -780,23 +840,33 @@ public class WNode extends WAbstractNetworkElement
 	/** Indicates if this node has a filterless brodcast operation with the add, dropped and express lightpaths
 	 * @return see above
 	 */
-	public OPTICALSWITCHTYPE getOpticalSwitchType ()
+	public IOadmArchitecture getOpticalSwitchingArchitecture ()
 	{
-		try
+		try 
 		{
-			return OPTICALSWITCHTYPE.valueOf(this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, OPTICALSWITCHTYPE.getDefault().name()));
-		} catch (Exception exc) 
+			final String classFullName = this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, null);
+			if (classFullName == null) throw new RuntimeException ();
+			final Class classOfOadmArchit = Class.forName(classFullName);
+			final IOadmArchitecture arc = (IOadmArchitecture) classOfOadmArchit.getConstructor().newInstance();
+			arc.initialize(this);
+			return arc;
+		} catch (Exception e) 
 		{
-			exc.printStackTrace();
-			return OPTICALSWITCHTYPE.getDefault();
+			e.printStackTrace();
+			final OadmArchitecture_generic res = new OadmArchitecture_generic();
+			this.getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, OadmArchitecture_generic.class.getName());
+			res.initialize(this);
+			return res;
 		}
 	}
 	
-	public void setOpticalSwitchType (OPTICALSWITCHTYPE type)
+	public void setOpticalSwitchArchitecture (Class opticalArchitectureClass)
 	{
-		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, type.name());
+		if (!IOadmArchitecture.class.isAssignableFrom(opticalArchitectureClass))
+			throw new Net2PlanException ("The architecture is not an instance of the appropriate class");
+		getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, opticalArchitectureClass.getName());
 	}
-	
+
 	@Override
 	void checkConsistency()
 	{
@@ -807,8 +877,8 @@ public class WNode extends WAbstractNetworkElement
 		assert getOutgoingIpConnections().stream().allMatch(e->e.getA().equals(this));
 		assert getIncomingLigtpathRequests().stream().allMatch(e->e.getB().equals(this));
 		assert getOutgoingLigtpathRequests().stream().allMatch(e->e.getA().equals(this));
-		assert getIncomingLigtpaths().stream().allMatch(e->e.getB().equals(this));
-		assert getOutgoingLigtpaths().stream().allMatch(e->e.getA().equals(this));
+		assert getDroppedLigtpaths().stream().allMatch(e->e.getB().equals(this));
+		assert getAddedLigtpaths().stream().allMatch(e->e.getA().equals(this));
 		assert getIncomingServiceChainRequests().stream().allMatch(e->e.getPotentiallyValidDestinations().contains(this));
 		assert getOutgoingServiceChainRequests().stream().allMatch(e->e.getPotentiallyValidOrigins().contains(this));
 		assert getIncomingServiceChains().stream().allMatch(e->e.getB().equals(this));

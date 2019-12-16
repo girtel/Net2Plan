@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -22,7 +23,9 @@ import org.junit.Test;
 import com.net2plan.examples.niw.algorithms.SimpleCapacityPlanningAlgorithm_v2;
 import com.net2plan.examples.niw.algorithms.TopologyGenerator_example7nodesWithTraffic;
 import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.niw.OadmArchitecture_generic;
 import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.OsmLightpathOccupationInfo;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpUnicastDemand;
@@ -95,29 +98,32 @@ public class NiwModelTest extends TestCase
 		assertEquals(n1.getIncomingLigtpathRequests(), new TreeSet<>(Arrays.asList(lr21, lr31, lr41)));
 		assertEquals(n1.getOutgoingLigtpathRequests(), new TreeSet<>(Arrays.asList(lr12, lr13, lr14)));
 
+		//OsmLightpathOccupationInfo lpOccupation , int numContiguousSlotsRequired , Optional<Integer> minimumInitialSlotId , 
+		//SortedSet<Integer> forbidenSlotIds
+		
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		List<WFiber> fiberPath;
 		fiberPath = net.getKShortestWdmPath(1, n1, n2, null).get(0);
-		this.l12 = lr12.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l12 = lr12.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n2, n1, null).get(0);
-		this.l21 = lr21.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l21 = lr21.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n1, n3, null).get(0);
-		this.l13 = lr13.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l13 = lr13.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n3, n1, null).get(0);
-		this.l31 = lr31.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l31 = lr31.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n1, n4, null).get(0);
-		this.l14 = lr14.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l14 = lr14.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n4, n1, null).get(0);
-		this.l41 = lr41.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l41 = lr41.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
         this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		assertEquals(net.getLightpaths(), Arrays.asList(l12, l21, l13, l31, l14, l41));
-		assertEquals(n1.getIncomingLigtpaths(), new TreeSet<>(Arrays.asList(l21, l31, l41)));
-		assertEquals(n1.getOutgoingLigtpaths(), new TreeSet<>(Arrays.asList(l12, l13, l14)));
+		assertEquals(n1.getDroppedLigtpaths(), new TreeSet<>(Arrays.asList(l21, l31, l41)));
+		assertEquals(n1.getAddedLigtpaths(), new TreeSet<>(Arrays.asList(l12, l13, l14)));
 
 		assertTrue(!lr12.isCoupledToIpLink());
 		assertTrue(!i12.getFirst().isCoupledtoLpRequest());
@@ -189,11 +195,11 @@ public class NiwModelTest extends TestCase
 		assertEquals(n3.getVnfInstances(vnfType2.getVnfTypeName()).first().getTraversingServiceChains(), new TreeSet<>(Arrays.asList(sc13)));
 		net.checkConsistency();
 
-		n1.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-		n2.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-        n3.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-        n4.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-		n5.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
+		n1.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+		n2.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+		n3.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+		n4.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+		n5.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
 
         this.osm = OpticalSpectrumManager.createFromRegularLps(net);
         List<List<WFiber>> res = new ArrayList<>();

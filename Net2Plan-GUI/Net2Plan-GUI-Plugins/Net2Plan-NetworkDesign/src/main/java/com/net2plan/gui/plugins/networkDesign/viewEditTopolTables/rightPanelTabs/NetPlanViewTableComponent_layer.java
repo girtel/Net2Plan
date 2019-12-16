@@ -45,6 +45,7 @@ import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.ParamValueTable;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_layer;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
@@ -104,7 +105,9 @@ public class NetPlanViewTableComponent_layer extends JPanel
         txt_layerDescription.setEditable(false);
         txt_layerDemandTrafficUnits = new JTextField();
         txt_layerDemandTrafficUnits.setEditable(false);
+        txt_layerDemandTrafficUnits.setText(networkViewer.getDesign().getDemandTrafficUnitsName(layerThisTable));
         txt_layerLinkCapacityUnits = new JTextField();
+        txt_layerLinkCapacityUnits.setText(networkViewer.getDesign().getLinkCapacityUnitsName(layerThisTable));
         txt_layerLinkCapacityUnits.setEditable(false);
 
         /*txt_layerName.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
@@ -187,7 +190,6 @@ public class NetPlanViewTableComponent_layer extends JPanel
         layerPane.add(txt_layerLinkCapacityUnits, "grow, wrap");
         layerPane.add(new JLabel("Demand traffic units"));
         layerPane.add(txt_layerDemandTrafficUnits, "grow, wrap");
-
         layerPane.add(sp_tags, "grow, spanx");
 
         layerPane.add(scrollPane, "grow, spanx 2");

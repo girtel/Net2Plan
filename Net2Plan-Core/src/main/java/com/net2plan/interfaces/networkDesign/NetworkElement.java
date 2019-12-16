@@ -109,6 +109,12 @@ public abstract class NetworkElement implements Comparable<NetworkElement>
 			return (o == this); 
 	}
 	
+	@Override
+	final public int hashCode ()
+	{
+		return super.hashCode();
+	}
+	
 	final public int compareTo(NetworkElement o)
 	{
 		if (this.equals(o)) return 0;

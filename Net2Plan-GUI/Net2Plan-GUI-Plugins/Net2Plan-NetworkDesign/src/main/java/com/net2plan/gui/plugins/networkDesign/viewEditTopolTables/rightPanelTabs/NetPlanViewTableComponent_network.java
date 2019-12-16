@@ -30,6 +30,8 @@ import javax.swing.table.TableColumn;
 
 import com.net2plan.gui.plugins.GUINetworkDesign;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.AdvancedJTable_layer;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.specificTables.Niw_AdvancedJTable_layer;
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
 import com.net2plan.gui.utils.ColumnHeaderToolTips;
@@ -48,22 +50,44 @@ public class NetPlanViewTableComponent_network extends JPanel {
     private final static String[] tagTableHeader = StringUtils.arrayOf("Tag");
     private final static String[] tagTableTip = StringUtils.arrayOf("Name of the tag");
 
-    private JTextField txt_networkName, txt_numLayers, txt_numNodes, txt_numSRGs , txt_currentDate;
-    private JButton updateTables;
+    private JTextField txt_networkName, txt_currentDate , txt_niwOpticalSlotSizeGHz;
+    private JButton updateDate , update_niwOpticalSlotSizeGHz;
     private JTextArea txt_networkDescription;
     private AdvancedJTable networkTagTable;
     private AdvancedJTable networkAttributeTable;
     private AdvancedJTable_networkElement layerTable;
     private final GUINetworkDesign networkViewer;
 
-    public NetPlanViewTableComponent_network(final GUINetworkDesign networkViewer, AdvancedJTable_networkElement layerTable) {
+    public NetPlanViewTableComponent_network(final GUINetworkDesign networkViewer, AdvancedJTable_networkElement layerTable) 
+    {
         super(new MigLayout("", "[][grow]", "[][][grow][][][][][grow]"));
 
         this.layerTable = layerTable;
         this.networkViewer = networkViewer;
-        updateTables = new JButton ("Update");
-        updateTables.setEnabled(true);
-        updateTables.addActionListener(new ActionListener() 
+        final boolean isNiwActive = networkViewer.getVisualizationState().isNiwDesignButtonActive() && networkViewer.isNiwValidCurrentDesign();
+        if (isNiwActive)
+        {
+            this.update_niwOpticalSlotSizeGHz = new JButton ("Update");
+            this.update_niwOpticalSlotSizeGHz.setEnabled(true);
+            this.update_niwOpticalSlotSizeGHz.addActionListener(new ActionListener() 
+            {
+    			@Override
+    			public void actionPerformed(ActionEvent e) 
+    			{
+                	try
+                	{
+                		final double val = Double.parseDouble(txt_niwOpticalSlotSizeGHz.getText());
+                		if (val > 0)
+                			networkViewer.getNiwInfo().getSecond().setWdmOpticalSlotSizeInGHz(val);
+                	} catch (Exception ee) { }
+                	txt_niwOpticalSlotSizeGHz.setText("" + networkViewer.getNiwInfo().getSecond().getWdmOpticalSlotSizeInGHz());
+                }
+    		});
+        	
+        }
+        updateDate = new JButton ("Update");
+        updateDate.setEnabled(true);
+        updateDate.addActionListener(new ActionListener() 
         {
 			@Override
 			public void actionPerformed(ActionEvent e) 
@@ -89,12 +113,11 @@ public class NetPlanViewTableComponent_network extends JPanel {
         txt_networkDescription.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
         txt_currentDate = new JTextField();
         txt_currentDate.setEditable(networkViewer.getVisualizationState().isNetPlanEditable());
-        txt_numLayers = new JTextField();
-        txt_numLayers.setEditable(false);
-        txt_numNodes = new JTextField();
-        txt_numNodes.setEditable(false);
-        txt_numSRGs = new JTextField();
-        txt_numSRGs.setEditable(false);
+        if (isNiwActive)
+        {
+            txt_niwOpticalSlotSizeGHz = new JTextField();
+            txt_niwOpticalSlotSizeGHz.setEditable(true);
+        }
 
         if (networkViewer.getVisualizationState().isNetPlanEditable()) {
             txt_networkName.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) {
@@ -110,28 +133,6 @@ public class NetPlanViewTableComponent_network extends JPanel {
                     networkViewer.getDesign().setDescription(text);
                 }
             });
-//            txt_currentDate.getDocument().addDocumentListener(new DocumentAdapter(networkViewer) 
-//            {
-//                @Override
-//                protected void updateInfo(String text) 
-//                {
-//                	try
-//                	{
-//                		if (!inTheMiddleOfUpdateOfCurrentDate)
-//                		{
-//                			inTheMiddleOfUpdateOfCurrentDate = true;
-//                    		final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
-//                    		final Date date = df.parse(text);
-//                    		if (!date.equals(networkViewer.getDesign().getCurrentDate())) 
-//                    		{
-//                                networkViewer.getDesign().setCurrentDate(date);
-//                                networkViewer.updateVisualizationJustTables();
-//                    		}
-//                            inTheMiddleOfUpdateOfCurrentDate = false;
-//                		}
-//                	} catch (Exception ee) {}
-//                }
-//            });
         }
 
         networkTagTable = new AdvancedJTable(new ClassAwareTableModel(new Object[1][tagTableHeader.length], tagTableHeader));
@@ -184,16 +185,18 @@ public class NetPlanViewTableComponent_network extends JPanel {
         this.add(new JLabel("Current date (yyyy-MM-dd HH:mm:ss)"), "grow");
         final JPanel auxPanel = new JPanel (new BorderLayout()); 
         auxPanel.add(txt_currentDate , BorderLayout.CENTER); 
-        auxPanel.add(updateTables, BorderLayout.EAST);
+        auxPanel.add(updateDate, BorderLayout.EAST);
         this.add(auxPanel, "grow, wrap"); 
-//        this.add(new JLabel("Click this button to update the tables"), "grow");
+        if (isNiwActive)
+        {
+            this.add(new JLabel("WDM layer optical slot size (GHz)"), "grow");
+            final JPanel auxPanel2 = new JPanel (new BorderLayout()); 
+            auxPanel2.add(txt_niwOpticalSlotSizeGHz , BorderLayout.CENTER); 
+            auxPanel2.add(update_niwOpticalSlotSizeGHz, BorderLayout.EAST);
+            this.add(auxPanel2, "grow, wrap"); 
+        }
+        //        this.add(new JLabel("Click this button to update the tables"), "grow");
 //        this.add(updateTables, "grow, wrap");
-        this.add(new JLabel("Number of layers"), "grow");
-        this.add(txt_numLayers, "grow, wrap");
-        this.add(new JLabel("Number of nodes"), "grow");
-        this.add(txt_numNodes, "grow, wrap");
-        this.add(new JLabel("Number of SRGs"), "grow");
-        this.add(txt_numSRGs, "grow, wrap");
         this.add(new JLabel("Layer information"), "grow, spanx2, wrap");
         this.add(layerTable.getTableScrollPane(), "grow, spanx 2");
         networkAttributeTable.addKeyListener(new TableCursorNavigation());
@@ -202,10 +205,8 @@ public class NetPlanViewTableComponent_network extends JPanel {
 
     // GETDECORATOR
 
-    public void updateNetPlanView(NetPlan currentState) {
-        txt_numLayers.setText(Integer.toString(currentState.getNumberOfLayers()));
-        txt_numNodes.setText(Integer.toString(currentState.getNumberOfNodes()));
-        txt_numSRGs.setText(Integer.toString(currentState.getNumberOfSRGs()));
+    public void updateNetPlanView(NetPlan currentState) 
+    {
 
         networkAttributeTable.setEnabled(false);
         ((DefaultTableModel) networkAttributeTable.getModel()).setDataVector(new Object[1][attributeTableHeader.length], attributeTableHeader);
@@ -244,6 +245,10 @@ public class NetPlanViewTableComponent_network extends JPanel {
 		final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
 		if (!txt_currentDate.getText().equals(df.format(currentState.getCurrentDate()))) 
 			txt_currentDate.setText(df.format(currentState.getCurrentDate()));
+        final boolean isNiwActive = networkViewer.getVisualizationState().isNiwDesignButtonActive() && networkViewer.isNiwValidCurrentDesign();
+        if (isNiwActive)
+        	txt_niwOpticalSlotSizeGHz.setText("" + networkViewer.getNiwInfo().getSecond().getWdmOpticalSlotSizeInGHz());
+		txt_currentDate.setText(df.format(currentState.getCurrentDate()));
         txt_networkName.setText(currentState.getName());
         txt_networkDescription.setText(currentState.getDescription());
         txt_networkDescription.setCaretPosition(0);

@@ -151,7 +151,10 @@ public abstract class WAbstractNetworkElement implements Comparable<WAbstractNet
 	{
 		return associatedNpElement.getAttributeAsDoubleList(name, defaultValue);
 	}
-
+	public List<String> getAttributeAsListStringOrDefault(String name, List<String> defaultValue)
+	{
+		return associatedNpElement.getAttributeAsStringList(name, defaultValue);
+	}
 	public SortedSet<Integer> getAttributeAsSortedSetIntegerOrDefault(String name, SortedSet<Integer> defaultValue)
 	{
 		final List<Double> res = associatedNpElement.getAttributeAsDoubleList(name, null);
