@@ -17,11 +17,8 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -34,31 +31,22 @@ import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_networkElement;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AdvancedJTable_abstractElement.AGTYPE;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
-import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
 import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.OpticalSimulationModule;
-import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
 import com.net2plan.niw.OpticalSpectrumManager;
-import com.net2plan.niw.WFiber;
-import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpSourceRoutedConnection;
 import com.net2plan.niw.WLightpath;
-import com.net2plan.niw.WLightpathRequest;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
-import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.niw.WNode;
 import com.net2plan.niw.WServiceChain;
-import com.net2plan.utils.Pair;
 
 /**
  */
@@ -113,7 +101,7 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
     		final OpticalSimulationModule osim = callback.getNiwInfo().getFourth();
     		
             res.add(new AjtColumnInfo<Route>(this , Demand.class, null , "Lp request", "Associated lightpath request", null , d->toLp.apply(d).getLightpathRequest().getNe() , AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , Boolean.class, null , "Up?", "Indicates if this lightpath is up (not traversing any down node or fiber)", null , d->!toLp.apply(d).isDown() , AGTYPE.COUNTTRUE , null));
+            res.add(new AjtColumnInfo<Route>(this , Boolean.class, null , "Up?", "Indicates if this lightpath is up (not traversing any down node or fiber)", null , d->!toLp.apply(d).isDown() , AGTYPE.COUNTTRUE , d->toLp.apply(d).isDown()? Color.red : null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, null , "Target line rate (Gbps)", "Nominal line rate for this lightpath (its rate if up)", null , d->toLp.apply(d).getLightpathRequest().getLineRateGbps() , AGTYPE.SUMDOUBLE , null));
             res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# fibers", "Number of traversed fibers links", null , d->toLp.apply(d).getSeqFibers().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Collection.class, null , "# OADMs", "Number of traversed OADM nodes", null , d->toLp.apply(d).getSeqNodes().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION , null));
@@ -126,20 +114,22 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
             
             res.add(new AjtColumnInfo<Route>(this , String.class, null , "# Occupied slots", "Number of occupied optical slots", null , d->toLp.apply(d).getOpticalSlotIds().size() , AGTYPE.SUMINT , null));
             res.add(new AjtColumnInfo<Route>(this , String.class, null , "Occupied slots", "Slots occupied", null , d->toLp.apply(d).getOpticalSlotIds().stream().map(ee->""+ee).collect(Collectors.joining(",")) , AGTYPE.SUMINT , null));
-            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Clashing?", "Slots occupied", null , d->ospec.isSpectrumOccupationOk(toLp.apply(d))? "No" : "Yes" , AGTYPE.COUNTTRUE , t->ospec.isSpectrumOccupationOk(toLp.apply(t))? null : Color.RED));
+            res.add(new AjtColumnInfo<Route>(this , String.class, null , "Clashing?", "Indicates if there is spectrum clashing for this lightpath, so it traverses at least a fiber where it copropagates with a lighpath with overlapping spectrum", null , d->ospec.isSpectrumOccupationOk(toLp.apply(d))? "No" : "Yes" , AGTYPE.COUNTTRUE , t->ospec.isSpectrumOccupationOk(toLp.apply(t))? null : Color.RED));
             res.add(new AjtColumnInfo<Route>(this , String.class, null , "Transponder name", "Name of the transponder associated to the lightpath request of this lightpath", null , d->toLp.apply(d).getLightpathRequest().getTransponderName().orElse("--") , AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , String.class, null , "ADD module", "The index of the directionless add module in the origin OADM where the transponder is placed, or a negative value meaning that is placed at the directed module placed in the out-degree", (d,val)->toLp.apply(d).setDirectionlessAddModuleIndexInOrigin(((Double) val).intValue() < 0? Optional.empty() : Optional.of(((Double) val).intValue())) , d->toLp.apply(d).getDirectionlessAddModuleIndexInOrigin().isPresent()? toLp.apply(d).getDirectionlessAddModuleIndexInOrigin().get () : "Directed ADD"  , AGTYPE.NOAGGREGATION , d->{ final int i = toLp.apply(d).getDirectionlessAddModuleIndexInOrigin().orElse(-1); final WNode n = toLp.apply(d).getA(); if (i < 0)  return n.isOadmWithDirectedAddDropModulesInTheDegrees()? null : Color.red; return i < n.getOadmNumAddDropDirectionlessModules()? null : Color.red;   }        ) );
+            res.add(new AjtColumnInfo<Route>(this , String.class, null , "DROP module", "The index of the directionless drop module in the destination OADM where the transponder is placed, or a negative value meaning that is placed at the directed module placed in the in-degree", (d,val)->toLp.apply(d).setDirectionlessDropModuleIndexInDestination(((Double) val).intValue() < 0? Optional.empty() : Optional.of(((Double) val).intValue())) , d->toLp.apply(d).getDirectionlessDropModuleIndexInDestination().isPresent()? toLp.apply(d).getDirectionlessAddModuleIndexInOrigin().get () : "Directed DROP"  , AGTYPE.NOAGGREGATION , d->{ final int i = toLp.apply(d).getDirectionlessDropModuleIndexInDestination().orElse(-1); final WNode n = toLp.apply(d).getB(); if (i < 0)  return n.isOadmWithDirectedAddDropModulesInTheDegrees()? null : Color.red; return i < n.getOadmNumAddDropDirectionlessModules()? null : Color.red;   } ));
             res.add(new AjtColumnInfo<Route>(this , String.class, Arrays.asList("Optical signal") , "Modulation id", "Identifier of the modulation used in this lightpath", (d,val)->toLp.apply(d).setModulationId((String)val) , d->toLp.apply(d).getModulationId() , AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp tx: injection power (dBm)", "The injection power of the lightpath, measured at the output of the transponder", (d,val)->toLp.apply(d).setAddTransponderInjectionPower_dBm((Double)val) , d->toLp.apply(d).getAddTransponderInjectionPower_dBm(), AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: power (dBm)", "The optical power at the input reception transponder end of the lightpath", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.POWER_DBM), AGTYPE.NOAGGREGATION , t-> { final double v = osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(t)).get(PERLPINFOMETRICS.POWER_DBM); if (v > toLp.apply(t).getTransponderMaximumTolerableReceptionPower_dBm()) return Color.red; if (v < toLp.apply(t).getTransponderMinimumTolerableReceptionPower_dBm()) return Color.red; return null; } ));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: OSNR (dB)", "The OSNR (at 12.5 GHz reference bandwidth) of the lightpath at the reception end", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW), AGTYPE.NOAGGREGATION , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW) < toLp.apply(d).getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB()? Color.red : null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: CD (ps/nm)", "The chromatic dispersion in ps/nm of the lightpath at the reception end", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.CD_PERPERNM), AGTYPE.NOAGGREGATION , d->Math.abs(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.CD_PERPERNM)) > toLp.apply(d).getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm()? Color.red : null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: PMS (ps)", "The polarization mode dispersion (PMD) in ps, of the lightpath at the reception end", null , d->Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.PMDSQUARED_PS2)), AGTYPE.NOAGGREGATION , d->Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).get(PERLPINFOMETRICS.PMDSQUARED_PS2)) > toLp.apply(d).getTransponderMaximumTolerablePmd_ps()? Color.red : null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: power (dBm)", "The optical power at the input reception transponder end of the lightpath", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getPower_dbm(), AGTYPE.NOAGGREGATION , t-> { final double v = osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(t)).getPower_dbm(); if (v > toLp.apply(t).getTransponderMaximumTolerableReceptionPower_dBm()) return Color.red; if (v < toLp.apply(t).getTransponderMinimumTolerableReceptionPower_dBm()) return Color.red; return null; } ));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: OSNR (dB)", "The OSNR (at 12.5 GHz reference bandwidth) of the lightpath at the reception end", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getOsnrAt12_5GhzRefBw(), AGTYPE.NOAGGREGATION , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getOsnrAt12_5GhzRefBw() < toLp.apply(d).getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB()? Color.red : null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: CD (ps/nm)", "The chromatic dispersion in ps/nm of the lightpath at the reception end", null , d->osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getCd_psPerNm(), AGTYPE.NOAGGREGATION , d->Math.abs(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getCd_psPerNm()) > toLp.apply(d).getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm()? Color.red : null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp rx: PMD (ps)", "The polarization mode dispersion (PMD) in ps, of the lightpath at the reception end", null , d->Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getPmdSquared_ps2()), AGTYPE.NOAGGREGATION , d->Math.sqrt(osim.getOpticalPerformanceAtTransponderReceiverEnd(toLp.apply(d)).getPmdSquared_ps2()) > toLp.apply(d).getTransponderMaximumTolerablePmd_ps()? Color.red : null));
 
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp: Min. rx power (dBm)", "The minimum reception power acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMinimumTolerableReceptionPower_dBm((Double)val) , d->toLp.apply(d).getTransponderMinimumTolerableReceptionPower_dBm(), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp: Max. rx power (dBm)", "The maximum reception power acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMaximumTolerableReceptionPower_dBm((Double)val) , d->toLp.apply(d).getTransponderMaximumTolerableReceptionPower_dBm(), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp: Min. OSNR (dB)", "The minimum OSNR, measured at 12.5 GHz of reference bandwidth, acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB((Double)val) , d->toLp.apply(d).getTransponderMinimumTolerableOsnrAt12_5GHzOfRefBw_dB(), AGTYPE.NOAGGREGATION , null));
             res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp: Max. CD (ps/nm)", "The maximum chromatic dispersion in absolutte value, measured in ps/nm, acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMaximumTolerableCdInAbsoluteValue_perPerNm((Double)val) , d->toLp.apply(d).getTransponderMaximumTolerableCdInAbsoluteValue_perPerNm(), AGTYPE.NOAGGREGATION , null));
-            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp: Max. PMS (ps)", "The maximum polarization mode dispersion (PMD), measured in ps, acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMaximumTolerablePmd_ps((Double)val) , d->toLp.apply(d).getTransponderMaximumTolerablePmd_ps(), AGTYPE.NOAGGREGATION , null));
+            res.add(new AjtColumnInfo<Route>(this , Double.class, Arrays.asList("Optical signal") , "Tp: Max. PMD (ps)", "The maximum polarization mode dispersion (PMD), measured in ps, acceptable in the reception side of this lightpath", (d,val)->toLp.apply(d).setTransponderMaximumTolerablePmd_ps((Double)val) , d->toLp.apply(d).getTransponderMaximumTolerablePmd_ps(), AGTYPE.NOAGGREGATION , null));
 
     	}
       return res;
@@ -240,7 +230,34 @@ public class Niw_AdvancedJTable_route extends AdvancedJTable_networkElement<Rout
                     		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setOpticalSlotIds(vals));
                     	}
                     ) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set add module index to selected lightpaths", e-> 
+            DialogBuilder.launch(
+                    "Set add module index" , 
+                    "Please introduce the requested information", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfInt("Index of the add module (>=0 means directionless module, otherwise directed module)", "Introduce the requested information", 10, -1)),
+                    (list)->
+                    	{
+                    		final Integer value = (Integer) list.get(0).get();
+                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setDirectionlessAddModuleIndexInOrigin(value < 0? Optional.empty() : Optional.of(value)));
+                    	}
+                    ) , (a,b)->b>0, null));
+            res.add(new AjtRcMenu("Set drop module index to selected lightpaths", e-> 
+            DialogBuilder.launch(
+                    "Set drop module index" , 
+                    "Please introduce the requested information", 
+                    "", 
+                    this, 
+                    Arrays.asList(InputForDialog.inputTfInt("Index of the drop module (>=0)", "Introduce the requested information", 10, 0)),
+                    (list)->
+                    	{
+                    		final Integer value = (Integer) list.get(0).get();
+                    		getSelectedElements().stream().map(ee->toLp.apply(ee)).forEach(ee->ee.setDirectionlessDropModuleIndexInDestination(value < 0? Optional.empty() : Optional.of(value)));
+                    	}
+                    ) , (a,b)->b>0, null));
 
+            
             res.add(new AjtRcMenu("Set modulation id to selected lightpaths", e-> 
             DialogBuilder.launch(
                     "Set modulation id" , 

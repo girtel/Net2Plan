@@ -17,9 +17,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.net2plan.niw.OadmArchitecture_generic;
+import com.net2plan.niw.OpticalAmplifierInfo;
 import com.net2plan.niw.OpticalSimulationModule;
-import com.net2plan.niw.OpticalSimulationModule.PERLPINFOMETRICS;
 import com.net2plan.niw.OpticalSpectrumManager;
+import com.net2plan.niw.OsmLightpathOccupationInfo;
 import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WIpUnicastDemand;
@@ -93,26 +95,26 @@ public class NiwModelTest extends TestCase
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		List<WFiber> fiberPath;
 		fiberPath = net.getKShortestWdmPath(1, n1, n2, null).get(0);
-		this.l12 = lr12.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l12 = lr12.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n2, n1, null).get(0);
-		this.l21 = lr21.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l21 = lr21.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n1, n3, null).get(0);
-		this.l13 = lr13.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l13 = lr13.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n3, n1, null).get(0);
-		this.l31 = lr31.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l31 = lr31.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n1, n4, null).get(0);
-		this.l14 = lr14.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l14 = lr14.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
 		this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		fiberPath = net.getKShortestWdmPath(1, n4, n1, null).get(0);
-		this.l41 = lr41.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(fiberPath, 5, Optional.empty()).get(), false);
+		this.l41 = lr41.addLightpathUnregenerated(fiberPath, osm.spectrumAssignment_firstFit(new OsmLightpathOccupationInfo(fiberPath, Optional.empty(), Optional.empty(), Optional.empty()), 5, Optional.empty() , new TreeSet<> ()).get(), false);
         this.osm = OpticalSpectrumManager.createFromRegularLps(net);
 		assertEquals(net.getLightpaths(), Arrays.asList(l12, l21, l13, l31, l14, l41));
-		assertEquals(n1.getIncomingLigtpaths(), new TreeSet<>(Arrays.asList(l21, l31, l41)));
-		assertEquals(n1.getOutgoingLigtpaths(), new TreeSet<>(Arrays.asList(l12, l13, l14)));
+		assertEquals(n1.getDroppedLigtpaths(), new TreeSet<>(Arrays.asList(l21, l31, l41)));
+		assertEquals(n1.getAddedLigtpaths(), new TreeSet<>(Arrays.asList(l12, l13, l14)));
 
 		assertTrue(!lr12.isCoupledToIpLink());
 		assertTrue(!i12.getFirst().isCoupledtoLpRequest());
@@ -184,11 +186,11 @@ public class NiwModelTest extends TestCase
 		assertEquals(n3.getVnfInstances(vnfType2.getVnfTypeName()).first().getTraversingServiceChains(), new TreeSet<>(Arrays.asList(sc13)));
 		net.checkConsistency();
 
-		n1.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-		n2.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-        n3.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-        n4.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
-		n5.setOpticalSwitchType(WNode.OPTICALSWITCHTYPE.FILTERLESS_DROPANDWASTENOTDIRECTIONLESS);
+		n1.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+		n2.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+        n3.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+        n4.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
+		n5.setOpticalSwitchArchitecture(OadmArchitecture_generic.class);
 
         this.osm = OpticalSpectrumManager.createFromRegularLps(net);
         List<List<WFiber>> res = new ArrayList<>();
@@ -301,25 +303,46 @@ public class NiwModelTest extends TestCase
 		final WFiber bc = net.addFiber(b, c, null, 160.0, false).getFirst();
 		final List<WFiber> fibers = Arrays.asList(ab , bc);
 		final List<WNode> nodes = Arrays.asList(a , b , c);
-		nodes.forEach(e->e.setOadmSwitchFabricAttenuation_dB(6.0));
-		nodes.forEach(e->e.setOadmSwitchFabricPmd_ps(0.5));
+		for (WNode n : nodes)
+		{
+			final OadmArchitecture_generic arq = (OadmArchitecture_generic) n.getOpticalSwitchingArchitecture();
+			final OadmArchitecture_generic.Parameters param = arq.getParameters();
+			param.setArchitectureTypeAsFilterless();
+			param.setAddDropModuleTypeAsMuxBased();
+			param.setMuxDemuxLoss_dB(6.0);
+			param.setMuxDemuxPmd_ps(0.5);
+			param.setDegreeSplitterCombinerLoss_dB(Optional.of(3.0));
+			param.setDirlessAddDropSplitterCombinerLoss_dB(Optional.empty());
+			n.setIsOadmWithDirectedAddDropModulesInTheDegrees(true);
+			n.setOadmNumAddDropDirectionlessModules(1);
+			arq.updateParameters(param);
+		}
 		fibers.forEach(e->e.setAttenuationCoefficient_dbPerKm(0.25));
 		fibers.forEach(e->e.setChromaticDispersionCoeff_psPerNmKm(15.0));
 		fibers.forEach(e->e.setPmdLinkDesignValueCoeff_psPerSqrtKm(0.5));
 		fibers.forEach(e->e.setIsExistingBoosterAmplifierAtOriginOadm(true));
 		fibers.forEach(e->e.setIsExistingPreamplifierAtDestinationOadm(true));
 		fibers.forEach(e->e.setOriginOadmSpectrumEqualizationTargetBeforeBooster_mwPerGhz(Optional.empty()));
-		fibers.forEach(e->e.setOriginBoosterAmplifierGain_dB(6.0));
-		fibers.forEach(e->e.setDestinationPreAmplifierGain_dB(20.0));
-		fibers.forEach(e->e.setOriginBoosterAmplifierNoiseFactor_dB(6.0));
-		fibers.forEach(e->e.setDestinationPreAmplifierNoiseFactor_dB(6.0));
-		fibers.forEach(e->e.setOriginBoosterAmplifierCdCompensation_psPerNm(-10.0));
-		fibers.forEach(e->e.setDestinationPreAmplifierCdCompensation_psPerNm(-10.0));
-		fibers.forEach(e->e.setOriginBoosterAmplifierPmd_ps(0.5));
-		fibers.forEach(e->e.setDestinationPreAmplifierPmd_ps(0.5));
+		final OpticalAmplifierInfo booster = OpticalAmplifierInfo.getDefaultBooster();
+		booster.setGainDb(6.0);
+		booster.setNoiseFigureDb(6.0);
+		booster.setCdCompensationPsPerNm(-10.0);
+		booster.setPmdPs(0.5);
+		fibers.forEach(e->e.setOriginBoosterAmplifierInfo(booster));
+		final OpticalAmplifierInfo pream = OpticalAmplifierInfo.getDefaultPreamplifier();
+		pream.setGainDb(20.0);
+		pream.setNoiseFigureDb(6.0);
+		pream.setCdCompensationPsPerNm(-10.0);
+		pream.setPmdPs(0.5);
+		fibers.forEach(e->e.setDestinationPreAmplifierInfo(pream));
 		final double olasPmd_ps = 0.5;
 		final double olasCdCompensation_psPerNm = -100.0;
-		fibers.forEach(e->e.setOlaTraversedInfo(Arrays.asList (80.0), Arrays.asList (20.0), Arrays.asList (6.0), Arrays.asList(olasPmd_ps), Arrays.asList(olasCdCompensation_psPerNm), null, null, null, null));
+		final OpticalAmplifierInfo ola = OpticalAmplifierInfo.getDefaultOla(80.0);
+		ola.setGainDb(20.0);
+		ola.setNoiseFigureDb(6.0);
+		ola.setCdCompensationPsPerNm(olasCdCompensation_psPerNm);
+		ola.setPmdPs(olasPmd_ps);
+		fibers.forEach(e->e.setOlaTraversedInfo(Arrays.asList (ola)));
 		for (int cont = 0 ; cont < 10 ; cont ++)
 		{
 			final WLightpathRequest lpr = net.addLightpathRequest(a, c, 100.0, false);
@@ -332,51 +355,60 @@ public class NiwModelTest extends TestCase
 		for (WLightpath lp : lps)
 		{
 			assertEquals (lp.getAddTransponderInjectionPower_dBm() ,  0.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(ab, lp).get(PERLPINFOMETRICS.POWER_DBM).getFirst() ,  0.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(ab, lp).get(PERLPINFOMETRICS.POWER_DBM).getSecond() ,  -20.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(bc, lp).get(PERLPINFOMETRICS.POWER_DBM).getFirst() ,  0.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEnds(bc, lp).get(PERLPINFOMETRICS.POWER_DBM).getSecond() ,  -20.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).get(PERLPINFOMETRICS.POWER_DBM) ,  -6.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, ab, 0).get(PERLPINFOMETRICS.POWER_DBM).getFirst() ,  -20.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, ab, 0).get(PERLPINFOMETRICS.POWER_DBM).getSecond() ,  0.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, bc, 0).get(PERLPINFOMETRICS.POWER_DBM).getFirst() ,  -20.0 , 1e-3);
-			assertEquals (osm.getOpticalPerformanceOfLightpathAtAmplifierInputAndOutput(lp, bc, 0).get(PERLPINFOMETRICS.POWER_DBM).getSecond() ,  0.0 , 1e-3);
+			// -10log(2) from output degree combiner 
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(ab, lp).getFirst().getPower_dbm() ,  -3.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(ab, lp).getSecond().getPower_dbm() ,  -23.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(bc, lp).getFirst().getPower_dbm() ,  -3.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(bc, lp).getSecond().getPower_dbm() ,  -23.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).getPower_dbm() ,  -23.0 + 20 - 3  - 6.0, 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, ab, 0).getFirst().getPower_dbm() ,  -23.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, ab, 0).getSecond().getPower_dbm() ,  -3.0 , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, bc, 0).getFirst().getPower_dbm() ,  -23.0  , 1e-1);
+			assertEquals (osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, bc, 0).getSecond().getPower_dbm() ,  -3.0 , 1e-1);
 		}
 		for (WFiber e : net.getFibers())
 		{
-			assertEquals (osm.getTotalPowerAtAmplifierInput_dBm(e, 0) , -10.0 , 1e-3);
-			assertEquals (osm.getTotalPowerAtAmplifierOutput_dBm(e, 0) , 10.0 , 1e-3);
-			assertEquals (osm.getTotalPowerAtFiberEnds_dBm(e).getFirst() , 10.0 , 1e-3);
-			assertEquals (osm.getTotalPowerAtFiberEnds_dBm(e).getSecond() , -10.0 , 1e-3);
+			assertEquals (osm.getTotalPowerAtLineAmplifierInput_dBm(e, 0) , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, e, 0).getFirst().getPower_dbm())).sum ()) , 1e-1);
+			assertEquals (osm.getTotalPowerAtLineAmplifierOutput_dBm(e, 0) , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtLineAmplifierInputAndOutput(lp, e, 0).getSecond().getPower_dbm())).sum ()) , 1e-1);
+			assertEquals (osm.getTotalPowerAtFiberEndsAfterBoosterBeforePreamplifier_dBm(e).getFirst() , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(e , lp).getFirst().getPower_dbm())).sum ()) , 1e-1);
+			assertEquals (osm.getTotalPowerAtFiberEndsAfterBoosterBeforePreamplifier_dBm(e).getSecond() , linear2dB(lps.stream().mapToDouble(lp->dB2linear(osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(e , lp).getSecond().getPower_dbm())).sum ()) , 1e-1);
 		}
 		
 		for (WLightpath lp : net.getLightpaths())
 		{
 			final double noisePartAll_linear = OpticalSimulationModule.dB2linear(6.0) * OpticalSimulationModule.constant_h * lp.getCentralFrequencyThz() * 1e12 * 12.5e9;
-			final double powerPartBoosters_linear = OpticalSimulationModule.dB2linear(-6.0) / 1000.0;
-			final double powerPartOlasAndPreampl_linear = OpticalSimulationModule.dB2linear(-20.0) / 1000.0;
+			final double powerPartBoosters_linear = OpticalSimulationModule.dB2linear(-3.0) / 1000.0;
+			final double powerPartOlasAndPreampl_linear = OpticalSimulationModule.dB2linear(-23.0) / 1000.0;
 			final double osnrTotal_linear = 1.0 / (2*(noisePartAll_linear / powerPartBoosters_linear) + 3*(noisePartAll_linear / powerPartOlasAndPreampl_linear));
 			final double osnrTotal_dB = OpticalSimulationModule.linear2dB(osnrTotal_linear);
-			assertEquals (osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).get(PERLPINFOMETRICS.OSNRAT12_5GHZREFBW) , osnrTotal_dB , 1e-3);
+			assertEquals (osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).getOsnrAt12_5GhzRefBw() , osnrTotal_dB , 1.5);
 			
 			final double totalLengthKm = ab.getLengthInKm() + bc.getLengthInKm();
-			final double pmdSquare = Math.pow(0.5, 2) * totalLengthKm + // fiber 
-					3 * Math.pow(0.5, 2) + // optical switches 
-					2 * Math.pow(0.5, 2) + // OLAs 
-					2 * Math.pow(0.5, 2) + // booster
-					2 * Math.pow(0.5, 2); // pre-amplifiers
-			assertEquals (pmdSquare , osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).get(PERLPINFOMETRICS.PMDSQUARED_PS2) , 1e-3);
-
 			final double cdEnd = ab.getChromaticDispersionCoeff_psPerNmKm() * totalLengthKm + // fiber 
 					2 * olasCdCompensation_psPerNm + // OLAs 
 					2 * (-10.0) + // booster
 					2 * (-10.0); // pre-amplifiers
-			assertEquals (cdEnd , osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).get(PERLPINFOMETRICS.CD_PERPERNM) , 1e-3);
+			assertEquals (cdEnd , osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).getCd_psPerNm() , 1e-3);
+			final double pmdSquare = Math.pow(0.5, 2) * totalLengthKm + // fiber 
+					2 * Math.pow(0.5, 2) + // MUX / DEMUX
+					2 * Math.pow(0.5, 2) + // OLAs 
+					2 * Math.pow(0.5, 2) + // booster
+					2 * Math.pow(0.5, 2); // pre-amplifiers
+			assertEquals (pmdSquare , osm.getOpticalPerformanceAtTransponderReceiverEnd(lp).getPmdSquared_ps2() , 1e-3);
 
 			
 		}
 
 	}
-	
+
+    public static double dB2linear(double dB)
+    {
+        return Math.pow(10, dB / 10);
+    }
+    public static double linear2dB(double num)
+    {
+        return num == 0? -Double.MAX_VALUE : 10 * Math.log10(num);
+    }
+
 		
 }

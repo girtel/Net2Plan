@@ -459,7 +459,7 @@ public class GUINetworkDesign extends IGUIModule
     		osi.updateAllPerformanceInfo();
     		this.niwInformationCurrentDesign = Optional.of(Quadruple.of(true, wNet , osm , osi));
     		for (WNode n : wNet.getNodes())
-    			if (n.getOpticalSwitchType().isDropAndWaste())
+    			if (n.getOpticalSwitchingArchitecture().isPotentiallyWastingSpectrum())
     				n.setWdmIcon(VisualizationConstants.FILTERLESS_ICON_URL, 1.0);
     	}
     	else this.niwInformationCurrentDesign = Optional.of(Quadruple.of(false, null , null , null));

@@ -54,8 +54,6 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  * </ul> 
  * 
  * See the technology conventions used in Net2Plan built-in algorithms and libraries to represent IP/OSPF networks. 
- * @net2plan.keywords IP/OSPF, Network recovery: restoration
- * @net2plan.inputParameters 
  * @author Pablo Pavon-Marino
  */
 public class DefaultStatelessSimulator implements IAlgorithm
@@ -96,9 +94,15 @@ public class DefaultStatelessSimulator implements IAlgorithm
 			if (!ospfRoutedDemands.isEmpty())
 			{
 				DoubleMatrix1D linkIGPWeightSetting = IPUtils.getLinkWeightVector(np , ipLayer);
-				linkIGPWeightSetting.assign (np.getVectorLinkUpState(ipLayer) , new DoubleDoubleFunction () { @Override
-				public double apply (double x , double y) { return y == 1? x : Double.MAX_VALUE; }  } );
+				for (Link e : net.getNe().getLinks(ipLayer))
+				{
+					final WIpLink ipLink = (WIpLink) net.getWElement(e).orElse (null);
+					if (ipLink == null) { linkIGPWeightSetting.set(e.getIndex(), Double.MAX_VALUE); continue; }
+					if (!ipLink.isUp()) { linkIGPWeightSetting.set(e.getIndex(), Double.MAX_VALUE); continue; }
+					if (ipLink.isBundleMember()) { linkIGPWeightSetting.set(e.getIndex(), Double.MAX_VALUE); continue; }
+				}
 				IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
+				assert net.getIpLinks().stream().filter(e->e.isBundleMember()).map(e->e.getNe()).allMatch(e->e.getDemandsWithNonZeroForwardingRules().isEmpty());
 			}
 			
 			/* To account for the occupation of IP links because of MPLS-TE tunnels */

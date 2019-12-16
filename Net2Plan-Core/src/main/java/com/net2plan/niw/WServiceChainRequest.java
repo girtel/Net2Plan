@@ -80,7 +80,7 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 
 	/**
 	 * Returns the opposite service chain request to this, if any
-	 * @return
+	 * @return see above
 	 */
 	@Override
 	public Optional<WServiceChainRequest> getBidirectionalPair()
@@ -95,7 +95,7 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	 * Makes that this service chain request is tagged as the opposite one to a given SCR, and viceversa. The two SCRs must
 	 * have opposite nodes (an origin node of this is destination in the other and viceversa), one must be downstream and
 	 * the other upstream. Any other opposite relation to other SCR is released.
-	 * @return
+	 * @param scr see above
 	 */
 	public void  setBidirectionalPair(WAbstractIpUnicastOrAnycastDemand scr)
 	{
@@ -113,7 +113,6 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	/**
 	 * If this service chain request has an opposite request associated, removes such association. If not, makes nothing
 	 * happens
-	 * @return
 	 */
 	public void removeBidirectionalPairRelation()
 	{
@@ -148,6 +147,18 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 		return res.stream().map(v -> v <= 0 ? Double.MAX_VALUE : v).collect(Collectors.toCollection(ArrayList::new));
 	}
 
+	/**
+	 * Returns the maximum latency from the origin node to the end node.
+	 * @return see above
+	 */
+	public double getMaxLatencyFromOriginEndNode_ms()
+	{
+		final List<Double> list = getListMaxLatencyFromOriginToVnStartAndToEndNode_ms();
+		return list.get(list.size() - 1);
+	}
+
+
+	
 	/**
 	 * Sets the information of the list of maximum latencies (in ms) specified for this service chain. See
 	 * getListMaxLatencyFromOriginToVnStartAndToEndNode_ms for an explanation
@@ -333,7 +344,7 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	}
 
 	/** Returns the service chains realizing this serice chain request
-	 * @return
+	 * @return see above
 	 */
 	public SortedSet<WServiceChain> getServiceChains () { return getNe().getRoutes().stream().map(r->new WServiceChain(r)).collect(Collectors.toCollection(TreeSet::new)); }
 

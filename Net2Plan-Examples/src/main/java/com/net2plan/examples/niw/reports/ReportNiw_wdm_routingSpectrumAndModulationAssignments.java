@@ -37,6 +37,7 @@ import com.net2plan.niw.WFiber;
 import com.net2plan.niw.WLightpath;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNode;
+import com.net2plan.niw.OpticalSpectrumManager.OpticalSignalOccupationType;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
@@ -148,8 +149,8 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 		
 		out.append("<h2><a name=\"generalStats\"></a>GENERAL STATISTICS - Signal metrics at the input of end OADM</h2>");
 		out.append("<table border='1'>");
-		final int numFilterlessOadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchType().isDropAndWaste()).count();
-		final int numPureRoadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchType().isRoadm()).count();
+		final int numFilterlessOadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchingArchitecture().isPotentiallyWastingSpectrum()).count();
+		final int numPureRoadms = (int) net.getNodes().stream().filter(n->n.getOpticalSwitchingArchitecture().isNeverCreatingWastedSpectrum()).count();
 		out.append("<tr><th align=\"left\" colspan=\"2\"><b>OADM stats</b></th></tr>");
 		out.append("<tr><td align=\"left\">Number of OADMs (#total / #Non-blocking ROADM / #Filterless)</td><td>" + net.getNodes().size() + " / " + numPureRoadms + " / " + numFilterlessOadms  + "</td></tr>");
 		out.append("<tr><td align=\"left\">Number of OADMs</td><td>" + net.getNodes().size() + "</td></tr>");
@@ -200,7 +201,7 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 		
 		for (WFiber e : net.getFibers())
 		{
-		   final SortedMap<Integer,SortedSet<WLightpath>> occupiedResources_e = osm.getOccupiedResources (e);
+		   final SortedMap<Integer,SortedSet<WLightpath>> occupiedResources_e = osm.getOccupiedResources (e , OpticalSignalOccupationType.LEGITIMATESIGNAL);
 		   final SortedSet<Integer> validOpticalSlotsIds_e = e.getValidOpticalSlotIds();
 		   
 			out.append("<tr>");
@@ -305,15 +306,15 @@ public class ReportNiw_wdm_routingSpectrumAndModulationAssignments implements IR
 				+ "</tr>");
 		for (WNode n : net.getNodes())
 		{
-			final int addRegLps = (int) n.getOutgoingLigtpaths().stream ().filter(e -> !e.isBackupLightpath()).count();
-			final int dropRegLps = (int) n.getIncomingLigtpaths().stream ().filter(e -> !e.isBackupLightpath()).count();
+			final int addRegLps = (int) n.getAddedLigtpaths().stream ().filter(e -> !e.isBackupLightpath()).count();
+			final int dropRegLps = (int) n.getDroppedLigtpaths().stream ().filter(e -> !e.isBackupLightpath()).count();
 			final int expressRegLps = (int) n.getInOutOrTraversingLigtpaths().stream ().filter(e->!e.getA().equals(n) && !e.getB().equals(n)).filter(e -> !e.isBackupLightpath()).count();
-			final int addBackupLps = (int) n.getOutgoingLigtpaths().stream ().filter(e -> e.isBackupLightpath()).count();
-			final int dropBackupLps = (int) n.getIncomingLigtpaths().stream ().filter(e -> e.isBackupLightpath()).count();
+			final int addBackupLps = (int) n.getAddedLigtpaths().stream ().filter(e -> e.isBackupLightpath()).count();
+			final int dropBackupLps = (int) n.getDroppedLigtpaths().stream ().filter(e -> e.isBackupLightpath()).count();
 			final int expressBackupLps = (int) n.getInOutOrTraversingLigtpaths().stream ().filter(e->!e.getA().equals(n) && !e.getB().equals(n)).filter(e -> e.isBackupLightpath()).count();
 			out.append("<tr>");
 			out.append("<td><a name=\"node" + n.getNe().getIndex() + "\">n" + n.getNe().getIndex() + " (" + n.getName() + ")" + "</a></td>");
-			out.append("<td>" + n.getOpticalSwitchType().getShortName() + "</td>");
+			out.append("<td>" + n.getOpticalSwitchingArchitecture().getShortName() + "</td>");
 			out.append("<td>" + n.getIncomingFibers().size() + "</td>");
 			out.append("<td>" + n.getOutgoingFibers().size() + "</td>");
 			out.append("<td>" + (addRegLps+addBackupLps) + "(" + addRegLps + " / " + addBackupLps + ")" + "</td>");

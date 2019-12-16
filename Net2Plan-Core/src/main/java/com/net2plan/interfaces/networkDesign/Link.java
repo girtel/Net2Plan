@@ -87,7 +87,7 @@ public class Link extends NetworkElement implements IMonitorizableElement
 	public Color getNominalColor () { return nominalColor; }
 
 	/** Sets the default Color that is assigned to this link for visualization
-	 * @param nominalColor
+	 * @param nominalColor see above
 	 */
 	public void setNominalColor (Color nominalColor) { this.nominalColor = nominalColor; }
 	

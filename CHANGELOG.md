@@ -3,6 +3,10 @@
 All notable changes to Net2Plan will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
+## [0.6.5.0] - 2019-12-18
+
+### Added
+	- Significant improvements in the NIW framework. Model and graphical interface.
 
 ## [0.6.4.0] - 2019-10-20
 

@@ -53,18 +53,6 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		super(sc);
 	}
 
-   /** Returns a map with an entry for each traversed link, and associated to it the demand's traffic carried in that link. 
-    * If selected by the user, the carried traffic is given as a fraction respect to the demand offered traffic
-	 * @return see above
-	 */
-	public SortedMap<WIpLink , Double> getTraversedIpLinksAndCarriedTraffic (final boolean normalizedToOfferedTraffic) 
-	{
-		final SortedMap<WIpLink , Double> res = new TreeMap<> ();
-		for (Entry<Link,Double> entry : getNe ().getTraversedLinksAndCarriedTraffic(normalizedToOfferedTraffic).entrySet())
-			res.put(new WIpLink(entry.getKey()), entry.getValue());
-		return res;
-	}
-
 	/**
 	 * Adds a source routed IP connection to this unicast demand, in the case that it is of the source routed type
 	 * @param sequenceOfIpLinks the sequence of IP links traversed
@@ -188,7 +176,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	/**
 	 * Makes that this IP demand tagged as the opposite one to a given IP demand, and viceversa. The two IP demand must
 	 * have opposite end nodes, one must be downstream and the other upstream. Any other opposite relation to other IP demand is released.
-	 * @return
+	 * @param d see above
 	 */
 	@Override
 	public void setBidirectionalPair(WAbstractIpUnicastOrAnycastDemand d) 
@@ -206,7 +194,6 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	/**
 	 * If this service chain request has an opposite request associated, removes such association. If not, makes nothing
 	 * happens
-	 * @return
 	 */
 	@Override
 	public void removeBidirectionalPairRelation() 
@@ -217,7 +204,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 
 	/**
 	 * Returns the opposite service chain request to this, if any
-	 * @return
+	 * @return see above
 	 */
 	@Override
 	public Optional<WIpUnicastDemand> getBidirectionalPair ()

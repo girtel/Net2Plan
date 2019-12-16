@@ -243,7 +243,7 @@ public class WLightpathRequest extends WAbstractNetworkElement
 	public Optional<String> getTransponderName () { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTNAME_LIGHTPATHUNREG_TRANSPONDERNAME)); }
 
 	/** Sets the name of the transponder associated to both sides of this lightpath
-	 * @param name
+	 * @param name see above
 	 */
 	public void setTransponderName (String name) { getNe ().setAttribute(WNetConstants.ATTNAME_LIGHTPATHUNREG_TRANSPONDERNAME, name); }
 

@@ -118,6 +118,7 @@ public class WServiceChain extends WAbstractNetworkElement
 	/** Reconfigures in one shot: (i) the injected traffic by the origin node of the service chain, (ii) the path of the chain: the sequence of traversed IP links and VNF instances, (iii) the current expansion factors applied by the traversed VNFs 
 	 * @param optInjectedTrafficGbps see above
 	 * @param optSeqIpLinksAndVnfInstances see above
+	 * @param sequenceOfExpansionFactorsRespectToInjection see above
 	 */
 	public void setPathAndInitiallyInjectedTraffic (Optional<Double> optInjectedTrafficGbps , Optional<List<? extends WAbstractNetworkElement>> optSeqIpLinksAndVnfInstances , Optional<List<Double>> sequenceOfExpansionFactorsRespectToInjection)
 	{
@@ -189,7 +190,7 @@ public class WServiceChain extends WAbstractNetworkElement
 	public String toString () { return "SChain(" + this.getInitiallyInjectedTrafficGbps() + "G) " + getA().getName() + "->" + getB().getName(); }
 
 	/** Indicates if this serivce chain is up: not traversing failied links or nodes, and not traversing links with zero capacity
-	 * @return
+	 * @return see above
 	 */
 	public boolean isUp () 
 	{
@@ -206,7 +207,7 @@ public class WServiceChain extends WAbstractNetworkElement
 	public void remove () { this.r.remove(); }
 
 	/** Returns the worst case length in km considering the traversed km in the transport layers
-	 * @return
+	 * @return see above
 	 */
 	public double getWorstCaseLengthInKm ()
 	{

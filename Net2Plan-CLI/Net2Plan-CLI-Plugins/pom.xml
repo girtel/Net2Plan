@@ -16,7 +16,7 @@
     <parent>
         <groupId>com.net2plan</groupId>
         <artifactId>net2plan-cli</artifactId>
-        <version>0.6.4.0</version>
+        <version>0.6.5.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>

@@ -355,6 +355,7 @@ public class NetPlan extends NetworkElement
             return np;
         } catch (FileNotFoundException e)
         {
+        	e.printStackTrace();
             throw new Net2PlanException(e.getMessage());
         } catch (IOException e)
         {

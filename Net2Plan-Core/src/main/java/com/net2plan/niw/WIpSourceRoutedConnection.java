@@ -118,7 +118,7 @@ public class WIpSourceRoutedConnection extends WAbstractNetworkElement
 	public String toString () { return "IP-SR-Connection(" + this.getCarriedTrafficInNoFailureStateGbps() + "G) " + getA().getName() + "->" + getB().getName(); }
 
 	/** Indicates if this serivce chain is up: not traversing failied links or nodes, and not traversing links with zero capacity
-	 * @return
+	 * @return see above
 	 */
 	public boolean isUp () 
 	{

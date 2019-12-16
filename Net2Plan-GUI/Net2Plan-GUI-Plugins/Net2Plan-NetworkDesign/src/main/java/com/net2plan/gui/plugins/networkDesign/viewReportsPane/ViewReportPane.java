@@ -22,7 +22,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.Closeable;
 import java.io.File;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -49,8 +48,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.internal.SystemUtils;
 import com.net2plan.internal.plugins.IGUIModule;
-import com.net2plan.niw.ReportNiw_wdm_lineEngineering;
-import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.ClassLoaderUtils;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
@@ -153,35 +151,36 @@ public class ViewReportPane extends JSplitPane implements ThreadExecutionControl
 	public Object execute(ThreadExecutionController controller) 
 	{
 		/************** report test ***/
-        final NetPlan reportTestNetPlan = mainWindow.getDesign().copy();
-        IReport instance = new ReportNiw_wdm_lineEngineering();
-        Pair<String, ? extends JPanel> aux = Pair.of(instance.getTitle(), new ReportBrowser(instance.executeReport(reportTestNetPlan, InputParameter.getDefaultParameters(instance.getParameters()), Configuration.getNet2PlanOptions())));
-        reportTestNetPlan.setNetworkLayerDefault(reportTestNetPlan.getNetworkLayer((int) 0));
-        mainWindow.getDesign().assignFrom(reportTestNetPlan); // do not update undo/redo here -> the visualization state should be updated before
-        return aux;
+//        final NetPlan reportTestNetPlan = mainWindow.getDesign().copy();
+//        IReport instance = new ReportNiw_wdm_lineEngineering();
+////        IReport instance = new ReportNiw_wdm_routingSpectrumAndModulationAssignments();
+//        Pair<String, ? extends JPanel> aux = Pair.of(instance.getTitle(), new ReportBrowser(instance.executeReport(reportTestNetPlan, InputParameter.getDefaultParameters(instance.getParameters()), Configuration.getNet2PlanOptions())));
+//        reportTestNetPlan.setNetworkLayerDefault(reportTestNetPlan.getNetworkLayer((int) 0));
+//        mainWindow.getDesign().assignFrom(reportTestNetPlan); // do not update undo/redo here -> the visualization state should be updated before
+//        return aux;
 		/************** end report test ***/
 		
 		
-//        Triple<File, String, Class> report = reportSelector.getRunnable();
-//        Map<String, String> reportParameters = reportSelector.getRunnableParameters();
-//        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
-//        final NetPlan netPlan = mainWindow.getDesign().copy();
-//        IReport instance = new ReportNiw_wdm_lineEngineering();
-//        String title = null;
-//        try {
-//            title = instance.getTitle();
-//        } catch (UnsupportedOperationException ex) {
-//        }
-//        if (title == null) title = "Untitled";
-//
-//        Pair<String, ? extends JPanel> aux = Pair.of(title, new ReportBrowser(instance.executeReport(netPlan, reportParameters, net2planParameters)));
-//        try {
-//            ((Closeable) instance.getClass().getClassLoader()).close();
-//        } catch (Throwable e) {
-//        }
-//        netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer((int) 0));
-//        mainWindow.getDesign().assignFrom(netPlan); // do not update undo/redo here -> the visualization state should be updated before
-//        return aux;
+        Triple<File, String, Class> report = reportSelector.getRunnable();
+        Map<String, String> reportParameters = reportSelector.getRunnableParameters();
+        Map<String, String> net2planParameters = Configuration.getNet2PlanOptions();
+        final NetPlan netPlan = mainWindow.getDesign().copy();
+        IReport instance = ClassLoaderUtils.getInstance(report.getFirst(), report.getSecond(), IReport.class , null);
+        String title = null;
+        try {
+            title = instance.getTitle();
+        } catch (UnsupportedOperationException ex) {
+        }
+        if (title == null) title = "Untitled";
+
+        Pair<String, ? extends JPanel> aux = Pair.of(title, new ReportBrowser(instance.executeReport(netPlan, reportParameters, net2planParameters)));
+        try {
+            ((Closeable) instance.getClass().getClassLoader()).close();
+        } catch (Throwable e) {
+        }
+        netPlan.setNetworkLayerDefault(netPlan.getNetworkLayer((int) 0));
+        mainWindow.getDesign().assignFrom(netPlan); // do not update undo/redo here -> the visualization state should be updated before
+        return aux;
 	}
 	@Override
 	public void executionFinished(ThreadExecutionController controller, Object out) 
