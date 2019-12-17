@@ -8,6 +8,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.niw.OpticalSimulationModule.LpSignalState;
 import com.net2plan.utils.Quadruple;
 
@@ -56,7 +57,34 @@ public interface IOadmArchitecture
 	public abstract LpSignalState getOutLpStateForDroppedLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , Optional<Integer> inputDropModuleIndex);
 	public abstract LpSignalState getOutLpStateForExpressLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , WFiber outputFiber , int numOpticalSlotsNeededIfEqualization);
 
+	public default double getExpressAttenuation_dB (WFiber inFiber , WFiber outFiber , int numOpticalSlotsNeededIfEqualization)
+	{
+		final WNode node = this.getHostNode();
+		if (!inFiber.getB().equals(node) || !outFiber.getA().equals (node)) throw new Net2PlanException ("Wrong fiber");
+		final LpSignalState initialState = new LpSignalState(0, 0, 0, 0);
+		final LpSignalState endState = getOutLpStateForExpressLp (initialState , inFiber , outFiber , numOpticalSlotsNeededIfEqualization);
+		return endState.getPower_dbm();
+	}
+	public default double getDropAttenuation_dB  (WFiber inFiber , Optional<Integer> inputDropModuleIndex)
+	{
+		final WNode node = this.getHostNode();
+		if (!inFiber.getB().equals(node)) throw new Net2PlanException ("Wrong fiber");
+		final LpSignalState initialState = new LpSignalState(0, 0, 0, 0);
+		final LpSignalState endState = getOutLpStateForDroppedLp (initialState , inFiber , inputDropModuleIndex);
+		return endState.getPower_dbm();
+	}
+	public default double getAddAttenuation_dB  (WFiber outFiber , Optional<Integer> inputAddModuleIndex , int numOpticalSlotsNeededIfEqualization)
+	{
+		final WNode node = this.getHostNode();
+		if (!outFiber.getA().equals(node)) throw new Net2PlanException ("Wrong fiber");
+		final LpSignalState initialState = new LpSignalState(0, 0, 0, 0);
+		final LpSignalState endState = getOutLpStateForAddedLp (initialState , inputAddModuleIndex , outFiber , numOpticalSlotsNeededIfEqualization);
+		return endState.getPower_dbm();
+	}
+	
 	public abstract boolean isColorless ();
 	
+	public default boolean isOadmGeneric () { return this instanceof OadmArchitecture_generic; }
+	public default OadmArchitecture_generic getAsOadmGeneric () { return (OadmArchitecture_generic) this; } 
 	
 }

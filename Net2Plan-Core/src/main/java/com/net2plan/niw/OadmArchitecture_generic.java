@@ -207,7 +207,6 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		public Parameters setDirlessAddDropSplitterCombinerLoss_dB (Optional<Double> val) { this.dirlessAddDropSplitterCombinerLoss_dB = val; return this; }
 
 		public String getArchitectureType() {return architectureType; }
-//		public boolean isDirectionless() { return isDirectionless; }
 		public String getAddDropModuleType() { return addDropModuleType; }
 		public double getMuxDemuxLoss_dB() { return muxDemuxLoss_dB; }
 		public double getMuxDemuxPmd_ps() { return muxDemuxPmd_ps; }
@@ -215,25 +214,6 @@ public class OadmArchitecture_generic implements IOadmArchitecture
 		public double getWssPmd_ps() { return wssPmd_ps; }
 		public Optional<Double> getManuallySettledDegreeSplitterCombinerLoss_dB () { return degreeSplitterCombinerLoss_dB.orElse(-100.0) < 0? Optional.empty() : degreeSplitterCombinerLoss_dB; }
 		public Optional<Double> getDirlessAddDropSplitterCombinerLoss_dB () { return dirlessAddDropSplitterCombinerLoss_dB.orElse(-100.0) < 0? Optional.empty() : dirlessAddDropSplitterCombinerLoss_dB; }
-
-		public Optional<Double> getExpressAttenuationForFiber0ToFiber0_dB ()
-		{
-			final WNode node = OadmArchitecture_generic.this.getHostNode();
-			final SortedSet<WFiber> inFibers = node.getIncomingFibers();
-			final SortedSet<WFiber> outFibers = node.getOutgoingFibers();
-			if (inFibers.isEmpty() || outFibers.isEmpty()) return Optional.empty();
-			final double inModuleAttenuation_dB = this.isRouteAndSelect()? this.getWssLoss_dB() : this.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumOutputsOfInDegreeSplitter(inFibers.first(), this)));
-			final double outModuleAttenuation_dB = this.isFilterless()? this.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumInputsOfOutDegreeCoupler(outFibers.first(), this))) : this.getWssLoss_dB();
-			return Optional.of(inModuleAttenuation_dB + outModuleAttenuation_dB);
-		}
-		public double getDropAttenuationFromFiber0ToDirectionFul_dB  ()
-		{
-			final SortedSet<WFiber> inFibers = node.getIncomingFibers();
-			final double inModuleAttenuation_dB = this.isRouteAndSelect()? this.getWssLoss_dB() : this.getManuallySettledDegreeSplitterCombinerLoss_dB().orElse(getIdealCouplerAttenuation_dB(getNumOutputsOfInDegreeSplitter(inFibers.first(), this)));
-			final double dropModuleAttenuation_dB = this.isAddDropTypeMuxBased()? this.getMuxDemuxLoss_dB() : this.getWssLoss_dB();
-			return inModuleAttenuation_dB + dropModuleAttenuation_dB;
-		}
-		
 		public boolean isRouteAndSelect () { return getArchitectureType().equalsIgnoreCase("R&S"); }
 		public boolean isBroadcastAndSelect () { return getArchitectureType().equalsIgnoreCase("B&S"); }
 		public boolean isFilterless () { return getArchitectureType().equalsIgnoreCase("Filterless"); }

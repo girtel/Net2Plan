@@ -790,12 +790,12 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
     				{
     					for (WFiber ee: getSelectedElements().stream().map(ee->toWFiber.apply(ee)).filter(ee->ee.getOriginBoosterAmplifierInfo().isPresent()).collect(Collectors.toList()))
     					{
+    						if (ee.isOriginOadmConfiguredToEqualizeOutput()) continue; // no booster gain to apply here, since this is equalized
     						final OpticalAmplifierInfo info = ee.getOriginBoosterAmplifierInfo().get();
-    						if (!(ee.getA ().getOpticalSwitchingArchitecture() instanceof OadmArchitecture_generic)) continue;
-    						final Parameters oadmParam = ((OadmArchitecture_generic) ee.getA ().getOpticalSwitchingArchitecture()).getParameters();
-    						final Double attenuatationExpressInputModule_dB = oadmParam.getExpressAttenuationForFiber0ToFiber0_dB().orElse(null);
-    						if (attenuatationExpressInputModule_dB == null) continue;
-    						info.setGainDb(attenuatationExpressInputModule_dB);
+    						final SortedSet<Double> attenuatationExpressInputModule_dB = ee.getA().getIncomingFibers().stream().map(inFiber->ee.getA ().getOpticalSwitchingArchitecture().getExpressAttenuation_dB(inFiber , ee , 1)).collect(Collectors.toCollection(TreeSet::new));
+    						if (attenuatationExpressInputModule_dB.isEmpty()) continue;
+    						if (attenuatationExpressInputModule_dB.size() != 1) throw new Net2PlanException ("Node " + ee.getA().getName() + " has different express attenuations for different input fibers. Not possibl to compensate losses in the booster");
+    						info.setGainDb(attenuatationExpressInputModule_dB.first());
     						ee.setOriginBoosterAmplifierInfo(info);
     					}
     				}
