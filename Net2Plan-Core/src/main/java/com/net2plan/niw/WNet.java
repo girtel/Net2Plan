@@ -387,7 +387,7 @@ public class WNet extends WAbstractNetworkElement
 		while (true)
 		{
 			final String name = "Node" + index;
-			if (getNodes().stream().anyMatch(n -> n.getName().equals(name))) { index ++; continue; }
+			if (getNodeByName(name).isPresent()) { index ++; continue; }
 			return name;
 		}
 	}
@@ -404,7 +404,7 @@ public class WNet extends WAbstractNetworkElement
 	{
 		if (name == null) ex("Names cannot be null");
 		if (name.contains(WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER)) throw new Net2PlanException("Names cannot contain the character: " + WNetConstants.LISTSEPARATORANDINVALIDNAMECHARACTER);
-		if (getNodes().stream().anyMatch(n -> n.getName().equals(name))) ex("Names cannot be repeated");
+		if (this.getNodeByName(name).isPresent()) ex("Names cannot be repeated");
 		final WNode n = new WNode(getNetPlan().addNode(xCoord, yCoord, name, null));
 		n.setType(type);
 		
@@ -699,7 +699,9 @@ public class WNet extends WAbstractNetworkElement
 	 */
 	public Optional<WNode> getNodeByName(String name)
 	{
-		return getNodes().stream().filter(n -> n.getName().equals(name)).findFirst();
+		final Node node = getNe ().getNodeByName(name);
+		if (node == null) return Optional.empty();
+		return Optional.of(new WNode (node));
 	}
 
 	/**

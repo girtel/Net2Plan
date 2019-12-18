@@ -57,13 +57,14 @@ public interface IOadmArchitecture
 	public abstract LpSignalState getOutLpStateForDroppedLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , Optional<Integer> inputDropModuleIndex);
 	public abstract LpSignalState getOutLpStateForExpressLp (LpSignalState stateAtTheInputOfOadmAfterPreamplif , WFiber inputFiber , WFiber outputFiber , int numOpticalSlotsNeededIfEqualization);
 
-	public default double getExpressAttenuation_dB (WFiber inFiber , WFiber outFiber , int numOpticalSlotsNeededIfEqualization)
+	public default Optional<Double> getExpressAttenuation_dB (WFiber inFiber , WFiber outFiber)
 	{
+		if (outFiber.isOriginOadmConfiguredToEqualizeOutput()) return Optional.empty();
 		final WNode node = this.getHostNode();
 		if (!inFiber.getB().equals(node) || !outFiber.getA().equals (node)) throw new Net2PlanException ("Wrong fiber");
 		final LpSignalState initialState = new LpSignalState(0, 0, 0, 0);
-		final LpSignalState endState = getOutLpStateForExpressLp (initialState , inFiber , outFiber , numOpticalSlotsNeededIfEqualization);
-		return endState.getPower_dbm();
+		final LpSignalState endState = getOutLpStateForExpressLp (initialState , inFiber , outFiber , 1);
+		return Optional.of(endState.getPower_dbm());
 	}
 	public default double getDropAttenuation_dB  (WFiber inFiber , Optional<Integer> inputDropModuleIndex)
 	{

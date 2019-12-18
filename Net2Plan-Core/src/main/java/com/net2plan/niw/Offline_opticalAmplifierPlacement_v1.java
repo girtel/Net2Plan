@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
@@ -37,8 +38,6 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-
 /**
  * Algorithm based on an ILP solving the VNF placement problem, for given IP links, assuming shortest path routing, and limited 
  * CPU, RAM and HD resources in the nodes, satisfying end to end latency constraints, and considering VNFs that may compress/decompress IP traffic.
@@ -51,8 +50,16 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
  */
 public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 {
-	private InputParameter shortestPathType = new InputParameter ("shortestPathType", "#select# hops latency" , "Criteria to compute the shortest path. Valid values: 'hops' or 'km'");
-	private InputParameter nfvTypesInfo = new InputParameter ("nfvTypesInfo", "NAT 1 1 1 1.0 ; FW 1 1 1 1.0" , "Info of NFVs that could be placed, separated by ';'. Each NFV info has five space-separated parameters: 1) type, 2) CPU use per Gbps, 3) RAM use per Gbps, 4) HD use per Gbps, 5) processing time in ms");
+	private InputParameter maxNumUsableOpticalSlotsPerFiber = new InputParameter ("maxNumUsableOpticalSlotsPerFiber", (int) 96  , "Number of optical slots to consider as maximum occupation." , 1 , Integer.MAX_VALUE);
+	private InputParameter relativeCostPenalizationOla = new InputParameter ("relativeCostPenalizationOla", (double) 2.0 , "The cost of all amplifiers hardware is supposed to be the same. However, placing an amplifier in the line instead of as booster of pre-amplifier, and thus in the central office, can ha ve a penalization stated by this factor" , 0.0 , false , Double.MAX_VALUE , true);
+	private InputParameter minGainDb = new InputParameter ("minGainDb", (double) 6.0 , "Minimum gain acceptable for the amplifiers" , 0.0 , false , Double.MAX_VALUE , true);
+	private InputParameter maxGainDb = new InputParameter ("maxGainDb", (double) 6.0 , "Maximum gain acceptable for the amplifiers" , 0.0 , false , Double.MAX_VALUE , true);
+	private InputParameter maxInterOlaDistanceKm = new InputParameter ("maxInterOlaDistanceKm", (double) 10.0 , "Maximum distance between two consecutive potential placements for line amplifiers in the same fiber" , 0.0 , false , Double.MAX_VALUE , true);
+	private InputParameter initialPowerDensityPostBooster_dBmPerOpticalSlot = new InputParameter ("initialPowerDensityPostBooster_dBmPerOpticalSlot", (double) 0.0 , "The power density that will we enforced in the output of the booster amplifier, that always exists at the start of the line" , -Double.MAX_VALUE , false , Double.MAX_VALUE , false);
+	private InputParameter maxOutputPoweramplifier_dBm = new InputParameter ("maxOutputPoweramplifier_dBm", (double) 20.0 , "Maximum acceptable output power at any amplifier. The design should enforce that this power is not exceeded in any " , 0.0 , false , Double.MAX_VALUE , true);
+	private InputParameter relativeCostPenalizationOla = new InputParameter ("relativeCostPenalizationOla", (double) 2.0 , "The cost of all amplifiers hardware is supposed to be the same. However, placing an amplifier in the line instead of as booster of pre-amplifier, and thus in the central office, can ha ve a penalization stated by this factor" , 0.0 , false , Double.MAX_VALUE , true);
+
+	
 	private InputParameter overideBaseResourcesInfo = new InputParameter ("overideBaseResourcesInfo", true , "If true, the current resources in tne input n2p are removed, and for each node aone CPU, RAM and HD resources are created, with the capacities defined in input parameter defaultCPU_RAM_HD_Capacities");
 	private InputParameter defaultCPU_RAM_HD_Capacities = new InputParameter ("defaultCPU_RAM_HD_Capacities", "100 100 100" , "The default capacity values (space separated) of CPU, RAM, HD");
 	private InputParameter overideSequenceTraversedNFVs = new InputParameter ("overideSequenceTraversedNFVs", true , "If true, all demands will reset the sequence of NFVs to traverse, to this (NFV types in this param are ; separated)");
@@ -61,6 +68,15 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 	private InputParameter solverLibraryName = new InputParameter ("solverLibraryName", "" , "The solver library full or relative path, to be used by JOM. Leave blank to use JOM default.");
 	private InputParameter maxSolverTimeInSeconds = new InputParameter ("maxSolverTimeInSeconds", (double) -1 , "Maximum time granted to the solver to solve the problem. If this time expires, the solver returns the best solution found so far (if a feasible solution is found)");
 
+	
+//	int maxNumUsableOpticalSlotsPerFiber , double relativeCostPenalizationOla ,
+//	double maxInterOlaDistanceKm , 
+//	double initialPowerDensityPostBooster_dBmPerOpticalSlot ,
+//	double maxOutputPoweramplifier_dBm , 
+//	double minPowerDensityAtTransponderDrop_dBmPerOpticalSlot , 
+//	double maxTransponderInjectionPowerDensity_dBmPerOpticalSlot)
+
+	
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
 	{
@@ -83,6 +99,7 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 		final int N = wNet.getNodes().size();
 
 		if (wNet.getFibers().stream().anyMatch(e->!e.isBidirectional())) throw new Net2PlanException ("Fibers must be bidirectional");
+		if (wNet.getFibers().stream().anyMatch(e->e.isOriginOadmConfiguredToEqualizeOutput())) throw new Net2PlanException ("Channel power cannot be power equalized in the OADMs");
 		
 		final SortedSet<WNode> threePlusDegreeOadms = new TreeSet<> ();
 		final List<List<WFiber>> lines = new ArrayList<> ();
@@ -146,9 +163,14 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 		return "Ok";
 	}
 		
-	private void placeAmplifiersAndInjectionPower (List<WFiber> line , double relativeCostPenalizationOla ,
-			double minGainDb , double maxGainDb , double maxInterOlaDistanceKm , double initialLinePowerPostBooster_dBm , 
-			double minPowerAtTransponderDrop_dBm , double maxTransponderInjectionPower_dBm)
+	private void placeAmplifiersAndInjectionPower (List<WFiber> line ,  
+			int maxNumUsableOpticalSlotsPerFiber , double relativeCostPenalizationOla ,
+			double minGainDb , double maxGainDb , 
+			double maxInterOlaDistanceKm , 
+			double initialPowerDensityPostBooster_dBmPerOpticalSlot ,
+			double maxOutputPoweramplifier_dBm , 
+			double minPowerDensityAtTransponderDrop_dBmPerOpticalSlot , 
+			double maxTransponderInjectionPowerDensity_dBmPerOpticalSlot)
 	{	
 		final int E = line.size();
 		if (line.isEmpty()) throw new Net2PlanException ("Empty line");
@@ -156,20 +178,29 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 		final List<WNode> seqNodes = new ArrayList<> (); seqNodes.add(line.get(0).getA()); seqNodes.addAll(seqNodesButFirst);
 		if (seqNodes.size() != new HashSet<> (seqNodes).size()) throw new Net2PlanException ("A node cannot be traversed more than once");
 		final int N = seqNodes.size();
-		if (seqNodesButFirst.stream().anyMatch(n->!n.getOpticalSwitchingArchitecture().isOadmGeneric())) throw new Net2PlanException ("All OADMs must be of the generic type");
+		if (seqNodes.stream().anyMatch(n->!n.getOpticalSwitchingArchitecture().isOadmGeneric())) throw new Net2PlanException ("All OADMs must be of the generic type");
 		final WNode lastNodeOfTheLine = line.get(line.size()-1).getB();
 		
 		
 		/* Potential amplifier positions */
-		final List<Pair<WFiber , Double>> oaPositions_nkm = new ArrayList<> ();
+		final List<Pair<WFiber , Double>> oaPositionsKmFromFiberOrigin_p = new ArrayList<> ();
+		final List<Double> fixedAttenuationBeforeOaDb_p = new ArrayList<> ();
 		final Function<Pair<WFiber,Double>,Boolean> isBooster = p->p.getSecond() == 0;
 		final Function<Pair<WFiber,Double>,Boolean> isPreamplifier = p->p.getSecond() == p.getFirst().getLengthInKm();
 		final Function<Pair<WFiber,Double>,Boolean> isOla = p->!isBooster.apply(p) && !isPreamplifier.apply(p);
-		final SortedMap<WNode , Pair<Integer , Double>> numOaPositionsAndAttenuationFromOriginAfterBoosterToTransponderOadmInputAfterPreamplifier_dB = new TreeMap<> ();
+		final SortedMap<WNode , Integer> fromOriginAfterBoosterToInputOadmAfterPreamplifier_alreadyTraversedOas= new TreeMap<> ();
+		final SortedMap<WNode , Double > fromOriginAfterBoosterToInputOadmAfterPreamplifier_attenuationDb = new TreeMap<> ();
 		double attenuationFromOriginAfterBoosterToAfterPreamp_dB = 0;
-		for (WFiber e : line)
+		for (int contFiber = 0; contFiber < line.size() ; contFiber ++)
 		{
-			if (!e.equals(line.get(0))) oaPositions_nkm.add(Pair.of(e, 0.0)); // BOOSTER (IF NOT FIRST LINK)
+			final WFiber e = line.get(contFiber);
+			
+			if (!e.equals(line.get(0)))
+			{
+				oaPositionsKmFromFiberOrigin_p.add(Pair.of(e, 0.0)); // BOOSTER (IF NOT FIRST LINK)
+				fixedAttenuationBeforeOaDb_p.add(attenuationFromOriginAfterBoosterToAfterPreamp_dB);
+			}
+			
 			final double fiberAttenuationDb = e.getLengthInKm() * e.getAttenuationCoefficient_dbPerKm();
 			final int numOlas = (int) Math.ceil(e.getLengthInKm() / maxInterOlaDistanceKm) - 1;
 			if (numOlas > 0) // OLAS
@@ -177,20 +208,41 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 				final double interOlaDistanceKm = e.getLengthInKm() / (numOlas + 1);
 				assert interOlaDistanceKm <= maxInterOlaDistanceKm;
 				for (int olaIndex = 0; olaIndex < numOlas ; olaIndex ++)
-					oaPositions_nkm.add(Pair.of(e, (olaIndex + 1) * interOlaDistanceKm ));
+				{
+					final double positionInFiber_km = (olaIndex + 1) * interOlaDistanceKm;
+					oaPositionsKmFromFiberOrigin_p.add(Pair.of(e,  positionInFiber_km));
+					fixedAttenuationBeforeOaDb_p.add(attenuationFromOriginAfterBoosterToAfterPreamp_dB + positionInFiber_km * e.getAttenuationCoefficient_dbPerKm());
+				}
 			}
-			oaPositions_nkm.add(Pair.of(e, e.getLengthInKm())); // PREAMPLIFIER
+			oaPositionsKmFromFiberOrigin_p.add(Pair.of(e, e.getLengthInKm())); // PREAMPLIFIER
+			fixedAttenuationBeforeOaDb_p.add(attenuationFromOriginAfterBoosterToAfterPreamp_dB + e.getLengthInKm() * e.getAttenuationCoefficient_dbPerKm());
 			
 			attenuationFromOriginAfterBoosterToAfterPreamp_dB += fiberAttenuationDb;
 			final WNode dropNode = e.getB();
 			final OadmArchitecture_generic oadmDropNode = (OadmArchitecture_generic) dropNode.getOpticalSwitchingArchitecture();
-			numOaPositionsAndAttenuationFromOriginAfterBoosterToTransponderOadmInputAfterPreamplifier_dB.put(dropNode, Pair.of(oaPositions_nkm.size () , attenuationFromOriginAfterBoosterToAfterPreamp_dB));
-			attenuationFromOriginAfterBoosterToAfterPreamp_dB += oadmDropNode.getParameters().getExpressAttenuationForFiber0ToFiber0_dB().get();
+			fromOriginAfterBoosterToInputOadmAfterPreamplifier_alreadyTraversedOas.put(dropNode, oaPositionsKmFromFiberOrigin_p.size());
+			fromOriginAfterBoosterToInputOadmAfterPreamplifier_attenuationDb.put(dropNode, attenuationFromOriginAfterBoosterToAfterPreamp_dB);
+			if (contFiber != line.size()-1)
+			{
+				final WFiber nextFiber = e.getB().getOutgoingFibers().stream().filter(ee->!ee.equals(e.getBidirectionalPair())).findFirst().get();
+				attenuationFromOriginAfterBoosterToAfterPreamp_dB += oadmDropNode.getExpressAttenuation_dB(e, nextFiber).get();
+			}
 		}
-		assert numOaPositionsAndAttenuationFromOriginAfterBoosterToTransponderOadmInputAfterPreamplifier_dB.get(seqNodesButFirst.getLast()).getSecond() == 
-				line.stream().mapToDouble(e->e.getLengthInKm() * e.getAttenuationCoefficient_dbPerKm()).sum() + 
-				seqNodesButFirst.stream().filter(n->!n.equals(lastNodeOfTheLine)).mapToDouble(n-> n.getOpticalSwitchingArchitecture().getAsOadmGeneric ().getParameters().getExpressAttenuationForFiber0ToFiber0_dB().get()).sum();
-		final int P = oaPositions_nkm.size();
+		final int P = oaPositionsKmFromFiberOrigin_p.size();
+		assert fixedAttenuationBeforeOaDb_p.size() == P;
+
+		/* Just a check */
+		final double checkTotalAttenuation_1 = fromOriginAfterBoosterToInputOadmAfterPreamplifier_attenuationDb.get(seqNodesButFirst.getLast()); 
+		double checkTotalAttenuation_2 = 0;
+		for (int contFiber = 0; contFiber < line.size() ; contFiber ++)
+		{
+			final WFiber e = line.get(contFiber);
+			final WFiber next = contFiber == line.size() - 1? null : line.get(contFiber + 1);
+			checkTotalAttenuation_2 += e.getLengthInKm() * e.getAttenuationCoefficient_dbPerKm();
+			checkTotalAttenuation_2 += contFiber == line.size() - 1? 0.0 : e.getB().getOpticalSwitchingArchitecture().getAsOadmGeneric ().getExpressAttenuation_dB(e, next).get();
+		}
+		assert Math.abs(checkTotalAttenuation_1 - checkTotalAttenuation_2) < 1e-3;
+
 		
 		/*************************************************************************************************************************/
 		/* Create the optimization problem object (JOM library) */
@@ -198,45 +250,62 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 		
 		op.addDecisionVariable("gain_p", false, new int [] {1 , P} , 0 , maxGainDb);
 		op.addDecisionVariable("placeOa_p", true, new int [] {1 , P} , 0 , 1);
-		
-		op.setInputParameter("INITIALLINEPOWERPOSTBOOSTER_DBM", initialLinePowerPostBooster_dBm);
-		op.setInputParameter("MINGAIN_DB", minGainDb);
-		op.setInputParameter("MAXGAIN_DB", maxGainDb);
-		op.setInputParameter("COST_P", oaPositions_nkm.stream().map(p->isOla.apply(p)? relativeCostPenalizationOla : 1.0).collect(Collectors.toList()) , "row");
-		op.setInputParameter("TOTALLOSS_DB", oaPositions_nkm.stream().map(p->isOla.apply(p)? relativeCostPenalizationOla : 1.0).collect(Collectors.toList()) , "row");
-		op.setInputParameter("minPowerAtTransponderDrop_dBm", minPowerAtTransponderDrop_dBm);
-		op.setInputParameter("maxTransponderInjectionPower_dBm", maxTransponderInjectionPower_dBm);
+		final double maxInitialPowerPostBooster_dBm = OpticalSimulationModule.linear2dB (OpticalSimulationModule.dB2linear(initialPowerDensityPostBooster_dBmPerOpticalSlot) * maxNumUsableOpticalSlotsPerFiber);
+		op.setInputParameter("initialPowerDensityPostBooster_dBmPerOpticalSlot", initialPowerDensityPostBooster_dBmPerOpticalSlot);
+		op.setInputParameter("maxNumUsableOpticalSlotsPerFiber", maxNumUsableOpticalSlotsPerFiber);
+		op.setInputParameter("maxInitialPowerPostBooster_dBm", maxInitialPowerPostBooster_dBm);
+		op.setInputParameter("minGainDb", minGainDb);
+		op.setInputParameter("maxGainDb", maxGainDb);
+		op.setInputParameter("cost_p", oaPositionsKmFromFiberOrigin_p.stream().map(p->isOla.apply(p)? relativeCostPenalizationOla : 1.0).collect(Collectors.toList()) , "row");
+		op.setInputParameter("lossToCompensate_dB", fromOriginAfterBoosterToInputOadmAfterPreamplifier_attenuationDb.get(lastNodeOfTheLine));
+		op.setInputParameter("maxOutputPoweramplifier_dBm", maxOutputPoweramplifier_dBm);
+		op.setInputParameter("minPowerDensityAtTransponderDrop_dBmPerOpticalSlot", minPowerDensityAtTransponderDrop_dBmPerOpticalSlot);
+		op.setInputParameter("maxTransponderInjectionPowerDensity_dBmPerOpticalSlot", maxTransponderInjectionPowerDensity_dBmPerOpticalSlot);
+		op.setInputParameter("fixedAttenuationBeforeOaDb_p", fixedAttenuationBeforeOaDb_p , "row");
 
-		op.setObjectiveFunction("minimize", "COST_P * placeOa_p'");
+		op.setObjectiveFunction("minimize", "cost_p * placeOa_p'");
 		
-		op.addConstraint("gain_p <= MAXGAIN_DB * placeOa_p"); // no amplifier => no gain, and if amplifier, below max gain
-		op.addConstraint("gain_p >= MINGAIN_DB * placeOa_p"); // amplifier => greater than min gain
-		op.addConstraint("sum (gain_p) == TOTALLOSS_DB"); // no amplifier => no gain
-		for (int contFiber = 0 ; contFiber < line.size() ; contFiber ++)
+		op.addConstraint("gain_p <= maxGainDb * placeOa_p"); // no amplifier => no gain, and if amplifier, below max gain
+		op.addConstraint("gain_p >= minGainDb * placeOa_p"); // amplifier => greater than min gain
+		op.addConstraint("sum (gain_p) == lossToCompensate_dB"); // no amplifier => no gain
+		for (int p = 0 ; p < P ; p ++)
 		{
-			final WFiber inFiber = line.get(contFiber);
-			final WNode dropOrAddNode = inFiber.getB();
-			
-			/* Power at drop is enough */
-			final int numOasBeforeDrop = numOaPositionsAndAttenuationFromOriginAfterBoosterToTransponderOadmInputAfterPreamplifier_dB.get(dropOrAddNode).getFirst();
-			final double fixedAttenuationAfterPreamp_dB = numOaPositionsAndAttenuationFromOriginAfterBoosterToTransponderOadmInputAfterPreamplifier_dB.get(dropOrAddNode).getSecond();
-			final double fixedOadmDropAttenuationAfterPreamp_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getDropAttenuation_dB(inFiber , Optional.empty());
-			final double [] affectedOas_p = new double [P]; for (int p = 0 ; p < numOasBeforeDrop ; p ++) affectedOas_p [p] = 1.0;
-			op.setInputParameter("affectingOas_p", affectedOas_p , "row");
-			op.setInputParameter("fixedAttenuationAfterPreamp_dB", fixedAttenuationAfterPreamp_dB);
-			op.setInputParameter("fixedOadmDropAttenuationAfterPreamp_dB", fixedOadmDropAttenuationAfterPreamp_dB);
-			op.addConstraint("INITIALLINEPOWERPOSTBOOSTER_DBM + (affectingOas_p * gain_p') - fixedAttenuationAfterPreamp_dB - fixedOadmDropAttenuationAfterPreamp_dB >= minPowerAtTransponderDrop_dBm");
+			final double [] traversedOasBefore_p = new double [P]; for (int pp = 0; pp < p ; pp ++) traversedOasBefore_p [pp] = 1.0;
+			op.setInputParameter("bigNumber", Math.abs (maxInitialPowerPostBooster_dBm + P * maxGainDb - fixedAttenuationBeforeOaDb_p.get(p) - maxOutputPoweramplifier_dBm) * 2);
+			op.setInputParameter("p", p);
+			op.setInputParameter("traversedOasBefore_p", traversedOasBefore_p , "row");
 
-			/* Power at add can be balanced, when outgoing for any out fiber */
-			for (WFiber outFiber : dropOrAddNode.getOutgoingFibers())
+			
+			/* Not OA output power saturation */
+			op.addConstraint("maxInitialPowerPostBooster_dBm + traversedOasBefore_p * gain_p' - fixedAttenuationBeforeOaDb_p(p) <= maxOutputPoweramplifier_dBm + (1-placeOa_p(p)) * bigNumber"); // amplifier output power is not saturating
+			
+			/* Enough power density at DROP */
+			if (isPreamplifier.apply(oaPositionsKmFromFiberOrigin_p.get(p)))
 			{
-				if (outFiber.equals(inFiber.getBidirectionalPair())) continue;
-				if (outFiber.isOriginOadmConfiguredToEqualizeOutput()) continue; // in this case, power balance is assured here because of this
-				final double fixedOadmExpressAttenuationAfterPreamp_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getExpressAttenuation_dB(inFiber , outFiber , 1);
-				final double fixedOadmAddAttenuation_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getAddAttenuation_dB(outFiber, Optional.empty(), 1);
-				op.setInputParameter("fixedOadmExpressAttenuationAfterPreamp_dB", fixedOadmExpressAttenuationAfterPreamp_dB);
-				op.setInputParameter("fixedOadmAddAttenuation_dB", fixedOadmAddAttenuation_dB);
-				op.addConstraint("INITIALLINEPOWERPOSTBOOSTER_DBM + (affectingOas_p * gain_p') - fixedAttenuationAfterPreamp_dB - fixedOadmExpressAttenuationAfterPreamp_dB <= maxTransponderInjectionPower_dBm - fixedOadmAddAttenuation_dB");
+				final WFiber inFiber = oaPositionsKmFromFiberOrigin_p.get(p).getFirst();
+				final WNode dropOrAddNode = inFiber.getB();
+
+				/* Power at drop is enough */
+				final double fixedOadmDropAttenuationAfterPreamp_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getDropAttenuation_dB(inFiber , Optional.empty());
+				op.setInputParameter("fixedOadmDropAttenuationAfterPreamp_dB", fixedOadmDropAttenuationAfterPreamp_dB);
+				op.addConstraint("initialPowerDensityPostBooster_dBmPerOpticalSlot + traversedOasBefore_p * gain_p'"
+						+ " - fixedAttenuationBeforeOaDb_p(p) + gain_p(p) - fixedOadmDropAttenuationAfterPreamp_dB "
+						+ ">= minPowerDensityAtTransponderDrop_dBmPerOpticalSlot"); // amplifier output power is not saturating
+
+				/* Power at add can be balanced, when outgoing for any out fiber */
+				for (WFiber outFiber : dropOrAddNode.getOutgoingFibers())
+				{
+					if (outFiber.equals(inFiber.getBidirectionalPair())) continue;
+					final double fixedOadmExpressAttenuationAfterPreamp_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getExpressAttenuation_dB(inFiber , outFiber).get();
+					final double fixedOadmAddAttenuation_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getAddAttenuation_dB(outFiber, Optional.empty(), 1);
+					op.setInputParameter("fixedOadmExpressAttenuationAfterPreamp_dB", fixedOadmExpressAttenuationAfterPreamp_dB);
+					op.setInputParameter("fixedOadmAddAttenuation_dB", fixedOadmAddAttenuation_dB);
+
+					op.addConstraint("initialPowerDensityPostBooster_dBmPerOpticalSlot + traversedOasBefore_p * gain_p'"
+							+ " - fixedAttenuationBeforeOaDb_p(p) + gain_p(p) - fixedOadmExpressAttenuationAfterPreamp_dB "
+							+ ">= maxTransponderInjectionPowerDensity_dBmPerOpticalSlot - fixedOadmAddAttenuation_dB"); // amplifier output power is not saturating
+				}
+				
 			}
 		}
 		
@@ -250,22 +319,69 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 		/*************************************************************************************************************************/
 		/************************ CREATE THE OUTPUT DESIGN FROM THE SOLUTION ****************************************************************/
 		/*************************************************************************************************************************/
-		final DoubleMatrix2D xx_scr_eup = op.getPrimalSolution("xx_scr_eup").view2D();
+		final List<Double> gain_p = op.getPrimalSolution("gain_p").toList();
+		final List<Double> placeOa_p = op.getPrimalSolution("placeOa_p").toList();
 		
-		/****************************************************************************************************************/
-		/**************************      CHECK THE SOLUTION    **********************************************************/
-		/****************************************************************************************************************/
-		assert wNet.getServiceChainRequests().stream().allMatch(e->e.getCurrentOfferedTrafficInGbps()> Configuration.precisionFactor);
-		assert wNet.getServiceChainRequests().stream().allMatch(e->e.getCurrentBlockedTraffic() == 0);
-		assert wNet.getServiceChainRequests().stream().allMatch(e->e.getServiceChains().size() == 1);
-		assert wNet.getVnfInstances().stream().allMatch(e->e.getOccupiedCapacityInGbps() <= e.getCurrentCapacityInGbps() + Configuration.precisionFactor);
-		for (WNode n : wNet.getNodes())
+		/* Check in decision variables and constraints  */
+		for (int p = 0; p < P ; p ++)
 		{
-			assert n.getTotalNumCpus() >= n.getVnfInstances().stream().mapToDouble(e->e.getOccupiedCpus()).sum() + Configuration.precisionFactor;
-			assert n.getTotalRamGB() >= n.getVnfInstances().stream().mapToDouble(e->e.getOccupiedRamInGB()).sum() + Configuration.precisionFactor;
-			assert n.getTotalHdGB() >= n.getVnfInstances().stream().mapToDouble(e->e.getOccupiedHdInGB()).sum() + Configuration.precisionFactor;
+			final boolean hasOa = placeOa_p.get(p) > 1e-1;
+			final double gainDb = gain_p.get(p); 
+			if (!hasOa &&  gainDb > 1e-3) throw new RuntimeException();
+			if (hasOa && gainDb < minGainDb - 1e-3) throw new RuntimeException();
+			if (hasOa && gainDb > maxGainDb + 1e-3) throw new RuntimeException();
 		}
-		assert wNet.getIpLinks().stream().allMatch(e->e.getCarriedTrafficGbps() <= e.getCurrentCapacityGbps() + Configuration.precisionFactor);
+
+
+		/* Remove all the optical amplifiers */
+		for (WFiber fiber : line)
+		{
+			fiber.removeOpticalLineAmplifiers();
+			fiber.setIsExistingBoosterAmplifierAtOriginOadm(false);
+			fiber.setIsExistingPreamplifierAtDestinationOadm(false);
+		}
+		final SortedMap<WFiber , List<OpticalAmplifierInfo>> olasPerFiber = new TreeMap<> ();
+		for (int p = 0; p < P ; p ++)
+		{
+			final WFiber fiber = oaPositionsKmFromFiberOrigin_p.get(p).getFirst();
+			final double positionFromFiberOrigin_km = oaPositionsKmFromFiberOrigin_p.get(p).getSecond();
+			final boolean amplifierExists = placeOa_p.get(p) > 1e-3;
+			if (!amplifierExists) continue;
+			
+			/* Set existence or not */
+			final OpticalAmplifierInfo info;
+			if (isBooster.apply(oaPositionsKmFromFiberOrigin_p.get(p))) info = OpticalAmplifierInfo.getDefaultBooster();
+			else if (isPreamplifier.apply(oaPositionsKmFromFiberOrigin_p.get(p))) info = OpticalAmplifierInfo.getDefaultPreamplifier();
+			else info = OpticalAmplifierInfo.getDefaultOla(positionFromFiberOrigin_km);
+			
+			info.setGainDb(gain_p.get(p));
+			info.setMaxAcceptableGainDb(maxGainDb);
+			info.setMinAcceptableGainDb(minGainDb);
+			info.setMaxAcceptableOutputPower_dBm(maxOutputPoweramplifier_dBm);
+
+			if (isBooster.apply(oaPositionsKmFromFiberOrigin_p.get(p)))
+			{
+				fiber.setIsExistingBoosterAmplifierAtOriginOadm(true);
+				fiber.setOriginBoosterAmplifierInfo(info);
+			}
+			else if (isPreamplifier.apply(oaPositionsKmFromFiberOrigin_p.get(p))) 
+			{
+				fiber.setIsExistingPreamplifierAtDestinationOadm(true);
+				fiber.setDestinationPreAmplifierInfo(info);
+			}
+			else 
+			{
+				List<OpticalAmplifierInfo> olasThisFiber = olasPerFiber.get(fiber);
+				if (olasThisFiber == null) { olasThisFiber = new ArrayList<> (); olasPerFiber.put(fiber, olasThisFiber); }
+				olasThisFiber.add(info);
+			}
+		}
+		/* Add OLAs */
+		for (Entry<WFiber,List<OpticalAmplifierInfo>> entry : olasPerFiber.entrySet())
+			entry.getKey().setOlaTraversedInfo(entry.getValue());
+		
+		/* */
+		PENDIENTE: CHEQUEAR QUE LA SOLUCION CUMPLE LO QUE QUEREMOS EN CUANTO A POWER, USANDO FUNCIONES DEL OPTICAL SIMULATION SI ES POSIBLE
 
 		return "Ok!: The solution found is guaranteed to be optimal: " + op.solutionIsOptimal();
 	}

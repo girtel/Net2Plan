@@ -144,6 +144,7 @@ public class NetPlan extends NetworkElement
     SortedMap<String,SortedSet<NetworkElement>> cache_taggedElements;
     SortedMap<String,SortedSet<Node>> cache_nodesPerSiteName;
     SortedMap<String, SortedSet<Node>> cache_planningDomain2nodes;
+    SortedMap<String,SortedSet<Node>> cache_nodesPerNodeName;
 
     DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping> interLayerCoupling;
     
@@ -192,6 +193,7 @@ public class NetPlan extends NetworkElement
         
         this.cache_taggedElements = new TreeMap<> ();
         this.cache_nodesPerSiteName = new TreeMap<> ();
+        this.cache_nodesPerNodeName = new TreeMap<> ();
         this.cache_planningDomain2nodes = new TreeMap<> ();
         interLayerCoupling = new DirectedAcyclicGraph<NetworkLayer, DemandLinkMapping>(DemandLinkMapping.class);
 
@@ -385,6 +387,7 @@ public class NetPlan extends NetworkElement
         if (!this.tags.equals(np2.tags)) return false;
         if (!this.cache_taggedElements.keySet().equals(np2.cache_taggedElements.keySet())) return false;
         if (!this.cache_nodesPerSiteName.keySet().equals(np2.cache_nodesPerSiteName.keySet())) return false;
+        if (!this.cache_nodesPerNodeName.keySet().equals(np2.cache_nodesPerNodeName.keySet())) return false;
         if (!this.cache_planningDomain2nodes.keySet().equals(np2.cache_planningDomain2nodes.keySet())) return false;
         for (String tag : cache_taggedElements.keySet()) 
        		if (this.cache_taggedElements.get(tag).size() != np2.cache_taggedElements.get(tag).size())
@@ -394,6 +397,9 @@ public class NetPlan extends NetworkElement
        			return false;
         for (String siteName : cache_nodesPerSiteName.keySet()) 
        		if (this.cache_nodesPerSiteName.get(siteName).size() != np2.cache_nodesPerSiteName.get(siteName).size())
+       			return false;
+        for (String nodeName : cache_nodesPerNodeName.keySet()) 
+       		if (this.cache_nodesPerNodeName.get(nodeName).size() != np2.cache_nodesPerNodeName.get(nodeName).size())
        			return false;
         for (int cont = 0; cont < nodes.size(); cont++)
             if (!this.getNode(cont).isDeepCopy(np2.getNode(cont))) return false;
@@ -1575,6 +1581,7 @@ public class NetPlan extends NetworkElement
         this.cache_id2srgMap = netPlan.cache_id2srgMap;
         this.cache_taggedElements = netPlan.cache_taggedElements;
         this.cache_nodesPerSiteName = netPlan.cache_nodesPerSiteName;
+        this.cache_nodesPerNodeName = netPlan.cache_nodesPerNodeName; 
         this.cache_planningDomain2nodes = netPlan.cache_planningDomain2nodes;
         this.interLayerCoupling = netPlan.interLayerCoupling;
         this.tags.clear(); this.tags.addAll(netPlan.tags);
@@ -2288,6 +2295,7 @@ public class NetPlan extends NetworkElement
         this.cache_id2MulticastTreeMap = new TreeMap<Long, MulticastTree>();
         this.cache_taggedElements = new TreeMap<> ();
         this.cache_nodesPerSiteName = new TreeMap<> ();
+        this.cache_nodesPerNodeName = new TreeMap<> ();
         this.cache_planningDomain2nodes = new TreeMap<> (); 
         for (String pd : originNetPlan.cache_planningDomain2nodes.keySet()) this.cache_planningDomain2nodes.put(pd, new TreeSet<> ());
         this.DEFAULT_ROUTING_TYPE = originNetPlan.DEFAULT_ROUTING_TYPE;
@@ -4079,8 +4087,8 @@ public class NetPlan extends NetworkElement
      */
     public Node getNodeByName(String name)
     {
-        for (Node n : nodes) if (n.name.equals(name)) return n;
-        return null;
+    	final SortedSet<Node> res = netPlan.cache_nodesPerNodeName.get(name);
+    	return res == null? null : res.isEmpty()? null : res.first();
     }
 
     /**
@@ -4091,7 +4099,7 @@ public class NetPlan extends NetworkElement
      */
     public List<Node> getNodeByNameAllNodes (String name)
     {
-        return nodes.stream().filter(n->n.getName().equals(name)).collect(Collectors.toList());
+        return new ArrayList<> (netPlan.cache_nodesPerNodeName.getOrDefault(name, new TreeSet<> ()));
     }
 
 
@@ -7752,6 +7760,10 @@ public class NetPlan extends NetworkElement
         for (String siteName : cache_nodesPerSiteName.keySet ())
         	for (Node n : cache_nodesPerSiteName.get(siteName))
         		if (!n.siteName.equals(siteName)) throw new RuntimeException();
+        /* Check node names are correct */
+        for (String nodeName : cache_nodesPerNodeName.keySet ())
+        	for (Node n : cache_nodesPerNodeName.get(nodeName))
+        		if (!n.getName().equals(nodeName)) throw new RuntimeException("Node " + n + " has name: " + n.getName() + ", and cache is: " + netPlan.cache_nodesPerNodeName);
 
         /* What is in the cache is correct */
         for (String type : cache_type2Resources.keySet())

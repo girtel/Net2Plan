@@ -85,7 +85,6 @@ public class Node extends NetworkElement
                 else
                     this.mapLayout2NodeXYPositionMap.put(NetPlan.PLOTLAYTOUT_DEFAULTNODELAYOUTNAME, new UnmodifiablePoint2D(xCoord, yCoord));
                 
-		this.name = name == null? "" : name;
 		this.isUp = true;
 		
 		this.cache_nodeIncomingLinks = new TreeSet<Link> ();
@@ -102,6 +101,11 @@ public class Node extends NetworkElement
 		this.planningDomains = new TreeSet<> ();
 		this.population = 0;
 		this.siteName = null;
+		this.name = name == null? "" : name;
+		SortedSet<Node> nodesThisNewName = netPlan.cache_nodesPerNodeName.get(name);
+		if (nodesThisNewName == null) { nodesThisNewName = new TreeSet<> (); netPlan.cache_nodesPerNodeName.put(name, nodesThisNewName); }
+		nodesThisNewName.add(this);
+		
 	}
 	
 	void copyFrom (Node origin)
@@ -846,6 +850,16 @@ public class Node extends NetworkElement
 		for (MulticastDemand demand : new LinkedList<MulticastDemand> (cache_nodeOutgoingMulticastDemands)) demand.remove ();
 
 		netPlan.cache_id2NodeMap.remove (id);
+		netPlan.cache_nodesDown.remove (this);
+		netPlan.cache_nodesPerNodeName.get(this.getName()).remove(this);
+		if (netPlan.cache_nodesPerNodeName.get(this.getName()).isEmpty()) netPlan.cache_nodesPerNodeName.remove(this.getName());
+		if (this.getSiteName() != null)
+		{
+			netPlan.cache_nodesPerSiteName.get(this.getSiteName()).remove(this);
+			if (netPlan.cache_nodesPerSiteName.get(this.getSiteName()).isEmpty()) netPlan.cache_nodesPerSiteName.remove(this.getSiteName());
+		}
+		for (String pd : this.getPlanningDomains()) this.removeFromPlanningDomain(pd);
+		
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		NetPlan.removeNetworkElementAndShiftIndexes(netPlan.nodes , this.index);
         final NetPlan npOld = this.netPlan;
@@ -993,6 +1007,21 @@ public class Node extends NetworkElement
 		this.planningDomains.add(planningDomain);
 		netPlan.cache_planningDomain2nodes.get(planningDomain).add(this);
 	}
-	
+
+	public void setName (String newName)
+	{
+		newName = name == null? "" : newName;
+		final String oldName = getName ();
+		if (newName.equals(oldName)) return;
+		final SortedSet<Node> nodesOldName = netPlan.cache_nodesPerNodeName.get(oldName);
+		assert nodesOldName != null;
+		final boolean wasRemoved = nodesOldName.remove(this);
+		assert wasRemoved;
+		if (nodesOldName.isEmpty()) netPlan.cache_nodesPerNodeName.remove(oldName);
+		SortedSet<Node> nodesThisNewName = netPlan.cache_nodesPerNodeName.get(newName);
+		if (nodesThisNewName == null) { nodesThisNewName = new TreeSet<> (); netPlan.cache_nodesPerNodeName.put(newName, nodesThisNewName); }
+		nodesThisNewName.add(this);
+		super.setName(newName);
+	}
 
 }

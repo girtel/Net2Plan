@@ -65,7 +65,7 @@ public abstract class NetworkElement implements Comparable<NetworkElement>
 	/** Sets this element name
 	 * @param name  see above
 	 */
-	public final void setName (String name) { this.name = name == null? "" : name; }
+	public void setName (String name) { this.name = name == null? "" : name; }
 
 	/** Returns current element name String
 	 * @return see above
