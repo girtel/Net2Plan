@@ -1185,8 +1185,8 @@ public class JltTecnoec1_capacityPlanningAlgorithm implements IAlgorithm
 			lprAb.coupleToIpLink(ipLinkAbBa.getFirst());
 			lprAb.getBidirectionalPair().coupleToIpLink(ipLinkAbBa.getSecond());
 		}
+
 		ipBidiLink.setIpLinkAsBundleOfIpLinksBidirectional(lpsCreatedAb.stream().map(lpr -> lpr.getCoupledIpLink()).collect(Collectors.toCollection(TreeSet::new)));
-		ipBidiLink.getBidirectionalPair().setIpLinkAsBundleOfIpLinksBidirectional(lpsCreatedAb.stream().map(lpr -> lpr.getBidirectionalPair()).map(lpr -> lpr.getCoupledIpLink()).collect(Collectors.toCollection(TreeSet::new)));
 
         final List<List<Pair<WNode, WNode>>> twoOrOneWdmPathsForThisIpLink_final = new LinkedList<>(twoOrOneWdmPathsForThisIpLink) ;
 		final boolean notFaultToleranceToWdmFailureAchieved = onlyOnePathExists? true : twoOrOneWdmPathsForThisIpLink_final.get(0).stream().anyMatch(nn->twoOrOneWdmPathsForThisIpLink_final.get(1).contains(nn));

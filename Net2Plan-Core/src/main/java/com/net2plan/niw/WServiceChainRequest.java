@@ -268,8 +268,6 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	{
 		if (validOrigins.isEmpty()) throw new Net2PlanException ("Nodes cannot be an empty set");
 		final List<String> resNames = validOrigins.stream().map(n -> n.getName()).collect(Collectors.toList());
-		if (getPotentiallyValidDestinations().stream().anyMatch(n->validOrigins.contains(n))) 
-				throw new Net2PlanException("Origin nodes cannot also be destination nodes");
 		sc.setAttributeAsStringList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDINPUTNODENAMES, resNames);
 	}
 
@@ -303,8 +301,6 @@ public class WServiceChainRequest extends WAbstractIpUnicastOrAnycastDemand
 	{
 		if (validDestinations.isEmpty()) throw new Net2PlanException ("Nodes cannot be an empty set");
 		final List<String> resNames = validDestinations.stream().map(n -> n.getName()).collect(Collectors.toList());
-		if (getPotentiallyValidOrigins().stream().anyMatch(n->validDestinations.contains(n))) 
-			throw new Net2PlanException("Origin nodes cannot also be destination nodes");
 		sc.setAttributeAsStringList(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_VALIDOUTPUTNODENAMES, resNames);
 	}
 

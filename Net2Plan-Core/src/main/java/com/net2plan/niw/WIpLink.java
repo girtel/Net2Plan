@@ -376,7 +376,7 @@ public class WIpLink extends WAbstractNetworkElement
 		if (!getNet().isWithIpLayer()) throw new Net2PlanException ("The design has no IP layer");
 		
 		if (!this.isBidirectional()) throw new Net2PlanException ("All IP link must be bidirectional");
-		if (this.isBundleMember() || this.isBundleOfIpLinks()) throw new Net2PlanException ("This elements cannot be a bundle nor a bundle member");
+		if (this.isBundleMember() || this.isBundleOfIpLinks()) throw new Net2PlanException ("These elements cannot be a bundle nor a bundle member");
 		if (this.getBidirectionalPair().isBundleMember() || this.getBidirectionalPair().isBundleOfIpLinks()) throw new Net2PlanException ("This elements cannot be a bundle nor a bundle member");
 		if (ipLinksToBundleAb.stream().anyMatch(e->!e.isBidirectional())) throw new Net2PlanException ("All IP links must be bidirectional");
 		final SortedSet<WIpLink> ipLinksToBundleBa = ipLinksToBundleAb.stream().map(e->e.getBidirectionalPair()).collect(Collectors.toCollection(TreeSet::new));
