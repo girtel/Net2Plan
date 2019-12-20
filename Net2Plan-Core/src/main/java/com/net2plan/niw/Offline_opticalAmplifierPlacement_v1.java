@@ -30,6 +30,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.graph.DirectedMultigraph;
 
+import com.ctc.wstx.sw.ISOLatin1XmlWriter;
 import com.jom.OptimizationProblem;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
@@ -286,29 +287,43 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 				final WNode dropOrAddNode = inFiber.getB();
 
 				/* Power at drop is enough */
-				PABLO: METER AQUI EL PEOR DROP POSIBLE
+				final boolean isWithDirfulDrop = inFiber.getB().isOadmWithDirectedAddDropModulesInTheDegrees();
+				final boolean isWithDirlessDrop = inFiber.getB().getOadmNumAddDropDirectionlessModules() > 0;
+				if (isWithDirfulDrop)
+				{
+					op.setInputParameter("fixedOadmDropAttenuationAfterPreamp_dB", dropOrAddNode.getOpticalSwitchingArchitecture().getDropAttenuation_dB(inFiber , Optional.empty()));
+					op.addConstraint("initialPowerDensityPostBooster_dBmPerOpticalSlot + traversedOasBefore_p * gain_p'"
+							+ " - fixedAttenuationBeforeOaDb_p(p) + gain_p(p) - fixedOadmDropAttenuationAfterPreamp_dB "
+							+ ">= minPowerDensityAtTransponderDrop_dBmPerOpticalSlot"); // amplifier output power is not saturating
+				}
+				if (isWithDirlessDrop)
+				{
+					op.setInputParameter("fixedOadmDropAttenuationAfterPreamp_dB", dropOrAddNode.getOpticalSwitchingArchitecture().getDropAttenuation_dB(inFiber , Optional.of(0)));
+					op.addConstraint("initialPowerDensityPostBooster_dBmPerOpticalSlot + traversedOasBefore_p * gain_p'"
+							+ " - fixedAttenuationBeforeOaDb_p(p) + gain_p(p) - fixedOadmDropAttenuationAfterPreamp_dB "
+							+ ">= minPowerDensityAtTransponderDrop_dBmPerOpticalSlot"); // amplifier output power is not saturating
+				}
 				
-				final double fixedOadmDropAttenuationAfterPreamp_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getDropAttenuation_dB(inFiber , Optional.empty());
-				op.setInputParameter("fixedOadmDropAttenuationAfterPreamp_dB", fixedOadmDropAttenuationAfterPreamp_dB);
-				op.addConstraint("initialPowerDensityPostBooster_dBmPerOpticalSlot + traversedOasBefore_p * gain_p'"
-						+ " - fixedAttenuationBeforeOaDb_p(p) + gain_p(p) - fixedOadmDropAttenuationAfterPreamp_dB "
-						+ ">= minPowerDensityAtTransponderDrop_dBmPerOpticalSlot"); // amplifier output power is not saturating
-
 				/* Power at add can be balanced, when outgoing for any out fiber */
 				for (WFiber outFiber : dropOrAddNode.getOutgoingFibers())
 				{
 					if (outFiber.equals(inFiber.getBidirectionalPair())) continue;
 					final double fixedOadmExpressAttenuationAfterPreamp_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getExpressAttenuation_dB(inFiber , outFiber).get();
-
-					PABLO: METER AQUI EL PEOR ADD POSIBLE, DE DIRECTIONFUL Y DIRECTIONLESS
-
-					final double fixedOadmAddAttenuation_dB = dropOrAddNode.getOpticalSwitchingArchitecture().getAddAttenuation_dB(outFiber, Optional.empty(), 1);
 					op.setInputParameter("fixedOadmExpressAttenuationAfterPreamp_dB", fixedOadmExpressAttenuationAfterPreamp_dB);
-					op.setInputParameter("fixedOadmAddAttenuation_dB", fixedOadmAddAttenuation_dB);
-
-					op.addConstraint("initialPowerDensityPostBooster_dBmPerOpticalSlot + traversedOasBefore_p * gain_p'"
-							+ " - fixedAttenuationBeforeOaDb_p(p) + gain_p(p) - fixedOadmExpressAttenuationAfterPreamp_dB "
-							+ ">= maxTransponderInjectionPowerDensity_dBmPerOpticalSlot - fixedOadmAddAttenuation_dB"); // amplifier output power is not saturating
+					if (isWithDirfulDrop)
+					{
+						op.setInputParameter("fixedOadmAddAttenuation_dB", dropOrAddNode.getOpticalSwitchingArchitecture().getAddAttenuation_dB(outFiber, Optional.empty(), 1));
+						op.addConstraint("initialPowerDensityPostBooster_dBmPerOpticalSlot + traversedOasBefore_p * gain_p'"
+								+ " - fixedAttenuationBeforeOaDb_p(p) + gain_p(p) - fixedOadmExpressAttenuationAfterPreamp_dB "
+								+ ">= maxTransponderInjectionPowerDensity_dBmPerOpticalSlot - fixedOadmAddAttenuation_dB"); // amplifier output power is not saturating
+					}
+					if (isWithDirlessDrop)
+					{
+						op.setInputParameter("fixedOadmAddAttenuation_dB", dropOrAddNode.getOpticalSwitchingArchitecture().getAddAttenuation_dB(outFiber, Optional.of(0), 1));
+						op.addConstraint("initialPowerDensityPostBooster_dBmPerOpticalSlot + traversedOasBefore_p * gain_p'"
+								+ " - fixedAttenuationBeforeOaDb_p(p) + gain_p(p) - fixedOadmExpressAttenuationAfterPreamp_dB "
+								+ ">= maxTransponderInjectionPowerDensity_dBmPerOpticalSlot - fixedOadmAddAttenuation_dB"); // amplifier output power is not saturating
+					}
 				}
 				
 			}
@@ -450,25 +465,28 @@ public class Offline_opticalAmplifierPlacement_v1 implements IAlgorithm
 		/* Drop power would be enough for any drop node */
 		for (WFiber e : line)
 		{
+			final boolean isWithDirfulDrop = e.getB().isOadmWithDirectedAddDropModulesInTheDegrees();
+			final boolean isWithDirlessDrop = e.getB().getOadmNumAddDropDirectionlessModules() > 0;
+
 			final WNode addDropNode = e.getB();
 			final double powerAtOadmInput_dBm = osm.getOpticalPerformanceOfLightpathAtFiberEndsAfterBoosterBeforePreamplifier(e, lpTest).getFirst().getPower_dbm();
-			assert powerAtOadmInput_dBm - addDropNode.getOpticalSwitchingArchitecture().getDropAttenuation_dB(e, inputDropModuleIndex)
+			if (isWithDirfulDrop) // drop power enough when the node has directoinful drops
+				assert powerAtOadmInput_dBm - addDropNode.getOpticalSwitchingArchitecture().getDropAttenuation_dB(e, Optional.empty()) >= minPowerDensityAtTransponderDrop_dBmPerOpticalSlot - 1e-3;
+			if (isWithDirlessDrop) // drop power enough when the node has directoinless drops 
+				assert powerAtOadmInput_dBm - addDropNode.getOpticalSwitchingArchitecture().getDropAttenuation_dB(e, Optional.of(0)) >= minPowerDensityAtTransponderDrop_dBmPerOpticalSlot - 1e-3;
+
+			for (WFiber outFiber : e.getB().getOutgoingFibers())
+			{
+				final double powerAtOadmOutput_dBm = powerAtOadmInput_dBm - addDropNode.getOpticalSwitchingArchitecture().getExpressAttenuation_dB(e, outFiber).get();
+				if (isWithDirfulDrop)  // add power enough to be able ot have balance, when the node has directoinful adds
+					assert maxTransponderInjectionPowerDensity_dBmPerOpticalSlot - addDropNode.getOpticalSwitchingArchitecture().getAddAttenuation_dB(outFiber, Optional.empty(), 1) >= powerAtOadmOutput_dBm - 1e-3;
+				if (isWithDirlessDrop)  // add power enough to be able ot have balance, when the node has directoinless adds
+					assert maxTransponderInjectionPowerDensity_dBmPerOpticalSlot - addDropNode.getOpticalSwitchingArchitecture().getAddAttenuation_dB(outFiber, Optional.of(0), 1) >= powerAtOadmOutput_dBm - 1e-3;
+			}
 		}		
 		
 		lprTest.remove();
 		
-		
-//		private boolean placeAmplifiersAndInjectionPower (List<WFiber> line ,  
-//				int maxNumUsableOpticalSlotsPerFiber ,
-//				double initialPowerDensityPostBooster_dBmPerOpticalSlot ,
-//				double minPowerDensityAtTransponderDrop_dBmPerOpticalSlot , 
-//				double maxTransponderInjectionPowerDensity_dBmPerOpticalSlot)
-
-		
-		
-		
-//		PENDIENTE: CHEQUEAR QUE LA SOLUCION CUMPLE LO QUE QUEREMOS EN CUANTO A POWER, USANDO FUNCIONES DEL OPTICAL SIMULATION SI ES POSIBLE
-
 		return op.solutionIsOptimal();
 	}
 
