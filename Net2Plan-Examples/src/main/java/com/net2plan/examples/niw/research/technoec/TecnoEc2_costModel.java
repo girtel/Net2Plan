@@ -1,0 +1,169 @@
+package com.net2plan.examples.niw.research.technoec;
+
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
+
+import com.net2plan.utils.Triple;
+
+public class TecnoEc2_costModel
+{
+	public static List<L2DCLikeSwitches> l2dcSwitchesAvailable = Arrays.asList(
+			new L2DCLikeSwitches("Nexus 93120", 65000.0/2, 1200.0/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 1200),
+			new L2DCLikeSwitches("Nexus 93180", 56100/2, 1800/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 1800),
+			new L2DCLikeSwitches("Nexus 93240", 30000, 2400/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 2400),
+			new L2DCLikeSwitches("Nexus 93360", 32500, 1800, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 3600),
+			new L2DCLikeSwitches("Nexus 93364", 51685.01, 3200, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 6400)
+			);
+	public static List<TelcoLikeSwitches> telcoLikeSwitchesAvailable = Arrays.asList(
+			new TelcoLikeSwitches("NCS 5001", 41610, 400, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 800),
+			new TelcoLikeSwitches("NCS 5002", 62140, 600, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 1200),
+			new TelcoLikeSwitches("NCS 5011", 115325, 1600, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 3200),
+			new TelcoLikeSwitches("NCS 5502", 139000, 2400, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 4800),
+			new TelcoLikeSwitches("NCS 5504", 146500, 2700, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 5400),
+			new TelcoLikeSwitches("NCS 5508", 271000, 14400, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 28800),
+			new TelcoLikeSwitches("NCS 5516", 450000, 28800, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 57600)
+			);
+	public static List<Pluggables> pluggablesAvailable = Arrays.asList(
+			new Pluggables("10G SFP+ copper", 79 , 10),
+			new Pluggables("40G QSFP copper", 96.12 , 40),
+			new Pluggables("100G QSFP copper", 150.45 , 100),
+			new Pluggables("10G SFP+ optical", 234 , 10),
+			new Pluggables("40G QSFP optical", 620.17 , 40),
+			new Pluggables("100G QSFP optical", 1283.16 , 100),
+			new Pluggables("100G CFP optical", 2500 , 100)
+			);
+	public static List<RouterChassis> routerChassisAvailable = Arrays.asList(
+			//new RouterChassis("XX", numLineCards, numRsps, numFanTrays, numFabricCards, priceDollars, capacityGbps)
+			new RouterChassis("ASR 9904", 2, 2, 1, 0, priceDollars, capacityGbps),			
+			);
+	
+
+	public static class RouterChassis
+	{
+		private final String name;
+		private final int numLineCards;
+		private final int numRsps;
+		private final int numFanTrays;
+		private final int numFabricCards;
+		private final double priceDollars;
+		private final double capacityGbps;
+		public RouterChassis(String name, int numLineCards, int numRsps, int numFanTrays, int numFabricCards,
+				double priceDollars, double capacityGbps) {
+			this.name = name;
+			this.numLineCards = numLineCards;
+			this.numRsps = numRsps;
+			this.numFanTrays = numFanTrays;
+			this.numFabricCards = numFabricCards;
+			this.priceDollars = priceDollars;
+			this.capacityGbps = capacityGbps;
+		}
+		public String getName() {
+			return name;
+		}
+		public int getNumLineCards() {
+			return numLineCards;
+		}
+		public int getNumRsps() {
+			return numRsps;
+		}
+		public int getNumFanTrays() {
+			return numFanTrays;
+		}
+		public int getNumFabricCards() {
+			return numFabricCards;
+		}
+		public double getPriceDollars() {
+			return priceDollars;
+		}
+		public double getCapacityGbps() {
+			return capacityGbps;
+		}
+		
+	}
+	
+	
+	public static class Pluggables
+	{
+		private final String name;
+		private final double priceDollars;
+		private final double lineRateGbps;
+		public Pluggables(String name, double priceDollars, double lineRateGbps) {
+			this.name = name;
+			this.priceDollars = priceDollars;
+			this.lineRateGbps = lineRateGbps;
+		}
+		public String getName() {
+			return name;
+		}
+		public double getPriceDollars() {
+			return priceDollars;
+		}
+		public double getLineRateGbps() {
+			return lineRateGbps;
+		}
+		
+	}
+	
+	public static class TelcoLikeSwitches
+	{
+		private final String name;
+		private final double priceInDollars;
+		private final double capacityGbps;
+		private final Function<Triple<Double,Double,Double>,Boolean> validationFunction;
+		public TelcoLikeSwitches(String name, double priceInDollars, double capacityGbps,
+				Function<Triple<Double, Double, Double>, Boolean> validationFunction) {
+			this.name = name;
+			this.priceInDollars = priceInDollars;
+			this.capacityGbps = capacityGbps;
+			this.validationFunction = validationFunction;
+		}
+		public String getName() {
+			return name;
+		}
+		public double getPriceInDollars() {
+			return priceInDollars;
+		}
+		public double getCapacityGbps() {
+			return capacityGbps;
+		}
+		public Function<Triple<Double, Double, Double>, Boolean> getValidationFunction() {
+			return validationFunction;
+		}
+	}
+	
+	
+	public static class L2DCLikeSwitches
+	{
+		private final String name;
+		private final double priceInDollars;
+		private final double capacityGbps;
+		private final Function<Triple<Double,Double,Double>,Boolean> validationFunction;
+		public L2DCLikeSwitches(String name, double priceInDollars, double capacityGbps,
+				Function<Triple<Double, Double, Double>, Boolean> validationFunction) {
+			this.name = name;
+			this.priceInDollars = priceInDollars;
+			this.capacityGbps = capacityGbps;
+			this.validationFunction = validationFunction;
+		}
+		public String getName() {
+			return name;
+		}
+		public double getPriceInDollars() {
+			return priceInDollars;
+		}
+		public double getCapacityGbps() {
+			return capacityGbps;
+		}
+		public Function<Triple<Double, Double, Double>, Boolean> getValidationFunction() {
+			return validationFunction;
+		}
+		
+	}
+
+	
+	
+	
+	
+}
