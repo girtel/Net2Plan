@@ -1,4 +1,4 @@
-JltTecnoec1_capacityPlanningAlgorithm.javapackage com.net2plan.examples.niw.research.technoec;
+package com.net2plan.examples.niw.research.technoec;
 
 import java.util.ArrayList;
 import java.util.Collections;
