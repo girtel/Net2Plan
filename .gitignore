@@ -30,6 +30,7 @@ doc/gen/
 *.stackdump
 *.xlsx
 *.xls
+*.txt
 
 # Test
 Net2Plan-Core/src/main/java/com/net2plan/niw/XXX_ReportNiw_wdm_routingSpectrumAndModulationAssignments_BACKUP_15484.java
