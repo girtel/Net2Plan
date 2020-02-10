@@ -68,14 +68,14 @@ public class AlgorithmTests extends TestCase
 				new TreeSet<> (Arrays.asList(n3 , n4)), 
 				Arrays.asList("NAT" , "FW"), false, 
 				Optional.of(Arrays.asList(1.0 , 2.0)), 
-				Optional.of(Arrays.asList(10.0 , 11.0 , 12.0)));
+				Optional.of(Arrays.asList(10.0 , 11.0 , 12.0)) , "");
 
 		
 		final WServiceChainRequest scr12_45 = net.addServiceChainRequest(new TreeSet<> (Arrays.asList(n1 , n2)), 
 				new TreeSet<> (Arrays.asList(n3 , n4)), 
 				Arrays.asList("FW" , "NAT"), false, 
 				Optional.of(Arrays.asList(1.0 , 2.0)), 
-				Optional.of(Arrays.asList(10.0 , 11.0 , 12.0)));
+				Optional.of(Arrays.asList(10.0 , 11.0 , 12.0)) ,"");
 
 		net.getServiceChainRequests().forEach(e->e.setCurrentOfferedTrafficInGbps(10.0));
 		net.getIpLinks().forEach(e->e.setLengthIfNotCoupledInKm(400.0)); // 2 ms for each IP link

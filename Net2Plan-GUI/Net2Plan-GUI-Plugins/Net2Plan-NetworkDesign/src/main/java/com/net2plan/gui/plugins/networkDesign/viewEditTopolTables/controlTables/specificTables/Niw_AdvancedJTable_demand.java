@@ -224,6 +224,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         		InputForDialog.inputTfString("Origin nodes", "Introduce the names (comma or space separated) of the origin nodes of this asnycast service chain request. For each node, first tries case sensitive, later case insensitive", 20, ""),
                         		InputForDialog.inputTfString("Destination nodes", "Introduce the names (comma or space separated) of the destination nodes of this asnycast service chain request. For each node, first tries case sensitive, later case insensitive", 20, ""),
                         		InputForDialog.inputTfString("VNF types to traverse", "Introduce the names (comma or space separated) of the types of the VNFs to traverse", 20, ""),
+                        		InputForDialog.inputTfString("User service id (QoS type)", "Indicate the user service ID of this traffic, which will be used as the QoS type", 20 , "Best-effort"),
                         		InputForDialog.inputCheckBox("Upstream?", "Indicate if the demand is upstream. Otherwise, it is considered downstream", false , null)
                         		),
                         (list)->
@@ -231,13 +232,14 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         		final String aNames  = (String) list.get(0).get();
                         		final String bNames  = (String) list.get(1).get();
                         		final String vnfTypes = (String) list.get(2).get();
-                        		final Boolean upstream = (Boolean) list.get(3).get();
+                        		final String userServiceOrQosType = (String) list.get(3).get();
+                        		final Boolean upstream = (Boolean) list.get(4).get();
                         		final List<String> aNamesArray = Stream.of (aNames.split(", ")).filter(a->!a.equals("")).collect(Collectors.toList());
                         		final List<String> bNamesArray = Stream.of (bNames.split(", ")).filter(a->!a.equals("")).collect(Collectors.toList());
                         		final List<String> vnfsArray = Stream.of (vnfTypes.split(", ")).filter(a->!a.equals("")).collect(Collectors.toList());
                         		final SortedSet<WNode> aNodes = aNamesArray.stream().map(n->nodeByName.apply(n).orElse(null)).filter(n->n!= null).collect(Collectors.toCollection(TreeSet::new));
                         		final SortedSet<WNode> bNodes = bNamesArray.stream().map(n->nodeByName.apply(n).orElse(null)).filter(n->n!= null).collect(Collectors.toCollection(TreeSet::new));
-                        		wNet.addServiceChainRequest(aNodes, bNodes , vnfsArray , upstream , Optional.empty() , Optional.empty());
+                        		wNet.addServiceChainRequest(aNodes, bNodes , vnfsArray , upstream , Optional.empty() , Optional.empty() , userServiceOrQosType);
                         	}
                         );
             } , (a,b)->b>0, null));         		

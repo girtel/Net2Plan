@@ -20,6 +20,8 @@ public interface IOadmArchitecture
 	public default boolean isNeverCreatingWastedSpectrum () { return !isPotentiallyWastingSpectrum(); }
 	public abstract String getShortName ();
 	public abstract boolean isPotentiallyWastingSpectrum ();
+	public default OadmArchitecture_generic getAsGenericArchitecture () { return (OadmArchitecture_generic) this; }
+	public default boolean isGeneriOadmeArchitecture () { return this instanceof OadmArchitecture_generic; }
 
 	public abstract SortedSet<OsmOpticalSignalPropagationElement> getOutElements(OsmOpticalSignalPropagationElement inputElement , Optional<OsmOpticalSignalPropagationElement> outputElement);
 

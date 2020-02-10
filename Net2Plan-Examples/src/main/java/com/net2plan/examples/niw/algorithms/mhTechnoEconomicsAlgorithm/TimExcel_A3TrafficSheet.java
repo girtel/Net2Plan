@@ -1,0 +1,66 @@
+package com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm;
+
+import java.util.List;
+import java.util.SortedMap;
+
+import com.net2plan.interfaces.networkDesign.Net2PlanException;
+
+public class TimExcel_A3TrafficSheet extends TimExcelSheet
+{
+
+	final TimExcelSheetColumn<String> nodeName = new TimExcelSheetColumn<String>("M-H node name", String.class, s -> true);
+	final TimExcelSheetColumn<Double> downTrafficTotal_2019 = new TimExcelSheetColumn<Double>("2019 Down", Double.class, s -> (s) >= 0);
+    final TimExcelSheetColumn<Double> downTrafficTotal_2022 = new TimExcelSheetColumn<Double>("2022 Down", Double.class, s -> (s) >= 0);
+    final TimExcelSheetColumn<Double> downTrafficTotal_2025 = new TimExcelSheetColumn<Double>("2025 Down", Double.class, s -> (s) >= 0);
+    final TimExcelSheetColumn<Double> upTrafficTotal_2019 = new TimExcelSheetColumn<Double>("2019 Up", Double.class, s -> (s) >= 0);
+    final TimExcelSheetColumn<Double> upTrafficTotal_2022 = new TimExcelSheetColumn<Double>("2022 Up", Double.class, s -> (s) >= 0);
+    final TimExcelSheetColumn<Double> upTrafficTotal_2025 = new TimExcelSheetColumn<Double>("2025 Up", Double.class, s -> (s) >= 0);
+
+	public TimExcel_A3TrafficSheet(SortedMap<String, Object[][]> valsAllExcels)
+	{
+		super(valsAllExcels);
+		this.checkIntraSheetValidity();
+	}
+
+	@Override
+	public final String getSheetName()
+	{
+		return "Video";
+	}
+
+	public List<Double> getDownstreamTotalTraffic(String year)
+	{
+        if (year.equals("2019")) return downTrafficTotal_2019.getColumnValuesInTable(getVals());
+        else if (year.equals("2022")) return downTrafficTotal_2022.getColumnValuesInTable(getVals());
+        else if (year.equals("2025")) return downTrafficTotal_2025.getColumnValuesInTable(getVals());
+        else throw new Net2PlanException("Not a valid year");
+	}
+
+    public List<Double> getUpstreamTotalTraffic(String year)
+    {
+        if (year.equals("2019")) return upTrafficTotal_2019.getColumnValuesInTable(getVals());
+        else if (year.equals("2022")) return upTrafficTotal_2022.getColumnValuesInTable(getVals());
+        else if (year.equals("2025")) return upTrafficTotal_2025.getColumnValuesInTable(getVals());
+        else throw new Net2PlanException("Not a valid year");
+    }
+
+	public List<String> getNodeNames()
+	{
+		return nodeName.getColumnValuesInTable(getVals());
+	}
+
+
+	public void checkIntraSheetValidity()
+	{
+		final List<Double> downUPFTraffic = getDownstreamTotalTraffic("2019");
+		final List<Double> upUPFTraffic = getUpstreamTotalTraffic("2019");
+		final List<String> nodeNames = getNodeNames();
+		if (upUPFTraffic == null) throw new Net2PlanException("Total upstream traffic column not read");
+        if (downUPFTraffic == null) throw new Net2PlanException("Total downstream traffic UPF column not read");
+		if (nodeNames == null) throw new Net2PlanException("Origin node column not read");
+		final int numElements = this.getNumRows();
+		if (upUPFTraffic.size() != numElements) throw new Net2PlanException("Not all the columns have the same size");
+        if (downUPFTraffic.size() != numElements) throw new Net2PlanException("Not all the columns have the same size");
+		if (nodeNames.size() != numElements) throw new Net2PlanException("Not all the columns have the same size");
+	}
+}

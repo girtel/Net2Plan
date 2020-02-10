@@ -845,14 +845,14 @@ public class WNode extends WAbstractNetworkElement
 		try 
 		{
 			final String classFullName = this.getNe().getAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, null);
-			if (classFullName == null) throw new RuntimeException ();
+			if (classFullName == null) throw new RuntimeException ("Not relevant exception");
 			final Class classOfOadmArchit = Class.forName(classFullName);
 			final IOadmArchitecture arc = (IOadmArchitecture) classOfOadmArchit.getConstructor().newInstance();
 			arc.initialize(this);
 			return arc;
 		} catch (Exception e) 
 		{
-			e.printStackTrace();
+			//e.printStackTrace();
 			final OadmArchitecture_generic res = new OadmArchitecture_generic();
 			this.getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, OadmArchitecture_generic.class.getName());
 			res.initialize(this);

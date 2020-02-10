@@ -564,6 +564,7 @@ public class WNet extends WAbstractNetworkElement
 			scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(userService.getSequenceTrafficExpansionFactorsRespectToBaseTrafficDownstream());
 			scReq.setListMaxLatencyFromInitialToVnfStart_ms(userService.getListMaxLatencyFromInitialToVnfStart_ms_downstream());
 		}
+		scReq.setQosType(userService.getUserServiceUniqueId());
 		return scReq;
 	}
 
@@ -597,7 +598,8 @@ public class WNet extends WAbstractNetworkElement
 			List<String> vnfTypesToTraverse , 
 			boolean isUpstream , 
 			Optional<List<Double>> defaultSequenceOfExpansionFactors , 
-			Optional<List<Double>> listMaxLatencyFromInitialToVnfStart_ms)
+			Optional<List<Double>> listMaxLatencyFromInitialToVnfStart_ms ,
+			String userServiceIdOrQosType)
 	{
 		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
 		checkInThisWNetCol(originNodes);
@@ -619,44 +621,45 @@ public class WNet extends WAbstractNetworkElement
 		if (actual_listMaxLatencyFromInitialToVnfStart_ms == null) actual_listMaxLatencyFromInitialToVnfStart_ms = Collections.nCopies(numVnfs + 1, Double.MAX_VALUE);
 		if (actual_listMaxLatencyFromInitialToVnfStart_ms.size() != numVnfs + 1) actual_listMaxLatencyFromInitialToVnfStart_ms = Collections.nCopies(numVnfs + 1, Double.MAX_VALUE);
 		scReq.setListMaxLatencyFromInitialToVnfStart_ms(actual_listMaxLatencyFromInitialToVnfStart_ms);
+		scReq.setQosType(userServiceIdOrQosType);
 		return scReq;
 	}
 
 	
-	/**
-	 * Adds a request for a unidirectional anycast service chain with hand picked initial and end nodes.
-	 * @param initialNodes list of nodes that can be the origin of this flow
-	 * @param endNodes list of nodes that can be the destination of this flow (different to origin or not)
-	 * @param listVnfTypes list of IDs of the VNF types that must be traversed
-	 * @param defaultSequenceOfExpansionFactorsRespectToInjection sequence of expansion factors to define as default for
-	 *        this service chain request (same size as the list of VNFs, if 1.0 means no compression/expansion after
-	 *        traversing the VNF)
-	 * @param maxLatencyFromInitialToVnfStartMs List of maximum latencies specified for this service chain request. The list
-	 *        contains V+1 values, being V the number of VNFs to traverse. The first V values (i=1,...,V) correspond to the
-	 *        maximum latency from the origin node, to the input of the i-th VNF traversed. The last value corresponds to
-	 *        the maximum latency from the origin node to the end node.
-	 * @param isUpstream if this request should be tagged as upstream of downstream
-	 * @param userServiceIdString an informational user-defined String to indicate a user service ID that this service chain
-	 *        belongs to. Such user service may exist or not
-	 * @return the created element
-	 */
-	public WServiceChainRequest addServiceChainRequest(SortedSet<WNode> initialNodes, SortedSet<WNode> endNodes, List<String> listVnfTypes, List<Double> defaultSequenceOfExpansionFactorsRespectToInjection,
-			List<Double> maxLatencyFromInitialToVnfStartMs, boolean isUpstream, String userServiceIdString)
-	{
-		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
-		checkInThisWNetCol(initialNodes);
-		checkInThisWNetCol(endNodes);
-		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer().get());
-		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
-		scReq.setQosType(userServiceIdString);
-		scNp.setServiceChainSequenceOfTraversedResourceTypes(listVnfTypes);
-		scReq.setPotentiallyValidOrigins(initialNodes);
-		scReq.setPotentiallyValidDestinations(endNodes);
-		scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(defaultSequenceOfExpansionFactorsRespectToInjection);
-		scReq.setListMaxLatencyFromInitialToVnfStart_ms(maxLatencyFromInitialToVnfStartMs);
-		scReq.setIsUpstream(isUpstream);
-		return scReq;
-	}
+//	/**
+//	 * Adds a request for a unidirectional anycast service chain with hand picked initial and end nodes.
+//	 * @param initialNodes list of nodes that can be the origin of this flow
+//	 * @param endNodes list of nodes that can be the destination of this flow (different to origin or not)
+//	 * @param listVnfTypes list of IDs of the VNF types that must be traversed
+//	 * @param defaultSequenceOfExpansionFactorsRespectToInjection sequence of expansion factors to define as default for
+//	 *        this service chain request (same size as the list of VNFs, if 1.0 means no compression/expansion after
+//	 *        traversing the VNF)
+//	 * @param maxLatencyFromInitialToVnfStartMs List of maximum latencies specified for this service chain request. The list
+//	 *        contains V+1 values, being V the number of VNFs to traverse. The first V values (i=1,...,V) correspond to the
+//	 *        maximum latency from the origin node, to the input of the i-th VNF traversed. The last value corresponds to
+//	 *        the maximum latency from the origin node to the end node.
+//	 * @param isUpstream if this request should be tagged as upstream of downstream
+//	 * @param userServiceIdString an informational user-defined String to indicate a user service ID that this service chain
+//	 *        belongs to. Such user service may exist or not
+//	 * @return the created element
+//	 */
+//	public WServiceChainRequest addServiceChainRequest(SortedSet<WNode> initialNodes, SortedSet<WNode> endNodes, List<String> listVnfTypes, List<Double> defaultSequenceOfExpansionFactorsRespectToInjection,
+//			List<Double> maxLatencyFromInitialToVnfStartMs, boolean isUpstream, String userServiceIdString)
+//	{
+//		if (!isWithIpLayer ()) throw new Net2PlanException ("IP layer does not exist");
+//		checkInThisWNetCol(initialNodes);
+//		checkInThisWNetCol(endNodes);
+//		final Demand scNp = getNetPlan().addDemand(getAnycastOriginNode().getNe(), getAnycastDestinationNode().getNe(), 0.0, RoutingType.SOURCE_ROUTING, null, getIpNpLayer().get());
+//		final WServiceChainRequest scReq = new WServiceChainRequest(scNp);
+//		scReq.setQosType(userServiceIdString);
+//		scNp.setServiceChainSequenceOfTraversedResourceTypes(listVnfTypes);
+//		scReq.setPotentiallyValidOrigins(initialNodes);
+//		scReq.setPotentiallyValidDestinations(endNodes);
+//		scReq.setDefaultSequenceOfExpansionFactorsRespectToInjection(defaultSequenceOfExpansionFactorsRespectToInjection);
+//		scReq.setListMaxLatencyFromInitialToVnfStart_ms(maxLatencyFromInitialToVnfStartMs);
+//		scReq.setIsUpstream(isUpstream);
+//		return scReq;
+//	}
 
 	/**
 	 * Adds a new unicast IP demand Returns the list of IP unicast demands, in increasing order according to its id
