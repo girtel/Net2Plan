@@ -214,7 +214,7 @@ public class MetroHaulModelTest extends TestCase
 		System.out.println("prepareTest");
 	}
 
-	@Test
+//	@Test
 	public void testImport()
 	{
 		final NetPlan np = new NetPlan();
@@ -238,7 +238,7 @@ public class MetroHaulModelTest extends TestCase
 
 	}
 
-    @Test
+//    @Test
 	public void testNodeDegree()
     {
 
@@ -312,7 +312,7 @@ public class MetroHaulModelTest extends TestCase
         System.out.println("Degree 9: " + d9);
     }
 
-	    @Test
+//	    @Test
 	    public void testLasingLoopsInTopologies()
 	    {
             System.out.println("------------ Lasing loops test -------------");
@@ -432,7 +432,7 @@ public class MetroHaulModelTest extends TestCase
 //		new WNet(np).checkConsistency();
 	}
 
-    @Test
+//    @Test
     public void testStatsClass()
     {
 

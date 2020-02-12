@@ -1072,7 +1072,7 @@ public class CapacityPlanningAlgorithm_v1 implements IAlgorithm
 			{
 				/* Assignment with both bidi-directions using the same slots */
 				Optional<Pair<List<Pair<WFiber,WFiber>> , SortedSet<Integer>>> assignment = this.osm.spectrumAssignment_firstFitForAdjacenciesBidi 
-						(spAbNodeSeq_baIsReversePath, ipBidiLink.getA() , ipBidiLink.getB() , 
+						(spAbNodeSeq_baIsReversePath, ipBidiLink.getA() , ipBidiLink.getB() ,
 								Optional.empty() , Optional.empty() , numSlotsPerLp , Optional.empty() , new TreeSet<> ()); 
 				
 				if (!assignment.isPresent())
