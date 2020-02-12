@@ -228,13 +228,13 @@ public class MetroHaulModelTest extends TestCase
         new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
         new WNet(np).checkConsistency();
 
-        algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Medium_M-H_D2.3.xlsx");
-        new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-        new WNet(np).checkConsistency();
-
-        algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Large_M-H_D2.3.xlsx");
-		new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-		new WNet(np).checkConsistency();
+//        algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Medium_M-H_D2.3.xlsx");
+//        new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+//        new WNet(np).checkConsistency();
+//
+//        algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Large_M-H_D2.3.xlsx");
+//		new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+//		new WNet(np).checkConsistency();
 
 	}
 
@@ -312,10 +312,9 @@ public class MetroHaulModelTest extends TestCase
         System.out.println("Degree 9: " + d9);
     }
 
-//	    @Test
+	    @Test
 	    public void testLasingLoopsInTopologies()
 	    {
-
             System.out.println("------------ Lasing loops test -------------");
 
 	        final NetPlan np = new NetPlan();
@@ -341,23 +340,23 @@ public class MetroHaulModelTest extends TestCase
             assertEquals (unavoidableLasingLoops , new ArrayList<> ());
             new WNet(np).checkConsistency();
 
-            algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Medium_M-H_D2.3.xlsx");
-            algorithmParameters.put("opticalSwiInputParameter","option1");
-            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-            this.osm = OpticalSpectrumManager.createFromRegularLps(new WNet(np));
-            this.unavoidableLasingLoops = this.osm.getUnavoidableLasingLoops ();
-            System.out.println("unavoidableLasingLoops: " + unavoidableLasingLoops);
-            assertEquals (unavoidableLasingLoops , new ArrayList<> ());
-            new WNet(np).checkConsistency();
-
-            algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Large_M-H_D2.3.xlsx");
-            algorithmParameters.put("opticalSwiInputParameter","option1");
-            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-            this.osm = OpticalSpectrumManager.createFromRegularLps(new WNet(np));
-            this.unavoidableLasingLoops = this.osm.getUnavoidableLasingLoops ();
-            System.out.println("unavoidableLasingLoops: " + unavoidableLasingLoops);
-            assertEquals (unavoidableLasingLoops , new ArrayList<> ());
-            new WNet(np).checkConsistency();
+//            algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Medium_M-H_D2.3.xlsx");
+//            algorithmParameters.put("opticalSwiInputParameter","option1");
+//            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+//            this.osm = OpticalSpectrumManager.createFromRegularLps(new WNet(np));
+//            this.unavoidableLasingLoops = this.osm.getUnavoidableLasingLoops ();
+//            System.out.println("unavoidableLasingLoops: " + unavoidableLasingLoops);
+//            assertEquals (unavoidableLasingLoops , new ArrayList<> ());
+//            new WNet(np).checkConsistency();
+//
+//            algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Large_M-H_D2.3.xlsx");
+//            algorithmParameters.put("opticalSwiInputParameter","option1");
+//            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+//            this.osm = OpticalSpectrumManager.createFromRegularLps(new WNet(np));
+//            this.unavoidableLasingLoops = this.osm.getUnavoidableLasingLoops ();
+//            System.out.println("unavoidableLasingLoops: " + unavoidableLasingLoops);
+//            assertEquals (unavoidableLasingLoops , new ArrayList<> ());
+//            new WNet(np).checkConsistency();
 
 
             System.out.println("************** Option 2 ****************");
@@ -380,27 +379,27 @@ public class MetroHaulModelTest extends TestCase
             assertEquals (unavoidableLasingLoops , new ArrayList<> ());
             new WNet(np).checkConsistency();
 
-            algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Medium_M-H_D2.3.xlsx");
-            algorithmParameters.put("opticalSwiInputParameter","option2");
-            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-            this.osm = OpticalSpectrumManager.createFromRegularLps(new WNet(np));
-            this.unavoidableLasingLoops = this.osm.getUnavoidableLasingLoops ();
-            System.out.println("unavoidableLasingLoops: " + unavoidableLasingLoops);
-            assertEquals (unavoidableLasingLoops , new ArrayList<> ());
-            new WNet(np).checkConsistency();
-
-            algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Large_M-H_D2.3.xlsx");
-            algorithmParameters.put("opticalSwiInputParameter","option2");
-            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-            this.osm = OpticalSpectrumManager.createFromRegularLps(new WNet(np));
-            this.unavoidableLasingLoops = this.osm.getUnavoidableLasingLoops ();
-            System.out.println("unavoidableLasingLoops: " + unavoidableLasingLoops);
-            assertEquals (unavoidableLasingLoops , new ArrayList<> ());
-            new WNet(np).checkConsistency();
+//            algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Medium_M-H_D2.3.xlsx");
+//            algorithmParameters.put("opticalSwiInputParameter","option2");
+//            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+//            this.osm = OpticalSpectrumManager.createFromRegularLps(new WNet(np));
+//            this.unavoidableLasingLoops = this.osm.getUnavoidableLasingLoops ();
+//            System.out.println("unavoidableLasingLoops: " + unavoidableLasingLoops);
+//            assertEquals (unavoidableLasingLoops , new ArrayList<> ());
+//            new WNet(np).checkConsistency();
+//
+//            algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Large_M-H_D2.3.xlsx");
+//            algorithmParameters.put("opticalSwiInputParameter","option2");
+//            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+//            this.osm = OpticalSpectrumManager.createFromRegularLps(new WNet(np));
+//            this.unavoidableLasingLoops = this.osm.getUnavoidableLasingLoops ();
+//            System.out.println("unavoidableLasingLoops: " + unavoidableLasingLoops);
+//            assertEquals (unavoidableLasingLoops , new ArrayList<> ());
+//            new WNet(np).checkConsistency();
 
 	    }
 
-//	@Test
+	@Test
 	public void testWithCapPlanning()
 	{
         System.out.println("------------ Capacity planning test -------------");
@@ -420,17 +419,17 @@ public class MetroHaulModelTest extends TestCase
 		new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters()), new HashMap<>());
 		new WNet(np).checkConsistency();
 
-		algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Medium_M-H_D2.3.xlsx");
-		new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-		new WNet(np).checkConsistency();
-		new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters()), new HashMap<>());
-		new WNet(np).checkConsistency();
-
-		algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Large_M-H_D2.3.xlsx");
-		new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-		new WNet(np).checkConsistency();
-		new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters()), new HashMap<>());
-		new WNet(np).checkConsistency();
+//		algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Medium_M-H_D2.3.xlsx");
+//		new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+//		new WNet(np).checkConsistency();
+//		new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters()), new HashMap<>());
+//		new WNet(np).checkConsistency();
+//
+//		algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Large_M-H_D2.3.xlsx");
+//		new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+//		new WNet(np).checkConsistency();
+//		new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters()), new HashMap<>());
+//		new WNet(np).checkConsistency();
 	}
 
     @Test
