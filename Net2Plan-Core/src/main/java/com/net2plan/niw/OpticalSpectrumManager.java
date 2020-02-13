@@ -543,20 +543,34 @@ public class OpticalSpectrumManager
    	 	/* If loops in the travsersed nodes => we do not allow that */
     	final WNode a = seqFibers_ab.get(0).getA();
     	final WNode b = seqFibers_ab.get(seqFibers_ab.size()-1).getB();
- 		final List<WFiber> pathAbBa = new ArrayList<> ();
- 		for (WFiber ab : seqFibers_ab) { pathAbBa.add(ab); pathAbBa.add(ab.getBidirectionalPair()); }
- 		final OsmLightpathOccupationInfo lpOccupationAbbA = new OsmLightpathOccupationInfo(pathAbBa, 
- 				directionlessAddModuleAb.isPresent()? Optional.of(Pair.of(a, directionlessAddModuleAb.get())) : Optional.empty(), 
- 					directionlessDropModuleAb.isPresent()? Optional.of(Pair.of(b, directionlessDropModuleAb.get())) : Optional.empty(), 
- 					Optional.empty());
- 		final SortedSet<Integer> forbidenSlotsBecauseOfAddAndDropBaAndUsable = new TreeSet<> (unusableSlots);
+    	
+ 		final SortedSet<Integer> forbidenSlotsBecauseOfPathBaAddAndDropBaAndUsable = new TreeSet<> (unusableSlots);
+ 		for (WFiber ab : seqFibers_ab) 
+ 			forbidenSlotsBecauseOfPathBaAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIds(ab.getBidirectionalPair()));
  		final Integer addModuleBa = directionlessDropModuleAb.orElse(null);
  		final Integer dropModuleBa = directionlessAddModuleAb.orElse(null);
  		if (addModuleBa != null)
- 		forbidenSlotsBecauseOfAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessAddModule(b, addModuleBa));
+ 		forbidenSlotsBecauseOfPathBaAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessAddModule(b, addModuleBa));
  		if (dropModuleBa != null)
- 		forbidenSlotsBecauseOfAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessDropModule(a, dropModuleBa));
- 		return spectrumAssignment_firstFit(lpOccupationAbbA, numContiguousSlotsRequired, minimumInitialSlotId, forbidenSlotsBecauseOfAddAndDropBaAndUsable);
+ 		forbidenSlotsBecauseOfPathBaAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessDropModule(a, dropModuleBa));
+ 		return spectrumAssignment_firstFit(lpInfo, numContiguousSlotsRequired, minimumInitialSlotId, forbidenSlotsBecauseOfPathBaAddAndDropBaAndUsable);
+
+    	////////////////////
+//    	
+// 		final List<WFiber> pathAbBa = new ArrayList<> ();
+// 		for (WFiber ab : seqFibers_ab) { pathAbBa.add(ab); pathAbBa.add(ab.getBidirectionalPair()); }
+// 		final OsmLightpathOccupationInfo lpOccupationAbbA = new OsmLightpathOccupationInfo(pathAbBa, 
+// 				directionlessAddModuleAb.isPresent()? Optional.of(Pair.of(a, directionlessAddModuleAb.get())) : Optional.empty(), 
+// 					directionlessDropModuleAb.isPresent()? Optional.of(Pair.of(b, directionlessDropModuleAb.get())) : Optional.empty(), 
+// 					Optional.empty());
+// 		final SortedSet<Integer> forbidenSlotsBecauseOfAddAndDropBaAndUsable = new TreeSet<> (unusableSlots);
+// 		final Integer addModuleBa = directionlessDropModuleAb.orElse(null);
+// 		final Integer dropModuleBa = directionlessAddModuleAb.orElse(null);
+// 		if (addModuleBa != null)
+// 		forbidenSlotsBecauseOfAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessAddModule(b, addModuleBa));
+// 		if (dropModuleBa != null)
+// 		forbidenSlotsBecauseOfAddAndDropBaAndUsable.addAll(this.getOccupiedOpticalSlotIdsInDirectionlessDropModule(a, dropModuleBa));
+// 		return spectrumAssignment_firstFit(lpOccupationAbbA, numContiguousSlotsRequired, minimumInitialSlotId, forbidenSlotsBecauseOfAddAndDropBaAndUsable);
     }
 
     /** Searches for a first-fit assignment. Given a set of fibers to occupy, the optional add and drop directionless modules used, the number of contiguous optical slots needed, 

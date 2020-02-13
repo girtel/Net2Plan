@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.net2plan.utils.Pair;
 
-public class OsmOpticalSignalPropagationElement implements Comparator<OsmOpticalSignalPropagationElement>
+public class OsmOpticalSignalPropagationElement implements Comparable<OsmOpticalSignalPropagationElement>
 {
 	private WFiber fiber = null;
 	private Pair<WNode,Integer> dirlessAddModule = null, dirlessDropModule = null;
@@ -75,30 +75,6 @@ public class OsmOpticalSignalPropagationElement implements Comparator<OsmOptical
 			return false;
 		return true;
 	}
-	@Override
-	public int compare(OsmOpticalSignalPropagationElement o1, OsmOpticalSignalPropagationElement o2) 
-	{
-		if (o1 == null && o2 == null) return 0;
-		if (o1 == null) return -1;
-		if (o2 == null) return 1;
-		int c;
-		c = Boolean.compare(o1.isDirfulAdd(), o2.isDirfulAdd());
-		if (c != 0) return c;
-		if (o1.isDirfulAdd()) o1.getDirfulAddOutFiber().compareTo(o2.getDirfulAddOutFiber());
-		c = Boolean.compare(o1.isDirfulDrop(), o2.isDirfulDrop());
-		if (c != 0) return c;
-		if (o1.isDirfulDrop()) o1.getDirfulDropInFiber().compareTo(o2.getDirfulDropInFiber());
-		c = Boolean.compare(o1.isDirlessAdd(), o2.isDirlessAdd());
-		if (c != 0) return c;
-		if (o1.isDirlessAdd())
-			return o1.getDirlessAddModule().compareTo(o2.getDirlessAddModule());
-		c = Boolean.compare(o1.isDirlessDrop(), o2.isDirlessDrop());
-		if (c != 0) return c;
-		if (o1.isDirlessDrop())
-			return o1.getDirlessDropModule().compareTo(o2.getDirlessDropModule());
-		assert o1.isFiber() && o2.isFiber();
-		return o1.fiber.compareTo(o2.fiber);
-	}
 
 	public static List<OsmOpticalSignalPropagationElement> fromFiberPathDirfulAddDrop (List<WFiber> fiberPath)
 	{
@@ -109,5 +85,31 @@ public class OsmOpticalSignalPropagationElement implements Comparator<OsmOptical
 		res.add(OsmOpticalSignalPropagationElement.asDropDirful(fiberPath.get(fiberPath.size()-1)));
 		return res;
 	}
+	@Override
+	public int compareTo(OsmOpticalSignalPropagationElement o2) 
+	{
+		final OsmOpticalSignalPropagationElement o1 = this;
+		if (o2 == null) return 1;
+		int c;
+		c = Boolean.compare(o1.isDirfulAdd(), o2.isDirfulAdd()); if (c != 0) return c;
+		if (o1.isDirfulAdd()) return o1.getDirfulAddOutFiber().compareTo(o2.getDirfulAddOutFiber()); 
+		c = Boolean.compare(o1.isDirfulDrop(), o2.isDirfulDrop()); if (c != 0) return c;
+		if (o1.isDirfulDrop()) return o1.getDirfulDropInFiber().compareTo(o2.getDirfulDropInFiber()); 
+		c = Boolean.compare(o1.isDirlessAdd(), o2.isDirlessAdd()); if (c != 0) return c;
+		if (o1.isDirlessAdd()) return o1.getDirlessAddModule().compareTo(o2.getDirlessAddModule()); 
+		c = Boolean.compare(o1.isDirlessDrop(), o2.isDirlessDrop()); if (c != 0) return c;
+		if (o1.isDirlessDrop()) return o1.getDirlessDropModule().compareTo(o2.getDirlessDropModule()); 
+		if (!o1.isFiber() || !o2.isFiber()) System.out.println("this: " + this + ", other: " + o2);
+		assert o1.isFiber();
+		assert o2.isFiber();
+		return o1.fiber.compareTo(o2.fiber);
+	}
+	@Override
+	public String toString() {
+		return "OsmOpticalSignalPropagationElement [fiber=" + fiber + ", dirlessAddModule=" + dirlessAddModule
+				+ ", dirlessDropModule=" + dirlessDropModule + ", dirfulAddModule=" + dirfulAddModule
+				+ ", dirfulDropModule=" + dirfulDropModule + "]";
+	}
 
+	
 }

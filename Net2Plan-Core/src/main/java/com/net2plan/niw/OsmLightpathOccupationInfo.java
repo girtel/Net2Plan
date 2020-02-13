@@ -293,7 +293,8 @@ public class OsmLightpathOccupationInfo
 	   	 }
 	   	 
 	   	 if (!propagationGraph.containsVertex(legitimateAddModule)) throw new Net2PlanException ("The signal of this lightpath is not starting in the add module");
-	   	 if (!propagationGraph.containsVertex(legitimateDropModule)) throw new Net2PlanException ("The signal of this lightpath is not reaching the drop node");
+	   	 if (!propagationGraph.containsVertex(legitimateDropModule)) 
+	   		 throw new Net2PlanException ("The signal of this lightpath is not reaching the drop node");
 	   	 for (WFiber e : this.getSeqFibersLegitimateSignal())
 		   	 if (!propagationGraph.containsVertex(OsmOpticalSignalPropagationElement.asFiber(e))) throw new Net2PlanException ("The signal of this lightpath is not traversing the legitimate paths");
 
