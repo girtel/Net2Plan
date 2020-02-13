@@ -54,6 +54,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 	private enum LAYERTYPE { OPTICAL , IT, IP};
     private enum OPTICAL_IT_IP_ELEMENTS
     {
+
+        // Complete the list with the real values of each element
     	ITSERVER (LAYERTYPE.IT , 25000 , 1000),
     	TRANSPONDERBIDI_25G (LAYERTYPE.OPTICAL , 0.2 , 0),
     	TRANSPONDERBIDI_100G (LAYERTYPE.OPTICAL , 0.2 , 0),
@@ -70,6 +72,9 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
     	WSS_FLEXI_1X9 (LAYERTYPE.OPTICAL , 0.2 , 0),
     	WSS_FLEXI_1X20 (LAYERTYPE.OPTICAL , 0.2 , 0),
     	MUXDEMUX80CHANNELS (LAYERTYPE.OPTICAL , 0.2 , 0);
+
+    	// Complete the enum list with the components of IT and IP layers
+
     	private final double cost, consumption_W;
     	private final LAYERTYPE layer;
 		private OPTICAL_IT_IP_ELEMENTS(LAYERTYPE layer , double cost, double consumption_W) 
@@ -229,7 +234,10 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 			final int numLc10G = (int) Math.ceil(num10GPortsAccessPlus10GLightpats / lc10G.getNumPorts());
 			final int numLc40G = (int) Math.ceil(num40GPortsTransponders / lc40G.getNumPorts());
 			final int numLc100G = (int) Math.ceil(num100GPortsTransponders / lc100G.getNumPorts());
-			final int totalNumLc = numLc10G + numLc40G + numLc100G; 
+			final int totalNumLc = numLc10G + numLc40G + numLc100G;
+
+			// Increase the number of Line cards (10G, 40G and 100G) needed in this node
+
 			/* Choose the best architecture */
 			RouterChassis bestRc = null;
 			int bestNumChassis = -1;
@@ -247,21 +255,29 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 				if (totalCost < bestCost) { bestRc = rc; bestNumChassis = numChassis ; bestCost = totalCost; }
 			}
 			if (bestRc == null) throw new Net2PlanException ("No chassis options fits the requirements");
-			
-			/* */
+
+            // Increase the number of chasis needed in this node
+
+            /* Calculate the number of pluggable devices in this node */
 			final Pluggables plug10G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 10.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
 			final Pluggables plug40G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 40.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
 			final Pluggables plug100G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 100.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
 			final int numPlugables10G = num10GPortsAccessPlus10GLightpats;
 			final int numPluggables40G = num40GPortsTransponders;
 			final int numPluggables100G = num100GPortsTransponders + (bestNumChassis == 1? 0 : bestNumChassis);
+
+			// Increase the number of pluggables (10G, 40G, 100G) in this node
 		}
 		
 		/************************************************************************************************/
 		// Separate per equipment in line = everything but transponders vs transponders
 		// Separate cost between AMENs / MCENs / line amplifiers. Energy consumption differences?
 		// ...
-		
+
+        // Finally, see the best way to treat the data in order to provide the correct metrics. Three options:
+        //  1. Using only one method in this class in case the length code is not so long (maybe this one is more appropiate)
+        //  2. Create a new class to export the corresponding metrics
+
 		return "Ok";
 	}
 
@@ -284,6 +300,6 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
     	return map;
     }
 
-    
+
     
 }
