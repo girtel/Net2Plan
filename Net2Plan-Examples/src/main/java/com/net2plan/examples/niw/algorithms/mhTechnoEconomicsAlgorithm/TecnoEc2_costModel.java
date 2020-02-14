@@ -13,9 +13,9 @@ import com.net2plan.utils.Triple;
 public class TecnoEc2_costModel
 {
 	public static List<L2DCLikeSwitches> l2dcSwitchesAvailable = Arrays.asList(
-			new L2DCLikeSwitches("Nexus 93120", 65000.0/2, 0.0 , 1200.0/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 1200),
-			new L2DCLikeSwitches("Nexus 93180", 56100/2, 0.0 , 1800/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 1800),
-			new L2DCLikeSwitches("Nexus 93240", 30000, 0.0 , 2400/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 2400),
+		//	new L2DCLikeSwitches("Nexus 93120", 65000.0/2, 0.0 , 1200.0/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 1200),
+		//	new L2DCLikeSwitches("Nexus 93180", 56100/2, 0.0 , 1800/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 1800),
+		//	new L2DCLikeSwitches("Nexus 93240", 30000, 0.0 , 2400/2, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 2400),
 			new L2DCLikeSwitches("Nexus 93360", 32500, 0.0 , 1800, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 3600),
 			new L2DCLikeSwitches("Nexus 93364", 51685.01, 0.0 , 3200, t->t.getFirst()*10 + t.getSecond()*40 + t.getThird()*100 <= 6400)
 			);
@@ -34,8 +34,8 @@ public class TecnoEc2_costModel
 			new Pluggables("100G QSFP copper", 150.45 , 0.0 , 100),
 			new Pluggables("10G SFP+ optical", 234 , 0.0 , 10),
 			new Pluggables("40G QSFP optical", 620.17 , 0.0 , 40),
-			new Pluggables("100G QSFP optical", 1283.16 , 0.0 , 100),
-			new Pluggables("100G CFP optical", 2500 , 0.0 , 100)
+			new Pluggables("100G QSFP optical", 1283.16 , 0.0 , 100)
+	//		new Pluggables("100G CFP optical", 2500 , 0.0 , 100)
 			);
 	public static SortedMap<String , OtherElements> otherElementsAvailable = new TreeMap <> ();
 	static
@@ -52,18 +52,18 @@ public class TecnoEc2_costModel
 	}
 	public static List<RouterChassis> routerChassisAvailable = Arrays.asList(
 			//new RouterChassis("XX", numLineCards, numRsps, numFanTrays, numFabricCards, priceDollars, capacityGbps)
-			new RouterChassis("ASR 9904", 0.0 , 2, 2, 1, 0, 312200, 3200),			
+//			new RouterChassis("ASR 9904", 0.0 , 2, 2, 1, 0, 312200, 3200),
 			new RouterChassis("ASR 9906", 0.0 , 4, 2, 2, 5, 544185, 6400),			
 			new RouterChassis("ASR 9910", 0.0 , 8, 2, 2, 5, 578174.99, 12800),			
-			new RouterChassis("ASR 9912", 0.0 , 10, 2, 7, 7, 677000, 16000),			
+//			new RouterChassis("ASR 9912", 0.0 , 10, 2, 7, 7, 677000, 16000),
 			new RouterChassis("ASR 9922", 0.0 , 20, 2, 4, 7, 749600, 32000)
 			);
 	
 	public static List<LineCards> lineCardsAvailable = Arrays.asList(
-			new LineCards("A9K-16X100GE-SE", 1820000.0 , 0.0 , 16, 100.0),			
-			new LineCards("A9K-1X100GE-SE", 240000.0 , 0.0 , 1, 100.0),			
-			new LineCards("A9K-48X10GE-1G-SE", 350000.0 , 0.0 , 48, 10.0),
-			new LineCards("Invented40G", 350000.0 , 0.0 , 12, 40.0)
+			new LineCards("A9K-8X100GE-SE", 1820000.0 , 0.0 , 8, 100.0),
+//			new LineCards("A9K-1X100GE-SE", 240000.0 , 0.0 , 1, 100.0),
+			new LineCards("A9K-48X10GE-1G-SE", 350000.0 , 0.0 , 48, 10.0)
+//			new LineCards("Invented40G", 350000.0 , 0.0 , 12, 40.0)
 			);
 
 	public static List<Server> serversAvailable = Arrays.asList(

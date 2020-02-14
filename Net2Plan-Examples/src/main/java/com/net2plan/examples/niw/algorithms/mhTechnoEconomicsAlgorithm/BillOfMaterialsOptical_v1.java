@@ -56,22 +56,51 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
     {
 
         // Complete the list with the real values of each element
-    	ITSERVER (LAYERTYPE.IT , 25000 , 1000),
-    	TRANSPONDERBIDI_25G (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	TRANSPONDERBIDI_100G (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	SPLITTER1X2 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	SPLITTER1X4 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	SPLITTER1X8 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	SPLITTER1XMORETHAN8 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	EDFADOUBLEBOOSTERANDPREAMPL (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	WAVELENGTHBLOCKER (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	WSS_FIXED_1X4 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	WSS_FIXED_1X9 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	WSS_FIXED_1X20 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	WSS_FLEXI_1X4 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	WSS_FLEXI_1X9 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	WSS_FLEXI_1X20 (LAYERTYPE.OPTICAL , 0.2 , 0),
-    	MUXDEMUX80CHANNELS (LAYERTYPE.OPTICAL , 0.2 , 0);
+    	// IT
+        ITSERVER (LAYERTYPE.IT , 5.6 , 2400),
+        NASLARGE (LAYERTYPE.IT , 6.6 ,  200),
+
+        // IP
+        TELCOSWITCH_NCS_5001(LAYERTYPE.IP , 8.4 , 200),
+        TELCOSWITCH_NCS_5002(LAYERTYPE.IP , 12 , 240),
+        TELCOSWITCH_NCS_5011(LAYERTYPE.IP , 16 , 240),
+        TELCOSWITCH_NCS_5502(LAYERTYPE.IP , 28 , 240),
+        TELCOSWITCH_NCS_5508(LAYERTYPE.IP , 54 , 300),
+        TELCOSWITCH_NCS_5516(LAYERTYPE.IP , 90 , 300),
+
+        l2SWITCH_NEXUS_93360(LAYERTYPE.IP , 6.5 , 296),
+        l2SWITCH_NEXUS_93364(LAYERTYPE.IP , 10 , 429),
+
+        PLUGGABLE_10G_COPPER(LAYERTYPE.IP , 0.01 , 0 ),
+        PLUGGABLE_40G_COPPER(LAYERTYPE.IP , 0.02 , 0 ),
+        PLUGGABLE_100G_COPPER(LAYERTYPE.IP , 0.04 , 0 ),
+        PLUGGABLE_10G_GREY(LAYERTYPE.IP , 0.016 , 0 ),
+        PLUGGABLE_40G_GREY(LAYERTYPE.IP , 0.05 , 0 ),
+        PLUGGABLE_100G_GREY(LAYERTYPE.IP , 0.1 , 0 ),
+
+        ROUTER_ASR_9906(LAYERTYPE.IP , 7 , 3000 ),
+        ROUTER_ASR_9912(LAYERTYPE.IP , 11 , 3000 ),
+        ROUTER_ASR_9922(LAYERTYPE.IP , 18.4 , 3000 ),
+
+        LINE_CARD_48x10G(LAYERTYPE.IP , 64 , 810),
+        LINE_CARD_8X100G(LAYERTYPE.IP , 98 , 1100),
+
+        // OPTICAL
+    	TRANSPONDERBIDI_25G (LAYERTYPE.OPTICAL , 2.4 , 120),
+    	TRANSPONDERBIDI_100G (LAYERTYPE.OPTICAL , 5 , 160),
+    	SPLITTER1X2 (LAYERTYPE.OPTICAL , 0.004 , 0),
+    	SPLITTER1X4 (LAYERTYPE.OPTICAL , 0.01 , 0),
+    	SPLITTER1X8 (LAYERTYPE.OPTICAL , 0.02 , 0),
+    	SPLITTER1XMORETHAN8 (LAYERTYPE.OPTICAL , 0.4 , 0),
+    	EDFADOUBLEBOOSTERANDPREAMPL (LAYERTYPE.OPTICAL , 0.6 , 27),
+    	WAVELENGTHBLOCKER (LAYERTYPE.OPTICAL , 0.2 , 7.2),
+    	WSS_FIXED_1X4 (LAYERTYPE.OPTICAL , 1.1 , 30),
+    	WSS_FIXED_1X9 (LAYERTYPE.OPTICAL , 2.2 , 40),
+    	WSS_FIXED_1X20 (LAYERTYPE.OPTICAL , 3 , 75),
+    	WSS_FLEXI_1X4 (LAYERTYPE.OPTICAL , 1.1 , 30),
+    	WSS_FLEXI_1X9 (LAYERTYPE.OPTICAL , 2.2 , 40),
+    	WSS_FLEXI_1X20 (LAYERTYPE.OPTICAL , 3 , 75),
+    	MUXDEMUX80CHANNELS (LAYERTYPE.OPTICAL , 0.8 , 0);
 
     	// Complete the enum list with the components of IT and IP layers
 
@@ -229,14 +258,17 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 			
 			/* Compute the number of line cards */
 			final LineCards lc10G = TecnoEc2_costModel.lineCardsAvailable.stream().filter(lc->lc.getPortRateGbps() == 10.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
-			final LineCards lc40G = TecnoEc2_costModel.lineCardsAvailable.stream().filter(lc->lc.getPortRateGbps() == 40.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
+//			final LineCards lc40G = TecnoEc2_costModel.lineCardsAvailable.stream().filter(lc->lc.getPortRateGbps() == 40.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
 			final LineCards lc100G = TecnoEc2_costModel.lineCardsAvailable.stream().filter(lc->lc.getPortRateGbps() == 100.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
 			final int numLc10G = (int) Math.ceil(num10GPortsAccessPlus10GLightpats / lc10G.getNumPorts());
-			final int numLc40G = (int) Math.ceil(num40GPortsTransponders / lc40G.getNumPorts());
+//			final int numLc40G = (int) Math.ceil(num40GPortsTransponders / lc40G.getNumPorts());
 			final int numLc100G = (int) Math.ceil(num100GPortsTransponders / lc100G.getNumPorts());
-			final int totalNumLc = numLc10G + numLc40G + numLc100G;
+//			final int totalNumLc = numLc10G + numLc40G + numLc100G;
+            final int totalNumLc = numLc10G + numLc100G;
 
 			// Increase the number of Line cards (10G, 40G and 100G) needed in this node
+            increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.LINE_CARD_48x10G, (double) numLc10G);
+            increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.LINE_CARD_8X100G, (double) numLc100G);
 
 			/* Choose the best architecture */
 			RouterChassis bestRc = null;
@@ -257,6 +289,21 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 			if (bestRc == null) throw new Net2PlanException ("No chassis options fits the requirements");
 
             // Increase the number of chasis needed in this node
+            OPTICAL_IT_IP_ELEMENTS routerEum = null;
+
+            switch (bestRc.getName()){
+                case "ASR 9906":
+                    routerEum = OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9906;
+                    break;
+                case "ASR 9912":
+                    routerEum = OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9912;
+                    break;
+                case "ASR 9922":
+                    routerEum = OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9922;
+                    break;
+            }
+
+            increase(bomOptical_n.get(n) , routerEum , (double) bestNumChassis);
 
             /* Calculate the number of pluggable devices in this node */
 			final Pluggables plug10G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 10.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
@@ -267,6 +314,35 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 			final int numPluggables100G = num100GPortsTransponders + (bestNumChassis == 1? 0 : bestNumChassis);
 
 			// Increase the number of pluggables (10G, 40G, 100G) in this node
+
+            OPTICAL_IT_IP_ELEMENTS plug10G_enum = null;
+            OPTICAL_IT_IP_ELEMENTS plug40G_enum = null;
+            OPTICAL_IT_IP_ELEMENTS plug100G_enum = null;
+
+            if (plug10G.getName().equalsIgnoreCase("10G SFP+ copper"))
+                plug10G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_COPPER;
+            else if(plug10G.getName().equalsIgnoreCase("10G SFP+ optical"))
+                plug10G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_GREY;
+            else throw new Net2PlanException("Wrong pluggable");
+
+            increase(bomOptical_n.get(n), plug10G_enum, (double) numPlugables10G);
+
+            if (plug40G.getName().equalsIgnoreCase("40G QSFP copper"))
+                plug40G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_COPPER;
+            else if(plug40G.getName().equalsIgnoreCase("40G QSFP optical"))
+                plug40G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_GREY;
+            else throw new Net2PlanException("Wrong pluggable");
+
+            increase(bomOptical_n.get(n), plug40G_enum, (double) numPluggables40G);
+
+            if (plug100G.getName().equalsIgnoreCase("100G QSFP copper"))
+                plug100G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_COPPER;
+            else if(plug100G.getName().equalsIgnoreCase("100G QSFP optica"))
+                plug100G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_GREY;
+            else throw new Net2PlanException("Wrong pluggable");
+
+            increase(bomOptical_n.get(n), plug100G_enum, (double) numPluggables100G);
+
 		}
 		
 		/************************************************************************************************/
