@@ -399,7 +399,7 @@ public class MetroHaulModelTest extends TestCase
 
 	    }
 
-	@Test
+//	@Test
 	public void testWithCapPlanning()
 	{
         System.out.println("------------ Capacity planning test -------------");
@@ -463,6 +463,21 @@ public class MetroHaulModelTest extends TestCase
         new AssessmentBenefitsOfDynamicity().executeAlgorithm(np, algorithmParameters, new HashMap<>());
         new WNet(np).checkConsistency();
 
+    }
+
+    @Test
+    public void testBillOfMaterial()
+    {
+        final NetPlan np = new NetPlan();
+        final Map<String, String> algorithmParameters = InputParameter.getDefaultParameters(new ImporterFromTimBulkFiles_forConfTimData().getParameters());
+
+        algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_DenseUrbanMetro_M-H_D2.3.xlsx");
+        new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+        new WNet(np).checkConsistency();
+        new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters()), new HashMap<>());
+        new WNet(np).checkConsistency();
+
+        new BillOfMaterialsOptical_v1().executeAlgorithm(np, algorithmParameters, new HashMap<>());
 
 
     }

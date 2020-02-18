@@ -345,7 +345,6 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 
 		}
 
-
 		/************************************************************************************************/
 		// Separate per equipment in line = everything but transponders vs transponders
 		// Separate cost between AMENs / MCENs / line amplifiers. Energy consumption differences?
@@ -354,6 +353,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         // Finally, see the best way to treat the data in order to provide the correct metrics. Three options:
         //  1. Using only one method in this class in case the length code is not so long (maybe this one is more appropiate)
         //  2. Create a new class to export the corresponding metrics
+
+        showMetrics(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
 
 		return "Ok";
 	}
