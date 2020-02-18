@@ -408,17 +408,15 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
                 System.out.println("Layer:  " + layer);
                 System.out.println("Value :  " + entry.getKey());
 
-                if(entry.getKey().layer.equals(layer)) {
+                if(entry.getKey().layer.equals(layer) && entry.getKey() != null){
                     totalConsumptionInThisNode += entry.getKey().consumption_W * entry.getValue();
                     totalCostInThisInThisNode += entry.getKey().cost * entry.getValue();
-                }
 
-                if (entry.getKey().layer == LAYERTYPE.IT) trafficInThisNode = n.getVnfInstances().stream().mapToDouble(value -> value.getCurrentCapacityInGbps()).sum();
-                else if (entry.getKey().layer == LAYERTYPE.IP) n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
-                else if (entry.getKey().layer == LAYERTYPE.OPTICAL) {
-                    n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
+                    if (entry.getKey().layer.equals(LAYERTYPE.IT)) trafficInThisNode = n.getVnfInstances().stream().mapToDouble(value -> value.getCurrentCapacityInGbps()).sum();
+                    else if (entry.getKey().layer.equals(LAYERTYPE.IP)) n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
+                    else if (entry.getKey().layer.equals(LAYERTYPE.OPTICAL)) n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
                 }
-                else throw new Net2PlanException(entry.getKey().layer + " element is not attached to any layer");
+                else throw new Net2PlanException(entry + " element is not attached to any layer");
             }
 
             itMetrics.put(n, Triple.of(trafficInThisNode,totalConsumptionInThisNode,totalCostInThisInThisNode));
