@@ -344,7 +344,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
             increase(bomOptical_n.get(n), plug100G_enum, (double) numPluggables100G);
 
 		}
-		
+
+
 		/************************************************************************************************/
 		// Separate per equipment in line = everything but transponders vs transponders
 		// Separate cost between AMENs / MCENs / line amplifiers. Energy consumption differences?
@@ -376,6 +377,39 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
     	return map;
     }
 
+    private static Map<WNode, Triple<Double, Double, Double>> computeMetrics (List<WNode> nodes, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n, LAYERTYPE layer )
+    {
+        Map<WNode, Triple<Double, Double, Double>> itMetrics = new HashMap<>();
+        Map<WNode, Triple<Double, Double, Double>> ipMetrics = new HashMap<>();
+        Map<WNode, Triple<Double, Double, Double>> opticalMetrics = new HashMap<>();
+
+        for (WNode n : nodes)
+        {
+            double trafficInThisNode = 0;
+
+            Map<OPTICAL_IT_IP_ELEMENTS, Double> elementsInthisNode = bomOptical_n.get(n);
+
+            double totalConsumptionInThisNode = 0;
+            double totalCostInThisInThisNode = 0;
+
+            for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : elementsInthisNode.entrySet()) {
+
+                if(entry.getKey().layer == layer ) {
+                    totalConsumptionInThisNode += entry.getKey().consumption_W * entry.getValue();
+                    totalCostInThisInThisNode += entry.getKey().cost * entry.getValue();
+                }
+
+                if (entry.getKey().layer == LAYERTYPE.IT) trafficInThisNode = n.getVnfInstances().stream().mapToDouble(value -> value.getCurrentCapacityInGbps()).sum();
+                else if (entry.getKey().layer == LAYERTYPE.IT) n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
+                else if (entry.getKey().layer == LAYERTYPE.OPTICAL) n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
+                else throw new Net2PlanException("Element is not attached to any layer");
+            }
+
+            itMetrics.put(n, Triple.of(trafficInThisNode,totalConsumptionInThisNode,totalCostInThisInThisNode));
+        }
+
+        return  itMetrics;
+    }
 
     
 }
