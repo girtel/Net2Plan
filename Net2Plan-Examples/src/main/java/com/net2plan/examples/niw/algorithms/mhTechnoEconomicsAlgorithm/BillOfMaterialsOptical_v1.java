@@ -377,7 +377,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
     	return map;
     }
 
-    private static Map<WNode, Triple<Double, Double, Double>> computeMetrics (List<WNode> nodes, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n, LAYERTYPE layer )
+    private Map<WNode, Triple<Double, Double, Double>> computeMetrics (List<WNode> nodes, List<WFiber> fibers, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n, Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e ,LAYERTYPE layer )
     {
         Map<WNode, Triple<Double, Double, Double>> itMetrics = new HashMap<>();
         Map<WNode, Triple<Double, Double, Double>> ipMetrics = new HashMap<>();
@@ -401,15 +401,67 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 
                 if (entry.getKey().layer == LAYERTYPE.IT) trafficInThisNode = n.getVnfInstances().stream().mapToDouble(value -> value.getCurrentCapacityInGbps()).sum();
                 else if (entry.getKey().layer == LAYERTYPE.IT) n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
-                else if (entry.getKey().layer == LAYERTYPE.OPTICAL) n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
+                else if (entry.getKey().layer == LAYERTYPE.OPTICAL) {
+                    n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
+                }
                 else throw new Net2PlanException("Element is not attached to any layer");
             }
 
             itMetrics.put(n, Triple.of(trafficInThisNode,totalConsumptionInThisNode,totalCostInThisInThisNode));
         }
 
+//        if (layer == LAYERTYPE.OPTICAL)
+//        {
+//            for (WFiber fiber : fibers)
+//            {
+//                for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> entry : bomOptical_e.get(fiber).entrySet())
+//                {
+//                    entry.getKey()
+//                }
+//            }
+//        }
+
         return  itMetrics;
     }
 
-    
+    public void showMetrics(List<WNode> nodes, List<WFiber> fibers, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n,  Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e)
+    {
+        Map<WNode, Triple<Double, Double, Double>> itMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IT);
+        Map<WNode, Triple<Double, Double, Double>> ipMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IT);
+        Map<WNode, Triple<Double, Double, Double>> opticalMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IT);
+
+        System.out.println("*******  IT Metrics *********");
+
+        double it_totalTraffic = itMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getFirst()).sum();
+        double it_totalConsumption = itMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getSecond()).sum();
+        double it_totalCost = itMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getThird()).sum();
+
+        System.out.println("IT - Total VNF Traffic: " + it_totalTraffic);
+        System.out.println("IT - Total Consumption (W): " + it_totalConsumption);
+        System.out.println("IT - Total cost: " + it_totalCost);
+
+        System.out.println("*******  IP Metrics *********");
+
+        double ip_totalTraffic = ipMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getFirst()).sum();
+        double ip_totalConsumption = ipMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getSecond()).sum();
+        double ip_totalCost = ipMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getThird()).sum();
+
+        System.out.println("IP - Total VNF Traffic: " + ip_totalTraffic);
+        System.out.println("IP - Total Consumption (W): " + ip_totalConsumption);
+        System.out.println("IP - Total cost: " + ip_totalCost);
+
+        System.out.println("*******  Optical Metrics *********");
+
+        double optical_totalTraffic = opticalMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getFirst()).sum();
+        double optical_totalConsumption = opticalMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getSecond()).sum();
+        double optical_totalCost = opticalMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getThird()).sum();
+
+        System.out.println("Optical - Total VNF Traffic: " + optical_totalTraffic);
+        System.out.println("Optical - Total Consumption (W): " + optical_totalConsumption);
+        System.out.println("Optical - Total cost: " + optical_totalCost);
+
+    }
+
+
+
 }
