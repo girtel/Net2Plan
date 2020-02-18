@@ -416,7 +416,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
                     else if (entry.getKey().layer.equals(LAYERTYPE.IP)) n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
                     else if (entry.getKey().layer.equals(LAYERTYPE.OPTICAL)) n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
                 }
-                else throw new Net2PlanException(entry + " element is not attached to any layer");
+//                else throw new Net2PlanException(entry + " element is not attached to any layer");
             }
 
             itMetrics.put(n, Triple.of(trafficInThisNode,totalConsumptionInThisNode,totalCostInThisInThisNode));
