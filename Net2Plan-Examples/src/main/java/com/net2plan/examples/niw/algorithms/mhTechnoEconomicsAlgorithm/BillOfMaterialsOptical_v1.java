@@ -44,13 +44,12 @@ import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
 
-
 public class BillOfMaterialsOptical_v1 implements IAlgorithm
 {
-	private InputParameter trafficAcceptableByAServerGbps = new InputParameter("trafficAcceptableByAServerGbps", 40.0, "", 0, true, Double.MAX_VALUE, true);
-	private InputParameter maximumUtilizationOfAccessPorts = new InputParameter("maximumUtilizationOfAccessPorts", 0.5, "", 0, true, 1.0, true);
+//	private InputParameter trafficAcceptableByAServerGbps = new InputParameter("trafficAcceptableByAServerGbps", 40.0, "Description", 0, true, Double.MAX_VALUE, true);
+//    private InputParameter trafficAcceptableByAServerGbps = new InputParameter("trafficAcceptableByAServerGbps", 40.0, "Traffic acceptable by a server", 0, true, 100.0, true);
+//	private InputParameter maximumUtilizationOfAccessPorts = new InputParameter("maximumUtilizationOfAccessPorts", 0.5, "Description", 0, true, 1.0, true);
 
-	
 	private enum LAYERTYPE { OPTICAL , IT, IP};
     private enum OPTICAL_IT_IP_ELEMENTS
     {
@@ -139,15 +138,21 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 	public String executeAlgorithm(NetPlan np, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
 	{
 		// First of all, initialize all parameters
+        Configuration.setOption("precisionFactor", new Double(1e-9).toString());
+        Configuration.precisionFactor = 1e-9;
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 
 		final WNet wNet = new WNet(np);
-		Configuration.setOption("precisionFactor", new Double(1e-9).toString());
-		Configuration.precisionFactor = 1e-9;
 		
 		final Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n = new HashMap<> ();
 		final Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e = new HashMap<> ();
-		
+
+		for (WNode n : wNet.getNodes())
+		    bomOptical_n.put(n, new HashMap<>());
+
+        for (WFiber e : wNet.getFibers())
+            bomOptical_e.put(e, new HashMap<>());
+
 		/* */
 		// 1. place preamplifiers and boosters: now simple: always booster and pre-amplifier, only line amplifier if 80 km
 		for (WFiber e : wNet.getFibers())
@@ -168,8 +173,10 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 		/* AMPLIFIERS: All nodes have preampl & booster, and one line amplifier for 80 km */
 		for (WFiber e : wNet.getFibers())
 		{
-			if (e.isExistingBoosterAmplifierAtOriginOadm()) increase (bomOptical_e.get(e) , OPTICAL_IT_IP_ELEMENTS.EDFADOUBLEBOOSTERANDPREAMPL , 0.5);
-			if (e.isExistingPreamplifierAtDestinationOadm()) increase (bomOptical_e.get(e) , OPTICAL_IT_IP_ELEMENTS.EDFADOUBLEBOOSTERANDPREAMPL , 0.5);
+			if (e.isExistingBoosterAmplifierAtOriginOadm())
+                increase(bomOptical_e.get(e), OPTICAL_IT_IP_ELEMENTS.EDFADOUBLEBOOSTERANDPREAMPL, 0.5);
+			if (e.isExistingPreamplifierAtDestinationOadm())
+			    increase (bomOptical_e.get(e) , OPTICAL_IT_IP_ELEMENTS.EDFADOUBLEBOOSTERANDPREAMPL , 0.5);
 			increase (bomOptical_e.get(e) , OPTICAL_IT_IP_ELEMENTS.EDFADOUBLEBOOSTERANDPREAMPL , (double) e.getOpticalLineAmplifiersInfo().size());
 		}
 		
@@ -235,7 +242,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 					trafficToOrFromTheServersGbps += inTRafficThisSc;
 				}
 			}
-			increase (bomOptical_n.get(n) , OPTICAL_IT_IP_ELEMENTS.ITSERVER , trafficToOrFromTheServersGbps / trafficAcceptableByAServerGbps.getDouble());
+	//		increase (bomOptical_n.get(n) , OPTICAL_IT_IP_ELEMENTS.ITSERVER , trafficToOrFromTheServersGbps / trafficAcceptableByAServerGbps.getDouble());
+            increase (bomOptical_n.get(n) , OPTICAL_IT_IP_ELEMENTS.ITSERVER , trafficToOrFromTheServersGbps / 40.0);
 		}
 		
 		/* IP Scenario 1 */
@@ -246,7 +254,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 			final double trafGeneratedInTheNodeGbps = n.getOutgoingServiceChainRequests().stream().mapToDouble(scr->scr.getCurrentOfferedTrafficInGbps()).sum ();
 			final double trafFinishedInTheNodeGbps = n.getIncomingServiceChainRequests().stream().mapToDouble(scr->scr.getCurrentOfferedTrafficInGbps()).sum ();
 			final double accessTrafficInTheNodesGbps = Math.max(trafGeneratedInTheNodeGbps, trafFinishedInTheNodeGbps);
-			int num10GPortsAccessPlus10GLightpats = (int) Math.ceil(accessTrafficInTheNodesGbps / (10.0 * maximumUtilizationOfAccessPorts.getDouble()));
+//			int num10GPortsAccessPlus10GLightpats = (int) Math.ceil(accessTrafficInTheNodesGbps / (10.0 * maximumUtilizationOfAccessPorts.getDouble()));
+            int num10GPortsAccessPlus10GLightpats = (int) Math.ceil(accessTrafficInTheNodesGbps / (10.0 * 0.5));
 			
 			/* 40G ports for the 25G transponders */
 			num10GPortsAccessPlus10GLightpats += (int) n.getOutgoingLigtpaths().stream().
@@ -374,7 +383,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 
     private static <E> Map<E , Double> increase (Map<E,Double> map , E key , Double amount)
     {
-    	if (map.containsKey(key)) map.put(key, map.get(key) + amount); else map.put(key, amount);
+    	if (map.containsKey(key)) map.put(key, map.get(key) + amount);
+    	else map.put(key, amount);
     	return map;
     }
 
@@ -395,17 +405,20 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 
             for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : elementsInthisNode.entrySet()) {
 
-                if(entry.getKey().layer == layer ) {
+                System.out.println("Layer:  " + layer);
+                System.out.println("Value :  " + entry.getKey());
+
+                if(entry.getKey().layer.equals(layer)) {
                     totalConsumptionInThisNode += entry.getKey().consumption_W * entry.getValue();
                     totalCostInThisInThisNode += entry.getKey().cost * entry.getValue();
                 }
 
                 if (entry.getKey().layer == LAYERTYPE.IT) trafficInThisNode = n.getVnfInstances().stream().mapToDouble(value -> value.getCurrentCapacityInGbps()).sum();
-                else if (entry.getKey().layer == LAYERTYPE.IT) n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
+                else if (entry.getKey().layer == LAYERTYPE.IP) n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
                 else if (entry.getKey().layer == LAYERTYPE.OPTICAL) {
                     n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
                 }
-                else throw new Net2PlanException("Element is not attached to any layer");
+                else throw new Net2PlanException(entry.getKey().layer + " element is not attached to any layer");
             }
 
             itMetrics.put(n, Triple.of(trafficInThisNode,totalConsumptionInThisNode,totalCostInThisInThisNode));
@@ -428,8 +441,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
     public void showMetrics(List<WNode> nodes, List<WFiber> fibers, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n,  Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e)
     {
         Map<WNode, Triple<Double, Double, Double>> itMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IT);
-        Map<WNode, Triple<Double, Double, Double>> ipMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IT);
-        Map<WNode, Triple<Double, Double, Double>> opticalMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IT);
+        Map<WNode, Triple<Double, Double, Double>> ipMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IP);
+        Map<WNode, Triple<Double, Double, Double>> opticalMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.OPTICAL);
 
         System.out.println("*******  IT Metrics *********");
 

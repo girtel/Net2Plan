@@ -466,7 +466,7 @@ public class MetroHaulModelTest extends TestCase
     }
 
     @Test
-    public void testBillOfMaterial()
+    public void testBillOfMaterials()
     {
         final NetPlan np = new NetPlan();
         final Map<String, String> algorithmParameters = InputParameter.getDefaultParameters(new ImporterFromTimBulkFiles_forConfTimData().getParameters());
@@ -478,7 +478,6 @@ public class MetroHaulModelTest extends TestCase
         new WNet(np).checkConsistency();
 
         new BillOfMaterialsOptical_v1().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-
 
     }
 
