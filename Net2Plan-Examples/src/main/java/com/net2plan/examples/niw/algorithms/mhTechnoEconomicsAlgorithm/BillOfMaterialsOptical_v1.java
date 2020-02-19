@@ -19,10 +19,7 @@
 
 package com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm.TecnoEc2_costModel.LineCards;
 import com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm.TecnoEc2_costModel.Pluggables;
@@ -298,59 +295,46 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 			if (bestRc == null) throw new Net2PlanException ("No chassis options fits the requirements");
 
             // Increase the number of chasis needed in this node
-            OPTICAL_IT_IP_ELEMENTS routerEum = null;
 
             switch (bestRc.getName()){
                 case "ASR 9906":
-                    routerEum = OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9906;
+                    increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9906, (double) bestNumChassis);
                     break;
                 case "ASR 9912":
-                    routerEum = OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9912;
+                    increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9912, (double) bestNumChassis);
                     break;
                 case "ASR 9922":
-                    routerEum = OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9922;
+                    increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.ROUTER_ASR_9922, (double) bestNumChassis);
                     break;
             }
-
-            increase(bomOptical_n.get(n) , routerEum , (double) bestNumChassis);
 
             /* Calculate the number of pluggable devices in this node */
 			final Pluggables plug10G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 10.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
 			final Pluggables plug40G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 40.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
 			final Pluggables plug100G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 100.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
-			final int numPlugables10G = num10GPortsAccessPlus10GLightpats;
+			final int numPluggables10G = num10GPortsAccessPlus10GLightpats;
 			final int numPluggables40G = num40GPortsTransponders;
 			final int numPluggables100G = num100GPortsTransponders + (bestNumChassis == 1? 0 : bestNumChassis);
 
 			// Increase the number of pluggables (10G, 40G, 100G) in this node
 
-            OPTICAL_IT_IP_ELEMENTS plug10G_enum = null;
-            OPTICAL_IT_IP_ELEMENTS plug40G_enum = null;
-            OPTICAL_IT_IP_ELEMENTS plug100G_enum = null;
-
             if (plug10G.getName().equalsIgnoreCase("10G SFP+ copper"))
-                plug10G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_COPPER;
+                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_COPPER, (double) numPluggables10G);
             else if(plug10G.getName().equalsIgnoreCase("10G SFP+ optical"))
-                plug10G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_GREY;
+                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_GREY, (double) numPluggables10G);
             else throw new Net2PlanException("Wrong pluggable");
-
-            increase(bomOptical_n.get(n), plug10G_enum, (double) numPlugables10G);
 
             if (plug40G.getName().equalsIgnoreCase("40G QSFP copper"))
-                plug40G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_COPPER;
+                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_40G_COPPER, (double) numPluggables40G);
             else if(plug40G.getName().equalsIgnoreCase("40G QSFP optical"))
-                plug40G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_GREY;
+                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_40G_GREY, (double) numPluggables40G);
             else throw new Net2PlanException("Wrong pluggable");
-
-            increase(bomOptical_n.get(n), plug40G_enum, (double) numPluggables40G);
 
             if (plug100G.getName().equalsIgnoreCase("100G QSFP copper"))
-                plug100G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_COPPER;
+                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_100G_COPPER, (double) numPluggables100G);
             else if(plug100G.getName().equalsIgnoreCase("100G QSFP optica"))
-                plug100G_enum = OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_GREY;
+                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_100G_GREY, (double) numPluggables100G);
             else throw new Net2PlanException("Wrong pluggable");
-
-            increase(bomOptical_n.get(n), plug100G_enum, (double) numPluggables100G);
 
 		}
 
@@ -403,8 +387,11 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
             double totalConsumptionInThisNode = 0;
             double totalCostInThisInThisNode = 0;
 
-            for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : elementsInthisNode.entrySet()) {
+            Iterator<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> iterator = elementsInthisNode.entrySet().iterator();
 
+            while (iterator.hasNext()) {
+
+                Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry = iterator.next();
                 System.out.println("Layer:  " + layer);
                 System.out.println("Value :  " + entry.getKey());
 
