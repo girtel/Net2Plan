@@ -38,6 +38,7 @@ import com.net2plan.niw.WNode;
 import com.net2plan.niw.WServiceChain;
 import com.net2plan.niw.WVnfInstance;
 import com.net2plan.utils.InputParameter;
+import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 
 
@@ -372,7 +373,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
     	return map;
     }
 
-    private Map<WNode, Triple<Double, Double, Double>> computeMetrics (List<WNode> nodes, List<WFiber> fibers, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n, Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e ,LAYERTYPE layer )
+    private Map<WNode, Triple<Double, Double, Double>> computeNodeMetrics (List<WNode> nodes, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n, LAYERTYPE layer )
     {
         Map<WNode, Triple<Double, Double, Double>> itMetrics = new HashMap<>();
         Map<WNode, Triple<Double, Double, Double>> ipMetrics = new HashMap<>();
@@ -392,42 +393,56 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
             while (iterator.hasNext()) {
 
                 Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry = iterator.next();
-                System.out.println("Layer:  " + layer);
-                System.out.println("Value :  " + entry.getKey());
 
-                if(entry.getKey().layer.equals(layer) && entry.getKey() != null){
-                    totalConsumptionInThisNode += entry.getKey().consumption_W * entry.getValue();
-                    totalCostInThisInThisNode += entry.getKey().cost * entry.getValue();
+                totalConsumptionInThisNode += entry.getKey().consumption_W * entry.getValue();
+                totalCostInThisInThisNode += entry.getKey().cost * entry.getValue();
 
-                    if (entry.getKey().layer.equals(LAYERTYPE.IT)) trafficInThisNode = n.getVnfInstances().stream().mapToDouble(value -> value.getCurrentCapacityInGbps()).sum();
-                    else if (entry.getKey().layer.equals(LAYERTYPE.IP)) n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
-                    else if (entry.getKey().layer.equals(LAYERTYPE.OPTICAL)) n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
-                }
-//                else throw new Net2PlanException(entry + " element is not attached to any layer");
+                if (entry.getKey().layer.equals(LAYERTYPE.IT)) trafficInThisNode += n.getVnfInstances().stream().mapToDouble(value -> value.getOccupiedCapacityInGbps()).sum();
+                else if (entry.getKey().layer.equals(LAYERTYPE.IP)) trafficInThisNode += n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
+                else if (entry.getKey().layer.equals(LAYERTYPE.OPTICAL)) trafficInThisNode += n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
+                else throw new Net2PlanException(entry + " element is not attached to any layer");
             }
 
             itMetrics.put(n, Triple.of(trafficInThisNode,totalConsumptionInThisNode,totalCostInThisInThisNode));
         }
 
-//        if (layer == LAYERTYPE.OPTICAL)
-//        {
-//            for (WFiber fiber : fibers)
-//            {
-//                for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> entry : bomOptical_e.get(fiber).entrySet())
-//                {
-//                    entry.getKey()
-//                }
-//            }
-//        }
-
         return  itMetrics;
     }
 
+    private Map<WFiber, Pair<Double,Double>> computeLineMetrics(List<WFiber> fibers, Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e)
+    {
+        Map<WFiber, Pair<Double,Double>> lineMetrics = new HashMap<>();
+
+        for (WFiber e : fibers)
+        {
+            Map<OPTICAL_IT_IP_ELEMENTS, Double> elementsInthisLink = bomOptical_e.get(e);
+
+            double totalConsumptionInThisLink = 0;
+            double totalCostInThisInThisLink = 0;
+
+            Iterator<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> iterator = elementsInthisLink.entrySet().iterator();
+
+            while (iterator.hasNext())
+            {
+                Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry = iterator.next();
+
+                totalConsumptionInThisLink += entry.getKey().consumption_W * entry.getValue();
+                totalCostInThisInThisLink += entry.getKey().cost * entry.getValue();
+            }
+            lineMetrics.put(e,Pair.of(totalConsumptionInThisLink,totalCostInThisInThisLink));
+        }
+
+        return lineMetrics;
+    }
+
+
+
     public void showMetrics(List<WNode> nodes, List<WFiber> fibers, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n,  Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e)
     {
-        Map<WNode, Triple<Double, Double, Double>> itMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IT);
-        Map<WNode, Triple<Double, Double, Double>> ipMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.IP);
-        Map<WNode, Triple<Double, Double, Double>> opticalMetrics = computeMetrics(nodes,fibers,bomOptical_n,bomOptical_e,LAYERTYPE.OPTICAL);
+        Map<WNode, Triple<Double, Double, Double>> itMetrics = computeNodeMetrics(nodes,bomOptical_n,LAYERTYPE.IT);
+        Map<WNode, Triple<Double, Double, Double>> ipMetrics = computeNodeMetrics(nodes,bomOptical_n,LAYERTYPE.IP);
+        Map<WNode, Triple<Double, Double, Double>> opticalMetrics = computeNodeMetrics(nodes,bomOptical_n,LAYERTYPE.OPTICAL);
+        Map<WFiber,Pair<Double,Double>> lineMetrics = computeLineMetrics(fibers,bomOptical_e);
 
         System.out.println("*******  IT Metrics *********");
 
@@ -435,7 +450,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         double it_totalConsumption = itMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getSecond()).sum();
         double it_totalCost = itMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getThird()).sum();
 
-        System.out.println("IT - Total VNF Traffic: " + it_totalTraffic);
+        System.out.println("IT - Total Traffic: " + it_totalTraffic);
         System.out.println("IT - Total Consumption (W): " + it_totalConsumption);
         System.out.println("IT - Total cost: " + it_totalCost);
 
@@ -445,7 +460,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         double ip_totalConsumption = ipMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getSecond()).sum();
         double ip_totalCost = ipMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getThird()).sum();
 
-        System.out.println("IP - Total VNF Traffic: " + ip_totalTraffic);
+        System.out.println("IP - Total Traffic: " + ip_totalTraffic);
         System.out.println("IP - Total Consumption (W): " + ip_totalConsumption);
         System.out.println("IP - Total cost: " + ip_totalCost);
 
@@ -455,9 +470,15 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         double optical_totalConsumption = opticalMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getSecond()).sum();
         double optical_totalCost = opticalMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getThird()).sum();
 
-        System.out.println("Optical - Total VNF Traffic: " + optical_totalTraffic);
+        System.out.println("Optical - Total Traffic: " + optical_totalTraffic);
         System.out.println("Optical - Total Consumption (W): " + optical_totalConsumption);
         System.out.println("Optical - Total cost: " + optical_totalCost);
+
+        double lineConsumption = lineMetrics.entrySet().stream().mapToDouble(value -> value.getValue().getFirst()).sum();
+        double lineCost = lineMetrics.entrySet().stream().mapToDouble(value -> value.getValue().getSecond()).sum();
+
+        System.out.println("Optical - Total line consumption: " +  lineConsumption);
+        System.out.println("Optical - Total line cost: " +  lineCost);
 
     }
 
