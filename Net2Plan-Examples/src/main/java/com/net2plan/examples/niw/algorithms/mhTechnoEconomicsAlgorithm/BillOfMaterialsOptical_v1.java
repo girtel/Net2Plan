@@ -388,7 +388,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
             double totalConsumptionInThisNode = 0;
             double totalCostInThisInThisNode = 0;
 
-            Iterator<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> iterator = elementsInthisNode.entrySet().iterator();
+            Iterator<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> iterator = elementsInthisNode.entrySet().stream().filter(v -> v.getKey().layer.equals(layer)).iterator();
 
             while (iterator.hasNext()) {
 
@@ -397,10 +397,14 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
                 totalConsumptionInThisNode += entry.getKey().consumption_W * entry.getValue();
                 totalCostInThisInThisNode += entry.getKey().cost * entry.getValue();
 
-                if (entry.getKey().layer.equals(LAYERTYPE.IT)) trafficInThisNode += n.getVnfInstances().stream().mapToDouble(value -> value.getOccupiedCapacityInGbps()).sum();
-                else if (entry.getKey().layer.equals(LAYERTYPE.IP)) trafficInThisNode += n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
-                else if (entry.getKey().layer.equals(LAYERTYPE.OPTICAL)) trafficInThisNode += n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
+                if (entry.getKey().layer.equals(LAYERTYPE.IT))
+                    trafficInThisNode += n.getVnfInstances().stream().mapToDouble(value -> value.getOccupiedCapacityInGbps()).sum();
+                else if (entry.getKey().layer.equals(LAYERTYPE.IP))
+                    trafficInThisNode += n.getInOutOrTraversingServiceChains().stream().mapToDouble(value -> value.getCurrentCarriedTrafficGbps()).sum();
+                else if (entry.getKey().layer.equals(LAYERTYPE.OPTICAL))
+                    trafficInThisNode += n.getIncomingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum();
                 else throw new Net2PlanException(entry + " element is not attached to any layer");
+
             }
 
             itMetrics.put(n, Triple.of(trafficInThisNode,totalConsumptionInThisNode,totalCostInThisInThisNode));

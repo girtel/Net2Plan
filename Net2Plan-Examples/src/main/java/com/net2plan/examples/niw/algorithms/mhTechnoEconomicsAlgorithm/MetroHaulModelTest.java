@@ -472,6 +472,11 @@ public class MetroHaulModelTest extends TestCase
         final Map<String, String> algorithmParameters = InputParameter.getDefaultParameters(new ImporterFromTimBulkFiles_forConfTimData().getParameters());
 
         algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_DenseUrbanMetro_M-H_D2.3.xlsx");
+//        algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Small_M-H_D2.3.xlsx");
+        algorithmParameters.put("opticalSwiInputParameter","option1");   // Option 1: All Roadm, Option2: with D&W Filterless
+        algorithmParameters.put("initialIndex","-1"); // -1: Static planning, 0: Dynamic planning
+        algorithmParameters.put("yearDataForAllTrafficTypes","2025"); // 2019 2022 2025
+        algorithmParameters.put("addFaultToleranceToMcenBBFailureAndWdmDuctFailureIfPossible","true"); // false: Without failure tolerance, true: with faultTolerance
         new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
         new WNet(np).checkConsistency();
         new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters()), new HashMap<>());
