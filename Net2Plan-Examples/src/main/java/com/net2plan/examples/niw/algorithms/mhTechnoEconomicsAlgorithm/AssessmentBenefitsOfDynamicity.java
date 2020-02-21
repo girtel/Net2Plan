@@ -107,6 +107,9 @@ public class AssessmentBenefitsOfDynamicity implements IAlgorithm
                 statDynamicCase.storeStatsAsIntegerList(statDynamicCase.getFsuPerFiber(), fileDynamic + "/out_FsuPerFiber_" + Integer.toString(timeIndex) + ".txt");
                 statDynamicCase.storeStatsAsIntegerMap(statDynamicCase.getTranspoderTrafficPerNode(), fileDynamic + "/out_TranspoderTrafficPerNode_" + Integer.toString(timeIndex) + ".txt");
                 statDynamicCase.storeStatsAsDoubleMap(statDynamicCase.getVNFsTrafficPerNode(), fileDynamic + "/out_VNFsTrafficPerNode_" + Integer.toString(timeIndex) + ".txt");
+
+                np.saveToFile(new File(fileDynamic+"/out_scenario.n2p"));
+
             }
         }else if(initialIndex.getInt() == -1){
             		/* Tests for static case */
@@ -148,11 +151,13 @@ public class AssessmentBenefitsOfDynamicity implements IAlgorithm
             statStaticCase.storeStatsAsIntegerList(statStaticCase.getFsuPerFiber(), fileStatic + "/out_FsuPerFiber_static.txt");
             statStaticCase.storeStatsAsIntegerMap(statStaticCase.getTranspoderTrafficPerNode(), fileStatic + "/out_TranspoderTrafficPerNode_static.txt");
             statStaticCase.storeStatsAsDoubleMap(statStaticCase.getVNFsTrafficPerNode(), fileStatic + "/out_VNFsTrafficPerNode_static.txt");
+
+            np.saveToFile(new File(fileStatic+"/out_scenario.n2p"));
         }
         else
             new Net2PlanException("Wrong time index, it must be between -1 and 23;");
 
-		np.saveToFile(new File(file+"out_scenario.n2p"));
+
 
 		return "Ok";
 
