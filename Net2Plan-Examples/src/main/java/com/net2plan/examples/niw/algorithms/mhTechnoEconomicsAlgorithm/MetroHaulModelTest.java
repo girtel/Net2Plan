@@ -508,8 +508,12 @@ public class MetroHaulModelTest extends TestCase
             algorithmParameters.put("initialIndex",planApproach); // -1: Static planning, 0: Dynamic planning
             algorithmParameters.put("yearDataForAllTrafficTypes",year); // 2019 2022 2025
             algorithmParameters.put("addFaultToleranceToMcenBBFailureAndWdmDuctFailureIfPossible",faultTolerance_boolean.toString()); // false: Without failure tolerance, true: with faultTolerance
+            algorithmParameters.put("indexOfTimeSlotToAplyMinus1MakesWorstCaseAllSlots", planApproach);
 
+            new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+            new WNet(np).checkConsistency();
             new AssessmentBenefitsOfDynamicity().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+            new WNet(np).checkConsistency();
 
             new BillOfMaterialsOptical_v1().executeAlgorithm(np, bomParameters, new HashMap<>());
 
