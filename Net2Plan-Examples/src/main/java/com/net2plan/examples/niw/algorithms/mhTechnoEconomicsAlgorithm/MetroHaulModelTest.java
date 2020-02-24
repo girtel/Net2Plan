@@ -3,6 +3,12 @@ package com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,6 +19,7 @@ import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.net2plan.interfaces.networkDesign.Resource;
 import org.apache.xmlbeans.impl.tool.XSTCTester.TestCase;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -470,19 +477,52 @@ public class MetroHaulModelTest extends TestCase
     {
         final NetPlan np = new NetPlan();
         final Map<String, String> algorithmParameters = InputParameter.getDefaultParameters(new ImporterFromTimBulkFiles_forConfTimData().getParameters());
+        final Map<String, String> bomParameters = InputParameter.getDefaultParameters(new BillOfMaterialsOptical_v1().getParameters());
 
-        algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_DenseUrbanMetro_M-H_D2.3.xlsx");
-//        algorithmParameters.put("excelFilePath", "resources/excelFiles/Traffic_Small_M-H_D2.3.xlsx");
-        algorithmParameters.put("opticalSwiInputParameter","option2");   // Option 1: All Roadm, Option2: with D&W Filterless
-        algorithmParameters.put("initialIndex","-1"); // -1: Static planning, 0: Dynamic planning
-        algorithmParameters.put("yearDataForAllTrafficTypes","2025"); // 2019 2022 2025
-        algorithmParameters.put("addFaultToleranceToMcenBBFailureAndWdmDuctFailureIfPossible","true"); // false: Without failure tolerance, true: with faultTolerance
+        final String excelFile = "Traffic_DenseUrbanMetro_M-H_D2.3";
+        final String nodeOption = "option2";
+        final String year = "2025";
+        final Boolean faultTolerance_boolean = true;
+        String faultTolerance = "";
+
+        if (faultTolerance_boolean) faultTolerance = "faultTol";
+        else faultTolerance = "noFaultTol";
+
+        final String planApproach = "-1";
+        String dynamicStatic = "";
+        if (planApproach.equalsIgnoreCase("-1")) dynamicStatic = "static";
+        else dynamicStatic = "dynamic";
+
+        final String fileString= "resources/outputs/" + excelFile + "/" + faultTolerance + "/" + year + "/" + nodeOption + "/" + dynamicStatic + "/out_scenario.n2p" ;
+
+        System.out.println(fileString);
+
+        Path path = Paths.get(fileString);
+
+        if (!Files.exists(path)) {
+
+            System.out.println("here");
+
+            algorithmParameters.put("excelFilePath", "resources/excelFiles/"+excelFile+".xlsx");
+            algorithmParameters.put("opticalSwiInputParameter",nodeOption);   // Option 1: All Roadm, Option2: with D&W Filterless
+            algorithmParameters.put("initialIndex",planApproach); // -1: Static planning, 0: Dynamic planning
+            algorithmParameters.put("yearDataForAllTrafficTypes",year); // 2019 2022 2025
+            algorithmParameters.put("addFaultToleranceToMcenBBFailureAndWdmDuctFailureIfPossible",faultTolerance_boolean.toString()); // false: Without failure tolerance, true: with faultTolerance
+
+            new AssessmentBenefitsOfDynamicity().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+
+            new BillOfMaterialsOptical_v1().executeAlgorithm(np, bomParameters, new HashMap<>());
+
+        }
+        else
+        {
+            final NetPlan np2 = new NetPlan(new File(fileString));
+            new BillOfMaterialsOptical_v1().executeAlgorithm(np2, bomParameters, new HashMap<>());
+        }
 
 
-        new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
-        new AssessmentBenefitsOfDynamicity().executeAlgorithm(np, algorithmParameters, new HashMap<>());
 
-        new BillOfMaterialsOptical_v1().executeAlgorithm(np, algorithmParameters, new HashMap<>());
+
 
     }
 
