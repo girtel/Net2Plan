@@ -30,11 +30,11 @@ public class TecnoEc2_costModel
 			);
 	public static List<Pluggables> pluggablesAvailable = Arrays.asList(
 			new Pluggables("10G SFP+ copper", 10),
-			new Pluggables("40G QSFP copper", 40),
-			new Pluggables("100G QSFP copper", 100),
-			new Pluggables("10G SFP+ optical", 10),
-			new Pluggables("40G QSFP optical", 40),
-			new Pluggables("100G QSFP optical", 100)
+			new Pluggables("25G QSFP copper", 25),
+			new Pluggables("100G QSFP copper", 100)
+//			new Pluggables("10G SFP+ optical", 10),
+//			new Pluggables("40G QSFP optical", 40),
+//			new Pluggables("100G QSFP optical", 100)
 	//		new Pluggables("100G CFP optical", 2500 , 0.0 , 100)
 			);
 	public static SortedMap<String , OtherElements> otherElementsAvailable = new TreeMap <> ();
@@ -62,6 +62,7 @@ public class TecnoEc2_costModel
 	public static List<LineCards> lineCardsAvailable = Arrays.asList(
 			new LineCards("A9K-8X100GE-SE", 8, 100.0),
 //			new LineCards("A9K-1X100GE-SE", 240000.0 , 0.0 , 1, 100.0),
+            new LineCards("Invented 24x25G", 24, 25.0),
 			new LineCards("A9K-48X10GE-1G-SE", 48, 10.0)
 //			new LineCards("Invented40G", 350000.0 , 0.0 , 12, 40.0)
 			);

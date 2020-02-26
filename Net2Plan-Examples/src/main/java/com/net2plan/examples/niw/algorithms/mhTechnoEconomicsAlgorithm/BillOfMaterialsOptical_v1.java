@@ -38,13 +38,14 @@ import com.net2plan.niw.WVnfInstance;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
+import org.junit.Assert;
 import sun.plugin.javascript.navig4.Layer;
 
 
 public class BillOfMaterialsOptical_v1 implements IAlgorithm
 {
 	private InputParameter trafficAcceptableByAServerGbps = new InputParameter("trafficAcceptableByAServerGbps", (double) 40.0, "Description", 0, true, Double.MAX_VALUE, true);
-	private InputParameter maximumUtilizationOfAccessPorts = new InputParameter("maximumUtilizationOfAccessPorts", (double)  0.5, "Description", 0, true, 1.0, true);
+	private InputParameter maximumUtilizationOfAccessPorts = new InputParameter("maximumUtilizationOfAccessPorts", (double)  0.8, "Description", 0, true, 1.0, true);
 
 	private enum LAYERTYPE { OPTICALLINESIDE , OPTICALTRANSPONDERSIDE , IT, IP};
     private enum OPTICAL_IT_IP_ELEMENTS
@@ -67,7 +68,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         l2SWITCH_NEXUS_93364(LAYERTYPE.IP , 10 , 429),
 
         PLUGGABLE_10G_COPPER(LAYERTYPE.IP , 0.01 , 0 ),
-        PLUGGABLE_40G_COPPER(LAYERTYPE.IP , 0.02 , 0 ),
+        PLUGGABLE_25G_COPPER(LAYERTYPE.IP , 0.02 , 0 ),
         PLUGGABLE_100G_COPPER(LAYERTYPE.IP , 0.04 , 0 ),
 //        PLUGGABLE_10G_GREY(LAYERTYPE.IP , 0.016 , 0 ),
 //        PLUGGABLE_40G_GREY(LAYERTYPE.IP , 0.05 , 0 ),
@@ -78,6 +79,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         ROUTER_ASR_9922(LAYERTYPE.IP , 18.4 , 3000 ),
 
         LINE_CARD_48x10G(LAYERTYPE.IP , 64 , 810),
+        LINE_CARD_24x25G(LAYERTYPE.IP , 64 , 810),
         LINE_CARD_8X100G(LAYERTYPE.IP , 98 , 1100),
 
         // OPTICAL
@@ -86,7 +88,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
     	SPLITTER1X2 (LAYERTYPE.OPTICALLINESIDE , 0.004 , 0),
     	SPLITTER1X4 (LAYERTYPE.OPTICALLINESIDE , 0.01 , 0),
     	SPLITTER1X8 (LAYERTYPE.OPTICALLINESIDE , 0.02 , 0),
-    	SPLITTER1XMORETHAN8 (LAYERTYPE.OPTICALLINESIDE , 0.4 , 0),
+    	SPLITTER1XMORETHAN8 (LAYERTYPE.OPTICALLINESIDE , 0.04 , 0),
     	EDFADOUBLEBOOSTERANDPREAMPL (LAYERTYPE.OPTICALLINESIDE , 0.6 , 27),
     	WAVELENGTHBLOCKER (LAYERTYPE.OPTICALLINESIDE , 0.2 , 7.2),
     	WSS_FIXED_1X4 (LAYERTYPE.OPTICALLINESIDE , 1.1 , 30),
@@ -214,16 +216,21 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 		}
 		
 		/* Add the transponders */
+        int numTransponders25G = 0;
+        int numTransponders100G = 0;
 		for (WLightpath lp : wNet.getLightpaths())
 		{
-			if (lp.getLightpathRequest().getLineRateGbps() == 25.0)
-				increase (bomOptical_n.get(lp.getA()) , OPTICAL_IT_IP_ELEMENTS.TRANSPONDERBIDI_25G , 1.0);
-			else if (lp.getLightpathRequest().getLineRateGbps() == 100.0)
-				increase (bomOptical_n.get(lp.getA()) , OPTICAL_IT_IP_ELEMENTS.TRANSPONDERBIDI_100G , 1.0);
+			if (lp.getLightpathRequest().getLineRateGbps() == 25.0) {
+                increase(bomOptical_n.get(lp.getA()), OPTICAL_IT_IP_ELEMENTS.TRANSPONDERBIDI_25G, 1.0);
+                numTransponders25G++;
+            }
+			else if (lp.getLightpathRequest().getLineRateGbps() == 100.0){
+                increase (bomOptical_n.get(lp.getA()) , OPTICAL_IT_IP_ELEMENTS.TRANSPONDERBIDI_100G , 1.0);
+                numTransponders100G++;
+            }
 			else throw new Net2PlanException ("Unkonwn transponder line rate");
 		}
-			
-		
+
 		/* IT BOM */
 		if (wNet.getServiceChains().stream().anyMatch(sc->sc.getCurrentExpansionFactorApplied().stream().anyMatch(sf->sf != 1.0))) throw new Net2PlanException ("Some expansion factors are not 1.0");
 		for (WNode n : wNet.getNodes())
@@ -238,39 +245,46 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 					trafficToOrFromTheServersGbps += inTRafficThisSc;
 				}
 			}
-			increase (bomOptical_n.get(n) , OPTICAL_IT_IP_ELEMENTS.ITSERVER , trafficToOrFromTheServersGbps / trafficAcceptableByAServerGbps.getDouble());
+			increase (bomOptical_n.get(n) , OPTICAL_IT_IP_ELEMENTS.ITSERVER , Math.ceil(trafficToOrFromTheServersGbps / trafficAcceptableByAServerGbps.getDouble()));
 		}
 		
 		/* IP Scenario 1 */
+        int numTotalPorts25G = 0;
+        int numTotalPorts100G = 0;
+
 		if (wNet.getLightpathRequests().stream().anyMatch(lpr->lpr.getLineRateGbps() > 100.0)) throw new Net2PlanException ("Muxponders are needed for transponders of more than 100G");
 		for (WNode n : wNet.getNodes())
 		{
 			/* 10G ports coming from the access: OLTs, mobile, business, residential... */
-			final double trafGeneratedInTheNodeGbps =  n.getNe().getIngressCarriedTraffic(wNet.getIpLayer().get().getNe());
-			final double trafFinishedInTheNodeGbps =  n.getNe().getEgressCarriedTraffic(wNet.getIpLayer().get().getNe());
+			final double trafGeneratedInTheNodeGbps =  n.getAddedLigtpaths().stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
+			final double trafFinishedInTheNodeGbps =  n.getDroppedLigtpaths().stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
 			final double accessTrafficInTheNodesGbps = Math.max(trafGeneratedInTheNodeGbps, trafFinishedInTheNodeGbps);
 			int num10GPortsAccessPlus10GLightpats = (int) Math.ceil(accessTrafficInTheNodesGbps / (10.0 * maximumUtilizationOfAccessPorts.getDouble()));
 
-			/* 40G ports for the 25G transponders */
+			/* 25G and 100G ports for the 25G and 100G transponders */
 			num10GPortsAccessPlus10GLightpats += (int) n.getOutgoingLigtpaths().stream().
 					filter(lp->lp.getLightpathRequest().getLineRateGbps() <= 10.0).count ();
-//			final int num40GPortsTransponders = (int) n.getOutgoingLigtpaths().stream().
-//					filter(lp->lp.getLightpathRequest().getLineRateGbps() > 10.0 && lp.getLightpathRequest().getLineRateGbps() <= 40.0).count ();
+			final int num25GPortsTransponders = (int) n.getOutgoingLigtpaths().stream().
+					filter(lp->lp.getLightpathRequest().getLineRateGbps() > 10.0 && lp.getLightpathRequest().getLineRateGbps() <= 25.0).count ();
 			final int num100GPortsTransponders = (int) n.getOutgoingLigtpaths().stream().
-					filter(lp->lp.getLightpathRequest().getLineRateGbps() > 10.0 && lp.getLightpathRequest().getLineRateGbps() <= 100.0).count ();
+					filter(lp->lp.getLightpathRequest().getLineRateGbps() > 25.0 && lp.getLightpathRequest().getLineRateGbps() <= 100.0).count ();
+
+			numTotalPorts25G += num25GPortsTransponders;
+			numTotalPorts100G += num100GPortsTransponders;
 
 			/* Compute the number of line cards */
 			final LineCards lc10G = TecnoEc2_costModel.lineCardsAvailable.stream().filter(lc->lc.getPortRateGbps() == 10.0).findFirst().get();
-//			final LineCards lc40G = TecnoEc2_costModel.lineCardsAvailable.stream().filter(lc->lc.getPortRateGbps() == 40.0).sorted((e1,e2)->Double.compare(e1.getPriceDollars() , e2.getPriceDollars())).findFirst().get();
+			final LineCards lc25G = TecnoEc2_costModel.lineCardsAvailable.stream().filter(lc->lc.getPortRateGbps() == 25.0).findFirst().get();
 			final LineCards lc100G = TecnoEc2_costModel.lineCardsAvailable.stream().filter(lc->lc.getPortRateGbps() == 100.0).findFirst().get();
 			final int numLc10G = (int) Math.ceil(num10GPortsAccessPlus10GLightpats / (double) lc10G.getNumPorts());
-//			final int numLc40G = (int) Math.ceil(num40GPortsTransponders / lc40G.getNumPorts());
+			final int numLc25G = (int) Math.ceil(num25GPortsTransponders / (double) lc25G.getNumPorts());
 			final int numLc100G = (int) Math.ceil(num100GPortsTransponders / (double) lc100G.getNumPorts());
-//			final int totalNumLc = numLc10G + numLc40G + numLc100G;
-            final int totalNumLc = numLc10G + numLc100G;
+			final int totalNumLc = numLc10G + numLc25G + numLc100G;
+//            final int totalNumLc = numLc10G + numLc100G;
 
-			// Increase the number of Line cards (10G, 40G and 100G) needed in this node
+			// Increase the number of Line cards (10G, 25G and 100G) needed in this node
             increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.LINE_CARD_48x10G, (double) numLc10G);
+            increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.LINE_CARD_24x25G, (double) numLc25G);
             increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.LINE_CARD_8X100G, (double) numLc100G);
 
 			/* Choose the best architecture */
@@ -314,10 +328,10 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 
             /* Calculate the number of pluggable devices in this node */
 			final Pluggables plug10G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 10.0).findFirst().get();
-//			final Pluggables plug40G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 40.0).findFirst().get();
+			final Pluggables plug25G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 25.0).findFirst().get();
 			final Pluggables plug100G = TecnoEc2_costModel.pluggablesAvailable.stream().filter(lc->lc.getLineRateGbps() == 100.0).findFirst().get();
 			final int numPluggables10G = num10GPortsAccessPlus10GLightpats;
-//			final int numPluggables40G = num40GPortsTransponders;
+			final int numPluggables25G = num25GPortsTransponders;
 			final int numPluggables100G = num100GPortsTransponders + (bestNumChassis == 1? 0 : bestNumChassis);
 
 			// Increase the number of pluggables (10G, 40G, 100G) in this node
@@ -328,8 +342,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 //                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_10G_GREY, (double) numPluggables10G);
             else throw new Net2PlanException("Wrong pluggable");
 
-//            if (plug40G.getName().equalsIgnoreCase("40G QSFP copper"))
-//                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_40G_COPPER, (double) numPluggables40G);
+            if (plug25G.getName().equalsIgnoreCase("25G QSFP copper"))
+                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_25G_COPPER, (double) numPluggables25G);
 //            else if(plug40G.getName().equalsIgnoreCase("40G QSFP optical"))
 //                increase(bomOptical_n.get(n), OPTICAL_IT_IP_ELEMENTS.PLUGGABLE_40G_GREY, (double) numPluggables40G);
 //            else throw new Net2PlanException("Wrong pluggable");
@@ -342,6 +356,9 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 
 		}
 
+        Assert.assertEquals(numTotalPorts25G, numTransponders25G);
+		Assert.assertEquals(numTotalPorts100G,numTransponders100G);
+
 		/************************************************************************************************/
 		// Separate per equipment in line = everything but transponders vs transponders
 		// Separate cost between AMENs / MCENs / line amplifiers. Energy consumption differences?
@@ -352,7 +369,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         //  2. Create a new class to export the corresponding metrics
 
         showMetrics(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
-        showBOMstatus(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
+//        showBOMstatus(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
 
 		return "Ok";
 	}
@@ -486,7 +503,9 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         {
             Set<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> thisNode = bomOptical_n.get(node).entrySet();
 
-            System.out.println("* Node ID: " + node.getNe().getIndex());
+            System.out.println(" ");
+            System.out.println("* -------------> Node ID: " + node.getNe().getIndex() + " Type: " + node.getType());
+
 
             for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : thisNode)
             {
