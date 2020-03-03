@@ -480,8 +480,8 @@ public class MetroHaulModelTest extends TestCase
         final Map<String, String> capacityParameters = InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters());
         final Map<String, String> bomParameters = InputParameter.getDefaultParameters(new BillOfMaterialsOptical_v1().getParameters());
 
-        final String excelFile = "Traffic_DenseUrbanMetro_M-H_D2.3";
-        final String nodeOption = "option1";
+        final String excelFile = "Traffic_Medium_M-H_D2.3";
+        final String nodeOption = "option2";
         final String year = "2025";
 
         final Boolean faultTolerance_boolean = true;

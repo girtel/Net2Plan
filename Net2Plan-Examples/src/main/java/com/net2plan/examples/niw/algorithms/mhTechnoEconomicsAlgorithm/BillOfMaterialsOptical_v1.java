@@ -293,16 +293,14 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 			double bestCost = Double.MAX_VALUE;
 			for (RouterChassis rc : TecnoEc2_costModel.routerChassisAvailable)
 			{
-			    int numChassis;
-				if (totalNumLc <= rc.getNumLineCards())
-					numChassis = 1; 
-				else if (totalNumLc <= 2 * (rc.getNumLineCards() - 1))
-					numChassis = 2;
-                else if (totalNumLc <= 3 * (rc.getNumLineCards() - 1))
-                    numChassis = 3;
-                else if (totalNumLc <= 4 * (rc.getNumLineCards() - 1))
-                    numChassis = 4;
-				else continue;
+			    int numChassis = 0;
+			    for(int numChas = 1; numChas < 20; numChas++) {
+                    if (totalNumLc <= rc.getNumLineCards())
+                        numChassis = numChas;
+                    else if (totalNumLc <= numChas * (rc.getNumLineCards() - 1))
+                        numChassis = numChas;
+                    else continue;
+                }
 				final int numExtraLcs = numChassis == 1? 0 : numChassis;
 
 				double costRouter = Arrays.stream(OPTICAL_IT_IP_ELEMENTS.values()).filter(v->v.name().matches("(.*)"+rc.getName().split(" ")[1]+"(.*)")).findFirst().get().cost;
