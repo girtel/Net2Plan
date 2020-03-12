@@ -10,7 +10,7 @@
 Net2Plan is a Java developed tool for the planning, optimization and evaluation of communication networks.
 
 For further information, please feel free to follow the next web pages:
-* The [Net2Plan website](www.net2plan.com).
+* The [Net2Plan website](http://net2plan.com).
 * The [Net2Plan user's guide](http://net2plan.com/documentation/current/help/usersGuide.pdf).
 * The [Net2Plan API Javadoc](http://net2plan.com/documentation/current/javadoc/api/index.html).
 
