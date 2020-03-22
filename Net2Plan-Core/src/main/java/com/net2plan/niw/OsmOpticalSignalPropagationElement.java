@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.net2plan.utils.Pair;
 
-public class OsmOpticalSignalPropagationElement implements Comparator<OsmOpticalSignalPropagationElement>
+public class OsmOpticalSignalPropagationElement implements Comparable<OsmOpticalSignalPropagationElement> , Comparator<OsmOpticalSignalPropagationElement>
 {
 	private WFiber fiber = null;
 	private Pair<WNode,Integer> dirlessAddModule = null, dirlessDropModule = null;
@@ -75,6 +75,7 @@ public class OsmOpticalSignalPropagationElement implements Comparator<OsmOptical
 			return false;
 		return true;
 	}
+
 	@Override
 	public int compare(OsmOpticalSignalPropagationElement o1, OsmOpticalSignalPropagationElement o2) 
 	{
@@ -108,6 +109,11 @@ public class OsmOpticalSignalPropagationElement implements Comparator<OsmOptical
 		fiberPath.forEach(f->res.add(OsmOpticalSignalPropagationElement.asFiber(f)));
 		res.add(OsmOpticalSignalPropagationElement.asDropDirful(fiberPath.get(fiberPath.size()-1)));
 		return res;
+	}
+	@Override
+	public int compareTo(OsmOpticalSignalPropagationElement other) 
+	{
+		return this.compare(this, other);
 	}
 
 }
