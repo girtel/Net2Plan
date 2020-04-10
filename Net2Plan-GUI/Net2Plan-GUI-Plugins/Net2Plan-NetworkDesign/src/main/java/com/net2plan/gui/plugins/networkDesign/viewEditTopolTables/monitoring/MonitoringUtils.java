@@ -209,7 +209,8 @@ public class MonitoringUtils
                     		for (Link link : np.getLinks(layer))
                     			link.getMonitoredOrForecastedCarriedTraffic().addValue(date, link.getCarriedTraffic());
                         }
-
+                		np.setVectorDemandOfferedTraffic(current_hd, layer);
+                		np.setVectorMulticastDemandOfferedTraffic(current_hmd, layer);
                     }
             );
         } , (a,b)->true, null);
@@ -407,7 +408,7 @@ public class MonitoringUtils
         final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
         final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
         if (!isDemandTable && !isMDemandTable) throw new RuntimeException ();
-        return new AjtRcMenu("Set offered traffic as forecasted traffic for selected elements", e->
+        return new AjtRcMenu("[Forecast->Current] Assign to the offered traffic the existing value for forecasted traffic, for selected elements", e->
         {
         	final Date date = table.getTableNetworkLayer().getNetPlan().getCurrentDate();
         	if (isDemandTable)
@@ -430,7 +431,7 @@ public class MonitoringUtils
         final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
         final boolean isLinkTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.LINKS;
         if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
-        return new AjtRcMenu("Set forecasted traffic as constant = current traffic in selected elements", e->
+        return new AjtRcMenu("[Current->Forecast]  Set forecasted traffic as constant = current traffic in selected elements", e->
         {
         	final Date date = table.getTableNetworkLayer().getNetPlan().getCurrentDate();
         	if (isDemandTable)
@@ -764,7 +765,7 @@ public class MonitoringUtils
     public static <T extends NetworkElement>  AjtRcMenu getMenuForecastDemandTrafficUsingGravityModel (AdvancedJTable_networkElement<T> table)
     {
 
-        return new AjtRcMenu("Forecast demands traffic using gravity model...", null , (a,b)->true, Arrays.asList(
+        return new AjtRcMenu("Using gravity model", null , (a,b)->true, Arrays.asList(
                 new AjtRcMenu("from monitored traffic", e->
                 {
                     final NetworkLayer layer = table.getTableNetworkLayer();
@@ -856,7 +857,7 @@ public class MonitoringUtils
         datesWithDemandMDemandOrLinkInfo.addAll(datesWihtAtLeastOneLinkMonitInfo);
         datesWithDemandMDemandOrLinkInfo.addAll(datesWihtAtLeastOneDemandMonitInfo);
         datesWithDemandMDemandOrLinkInfo.addAll(datesWihtAtLeastOneMDemandMonitInfo);
-        return new AjtRcMenu("Forecast demands traffic using regression from link monitor info", e->
+        return new AjtRcMenu("Using regression from link monitor info", e->
         {
             if (datesWithDemandMDemandOrLinkInfo.isEmpty()) throw new Net2PlanException ("No monitoring information available");
             final List<String> optionsInputDemandMonit = Arrays.asList(
@@ -945,7 +946,7 @@ public class MonitoringUtils
         final boolean isDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.DEMANDS;
         final boolean isMDemandTable =  table.getAjType() == GUINetworkDesignConstants.AJTableType.MULTICAST_DEMANDS;
         if (!isLinkTable && !isDemandTable && !isMDemandTable) throw new RuntimeException ();
-        return new AjtRcMenu("Forecast demands traffic using regression from link forecast info", e->
+        return new AjtRcMenu("Using regression from link forecast info", e->
         {
             final List<String> optionsInputDemandMonit = Arrays.asList(
                     "No input demand information" ,

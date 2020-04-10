@@ -177,9 +177,8 @@ public class WhatIfAnalysisPane extends JPanel implements ActionListener
             statelessSimulatorPanel.setEnabled(activePanel);
         }
         
-        if (callback.getVisualizationState().isWhatIfAnalysisActive())
-        	this.whatIfSomethingModified ();
-        
+        callback.setDesignAndCallWhatIfSomethingModified(callback.getDesign());
+        callback.updateVisualizationAfterChanges();
     }
 
 }

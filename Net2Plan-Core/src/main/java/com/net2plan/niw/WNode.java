@@ -852,7 +852,7 @@ public class WNode extends WAbstractNetworkElement
 			return arc;
 		} catch (Exception e) 
 		{
-			e.printStackTrace();
+//			e.printStackTrace();
 			final OadmArchitecture_generic res = new OadmArchitecture_generic();
 			this.getNe().setAttribute(ATTNAMECOMMONPREFIX + ATTNAME_OPTICALSWITCHTYPE, OadmArchitecture_generic.class.getName());
 			res.initialize(this);
