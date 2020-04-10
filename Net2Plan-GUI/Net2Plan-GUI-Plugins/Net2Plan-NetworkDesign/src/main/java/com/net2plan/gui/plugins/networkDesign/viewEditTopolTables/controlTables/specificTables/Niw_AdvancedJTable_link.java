@@ -575,15 +575,19 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                     MonitoringUtils.getMenuAddLinkMonitoringInfoSimulatingTrafficVariations (this),
                     MonitoringUtils.getMenuPercentileFilterMonitSamples (this) , 
                     MonitoringUtils.getMenuCreatePredictorTraffic (this),
-                    MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
-                    MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
-                    MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this),
-                    new AjtRcMenu("Remove traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
-                    new AjtRcMenu("Remove monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()) , (a,b)->b>0, null),
-                    new AjtRcMenu("Remove monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
-                            MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
-                            MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
-                    		))
+	                new AjtRcMenu("Estimate IP demand traffic", null , (a,b)->true, Arrays.asList(
+	    	                MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel (this),
+	    	                MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo (this),
+	    	                MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this)
+	                		)),    	                
+                    new AjtRcMenu("Remove", null , (a,b)->b>0, Arrays.asList(
+                            new AjtRcMenu("Traffic predictors of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).removeTrafficPredictor()) , (a,b)->b>0, null),
+                            new AjtRcMenu("Monitored/forecast stored information of selected elements", e->getSelectedElements().forEach(dd->((Link)dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()) , (a,b)->b>0, null),
+                            new AjtRcMenu("Monitored/forecast stored information...", null , (a,b)->b>0, Arrays.asList(
+                                    MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , true) ,
+                                    MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate (this , false)
+                            		))
+                    		))                    
             		)));
             
     	} // if ipLayer

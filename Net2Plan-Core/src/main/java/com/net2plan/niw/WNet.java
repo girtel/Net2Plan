@@ -1155,7 +1155,8 @@ public class WNet extends WAbstractNetworkElement
     	final int numIpLayers = (int) getNe().getNetworkLayers().stream().filter(e->isIp.apply(e)).count ();
     	final int numWdmLayers = (int) getNe().getNetworkLayers().stream().filter(e->isWdm.apply(e)).count ();
     	if (numIpLayers > 1 || numWdmLayers > 1) throw new Net2PlanException ();
-    	if (numIpLayers + numWdmLayers != getNe().getNumberOfLayers()) throw new Net2PlanException ("Num IP layers: " + numIpLayers + ", num WDM layers: " + numWdmLayers + ", num layers: " + getNe().getNumberOfLayers());
+    	if (numIpLayers + numWdmLayers != getNe().getNumberOfLayers()) 
+    		throw new Net2PlanException ("Num IP layers: " + numIpLayers + ", num WDM layers: " + numWdmLayers + ", num layers: " + getNe().getNumberOfLayers());
 
     	getNodes().forEach(e->e.checkConsistency());
 		getFibers().forEach(e->e.checkConsistency());
