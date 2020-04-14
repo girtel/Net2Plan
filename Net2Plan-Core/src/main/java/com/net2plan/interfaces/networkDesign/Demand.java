@@ -987,6 +987,8 @@ public class Demand extends NetworkElement implements IMonitorizableElement
 			}
 		}
 		layer.cache_nodePairDemandsThisLayer.get(Pair.of(ingressNode, egressNode)).remove(this);
+		if (layer.cache_nodePairDemandsThisLayer.get(Pair.of(ingressNode, egressNode)).isEmpty())
+			layer.cache_nodePairDemandsThisLayer.remove(Pair.of(ingressNode, egressNode));
 
         for (String tag : tags) netPlan.cache_taggedElements.get(tag).remove(this);
 		netPlan.cache_id2DemandMap.remove(id);

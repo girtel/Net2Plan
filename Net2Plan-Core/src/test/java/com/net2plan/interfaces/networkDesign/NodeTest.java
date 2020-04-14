@@ -19,12 +19,12 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.TreeSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -32,8 +32,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.net2plan.utils.Constants.RoutingType;
 import com.google.common.collect.Sets;
+import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
 
 public class NodeTest 
@@ -615,4 +615,20 @@ public class NodeTest
 		assertEquals (n3.getForwardingRules(d13) , Collections.emptyMap());
 	}
 
+	@Test
+	public void removeAllNodes ()
+	{
+		np.removeAllNodes();
+		np.checkCachesConsistency();
+		final NetPlan np1 = np.copy();
+		np1.checkCachesConsistency();
+		np.checkCachesConsistency();
+//		assert np.isDeepCopy(np1);
+//		assert np1.isDeepCopy(np);
+		
+		final NetPlan np2 = new NetPlan();
+		np2.copyFrom(np1);
+		
+	}
+	
 }

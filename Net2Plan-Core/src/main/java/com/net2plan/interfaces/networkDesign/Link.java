@@ -877,6 +877,8 @@ public class Link extends NetworkElement implements IMonitorizableElement
 		originNode.cache_nodeOutgoingLinks.remove (this);
 		destinationNode.cache_nodeIncomingLinks.remove (this);
 		layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode)).remove(this);
+		if (layer.cache_nodePairLinksThisLayer.get(Pair.of(originNode, destinationNode)).isEmpty()) 
+			layer.cache_nodePairLinksThisLayer.remove(Pair.of(originNode, destinationNode));
 		
 		for (SharedRiskGroup srg : this.cache_nonDynamicSrgs) srg.linksIfNonDynamic.remove(this);
 		for (MulticastTree tree : new LinkedList<MulticastTree> (cache_traversingTrees)) tree.remove ();
