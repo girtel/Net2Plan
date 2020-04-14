@@ -431,7 +431,7 @@ public class Offline_ipOverWdm_routingSpectrumAndModulationAssignmentILPNotGroom
 
 		return "Ok!";
 	}
-
+ 
 	private static double getLengthInKm (Collection<Link> r) { double res = 0; for (Link e : r) res += e.getLengthInKm(); return res; }
 	
 	@Override
