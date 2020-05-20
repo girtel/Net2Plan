@@ -65,8 +65,10 @@ import cern.colt.matrix.tdouble.DoubleMatrix2D;
 public class ReportNiw_availability implements IReport
 {
 	private InputParameter provisioningAlgorithm_algorithm = new InputParameter ("provisioningAlgorithm_algorithm" , "#algorithm#" , "Algorithm to process failure events, in the form of an IAlgorithm");
-	private InputParameter analyzeDoubleFailures = new InputParameter ("analyzeDoubleFailures" , true , "Indicates whether double failures are studied");
-	private InputParameter capacityAnalysys_updateLinkCapacitiesInDesign = new InputParameter ("capacityAnalysys_updateLinkCapacitiesInDesign" , false , "If true, the link capacities are updated with the worst case occupied capacity in the links, removing any previous capacities");
+	private InputParameter analyzeDoubleFailures = new InputParameter ("analyzeDoubleFailures" , true , "Indicates whether double SRG failures are studied");
+//	private InputParameter capacityAnalysys_updateLinkCapacitiesInDesign = new InputParameter ("capacityAnalysys_updateLinkCapacitiesInDesign" , false , "If true, the link capacities are updated with the worst case occupied capacity in the links, removing any previous capacities");
+	private InputParameter linkCapacityPlanning_maximumLinkUtilization = new InputParameter ("linkCapacityPlanning_maximumLinkUtilization" , 0.9 , "For dimensioning the link capacities: the required capacity of each link is computed as the minimum multiple of the capacity module, that makes that the link utilization is not above this limit an ANY FAILURE OR NON-FAILURE SITUATION, in the two link directions (is bidirectional). This means that in bidirectional links, the link capacity is the same in both directions" , 0 , false , Double.MAX_VALUE , true);
+	private InputParameter linkCapacityPlanning_capacityModuleAndCostGbps = new InputParameter ("linkCapacityPlanning_bidirectionalCapacityModuleGbps" , 10.0 , "For dimensioning the link capacities: the required capacity of each link is computed as the minimum multiple of the capacity module, that makes that the link utilization is not above this limit an ANY FAILURE OR NON-FAILURE SITUATION, in the two link directions (is bidirectional). This means that in bidirectional links, the link capacity is the same in both directions" , 0 , false , Double.MAX_VALUE , true);
 	
 	private Map<Long , PerDemandInfo> info_d = new HashMap<> ();
 	private Map<Long , PerDemandInfo> info_md = new HashMap<> ();
@@ -148,13 +150,13 @@ public class ReportNiw_availability implements IReport
 		final String report = printReport(netPlan , reportParameters);
 
 		/* At the end, optionally update the link capacities */
-		if (capacityAnalysys_updateLinkCapacitiesInDesign.getBoolean())
-		{
-			for (NetworkLayer layer : netPlan.getNetworkLayers())
-				for (Link e : netPlan.getLinks (layer))
-					if (!e.isCoupled())
-						e.setCapacity(info_e.get(e.getId()).getWcOccupiedCapacityGbps());
-		}			
+//		if (capacityAnalysys_updateLinkCapacitiesInDesign.getBoolean())
+//		{
+//			for (NetworkLayer layer : netPlan.getNetworkLayers())
+//				for (Link e : netPlan.getLinks (layer))
+//					if (!e.isCoupled())
+//						e.setCapacity(info_e.get(e.getId()).getWcOccupiedCapacityGbps());
+//		}			
 		
 		return report;
 	}
@@ -162,7 +164,8 @@ public class ReportNiw_availability implements IReport
 	@Override
 	public String getDescription()
 	{
-		return "This report receives as an input a network design, the network recovery scheme algorithm, and the network risks (SRGs), and estimates the availability of the network (including individual availabilities for each demand), using an enumerative process that also provides an estimation of the estimation error. ";
+		return "This report receives as an input a network design, the network recovery scheme algorithm, and the network risks (SRGs), and estimates the availability of the network (including individual availabilities for each demand), using an enumerative process that also provides an estimation of the estimation error. "
+				+ "Additionally, the capacities of the links are dimensioned so that in any failure state, the link utilization is not above a limit. Link capacities are discrete multiples of a user-defined amount. Additionally, the capacities of bidirectional links is the same in both directions";
 	}
 
 	@Override
@@ -206,7 +209,10 @@ public class ReportNiw_availability implements IReport
 				"0.99*1 + 0.01*0.5 = 99.5%</p>");
 		out.append("<p>In each metric, we provide a pessimistic and optimistic estimation. The pessimistic estimation, considers that in the triple, quadruple etc. " +
 				"failure states, all the traffic is lost. In the optimistic case, we assume that in such cases, all the traffic is carried. </p>");
-		
+
+		out.append("<p>Additionally, the report computes the fault-tolerant capacity requirements in the links: the ones so that the link utilization is never above a user-defined limit in any failure (or non-failure) state. "
+				+ "For this, the fault-tolerant link capacities are restricted to be an integer multiple of a user-defined capacity module, and the same in both directions of bidirectional links.</p>");
+
 		out.append("<p>For more information of this method:</p>");
 		out.append("<p>P. Pavon Mariño, \"Optimization of computer networks. Modeling and algorithms. A hands-on approach\", Wiley 2016</p>");
 		out.append("<h1>Global information</h1>");
@@ -329,16 +335,26 @@ public class ReportNiw_availability implements IReport
 			}			
 			if (np.getNumberOfLinks(layer) != 0)
 			{
+				List<Double> ftCapacities = new ArrayList<> ();
 				out.append("<table border='1'>");
-				final List<String> headers = Arrays.asList("Link" , "Origin node" , "Destination node" , "Capacity",
-						"WC Occupied capacity / involved SRGs" , "WC utilization (0...1)");
+				final List<String> headers = Arrays.asList("Link" , "Origin node" , "Destination node" , "Current capacity",
+						"WC Occupied capacity / involved SRGs" , "WC utilization (0...1)" , "Fault-tolerant capacity");
 				final List<Function<Link , String>> vals_e = Arrays.asList(
 						d->"<td>" + d.getIndex () + "</td>" ,
 						d->"<td>" + d.getOriginNode().getIndex() + "(" + d.getOriginNode().getName() + ")" + "</td>",
 						d->"<td>" + d.getDestinationNode().getIndex() + "(" + d.getDestinationNode().getName() + ")" + "</td>",
 						d->"<td>" + df6(d.getCapacity()) + "</td>",
 						d->printWcAndSrgs(info_e.get(d.getId()).getWcOccupiedCapacityGbps() , info_e.get(d.getId()).getFailureStates_wcOccupiedCapacity() , info_e.get(d.getId()).getWcOccupiedCapacityGbps() + Configuration.precisionFactor > d.getCapacity()),
-						d-> { final double cap = d.getCapacity(); final double traf = info_e.get(d.getId()).getWcOccupiedCapacityGbps(); return "<td>" + df6(cap == 0? (traf == 0? 0 : Double.MAX_VALUE) :  traf/cap) + "</td>"; }
+						d-> { final double cap = d.getCapacity(); final double traf = info_e.get(d.getId()).getWcOccupiedCapacityGbps(); return "<td>" + df6(cap == 0? (traf == 0? 0 : Double.MAX_VALUE) :  traf/cap) + "</td>"; },
+						d-> 
+						{
+							final double wcCap_ab = info_e.get(d.getId()).getWcOccupiedCapacityGbps(); 
+							final double wcCap_ba = d.isBidirectional()? info_e.get(d.getBidirectionalPair().getId()).getWcOccupiedCapacityGbps() : wcCap_ab;
+							final double wcCap = Math.max(wcCap_ab, wcCap_ba) / linkCapacityPlanning_maximumLinkUtilization.getDouble();
+							final double capReq = linkCapacityPlanning_capacityModuleAndCostGbps.getDouble() * Math.ceil(wcCap / linkCapacityPlanning_capacityModuleAndCostGbps.getDouble());
+							ftCapacities.add(capReq);
+							return "<td>" + df6(capReq) + "</td>"; 
+						}
 						);
 				out.append("<tr>"); for (String h : headers) out.append("<th><b>" + h + "</b></th>"); out.append("</tr>"); 
 				for (Link d : np.getLinks (layer))
@@ -350,6 +366,10 @@ public class ReportNiw_availability implements IReport
 					for (Function<Link,String> f : vals_e) out.append(f.apply(d));
 					out.append("</tr>");
 				}
+				out.append("<tr>");
+				for (int cont = 0; cont < vals_e.size() ; cont ++) if (cont != vals_e.size() -1) out.append("<td>--</td>"); else out.append("<td>" + df6(ftCapacities.stream().mapToDouble(e->e).sum()) + "</td>");
+				out.append("</tr>");
+
 				out.append("</table>");
 				out.append("<p></p><p></p>");
 			}			
