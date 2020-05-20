@@ -1356,6 +1356,15 @@ public class WNet extends WAbstractNetworkElement
 	@Override
 	public WTYPE getWType() { return WTYPE.WNet; }
 
+
+	/** Sets all the resources as non-failed
+	 */
+	public void setFailureStateAllUp ()
+	{
+		getNe().setAllNodesFailureState(true);
+		for (NetworkLayer layer : getNe().getNetworkLayers ())
+			getNe().setAllLinksFailureState(true , layer);
+	}
 	
 	
 }
