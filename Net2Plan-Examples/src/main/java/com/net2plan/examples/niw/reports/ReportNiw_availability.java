@@ -66,7 +66,7 @@ public class ReportNiw_availability implements IReport
 {
 	private InputParameter provisioningAlgorithm_algorithm = new InputParameter ("provisioningAlgorithm_algorithm" , "#algorithm#" , "Algorithm to process failure events, in the form of an IAlgorithm");
 	private InputParameter analyzeDoubleFailures = new InputParameter ("analyzeDoubleFailures" , true , "Indicates whether double SRG failures are studied");
-//	private InputParameter capacityAnalysys_updateLinkCapacitiesInDesign = new InputParameter ("capacityAnalysys_updateLinkCapacitiesInDesign" , false , "If true, the link capacities are updated with the worst case occupied capacity in the links, removing any previous capacities");
+	private InputParameter linkCapacityPlanning_updateLinkCapacitiesInDesign = new InputParameter ("linkCapacityPlanning_updateLinkCapacitiesInDesign" , false , "If true, the link capacities are updated with the fault-tolerant link capacities estimated, removing any previous capacity values");
 	private InputParameter linkCapacityPlanning_maximumLinkUtilization = new InputParameter ("linkCapacityPlanning_maximumLinkUtilization" , 0.9 , "For dimensioning the link capacities: the required capacity of each link is computed as the minimum multiple of the capacity module, that makes that the link utilization is not above this limit an ANY FAILURE OR NON-FAILURE SITUATION, in the two link directions (is bidirectional). This means that in bidirectional links, the link capacity is the same in both directions" , 0 , false , Double.MAX_VALUE , true);
 	private InputParameter linkCapacityPlanning_capacityModuleAndCostGbps = new InputParameter ("linkCapacityPlanning_bidirectionalCapacityModuleGbps" , 10.0 , "For dimensioning the link capacities: the required capacity of each link is computed as the minimum multiple of the capacity module, that makes that the link utilization is not above this limit an ANY FAILURE OR NON-FAILURE SITUATION, in the two link directions (is bidirectional). This means that in bidirectional links, the link capacity is the same in both directions" , 0 , false , Double.MAX_VALUE , true);
 	
@@ -150,13 +150,20 @@ public class ReportNiw_availability implements IReport
 		final String report = printReport(netPlan , reportParameters);
 
 		/* At the end, optionally update the link capacities */
-//		if (capacityAnalysys_updateLinkCapacitiesInDesign.getBoolean())
-//		{
-//			for (NetworkLayer layer : netPlan.getNetworkLayers())
-//				for (Link e : netPlan.getLinks (layer))
-//					if (!e.isCoupled())
+		if (linkCapacityPlanning_updateLinkCapacitiesInDesign.getBoolean())
+		{
+			for (NetworkLayer layer : netPlan.getNetworkLayers())
+				for (Link e : netPlan.getLinks (layer))
+					if (!e.isCoupled())
+					{
+						final double wcCap_ab = info_e.get(e.getId()).getWcOccupiedCapacityGbps(); 
+						final double wcCap_ba = e.isBidirectional()? info_e.get(e.getBidirectionalPair().getId()).getWcOccupiedCapacityGbps() : wcCap_ab;
+						final double wcCap = Math.max(wcCap_ab, wcCap_ba) / linkCapacityPlanning_maximumLinkUtilization.getDouble();
+						final double capReq = linkCapacityPlanning_capacityModuleAndCostGbps.getDouble() * Math.ceil(wcCap / linkCapacityPlanning_capacityModuleAndCostGbps.getDouble());
 //						e.setCapacity(info_e.get(e.getId()).getWcOccupiedCapacityGbps());
-//		}			
+						e.setCapacity(capReq);
+					}
+		}			
 		
 		return report;
 	}
