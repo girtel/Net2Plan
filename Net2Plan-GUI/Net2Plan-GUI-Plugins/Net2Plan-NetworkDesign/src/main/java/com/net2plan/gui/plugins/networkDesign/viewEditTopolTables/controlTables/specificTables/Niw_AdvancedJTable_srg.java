@@ -36,6 +36,7 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.niw.WFiber;
+import com.net2plan.niw.WIpLink;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNode;
 import com.net2plan.niw.WSharedRiskGroup;
@@ -61,6 +62,7 @@ public class Niw_AdvancedJTable_srg extends AdvancedJTable_networkElement<Shared
 	final Function<SharedRiskGroup,WSharedRiskGroup> toSrg = d -> (WSharedRiskGroup) wNet.getWElement(d).get();
 
 	res.add(new AjtColumnInfo<SharedRiskGroup>(this , Collection.class, null , "Nodes", "The nodes belonging to this SRG, and thus failing when the SRG occurs", null , d->toSrg.apply(d).getFailingNodes ().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
+	res.add(new AjtColumnInfo<SharedRiskGroup>(this , Collection.class, null , "IP links", "The IP links belonging to this SRG, and thus failing when the SRG occurs", null , d->toSrg.apply(d).getFailingIpLinks().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
 	res.add(new AjtColumnInfo<SharedRiskGroup>(this , Collection.class, null , "Fibers", "The fibers belonging to this SRG, and thus failing when the SRG occurs", null , d->toSrg.apply(d).getFailingFibers ().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.SUMCOLLECTIONCOUNT , null));
     res.add(new AjtColumnInfo<SharedRiskGroup>(this , Double.class, null , "MTTF (hours)" , "The average Mean-Time-To-Fail value measued in hours (the time since the element is repaired until it fails again)", (d,val)->toSrg.apply(d).setMeanTimeToFailInHours((Double) val), d->toSrg.apply(d).getMeanTimeToFailInHours() , AGTYPE.MAXDOUBLE , null));
     res.add(new AjtColumnInfo<SharedRiskGroup>(this , Double.class, null , "MTTR (hours)" , "The average Mean-Time-To-Repair value measued in hours (the time betweem the element fails, and is up again since it is repaired)", (d,val)->toSrg.apply(d).setMeanTimeToRepairInHours((Double) val), d->toSrg.apply(d).getMeanTimeToRepairInHours() , AGTYPE.MAXDOUBLE , null));
@@ -89,6 +91,7 @@ public class Niw_AdvancedJTable_srg extends AdvancedJTable_networkElement<Shared
         {
         	final List<String> models = Arrays.asList(
         			"One SRG per node" , 
+        			"One SRG per IP adjacency (adjacency IP links in both directions fail)" , 
         			"One SRG per unidirectional fiber" , 
         			"One SRG per bidirectional duct");
             DialogBuilder.launch(
@@ -116,10 +119,23 @@ public class Niw_AdvancedJTable_srg extends AdvancedJTable_networkElement<Shared
                     		}
                     		else if (srgModel.equals(models.get(1)))
                     		{
+                    			for (WNode n1 : wNet.getNodes())
+                    				for (WNode n2 : wNet.getNodes())
+                    					if (n1.getId() > n2.getId())
+                    					{
+                    						final SortedSet<WIpLink> ipLinksAbbA = new TreeSet<> ();
+                    						ipLinksAbbA.addAll(wNet.getNodePairIpLinks(n1, n2));
+                    						ipLinksAbbA.addAll(wNet.getNodePairIpLinks(n2, n1));
+                    						if (ipLinksAbbA.isEmpty()) continue;
+                            				wNet.addSharedRiskGroup().setMeanTimeToFailInHours(mttf).setMeanTimeToRepairInHours(mttr).addFailingIpLinks(ipLinksAbbA);
+                    					}
+                    		}
+                    		else if (srgModel.equals(models.get(2)))
+                    		{
                     			for (WFiber n : wNet.getFibers())
                     				wNet.addSharedRiskGroup().setMeanTimeToFailInHours(mttf).setMeanTimeToRepairInHours(mttr).addFailingFiber(n);
                     		}
-                    		else if (srgModel.equals(models.get(2)))
+                    		else if (srgModel.equals(models.get(3)))
                     		{
                     			for (WNode n1 : wNet.getNodes())
                     				for (WNode n2 : wNet.getNodes())
@@ -128,6 +144,7 @@ public class Niw_AdvancedJTable_srg extends AdvancedJTable_networkElement<Shared
                     						final SortedSet<WFiber> fibersAbbA = new TreeSet<> ();
                     						fibersAbbA.addAll(wNet.getNodePairFibers(n1, n2));
                     						fibersAbbA.addAll(wNet.getNodePairFibers(n2, n1));
+                    						if (fibersAbbA.isEmpty()) continue;
                             				wNet.addSharedRiskGroup().setMeanTimeToFailInHours(mttf).setMeanTimeToRepairInHours(mttr).addFailingFibers(fibersAbbA);
                     					}
                     		}

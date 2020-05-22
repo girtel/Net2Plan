@@ -7,6 +7,7 @@
 package com.net2plan.niw;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.SortedSet;
@@ -51,6 +52,15 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 		return getNe().getLinks(getNet().getWdmNpLayer().get()).stream().map(n->new WFiber(n)).collect(Collectors.toCollection(TreeSet::new));
 	}
 
+	/** Returns the IP links associated to this SRG
+	 * @return see above
+	 */
+	public SortedSet<WIpLink> getFailingIpLinks () 
+	{
+		if (!getNet().isWithIpLayer()) return new TreeSet<> ();
+		return getNe().getLinks(getNet().getIpNpLayer().get()).stream().map(n->new WIpLink(n)).collect(Collectors.toCollection(TreeSet::new));
+	}
+
 	/** Adds a failing node to the SRG 
 	 * @param node see above
 	 */
@@ -91,6 +101,13 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 		for (WFiber n : new ArrayList<> (getFailingFibers ()))
 			this.removeFailingFiber(n);
 	}
+	/** Removes all the failing IP links in this SRG
+	 */
+	public void removeAllFailingIpLinks ()
+	{
+		for (WIpLink n : new ArrayList<> (getFailingIpLinks ()))
+			this.removeFailingIpLink(n);
+	}
 	
 
 	/** Removes a failing node from the SRG. If the node is not in the SRG, no action is taken 
@@ -117,6 +134,23 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 	{
 		for (WFiber e : fibers) getNe().addLink (e.getNe());
 	}
+
+	/** Adds failing IP links to the SRG 
+	 * @param links see above
+	 */
+	public void addFailingIpLinks (Collection<WIpLink> links)
+	{
+		for (WIpLink e : links) getNe().addLink (e.getNe());
+	}
+
+	/** Adds one failing IP link to the SRG 
+	 * @param link see above
+	 */
+	public void addFailingIpLink (WIpLink link)
+	{
+		addFailingIpLinks(Arrays.asList(link));
+	}
+	
 	
 	/** Removes a failing fiber from the SRG. If it is not in the SRG, no action is taken 
 	 * @param fiber see above
@@ -124,6 +158,14 @@ public class WSharedRiskGroup extends WAbstractNetworkElement
 	public void removeFailingFiber (WFiber fiber)
 	{
 		getNe().removeLink (fiber.getNe());
+	}
+
+	/** Removes a failing IP link from the SRG. If it is not in the SRG, no action is taken 
+	 * @param ipLink see above
+	 */
+	public void removeFailingIpLink (WIpLink ipLink)
+	{
+		getNe().removeLink (ipLink.getNe());
 	}
 
 	/**
