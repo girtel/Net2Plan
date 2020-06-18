@@ -463,6 +463,8 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         System.out.println("IT - Total Consumption (W): " + it_totalConsumption);
         System.out.println("IT - Total cost: " + it_totalCost);
 
+        System.out.println("");
+
         System.out.println("*******  IP Metrics *********");
 
         double ip_totalConsumption = ipMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getFirst()).sum();
