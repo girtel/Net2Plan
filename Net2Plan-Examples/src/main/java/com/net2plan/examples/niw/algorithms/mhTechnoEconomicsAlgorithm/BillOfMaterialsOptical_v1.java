@@ -368,6 +368,7 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 
         showMetrics(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
 //        showBOMstatus(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
+        showBOMElementByElement(wNet.getNodes(),wNet.getFibers(), bomOptical_n,bomOptical_e);
 
 		return "Ok";
 	}
@@ -463,8 +464,6 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         System.out.println("IT - Total Consumption (W): " + it_totalConsumption);
         System.out.println("IT - Total cost: " + it_totalCost);
 
-        System.out.println("");
-
         System.out.println("*******  IP Metrics *********");
 
         double ip_totalConsumption = ipMetrics.entrySet().stream().mapToDouble(entry -> entry.getValue().getFirst()).sum();
@@ -534,13 +533,41 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 
         }
 
-
-
-
-        
-
     }
 
+    public void showBOMElementByElement(List<WNode> nodes, List<WFiber> fibers, Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n,  Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e)
+    {
 
+        System.out.println("----- Print BOM Element by Element -----");
+
+        Map<OPTICAL_IT_IP_ELEMENTS,Double> bomByElement_n = new HashMap();
+
+        for (WNode node : nodes)
+        {
+            Set<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> thisNode = bomOptical_n.get(node).entrySet();
+
+            for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : thisNode)
+            {
+                if (bomByElement_n.containsKey(element.getKey())) bomByElement_n.put(element.getKey(), bomByElement_n.get(element.getKey())+element.getValue());
+                else bomByElement_n.put(element.getKey(), element.getValue());
+            }
+        }
+
+        for (WFiber fiber : fibers)
+        {
+            Set<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> thisFiber = bomOptical_e.get(fiber).entrySet();
+
+            for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : thisFiber)
+            {
+                if (bomByElement_n.containsKey(element.getKey())) bomByElement_n.put(element.getKey(), bomByElement_n.get(element.getKey())+element.getValue());
+                else bomByElement_n.put(element.getKey(), element.getValue());
+            }
+        }
+
+        for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : bomByElement_n.entrySet())
+            System.out.println(element.getKey().name() + ": " + element.getValue());
+
+
+    }
 
 }
