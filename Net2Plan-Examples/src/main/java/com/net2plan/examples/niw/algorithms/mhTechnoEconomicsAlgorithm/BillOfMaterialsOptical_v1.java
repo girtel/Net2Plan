@@ -295,10 +295,14 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
 			{
 			    int numChassis = 0;
 			    for(int numChas = 1; numChas < 20; numChas++) {
-                    if (totalNumLc <= rc.getNumLineCards())
+                    if (totalNumLc <= rc.getNumLineCards()) {
                         numChassis = numChas;
-                    else if (totalNumLc <= numChas * (rc.getNumLineCards() - 1))
+                        break;
+                    }
+                    else if (totalNumLc <= numChas * (rc.getNumLineCards() - 1)) {
                         numChassis = numChas;
+                        break;
+                    }
                     else continue;
                 }
 				final int numExtraLcs = numChassis == 1? 0 : numChassis;
@@ -366,7 +370,49 @@ public class BillOfMaterialsOptical_v1 implements IAlgorithm
         //  1. Using only one method in this class in case the length code is not so long (maybe this one is more appropiate)
         //  2. Create a new class to export the corresponding metrics
 
+        System.out.println("------------ Traffic Metrics --------------");
+
+        System.out.println("WDM - Total carried traffic : " +  wNet.getNe().getVectorRouteCarriedTraffic(wNet.getNe().getNetworkLayer(0)).zSum());
+        System.out.println("IP - Total carried traffic : " +  wNet.getNe().getVectorRouteCarriedTraffic(wNet.getNe().getNetworkLayer(1)).zSum());
+
+        final List<WNode> mcenBbs = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isMcenBb(n)).collect(Collectors.toList());
+
+        double mcenBBTraffic = 0;
+
+        for (WNode node : mcenBbs)
+            mcenBBTraffic += node.getNe().getIngressCarriedTraffic();
+
+        System.out.println("MCENBB - Total carried traffic : " + mcenBBTraffic);
+        System.out.println("MCENBB - Average carried traffic per node : "+ mcenBBTraffic/(double)mcenBbs.size() );
+
+        final List<WNode> mcenNoBBs = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isMcenNotBb(n)).collect(Collectors.toList());
+
+        double mcenNoBBTraffic = 0;
+
+        for (WNode node : mcenNoBBs)
+            mcenNoBBTraffic += node.getNe().getIngressCarriedTraffic(wNet.getNe().getNetworkLayer(1));
+
+        System.out.println("MCEN No BB - Total carried traffic : " + mcenNoBBTraffic);
+        System.out.println("MCEN No BB - Average carried traffic per node : "+ mcenNoBBTraffic/(double)mcenNoBBs.size() );
+
+
+        final List<WNode> amens = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isAmen(n)).collect(Collectors.toList());
+
+        double amenTraffic = 0;
+
+        for (WNode node : amens)
+            amenTraffic += node.getNe().getIngressCarriedTraffic(wNet.getNe().getNetworkLayer(1));
+
+        System.out.println("AMEN - Total carried traffic : " + amenTraffic);
+        System.out.println("AMEN - Average carried traffic per node : "+ amenTraffic/(double)amens.size() );
+
+
+
         showMetrics(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
+
+        System.out.println(" ");
+        System.out.println(" ");
+
 //        showBOMstatus(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
         showBOMElementByElement(wNet.getNodes(),wNet.getFibers(), bomOptical_n,bomOptical_e);
 
