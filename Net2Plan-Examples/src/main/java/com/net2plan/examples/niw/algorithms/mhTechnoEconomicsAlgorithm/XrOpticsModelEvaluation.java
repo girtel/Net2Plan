@@ -29,7 +29,7 @@ public class XrOpticsModelEvaluation extends XSTCTester.TestCase {
         final String nodeOption = "option2";
         final String year = "2025";
 
-        final Boolean faultTolerance_boolean = true;
+        final Boolean faultTolerance_boolean = false;
         String faultTolerance = "";
         if (faultTolerance_boolean) faultTolerance = "faultTol";
         else faultTolerance = "noFaultTol";
