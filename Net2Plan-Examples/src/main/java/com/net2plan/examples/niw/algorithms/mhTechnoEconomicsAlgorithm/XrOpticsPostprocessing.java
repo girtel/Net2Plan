@@ -41,8 +41,9 @@ import java.util.stream.Collectors;
 public class XrOpticsPostprocessing implements IAlgorithm
 {
 	private InputParameter alpha = new InputParameter("alpha", (double) 1.5, "Description", 0, true, Double.MAX_VALUE, true);
-	private InputParameter isXrOpticsType = new InputParameter("opticsType", true, "True if XR, false otherwise");
+	private InputParameter isXrOpticsType = new InputParameter("opticsType", false, "True if XR, false otherwise");
     private InputParameter isTrafficAware = new InputParameter("isTrafficAware", false, "True if isTrafficAware, false if cost");
+    private InputParameter isDebug = new InputParameter("isDebug", true, "True if debug, false otherwise");
 
 	private enum LAYERTYPE { NONXR , XR };
     private enum OPTICAL_IT_IP_ELEMENTS
@@ -52,12 +53,12 @@ public class XrOpticsPostprocessing implements IAlgorithm
 
 
         // OPTICAL
-    	TRANSPONDERBIDI_25G (LAYERTYPE.NONXR , 2.4 , 120),
+    	TRANSPONDERBIDI_25G (LAYERTYPE.NONXR , 3.5 , 120),
     	TRANSPONDERBIDI_100G (LAYERTYPE.NONXR , 5 , 160),
-        TRANSPONDERBIDI_400G (LAYERTYPE.NONXR , 5 , 160),
+        TRANSPONDERBIDI_400G (LAYERTYPE.NONXR , 12 , 160),
 
         TRANSPONDERBIDIXR_100G (LAYERTYPE.XR , 5 , 160),
-        TRANSPONDERBIDIXR_400G (LAYERTYPE.XR , 5 , 160);
+        TRANSPONDERBIDIXR_400G (LAYERTYPE.XR , 12 , 160);
 
 
     	// Complete the enum list with the components of IT and IP layers
@@ -111,6 +112,34 @@ public class XrOpticsPostprocessing implements IAlgorithm
 		/* Add the transponders */
         int numTransponders25G = 0;
         int numTransponders100G = 0;
+        int numTransponders400G = 0;
+//
+//        for (WLightpath lp : wNet.getLightpaths()) lp.remove();
+//        for (WLightpathRequest lpr : wNet.getLightpathRequests()) lpr.remove();
+
+        for (WIpLink ipl : wNet.getIpLinks()){
+            double ipTraffic = ipl.getCarriedTrafficGbps();
+            String origin = ipl.getA().getName();
+            String destination = ipl.getB().getName();
+
+//            if (isDebug.getBoolean()) System.out.println("Ip Link: " + origin + " - " + destination + " " + ipTraffic + " Gbps" );
+
+        }
+
+        if (isXrOpticsType.getBoolean()){
+
+        }
+        else{
+            for (WNode origin : wNet.getNodes())
+            {
+                Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS, Integer>> tranponderMapPerNode = postProcessingTranponderPerNode(wNet, origin, isTrafficAware.getBoolean(), isXrOpticsType.getBoolean(), isDebug.getBoolean());
+
+                System.out.println("Node: " + origin.getName() + " Total traffic in lightpaths: " + origin.getOutgoingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum());
+                System.out.println("---------------------------------------");
+            }
+        }
+
+
 		for (WLightpath lp : wNet.getLightpaths())
 		{
 			if (lp.getLightpathRequest().getLineRateGbps() == 25.0) {
@@ -128,8 +157,12 @@ public class XrOpticsPostprocessing implements IAlgorithm
         int numTotalPorts25G = 0;
         int numTotalPorts100G = 0;
 
-        Assert.assertEquals(numTotalPorts25G, numTransponders25G);
-		Assert.assertEquals(numTotalPorts100G,numTransponders100G);
+
+
+
+
+//        Assert.assertEquals(numTotalPorts25G, numTransponders25G);
+//		Assert.assertEquals(numTotalPorts100G,numTransponders100G);
 
 		/************************************************************************************************/
 		// Separate per equipment in line = everything but transponders vs transponders
@@ -140,51 +173,51 @@ public class XrOpticsPostprocessing implements IAlgorithm
         //  1. Using only one method in this class in case the length code is not so long (maybe this one is more appropiate)
         //  2. Create a new class to export the corresponding metrics
 
-        System.out.println("------------ Traffic Metrics --------------");
-
-        System.out.println("WDM - Total carried traffic : " +  wNet.getNe().getVectorRouteCarriedTraffic(wNet.getNe().getNetworkLayer(0)).zSum());
-        System.out.println("IP - Total carried traffic : " +  wNet.getNe().getVectorRouteCarriedTraffic(wNet.getNe().getNetworkLayer(1)).zSum());
-
-        final List<WNode> mcenBbs = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isMcenBb(n)).collect(Collectors.toList());
-
-        double mcenBBTraffic = 0;
-
-        for (WNode node : mcenBbs)
-            mcenBBTraffic += node.getNe().getIngressCarriedTraffic();
-
-        System.out.println("MCENBB - Total carried traffic : " + mcenBBTraffic);
-        System.out.println("MCENBB - Average carried traffic per node : "+ mcenBBTraffic/(double)mcenBbs.size() );
-
-        final List<WNode> mcenNoBBs = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isMcenNotBb(n)).collect(Collectors.toList());
-
-        double mcenNoBBTraffic = 0;
-
-        for (WNode node : mcenNoBBs)
-            mcenNoBBTraffic += node.getNe().getIngressCarriedTraffic(wNet.getNe().getNetworkLayer(1));
-
-        System.out.println("MCEN No BB - Total carried traffic : " + mcenNoBBTraffic);
-        System.out.println("MCEN No BB - Average carried traffic per node : "+ mcenNoBBTraffic/(double)mcenNoBBs.size() );
-
-
-        final List<WNode> amens = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isAmen(n)).collect(Collectors.toList());
-
-        double amenTraffic = 0;
-
-        for (WNode node : amens)
-            amenTraffic += node.getNe().getIngressCarriedTraffic(wNet.getNe().getNetworkLayer(1));
-
-        System.out.println("AMEN - Total carried traffic : " + amenTraffic);
-        System.out.println("AMEN - Average carried traffic per node : "+ amenTraffic/(double)amens.size() );
-
-
-
-        showMetrics(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
-
-        System.out.println(" ");
-        System.out.println(" ");
-
-//        showBOMstatus(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
-        showBOMElementByElement(wNet.getNodes(),wNet.getFibers(), bomOptical_n,bomOptical_e);
+//        System.out.println("------------ Traffic Metrics --------------");
+//
+//        System.out.println("WDM - Total carried traffic : " +  wNet.getNe().getVectorRouteCarriedTraffic(wNet.getNe().getNetworkLayer(0)).zSum());
+//        System.out.println("IP - Total carried traffic : " +  wNet.getNe().getVectorRouteCarriedTraffic(wNet.getNe().getNetworkLayer(1)).zSum());
+//
+//        final List<WNode> mcenBbs = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isMcenBb(n)).collect(Collectors.toList());
+//
+//        double mcenBBTraffic = 0;
+//
+//        for (WNode node : mcenBbs)
+//            mcenBBTraffic += node.getNe().getIngressCarriedTraffic();
+//
+//        System.out.println("MCENBB - Total carried traffic : " + mcenBBTraffic);
+//        System.out.println("MCENBB - Average carried traffic per node : "+ mcenBBTraffic/(double)mcenBbs.size() );
+//
+//        final List<WNode> mcenNoBBs = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isMcenNotBb(n)).collect(Collectors.toList());
+//
+//        double mcenNoBBTraffic = 0;
+//
+//        for (WNode node : mcenNoBBs)
+//            mcenNoBBTraffic += node.getNe().getIngressCarriedTraffic(wNet.getNe().getNetworkLayer(1));
+//
+//        System.out.println("MCEN No BB - Total carried traffic : " + mcenNoBBTraffic);
+//        System.out.println("MCEN No BB - Average carried traffic per node : "+ mcenNoBBTraffic/(double)mcenNoBBs.size() );
+//
+//
+//        final List<WNode> amens = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isAmen(n)).collect(Collectors.toList());
+//
+//        double amenTraffic = 0;
+//
+//        for (WNode node : amens)
+//            amenTraffic += node.getNe().getIngressCarriedTraffic(wNet.getNe().getNetworkLayer(1));
+//
+//        System.out.println("AMEN - Total carried traffic : " + amenTraffic);
+//        System.out.println("AMEN - Average carried traffic per node : "+ amenTraffic/(double)amens.size() );
+//
+//
+//
+//        showMetrics(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
+//
+//        System.out.println(" ");
+//        System.out.println(" ");
+//
+////        showBOMstatus(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
+//        showBOMElementByElement(wNet.getNodes(),wNet.getFibers(), bomOptical_n,bomOptical_e);
 
 		return "Ok";
 	}
@@ -208,6 +241,45 @@ public class XrOpticsPostprocessing implements IAlgorithm
     	else map.put(key, amount);
     	return map;
     }
+
+    private static Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS, Integer>> postProcessingTranponderPerNode (WNet wNet, WNode origin, Boolean isTraffic, Boolean isXROptics, Boolean isDebug){
+
+        Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS, Integer>> transponderMap = new HashMap<>();
+
+        SortedSet<WLightpath> outgoingLigtpaths = origin.getOutgoingLigtpaths();
+
+        for (WNode destination : wNet.getNodes())
+        {
+            List<WLightpath> lpsThisNode = outgoingLigtpaths.stream().filter(lp -> lp.getB().equals(destination)).collect(Collectors.toList());
+            double trafficThisDestination = lpsThisNode.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
+            if (trafficThisDestination > 0 )
+            {
+                System.out.println("Destination node " + destination.getName() + " :" + trafficThisDestination );
+                Map<OPTICAL_IT_IP_ELEMENTS, Integer> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics, isDebug);
+                transponderMap.put(destination,newTps);
+            }
+        }
+
+        return transponderMap;
+
+    }
+
+    private static Map<OPTICAL_IT_IP_ELEMENTS, Integer> calculateBestTransponders(double traffic, Boolean isTraffic, Boolean isXROptics, Boolean isDebug){
+
+        Map<OPTICAL_IT_IP_ELEMENTS, Integer> map = new HashMap<>();
+
+        if(isTraffic)
+        {
+
+        }else
+        {
+
+        }
+
+        return map;
+
+    }
+
 
     private Map<WNode, Pair<Double, Double>> computeNodeMetrics (List<WNode> nodes, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n, LAYERTYPE layer )
     {

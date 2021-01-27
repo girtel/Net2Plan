@@ -23,6 +23,7 @@ public class XrOpticsModelEvaluation extends XSTCTester.TestCase {
         final NetPlan np = new NetPlan();
         final Map<String, String> algorithmParameters = InputParameter.getDefaultParameters(new ImporterFromTimBulkFiles_forConfTimData().getParameters());
         final Map<String, String> capacityParameters = InputParameter.getDefaultParameters(new CapacityPlanningAlgorithm_v1().getParameters());
+        final Map<String, String> xrPostProcessingParameters = InputParameter.getDefaultParameters(new XrOpticsPostprocessing().getParameters());
 //        final Map<String, String> bomParameters = InputParameter.getDefaultParameters(new BillOfMaterialsOptical_v1().getParameters());
 
         final String excelFile = "Traffic_Small_M-H_D2.3";
@@ -54,11 +55,12 @@ public class XrOpticsModelEvaluation extends XSTCTester.TestCase {
             algorithmParameters.put("yearDataForAllTrafficTypes",year); // 2019 2022 2025
             capacityParameters.put("addFaultToleranceToMcenBBFailureAndWdmDuctFailureIfPossible",faultTolerance_boolean.toString()); // false: Without failure tolerance, true: with faultTolerance
             capacityParameters.put("indexOfTimeSlotToAplyMinus1MakesWorstCaseAllSlots", planApproach);
+            xrPostProcessingParameters.put("isDebug", "true");
 
             new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
             new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, capacityParameters, new HashMap<>());
             new WNet(np).checkConsistency();
-//            new BillOfMaterialsOptical_v1().executeAlgorithm(np, bomParameters, new HashMap<>());
+            new XrOpticsPostprocessing().executeAlgorithm(np, xrPostProcessingParameters, new HashMap<>());
 
             // if directory exists?
             if (!Files.exists(path))
@@ -79,7 +81,7 @@ public class XrOpticsModelEvaluation extends XSTCTester.TestCase {
         else
         {
             final NetPlan np2 = new NetPlan(new File(fileString));
-//            new BillOfMaterialsOptical_v1().executeAlgorithm(np2, bomParameters, new HashMap<>());
+            new XrOpticsPostprocessing().executeAlgorithm(np2, xrPostProcessingParameters, new HashMap<>());
         }
     }
 
