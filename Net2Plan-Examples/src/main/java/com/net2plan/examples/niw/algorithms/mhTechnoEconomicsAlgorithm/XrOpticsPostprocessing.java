@@ -19,20 +19,14 @@
 
 package com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm;
 
-import com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm.TecnoEc2_costModel.LineCards;
-import com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm.TecnoEc2_costModel.Pluggables;
-import com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm.TecnoEc2_costModel.RouterChassis;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.niw.*;
-import com.net2plan.niw.OadmArchitecture_generic.Parameters;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
-import jdk.internal.util.xml.impl.Input;
-import org.junit.Assert;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,28 +42,26 @@ public class XrOpticsPostprocessing implements IAlgorithm
 	private enum LAYERTYPE { NONXR , XR };
     private enum OPTICAL_IT_IP_ELEMENTS
     {
-
         // Complete the list with the real values of each element
 
-
         // OPTICAL
-    	TRANSPONDERBIDI_25G (LAYERTYPE.NONXR , 3.5 , 120),
-    	TRANSPONDERBIDI_100G (LAYERTYPE.NONXR , 5 , 160),
-        TRANSPONDERBIDI_400G (LAYERTYPE.NONXR , 12 , 160),
+    	TRANSPONDERBIDI_25G (LAYERTYPE.NONXR , 3.5 , 120, 25),
+    	TRANSPONDERBIDI_100G (LAYERTYPE.NONXR , 5 , 160, 100),
+        TRANSPONDERBIDI_400G (LAYERTYPE.NONXR , 12 , 160, 400),
 
-        TRANSPONDERBIDIXR_100G (LAYERTYPE.XR , 5 , 160),
-        TRANSPONDERBIDIXR_400G (LAYERTYPE.XR , 12 , 160);
-
+        TRANSPONDERBIDIXR_100G (LAYERTYPE.XR , 5 , 160, 100),
+        TRANSPONDERBIDIXR_400G (LAYERTYPE.XR , 12 , 160, 400);
 
     	// Complete the enum list with the components of IT and IP layers
 
-    	private final double cost, consumption_W;
+    	private final double cost, consumption_W, line_rate_Gbps;
     	private final LAYERTYPE layer;
-		private OPTICAL_IT_IP_ELEMENTS(LAYERTYPE layer , double cost, double consumption_W) 
+		private OPTICAL_IT_IP_ELEMENTS(LAYERTYPE layer, double cost, double consumption_W, double line_rate_Gbps)
 		{
 			this.layer = layer;
 			this.cost = cost;
 			this.consumption_W = consumption_W;
+			this.line_rate_Gbps = line_rate_Gbps;
 		}
 		public double getCost() {
 			return cost;
@@ -77,6 +69,27 @@ public class XrOpticsPostprocessing implements IAlgorithm
 		public double getConsumption_W() {
 			return consumption_W;
 		}
+		public double getLine_rate_Gbps() {return line_rate_Gbps; }
+
+		public static List<OPTICAL_IT_IP_ELEMENTS> getListofTranspodersAvailable (Boolean isXROptics){
+
+		    List<OPTICAL_IT_IP_ELEMENTS> transponderList =  new ArrayList<> ();
+
+		    if (isXROptics)
+            {
+                transponderList.add(TRANSPONDERBIDI_25G);
+                transponderList.add(TRANSPONDERBIDIXR_100G);
+                transponderList.add(TRANSPONDERBIDIXR_400G);
+                transponderList.add(TRANSPONDERBIDI_100G);
+                transponderList.add(TRANSPONDERBIDI_400G);
+            }else {
+                transponderList.add(TRANSPONDERBIDI_25G);
+                transponderList.add(TRANSPONDERBIDI_100G);
+                transponderList.add(TRANSPONDERBIDI_400G);
+            }
+
+		    return transponderList;
+        }
 
     }
     
@@ -247,18 +260,29 @@ public class XrOpticsPostprocessing implements IAlgorithm
         Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS, Integer>> transponderMap = new HashMap<>();
 
         SortedSet<WLightpath> outgoingLigtpaths = origin.getOutgoingLigtpaths();
+        final double totalTraffic = outgoingLigtpaths.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
 
-        for (WNode destination : wNet.getNodes())
+        if (isXROptics)
         {
-            List<WLightpath> lpsThisNode = outgoingLigtpaths.stream().filter(lp -> lp.getB().equals(destination)).collect(Collectors.toList());
-            double trafficThisDestination = lpsThisNode.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
-            if (trafficThisDestination > 0 )
+            Map<OPTICAL_IT_IP_ELEMENTS, Integer> map = calculateBestTransponders(totalTraffic,isTraffic,isXROptics,isDebug);
+
+        }else{
+            for (WNode destination : wNet.getNodes())
             {
-                System.out.println("Destination node " + destination.getName() + " :" + trafficThisDestination );
-                Map<OPTICAL_IT_IP_ELEMENTS, Integer> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics, isDebug);
-                transponderMap.put(destination,newTps);
+                List<WLightpath> lpsThisNode = outgoingLigtpaths.stream().filter(lp -> lp.getB().equals(destination)).collect(Collectors.toList());
+                double trafficThisDestination = lpsThisNode.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
+                if (trafficThisDestination > 0 )
+                {
+                    System.out.println("Destination node " + destination.getName() + " :" + trafficThisDestination );
+                    Map<OPTICAL_IT_IP_ELEMENTS, Integer> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics, isDebug);
+                    transponderMap.put(destination,newTps);
+                }
             }
         }
+
+
+
+
 
         return transponderMap;
 
@@ -266,17 +290,41 @@ public class XrOpticsPostprocessing implements IAlgorithm
 
     private static Map<OPTICAL_IT_IP_ELEMENTS, Integer> calculateBestTransponders(double traffic, Boolean isTraffic, Boolean isXROptics, Boolean isDebug){
 
-        Map<OPTICAL_IT_IP_ELEMENTS, Integer> map = new HashMap<>();
+        Map<OPTICAL_IT_IP_ELEMENTS, Integer> finalMap = new HashMap<>();
+
+        List<OPTICAL_IT_IP_ELEMENTS> trasponderList = OPTICAL_IT_IP_ELEMENTS.getListofTranspodersAvailable(isXROptics);
+        double remainingTraffic = traffic;
+        double bestTraffic = 0;
 
         if(isTraffic)
         {
+            Map<OPTICAL_IT_IP_ELEMENTS, Integer> auxMap = new HashMap<>();
+            while (remainingTraffic > 0){
+                 for (OPTICAL_IT_IP_ELEMENTS tp : trasponderList) {
+                     double lr = tp.line_rate_Gbps;
+                     double numberOfTpNeeded = Math.ceil(traffic/lr);
+                     if (lr >= traffic)
+                     {
+                         bestTraffic = traffic - lr*numberOfTpNeeded;
+                         break;
+                     }
+                     else{
 
+                         continue;
+                     }
+                     auxMap.put(tp,(int) numberOfTpNeeded);
+                     remainingTraffic = traffic - lr*numberOfTpNeeded;
+                 }
+            }
         }else
         {
+            while (remainingTraffic > 0) {
 
+
+            }
         }
 
-        return map;
+        return finalMap;
 
     }
 
