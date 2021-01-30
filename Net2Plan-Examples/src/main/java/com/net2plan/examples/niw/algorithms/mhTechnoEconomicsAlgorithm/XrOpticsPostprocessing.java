@@ -39,8 +39,8 @@ public class XrOpticsPostprocessing implements IAlgorithm
     private InputParameter isTrafficAware = new InputParameter("isTrafficAware", false, "True if isTrafficAware, false if cost");
     private InputParameter isDebug = new InputParameter("isDebug", true, "True if debug, false otherwise");
 
-	private enum LAYERTYPE { NONXR , XR };
-    private enum OPTICAL_IT_IP_ELEMENTS
+	public enum LAYERTYPE { NONXR , XR };
+    public enum OPTICAL_IT_IP_ELEMENTS
     {
         // Complete the list with the real values of each element
 
@@ -77,15 +77,17 @@ public class XrOpticsPostprocessing implements IAlgorithm
 
 		    if (isXROptics)
             {
-                transponderList.add(TRANSPONDERBIDI_25G);
-                transponderList.add(TRANSPONDERBIDIXR_100G);
                 transponderList.add(TRANSPONDERBIDIXR_400G);
-                transponderList.add(TRANSPONDERBIDI_100G);
-                transponderList.add(TRANSPONDERBIDI_400G);
-            }else {
+                transponderList.add(TRANSPONDERBIDIXR_100G);
                 transponderList.add(TRANSPONDERBIDI_25G);
-                transponderList.add(TRANSPONDERBIDI_100G);
                 transponderList.add(TRANSPONDERBIDI_400G);
+                transponderList.add(TRANSPONDERBIDI_100G);
+            }else {
+                transponderList.add(TRANSPONDERBIDI_400G);
+                transponderList.add(TRANSPONDERBIDI_100G);
+                transponderList.add(TRANSPONDERBIDI_25G);
+
+
             }
 
 		    return transponderList;
@@ -306,11 +308,12 @@ public class XrOpticsPostprocessing implements IAlgorithm
                      if (lr >= traffic)
                      {
                          bestTraffic = traffic - lr*numberOfTpNeeded;
+                         auxMap.put(tp,(int) numberOfTpNeeded);
+                         remainingTraffic = traffic - lr*numberOfTpNeeded;
                          break;
                      }
                      else{
 
-                         continue;
                      }
                      auxMap.put(tp,(int) numberOfTpNeeded);
                      remainingTraffic = traffic - lr*numberOfTpNeeded;
