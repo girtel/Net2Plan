@@ -166,7 +166,7 @@ public class XrOpticsPostprocessing implements IAlgorithm
                 double trafficThisDestination = lpsThisNode.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
                 if (trafficThisDestination > 0 )
                 {
-                    Map<OPTICAL_IT_IP_ELEMENTS, Double> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics);
+                    Map<OPTICAL_IT_IP_ELEMENTS, Double> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, !isXROptics);
 
                     for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : newTps.entrySet()){
                         if (noXRmap.containsKey(entry.getKey())) noXRmap.put(entry.getKey(),entry.getValue()+noXRmap.get(entry.getKey()));
@@ -368,6 +368,8 @@ public class XrOpticsPostprocessing implements IAlgorithm
             else
                 totalCost += element.getKey().getCost() * element.getValue();
         }
+
+        System.out.println("Total cost: " + totalCost);
 
 
     }
