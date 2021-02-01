@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class XrOpticsPostprocessing implements IAlgorithm
 {
 	private InputParameter alpha = new InputParameter("alpha", (double) 1.5, "Alpha");
-	private InputParameter isXrOpticsType = new InputParameter("opticsType", false, "True if XR, false otherwise");
+	private InputParameter isXrOpticsType = new InputParameter("isXRopticsType", false, "True if XR, false otherwise");
     private InputParameter isTrafficAware = new InputParameter("isTrafficAware", false, "True if isTrafficAware, false if cost");
     private InputParameter isDebug = new InputParameter("isDebug", true, "True if debug, false otherwise");
 
@@ -101,135 +101,27 @@ public class XrOpticsPostprocessing implements IAlgorithm
         Configuration.precisionFactor = 1e-9;
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
 
+
+        System.out.println("Alpha: " + alpha.getDouble());
+        System.out.println("IsXROptics: " + isXrOpticsType.getBoolean());
+        System.out.println("IsTraffic: " + isTrafficAware.getBoolean());
+
 		final WNet wNet = new WNet(np);
 		
 		final Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n = new HashMap<> ();
-		final Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e = new HashMap<> ();
 
 		for (WNode n : wNet.getNodes())
 		    bomOptical_n.put(n, new HashMap<>());
 
-        for (WFiber e : wNet.getFibers())
-            bomOptical_e.put(e, new HashMap<>());
-
-		/* */
-		// 1. place preamplifiers and boosters: now simple: always booster and pre-amplifier, only line amplifier if 80 km
-
-		/* Directionless add/drop modules (the same if filterless or not): 1 splitter, 1 combiner, and an amplifier if more than 8 transponders 
-		 * All are made with amplifier double and splitter/combiner
-		 * 1) All have fixed mux/demux, even if transponders are of different grids */
-
-		/* The OADM degrees, filterless or not */
-
-		/* Add the transponders */
-        int numTransponders25G = 0;
-        int numTransponders100G = 0;
-        int numTransponders400G = 0;
-//
-//        for (WLightpath lp : wNet.getLightpaths()) lp.remove();
-//        for (WLightpathRequest lpr : wNet.getLightpathRequests()) lpr.remove();
-
-        for (WIpLink ipl : wNet.getIpLinks()){
-            double ipTraffic = ipl.getCarriedTrafficGbps();
-            String origin = ipl.getA().getName();
-            String destination = ipl.getB().getName();
-
-//            if (isDebug.getBoolean()) System.out.println("Ip Link: " + origin + " - " + destination + " " + ipTraffic + " Gbps" );
-
+        for (WNode origin : wNet.getNodes())
+        {
+            Map<OPTICAL_IT_IP_ELEMENTS, Double> tranponderMapPerNode = postProcessingTranponderPerNode(wNet, origin, isTrafficAware.getBoolean(), isXrOpticsType.getBoolean(), alpha.getDouble());
+            bomOptical_n.put(origin,tranponderMapPerNode);
         }
 
-        if (isXrOpticsType.getBoolean()){
-
-        }
-        else{
-            for (WNode origin : wNet.getNodes())
-            {
-                Map<OPTICAL_IT_IP_ELEMENTS, Integer> tranponderMapPerNode = postProcessingTranponderPerNode(wNet, origin, isTrafficAware.getBoolean(), isXrOpticsType.getBoolean(), alpha.getDouble());
-
-                System.out.println("Node: " + origin.getName() + " Total traffic in lightpaths: " + origin.getOutgoingLigtpaths().stream().mapToDouble(value -> value.getLightpathRequest().getLineRateGbps()).sum());
-                System.out.println("---------------------------------------");
-            }
-        }
-
-
-		for (WLightpath lp : wNet.getLightpaths())
-		{
-			if (lp.getLightpathRequest().getLineRateGbps() == 25.0) {
-                increase(bomOptical_n.get(lp.getA()), OPTICAL_IT_IP_ELEMENTS.TRANSPONDERBIDI_25G, 1.0);
-                numTransponders25G++;
-            }
-			else if (lp.getLightpathRequest().getLineRateGbps() == 100.0){
-                increase (bomOptical_n.get(lp.getA()) , OPTICAL_IT_IP_ELEMENTS.TRANSPONDERBIDI_100G , 1.0);
-                numTransponders100G++;
-            }
-			else throw new Net2PlanException ("Unkonwn transponder line rate");
-		}
-
-		/* IP Scenario 1 */
-        int numTotalPorts25G = 0;
-        int numTotalPorts100G = 0;
-
-
-
-
-
-//        Assert.assertEquals(numTotalPorts25G, numTransponders25G);
-//		Assert.assertEquals(numTotalPorts100G,numTransponders100G);
-
-		/************************************************************************************************/
-		// Separate per equipment in line = everything but transponders vs transponders
-		// Separate cost between AMENs / MCENs / line amplifiers. Energy consumption differences?
-		// ...
-
-        // Finally, see the best way to treat the data in order to provide the correct metrics. Three options:
-        //  1. Using only one method in this class in case the length code is not so long (maybe this one is more appropiate)
-        //  2. Create a new class to export the corresponding metrics
-
-//        System.out.println("------------ Traffic Metrics --------------");
-//
-//        System.out.println("WDM - Total carried traffic : " +  wNet.getNe().getVectorRouteCarriedTraffic(wNet.getNe().getNetworkLayer(0)).zSum());
-//        System.out.println("IP - Total carried traffic : " +  wNet.getNe().getVectorRouteCarriedTraffic(wNet.getNe().getNetworkLayer(1)).zSum());
-//
-//        final List<WNode> mcenBbs = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isMcenBb(n)).collect(Collectors.toList());
-//
-//        double mcenBBTraffic = 0;
-//
-//        for (WNode node : mcenBbs)
-//            mcenBBTraffic += node.getNe().getIngressCarriedTraffic();
-//
-//        System.out.println("MCENBB - Total carried traffic : " + mcenBBTraffic);
-//        System.out.println("MCENBB - Average carried traffic per node : "+ mcenBBTraffic/(double)mcenBbs.size() );
-//
-//        final List<WNode> mcenNoBBs = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isMcenNotBb(n)).collect(Collectors.toList());
-//
-//        double mcenNoBBTraffic = 0;
-//
-//        for (WNode node : mcenNoBBs)
-//            mcenNoBBTraffic += node.getNe().getIngressCarriedTraffic(wNet.getNe().getNetworkLayer(1));
-//
-//        System.out.println("MCEN No BB - Total carried traffic : " + mcenNoBBTraffic);
-//        System.out.println("MCEN No BB - Average carried traffic per node : "+ mcenNoBBTraffic/(double)mcenNoBBs.size() );
-//
-//
-//        final List<WNode> amens = wNet.getNodes().stream().filter(n-> TimExcel_NodeListSheet_forConfTimData.NODETYPE.isAmen(n)).collect(Collectors.toList());
-//
-//        double amenTraffic = 0;
-//
-//        for (WNode node : amens)
-//            amenTraffic += node.getNe().getIngressCarriedTraffic(wNet.getNe().getNetworkLayer(1));
-//
-//        System.out.println("AMEN - Total carried traffic : " + amenTraffic);
-//        System.out.println("AMEN - Average carried traffic per node : "+ amenTraffic/(double)amens.size() );
-//
-//
-//
-//        showMetrics(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
-//
-//        System.out.println(" ");
-//        System.out.println(" ");
-//
-////        showBOMstatus(wNet.getNodes(),wNet.getFibers(),bomOptical_n,bomOptical_e);
-//        showBOMElementByElement(wNet.getNodes(),wNet.getFibers(), bomOptical_n,bomOptical_e);
+//        showMetrics(wNet.getNodes(),bomOptical_n);
+//        showBOMstatus(wNet.getNodes(),bomOptical_n);
+        showBOMElementByElement(wNet.getNodes(),bomOptical_n, alpha.getDouble());
 
 		return "Ok";
 	}
@@ -254,19 +146,19 @@ public class XrOpticsPostprocessing implements IAlgorithm
     	return map;
     }
 
-    private static Map<OPTICAL_IT_IP_ELEMENTS, Integer> postProcessingTranponderPerNode (WNet wNet, WNode origin, Boolean isTraffic, Boolean isXROptics, double alpha){
+    private static Map<OPTICAL_IT_IP_ELEMENTS, Double> postProcessingTranponderPerNode (WNet wNet, WNode origin, Boolean isTraffic, Boolean isXROptics, double alpha){
 
-        Map<OPTICAL_IT_IP_ELEMENTS, Integer> transponderMap = new HashMap<>();
+        Map<OPTICAL_IT_IP_ELEMENTS, Double> transponderMap = new HashMap<>();
 
         SortedSet<WLightpath> outgoingLigtpaths = origin.getOutgoingLigtpaths();
         final double totalTraffic = outgoingLigtpaths.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
 
         if (isXROptics){
 
-            Map<OPTICAL_IT_IP_ELEMENTS, Integer> xRmap = calculateBestTransponders(totalTraffic,isTraffic,isXROptics);
+            Map<OPTICAL_IT_IP_ELEMENTS, Double> xRmap = calculateBestTransponders(totalTraffic,isTraffic,isXROptics);
             double costXR = calculateTotalCost(xRmap, alpha);
 
-            Map<OPTICAL_IT_IP_ELEMENTS, Integer> noXRmap = new HashMap<>();
+            Map<OPTICAL_IT_IP_ELEMENTS, Double> noXRmap = new HashMap<>();
 
             for (WNode destination : wNet.getNodes())
             {
@@ -274,10 +166,9 @@ public class XrOpticsPostprocessing implements IAlgorithm
                 double trafficThisDestination = lpsThisNode.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
                 if (trafficThisDestination > 0 )
                 {
-                    System.out.println("Destination node " + destination.getName() + " :" + trafficThisDestination );
-                    Map<OPTICAL_IT_IP_ELEMENTS, Integer> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics);
+                    Map<OPTICAL_IT_IP_ELEMENTS, Double> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics);
 
-                    for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Integer> entry : newTps.entrySet()){
+                    for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : newTps.entrySet()){
                         if (noXRmap.containsKey(entry.getKey())) noXRmap.put(entry.getKey(),entry.getValue()+noXRmap.get(entry.getKey()));
                         else noXRmap.put(entry.getKey(),entry.getValue());
                     }
@@ -292,7 +183,7 @@ public class XrOpticsPostprocessing implements IAlgorithm
 
         }else{
 
-            Map<OPTICAL_IT_IP_ELEMENTS, Integer> noXRmap = new HashMap<>();
+            Map<OPTICAL_IT_IP_ELEMENTS, Double> noXRmap = new HashMap<>();
 
             for (WNode destination : wNet.getNodes())
             {
@@ -300,10 +191,9 @@ public class XrOpticsPostprocessing implements IAlgorithm
                 double trafficThisDestination = lpsThisNode.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
                 if (trafficThisDestination > 0 )
                 {
-                    System.out.println("Destination node " + destination.getName() + " :" + trafficThisDestination );
-                    Map<OPTICAL_IT_IP_ELEMENTS, Integer> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics);
+                    Map<OPTICAL_IT_IP_ELEMENTS, Double> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics);
 
-                    for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Integer> entry : newTps.entrySet()){
+                    for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : newTps.entrySet()){
                         if (noXRmap.containsKey(entry.getKey())) noXRmap.put(entry.getKey(),entry.getValue()+noXRmap.get(entry.getKey()));
                         else noXRmap.put(entry.getKey(),entry.getValue());
                     }
@@ -316,9 +206,9 @@ public class XrOpticsPostprocessing implements IAlgorithm
         return transponderMap;
     }
 
-    private static Map<OPTICAL_IT_IP_ELEMENTS, Integer> calculateBestTransponders(double traffic, Boolean isTraffic, Boolean isXROptics){
+    private static Map<OPTICAL_IT_IP_ELEMENTS, Double> calculateBestTransponders(double traffic, Boolean isTraffic, Boolean isXROptics){
 
-        Map<OPTICAL_IT_IP_ELEMENTS, Integer> map = new HashMap<>();
+        Map<OPTICAL_IT_IP_ELEMENTS, Double> map = new HashMap<>();
         List<OPTICAL_IT_IP_ELEMENTS> trasponderList = OPTICAL_IT_IP_ELEMENTS.getListofTranspodersAvailable(isXROptics);
 
         int T = trasponderList.size();
@@ -360,18 +250,18 @@ public class XrOpticsPostprocessing implements IAlgorithm
 
         for (OPTICAL_IT_IP_ELEMENTS tp : trasponderList){
             if (x_t[t] > 0)
-                map.put(tp, (int) x_t[t]);
+                map.put(tp, x_t[t]);
             t++;
         }
 
         return map;
     }
 
-    private static double calculateTotalCost(Map<OPTICAL_IT_IP_ELEMENTS, Integer> map, double alpha){
+    public static double calculateTotalCost(Map<OPTICAL_IT_IP_ELEMENTS, Double> map, double alpha){
 
         double cost = 0;
 
-        for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Integer> entry : map.entrySet()){
+        for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : map.entrySet()){
             if(entry.getKey().getLayerType().equals(OPTICALTYPE.XR))
                 cost += entry.getKey().getCost() * alpha * entry.getValue();
             else
@@ -410,7 +300,7 @@ public class XrOpticsPostprocessing implements IAlgorithm
     }
 
 
-    public void showMetrics(List<WNode> nodes, List<WFiber> fibers, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n,  Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e)
+    public void showMetrics(List<WNode> nodes, Map<WNode , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n)
     {
 
         Map<WNode, Pair<Double, Double>> opticalMetrics_transponderSide_nonXR = computeNodeMetrics(nodes,bomOptical_n, OPTICALTYPE.NONXR);
@@ -423,7 +313,7 @@ public class XrOpticsPostprocessing implements IAlgorithm
 
     }
 
-    public void showBOMstatus(List<WNode> nodes, List<WFiber> fibers, Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n,  Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e){
+    public void showBOMstatus(List<WNode> nodes, Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n){
 
         System.out.println("----- Print BOM_n -----");
 
@@ -449,26 +339,9 @@ public class XrOpticsPostprocessing implements IAlgorithm
             }
         }
 
-        for (WFiber fiber : fibers)
-        {
-            Set<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> thisFiber = bomOptical_e.get(fiber).entrySet();
-
-            System.out.println("- Fiber ID: " + fiber.getNe().getIndex());
-
-            for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : thisFiber)
-            {
-                System.out.println("Element name: " + element.getKey().name());
-                System.out.println("Number of elements: " + element.getValue());
-
-                if (bomByElement_e.containsKey(element.getKey())) bomByElement_e.put(element.getKey(), bomByElement_e.get(element.getKey())+element.getValue());
-                else bomByElement_e.put(element.getKey(), element.getValue());
-            }
-
-        }
-
     }
 
-    public void showBOMElementByElement(List<WNode> nodes, List<WFiber> fibers, Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n,  Map<WFiber , Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_e)
+    public void showBOMElementByElement(List<WNode> nodes, Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n, double alpha)
     {
 
         System.out.println("----- Print BOM Element by Element -----");
@@ -486,19 +359,15 @@ public class XrOpticsPostprocessing implements IAlgorithm
             }
         }
 
-        for (WFiber fiber : fibers)
-        {
-            Set<Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double>> thisFiber = bomOptical_e.get(fiber).entrySet();
+        double totalCost = 0;
 
-            for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : thisFiber)
-            {
-                if (bomByElement_n.containsKey(element.getKey())) bomByElement_n.put(element.getKey(), bomByElement_n.get(element.getKey())+element.getValue());
-                else bomByElement_n.put(element.getKey(), element.getValue());
-            }
-        }
-
-        for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : bomByElement_n.entrySet())
+        for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : bomByElement_n.entrySet()) {
             System.out.println(element.getKey().name() + ": " + element.getValue());
+            if (element.getKey().getLayerType().equals(OPTICALTYPE.XR))
+                totalCost += element.getKey().getCost() * alpha * element.getValue();
+            else
+                totalCost += element.getKey().getCost() * element.getValue();
+        }
 
 
     }

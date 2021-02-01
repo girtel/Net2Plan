@@ -43,6 +43,10 @@ public class XrOpticsModelEvaluation extends XSTCTester.TestCase {
         final String pathFolder = "resources/outputs/" + excelFile + "/" + faultTolerance + "/" + year + "/" + nodeOption + "/" + dynamicStatic;
         final String fileString = pathFolder + "/out_scenario.n2p" ;
 
+        xrPostProcessingParameters.put("alpha", "10");
+        xrPostProcessingParameters.put("isXRopticsType", "true");
+        xrPostProcessingParameters.put("isTrafficAware", "false");
+
         System.out.println(fileString);
 
         Path path = Paths.get(pathFolder);
@@ -55,7 +59,6 @@ public class XrOpticsModelEvaluation extends XSTCTester.TestCase {
             algorithmParameters.put("yearDataForAllTrafficTypes",year); // 2019 2022 2025
             capacityParameters.put("addFaultToleranceToMcenBBFailureAndWdmDuctFailureIfPossible",faultTolerance_boolean.toString()); // false: Without failure tolerance, true: with faultTolerance
             capacityParameters.put("indexOfTimeSlotToAplyMinus1MakesWorstCaseAllSlots", planApproach);
-            xrPostProcessingParameters.put("isDebug", "true");
 
             new ImporterFromTimBulkFiles_forConfTimData().executeAlgorithm(np, algorithmParameters, new HashMap<>());
             new CapacityPlanningAlgorithm_v1().executeAlgorithm(np, capacityParameters, new HashMap<>());
