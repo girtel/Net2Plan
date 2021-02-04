@@ -43,9 +43,9 @@ public class XrOpticsModelEvaluation extends XSTCTester.TestCase {
         final String pathFolder = "resources/outputs/" + excelFile + "/" + faultTolerance + "/" + year + "/" + nodeOption + "/" + dynamicStatic;
         final String fileString = pathFolder + "/out_scenario.n2p" ;
 
-        xrPostProcessingParameters.put("alpha", "2.5");
+        xrPostProcessingParameters.put("alpha", "1.5");
         xrPostProcessingParameters.put("isXRopticsType", "true");
-        xrPostProcessingParameters.put("isTrafficAware", "true");
+        xrPostProcessingParameters.put("isTrafficAware", "false");
 
         System.out.println(fileString);
 

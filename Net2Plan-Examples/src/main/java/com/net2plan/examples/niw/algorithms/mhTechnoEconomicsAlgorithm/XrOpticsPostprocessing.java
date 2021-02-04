@@ -84,7 +84,6 @@ public class XrOpticsPostprocessing implements IAlgorithm
                 transponderList.add(TRANSPONDERBIDI_400G);
                 transponderList.add(TRANSPONDERBIDI_100G);
                 transponderList.add(TRANSPONDERBIDI_25G);
-
             }
 
 		    return transponderList;
@@ -153,10 +152,44 @@ public class XrOpticsPostprocessing implements IAlgorithm
         SortedSet<WLightpath> outgoingLigtpaths = origin.getOutgoingLigtpaths();
         final double totalTraffic = outgoingLigtpaths.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
 
+        List<OPTICAL_IT_IP_ELEMENTS> trasponderList = OPTICAL_IT_IP_ELEMENTS.getListofTranspodersAvailable(isXROptics);
+
+        final int T = OPTICAL_IT_IP_ELEMENTS.getListofTranspodersAvailable(isXROptics).size();
+
+        double costArray[] = new double[T];
+        double lineRateArray[] = new double[T];
+
+        int t = 0;
+
+        for (OPTICAL_IT_IP_ELEMENTS tp : trasponderList ){
+            if (tp.getLayerType().equals(OPTICALTYPE.XR))
+                costArray[t] = tp.getCost()*alpha;
+            else
+                costArray[t] = tp.getCost();
+
+            lineRateArray[t] = tp.getLine_rate_Gbps();
+            t++;
+        }
+
         if (isXROptics){
 
-            Map<OPTICAL_IT_IP_ELEMENTS, Double> xRmap = calculateBestTransponders(totalTraffic,isTraffic,isXROptics);
+            Map<OPTICAL_IT_IP_ELEMENTS, Double> xRmap = calculateBestTransponders(totalTraffic,isTraffic,trasponderList, costArray, lineRateArray);
             double costXR = calculateTotalCost(xRmap, alpha);
+
+            List<OPTICAL_IT_IP_ELEMENTS> trasponderList_noXR = OPTICAL_IT_IP_ELEMENTS.getListofTranspodersAvailable(!isXROptics);
+
+            final int T_noXR = OPTICAL_IT_IP_ELEMENTS.getListofTranspodersAvailable(!isXROptics).size();
+
+            double costArray_noXR[] = new double[T_noXR];
+            double lineRateArray_noXR[] = new double[T_noXR];
+
+            int t_noXR = 0;
+
+            for (OPTICAL_IT_IP_ELEMENTS tp : trasponderList_noXR ){
+                costArray_noXR[t_noXR] = tp.getCost();
+                lineRateArray_noXR[t_noXR] = tp.getLine_rate_Gbps();
+                t_noXR++;
+            }
 
             Map<OPTICAL_IT_IP_ELEMENTS, Double> noXRmap = new HashMap<>();
 
@@ -166,7 +199,7 @@ public class XrOpticsPostprocessing implements IAlgorithm
                 double trafficThisDestination = lpsThisNode.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
                 if (trafficThisDestination > 0 )
                 {
-                    Map<OPTICAL_IT_IP_ELEMENTS, Double> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, !isXROptics);
+                    Map<OPTICAL_IT_IP_ELEMENTS, Double> newTps = calculateBestTransponders(trafficThisDestination,isTraffic,trasponderList_noXR, costArray_noXR, lineRateArray_noXR);
 
                     for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : newTps.entrySet()){
                         if (noXRmap.containsKey(entry.getKey())) noXRmap.put(entry.getKey(),entry.getValue()+noXRmap.get(entry.getKey()));
@@ -181,6 +214,8 @@ public class XrOpticsPostprocessing implements IAlgorithm
             else
                 transponderMap = noXRmap;
 
+//            transponderMap = xRmap;
+
         }else{
 
             Map<OPTICAL_IT_IP_ELEMENTS, Double> noXRmap = new HashMap<>();
@@ -191,7 +226,7 @@ public class XrOpticsPostprocessing implements IAlgorithm
                 double trafficThisDestination = lpsThisNode.stream().mapToDouble(v->v.getLightpathRequest().getLineRateGbps()).sum();
                 if (trafficThisDestination > 0 )
                 {
-                    Map<OPTICAL_IT_IP_ELEMENTS, Double> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, isXROptics);
+                    Map<OPTICAL_IT_IP_ELEMENTS, Double> newTps = calculateBestTransponders(trafficThisDestination, isTraffic, trasponderList, costArray,lineRateArray);
 
                     for (Map.Entry<OPTICAL_IT_IP_ELEMENTS, Double> entry : newTps.entrySet()){
                         if (noXRmap.containsKey(entry.getKey())) noXRmap.put(entry.getKey(),entry.getValue()+noXRmap.get(entry.getKey()));
@@ -206,22 +241,12 @@ public class XrOpticsPostprocessing implements IAlgorithm
         return transponderMap;
     }
 
-    private static Map<OPTICAL_IT_IP_ELEMENTS, Double> calculateBestTransponders(double traffic, Boolean isTraffic, Boolean isXROptics){
+    private static Map<OPTICAL_IT_IP_ELEMENTS, Double> calculateBestTransponders(double traffic, Boolean isTraffic, List<OPTICAL_IT_IP_ELEMENTS>  transponderList, double[] c_t, double[] r_t){
 
         Map<OPTICAL_IT_IP_ELEMENTS, Double> map = new HashMap<>();
-        List<OPTICAL_IT_IP_ELEMENTS> trasponderList = OPTICAL_IT_IP_ELEMENTS.getListofTranspodersAvailable(isXROptics);
 
-        int T = trasponderList.size();
-
-        double [] r_t = new double[T];
-        double [] c_t = new double[T];
+        int T = transponderList.size();
         int t = 0;
-
-        for (OPTICAL_IT_IP_ELEMENTS tp : trasponderList ){
-            r_t[t] = tp.getLine_rate_Gbps();
-            c_t[t] = tp.getCost();
-            t++;
-        }
 
         double remainingTraffic = traffic;
 
@@ -248,7 +273,7 @@ public class XrOpticsPostprocessing implements IAlgorithm
 
         t = 0;
 
-        for (OPTICAL_IT_IP_ELEMENTS tp : trasponderList){
+        for (OPTICAL_IT_IP_ELEMENTS tp : transponderList){
             if (x_t[t] > 0)
                 map.put(tp, x_t[t]);
             t++;
@@ -362,11 +387,11 @@ public class XrOpticsPostprocessing implements IAlgorithm
         double totalCost = 0;
 
         for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : bomByElement_n.entrySet()) {
-            System.out.println(element.getKey().name() + ": " + element.getValue());
             if (element.getKey().getLayerType().equals(OPTICALTYPE.XR))
                 totalCost += element.getKey().getCost() * alpha * element.getValue();
             else
                 totalCost += element.getKey().getCost() * element.getValue();
+            System.out.println(element.getKey().name() + ": " + element.getValue() + "--> " + totalCost);
         }
 
         System.out.println("Total cost: " + totalCost);
