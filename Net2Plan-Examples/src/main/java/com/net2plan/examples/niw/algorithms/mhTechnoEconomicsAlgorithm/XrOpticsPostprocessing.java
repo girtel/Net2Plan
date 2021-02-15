@@ -20,10 +20,7 @@
 package com.net2plan.examples.niw.algorithms.mhTechnoEconomicsAlgorithm;
 
 import com.jom.OptimizationProblem;
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.niw.*;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Pair;
@@ -122,6 +119,7 @@ public class XrOpticsPostprocessing implements IAlgorithm
 //        showBOMstatus(wNet.getNodes(),bomOptical_n);
         showBOMElementByElement(wNet.getNodes(),bomOptical_n, alpha.getDouble());
 
+
 		return "Ok";
 	}
 
@@ -209,12 +207,12 @@ public class XrOpticsPostprocessing implements IAlgorithm
             }
             double costNoXR = calculateTotalCost(noXRmap,0);
 
-            if (costXR < costNoXR)
-                transponderMap = xRmap;
-            else
-                transponderMap = noXRmap;
+//            if (costXR < costNoXR)
+//                transponderMap = xRmap;
+//            else
+//                transponderMap = noXRmap;
 
-//            transponderMap = xRmap;
+            transponderMap = xRmap;
 
         }else{
 
@@ -368,7 +366,6 @@ public class XrOpticsPostprocessing implements IAlgorithm
 
     public void showBOMElementByElement(List<WNode> nodes, Map<WNode,Map<OPTICAL_IT_IP_ELEMENTS,Double>> bomOptical_n, double alpha)
     {
-
         System.out.println("----- Print BOM Element by Element -----");
 
         Map<OPTICAL_IT_IP_ELEMENTS,Double> bomByElement_n = new HashMap();
@@ -387,11 +384,16 @@ public class XrOpticsPostprocessing implements IAlgorithm
         double totalCost = 0;
 
         for (Map.Entry<OPTICAL_IT_IP_ELEMENTS,Double> element : bomByElement_n.entrySet()) {
+
+            double thisCost = 0;
+
             if (element.getKey().getLayerType().equals(OPTICALTYPE.XR))
-                totalCost += element.getKey().getCost() * alpha * element.getValue();
+                thisCost = element.getKey().getCost() * alpha * element.getValue();
             else
-                totalCost += element.getKey().getCost() * element.getValue();
-            System.out.println(element.getKey().name() + ": " + element.getValue() + "--> " + totalCost);
+                thisCost = element.getKey().getCost() * element.getValue();
+            totalCost += thisCost;
+
+            System.out.println(element.getKey().name() + ": " + element.getValue() + "--> " + thisCost);
         }
 
         System.out.println("Total cost: " + totalCost);
