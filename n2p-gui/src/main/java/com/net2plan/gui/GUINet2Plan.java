@@ -12,9 +12,54 @@
 
 package com.net2plan.gui;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.PrintStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.ImageIcon;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.MenuElement;
+import javax.swing.RowSorter;
+import javax.swing.WindowConstants;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
+
 import com.net2plan.gui.utils.AdvancedJTable;
 import com.net2plan.gui.utils.ClassAwareTableModel;
-import com.net2plan.gui.utils.ClassPathEditor;
 import com.net2plan.gui.utils.ColumnFitAdapter;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.internal.Constants;
@@ -28,25 +73,8 @@ import com.net2plan.utils.HTMLUtils;
 import com.net2plan.utils.ImageUtils;
 import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.SwingUtils;
-import net.miginfocom.swing.MigLayout;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.io.PrintStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Main class for the graphical user interface (GUI).
@@ -61,7 +89,7 @@ public class GUINet2Plan extends JFrame implements ActionListener {
     private Set<KeyStroke> usedKeyStrokes;
     private JPanel container;
     private JMenuBar menu;
-    private JMenuItem exitItem, optionsItem, errorConsoleItem, classPathEditorItem, keyCombinationItem;
+    private JMenuItem exitItem, optionsItem, errorConsoleItem, keyCombinationItem;
     private JMenuItem aboutItem, helpItem, javadocItem, javadocExamplesItem;
     private Map<JMenuItem, Object> itemObject;
     private IGUIModule runningModule;
@@ -124,8 +152,6 @@ public class GUINet2Plan extends JFrame implements ActionListener {
                 dialog.setVisible(true);
             } else if (item.equals(errorConsoleItem)) {
                 ErrorHandling.showConsole();
-            } else if (item.equals(classPathEditorItem)) {
-                ClassPathEditor.showGUI();
             } else if (item.equals(keyCombinationItem)) {
                 showKeyCombinations();
             } else if (item.equals(exitItem)) {
@@ -422,10 +448,6 @@ public class GUINet2Plan extends JFrame implements ActionListener {
         optionsItem.addActionListener(this);
         addKeyCombination(optionsItem);
         file.add(optionsItem);
-
-        classPathEditorItem = new JMenuItem("Classpath editor");
-        classPathEditorItem.addActionListener(this);
-        file.add(classPathEditorItem);
 
         errorConsoleItem = new JMenuItem("Show Java console");
         errorConsoleItem.addActionListener(this);

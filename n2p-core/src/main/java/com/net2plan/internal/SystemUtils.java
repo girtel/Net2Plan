@@ -50,7 +50,7 @@ public class SystemUtils
 {
 	private static Class mainClass;
 	private static UserInterface ui = null;
-	private static Set<URL> defaultClasspath;
+//	private static Set<URL> defaultClasspath;
 
 	/**
 	 * Adds a given file to the classpath.
@@ -150,7 +150,7 @@ public class SystemUtils
 			UIManager.put("TitledBorder.titleColor", fgColor);
 		}
 		
-		defaultClasspath = getClasspath();
+//		defaultClasspath = getClasspath();
 		
 		/* Load options */
 		try { Configuration.readFromOptionsDefaultFile();  }
@@ -265,21 +265,6 @@ public class SystemUtils
 		return absolutePath.substring(0, absolutePath.lastIndexOf(getDirectorySeparator()));
 	}
 	
-	/**
-	 * Returns the user classpath ({@code .class/.jar} files not added by default).
-	 *
-	 * @return User classpath
-	 * @since 0.3.1
-	 */
-	public static Set<URL> getUserClasspath()
-	{
-		Set<URL> classpath = new TreeSet<URL>(new URLComparator());
-		classpath.addAll(getClasspath());
-		classpath.removeAll(defaultClasspath);
-		
-		return Collections.unmodifiableSet(classpath);
-	}
-
 	/**
 	 * Returns the active user interface (GUI or CLI).
 	 *

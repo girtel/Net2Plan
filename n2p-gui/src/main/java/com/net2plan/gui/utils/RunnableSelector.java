@@ -128,7 +128,8 @@ public class RunnableSelector extends JPanel {
                     String aux_description = instance.getDescription() == null ? "No description" : instance.getDescription();
                     List<Triple<String, String, String>> aux_parameters = instance.getParameters() == null ? new LinkedList<>() : instance.getParameters();
 
-                    ((Closeable) instance.getClass().getClassLoader()).close();
+                    if (instance.getClass().getClassLoader() instanceof Closeable)
+                    	((Closeable) instance.getClass().getClassLoader()).close();
 
                     txt_description.setText(aux_description);
                     if (!txt_description.getText().isEmpty()) txt_description.setCaretPosition(0);
