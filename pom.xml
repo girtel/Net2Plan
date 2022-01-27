@@ -34,6 +34,13 @@
     </modules>
 
 
+	<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+
 	<!-- Defines dependencies that COULD be added to each module, in each module <dependencies> section. Here we define the version of the dependency, so 
 	all the modules using the same dependency, make it in the same version and scope -->
 	<dependencyManagement>
@@ -143,10 +150,10 @@
             <artifactId>miglayout-swing</artifactId>
             <version>5.0</version>
         </dependency>
-        <dependency>
+         <dependency>
             <groupId>com.github.rwl</groupId>
             <artifactId>parallelcolt</artifactId>
-            <version>parallelcolt-0.11.4</version>
+             <version>parallelcolt-0.11.4</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.woodstox</groupId>
@@ -228,7 +235,7 @@
      </dependencies>
 	</dependencyManagement>
 
-
+	
     <build>
     
     	<!--  pluginmanagement: does not call any plugin. Instead, defines properties so if the same plugin is called in a plugin call (outside pluginmanagement), it can inherit 
@@ -302,4 +309,16 @@
             </plugin>
         </plugins>
     </build>
+    <dependencies>
+    	<dependency>
+    		<groupId>org.apache.poi</groupId>
+    		<artifactId>poi-ooxml</artifactId>
+    		<exclusions>
+    			<exclusion>
+    				<groupId>stax</groupId>
+    				<artifactId>stax-api</artifactId>
+    			</exclusion>
+    		</exclusions>
+    	</dependency>
+    </dependencies>
 </project>

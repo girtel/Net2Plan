@@ -98,11 +98,13 @@
             <groupId>com.miglayout</groupId>
             <artifactId>miglayout-swing</artifactId>
         </dependency>
-        <dependency>
+
+         <dependency>
             <groupId>com.github.rwl</groupId>
             <artifactId>parallelcolt</artifactId>
         </dependency>
-        <dependency>
+ 
+         <dependency>
             <groupId>org.codehaus.woodstox</groupId>
             <artifactId>stax2-api</artifactId>
         </dependency>

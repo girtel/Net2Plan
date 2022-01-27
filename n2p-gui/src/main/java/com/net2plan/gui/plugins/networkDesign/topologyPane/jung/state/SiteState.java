@@ -22,10 +22,8 @@ import com.net2plan.gui.plugins.networkDesign.interfaces.ITopologyCanvas;
 import com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport.OSMController;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager;
 import com.net2plan.gui.plugins.networkDesign.visualizationControl.PickManager.PickStateInfo;
-import com.net2plan.gui.utils.NetworkElementOrFr;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.sun.tools.javac.util.Pair;
 
 /**
  * @author Jorge San Emeterio

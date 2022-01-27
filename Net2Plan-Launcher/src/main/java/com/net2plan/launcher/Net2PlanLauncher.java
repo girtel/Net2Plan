@@ -31,8 +31,6 @@ public class Net2PlanLauncher
 
         final Option guiOption = new Option(null, "GUI", false, "Launch Net2Plan in GUI mode");
         GROUP_DIRECTION.addOption(guiOption);
-        final Option cliOption = new Option(null, "CLI", false, "Launch Net2Plan in CLI mode");
-        GROUP_DIRECTION.addOption(cliOption);
 
         OPTIONS.addOptionGroup(GROUP_DIRECTION);
     }
@@ -46,10 +44,7 @@ public class Net2PlanLauncher
         {
             parser.parse(OPTIONS, args, true);
 
-            if (GROUP_DIRECTION.getSelected().equals("CLI"))
-            {
-                CLILauncher.main((String[]) ArrayUtils.removeElement(args, "--CLI"));
-            } else if (GROUP_DIRECTION.getSelected().equals("GUI"))
+            if (GROUP_DIRECTION.getSelected().equals("GUI"))
             {
                 GUILauncher.main((String[]) ArrayUtils.removeElement(args, "--GUI"));
             } else

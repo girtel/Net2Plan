@@ -11,7 +11,8 @@ import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
-import com.sun.tools.javac.util.Pair;
+import com.net2plan.utils.Pair;
+
 
 public class DynamicSrgAllBidiLinksTwoNodes extends DynamicSrgImplementation
 {
