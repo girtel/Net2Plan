@@ -222,8 +222,6 @@ public class NiwModelTest extends TestCase
    	netIpOverWdm.checkConsistency();
    	netIp.updateNetPlanObjectInternalState();
    	netIpOverWdm.updateNetPlanObjectInternalState();
-   	netIp.saveToFile(new File ("c:\\Dropbox\\niw_example7nodes_ip.n2p"));
-   	netIpOverWdm.saveToFile(new File ("c:\\Dropbox\\niw_example7nodes_ipOverWdm.n2p"));
    }
     
  	@Test
