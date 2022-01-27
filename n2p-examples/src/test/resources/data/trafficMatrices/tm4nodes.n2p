@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="" name="" version="3">
+	<node id="0" xCoord="0.0" yCoord="0.0" name="Node 0"/>
+	<node id="1" xCoord="0.0" yCoord="0.0" name="Node 1"/>
+	<node id="2" xCoord="0.0" yCoord="0.0" name="Node 2"/>
+	<node id="3" xCoord="0.0" yCoord="0.0" name="Node 3"/>
+	<layer id="0" name="" description="" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<demand id="0" ingressNodeId="0" egressNodeId="1" offeredTraffic="26.7426258845998"/>
+		<demand id="1" ingressNodeId="0" egressNodeId="2" offeredTraffic="11.247530972604169"/>
+		<demand id="2" ingressNodeId="0" egressNodeId="3" offeredTraffic="7.920029924732238"/>
+		<demand id="3" ingressNodeId="1" egressNodeId="0" offeredTraffic="26.7426258845998"/>
+		<demand id="4" ingressNodeId="1" egressNodeId="2" offeredTraffic="2.977605380367562"/>
+		<demand id="5" ingressNodeId="1" egressNodeId="3" offeredTraffic="0.8114278079207307"/>
+		<demand id="6" ingressNodeId="2" egressNodeId="0" offeredTraffic="11.247530972604169"/>
+		<demand id="7" ingressNodeId="2" egressNodeId="1" offeredTraffic="2.977605380367562"/>
+		<demand id="8" ingressNodeId="2" egressNodeId="3" offeredTraffic="0.3007800297754944"/>
+		<demand id="9" ingressNodeId="3" egressNodeId="0" offeredTraffic="7.920029924732238"/>
+		<demand id="10" ingressNodeId="3" egressNodeId="1" offeredTraffic="0.8114278079207307"/>
+		<demand id="11" ingressNodeId="3" egressNodeId="2" offeredTraffic="0.3007800297754944"/>
+		<sourceRouting/>
+	</layer>
+</network>

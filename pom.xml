@@ -12,34 +12,31 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+	<!--  These are common properties (constants) that can be accessed via ${XX} in all the modules -->
+	<properties>
+	    <!-- Our projects versioning -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	    <!-- External dependencies versioning -->        
+	</properties>
+
+
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
     <version>0.6.6.0</version>
     <packaging>pom</packaging>
     <url>http://www.net2plan.com</url>
 
-    <licenses>
-        <license>
-            <name>Simplified BSD License</name>
-            <url>https://opensource.org/licenses/BSD-2-Clause</url>
-        </license>
-    </licenses>
-
     <modules>
-        <module>Net2Plan-Core</module>
-        <module>Net2Plan-CLI</module>
-        <module>Net2Plan-GUI</module>
-        <module>Net2Plan-Examples</module>
-        <module>Net2Plan-Javadoc</module>
-        <module>Net2Plan-Launcher</module>
-        <module>Net2Plan-CI</module>
-        <module>Net2Plan-Assembly</module>
+        <module>n2p-core</module> 
+        <module>n2p-gui</module>
+        <module>n2p-assembly</module>
+        <module>n2p-examples</module>
     </modules>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
+	<!-- Defines dependencies that COULD be added to each module, in each module <dependencies> section. Here we define the version of the dependency, so 
+	all the modules using the same dependency, make it in the same version and scope -->
+	<dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.jfree</groupId>
@@ -220,41 +217,63 @@
         </dependency>
         <!--Local-->
         <!--Javadoc-->
-        <dependency>
+<!--          <dependency>
             <groupId>com.sun</groupId>
             <artifactId>tools</artifactId>
             <version>1.8</version> 
             <scope>system</scope>
             <systemPath>${java.home}/../lib/tools.jar</systemPath>
-			<!--<systemPath>${env.JAVA_HOME}/lib/tools.jar</systemPath>-->
-        </dependency>
-    </dependencies>
+			<systemPath>${env.JAVA_HOME}/lib/tools.jar</systemPath>
+        </dependency> -->
+     </dependencies>
+	</dependencyManagement>
 
-    <repositories>
-        <!-- Using GitHub as an external repository -->
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
 
     <build>
+    
+    	<!--  pluginmanagement: does not call any plugin. Instead, defines properties so if the same plugin is called in a plugin call (outside pluginmanagement), it can inherit 
+    	the properties defined here. That is, is just a form of centralizing some configurations. Children calls to plugin can override anything -->
         <pluginManagement>
             <plugins>
-                <!-- Modifies the compiler to jdk 1.8 -->
+
+                <!-- Compiler-plugin: Modifies the compiler to jdk 1.11, with compiler of Eclipse -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.5.1</version>
+                    <version>3.8.0</version>
                     <configuration>
-                        <compilerVersion>1.8</compilerVersion>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                    	<release>11</release>
+                      	<compilerId>eclipse</compilerId>
+                        <compilerVersion>1.11</compilerVersion>
+                         <compilerArgs>
+        					<arg>-Xlint:none</arg>
+         					<arg>-Xdiags:verbose</arg> 
+    					</compilerArgs>
                         <failOnError>true</failOnError>
                     </configuration>
-                </plugin>
+                     <dependencies>
+	                <dependency>
+	                    <groupId>org.codehaus.plexus</groupId>
+	                    <artifactId>plexus-compiler-eclipse</artifactId>
+	                    <version>2.8.8</version>  <!-- 2.8.3, 2.8.4,2.8.5 works. BUT 2.8.6 and later not -->
+	                </dependency>
+	                <dependency>
+	                    <groupId>org.eclipse.jdt</groupId>
+	                    <artifactId>ecj</artifactId>
+	                 	<version>3.25.0</version> 
+<!-- 	                    <version>3.13.101</version> -->
+ 	                </dependency>
+	            </dependencies>
+              </plugin>
 
-                <!-- Generates each module jar -->
+				<!-- 20210302: Added, since maybe needed JavaFx was before in JDK, but soon will be removed => it will be a separated library  -->
+				<plugin>
+				    <groupId>org.openjfx</groupId>
+				    <artifactId>javafx-maven-plugin</artifactId>
+				    <version>0.0.5</version>
+				</plugin>
+
+                <!-- JAR-plugin: Generates each module jar -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
@@ -265,11 +284,15 @@
                                 <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                                 <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                             </manifest>
+							<addMavenDescriptor>false</addMavenDescriptor> <!--  so maven POM is not included in the JARs -->
                         </archive>
                     </configuration>
                 </plugin>
             </plugins>
+
+
         </pluginManagement>
+        
         <plugins>
             <!-- Build helper: Version controller -->
             <plugin>
