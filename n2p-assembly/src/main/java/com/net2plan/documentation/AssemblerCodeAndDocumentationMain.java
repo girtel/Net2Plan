@@ -84,21 +84,6 @@ public class AssemblerCodeAndDocumentationMain
     		fileCreator.run();
     	}
 	}
-//	private static void assembleFileLaunch (Scanner in , List<File> ff , Runnable fileCreator)
-//	{
-//		final String fileNames = ff.stream().map(f->f.getName()).collect(Collectors.joining(",")); 
-//		System.out.print("Assembling the file/s: " + fileNames);
-//    	if (ff.stream().allMatch(f->f.isFile()))
-//    	{
-//    		final boolean create = AwsUtils.getYesNo(in, false, "All the zip files " + fileNames + " already exist. Create again (all of them)?");
-//    		if (create) fileCreator.run();;
-//    	}
-//    	else 
-//    	{
-//    		System.out.println(" At least one of the files do not exist. Creating it.");
-//    		fileCreator.run();
-//    	}
-//	}
 	
 	public static void main( String[] args ) throws Throwable
     {
@@ -111,9 +96,12 @@ public class AssemblerCodeAndDocumentationMain
 		final Scanner in = new Scanner(System.in);
     	
     	/* Initialize the output assembly directory */
-    	resetDirectory(outputGlobalDirectory_unzipped);
-		resetDirectory(outputAssemblyDirectory);
-    	resetDirectory(outputGlobalDirectory_zipFiles);
+		final boolean resetZips = getYesNo(in, false, "Do you want a fresh start, eliminaty any previous ZIP files with information in diectory " + outputGlobalDirectory_zipFiles.getCanonicalPath() + "?");
+		if (resetZips)
+    	{
+			resetDirectory(outputAssemblyDirectory);
+	    	resetDirectory(outputGlobalDirectory_zipFiles);
+    	}
     	FileUtils.forceMkdir(getChild(outputGlobalDirectory_unzipped, "gui"));
     	
     	assembleFileLaunch (in , assembledZipFile_core , ()-> createZip_n2pCore () );
