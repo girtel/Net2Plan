@@ -91,7 +91,7 @@ public class Wget
       try {
     	  if (bufferedOut != null) bufferedOut.close();
     	  if (fileOutput != null) fileOutput.close();
-        httpIn.close();
+    	  if (httpIn !=null) httpIn.close();
       } catch (IOException e) {
         return WgetStatus.UnableToCloseOutputStream;
       }

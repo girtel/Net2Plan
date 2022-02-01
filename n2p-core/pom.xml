@@ -38,6 +38,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
         </dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.maven.shared/maven-invoker -->
+		<dependency>
+		    <groupId>org.apache.maven.shared</groupId>
+		    <artifactId>maven-invoker</artifactId>
+		</dependency>
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>

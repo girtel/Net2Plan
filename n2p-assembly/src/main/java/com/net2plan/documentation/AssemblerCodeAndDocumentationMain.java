@@ -44,7 +44,7 @@ public class AssemblerCodeAndDocumentationMain
 	
 	/* Control [non-configurable] variables */
 	
-	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pCore = Optional.of (new TreeSet<> (Arrays.asList(".class" , ".jar", ".txt" , ".MF" , ".properties" , ".css.map" , ".css" , ".js.map" , ".js", ".json"))); 
+	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pCore = Optional.of (new TreeSet<> (Arrays.asList(".class" , ".jar", ".txt" , ".MF" , ".properties" , ".css.map" , ".css" , ".js.map" , ".js", ".json", ".xsl" , ".gif" , ".xsd" , ".html" , ".n2p" , ".pdf"))); 
 	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pGui = Optional.of (new TreeSet<> (CollectionUtils.union(acceptedSuffixesForZippingInAssembly_n2pCore.get() , Arrays.asList(".js" , "js.map" , ".png", ".ico", ".icns" , ".gif" , ".bmp" , ".jpg" , ".css", ".json")))); 
 	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_javadoc = Optional.empty (); 
 	private static final File currentSystemDirectory = new File (System.getProperty("user.dir")); 
@@ -170,15 +170,16 @@ public class AssemblerCodeAndDocumentationMain
         	
         	/* Create the ZIP file with all together */
         	ZipUtils.zipDirectory(outputGlobalTemporalDirectory, assembledZipFile_gui, false , acceptedSuffixesForZippingInAssembly_n2pGui);
-        	
+
         	/* Remove the temporal directory */
         	FileUtils.deleteQuietly(outputGlobalTemporalDirectory);
+
     	} catch (IOException e) { throw new RuntimeException (e.getMessage()); }
     }
 
     private static void createAndSaveModifiedVersionOfN2pCoreJar (File n2pCoreJarFileCopyInOutputFolder) throws IOException
     {
-    	final File inputDirectoryOfSubmodule = getChild(parentFolderOfAllModules , "n2p");
+    	final File inputDirectoryOfSubmodule = getChild(parentFolderOfAllModules , "n2p-core");
     	final File jarFileN2pCore = getChild(inputDirectoryOfSubmodule , "target" , "n2p-core-" + versionOfJars + ".jar");
     	final File rootFolderOfClassesOfCore = getChild(inputDirectoryOfSubmodule , "target" , "classes");
     	if (!rootFolderOfClassesOfCore.isDirectory()) throw new RuntimeException("Classes directory not found: " + rootFolderOfClassesOfCore.getAbsolutePath());
@@ -219,10 +220,15 @@ public class AssemblerCodeAndDocumentationMain
     	}
 
     	if (!jarFileN2pGui.isFile()) throw new RuntimeException("File not found: " + jarFileN2pGui.getAbsolutePath());
-    	FileUtils.copyFile(jarFileN2pGui, n2pGuiJarFileCopyInOutputFolder);
+    	
+    	if(n2pGuiJarFileCopyInOutputFolder.isDirectory()) FileUtils.copyFileToDirectory(jarFileN2pGui, n2pGuiJarFileCopyInOutputFolder);
+    	else FileUtils.copyFile(jarFileN2pGui, n2pGuiJarFileCopyInOutputFolder);
+
+
 
     	/* Check there are no files with forbidden extensions */
     	ZipUtils.checkAcceptableFileSuffixes (jarFileN2pGui , acceptedSuffixesForZippingInAssembly_n2pGui);
+
 
 //    	/* Change the manifest with what we want */
 //    	ManifestManipulator.setNewManifestFileInJar_2(n2pGuiJarFileCopyInOutputFolder , "n2p-gui" , versionOfJars , jarFilesInClassPathNames , Optional.of(GUINet2Plan.class.getName()) , Optional.empty());
