@@ -39,18 +39,22 @@ public class AssemblerCodeAndDocumentationMain
 	public static void log (String s) { log.add(s); }
 	
 	/* Configuration variables */
-	public final static String versionOfJars = "0.6.6.0"; // Change for a varible
+	public final static String versionOfJars = "0.7.0"; // Change for a varible
 	public final static File outputAssemblyDirectory = Constants.computerThisIsRunning.localFileForAssembly; // better if outside the GIT domain
 	
 	/* Control [non-configurable] variables */
 	
 	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pCore = Optional.of (new TreeSet<> (Arrays.asList(".class" , ".jar", ".txt" , ".MF" , ".properties" , ".css.map" , ".css" , ".js.map" , ".js", ".json", ".xsl" , ".gif" , ".xsd" , ".html" , ".n2p" , ".pdf"))); 
-	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pGui = Optional.of (new TreeSet<> (CollectionUtils.union(acceptedSuffixesForZippingInAssembly_n2pCore.get() , Arrays.asList(".js" , "js.map" , ".png", ".ico", ".icns" , ".gif" , ".bmp" , ".jpg" , ".css", ".json")))); 
+	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pGui = Optional.of (new TreeSet<> (CollectionUtils.union(acceptedSuffixesForZippingInAssembly_n2pCore.get() , Arrays.asList(".js" , "js.map" , ".png", ".ico", ".icns" , ".gif" , ".bmp" , ".jpg" , ".css", ".json", ".md")))); 
+	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pBuiltInExamples = Optional.of (new TreeSet<> (CollectionUtils.union(acceptedSuffixesForZippingInAssembly_n2pCore.get() , Arrays.asList(".js" , "js.map" , ".png", ".ico", ".icns" , ".gif" , ".bmp" , ".jpg" , ".css", ".json", ".md", ".java")))); 
 	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_javadoc = Optional.empty (); 
 	private static final File currentSystemDirectory = new File (System.getProperty("user.dir")); 
 	private static final File outputGlobalDirectory_zipFiles = new File (outputAssemblyDirectory , "compressedFiles"); 
 	private static final File outputGlobalDirectory_unzipped = new File (outputAssemblyDirectory , "unzipped"); 
 	public static final File outputGlobalTemporalDirectory = new File (outputAssemblyDirectory , "temporalFolderShouldBeRemoved"); 
+	public static final File outputGlobalTemporalDirectory_workspace = new File (outputGlobalTemporalDirectory , "workspace"); 
+	public static final File outputGlobalTemporalDirectory_data = new File (outputGlobalTemporalDirectory_workspace , "data"); 
+	public static final File outputGlobalTemporalDirectory_docs = new File (outputGlobalTemporalDirectory , "docs"); 
 	public static final File parentFolderOfAllModules = currentSystemDirectory.getAbsoluteFile().getParentFile();
 	private static final File assembledZipFile_core = new File (outputGlobalDirectory_zipFiles , "assembly-n2p-core-" + versionOfJars + ".zip");
 	private static final File assembledZipFile_gui = new File (outputGlobalDirectory_zipFiles , "assembly-n2p-gui-" + versionOfJars + ".zip");
@@ -135,10 +139,260 @@ public class AssemblerCodeAndDocumentationMain
         	assert inputDirectoryOfSubmodule.isDirectory();
         	
         	/* Copy README to root of output directory */
+        	final String RET = System.getProperty("line.separator");
         	final String readString = 
-        			"This ZIP file includes the Graphical User Interface (GUI) of the Net2Plan. "
-        			+ "The /lib directory contains the dependencies of the application.";
-        	FileUtils.writeStringToFile(new File (outputGlobalTemporalDirectory , "README.txt"), readString, "UTF-8");
+        			"<p align=\"center\">" + RET
+        			+ "    <img src=\"https://raw.githubusercontent.com/girtel/Net2Plan/develop/Net2Plan-GUI/Net2Plan-GUI-Plugins/Net2Plan-NetworkDesign/src/main/resources/resources/common/net2plan-logo.jpg\" height=\"300\">" + RET
+        			+ "</p>" + RET
+        			+ "<p align=\"center\">" + RET
+        			+ "    <img src=\"https://travis-ci.org/girtel/Net2Plan.svg?branch=master\">" + RET
+        			+ "    <img src=\"https://s-a.github.io/license/img/bsd-2-clause.svg\">" + RET
+        			+ "</p>" + RET
+        			+ "" + RET
+        			+ "# Introduction" + RET
+        			+ "Net2Plan is a Java developed tool for the planning, optimization and evaluation of communication networks." + RET
+        			+ "" + RET
+        			+ "For further information, please feel free to follow the next web pages:" + RET
+        			+ "* The [Net2Plan website](www.net2plan.com)." + RET
+        			+ "* The [Net2Plan user's guide](http://net2plan.com/documentation/current/help/usersGuide.pdf)." + RET
+        			+ "* The [Net2Plan API Javadoc](http://net2plan.com/documentation/current/javadoc/api/index.html)." + RET
+        			+ "" + RET
+        			+ "# About Net2Plan" + RET
+        			+ "Net2Plan is a free and open-source Java tool devoted to the planning, optimization and evaluation of communication networks. It was originally thought as a tool to assist on the teaching of communication networks courses. Eventually, it got converted into a powerful network optimization and planning tool for both the academia and the industry, together with a growing repository of network planning resources." + RET
+        			+ "" + RET
+        			+ "Net2Plan is built on top of an abstract network representation, so-called network plan, based on abstract components: nodes, links, traffic unicast and multicast demands, routes, multicast trees, shared-risk groups, resources and network layers. The network representation is technology-agnostic, thus Net2Plan can be adapted for planning networks of any technology. Technology-specific information can be introduced in the network representation via user-defined attributes attached to any of the abstract components mentioned above. Some attribute names has been fixed to ease the adaptation of well-known technologies (e.g. IP networks, WDM networks, NFV scenarios)." + RET
+        			+ "" + RET
+        			+ "Net2Plan is implemented as a Java library along with both command-line and graphical user interfaces (CLI and GUI, respectively). The GUI is specially useful for laboratory sessions as an educational resource, or for a visual inspection of the network. In its turn, the command-line interface is specifically devoted to in-depth research studies, making use of batch processing or large-scale simulation features. Therefore, Net2Plan is a tool intended for a broad spectrum of users: industry, research, and academia." + RET
+        			+ "" + RET
+        			+ "# Building instructions" + RET
+        			+ "Since Net2Plan 0.4.1, the project is being built through the use of Maven." + RET
+        			+ "" + RET
+        			+ "The Maven command to build the project is the following:" + RET
+        			+ "" + RET
+        			+ "`clean package`" + RET
+        			+ "" + RET
+        			+ "The result is a _Net2Plan-VERSION.zip_ package containing the resulting program. By default, this file can be found under the _target_ folder of the _Net2Plan-Assembly_ module." + RET
+        			+ "" + RET
+        			+ "# Developer tools" + RET
+        			+ "Net2Plan offers an alternative method of running the program without the need of going through the packaging phase. This is achieved by running the main method under:" + RET
+        			+ "" + RET
+        			+ "`com.net2plan.launcher.GUILauncher`" + RET
+        			+ "" + RET
+        			+ "Which can be found at:" + RET
+        			+ "" + RET
+        			+ "`Net2Plan -> Net2Plan-Launcher`" + RET
+        			+ "" + RET
+        			+ "Note that this is meant for running the graphical interface of the project." + RET
+        			+ "" + RET
+        			+ "# Learning materials" + RET
+        			+ "New users may want to checkout the Net2Plan's [Youtube channel](https://www.youtube.com/channel/UCCgkr1wlMlO221yhFGmWZUg), alongside the [user's guide](http://net2plan.com/documentation/current/help/usersGuide.pdf), for an introduction into the basics of the provided tools. " + RET
+        			+ "" + RET
+        			+ "# License" + RET
+        			+ "Net2Plan is licensed under the [Simplified BSD License](https://opensource.org/licenses/BSD-2-Clause). Meaning that it is completely free and open-source. As a consequence of this, you may use parts of Net2Plan or the complete package inside your own programs for free, can make money from them and do not have to disclose your code. Although, you are obliged to mention that you are using Net2Plan in your program.";
+        	FileUtils.writeStringToFile(new File (outputGlobalTemporalDirectory , "README.md"), readString, "UTF-8");
+        	
+        	final String licenseString = "BSD 2-Clause License" + RET
+        			+ "" + RET
+        			+ "Copyright (c) 2017, Pablo Pavon Marino" + RET
+        			+ "All rights reserved." + RET
+        			+ "" + RET
+        			+ "Redistribution and use in source and binary forms, with or without" + RET
+        			+ "modification, are permitted provided that the following conditions are met:" + RET
+        			+ "" + RET
+        			+ "* Redistributions of source code must retain the above copyright notice, this" + RET
+        			+ "  list of conditions and the following disclaimer." + RET
+        			+ "" + RET
+        			+ "* Redistributions in binary form must reproduce the above copyright notice," + RET
+        			+ "  this list of conditions and the following disclaimer in the documentation" + RET
+        			+ "  and/or other materials provided with the distribution." + RET
+        			+ "" + RET
+        			+ "THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"" + RET
+        			+ "AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE" + RET
+        			+ "IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE" + RET
+        			+ "DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE" + RET
+        			+ "FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL" + RET
+        			+ "DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR" + RET
+        			+ "SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER" + RET
+        			+ "CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY," + RET
+        			+ "OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE" + RET
+        			+ "OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.";
+        	FileUtils.writeStringToFile(new File (outputGlobalTemporalDirectory , "LICENSE.md"), licenseString, "UTF-8");
+        	
+        	final String changelogString = "# Changelog" + RET
+        			+ "" + RET
+        			+ "All notable changes to Net2Plan will be documented in this file." + RET
+        			+ "" + RET
+        			+ "The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/)." + RET
+        			+ "## [0.6.5.0] - 2019-12-18" + RET
+        			+ "" + RET
+        			+ "### Added" + RET
+        			+ "	- Significant improvements in the NIW framework. Model and graphical interface." + RET
+        			+ "" + RET
+        			+ "## [0.6.4.0] - 2019-10-20" + RET
+        			+ "" + RET
+        			+ "### Added" + RET
+        			+ "	- Included NIW (NFV over IP over WDM) library in the core, and added GUI specific options for it. " + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "## [0.6.3.2] - 2019-07-15" + RET
+        			+ "" + RET
+        			+ "### Fixed" + RET
+        			+ "	- Upgraded JGraphT library to 1.3.1 version to fix several bugs." + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "## [0.6.3.1] - 2019-05-31" + RET
+        			+ "" + RET
+        			+ "### Added" + RET
+        			+ "	- SAN based algorithm for distance geometry problem." + RET
+        			+ "	- Property \"Nominal Color\" to link class." + RET
+        			+ "	" + RET
+        			+ "### Removed" + RET
+        			+ "	- NIW classes." + RET
+        			+ "" + RET
+        			+ "### Fixed" + RET
+        			+ "	- Several minor bugs associated to the tables." + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "## [0.6.3] - 2019-04-29" + RET
+        			+ "" + RET
+        			+ "### Added" + RET
+        			+ "	- Several new examples (reports)." + RET
+        			+ "" + RET
+        			+ "### Fixed" + RET
+        			+ "	- Several minor bugs." + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "## [0.6.2] - 2019-03-27" + RET
+        			+ "" + RET
+        			+ "### Added" + RET
+        			+ "	- Monitoring Panel to show traffic monitoring of links, demands and multicast demands." + RET
+        			+ "" + RET
+        			+ "### Changed" + RET
+        			+ "	- Focus Panel is now placed inside the tables panel, next to Monitoring Panel." + RET
+        			+ "	- Several columns names have been renamed." + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "## [0.6.1.2] - 2019-01-09" + RET
+        			+ "" + RET
+        			+ "### Fixed" + RET
+        			+ "	- Bug in Report header when showed in navigator." + RET
+        			+ "	" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "## [0.6.1.1] - 2018-11-05" + RET
+        			+ "" + RET
+        			+ "### Fixed" + RET
+        			+ "	- Different bugs in Smart City algorithms." + RET
+        			+ "	" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "## [0.6.1] - 2018-10-24" + RET
+        			+ "" + RET
+        			+ "### Added" + RET
+        			+ "	- New GUI to add multicast demands and multicast trees." + RET
+        			+ "	- Dialog confirmation when loading a design in a right way." + RET
+        			+ "	- Waste collection algorithms." + RET
+        			+ "	- NIW library to design NFV algorithms." + RET
+        			+ "### Changed" + RET
+        			+ "	- GUI improvements." + RET
+        			+ "### Fixed" + RET
+        			+ "	- Some bug fixes." + RET
+        			+ "" + RET
+        			+ "	" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "## [0.6.0.1] - 2018-07-11 " + RET
+        			+ "" + RET
+        			+ "### Fixed" + RET
+        			+ "	- Some bug fixes." + RET
+        			+ "" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "## [0.6.0] - 2018-07-05" + RET
+        			+ "### Added" + RET
+        			+ "	- Possibility to attach monitoring traces of carried traffic (series of pairs date-traffic) to the links, and also traces of offered traffic to demands and multicast demands. Methods to synthetically create, import and export from Excel, and manipulate those traces are included in the GUI. " + RET
+        			+ "	- Basic forecasting functionalities, also accessible from the GUI, to predict traffic in links and demands from the monitoring traces. " + RET
+        			+ "	- Basic traffic matrix estimation functionalities, also accessible from the GUI, to predict demands and multicast demands traffic, from link occupations. " + RET
+        			+ "	- QoS functionalities. Demands and multicast demands can be tagged with a user-defined QoS. Then, the user can define scheduling policies, that assign link bandwidth to the traversing demands and multicast demands with user-defined priorities, according to their QoS." + RET
+        			+ "	- Resources can now we dettached from the nodes, and attached later to other nodes." + RET
+        			+ "	- Nodes now can have different (X,Y) positions at different user-defined layouts." + RET
+        			+ "	- Links can now be coupled to demands in the same layer, as long as no coupling cycles occur. " + RET
+        			+ "	- Demands can now be of the type source routing or hop-by-hop routing. Previously, all the demands in the same layer where forced to be of the same type." + RET
+        			+ "	- Multicast trees can now be trees that reach just a subset of the egress nodes of the associated demand." + RET
+        			+ "	- Shared risk groups can now also be dynamic, meaning that the associated links and nodes are defined by a function of the network state, not statically set." + RET
+        			+ "	- Internally, most of the methods work with SortedSets instead of Set, so the ordering when iterating those sets is platform independent (in its turn, the order in Set is not defined, and can change from one from one program execution to the next). " + RET
+        			+ "	- GUI: Possibility to navigate through the tables, e.g. picking the origin node of a link in the links table, picks that node in the nodes table. It is possible to move back and forward the picked elements." + RET
+        			+ "	- GUI: Easier selection of the current active layer in a left panel." + RET
+        			+ "	- GUI: The tabbed panel at the right, now shows ALL the layers information, not just the active layer." + RET
+        			+ "    " + RET
+        			+ "### Fixed" + RET
+        			+ "	- Some bug fixes." + RET
+        			+ "" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "## [0.5.3] - 2018-02-14" + RET
+        			+ "### Added" + RET
+        			+ "    - Added Optical Fiber Utils." + RET
+        			+ "	- Report for Optical Fiber networks following calculations of Gaussian  Noise Model." + RET
+        			+ "    " + RET
+        			+ "### Fixed" + RET
+        			+ "    - Site mode does not break the tool when loading a new topology." + RET
+        			+ "	- Corrected layer table tags." + RET
+        			+ "	- Sorting table columns works as it should." + RET
+        			+ "	- Other bug fixes." + RET
+        			+ "" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "" + RET
+        			+ "## [0.5.2] - 2017-05-24" + RET
+        			+ "### Added" + RET
+        			+ "    - Added a new tab under the \"Demands\" table for traffic matrix visualization and control." + RET
+        			+ "    - Added a new visualization option for giving color to links based on their current utilization." + RET
+        			+ "    " + RET
+        			+ "### Changed" + RET
+        			+ "    - Reworked multi-layer control panel to work as a non-intrusive pop-up." + RET
+        			+ "    - Separated canvas display from table display: Pick option." + RET
+        			+ "    - Changed project license to BSD 2-clause." + RET
+        			+ "    " + RET
+        			+ "### Fixed" + RET
+        			+ "    - Focus panel refreshes correctly again." + RET
+        			+ "    - Returned non-n2p loading modules: SNDLib..." + RET
+        			+ "    - Can now load designs with no population attribute." + RET
+        			+ "    - Giving order to a table now works as intended." + RET
+        			+ "    - Canvas no longer draws layers in the inverse order." + RET
+        			+ "" + RET
+        			+ "####" + RET
+        			+ "" + RET
+        			+ "## [0.5.1-Beta.1] - 2017-04-20" + RET
+        			+ "### Added" + RET
+        			+ "    - Added capacity for multiple line selection on tables." + RET
+        			+ "    - Exporting function for writing tables on an Excel file." + RET
+        			+ "    - Added a helper under the options window for looking for solvers under the PC." + RET
+        			+ "    - New development tools." + RET
+        			+ "### Changed" + RET
+        			+ "    - Improved performance for large scale algorithms." + RET
+        			+ "    - Tools now ask for confirmation when changing between them." + RET
+        			+ "    - Tables' window can now run all keyboard shortcuts." + RET
+        			+ "### Fixed" + RET
+        			+ "    - Solved a problem on the focus panel where it crashed when an element on its list was removed." + RET
+        			+ "    - Solved right-click pop-up options order issues." + RET
+        			+ "    - What-If analysis now correctly shows the help box." + RET
+        			+ "    - \"View/Edit backup routes\" now displays properly." + RET
+        			+ "    - Solved a problem where forwarding rules were not displayed on the focus panel." + RET
+        			+ "    ";
+        	FileUtils.writeStringToFile(new File (outputGlobalTemporalDirectory , "CHANGELOG.md"), changelogString, "UTF-8");
 
         	/* Copy dependencies to lib folder: external and n2p-core  */
         	final List<File> n2pCoreExternalDependencies = DependenciesCutAndPastes.getExternalDependencies_n2pCore();
@@ -149,12 +403,21 @@ public class AssemblerCodeAndDocumentationMain
         	/* Copy the n2p-core-jar file, with a modified MANIFEST */
             createAndSaveModifiedVersionOfN2pCoreJar (getChild (outputGlobalTemporalDirectory , "lib" , "n2p-core-" + versionOfJars + ".jar"));
 
-        	/* Create the /data folder */
-        	final File directory_data = getChild(outputGlobalTemporalDirectory , "data");
+        	/* Create the /data folder into workspace folder */
+        	final File directory_data = getChild(outputGlobalTemporalDirectory_workspace , "data");
         	FileUtils.forceMkdir(directory_data);
-
+        	
         	/* Write the modified version of the GUI (with new classpath) */
         	createAndSaveModifiedVersionOfGuiJar (getChild(outputGlobalTemporalDirectory));
+        	
+        	/* Write the BuildInExample.jar into workspace directory */
+        	createAndSaveBuildInExampleJar(getChild(outputGlobalTemporalDirectory_workspace));
+        	
+        	/* Copy networkTopologies and trafficMatrices to data directory*/
+        	final File directoryNetworkTopologiesToCopyIntoGui = getChild(parentFolderOfAllModules , "n2p-examples", "src", "test", "resources", "data", "networkTopologies");
+        	FileUtils.copyDirectoryToDirectory(directoryNetworkTopologiesToCopyIntoGui, outputGlobalTemporalDirectory_data);
+        	final File directoryTrafficMatricesToCopyIntoGui = getChild(parentFolderOfAllModules , "n2p-examples", "src", "test", "resources", "data", "trafficMatrices");
+        	FileUtils.copyDirectoryToDirectory(directoryTrafficMatricesToCopyIntoGui, outputGlobalTemporalDirectory_data);
         	
         	/* Create the ZIP file with all together */
         	ZipUtils.zipDirectory(outputGlobalTemporalDirectory, assembledZipFile_gui, false , acceptedSuffixesForZippingInAssembly_n2pGui);
@@ -165,7 +428,33 @@ public class AssemblerCodeAndDocumentationMain
     	} catch (IOException e) { throw new RuntimeException (e.getMessage()); }
     }
 
-    private static void createAndSaveModifiedVersionOfN2pCoreJar (File n2pCoreJarFileCopyInOutputFolder) throws IOException
+    private static void createAndSaveBuildInExampleJar(File n2pCoreJarFileCopyInOutputFolder) throws IOException
+    {
+    	final File inputDirectoryOfSubmodule = getChild(parentFolderOfAllModules , "n2p-examples");
+    	final File jarFileN2pCore = getChild(inputDirectoryOfSubmodule , "target" , "BuiltInExamples.jar");
+    	final File rootFolderOfClassesOfCore = getChild(inputDirectoryOfSubmodule , "src" , "main", "java");
+    	if (!rootFolderOfClassesOfCore.isDirectory()) throw new RuntimeException("Classes directory not found: " + rootFolderOfClassesOfCore.getAbsolutePath());
+    	    	
+    	/* Create JAR with its manifest */
+    	final List<File> n2pCoreExternalDependencies = DependenciesCutAndPastes.getExternalDependencies_n2pCore();
+    	final List<String> jarFilesInClassPathNames = n2pCoreExternalDependencies.stream().map(e->e.getName().trim()).collect(Collectors.toList());
+    	final Manifest manifest = ManifestManipulator.getEnpGeneralManifest("n2p-examples", versionOfJars, jarFilesInClassPathNames , Optional.empty(), Optional.empty());
+    	
+    	try (JarOutputStream target = new JarOutputStream(new FileOutputStream(jarFileN2pCore), manifest))
+    	{
+        	JarUtils.add (rootFolderOfClassesOfCore , rootFolderOfClassesOfCore , target);
+    		target.close();
+        	if (!jarFileN2pCore.isFile()) throw new RuntimeException("File not found: " + jarFileN2pCore.getAbsolutePath());
+        	if (n2pCoreJarFileCopyInOutputFolder.isDirectory()) FileUtils.copyFileToDirectory(jarFileN2pCore, n2pCoreJarFileCopyInOutputFolder);
+        	else FileUtils.copyFile(jarFileN2pCore, n2pCoreJarFileCopyInOutputFolder);
+    	}
+
+    	/* Check there are no files with forbidden extensions */
+    	ZipUtils.checkAcceptableFileSuffixes (jarFileN2pCore , acceptedSuffixesForZippingInAssembly_n2pBuiltInExamples);
+
+	}
+
+	private static void createAndSaveModifiedVersionOfN2pCoreJar (File n2pCoreJarFileCopyInOutputFolder) throws IOException
     {
     	final File inputDirectoryOfSubmodule = getChild(parentFolderOfAllModules , "n2p-core");
     	final File jarFileN2pCore = getChild(inputDirectoryOfSubmodule , "target" , "n2p-core-" + versionOfJars + ".jar");
@@ -193,14 +482,14 @@ public class AssemblerCodeAndDocumentationMain
     private static void createAndSaveModifiedVersionOfGuiJar (File n2pGuiJarFileCopyInOutputFolder) throws IOException
     {
     	final File inputDirectoryOfSubmodule = getChild(parentFolderOfAllModules , "n2p-gui");
-    	final File jarFileN2pGui = getChild(inputDirectoryOfSubmodule , "target" , "n2p-gui-" + versionOfJars + ".jar");
+    	final File jarFileN2pGui = getChild(inputDirectoryOfSubmodule , "target" , "Net2Plan.jar");
     	final File rootFolderOfClasses = getChild(inputDirectoryOfSubmodule , "target" , "classes");
 
     	/* Create the JAR */
     	final List<File> n2pGuiDependencies = DependenciesCutAndPastes.getExternalDependencies_n2pGui();
     	n2pGuiDependencies.add(new File ("n2p-core-" + versionOfJars + ".jar"));
     	final List<String> jarFilesInClassPathNames = n2pGuiDependencies.stream().map(e->"lib/" + e.getName().trim()).collect(Collectors.toList());
-        final Manifest manifest = ManifestManipulator.getEnpGeneralManifest("n2p-gui", versionOfJars, jarFilesInClassPathNames , Optional.of(GUINet2Plan.class.getName()) , Optional.empty());
+        final Manifest manifest = ManifestManipulator.getEnpGeneralManifest("Net2Plan", versionOfJars, jarFilesInClassPathNames , Optional.of(GUINet2Plan.class.getName()) , Optional.empty());
     	try (JarOutputStream target = new JarOutputStream(new FileOutputStream(jarFileN2pGui), manifest))
     	{
         	JarUtils.add (rootFolderOfClasses , rootFolderOfClasses , target);
@@ -292,9 +581,10 @@ public class AssemblerCodeAndDocumentationMain
         	assert srcFolderCore.isDirectory();
         	final List<String> commands = new ArrayList<> ();
         	commands.add(Constants.computerThisIsRunning.pathToJavadocFile);
+        	System.out.println("Debug7");
 
         	
-        	/* Add all the .java files in package mtn, mtn.nodes, optionsStructure, serverInterfaces. The ones that DO NOT start with "_" */
+//        	/* Add all the .java files in package mtn, mtn.nodes, optionsStructure, serverInterfaces. The ones that DO NOT start with "_" */
 //        	final Package mtnPackage = Mtn.class.getPackage();
 //        	final Package mtnPubUtilsPackage = Pair.class.getPackage();
 //        	final Package mtnNodesPackage = ZGenericAbstractNode.class.getPackage();

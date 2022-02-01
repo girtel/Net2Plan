@@ -16,10 +16,6 @@
             <artifactId>n2p-core</artifactId>
             <version>0.6.6.0</version>
         </dependency>
-         <dependency>
-            <groupId>org.codehaus.woodstox</groupId>
-            <artifactId>stax2-api</artifactId>
-        </dependency>
         
     </dependencies>
   
