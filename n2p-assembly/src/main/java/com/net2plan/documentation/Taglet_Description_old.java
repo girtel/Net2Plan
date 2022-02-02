@@ -25,7 +25,7 @@ import java.util.Map;
 // Doclet API
 // Used in register(Map)
 @SuppressWarnings("unchecked")
-public class Taglet_Description implements Taglet
+public class Taglet_Description_old implements Taglet
 {
 
 	private static final String NAME = "net2plan.description";
@@ -119,7 +119,7 @@ public class Taglet_Description implements Taglet
    * @param tagletMap  the map to register this tag to.
    */
   public static void register(Map tagletMap) {
-     Taglet_Description tag = new Taglet_Description();
+     Taglet_Description_old tag = new Taglet_Description_old();
      Taglet t = (Taglet) tagletMap.get(tag.getName());
      if (t != null) {
          tagletMap.remove(tag.getName());
@@ -173,7 +173,7 @@ public class Taglet_Description implements Taglet
   	IAlgorithm alg = null;
     try 
     { 
-      Class algorithmClass = Taglet_Description.class.getClassLoader().loadClass(theClassName); 
+      Class algorithmClass = Taglet_Description_old.class.getClassLoader().loadClass(theClassName); 
     	if (!IAlgorithm.class.isAssignableFrom(algorithmClass)) return null; // not an algorithm
     	alg = (IAlgorithm) algorithmClass.getConstructor().newInstance();
     } catch (Exception e)

@@ -25,7 +25,21 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 
 import com.net2plan.constants.Constants;
+import com.net2plan.examples.general.offline.Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming;
+import com.net2plan.examples.general.offline.nfv.Offline_nfvPlacementILP_v1;
+import com.net2plan.examples.general.onlineSim.Online_evGen_doNothing;
+import com.net2plan.examples.general.reports.Report_WDM_lineEngineering_GNModel;
+import com.net2plan.examples.ocnbook.offline.Offline_ba_numFormulations;
+import com.net2plan.examples.ocnbook.onlineSim.Online_evGen_generalGenerator;
+import com.net2plan.examples.ocnbook.reports.Report_availability;
 import com.net2plan.gui.GUINet2Plan;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.dynamicSrgs.DynamicSrgAllBidiLinksTwoNodes;
+import com.net2plan.interfaces.simulation.SimEvent;
+import com.net2plan.libraries.GraphUtils;
+import com.net2plan.niw.DefaultStatelessSimulator;
+import com.net2plan.utils.RandomUtils;
+import com.net2plan.utils.StringUtils;
 import com.net2plan.utils.ZipUtils;
 
 
@@ -45,7 +59,7 @@ public class AssemblerCodeAndDocumentationMain
 	/* Control [non-configurable] variables */
 	
 	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pCore = Optional.of (new TreeSet<> (Arrays.asList(".class" , ".jar", ".txt" , ".MF" , ".properties" , ".css.map" , ".css" , ".js.map" , ".js", ".json", ".xsl" , ".gif" , ".xsd" , ".html" , ".n2p" , ".pdf"))); 
-	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pGui = Optional.of (new TreeSet<> (CollectionUtils.union(acceptedSuffixesForZippingInAssembly_n2pCore.get() , Arrays.asList(".js" , "js.map" , ".png", ".ico", ".icns" , ".gif" , ".bmp" , ".jpg" , ".css", ".json", ".md")))); 
+	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pGui = Optional.of (new TreeSet<> (CollectionUtils.union(acceptedSuffixesForZippingInAssembly_n2pCore.get() , Arrays.asList(".js" , "js.map" , ".png", ".ico", ".icns" , ".gif" , ".bmp" , ".jpg" , ".css", ".json", ".md", "out8", "out6", "package-list")))); 
 	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_n2pBuiltInExamples = Optional.of (new TreeSet<> (CollectionUtils.union(acceptedSuffixesForZippingInAssembly_n2pCore.get() , Arrays.asList(".js" , "js.map" , ".png", ".ico", ".icns" , ".gif" , ".bmp" , ".jpg" , ".css", ".json", ".md", ".java")))); 
 	private final static Optional<SortedSet<String>> acceptedSuffixesForZippingInAssembly_javadoc = Optional.empty (); 
 	private static final File currentSystemDirectory = new File (System.getProperty("user.dir")); 
@@ -54,11 +68,13 @@ public class AssemblerCodeAndDocumentationMain
 	public static final File outputGlobalTemporalDirectory = new File (outputAssemblyDirectory , "temporalFolderShouldBeRemoved"); 
 	public static final File outputGlobalTemporalDirectory_workspace = new File (outputGlobalTemporalDirectory , "workspace"); 
 	public static final File outputGlobalTemporalDirectory_data = new File (outputGlobalTemporalDirectory_workspace , "data"); 
-	public static final File outputGlobalTemporalDirectory_docs = new File (outputGlobalTemporalDirectory , "docs"); 
+	public static final File outputGlobalTemporalDirectory_doc = new File (outputGlobalTemporalDirectory , "doc"); 
+	public static final File outputGlobalTemporalDirectory_javadoc = new File (outputGlobalTemporalDirectory_doc , "javadoc"); 
 	public static final File parentFolderOfAllModules = currentSystemDirectory.getAbsoluteFile().getParentFile();
-	private static final File assembledZipFile_core = new File (outputGlobalDirectory_zipFiles , "assembly-n2p-core-" + versionOfJars + ".zip");
-	private static final File assembledZipFile_gui = new File (outputGlobalDirectory_zipFiles , "assembly-n2p-gui-" + versionOfJars + ".zip");
-	private static final File assembledZipFile_javadoc = new File (outputGlobalDirectory_zipFiles , "assembly-javadoc-" + versionOfJars + ".zip");
+	private static final File assembledZipFile_core = new File (outputGlobalDirectory_zipFiles , "Net2Plan-core-" + versionOfJars + ".zip");
+	private static final File assembledZipFile_gui = new File (outputGlobalDirectory_zipFiles , "Net2Plan-gui-" + versionOfJars + ".zip");
+	private static final File assembledZipFile_javadocApi = new File (outputGlobalDirectory_zipFiles , "Net2Plan-javadoc-API-" + versionOfJars + ".zip");
+	private static final File assembledZipFile_javadocExamples = new File (outputGlobalDirectory_zipFiles , "Net2Plan-javadoc-Examples-" + versionOfJars + ".zip");
 	public static final File pomFile_general = new File (parentFolderOfAllModules , "pom.xml");
 	public static final File pomFile_n2pGui = getChild (parentFolderOfAllModules , "n2p-gui" , "pom.xml");
 	public static final File pomFile_n2pCore = getChild (parentFolderOfAllModules , "n2p-core" , "pom.xml");
@@ -110,7 +126,8 @@ public class AssemblerCodeAndDocumentationMain
     	
     	assembleFileLaunch (in , assembledZipFile_core , ()-> createZip_n2pCore () );
     	assembleFileLaunch (in , assembledZipFile_gui , ()-> createZip_n2pGuiApplication ());
-    	assembleFileLaunch (in , assembledZipFile_javadoc , ()-> createZip_javadoc () );
+    	assembleFileLaunch (in , assembledZipFile_javadocApi , ()-> createZip_javadocAPI () );
+    	assembleFileLaunch (in , assembledZipFile_javadocExamples , ()-> createZip_javadocExamples () );
     	
     	/* Remove the temporal directory */
     	FileUtils.deleteQuietly(outputGlobalTemporalDirectory);
@@ -414,10 +431,18 @@ public class AssemblerCodeAndDocumentationMain
         	createAndSaveBuildInExampleJar(getChild(outputGlobalTemporalDirectory_workspace));
         	
         	/* Copy networkTopologies and trafficMatrices to data directory*/
-        	final File directoryNetworkTopologiesToCopyIntoGui = getChild(parentFolderOfAllModules , "n2p-examples", "src", "test", "resources", "data", "networkTopologies");
-        	FileUtils.copyDirectoryToDirectory(directoryNetworkTopologiesToCopyIntoGui, outputGlobalTemporalDirectory_data);
-        	final File directoryTrafficMatricesToCopyIntoGui = getChild(parentFolderOfAllModules , "n2p-examples", "src", "test", "resources", "data", "trafficMatrices");
-        	FileUtils.copyDirectoryToDirectory(directoryTrafficMatricesToCopyIntoGui, outputGlobalTemporalDirectory_data);
+        	final File networkTopologiesDirectoryCopyToGui = getChild(parentFolderOfAllModules , "n2p-examples", "src", "test", "resources", "data", "networkTopologies");
+        	FileUtils.copyDirectoryToDirectory(networkTopologiesDirectoryCopyToGui, outputGlobalTemporalDirectory_data);
+        	final File trafficMatricesDirectoryCopyToGui = getChild(parentFolderOfAllModules , "n2p-examples", "src", "test", "resources", "data", "trafficMatrices");
+        	FileUtils.copyDirectoryToDirectory(trafficMatricesDirectoryCopyToGui, outputGlobalTemporalDirectory_data);
+        	
+           	/* Copy help folder to doc directory*/
+        	final File helpDirectoryCopyToGui = getChild(parentFolderOfAllModules , "n2p-core", "src", "main", "resources", "help");
+        	FileUtils.copyDirectoryToDirectory(helpDirectoryCopyToGui, outputGlobalTemporalDirectory_doc);
+
+           	/* Copy parallelcolt folder to doc/javadoc directory*/
+        	final File parallelcoltDirectoryCopyToGui = getChild(parentFolderOfAllModules , "n2p-examples", "src", "test", "resources", "parallelcolt");
+        	FileUtils.copyDirectoryToDirectory(parallelcoltDirectoryCopyToGui, outputGlobalTemporalDirectory_javadoc);
         	
         	/* Create the ZIP file with all together */
         	ZipUtils.zipDirectory(outputGlobalTemporalDirectory, assembledZipFile_gui, false , acceptedSuffixesForZippingInAssembly_n2pGui);
@@ -566,7 +591,7 @@ public class AssemblerCodeAndDocumentationMain
     // See: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/javadoc.html#CHDFDACB
     // Add the files one by one: if different packages, generates the package info?
     // IMPORTANT: The taglet adds to the classloader in the register method, those JARs in documented classes, that are imported there (e.g. ogr.jgrapht). If not added, fails. 
-    private static void createZip_javadoc () 
+    private static void createZip_javadocAPI () 
     {
     	try
     	{
@@ -575,36 +600,37 @@ public class AssemblerCodeAndDocumentationMain
         	
         	final String dependenciesJarFiles = DependenciesCutAndPastes.getExternalDependencies_n2pCore().stream().map(e->e.getAbsoluteFile().toString()).collect(Collectors.joining(Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls));
 
-        	final File srcFolderCore = getChild (parentFolderOfAllModules , "n2p" , "src" , "main" , "java");
+        	final File srcFolderCore = getChild (parentFolderOfAllModules , "n2p-core" , "src" , "main" , "java");
         	final File classFolderAssembler = getChild (parentFolderOfAllModules , "n2p-assembly" , "target" , "classes");
-        	final File classFolderCore = getChild (parentFolderOfAllModules , "n2p" , "target" , "classes");
+        	final File classFolderCore = getChild (parentFolderOfAllModules , "n2p-core" , "target" , "classes");
         	assert srcFolderCore.isDirectory();
         	final List<String> commands = new ArrayList<> ();
         	commands.add(Constants.computerThisIsRunning.pathToJavadocFile);
-        	System.out.println("Debug7");
 
         	
-//        	/* Add all the .java files in package mtn, mtn.nodes, optionsStructure, serverInterfaces. The ones that DO NOT start with "_" */
-//        	final Package mtnPackage = Mtn.class.getPackage();
-//        	final Package mtnPubUtilsPackage = Pair.class.getPackage();
-//        	final Package mtnNodesPackage = ZGenericAbstractNode.class.getPackage();
-//        	final Package serverInterfacesPackage = IEnpServerInterface.class.getPackage();
-//        	final Package optionsStructurePackage = INavigableDocumentedObject.class.getPackage();
-//        	final Package enumsPackage = OtuRecoveryType.class.getPackage();
-//        	for (Package pack : Arrays.asList(mtnPackage , mtnNodesPackage , serverInterfacesPackage , optionsStructurePackage , enumsPackage , mtnPubUtilsPackage))
-//        	{
-//        		final String [] packageFolders = StringUtils.split(pack.getName() , ".");
-//        		final String packageFolderWithCorrectSeparator = Arrays.asList(packageFolders).stream().collect (Collectors.joining("/"));
-//        		final File folderOfJavaFilesthisPackage = getChild(srcFolderCore, packageFolders);
-//        		assert folderOfJavaFilesthisPackage.isDirectory();
-//        		for (File javaFile : folderOfJavaFilesthisPackage.listFiles())
-//        		{
-//        			if (!javaFile.getName().toLowerCase().endsWith(".java")) continue;
-//        			if (javaFile.getName().toLowerCase().startsWith("_")) continue;
-//        			final String fileNameToAdd = packageFolderWithCorrectSeparator + "/" + javaFile.getName(); 
-//        			commands.add(fileNameToAdd);
-//        		}
-//        	}
+        	/* Add all the .java files in package mtn, mtn.nodes, optionsStructure, serverInterfaces. The ones that DO NOT start with "_" */
+        	final Package networkDesignPackage = Configuration.class.getPackage();
+        	final Package networkDesignDynamicSrgsPackage = DynamicSrgAllBidiLinksTwoNodes.class.getPackage();
+        	final Package simulationPackage = SimEvent.class.getPackage();
+        	final Package librariesPackage = GraphUtils.class.getPackage();
+        	final Package niwPackage = DefaultStatelessSimulator.class.getPackage();
+        	final Package utilsPackage = RandomUtils.class.getPackage();
+        	for (Package pack : Arrays.asList(networkDesignPackage , networkDesignDynamicSrgsPackage , simulationPackage , librariesPackage , niwPackage , utilsPackage))
+        	{
+        		final String [] packageFolders = StringUtils.split(pack.getName() , ".");
+        		final String packageFolderWithCorrectSeparator = Arrays.asList(packageFolders).stream().collect (Collectors.joining("/"));
+        		System.out.println(packageFolderWithCorrectSeparator);
+        		final File folderOfJavaFilesthisPackage = getChild(srcFolderCore, packageFolders);
+        		System.out.println(folderOfJavaFilesthisPackage.toString());
+        		assert folderOfJavaFilesthisPackage.isDirectory();
+        		for (File javaFile : folderOfJavaFilesthisPackage.listFiles())
+        		{
+        			if (!javaFile.getName().toLowerCase().endsWith(".java")) continue;
+        			if (javaFile.getName().toLowerCase().startsWith("_")) continue;
+        			final String fileNameToAdd = packageFolderWithCorrectSeparator + "/" + javaFile.getName(); 
+        			commands.add(fileNameToAdd);
+        		}
+        	}
         	
         	commands.addAll(Arrays.asList(
         	  
@@ -621,7 +647,7 @@ public class AssemblerCodeAndDocumentationMain
         	"-Xdoclint:none", // skip any error, do not check e.g. param tags are all there etc
 //        	"-link" , "https://docs.oracle.com/javase/8/docs/api/",  //, "https://docs.oracle.com/en/java/javase/8/docs/api/",
         	"-link" , "https://docs.oracle.com/en/java/javase/11/docs/api",  //, "https://docs.oracle.com/en/java/javase/8/docs/api/",
-        	"-taglet" , Taglet_Description.class.getName(),
+        	"-taglet" , Taglet_Description_old.class.getName(),
         	"-tagletpath" , classFolderAssembler.getAbsolutePath()+ 
         			Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls + classFolderCore.getAbsolutePath() + 
         			Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls + dependenciesJarFiles 
@@ -649,7 +675,105 @@ public class AssemblerCodeAndDocumentationMain
           System.out.println("Exit...");
 
     	  	/* Create the ZIP file with all together */
-    	  	ZipUtils.zipDirectory(getChild(outputGlobalTemporalDirectory , "javadoc"), assembledZipFile_javadoc, false , acceptedSuffixesForZippingInAssembly_javadoc);
+    	  	ZipUtils.zipDirectory(getChild(outputGlobalTemporalDirectory , "javadoc"), assembledZipFile_javadocApi, false , acceptedSuffixesForZippingInAssembly_javadoc);
+          
+          	/* ZIP the javadoc */
+          
+    	  	/* Remove the temporal directory */
+    	  	FileUtils.deleteQuietly(outputGlobalTemporalDirectory);
+    	} catch (IOException e) { throw new RuntimeException (e.getMessage()); } 
+    	catch (InterruptedException e1) 
+    	{
+    		throw new RuntimeException (e1.getMessage());
+    	}
+    	
+    }
+    private static void createZip_javadocExamples () 
+    {
+    	try
+    	{
+        	final File tempFolder_javadocFolder = getChild(outputGlobalTemporalDirectory, "javadoc");
+        	FileUtils.forceMkdir(tempFolder_javadocFolder);
+        	
+        	final String dependenciesJarFiles = DependenciesCutAndPastes.getExternalDependencies_n2pCore().stream().map(e->e.getAbsoluteFile().toString()).collect(Collectors.joining(Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls));
+
+        	final File srcFolderCore = getChild (parentFolderOfAllModules , "n2p-core" , "src" , "main" , "java");
+        	final File classFolderAssembler = getChild (parentFolderOfAllModules , "n2p-assembly" , "target" , "classes");
+        	final File classFolderCore = getChild (parentFolderOfAllModules , "n2p-core" , "target" , "classes");
+        	assert srcFolderCore.isDirectory();
+        	final List<String> commands = new ArrayList<> ();
+        	commands.add(Constants.computerThisIsRunning.pathToJavadocFile);
+
+        	
+        	/* Add all the .java files in package mtn, mtn.nodes, optionsStructure, serverInterfaces. The ones that DO NOT start with "_" */
+        	final Package generalOfflinePackage = Offline_ipOverWdm_routingSpectrumAndModulationAssignmentHeuristicNotGrooming.class.getPackage();
+        	final Package generalOfflineNfvPackage = Offline_nfvPlacementILP_v1.class.getPackage();
+        	final Package generalOnlineSimPackage = Online_evGen_doNothing.class.getPackage();
+        	final Package generalReportsPackage = Report_WDM_lineEngineering_GNModel.class.getPackage();
+        	final Package ocnbookOfflinePackage = Offline_ba_numFormulations.class.getPackage();
+        	final Package ocnbookOnlineSimPackage = Online_evGen_generalGenerator.class.getPackage();
+        	final Package ocnbookReportsPackage = Report_availability.class.getPackage();
+        	for (Package pack : Arrays.asList(generalOfflinePackage , generalOfflineNfvPackage , generalOnlineSimPackage , generalReportsPackage , ocnbookOfflinePackage , ocnbookOnlineSimPackage, ocnbookReportsPackage))
+        	{
+        		final String [] packageFolders = StringUtils.split(pack.getName() , ".");
+        		final String packageFolderWithCorrectSeparator = Arrays.asList(packageFolders).stream().collect (Collectors.joining("/"));
+        		System.out.println(packageFolderWithCorrectSeparator);
+        		final File folderOfJavaFilesthisPackage = getChild(srcFolderCore, packageFolders);
+        		System.out.println(folderOfJavaFilesthisPackage.toString());
+        		assert folderOfJavaFilesthisPackage.isDirectory();
+        		for (File javaFile : folderOfJavaFilesthisPackage.listFiles())
+        		{
+        			if (!javaFile.getName().toLowerCase().endsWith(".java")) continue;
+        			if (javaFile.getName().toLowerCase().startsWith("_")) continue;
+        			final String fileNameToAdd = packageFolderWithCorrectSeparator + "/" + javaFile.getName(); 
+        			commands.add(fileNameToAdd);
+        		}
+        	}
+        	
+        	commands.addAll(Arrays.asList(
+        	  
+        	"-d" , tempFolder_javadocFolder.toPath().toString(),   // where to put the output files
+        	"-sourcepath ", srcFolderCore.getAbsolutePath().toString(), // do not include since information
+        	"-classpath ", dependenciesJarFiles, // the dependencies are then not looked for javadoc them
+        	"-use", // create class and package use classes
+        	"-splitindex", // split index into one file per letter
+        	"-header " , "Ne2Plan Core Documentation",
+        	"-windowtitle", "\"Net2Plan - Software Development Kit (SDK) Javadoc\"" ,  // split index into one file per letter
+        	"-nosince" ,// do not include since information
+        	"-public" ,// only public methods
+        	"-source", "1.8", // provide source compatibility with the indicated release
+        	"-Xdoclint:none", // skip any error, do not check e.g. param tags are all there etc
+//        	"-link" , "https://docs.oracle.com/javase/8/docs/api/",  //, "https://docs.oracle.com/en/java/javase/8/docs/api/",
+        	"-link" , "https://docs.oracle.com/en/java/javase/11/docs/api",  //, "https://docs.oracle.com/en/java/javase/8/docs/api/",
+        	"-taglet" , Taglet_Description_old.class.getName(),
+        	"-tagletpath" , classFolderAssembler.getAbsolutePath()+ 
+        			Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls + classFolderCore.getAbsolutePath() + 
+        			Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls + dependenciesJarFiles 
+//        	"-quiet" // Shuts off messages so that only the warnings and errors appear to make them easier to view. It also suppresses the version string.
+//        	"-verbose" // print ifo
+        	)); //at the end: the packages to be documented
+        	
+        	System.out.println("Javadoc command: " + commands.stream().map(e->e.trim()).collect(Collectors.joining(" ")));
+        	System.out.println("dependenciesJarFiles: " + dependenciesJarFiles);
+        	
+        	final ProcessBuilder builder = new ProcessBuilder(commands.stream().map(e->e.trim()).collect(Collectors.toList()));
+    	    builder.directory(srcFolderCore);
+    	    builder.inheritIO();
+    	    final Process runningProcess = builder.start();
+    	    final int exitCode = runningProcess.waitFor();
+    	    System.out.println("Javadoc exit with exit code: " + exitCode);
+//    	      String outputOk = IOUtils.toString(runningProcess.getInputStream(), StandardCharsets.UTF_8);
+//    	      String outputError = IOUtils.toString(runningProcess.getErrorStream(), StandardCharsets.UTF_8);
+//    	      System.out.println("--- Output ok");
+//    	      System.out.println(outputOk);
+//    	      System.out.println("--- Output error");
+//    	      System.out.println(outputError);
+//    	      int returnCode = runningProcess.waitFor();
+//            System.out.printf("Program exited with code: %d", returnCode);
+          System.out.println("Exit...");
+
+    	  	/* Create the ZIP file with all together */
+    	  	ZipUtils.zipDirectory(getChild(outputGlobalTemporalDirectory , "javadoc"), assembledZipFile_javadocExamples, false , acceptedSuffixesForZippingInAssembly_javadoc);
           
           	/* ZIP the javadoc */
           

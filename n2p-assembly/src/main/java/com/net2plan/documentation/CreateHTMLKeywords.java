@@ -336,7 +336,7 @@ public class CreateHTMLKeywords
   	Object alg = null;
     try 
     { 
-      Class algorithmClass = Taglet_Description.class.getClassLoader().loadClass(theClassName); 
+      Class algorithmClass = Taglet_Description_old.class.getClassLoader().loadClass(theClassName); 
     	if (IAlgorithm.class.isAssignableFrom(algorithmClass)) return (IAlgorithm) algorithmClass.getConstructor().newInstance(); 
     	if (IReport.class.isAssignableFrom(algorithmClass)) return (IReport)algorithmClass.getConstructor().newInstance();
     	if (IEventGenerator.class.isAssignableFrom(algorithmClass)) return (IEventGenerator)algorithmClass.getConstructor().newInstance();
