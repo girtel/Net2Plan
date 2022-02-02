@@ -642,7 +642,7 @@ public class AssemblerMain
         	"-Xdoclint:none", // skip any error, do not check e.g. param tags are all there etc
 //        	"-link" , "https://docs.oracle.com/javase/8/docs/api/",  //, "https://docs.oracle.com/en/java/javase/8/docs/api/",
         	"-link" , "https://docs.oracle.com/en/java/javase/11/docs/api",  //, "https://docs.oracle.com/en/java/javase/8/docs/api/",
-        	"-taglet" , Taglet_Description_old.class.getName(),
+        	"-taglet" , Taglet_Description.class.getName(),
         	"-tagletpath" , classFolderAssembler.getAbsolutePath()+ 
         			Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls + classFolderCore.getAbsolutePath() + 
         			Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls + dependenciesJarFiles 
@@ -740,7 +740,7 @@ public class AssemblerMain
         	"-Xdoclint:none", // skip any error, do not check e.g. param tags are all there etc
 //        	"-link" , "https://docs.oracle.com/javase/8/docs/api/",  //, "https://docs.oracle.com/en/java/javase/8/docs/api/",
         	"-link" , "https://docs.oracle.com/en/java/javase/11/docs/api",  //, "https://docs.oracle.com/en/java/javase/8/docs/api/",
-        	"-taglet" , Taglet_Description_old.class.getName(),
+        	"-taglet" , Taglet_Description.class.getName(),
         	"-tagletpath" , classFolderAssembler.getAbsolutePath()+ 
         			Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls + classFolderCore.getAbsolutePath() + 
         			Constants.computerThisIsRunning.interDocletFolderSeparatorInJavadocCalls + dependenciesJarFiles 
