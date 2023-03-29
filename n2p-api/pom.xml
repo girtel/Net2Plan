@@ -65,6 +65,11 @@
 		    <version>2.14.1</version>
 		</dependency>
 
+		<dependency>
+			<groupId>com.net2plan</groupId>
+			<artifactId>n2p-examples</artifactId>
+			<version>0.6.6.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

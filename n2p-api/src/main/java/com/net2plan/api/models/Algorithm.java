@@ -1,36 +1,47 @@
 package com.net2plan.api.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import jakarta.validation.constraints.NotBlank;
-import nonapi.io.github.classgraph.json.Id;
-
 public class Algorithm {
-
-	@Id
+	
 	public int algorithmId;
+	public String algorithmName;
+	public String inputParameter;
+	public String outputParameter;
+	public String description;
 	
-	@JsonProperty("inputParameter") public String inputParameter;
-	@JsonProperty("outputParameter") public String outputParameter;
-	@JsonProperty("description") public String description;
 	
-	public Algorithm (int algorithmId, String inputParameter, String description)
+	public Algorithm(int algorithmId, String algorithmName, String inputParameter, String outputParameter,
+			String description) 
 	{
+		super();
 		this.algorithmId = algorithmId;
+		this.algorithmName = algorithmName;
 		this.inputParameter = inputParameter;
+		this.outputParameter = outputParameter;
 		this.description = description;
-		this.outputParameter = inputParameter + " algorithmId=" +algorithmId;
 	}
-	public Algorithm () {
-		this.description = "404. Algorithm not found";
-	}	
 
+	public Algorithm () 
+	{
+		this.algorithmId = -1;
+		this.algorithmName = "None";
+		this.inputParameter = "None";
+		this.outputParameter = "None";
+		this.description = "None";	
+	}	
+	
 	public int getAlgorithmId() {
 		return algorithmId;
 	}
 
 	public void setAlgorithmId(int algorithmId) {
 		this.algorithmId = algorithmId;
+	}
+	
+	public String getAlgorithmName() {
+		return algorithmName;
+	}
+	public void setAlgorithmName(String algorithmName) {
+		this.algorithmName = algorithmName;
 	}
 
 	public String getInputParameter() {

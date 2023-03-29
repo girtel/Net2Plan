@@ -2,6 +2,7 @@ package com.net2plan.api.controllers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.ArrayList;
 
@@ -18,12 +19,42 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.net2plan.api.models.Algorithm;
+import com.net2plan.examples.general.offline.nfv.Offline_nfvPlacementILP_v1;
+import com.net2plan.examples.ocnbook.offline.Offline_fa_ospfWeightOptimization_tabuSearch;
+import com.net2plan.utils.Triple;
 @RestController
 public class AlgorithmController {
 
+	//	Available algorithms
+	Offline_nfvPlacementILP_v1 nfv = new Offline_nfvPlacementILP_v1();
+	Offline_fa_ospfWeightOptimization_tabuSearch ts = new Offline_fa_ospfWeightOptimization_tabuSearch();
+	
 	List<Algorithm> alg = new ArrayList<>();
+	List<Object> list = new ArrayList<Object>();
+
+	
+	public AlgorithmController ()
+	{
+		list.add(nfv);
+		list.add(ts);
+	}
+
+	
+	
+	
 	ObjectMapper mapper = new ObjectMapper();
 
+	@GetMapping(value = "/test")
+	public List<Object> getAllInfoFromAlgorithms()
+	{
+		return list;
+	}
+	@GetMapping(value="/testParameters")
+	public List<Triple<String, String, String>> getParameters()
+	{
+		return nfv.getParameters();
+	}
+	
 	@GetMapping(value = "/algorithms")
 	public List<Algorithm> getAlgorithms()
 	{
@@ -40,8 +71,9 @@ public class AlgorithmController {
 	@PostMapping (value = "/algorithm")
 	public List<Algorithm> setAlgorithm (@RequestBody String json) throws JsonMappingException, JsonProcessingException
 	{
-		Algorithm algorithm = mapper.readValue(json, Algorithm.class);
-		alg.add(algorithm);
+		AlgorithmRequest algReq = mapper.readValue(json, AlgorithmRequest.class);
+		Algorithm al = new Algorithm(alg.size(), algReq.inputParameter, algReq.description);
+		alg.add(al);
 		return alg;
 	}
 	

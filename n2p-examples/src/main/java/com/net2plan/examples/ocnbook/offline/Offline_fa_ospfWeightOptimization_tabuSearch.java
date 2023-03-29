@@ -207,4 +207,9 @@ public class Offline_fa_ospfWeightOptimization_tabuSearch implements IAlgorithm
 		return InputParameter.getInformationAllInputParameterFieldsOfObject(this);
 	}
 
+	public String getAlgorithmName() {
+		// TODO Auto-generated method stub
+		return this.getClass().getSimpleName();
+	}
+
 }

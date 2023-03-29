@@ -275,4 +275,8 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 		return InputParameter.getInformationAllInputParameterFieldsOfObject(this);
 	}
 
+	public String getAlgorithmName() {
+		return this.getClass().getSimpleName();
+	}
+
 }
