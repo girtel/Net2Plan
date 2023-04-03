@@ -198,6 +198,19 @@ public class NetPlan extends NetworkElement
         defaultLayer = addLayer("Layer 0", null, null, null, null, null);
     }
 
+    public static void main(String[] args) {
+    	File currentDirectory = new File (System.getProperty("user.dir"));
+    	File [] files = currentDirectory.listFiles();
+    	for (File file:files)
+    	{
+        	System.out.println(file.getName());
+        	if (file.getName().contains("topSevenSpain.n2p")) {
+        		NetPlan netplan = new NetPlan(file);
+        		System.out.println(netplan);
+        	}
+    	}
+//		System.out.println(NetPlan.loadFromFile(new File ("C:\\Users\\monax\\Downloads\\Net2Plan-0.6.6.0.zip\\Net2Plan-0.6.6.0\\workspace\\data\\networkTopologies\\topSevenSpain.n2p")));
+	}
 
     /********************************************************************************************************/
     /********************************************************************************************************/

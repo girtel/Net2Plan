@@ -4,14 +4,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.HashMap;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,6 +28,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.net2plan.api.models.Algorithm;
 import com.net2plan.examples.general.offline.nfv.Offline_nfvPlacementILP_v1;
 import com.net2plan.examples.ocnbook.offline.Offline_fa_ospfWeightOptimization_tabuSearch;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.ReaderNetPlanFromJson;
 import com.net2plan.utils.Triple;
 @RestController
 public class AlgorithmController {
@@ -30,77 +40,102 @@ public class AlgorithmController {
 	Offline_fa_ospfWeightOptimization_tabuSearch ts = new Offline_fa_ospfWeightOptimization_tabuSearch();
 	
 	List<Algorithm> alg = new ArrayList<>();
-	List<Object> list = new ArrayList<Object>();
+	List<IAlgorithm> list = new ArrayList<>();
 
 	
 	public AlgorithmController ()
 	{
-		list.add(nfv);
-		list.add(ts);
-	}
-
-	
-	
-	
-	ObjectMapper mapper = new ObjectMapper();
-
-	@GetMapping(value = "/test")
-	public List<Object> getAllInfoFromAlgorithms()
-	{
-		return list;
-	}
-	@GetMapping(value="/testParameters")
-	public List<Triple<String, String, String>> getParameters()
-	{
-		return nfv.getParameters();
-	}
-	
-	@GetMapping(value = "/algorithms")
-	public List<Algorithm> getAlgorithms()
-	{
-		return alg;
-	}
-	
-	@GetMapping(value = "/algorithm/{id}")
-	public Algorithm getAlgorithmById(@PathVariable int id)
-	{
-		if (alg.size() == 0) return new Algorithm();
-		return alg.get(id);
-	}
-	
-	@PostMapping (value = "/algorithm")
-	public List<Algorithm> setAlgorithm (@RequestBody String json) throws JsonMappingException, JsonProcessingException
-	{
-		AlgorithmRequest algReq = mapper.readValue(json, AlgorithmRequest.class);
-		Algorithm al = new Algorithm(alg.size(), algReq.inputParameter, algReq.description);
-		alg.add(al);
-		return alg;
-	}
-	
-	@PostMapping (value = "/algorithm/{id}")
-	public Map<String, String> launchAlgorithmById (@PathVariable int id)
-	{
-		Map <String, String> h = new HashMap<>();
-		if (alg.get(id) == null) h.put("message", "404. AlgorithmId not found");
-		else h.put("message", "Launched Algorithm");
 		
-		return h;
+		nfv.setAlgorithmId(0); list.add(nfv);
+		ts.setAlgorithmId(1); list.add(ts);
 	}
-	@PutMapping(value = "/algorithm/{id}")
-	public Map<String, String> setInputParatmeters (@PathVariable int algorithmId, @RequestBody String inputParameter)
+
+	ObjectMapper mapper = new ObjectMapper();
+	
+	/* ALGORITHMS */
+	@GetMapping(value = "/algorithms")
+	public ResponseEntity<Object> getAllInfoFromAlgorithms()
 	{
-		Map <String, String> h = new HashMap<>();
-		if (alg.get(algorithmId) == null) h.put("message", "404. AlgorithmId not found");
-		alg.get(algorithmId).setInputParameter(inputParameter);
-		h.put("message", "New inputParameter value defined");
-		return h;
+		if (list.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The system does not include any algorithm"));
+		return ResponseEntity.ok(list);
 	}
-	@DeleteMapping (value = "/algorithm/{id}")
-	public Map<String, String> deleteAlgorithm (@PathVariable int algorithmId)
+	@GetMapping(value = "/algorithm/{algId}")
+	public ResponseEntity<Object> getAlgorithmById(@PathVariable int algId)
 	{
-		Map <String, String> h = new HashMap<>();
-		if (alg.get(algorithmId) == null) h.put("message", "404. AlgorithmId not found");
-		alg.remove(algorithmId);
-		h.put("message", "algorithm deleted");
-		return h;
-	}}
+		if (list.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The system does not include any algorithm"));
+		if (algId > list.size() - 1) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The requested algorithm is not present"));
+		return ResponseEntity.ok(list.get(algId));
+	}
+	@PostMapping(value = "/algorithm/{algId}")
+	public ResponseEntity<Object> executeAlgorithmById(@PathVariable int algId)
+	{
+		if (list.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The system does not include any algorithm"));
+		if (algId > list.size() - 1) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The requested algorithm is not present"));
+		//list.get(algId).executeAlgorithm(null, null, null)
+		return ResponseEntity.ok(list.get(algId));
+	}
+	@GetMapping(value = "/algorithm/{algId}/parameters")
+	public ResponseEntity<Object> getAlgorithmParametersById(@PathVariable int algId)
+	{
+		if (list.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The system does not include any algorithm"));
+		if (list.get(algId).getParameters().isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The requested algorithm is not present"));
+		return ResponseEntity.ok(list.get(algId).getParameters());
+	}
+	@GetMapping(value = "/algorithm/{algId}/description")
+	public ResponseEntity<Object> getAlgorithmDescriptionById(@PathVariable int algId)
+	{
+		if (list.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The system does not include any algorithm"));
+		if (list.get(algId).getDescription().isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The requested algorithm is not present"));
+		return ResponseEntity.ok(list.get(algId).getDescription());
+	}
+	@GetMapping(value = "/algorithm/{algId}/parameter/{paramId}")
+	public ResponseEntity<Object> getAlgorithmParameterById(@PathVariable int algId, @PathVariable int paramId)
+	{
+		if (list.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The algorithm parameters are not present"));
+		if (list.get(algId).getParameters().isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ReturnMessage("The requested algorithm is not present"));
+		return ResponseEntity.ok(list.get(algId).getParameters().get(paramId));
+	}
+	
+	/* NETPLAN */
+	@GetMapping(value = "/netplan")
+	public ResponseEntity<Object> getNetplanModel()
+	{
+		NetPlan netplan = new NetPlan();
+		try {
+			return ResponseEntity.ok(mapper.writeValueAsString(netplan));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ReturnMessage("EERRRRORRRR"));
+			//e.printStackTrace();
+		}
+	}
+	
+	public static void main(String[] args) throws IOException {
+//		String currentWorkingDirectory = System.getProperty("user.dir");
+//		System.out.println("Current working directory: " + currentWorkingDirectory);
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+		
+		try {
+            // read the JSON file into a User object
+			ReaderNetPlanFromJson n2p = objectMapper.readValue(new File("test.json"), ReaderNetPlanFromJson.class);
+
+            // print the user object
+            System.out.println(n2p);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		
+		String json = Files.readString(Paths.get("test.json"));
+		ReaderNetPlanFromJson myObject = objectMapper.readValue(json, ReaderNetPlanFromJson.class);
+
+		
+//		ReaderNetPlanFromJson reader = new  ReaderNetPlanFromJson();
+//		String jsonString = objectMapper.writeValueAsString(reader);
+//		ReaderNetPlanFromJson myObject = objectMapper.readValue(jsonString, ReaderNetPlanFromJson.class);
+		System.out.println(myObject);
+
+	}
+	
+	
+}

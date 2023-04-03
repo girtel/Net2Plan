@@ -58,6 +58,8 @@ public class Offline_fa_ospfWeightOptimization_tabuSearch implements IAlgorithm
 	private InputParameter ts_aspirationCriterion = new InputParameter ("ts_aspirationCriterion", true , "Apply aspiration criterion in tabu search");
 	private InputParameter ospf_weightOfMaxUtilizationInObjectiveFunction = new InputParameter ("ospf_weightOfMaxUtilizationInObjectiveFunction", (double) 0.9 , "Objective function is this factor multiplied by maximum link utilization, plus 1 minus this factor by average link utilization" , 0 , true , 1 , true);
 	
+	private int algorithmId;
+	
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
 	{
@@ -211,5 +213,14 @@ public class Offline_fa_ospfWeightOptimization_tabuSearch implements IAlgorithm
 		// TODO Auto-generated method stub
 		return this.getClass().getSimpleName();
 	}
+	
+	public int getAlgorithmId() {
+		return algorithmId;
+	}
+
+	public void setAlgorithmId(int algorithmId) {
+		this.algorithmId = algorithmId;
+	}
+	
 
 }

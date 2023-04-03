@@ -67,6 +67,8 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 	private InputParameter maxNumHopsPerSubpath = new InputParameter ("maxNumHopsPerSubpath", (int) -1 , "Subpaths (parts of the path split by resources) longer than this in number of hops are considered not admissible. A non-positive number means this limit does not exist");
 	private InputParameter maxPropDelayInMsPerSubpath = new InputParameter ("maxPropDelayInMsPerSubpath", (double) -1 , "Subpaths (parts of the path split by resources) longer than this in propagation delay (in ms) are considered not admissible. A non-positive number means this limit does not exist");
 
+	private int algorithmId;
+	
 	@Override
 	public String executeAlgorithm(NetPlan netPlan, Map<String, String> algorithmParameters, Map<String, String> net2planParameters)
 	{
@@ -278,5 +280,15 @@ public class Offline_nfvPlacementILP_v1 implements IAlgorithm
 	public String getAlgorithmName() {
 		return this.getClass().getSimpleName();
 	}
+
+	public int getAlgorithmId() {
+		return algorithmId;
+	}
+
+	public void setAlgorithmId(int algorithmId) {
+		this.algorithmId = algorithmId;
+	}
+	
+
 
 }

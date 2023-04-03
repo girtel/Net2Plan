@@ -1,0 +1,33 @@
+{
+    "description": "networkDescription",
+    "version": 3,
+    "nodes": [
+    {
+        "id": 0,
+        "population": 0,
+        "isUp": true,
+        "layer": 1,
+        "xCoord": 0.0,
+        "yCoord": 0.0
+    }],
+    "links": [
+    {
+        "id": 1,
+        "layer": 1,
+        "originNodeId": 1,
+        "destinationNodeId": 2,
+        "capacity": 12,
+        "lengthInKm": 1.235,
+        "propagationSpeedInKmPerSecond": 200000.0,
+        "isUp": true
+    }],
+    "demands" : [
+    {
+        "id": 1,
+        "layer": 1,
+        "ingressNodeId": 4,
+        "egressNodeId": 5,
+        "offeredTraffic": 2.2224,
+        "carriedTraffic": 2.2224
+    }]
+}

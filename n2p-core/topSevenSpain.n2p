@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><network description="Fictitious set of nodes representing the seven most populated cities in Spain. It does not contain any traffic demand. Population and coordinates extracted from Wikipedia" name="7-node network">
+    <physicalTopology>
+        <node level="1" name="Madrid" population="3265038" xCoord="-3.6919444" yCoord="40.4188889"/>
+        <node level="1" name="Barcelona" population="1615448" xCoord="2.1769444" yCoord="41.3825000"/>
+        <node level="1" name="Valencia" population="798033" xCoord="-0.3750000" yCoord="39.4666667"/>
+        <node level="1" name="Sevilla" population="703021" xCoord="-5.9833333" yCoord="37.3833333"/>
+        <node level="1" name="Zaragoza" population="674725" xCoord="-0.8833333" yCoord="41.6500000"/>
+        <node level="1" name="Málaga" population="568030" xCoord="-4.4166667" yCoord="36.7166667"/>
+        <node level="1" name="Murcia" population="442203" xCoord="-1.1302778" yCoord="37.9861111"/>
+    </physicalTopology>
+</network>
