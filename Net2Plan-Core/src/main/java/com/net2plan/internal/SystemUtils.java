@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -39,6 +40,8 @@ import java.net.URLClassLoader;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * Class with system utilities depending on the operating system and locale configuration.
@@ -51,6 +54,7 @@ public class SystemUtils
 	private static Class mainClass;
 	private static UserInterface ui = null;
 	private static Set<URL> defaultClasspath;
+
 
 
 	/**
@@ -146,10 +150,15 @@ public class SystemUtils
 	 */
 	public static Set<URL> getClasspath()
 	{
+
+		// TODO still needs to be fixed 
+
 		// Instead of casting ClassLoader to get the class paths, use
 		// system properties
 		String classPaths = System.getProperty("java.class.path");
 		String[] paths = classPaths.split(";");
+
+		System.out.println("Classpath: " + classPaths);
 
 		// Create URLs of the classPaths
 		Set<URL> classPath = new TreeSet<URL>(new URLComparator());
@@ -164,6 +173,8 @@ public class SystemUtils
 			throw new RuntimeException(e);
 		}
 
+		System.out.println(Arrays.toString(classPath.toArray()));
+
 		return Collections.unmodifiableSet(classPath);
 	}
 
@@ -175,24 +186,10 @@ public class SystemUtils
 	 */
 	public static void addToClasspath(File f)
 	{
-		try
-		{
-			Method addURL = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] { URL.class });
-			addURL.setAccessible(true);
-
-			URL url = f.toURI().toURL();
-
-			// New JDK-9+ ClassLoading hierarchy
-			// Invoke directly parent class loader
-//			ClassLoader cl = ClassLoader.getSystemClassLoader();
-			ClassLoader cl = SystemUtils.class.getClassLoader();
-			addURL.invoke(cl, new Object[] { url });
-		}
-		catch (NoSuchMethodException | SecurityException | MalformedURLException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
+		// JDK9+
+		System.out.println("Appending: " + f.toPath());
+		ClassLoad.loadClass(f);
+    }
 
 
 
