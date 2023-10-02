@@ -12,7 +12,7 @@
 
 
 
- 
+
 
 
 
@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -39,6 +40,8 @@ import java.net.URLClassLoader;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * Class with system utilities depending on the operating system and locale configuration.
@@ -52,32 +55,11 @@ public class SystemUtils
 	private static UserInterface ui = null;
 	private static Set<URL> defaultClasspath;
 
-	/**
-	 * Adds a given file to the classpath.
-	 * 
-	 * @param f File to be added
-	 * @since 0.3.1
-	 */
-	public static void addToClasspath(File f)
-	{
-		try
-		{
-			Method addURL = URLClassLoader.class.getDeclaredMethod("addURL", new Class[] { URL.class });
-			addURL.setAccessible(true);
-			
-			URL url = f.toURI().toURL();
-			ClassLoader cl = ClassLoader.getSystemClassLoader();
-			addURL.invoke(cl, new Object[] { url });
-		}
-		catch (NoSuchMethodException | SecurityException | MalformedURLException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
-	
+
+
 	/**
 	 * Configures the environment for Net2Plan (locale, number format, look and feel...).
-	 * 
+	 *
 	 * @param mainClass Main class of the running program
 	 * @param ui User interface (GUI or CLI)
 	 * @since 0.2.3
@@ -94,7 +76,7 @@ public class SystemUtils
 
 		if (SystemUtils.ui != null) throw new RuntimeException("Environment was already configured");
 		SystemUtils.ui = ui;
-		
+
 		if (ui == UserInterface.GUI)
 		{
 			try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
@@ -149,9 +131,9 @@ public class SystemUtils
 			UIManager.put("Separator.shadow", bgColor);
 			UIManager.put("TitledBorder.titleColor", fgColor);
 		}
-		
+
 		defaultClasspath = getClasspath();
-		
+
 		/* Load options */
 		try { Configuration.readFromOptionsDefaultFile();  }
 		catch (IOException ex) { throw new Net2PlanException("Error loading options: " + ex.getMessage()); }
@@ -168,13 +150,51 @@ public class SystemUtils
 	 */
 	public static Set<URL> getClasspath()
 	{
-		ClassLoader cl = ClassLoader.getSystemClassLoader();
-		Set<URL> classpath = new TreeSet<URL>(new URLComparator());
-		classpath.addAll(Arrays.asList(((URLClassLoader) cl).getURLs()));
-		
-		return Collections.unmodifiableSet(classpath);
+
+		// TODO still needs to be fixed 
+
+		// Instead of casting ClassLoader to get the class paths, use
+		// system properties
+		String classPaths = System.getProperty("java.class.path");
+		String[] paths = classPaths.split(";");
+
+		System.out.println("Classpath: " + classPaths);
+
+		// Create URLs of the classPaths
+		Set<URL> classPath = new TreeSet<URL>(new URLComparator());
+
+		try
+		{
+			for (String path : paths)
+				classPath.add( (new File(path) ).toURI().toURL() );
+		}
+		catch (MalformedURLException e)
+		{
+			throw new RuntimeException(e);
+		}
+
+		System.out.println(Arrays.toString(classPath.toArray()));
+
+		return Collections.unmodifiableSet(classPath);
 	}
-	
+
+	/**
+	 * Adds a given file to the classpath.
+	 *
+	 * @param f File to be added
+	 * @since 0.3.1
+	 */
+	public static void addToClasspath(File f)
+	{
+		// JDK9+
+		System.out.println("Appending: " + f.toPath());
+		ClassLoad.loadClass(f);
+    }
+
+
+
+
+
 	/**
 	 * Returns the current directory where the application is executing in.
 	 *
@@ -189,7 +209,7 @@ public class SystemUtils
 
 			File curDir = new File(mainClass.getProtectionDomain().getCodeSource().getLocation().toURI());
 			if (!curDir.isDirectory()) curDir = curDir.getAbsoluteFile().getParentFile();
-			
+
 			return curDir;
 		}
 		catch (RuntimeException | URISyntaxException e)
@@ -251,7 +271,7 @@ public class SystemUtils
 	{
 		return Files.getNameWithoutExtension(file.getAbsolutePath());
 	}
-	
+
 	/**
 	 * Returns the path of a file (without file name or extension).
 	 *
@@ -264,7 +284,7 @@ public class SystemUtils
 		String absolutePath = file.getAbsolutePath();
 		return absolutePath.substring(0, absolutePath.lastIndexOf(getDirectorySeparator()));
 	}
-	
+
 	/**
 	 * Returns the user classpath ({@code .class/.jar} files not added by default).
 	 *
@@ -276,7 +296,7 @@ public class SystemUtils
 		Set<URL> classpath = new TreeSet<URL>(new URLComparator());
 		classpath.addAll(getClasspath());
 		classpath.removeAll(defaultClasspath);
-		
+
 		return Collections.unmodifiableSet(classpath);
 	}
 
@@ -290,7 +310,7 @@ public class SystemUtils
 	{
 		return ui;
 	}
-	
+
 	private static class URLComparator implements Comparator<URL>
 	{
 		@Override
