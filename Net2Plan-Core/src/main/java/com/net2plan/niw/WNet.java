@@ -51,6 +51,10 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import jdk.nashorn.internal.parser.JSONParser;
+import org.jfree.data.json.JSONUtils;
+import org.jfree.data.json.impl.JSONObject;
+import org.jfree.data.json.impl.JSONValue;
 
 /**
  * This class represents an IP over WDM network with potential VNF placement. This is the main model class, that gives
@@ -1365,6 +1369,77 @@ public class WNet extends WAbstractNetworkElement
 		for (NetworkLayer layer : getNe().getNetworkLayers ())
 			getNe().setAllLinksFailureState(true , layer);
 	}
-	
+
+
+
+
+
+	/* Segment Routing information */
+	public void addFlexAlgo(String k, String calculationType, String weightType, Optional<List<String>> usingSidList, Optional<List<String>> ipLinkList)
+	{
+		// Check that all parameters are not empty
+		assert !k.isEmpty(); assert  !calculationType.isEmpty(); assert !weightType.isEmpty();
+
+		// Check that k, calculationType and weightType are integers
+//		try
+//		{
+//			Integer.parseInt(k);
+//			Integer.parseInt(calculationType);
+//			Integer.parseInt(weightType);
+//		} catch (NumberFormatException nfe) { System.out.println("Flex algo data is incorrect"); return; }
+
+
+
+
+		StringBuilder flexValue = new StringBuilder(calculationType + " " + weightType + " ");
+
+
+		if(usingSidList.isPresent())
+		{
+			StringBuilder sidList = new StringBuilder();
+			for(String sid: usingSidList.get())
+				sidList.append(",").append(sid);
+
+			flexValue.append(" ").append(sidList.toString());
+		}
+
+		if(ipLinkList.isPresent())
+		{
+			StringBuilder linkList = new StringBuilder();
+			for(String link: ipLinkList.get())
+				linkList.append(",").append(link);
+
+			flexValue.append(" ").append(linkList.toString());
+		}
+
+		getNe().setAttribute("flexAlgo_"+k, flexValue.toString());
+	}
+
+	public JSONObject getFlexAlgo(String k)
+	{
+		if(!getNe().getAttributes().containsKey("flexAlgo_" + k)) return null;
+
+		String flexValue = getNe().getAttribute("flexAlgo_" + k);
+		String[] fields = flexValue.split(" ");
+
+		JSONObject jsonFlexAlgo = new JSONObject();
+		jsonFlexAlgo.put("k", k);
+		jsonFlexAlgo.put("calculationType", fields[0]);
+		jsonFlexAlgo.put("weightType", fields[1]);
+
+		String[] sidListValues = fields[2].split(",");
+		jsonFlexAlgo.put("usingSidList", Arrays.asList(sidListValues));
+
+		String[] ipLinkListValues = fields[3].split(",");
+		jsonFlexAlgo.put("ipLinkList", Arrays.asList(ipLinkListValues));
+
+		return jsonFlexAlgo;
+	}
+
+	public void removeFlexAlgo(String k)
+	{
+		if(getNe().getAttributes().containsKey("flexAlgo_"+k)) getNe().removeAttribute("flexAlgo_"+k);
+	}
+
 	
 }

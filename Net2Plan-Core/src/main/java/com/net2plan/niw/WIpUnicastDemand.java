@@ -320,6 +320,76 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
                 return longestPathSoFarIngressToNode.apply(egressNode , costFunction);
         } while (true);
     }
-	
+
+
+
+
+
+
+	/* Segment Routing information */
+
+	public void setDemandAsSegmentRouted()
+	{
+		// TODO check whether A and B are SR enabled
+
+		// set hop by hop
+		// set tag
+		// set associated sid (demand origin node's sid)
+
+		getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		getNe().setAttribute("routing_tag", "segment-routing");
+
+		// Get origin node (A)
+		if(getA().getSidList().isPresent())
+		{
+			String sid = getA().getSidList().get().get(0); // Select the first SID, for example
+			getNe().setAttribute("associatedSid", sid);
+		}
+	}
+
+	public void notSetDemandAsSegmentRouted()
+	{
+		// remove tag
+		// remove associated sid (demand origin node's sid)
+
+		getNe().removeAttribute("routing_tag");
+		getNe().removeAttribute("associatedSid");
+	}
+
+
+	public void setRoutingProtocol(String routingProtocol)
+	{
+		if(routingProtocol.isEmpty()) return;
+
+		switch (routingProtocol)
+		{
+			case "SR":
+			{
+				this.setAsHopByHopRouted();
+				this.setDemandAsSegmentRouted();
+				break;
+			}
+			case "OSPF":
+			{
+				this.setAsHopByHopRouted();
+				this.notSetDemandAsSegmentRouted();
+				break;
+			}
+			case "MPLS-TE":
+			{
+				this.notSetDemandAsSegmentRouted();
+				this.setAsSourceRouted();
+				break;
+			}
+			default:
+				return;
+		}
+	}
+
+
+
+
+
+	// TODO right click events
 	
 }
