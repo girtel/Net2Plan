@@ -328,68 +328,30 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 
 	/* Segment Routing information */
 
-	public void setDemandAsSegmentRouted()
+	public boolean isSegmentRoutingActive() // if present set as segment routed, if not, do not set as SR
 	{
-		// TODO check whether A and B are SR enabled
-
-		// set hop by hop
-		// set tag
-		// set associated sid (demand origin node's sid)
-
-		getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-		getNe().setAttribute("routing_tag", "segment-routing");
-
-		// Get origin node (A)
-		if(getA().getSidList().isPresent())
+		return getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , "").equals(Boolean.valueOf(true).toString());
+	}
+	
+	public void setDemandAsSegmentRouted(Optional<String> sid) // if present set as segment routed, if not, do not set as SR
+	{
+		if (sid.isPresent())
 		{
-			String sid = getA().getSidList().get().get(0); // Select the first SID, for example
-			getNe().setAttribute("associatedSid", sid);
+			getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(true).toString());
+			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID , sid.get());
+		}
+		else
+		{
+			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(false).toString());
 		}
 	}
 
 	public void notSetDemandAsSegmentRouted()
 	{
-		// remove tag
-		// remove associated sid (demand origin node's sid)
-
-		getNe().removeAttribute("routing_tag");
-		getNe().removeAttribute("associatedSid");
+		setDemandAsSegmentRouted(Optional.empty());
 	}
 
-
-	public void setRoutingProtocol(String routingProtocol)
-	{
-		if(routingProtocol.isEmpty()) return;
-
-		switch (routingProtocol)
-		{
-			case "SR":
-			{
-				this.setAsHopByHopRouted();
-				this.setDemandAsSegmentRouted();
-				break;
-			}
-			case "OSPF":
-			{
-				this.setAsHopByHopRouted();
-				this.notSetDemandAsSegmentRouted();
-				break;
-			}
-			case "MPLS-TE":
-			{
-				this.notSetDemandAsSegmentRouted();
-				this.setAsSourceRouted();
-				break;
-			}
-			default:
-				return;
-		}
-	}
-
-
-
-
-
-	// TODO right click events
+	public Optional<String> getSr_sid () { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID)); }
 	
 }

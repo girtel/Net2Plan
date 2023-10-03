@@ -6,7 +6,6 @@
 package com.net2plan.niw;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,8 +23,11 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.jfree.data.json.impl.JSONObject;
 
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -38,23 +40,14 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.IPUtils;
+import com.net2plan.niw.WFlexAlgo.FlexAlgoProperties;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
-import com.net2plan.utils.Constants;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Quadruple;
 import com.net2plan.utils.StringUtils;
 
-import cern.colt.function.tdouble.DoubleDoubleFunction;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleFactory2D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import jdk.nashorn.internal.parser.JSONParser;
-import org.jfree.data.json.JSONUtils;
-import org.jfree.data.json.impl.JSONObject;
-import org.jfree.data.json.impl.JSONValue;
 
 /**
  * This class represents an IP over WDM network with potential VNF placement. This is the main model class, that gives
@@ -66,7 +59,23 @@ public class WNet extends WAbstractNetworkElement
 	private static final String ATTNAME_VNFTYPELIST = NIWNAMEPREFIX + "VnfTypeListMatrix";
 	private static final String ATTNAME_USERSERVICELIST = NIWNAMEPREFIX + "userServiceListMatrix";
 	private static final String ATTNAME_WDMOPTICALSLOTSIZEGHZ = NIWNAMEPREFIX + "wdmOpticalSlotSizeGhz";
+	private static final String ATTNAME_FLEXALGOINFO = NIWNAMEPREFIX + "flexAlgoInfo";
+	
 
+	public Map<Integer,FlexAlgoProperties> getFlexAlgoInfo ()
+	{
+		modifyFlexAlgo(7, f->f.associatedSids.add(""));
+		
+	}
+	
+	public void modifyFlexAlgo (int flexAlgoId , Consumer<FlexAlgoProperties> whatToDoInFlexAlgo  )
+	{
+		// read the attribute and extract the lex aglo
+		// aplly the consumer function to the flex algo
+		// write the attribute again with the full flex algo repo 
+	}
+	
+	
 	/** Creates a WNet object from a NetPlan object. Does not check its consistency as a valid NIW design
 	 * @param np see above
 	 */
