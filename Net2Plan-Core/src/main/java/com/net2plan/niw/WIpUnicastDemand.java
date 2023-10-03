@@ -330,7 +330,8 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 
 	public boolean isSegmentRoutingActive() // if present set as segment routed, if not, do not set as SR
 	{
-		return getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , "").equals(Boolean.valueOf(true).toString());
+		return getNe().getAttributes().containsKey(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED);
+//		return getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , "").equals(Boolean.valueOf(true).toString());
 	}
 	
 	public void setDemandAsSegmentRouted(Optional<String> sid) // if present set as segment routed, if not, do not set as SR
@@ -344,6 +345,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		else
 		{
 			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(false).toString());
+			getNe().removeAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID);
 		}
 	}
 

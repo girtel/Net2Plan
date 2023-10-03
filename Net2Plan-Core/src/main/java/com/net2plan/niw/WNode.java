@@ -90,6 +90,7 @@ public class WNode extends WAbstractNetworkElement
     static final String ATTNAME_OPTICALSWITCHTYPEINITSTRING = "ATTNAME_OPTICALSWITCHTYPE_INITSTRING";
     private static final String ATTNAMESUFFIX_OADMNUMADDDROPMODULES = "oadmNumAddDropModules";
     private static final String ATTNAMESUFFIX_HASDIRECTEDMODULES = "oadmHasDirectedAddDropModules";
+    private static final String ATTNAMESUFFIX_SR_SIDLIST = "sidList";
 
     public void setArbitraryParamString(String s)
     {
@@ -379,7 +380,7 @@ public class WNode extends WAbstractNetworkElement
      */
     public void setIsConnectedToNetworkCore(boolean isConnectedToCore)
     {
-        n.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISCONNECTEDTOCORE, new Boolean(isConnectedToCore).toString());
+        n.setAttribute(ATTNAMECOMMONPREFIX + ATTNAMESUFFIX_ISCONNECTEDTOCORE, Boolean.valueOf(isConnectedToCore).toString());
     }
 
     /**
@@ -947,6 +948,9 @@ public class WNode extends WAbstractNetworkElement
     public WTYPE getWType() { return WTYPE.WNode; }
 
 
+
+
+
     /* Segment Routing information */
 
     /**
@@ -959,9 +963,9 @@ public class WNode extends WAbstractNetworkElement
     {
         if (!sidList.isPresent()) return;
 
-
         // At this point, everything is correct, save the list
-        this.setAttribute("sidList", StringUtils.collectionToString(sidList.get()));
+//        this.setAttribute(ATTNAMESUFFIX_SR_SIDLIST, StringUtils.collectionToString(sidList.get()));
+        this.setAttribute(ATTNAMESUFFIX_SR_SIDLIST, Arrays.toString(sidList.get().toArray()));
     }
 
 
@@ -971,15 +975,17 @@ public class WNode extends WAbstractNetworkElement
      */
     public Optional<List<String>> getSidList()
     {
+        assert getNe().getAttributes().containsKey(ATTNAMESUFFIX_SR_SIDLIST);
+
         // Get "sidList" from the attributes of the WNet, where it is stored
-        final String sidListString = this.getNe().getAttribute("sidList");
+        final String sidListString = this.getNe().getAttribute(ATTNAMESUFFIX_SR_SIDLIST);
 
-        // It is stored as a String, so check that is has some length
-        if (sidListString == null || sidListString.isEmpty()) return Optional.empty();
+        if (sidListString.isEmpty()) return Optional.empty();
 
-        // In case it is not empty, return the values
-        // TODO creo que read escaped va a dar tortazos
-        List<String> sidList = StringUtils.readEscapedString_asStringList(sidListString, new ArrayList<>());
+        final String finalSidList = sidListString.substring(1, sidListString.length() - 2); // Remove "["..."]"
+
+        List<String> sidList = Arrays.asList(finalSidList.split(","));
+
         return Optional.of(sidList);
     }
 
@@ -990,14 +996,6 @@ public class WNode extends WAbstractNetworkElement
      */
     public boolean participatesAtSegmentRouting()
     {
-        return this.getNe().getAttributes().containsKey("sidList");
+        return this.getNe().getAttributes().containsKey(ATTNAMESUFFIX_SR_SIDLIST);
     }
-
-
-
-    // TODO right click events
-
-
-
-
 }
