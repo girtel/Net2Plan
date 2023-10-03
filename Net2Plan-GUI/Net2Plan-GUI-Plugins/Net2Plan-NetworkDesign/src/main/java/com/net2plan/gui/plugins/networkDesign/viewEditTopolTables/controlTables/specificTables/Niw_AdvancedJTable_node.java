@@ -118,7 +118,7 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
             res.add(new AjtColumnInfo<Node>(this, Double.class, Arrays.asList("CPU/RAM/HD"), "Occupied HD (TB)", "The amount of storage occupied in the node, in TeraBytes", null, d -> toWNode.apply(d).getOccupiedHdGB() * 1000, AGTYPE.NOAGGREGATION, e -> toWNode.apply(e).getOccupiedHdGB() > toWNode.apply(e).getTotalHdGB() ? Color.red : null));
 
             /* SR Information */
-            res.add(new AjtColumnInfo<>(this, String.class, null, "SID's", "List of SID's assigned to this node", null , d -> toWNode.apply(d).getSidList().toString(), AGTYPE.NOAGGREGATION, null));
+            res.add(new AjtColumnInfo<>(this, String.class, null, "SID's", "List of SID's assigned to this node", null , d -> toWNode.apply(d).getSidListAsNiceLookingString(), AGTYPE.NOAGGREGATION, null));
 
 
         } else if (isWdmLayer)
@@ -190,10 +190,11 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
 
 
         /* Segment Routing */
-        res.add(new AjtRcMenu("Set SID's to selected nodes", event -> DialogBuilder.launch("Set selected SID's to nodes", "Please introduce the SID separated by spaces", toWNode.apply(getSelectedElements().first()).getSidList().toString(), this, Arrays.asList(InputForDialog.inputTfString("SID list", "Introduce the SID list for the demands, separated by spaces", 1, "")), stringedList -> {
+        res.add(new AjtRcMenu("Set SID's to selected nodes", event -> DialogBuilder.launch("Set selected SID's to nodes", "Please introduce the SID separated by spaces", "", this, Arrays.asList(InputForDialog.inputTfString("SID list", "SID list", 1, "")), stringedList -> {
             List<String> sidList = Arrays.asList( ((String) stringedList.get(0).get()).split(" ") );
             getSelectedElements().stream().map(toWNode).forEach(wnode -> wnode.setSidList(Optional.of(sidList)));
         }), (a, b) -> true, null));
+
 
 
         if (isWdmLayer)

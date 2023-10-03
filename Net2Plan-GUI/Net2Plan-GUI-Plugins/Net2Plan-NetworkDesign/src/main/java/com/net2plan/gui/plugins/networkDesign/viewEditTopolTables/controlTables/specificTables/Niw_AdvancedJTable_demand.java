@@ -339,6 +339,34 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             }, (a, b) -> b > 0, null));
 
 
+            res.add(new AjtRcMenu("Set routing type of seleted IP unicast demands", null , (a,b)->b>0, Arrays.asList(
+                    new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e-> getSelectedElements().stream().filter(d->isWIpUnicast.apply(d)).forEach(dd->toWIpUnicast.apply (dd).setAsHopByHopRouted ()), (a,b)->b>0, null),
+                    new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e-> getSelectedElements().stream().filter(d->isWIpUnicast.apply(d)).forEach(dd->toWIpUnicast.apply (dd).setAsSourceRouted ()), (a,b)->b>0, null)
+            )));
+
+            res.add(new AjtRcMenu("Set QoS type to selected elements", e->
+            {
+                DialogBuilder.launch(
+                        "Set selected demands QoS type",
+                        "Please introduce the QoS type.",
+                        "",
+                        this,
+                        Arrays.asList(InputForDialog.inputTfString ("Qos type", "Introduce the QoS type of the demands" , 10 , "")),
+                        (list)->
+                        {
+                            final String qos = (String) list.get(0).get();
+                            getSelectedElements().forEach(dd->toAbsIp.apply(dd).setQosType(qos));
+                        }
+                );
+            }, (a,b) -> b>0, null));
+
+            /* Set as segment routing */
+            res.add(new AjtRcMenu("Set as Segment Routed", null, (a, b) -> true, Arrays.asList(
+                    new AjtRcMenu("True", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::setAsSourceRouted);}, (a, b) -> true, null),
+                    new AjtRcMenu("False", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::notSetDemandAsSegmentRouted); }, (a, b) -> true, null)
+            )));
+
+
             res.add(new AjtRcMenu("Set maximum e2e limit to selected unicast demands", e -> {
                 DialogBuilder.launch("Set maximum e2e limit to selected unicast demands", "Please introduce the maximum end-to-end limit in ms, to set for the selected demands.", "", this, Arrays.asList(InputForDialog.inputTfDouble("Maximum end-to-end limit (ms)", "Introduce the maximum end-to-end limit in miliseconds", 10, 50.0)), (list) -> {
                     final double newLimit = (Double) list.get(0).get();
@@ -398,11 +426,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
 
             res.add(new AjtRcMenu("Monitor/forecast...", null, (a, b) -> true, Arrays.asList(MonitoringUtils.getMenuAddSyntheticMonitoringInfo(this), MonitoringUtils.getMenuExportMonitoringInfo(this), MonitoringUtils.getMenuImportMonitoringInfo(this), MonitoringUtils.getMenuSetMonitoredTraffic(this), MonitoringUtils.getMenuSetOfferedTrafficAsForecasted(this), MonitoringUtils.getMenuSetTrafficPredictorAsConstantEqualToTrafficInElement(this), MonitoringUtils.getMenuPercentileFilterMonitSamples(this), MonitoringUtils.getMenuCreatePredictorTraffic(this), new AjtRcMenu("Estimate IP demand traffic", null, (a, b) -> true, Arrays.asList(MonitoringUtils.getMenuForecastDemandTrafficUsingGravityModel(this), MonitoringUtils.getMenuForecastDemandTrafficFromLinkInfo(this), MonitoringUtils.getMenuForecastDemandTrafficFromLinkForecast(this))), new AjtRcMenu("Remove", null, (a, b) -> b > 0, Arrays.asList(new AjtRcMenu("Traffic predictors of selected elements", e -> getSelectedElements().forEach(dd -> ((Demand) dd).removeTrafficPredictor()), (a, b) -> b > 0, null), new AjtRcMenu("Monitored/forecast stored information of selected elements", e -> getSelectedElements().forEach(dd -> ((Demand) dd).getMonitoredOrForecastedCarriedTraffic().removeAllValues()), (a, b) -> b > 0, null), new AjtRcMenu("Monitored/forecast stored information...", null, (a, b) -> b > 0, Arrays.asList(MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate(this, true), MonitoringUtils.getMenuRemoveMonitorInfoBeforeAfterDate(this, false))))))));
 
-            /* Set as segment routing */
-            res.add(new AjtRcMenu("Set as Segment Routed", null, (a, b) -> true, Arrays.asList(
-                    new AjtRcMenu("True", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::setAsSourceRouted);}, (a, b) -> true, null),
-                    new AjtRcMenu("False", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::notSetDemandAsSegmentRouted); }, (a, b) -> true, null)
-            )));
+
 
         } // is ipLayer
 

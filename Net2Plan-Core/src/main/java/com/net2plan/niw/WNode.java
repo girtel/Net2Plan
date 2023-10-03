@@ -980,13 +980,26 @@ public class WNode extends WAbstractNetworkElement
         // Get "sidList" from the attributes of the WNet, where it is stored
         final String sidListString = this.getNe().getAttribute(ATTNAMESUFFIX_SR_SIDLIST);
 
-        if (sidListString.isEmpty()) return Optional.empty();
+        if (sidListString == null || sidListString.isEmpty()) return Optional.empty();
 
-        final String finalSidList = sidListString.substring(1, sidListString.length() - 2); // Remove "["..."]"
+        final String finalSidList = sidListString.substring(1, sidListString.length() - 1); // Remove "["..."]"
 
         List<String> sidList = Arrays.asList(finalSidList.split(","));
 
-        return Optional.of(sidList);
+        return Optional.ofNullable(sidList);
+    }
+
+    public String getSidListAsNiceLookingString()
+    {
+        Optional<List<String>> sidList = getSidList();
+
+        if(!sidList.isPresent() || sidList.get().isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder();
+        for(String sid: sidList.get())
+            sb.append(sid).append(" ");
+
+        return  sb.toString();
     }
 
 
