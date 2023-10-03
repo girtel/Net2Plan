@@ -1478,7 +1478,7 @@ public class WNet extends WAbstractNetworkElement
     /**
      * Create flex algo manager inside the attribute map
      */
-    public void createFlexAlgoAttribute()
+    public void initializeFlexAlgoAttributes()
     {
         ObjectMapper mapper = new ObjectMapper();
         try
@@ -1499,7 +1499,7 @@ public class WNet extends WAbstractNetworkElement
      * @param flexAlgoId         - identifier (k) of the FlexAlgo
      * @param whatToDoInFlexAlgo - function to be performed over the FlexAlgo(k)
      */
-    public void performOperationOnFlexAlgo(int flexAlgoId, Consumer<FlexAlgoProperties> whatToDoInFlexAlgo)
+    public void performOperationOnFlexAlgoProperties(int flexAlgoId, Consumer<FlexAlgoProperties> whatToDoInFlexAlgo)
     {
         // read the attribute and extract the lex aglo
         // apply the consumer function to the flex algo
@@ -1514,6 +1514,36 @@ public class WNet extends WAbstractNetworkElement
 
         // Get the desired flex algo
         WFlexAlgo.FlexAlgoProperties flexAlgo = repository.get().getFlexAlgoPropertiesFromID(flexAlgoId);
+
+        // Perform the operation
+        whatToDoInFlexAlgo.accept(flexAlgo);
+
+        // Once the desired operation is finished, and may have modified the flex algo object, write the modified
+        // flex algo repository to the attribute map
+        writeFlexAlgoRepository(repository);
+    }
+
+    /**
+     * Generic function to perform an operation to a flex algo. Reads the FlexAlgo manager from the attribute map,
+     * get the FlexAlgo properties if present, performs the desired operation, and writes modified repo inside the
+     * attribute map.
+     *
+     * @param whatToDoInFlexAlgo - function to be performed over the FlexAlgo(k)
+     */
+    public void performOperationOnFlexAlgoRepository(Consumer<WFlexAlgo.FlexAlgoRepository> whatToDoInFlexAlgo)
+    {
+        // read the attribute and extract the lex aglo
+        // apply the consumer function to the flex algo
+        // write the attribute again with the full flex algo repo
+
+        // Read the flex algo repository from the attribute map
+        Optional<WFlexAlgo.FlexAlgoRepository> repository = readFlexAlgoRepository();
+
+        // Check that everything is ok
+        assert repository.isPresent();
+
+        // Get the desired flex algo
+        WFlexAlgo.FlexAlgoRepository flexAlgo = repository.get();
 
         // Perform the operation
         whatToDoInFlexAlgo.accept(flexAlgo);

@@ -355,6 +355,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 	}
 
 	public Optional<String> getSrSid () { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID)); }
+	public String getSrSidBeauty() { Optional<String> srSid = getSrSid(); return srSid.isPresent() ? srSid.get() : ""; }
 	public void setSrSid (Optional<String> sid) { assert sid.isPresent(); getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID, sid.get());}
 	
 }

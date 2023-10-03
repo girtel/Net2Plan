@@ -144,6 +144,9 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             res.add(new AjtColumnInfo<Demand>(this, Collection.class, null, "SC: Max. lancies", "Returns the list of maximum latencies specified for this service chain request. The list contains V+1 values, being V the number of VNFs to traverse. The first V values (i=1,...,V) correspond to the maximum latency from the origin node, to the input of the i-th VNF traversed. The last value correspon to the maximum latency from the origin node to the end node.", null, d -> isWIpUnicast.apply(d) ? null : toWScr.apply(d).getListMaxLatencyFromOriginToVnStartAndToEndNode_ms().stream().map(e -> df.format(e)).collect(Collectors.joining(" ")), AGTYPE.NOAGGREGATION, null));
             res.add(new AjtColumnInfo<Demand>(this, Collection.class, null, "SC: Default Exp. factors", "Gets the sequence of default expansion factors to apply when traversing a VNF, for the service chains realizing this request", null, d -> isWIpUnicast.apply(d) ? null : toWScr.apply(d).getDefaultSequenceOfExpansionFactorsRespectToInjection().stream().map(e -> df.format(e)).collect(Collectors.joining(" ")), AGTYPE.NOAGGREGATION, null));
             res.addAll(Niw_AdvancedJTable_demand.getMonitoringAndTrafficEstimationColumns(this).stream().map(c -> (AjtColumnInfo<Demand>) (AjtColumnInfo<?>) c).collect(Collectors.toList()));
+            /* Segment Routing */
+            res.add(new AjtColumnInfo<Demand>(this, Boolean.class, null, "SegmentRouted", "Shows whether the demand is being routed via SegmentRouting protocol", null, demand -> (toWIpUnicast.apply(demand)).isSegmentRoutingActive() , AGTYPE.NOAGGREGATION, null));
+            res.add(new AjtColumnInfo<Demand>(this, String.class, null, "SID", "Shows the demand associated SID", null, demand -> (toWIpUnicast.apply(demand)).getSrSidBeauty() , AGTYPE.NOAGGREGATION, null));
         } else
         {
             res.add(new AjtColumnInfo<Demand>(this, Node.class, null, "A", "Lighptath request origin", null, d -> d.getIngressNode(), AGTYPE.NOAGGREGATION, null));
@@ -362,7 +365,20 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
 
             /* Set as segment routing */
             res.add(new AjtRcMenu("Set as Segment Routed", null, (a, b) -> true, Arrays.asList(
-                    new AjtRcMenu("True", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::setAsSourceRouted);}, (a, b) -> true, null),
+                    new AjtRcMenu("True", items -> {
+                        DialogBuilder.launch(
+                                "Set selected demands SID for Source Routing",
+                                "Please introduce the SID.",
+                                "",
+                                this,
+                                Arrays.asList(InputForDialog.inputTfInt ("SID", "Introduce the SID of the demands" , 1 , -1)),
+                                (list)->
+                                {
+                                    final String sid = Integer.toString((Integer) list.get(0).get());
+                                    getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(wdem -> wdem.setDemandAsSegmentRouted(Optional.of(sid)));
+                                }
+                        );
+                    }, (a, b) -> true, null),
                     new AjtRcMenu("False", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::notSetDemandAsSegmentRouted); }, (a, b) -> true, null)
             )));
 
