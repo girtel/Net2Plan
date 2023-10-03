@@ -354,6 +354,7 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 		setDemandAsSegmentRouted(Optional.empty());
 	}
 
-	public Optional<String> getSr_sid () { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID)); }
+	public Optional<String> getSrSid () { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID)); }
+	public void setSrSid (Optional<String> sid) { assert sid.isPresent(); getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID, sid.get());}
 	
 }

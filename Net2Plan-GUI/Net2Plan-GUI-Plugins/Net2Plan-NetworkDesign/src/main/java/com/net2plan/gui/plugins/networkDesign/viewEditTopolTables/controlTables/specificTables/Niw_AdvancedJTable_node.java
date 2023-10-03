@@ -57,16 +57,23 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
     {
         final List<AjtColumnInfo<Node>> res = new LinkedList<>();
 
-        assert callback.getNiwInfo().getFirst(); final WNet wNet = callback.getNiwInfo().getSecond();
+        assert callback.getNiwInfo().getFirst();
+        final WNet wNet = callback.getNiwInfo().getSecond();
         final Function<Node, WNode> toWNode = n -> {
-            final WNode nn = new WNode(n); assert !nn.isVirtualNode(); return nn;
-        }; final Function<Node, Boolean> isOadmGeneric = n -> {
-        return toWNode.apply(n).getOpticalSwitchingArchitecture() instanceof OadmArchitecture_generic;
-    }; final Function<Node, OadmArchitecture_generic> toOadmGeneric = n -> {
-        return (OadmArchitecture_generic) new WNode(n).getOpticalSwitchingArchitecture();
-    }; final boolean isIpLayer = getTableNetworkLayer().getName().equals(WNetConstants.ipLayerName);
+            final WNode nn = new WNode(n);
+            assert !nn.isVirtualNode();
+            return nn;
+        };
+        final Function<Node, Boolean> isOadmGeneric = n -> {
+            return toWNode.apply(n).getOpticalSwitchingArchitecture() instanceof OadmArchitecture_generic;
+        };
+        final Function<Node, OadmArchitecture_generic> toOadmGeneric = n -> {
+            return (OadmArchitecture_generic) new WNode(n).getOpticalSwitchingArchitecture();
+        };
+        final boolean isIpLayer = getTableNetworkLayer().getName().equals(WNetConstants.ipLayerName);
         final boolean isWdmLayer = getTableNetworkLayer().getName().equals(WNetConstants.wdmLayerName);
-        assert isIpLayer || isWdmLayer; assert !(isIpLayer && isWdmLayer);
+        assert isIpLayer || isWdmLayer;
+        assert !(isIpLayer && isWdmLayer);
 
         final String currentLauyout = wNet.getNe().getPlotNodeLayoutCurrentlyActive();
 
@@ -77,7 +84,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
 
         res.add(new AjtColumnInfo<Node>(this, String.class, null, "Name", "Node name", (d, val) -> toWNode.apply(d).setName((String) val), d -> toWNode.apply(d).getName(), AGTYPE.NOAGGREGATION, null));
         res.add(new AjtColumnInfo<Node>(this, Boolean.class, null, "Up?", "", (d, val) -> {
-            final boolean isNodeUp = (Boolean) val; if (isNodeUp) new WNode(d).setAsUp();
+            final boolean isNodeUp = (Boolean) val;
+            if (isNodeUp) new WNode(d).setAsUp();
             else new WNode(d).setAsDown();
         }, d -> new WNode(d).isUp(), AGTYPE.COUNTTRUE, n -> new WNode(n).isUp() ? null : Color.RED));
         res.add(new AjtColumnInfo<Node>(this, Double.class, null, "X-coord", "The X coordinate of the node in he current layout. Interpreted as geographical longitude in the map view", (d, val) -> d.setXYPositionMap(new Point2D.Double((Double) val, d.getXYPositionMap(currentLauyout).getY()), currentLauyout), d -> d.getXYPositionMap(currentLauyout).getX(), AGTYPE.NOAGGREGATION, null));
@@ -110,7 +118,7 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
             res.add(new AjtColumnInfo<Node>(this, Double.class, Arrays.asList("CPU/RAM/HD"), "Occupied HD (TB)", "The amount of storage occupied in the node, in TeraBytes", null, d -> toWNode.apply(d).getOccupiedHdGB() * 1000, AGTYPE.NOAGGREGATION, e -> toWNode.apply(e).getOccupiedHdGB() > toWNode.apply(e).getTotalHdGB() ? Color.red : null));
 
             /* SR Information */
-            res.add(new AjtColumnInfo<>(this, String.class, null, "SID's", "List of SID's assigned to this node", null, d -> toWNode.apply(d).getSidList().toString(), AGTYPE.NOAGGREGATION, null));
+            res.add(new AjtColumnInfo<>(this, String.class, null, "SID's", "List of SID's assigned to this node", null , d -> toWNode.apply(d).getSidList().toString(), AGTYPE.NOAGGREGATION, null));
 
 
         } else if (isWdmLayer)
@@ -140,17 +148,20 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                 final double val = toOadmGeneric.apply(d).getParameters().getDirlessAddDropSplitterCombinerLoss_dB().orElse(-1.0);
                 return val < 0 ? "--" : val;
             }, AGTYPE.NOAGGREGATION, null));
-        } return res;
+        }
+        return res;
     }
 
 
     public List<AjtRcMenu> getNonBasicRightClickMenusInfo()
     {
-        final List<AjtRcMenu> res = new ArrayList<>(); assert callback.getNiwInfo().getFirst();
+        final List<AjtRcMenu> res = new ArrayList<>();
+        assert callback.getNiwInfo().getFirst();
         final WNet wNet = callback.getNiwInfo().getSecond();
         final boolean isIpLayer = getTableNetworkLayer().getName().equals(WNetConstants.ipLayerName);
         final boolean isWdmLayer = getTableNetworkLayer().getName().equals(WNetConstants.wdmLayerName);
-        assert isIpLayer || isWdmLayer; assert !(isIpLayer && isWdmLayer);
+        assert isIpLayer || isWdmLayer;
+        assert !(isIpLayer && isWdmLayer);
         final Function<Node, WNode> toWNode = d -> (WNode) wNet.getWElement(d).get();
         res.add(new AjtRcMenu("Add node", e -> wNet.addNode(0, 0, wNet.getUnusedValidNodeName(), null), (a, b) -> true, null));
         res.add(new AjtRcMenu("Remove selected nodes", e -> getSelectedElements().forEach(dd -> toWNode.apply(dd).remove()), (a, b) -> b > 0, null));
@@ -159,16 +170,19 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
         res.add(new AjtRcMenu("Switch selected nodes' coordinates from (x,y) to (y,x)", e -> getSelectedElements().forEach(node -> node.setXYPositionMap(new Point2D.Double(node.getXYPositionMap().getY(), node.getXYPositionMap().getX()))), (a, b) -> b > 0, null));
         res.add(new AjtRcMenu("Re-arrange selected nodes", null, (a, b) -> b > 0, Arrays.asList(new AjtRcMenu("Equispaced in a circunference", e -> {
             DialogBuilder.launch("Indicate the coordinates of the circle center, and the radius", "Please introduce the requested data.", "", this, Arrays.asList(InputForDialog.inputTfDouble("X position of the center", "Introduce the X position of the circle center", 10, 0.0), InputForDialog.inputTfDouble("Y position of the center", "Introduce the Y position of the circle center", 10, 0.0), InputForDialog.inputTfDouble("Radius", "Introduce the radius", 10, 100.0)), (list) -> {
-                final double x = ((Double) list.get(0).get()); final double y = ((Double) list.get(1).get());
+                final double x = ((Double) list.get(0).get());
+                final double y = ((Double) list.get(1).get());
                 final double radius = ((Double) list.get(2).get());
                 if (radius <= 0) throw new Net2PlanException("The circle radius must e strictly positive");
                 if (getSelectedElements().isEmpty()) throw new Net2PlanException("No nodes are selected");
-                int contNode = 0; final double radQuantum = 2 * Math.PI / getSelectedElements().size();
+                int contNode = 0;
+                final double radQuantum = 2 * Math.PI / getSelectedElements().size();
                 for (Node np_ee : getSelectedElements())
                 {
                     final WNode ee = toWNode.apply(np_ee);
                     final double newX = x + radius * Math.cos(contNode * radQuantum);
-                    final double newY = y + radius * Math.sin(contNode * radQuantum); contNode++;
+                    final double newY = y + radius * Math.sin(contNode * radQuantum);
+                    contNode++;
                     ee.setNodePositionXY(new Point2D.Double(newX, newY));
                 }
             });
@@ -176,11 +190,10 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
 
 
         /* Segment Routing */
-        final AjtRcMenu rightClick_node_setSid = new AjtRcMenu("Set SID to selected nodes", e -> DialogBuilder.launch("Set selected SID to nodes", "Please introduce the SID", "", this, Arrays.asList(InputForDialog.inputTfString("SID list", "Introduce the SID list for the demands, separated by spaces", 10, "")), list -> {
-            final String sidString = (String) list.get(0).get(); final String[] sidStringList = sidString.split(" ");
-            final List<String> sidSet = Arrays.asList(sidStringList);
-            getSelectedElements().forEach(dd -> toWNode.apply(dd).setSidList(Optional.of(sidSet)));
-        }), (a, b) -> b > 0, null); res.add(rightClick_node_setSid);
+        res.add(new AjtRcMenu("Set SID's to selected nodes", event -> DialogBuilder.launch("Set selected SID's to nodes", "Please introduce the SID separated by spaces", toWNode.apply(getSelectedElements().first()).getSidList().toString(), this, Arrays.asList(InputForDialog.inputTfString("SID list", "Introduce the SID list for the demands, separated by spaces", 1, "")), stringedList -> {
+            List<String> sidList = Arrays.asList( ((String) stringedList.get(0).get()).split(" ") );
+            getSelectedElements().stream().map(toWNode).forEach(wnode -> wnode.setSidList(Optional.of(sidList)));
+        }), (a, b) -> true, null));
 
 
         if (isWdmLayer)
@@ -198,12 +211,13 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                     {
                         for (WNode b : getSelectedElements().stream().map(n -> toWNode.apply(n)).collect(Collectors.toList()))
                         {
-                            if (a.getId() <= b.getId()) continue; for (int cont = 0; cont < numRequests; cont++)
-                        {
-                            final WLightpathRequest lprAb = wNet.addLightpathRequest(a, b, lineRateGbps, isToBe11Protected);
-                            final WLightpathRequest lprBa = wNet.addLightpathRequest(b, a, lineRateGbps, isToBe11Protected);
-                            lprAb.setBidirectionalPair(lprBa);
-                        }
+                            if (a.getId() <= b.getId()) continue;
+                            for (int cont = 0; cont < numRequests; cont++)
+                            {
+                                final WLightpathRequest lprAb = wNet.addLightpathRequest(a, b, lineRateGbps, isToBe11Protected);
+                                final WLightpathRequest lprBa = wNet.addLightpathRequest(b, a, lineRateGbps, isToBe11Protected);
+                                lprAb.setBidirectionalPair(lprBa);
+                            }
                         }
                     }
                 });
@@ -213,7 +227,8 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
             res.add(new AjtRcMenu("Set optical switching type of selected OADMs", null, (a, b) -> b > 0, menusForEachOpticalSwitchType));
             res.add(new AjtRcMenu("Set number of add/drop directionless modules to selected nodes", e -> {
                 DialogBuilder.launch("Set number of add/drop directionless modules to selected nodes", "Please introduce the requested information.", "", this, Arrays.asList(InputForDialog.inputTfInt("Number of directionless Add/Drop modules in each node", "The number of directionless add/drop modules in each OADM", 10, 2)), (list) -> {
-                    Integer numADs = (Integer) list.get(0).get(); if (numADs < 0) numADs = 0;
+                    Integer numADs = (Integer) list.get(0).get();
+                    if (numADs < 0) numADs = 0;
                     for (WNode node : getSelectedElements().stream().map(ee -> toWNode.apply(ee)).collect(Collectors.toList()))
                         node.setOadmNumAddDropDirectionlessModules(numADs);
                 });
@@ -244,8 +259,10 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
                         else if (indexArqType == 2) param.setArchitectureTypeAsFilterless();
                         if (indexAdType == 0) param.setAddDropModuleTypeAsMuxBased();
                         else if (indexAdType == 1) param.setAddDropModuleTypeAsWssBased();
-                        param.setMuxDemuxLoss_dB(muxDemuxAttDb); param.setMuxDemuxPmd_ps(muxDemuxPmdPs);
-                        param.setWssLoss_dB(wssAttDb); param.setWssPmd_ps(wssPmdPs);
+                        param.setMuxDemuxLoss_dB(muxDemuxAttDb);
+                        param.setMuxDemuxPmd_ps(muxDemuxPmdPs);
+                        param.setWssLoss_dB(wssAttDb);
+                        param.setWssPmd_ps(wssPmdPs);
                         param.setDegreeSplitterCombinerLoss_dB(degreeSplitterCombinerLoss_dB < 0 ? Optional.empty() : Optional.of(degreeSplitterCombinerLoss_dB));
                         param.setDirlessAddDropSplitterCombinerLoss_dB(dirlessAdSplitterCombinerLoss_dB < 0 ? Optional.empty() : Optional.of(dirlessAdSplitterCombinerLoss_dB));
                         oadm.updateParameters(param);
