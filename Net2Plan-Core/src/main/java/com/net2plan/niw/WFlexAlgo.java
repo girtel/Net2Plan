@@ -10,14 +10,14 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 
 
-public class WFlexAlgo extends WNet
+public class WFlexAlgo 
 {
     /**
      * Creates a WNet object from a NetPlan object. Does not check its consistency as a valid NIW design
      *
      * @param np see above
      */
-    public WFlexAlgo(NetPlan np) { super(np); }
+    public WFlexAlgo(NetPlan np) {  }
 
 
     @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
@@ -65,11 +65,6 @@ public class WFlexAlgo extends WNet
             this.calculationType = calculationType;
             this.weightType = weightType;
         }
-
-
-
-
-
 
         /* Checkers */
         public boolean isLinkIncluded(Link e) { return linkIdsIncluded.contains(e.getId()); }
