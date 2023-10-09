@@ -28,6 +28,8 @@ import java.awt.*;
 public class WiderJComboBox<T> extends JComboBox<T> {
     private boolean layingOut = false;
 
+    
+    public WiderJComboBox() {}
     public WiderJComboBox(T[] list) { super(list); }
 
     @Override
