@@ -75,6 +75,17 @@ public class WFlexAlgo
             this.weightType = weightType;
         }
 
+        public FlexAlgoProperties(int flexAlgoIndentifier, int calculationType, int weightType, Optional<Set<Long>> ipLinkListIds, Optional<Set<String>> nodeSidList)
+        {
+            assert flexAlgoIndentifier > 0;
+
+            this.flexAlgoIndentifier = flexAlgoIndentifier;
+            this.calculationType = calculationType;
+            this.weightType = weightType;
+            ipLinkListIds.ifPresent(longs -> this.linkIdsIncluded = new TreeSet<>(longs));
+            nodeSidList.ifPresent(strings -> this.associatedSids = new TreeSet<>(strings));
+        }
+
         /* Checkers */
         public boolean isLinkIncluded(Link e) { return linkIdsIncluded.contains(e.getId()); }
         public boolean isSidIncluded(String s) { return associatedSids.contains(s); }
