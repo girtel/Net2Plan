@@ -968,6 +968,8 @@ public class WNode extends WAbstractNetworkElement
         this.setAttribute(ATTNAMESUFFIX_SR_SIDLIST, Arrays.toString(sidList.get().toArray()));
     }
 
+    public void removeSidList() { if(this.getNe().getAttributes().containsKey(ATTNAMESUFFIX_SR_SIDLIST)) this.getNe().removeAttribute(ATTNAMESUFFIX_SR_SIDLIST); }
+
 
     /**
      * Returns the set of SID that belongs to the node, if applies.
@@ -1001,6 +1003,8 @@ public class WNode extends WAbstractNetworkElement
 
         return  sb.toString();
     }
+
+
 
 
     /**

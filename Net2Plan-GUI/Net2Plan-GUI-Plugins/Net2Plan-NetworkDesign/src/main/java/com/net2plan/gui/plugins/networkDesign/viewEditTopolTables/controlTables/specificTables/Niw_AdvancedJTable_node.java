@@ -37,6 +37,7 @@ import com.net2plan.niw.WLightpathRequest;
 import com.net2plan.niw.WNet;
 import com.net2plan.niw.WNetConstants;
 import com.net2plan.niw.WNode;
+import org.apache.poi.hssf.eventusermodel.AbortableHSSFListener;
 
 /**
  *
@@ -190,10 +191,29 @@ public class Niw_AdvancedJTable_node extends AdvancedJTable_networkElement<Node>
 
 
         /* Segment Routing */
-        res.add(new AjtRcMenu("Set SID's to selected nodes", event -> DialogBuilder.launch("Set selected SID's to nodes", "Please introduce the SID separated by spaces", "", this, Arrays.asList(InputForDialog.inputTfString("SID list", "SID list", 1, "")), stringedList -> {
-            List<String> sidList = Arrays.asList( ((String) stringedList.get(0).get()).split(" ") );
-            getSelectedElements().stream().map(toWNode).forEach(wnode -> wnode.setSidList(Optional.of(sidList)));
-        }), (a, b) -> true, null));
+        res.add(new AjtRcMenu("Segment Routing", null, (a, b) -> true, Arrays.asList(
+                new AjtRcMenu("Set SIDs to selected nodes", event -> DialogBuilder.launch("Set selected SID's to nodes", "Please introduce the SID separated by spaces", "", this, Arrays.asList(InputForDialog.inputTfString("SID list", "SID list", 1, "")), stringedList -> {
+                    List<String> sidList = Arrays.asList( ((String) stringedList.get(0).get()).split(" ") );
+                    getSelectedElements().stream().map(toWNode).forEach(wnode -> wnode.setSidList(Optional.of(sidList)));
+                }), (a, b) -> true, null),
+                new AjtRcMenu("Set 2 SID's to selected nodes as random numbers", event -> {
+                    Random rng = new Random();
+                    Set<Integer> alreadySelectedSid = new HashSet<>();
+
+                    getSelectedElements().stream().map(toWNode).forEach(wNode -> {
+                        int n1, n2;
+                        do { n1 = 16000 + rng.nextInt(8000); n2 = 16000 + rng.nextInt(8000); }
+                        while (n1 == n2 || alreadySelectedSid.contains(n1) || alreadySelectedSid.contains(n2));
+                        alreadySelectedSid.add(n1);
+                        alreadySelectedSid.add(n2);
+
+                        wNode.setSidList(Optional.of(Arrays.asList("" + n1, "" + n2)));
+                    });
+                }, (a, b) -> true, null),
+                new AjtRcMenu("Remove SIDs from selected nodes", actionEvent -> {
+                    getSelectedElements().stream().map(toWNode).forEach(WNode::removeSidList);
+                }, (a, b) -> true, null)
+        )));
 
 
 

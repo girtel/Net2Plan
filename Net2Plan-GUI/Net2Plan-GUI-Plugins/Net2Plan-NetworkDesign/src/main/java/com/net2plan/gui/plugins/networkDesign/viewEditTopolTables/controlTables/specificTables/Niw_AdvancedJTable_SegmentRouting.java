@@ -167,9 +167,9 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         mainPanel.add(new JLabel("SID-Nodes (optional)"));
         mainPanel.add(new JLabel("Links that will be added to the FlexAlgo."), "wrap");
         mainPanel.add(nodeListScroller);
-        mainPanel.add(linkListScroller);
+        mainPanel.add(linkListScroller, "wrap");
         mainPanel.add(new JLabel(""));
-        mainPanel.add(new JLabel("Links are generated if two selected nodes have link between them"), "wrap");
+        mainPanel.add(new JLabel("Links are added if two selected nodes have link between them"), "wrap");
 
 
 
