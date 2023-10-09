@@ -1244,7 +1244,7 @@ public class WNet extends WAbstractNetworkElement
     {
         final Function<NetworkLayer, Boolean> isIp = d -> {
             final WAbstractNetworkElement ee = getWElement(d).orElse(null);
-            return ee == null ? false : ee.isLayerIp();
+            return ee != null && ee.isLayerIp();
         };
         final Function<NetworkLayer, Boolean> isWdm = d -> {
             final WAbstractNetworkElement ee = getWElement(d).orElse(null);

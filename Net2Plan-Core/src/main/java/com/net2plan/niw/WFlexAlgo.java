@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.Node;
+import com.net2plan.utils.Pair;
 
 
 public class WFlexAlgo 
@@ -46,18 +48,25 @@ public class WFlexAlgo
     public static class FlexAlgoProperties
     {
         /* Properties */
-        public CalculationTypes calculationType;
-        public WeightTypes weightType;
+        public int calculationType;
+        public int weightType;
         public int flexAlgoIndentifier;
         public SortedSet<String> associatedSids = new TreeSet<>();
         public SortedSet<Long> linkIdsIncluded = new TreeSet<>();
 
 
+        /* Constants */
+        public static final int calculation_spf = 0;
+        public static final int calculation_heuristic = 1;
+        public static final int weight_igp = 0;
+        public static final int weight_te = 1;
+        public static final int weight_latency = 2;
+
 
         /* Constructors */
         public FlexAlgoProperties() { }
 
-        public FlexAlgoProperties(int flexAlgoIndentifier, CalculationTypes calculationType, WeightTypes weightType)
+        public FlexAlgoProperties(int flexAlgoIndentifier, int calculationType, int weightType)
         {
             assert flexAlgoIndentifier > 0;
 
@@ -70,9 +79,9 @@ public class WFlexAlgo
         public boolean isLinkIncluded(Link e) { return linkIdsIncluded.contains(e.getId()); }
         public boolean isSidIncluded(String s) { return associatedSids.contains(s); }
 
-        public boolean isIgpWeighted() { return weightType.isIGP(); }
-        public boolean isLatencyWeighted() { return weightType.isLatency(); }
-        public boolean isTeWeighted() { return weightType.isTE(); }
+        public boolean isIgpWeighted() { return weightType == weight_igp; }
+        public boolean isLatencyWeighted() { return weightType == weight_latency; }
+        public boolean isTeWeighted() { return weightType == weight_te; }
 
 
         /* Modify properties content */
@@ -85,6 +94,47 @@ public class WFlexAlgo
 
         /* Get properties content */
         public SortedSet<Link> getLinksIncluded(NetPlan np) { return linkIdsIncluded.stream().map(np::getLinkFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new)); }
+        public SortedSet<Node> getNodesAssociated(NetPlan np) { return linkIdsIncluded.stream().map(np::getNodeFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new)); }
+
+
+        public int getK() { return this.flexAlgoIndentifier; }
+        public int getCalculationType() { return this.calculationType; }
+        public int getWeightType() { return this.weightType; }
+
+
+
+        /* Content for tables */
+        public String getCalculationString()
+        {
+            switch (calculationType)
+            {
+                case calculation_spf: return "SPF";
+                case calculation_heuristic: return "Heuristic";
+                default: return "Not recognized";
+            }
+        }
+        public String getWeightTypeString()
+        {
+            switch (weightType)
+            {
+                case weight_igp: return "IGP";
+                case weight_te: return "TE";
+                case weight_latency: return "Latency";
+                default: return "Not recognized";
+            }
+        }
+
+
+        /* Content for right click options */
+        public static List<Pair<String, Integer>> getCalculationOptions()
+        {
+            return Arrays.asList(Pair.of("SPF", calculation_spf), Pair.of("Heuristic", calculation_heuristic));
+        }
+        public static List<Pair<String, Integer>> getWeightOptions()
+        {
+            return Arrays.asList(Pair.of("IGP", weight_igp), Pair.of("TE", weight_te), Pair.of("Latency", weight_latency));
+        }
+
 
 
     }
