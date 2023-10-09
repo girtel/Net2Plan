@@ -13,6 +13,8 @@ package com.net2plan.gui.plugins.networkDesign.interfaces;
 import com.google.common.collect.Sets;
 import com.net2plan.gui.plugins.GUINetworkDesignConstants.AJTableType;
 import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.niw.WFlexAlgo;
+import com.net2plan.niw.WLayerIp;
 import com.net2plan.utils.Pair;
 
 import java.util.*;
@@ -31,6 +33,7 @@ public abstract class ITableRowFilter
 	protected final Map<NetworkLayer,List<Resource>> vResources;
 	protected final Map<NetworkLayer,List<Route>> vRoutes;
 	protected final Map<NetworkLayer,List<SharedRiskGroup>> vSRGs;
+	protected final Map<NetworkLayer, List<WFlexAlgo.FlexAlgoProperties>> vFlexAlgoProperties;
 	protected final NetPlan netPlan;
 	protected List<String> chainOfDescriptionsPreviousFiltersComposingThis;
 
@@ -49,6 +52,7 @@ public abstract class ITableRowFilter
 		this.vResources = new HashMap<> ();
 		this.vRoutes = new HashMap<> ();
 		this.vSRGs = new HashMap<> ();
+		this.vFlexAlgoProperties = new HashMap<>();
 		this.chainOfDescriptionsPreviousFiltersComposingThis = new LinkedList<> ();
 		for (NetworkLayer layer : netPlan.getNetworkLayers())
 		{
@@ -61,6 +65,7 @@ public abstract class ITableRowFilter
 			this.vResources.put(layer , new ArrayList<> ());
 			this.vRoutes.put(layer , new ArrayList<> ());
 			this.vSRGs.put(layer , new ArrayList<> ());
+			this.vFlexAlgoProperties.put(layer, new ArrayList<>());
 		}
 	}
 
@@ -80,6 +85,7 @@ public abstract class ITableRowFilter
 		case RESOURCE: return np.getResources();
 		case ROUTE: return np.getRoutes(layer);
 		case SRG: return np.getSRGs();
+		case FLEXALGO: return new ArrayList<>(); // TODO
 		default: throw new RuntimeException();
 		}
 	}
