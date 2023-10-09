@@ -184,7 +184,14 @@ public class Constants
          *
          * @since 0.3.0
          */
-        SRG("SRG");
+        SRG("SRG"),
+
+        /**
+         * Flexible-Algorithms type.
+         *
+         * @since 0.7
+         */
+        FLEXALGO("flex algo");
 
         private final String label;
         

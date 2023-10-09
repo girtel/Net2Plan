@@ -1491,6 +1491,10 @@ public class WNet extends WAbstractNetworkElement
         }
     }
 
+    public boolean isSrInitialized() { return getNe().getAttributes().containsKey(ATTNAME_FLEXALGOINFO); }
+
+
+
     /**
      * Generic function to perform an operation to a flex algo. Reads the FlexAlgo manager from the attribute map,
      * get the FlexAlgo properties if present, performs the desired operation, and writes modified repo inside the

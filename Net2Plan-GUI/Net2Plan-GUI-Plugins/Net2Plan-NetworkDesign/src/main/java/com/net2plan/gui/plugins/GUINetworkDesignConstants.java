@@ -29,7 +29,8 @@ public class GUINetworkDesignConstants
     	MULTICAST_DEMANDS ("Multicast demands" , NetworkElementType.MULTICAST_DEMAND),
     	MULTICAST_TREES ("Multicast trees" , NetworkElementType.MULTICAST_TREE),
     	RESOURCES ("Resources" , NetworkElementType.RESOURCE),
-    	SRGS ("SRGs" , NetworkElementType.SRG);
+    	SRGS ("SRGs" , NetworkElementType.SRG),
+    	FLEXALGO ("Flex-Algos" , NetworkElementType.FLEXALGO);
         private final String tabName;
         private final NetworkElementType neType;
         
@@ -79,6 +80,7 @@ public class GUINetworkDesignConstants
 			case RESOURCE: return AJTableType.RESOURCES;
 			case ROUTE: return AJTableType.ROUTES;
 			case SRG: return AJTableType.SRGS;
+                case FLEXALGO: return AJTableType.FLEXALGO;
 			default:
 				break;
         	}
