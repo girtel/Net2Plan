@@ -145,7 +145,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         List<Triple<String, Long, String>> candidateNodeTuples = new ArrayList<>();
         Map<String, Pair<Long, String>> candidateNodeMap = new TreeMap<>();
         wNet.getNodes().stream().forEach(node -> {
-            node.getSidList().ifPresent( sidList -> sidList.forEach(sid -> candidateNodeMap.put("("+sid+") - "+node.getName(), Pair.of(node.getId(), sid)) ) );
+            node.getSidList().ifPresent( sidList -> sidList.forEach(sid -> candidateNodeMap.put(node.getName() + " (" + sid.trim() + ")", Pair.of(node.getId(), sid)) ) );
         });
         JList<String> nodeList = new JList(candidateNodeMap.keySet().toArray());
 
@@ -164,10 +164,12 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         mainPanel.add(calculationSelector, "wrap");
         mainPanel.add(weightLabel);
         mainPanel.add(weightSelector, "wrap");
-        mainPanel.add(new JLabel("Nodes (optional"));
-        mainPanel.add(new JLabel("Links (optional)"), "wrap");
+        mainPanel.add(new JLabel("SID-Nodes (optional)"));
+        mainPanel.add(new JLabel("Links that will be added to the FlexAlgo."), "wrap");
         mainPanel.add(nodeListScroller);
         mainPanel.add(linkListScroller);
+        mainPanel.add(new JLabel(""));
+        mainPanel.add(new JLabel("Links are generated if two selected nodes have link between them"), "wrap");
 
 
 
@@ -262,7 +264,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                 List<Pair<Long, String>> selectedNodesInformation = nodeRepresentatives.stream().map(candidateNodeMap::get).collect(Collectors.toList());
                 Set<String> flexNodes = selectedNodesInformation.stream().map(Pair::getSecond).collect(Collectors.toSet());
 
-                
+
 
                 // TODO check if k is already in use
 
