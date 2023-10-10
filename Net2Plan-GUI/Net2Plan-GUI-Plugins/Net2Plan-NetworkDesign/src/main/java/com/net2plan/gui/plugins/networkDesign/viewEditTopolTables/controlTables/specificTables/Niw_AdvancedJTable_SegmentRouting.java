@@ -25,10 +25,7 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.internal.ErrorHandling;
 import com.net2plan.libraries.IPUtils;
-import com.net2plan.niw.WFlexAlgo;
-import com.net2plan.niw.WIpLink;
-import com.net2plan.niw.WNet;
-import com.net2plan.niw.WNode;
+import com.net2plan.niw.*;
 import com.net2plan.utils.Pair;
 import com.net2plan.utils.Triple;
 import net.miginfocom.swing.MigLayout;
@@ -42,6 +39,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -113,7 +111,8 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         /* Check for some first steps */
         final NetPlan netPlan = callback.getDesign();
         final WNet wNet = callback.getNiwInfo().getSecond();
-        if(!wNet.isSrInitialized()) wNet.initializeFlexAlgoAttributes();
+        if (!wNet.isSrInitialized()) wNet.initializeFlexAlgoAttributes();
+
 
 
         /* ID Selector */
@@ -133,7 +132,9 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         JLabel weightLabel = new JLabel("Calculation type");
 
         /* Link selector */
-        JList<Link> linkList = new JList(wNet.getIpLinks().toArray());
+//        JList<Link> linkList = new JList(wNet.getIpLinks().toArray());
+        DefaultListModel<String> linkListModel = new DefaultListModel<>();
+        JList<String> linkList = new JList<>(linkListModel);
         linkList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         linkList.setLayoutOrientation(JList.VERTICAL);
         linkList.setVisibleRowCount(-1);
@@ -141,14 +142,12 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         linkListScroller.setPreferredSize(new Dimension(500, 160));
 
         /* Node selector */
-//        JList<Node> nodeList = new JList(wNet.getNodes().toArray());
         List<Triple<String, Long, String>> candidateNodeTuples = new ArrayList<>();
         Map<String, Pair<Long, String>> candidateNodeMap = new TreeMap<>();
-        wNet.getNodes().stream().forEach(node -> {
-            node.getSidList().ifPresent( sidList -> sidList.forEach(sid -> candidateNodeMap.put(node.getName() + " (" + sid.trim() + ")", Pair.of(node.getId(), sid)) ) );
+        wNet.getNodes().forEach(node -> {
+            node.getSidList().ifPresent(sidList -> sidList.forEach(sid -> candidateNodeMap.put(node.getName() + " (" + sid.trim() + ")", Pair.of(node.getId(), sid))));
         });
         JList<String> nodeList = new JList(candidateNodeMap.keySet().toArray());
-
         nodeList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         nodeList.setLayoutOrientation(JList.VERTICAL);
         nodeList.setVisibleRowCount(-1);
@@ -164,7 +163,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         mainPanel.add(calculationSelector, "wrap");
         mainPanel.add(weightLabel);
         mainPanel.add(weightSelector, "wrap");
-        mainPanel.add(new JLabel("SID-Nodes (optional)"));
+        mainPanel.add(new JLabel("Nodes - (SID) -> (optional)"));
         mainPanel.add(new JLabel("Links that will be added to the FlexAlgo."), "wrap");
         mainPanel.add(nodeListScroller);
         mainPanel.add(linkListScroller, "wrap");
@@ -172,11 +171,14 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         mainPanel.add(new JLabel("Links are added if two selected nodes have link between them"), "wrap");
 
 
+        /* Virtual minimal topology to calculate which nodes are selected and which links will be used */
+        final int WN = netPlan.getNodes().size();
+        Map<Integer, Long> virtualLinkId2realId = new HashMap<>();
 
 
         /* Events */
 
-        // Listener for identifier checker. ID must belong to [128, 255] and not be already in use
+        /* Listener for identifier checker. ID must belong to [128, 255] and not be already in use */
         idText.addActionListener(new ActionListener()
         {
             @Override
@@ -197,15 +199,16 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
 
                     // If correct
                     idText.setBorder(BorderFactory.createLineBorder(Color.GREEN));
-                } catch (NumberFormatException nfe) { idText.setBorder(BorderFactory.createLineBorder(Color.RED)); }
+                } catch (NumberFormatException nfe) {idText.setBorder(BorderFactory.createLineBorder(Color.RED));}
             }
         });
 
 
-        // Selection panels
+        /* Selection panels */
         ListSelectionModel nodeSelectionModel = new DefaultListSelectionModel()
         {
             boolean gestureStarted = false;
+
             @Override
             public void setSelectionInterval(int index0, int index1)
             {
@@ -215,34 +218,32 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                     else super.addSelectionInterval(index0, index1);
                 }
                 gestureStarted = true;
+
+                recomputeLinkList();
             }
 
             @Override
-            public void setValueIsAdjusting(boolean isAdjusting) { if (!isAdjusting) gestureStarted = false; }
-        }; nodeList.setSelectionModel(nodeSelectionModel);
+            public void setValueIsAdjusting(boolean isAdjusting) {if (!isAdjusting) gestureStarted = false;}
 
-        ListSelectionModel linkSelectionModel = new DefaultListSelectionModel()
-        {
-            boolean gestureStarted = false;
-            @Override
-            public void setSelectionInterval(int index0, int index1)
+            private void recomputeLinkList()
             {
-                if (!gestureStarted)
-                {
-                    if (isSelectedIndex(index0)) super.removeSelectionInterval(index0, index1);
-                    else super.addSelectionInterval(index0, index1);
-                }
-                gestureStarted = true;
+                List<String> selectedNodesRepresentative = nodeList.getSelectedValuesList();
+                List<Pair<Long, String>> selectedNodesInformation = selectedNodesRepresentative.stream().map(candidateNodeMap::get).collect(Collectors.toList());
+                Set<Long> selectedNodesId = selectedNodesInformation.stream().map(Pair::getFirst).collect(Collectors.toSet());
+
+                Set<WIpLink> links = recomputeVirtualLinkList(wNet,selectedNodesId);
+
+                if(links.isEmpty()) return;
+                linkListModel.clear();
+                links.forEach(link -> linkListModel.addElement(   link.getA().getName() + " -> " + link.getB().getName()   ));
+
             }
-
-            @Override
-            public void setValueIsAdjusting(boolean isAdjusting) { if (!isAdjusting) gestureStarted = false; }
-        }; linkList.setSelectionModel(linkSelectionModel);
-
+        };
+        nodeList.setSelectionModel(nodeSelectionModel);
+        linkList.setSelectionModel(new NoSelectionModel());
 
 
-
-        // Launch the confirm dialog and wait to fill information. When information recovered, do all the stuff
+        /* Launch the confirm dialog and wait to fill information. When information recovered, do all the stuff */
         while (true)
         {
             /* Launch the dialog */
@@ -254,22 +255,25 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
             {
                 /* Recover information from all tables */ //TODO
                 int k = Integer.parseInt(idText.getText());
-                int calculation = calculationTypes.stream().filter(pair -> pair.getFirst().equals(calculationSelector.getSelectedItem()) ).findFirst().get().getSecond();
+                int calculation = calculationTypes.stream().filter(pair -> pair.getFirst().equals(calculationSelector.getSelectedItem())).findFirst().get().getSecond();
                 int weight = weightTypes.stream().filter(pair -> pair.getFirst().equals(weightSelector.getSelectedItem())).findFirst().get().getSecond();
 
-                List<Link> links = linkList.getSelectedValuesList();
-                Set<Long> linkIdList = links.stream().map(Link::getId).collect(Collectors.toSet());
 
                 List<String> nodeRepresentatives = nodeList.getSelectedValuesList();
                 List<Pair<Long, String>> selectedNodesInformation = nodeRepresentatives.stream().map(candidateNodeMap::get).collect(Collectors.toList());
-                Set<String> flexNodes = selectedNodesInformation.stream().map(Pair::getSecond).collect(Collectors.toSet());
+                Set<Long> selectedNodesId = selectedNodesInformation.stream().map(Pair::getFirst).collect(Collectors.toSet());
+                Set<String> selectedNodesSid = selectedNodesInformation.stream().map(Pair::getSecond).collect(Collectors.toSet());
 
+
+                Set<WIpLink> virtualLinksList = recomputeVirtualLinkList(wNet, selectedNodesId );
+                Set<Long> virtualLinksIdList = virtualLinksList.stream().map(WIpLink::getId).collect(Collectors.toSet());
 
 
                 // TODO check if k is already in use
+                
 
                 /* Create the FlexAlgoProperties */
-                WFlexAlgo.FlexAlgoProperties wflex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(linkIdList), Optional.of(flexNodes));
+                WFlexAlgo.FlexAlgoProperties wflex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(virtualLinksIdList), Optional.of(selectedNodesSid));
                 wNet.performOperationOnFlexAlgoRepository(repo -> repo.mapFlexAlgoId2FlexAlgoProperties.put(k, wflex));
 
                 /* Perform operation on the flex algo repository -> add the flex algo property */
@@ -277,18 +281,56 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                 /* Perform operation on nodes (set this flex algo as used), links, etc */
 
 
-
-            } catch (Exception e) { continue; }
-
-
-
-
-
+            } catch (Exception e) {continue;}
 
 
             break;
         }
 
 
+
+
+
+
+    }
+
+    private static Set<WIpLink> recomputeVirtualLinkList(WNet wNet, Set<Long> selectedNodes)
+    {
+        if(selectedNodes.size() <= 1) return new TreeSet<>();
+
+        Set<WIpLink> links = new HashSet<>();
+        for(long n1: selectedNodes)
+            for(long n2: selectedNodes)
+            {
+                if(n1 <= n2) continue;
+
+                final Optional<WNode> n1p = wNet.getNodeFromId(n1), n2p = wNet.getNodeFromId(n2);
+                assert n1p.isPresent(); assert n2p.isPresent();
+
+                final Set<WIpLink> linkBetween = wNet.getNodePairIpLinks(n1p.get(), n2p.get());
+                if(linkBetween.isEmpty()) continue;
+
+                links.addAll(linkBetween);
+            }
+
+        links.forEach(System.out::println);
+
+
+        return links;
+    }
+
+
+
+
+    private static class NoSelectionModel extends DefaultListSelectionModel
+    {
+        @Override
+        public void setAnchorSelectionIndex(final int anchorIndex) {}
+        @Override
+        public void setLeadAnchorNotificationEnabled(final boolean flag) {}
+        @Override
+        public void setLeadSelectionIndex(final int leadIndex) {}
+        @Override
+        public void setSelectionInterval(final int index0, final int index1) {}
     }
 }
