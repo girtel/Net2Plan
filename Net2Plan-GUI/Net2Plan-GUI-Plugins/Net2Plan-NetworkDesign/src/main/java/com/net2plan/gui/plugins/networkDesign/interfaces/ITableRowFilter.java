@@ -101,6 +101,9 @@ public abstract class ITableRowFilter
 	public final List<Resource> getVisibleResources (NetworkLayer layer) { return Collections.unmodifiableList(vResources.get(layer)); }
 	public final List<Route> getVisibleRoutes (NetworkLayer layer) { return Collections.unmodifiableList(vRoutes.get(layer)); }
 	public final List<SharedRiskGroup> getVisibleSRGs (NetworkLayer layer) { return Collections.unmodifiableList(vSRGs.get(layer)); }
+	public final List<WFlexAlgo.FlexAlgoProperties> getVisibleFlexAlgos (NetworkLayer layer) {
+		return new ArrayList<>();
+	}
 
 	public final boolean hasDemands (NetworkLayer layer) { return !vDemands.get(layer).isEmpty(); }
 	public final boolean hasLinks (NetworkLayer layer) { return !vLinks.get(layer).isEmpty(); }
