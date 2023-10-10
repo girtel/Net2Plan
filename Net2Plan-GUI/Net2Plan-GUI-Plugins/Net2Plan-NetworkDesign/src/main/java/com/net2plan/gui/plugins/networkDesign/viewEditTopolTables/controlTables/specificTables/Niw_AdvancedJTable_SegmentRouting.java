@@ -63,6 +63,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
     public static final Function<Pair<Link, WNet>, WIpLink> toWIpLink = pair -> (WIpLink) pair.getSecond().getWElement(pair.getFirst()).get();
 
 
+    /* Properties table */
     @Override
     public List<AjtColumnInfo<WFlexAlgo.FlexAlgoProperties>> getNonBasicUserDefinedColumnsVisibleOrNot()
     {
@@ -86,6 +87,8 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         return res;
     }
 
+
+    /* Action list */
     public List<AjtRcMenu> getNonBasicRightClickMenusInfo()
     {
         final NetPlan np = callback.getDesign();
@@ -106,7 +109,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
     }
 
 
-    private static void createFlexAlgoFromGUI(final GUINetworkDesign callback, final NetworkLayer layer)
+    private static void createFlexAlgoFromGUI(GUINetworkDesign callback, NetworkLayer layer)
     {
         /* Check for some first steps */
         final NetPlan netPlan = callback.getDesign();
@@ -132,7 +135,6 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         JLabel weightLabel = new JLabel("Calculation type");
 
         /* Link selector */
-//        JList<Link> linkList = new JList(wNet.getIpLinks().toArray());
         DefaultListModel<String> linkListModel = new DefaultListModel<>();
         JList<String> linkList = new JList<>(linkListModel);
         linkList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -171,13 +173,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         mainPanel.add(new JLabel("Links are added if two selected nodes have link between them"), "wrap");
 
 
-        /* Virtual minimal topology to calculate which nodes are selected and which links will be used */
-        final int WN = netPlan.getNodes().size();
-        Map<Integer, Long> virtualLinkId2realId = new HashMap<>();
-
-
         /* Events */
-
         /* Listener for identifier checker. ID must belong to [128, 255] and not be already in use */
         idText.addActionListener(new ActionListener()
         {
@@ -193,9 +189,13 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                     if (id < 128 || id > 255) throw new NumberFormatException();
 
                     // Check that it is not already in use
-                    wNet.performOperationOnFlexAlgoRepository(repo -> {
-                        if (repo.containsKey(id)) throw new NumberFormatException();
-                    });
+                    if(wNet.isSrInitialized())
+                    {
+                        wNet.performOperationOnFlexAlgoRepository(repo -> {
+                            if (repo.containsKey(id)) throw new NumberFormatException();
+                        });
+                    }
+
 
                     // If correct
                     idText.setBorder(BorderFactory.createLineBorder(Color.GREEN));
@@ -270,15 +270,17 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
 
 
                 // TODO check if k is already in use
-                
+
+                WFlexAlgo.FlexAlgoRepository wFlexRepo = wNet.readFlexAlgoRepository().get();
+
+
+
 
                 /* Create the FlexAlgoProperties */
-                WFlexAlgo.FlexAlgoProperties wflex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(virtualLinksIdList), Optional.of(selectedNodesSid));
-                wNet.performOperationOnFlexAlgoRepository(repo -> repo.mapFlexAlgoId2FlexAlgoProperties.put(k, wflex));
+                WFlexAlgo.FlexAlgoProperties wFlex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(virtualLinksIdList), Optional.of(selectedNodesSid));
+                wNet.performOperationOnFlexAlgoRepository(repo -> repo.mapFlexAlgoId2FlexAlgoProperties.put(k, wFlex));
 
-                /* Perform operation on the flex algo repository -> add the flex algo property */
-
-                /* Perform operation on nodes (set this flex algo as used), links, etc */
+                // Temporally show flexAlgoList, up to showing FlexAlgoProperties on the tables
 
 
             } catch (Exception e) {continue;}
@@ -286,10 +288,6 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
 
             break;
         }
-
-
-
-
 
 
     }
@@ -312,9 +310,6 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
 
                 links.addAll(linkBetween);
             }
-
-        links.forEach(System.out::println);
-
 
         return links;
     }
