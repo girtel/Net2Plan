@@ -1536,25 +1536,27 @@ public class WNet extends WAbstractNetworkElement
      */
     public void performOperationOnFlexAlgoRepository(Consumer<WFlexAlgo.FlexAlgoRepository> whatToDoInFlexAlgo)
     {
-        // read the attribute and extract the lex aglo
+        // read the attribute and extract the flex algo
         // apply the consumer function to the flex algo
         // write the attribute again with the full flex algo repo
 
         // Read the flex algo repository from the attribute map
-        Optional<WFlexAlgo.FlexAlgoRepository> repository = readFlexAlgoRepository();
+        Optional<WFlexAlgo.FlexAlgoRepository> optionalRepository = readFlexAlgoRepository();
 
         // Check that everything is ok
-        assert repository.isPresent();
+//        assert optionalRepository.isPresent();
+        if(!optionalRepository.isPresent()) return;
+
 
         // Get the desired flex algo
-        WFlexAlgo.FlexAlgoRepository flexAlgo = repository.get();
+        WFlexAlgo.FlexAlgoRepository repository = optionalRepository.get();
 
         // Perform the operation
-        whatToDoInFlexAlgo.accept(flexAlgo);
+        whatToDoInFlexAlgo.accept(repository);
 
         // Once the desired operation is finished, and may have modified the flex algo object, write the modified
         // flex algo repository to the attribute map
-        writeFlexAlgoRepository(repository);
+        writeFlexAlgoRepository(Optional.of(repository));
     }
 
 

@@ -25,8 +25,9 @@ public class WFlexAlgo
     @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
     public static class FlexAlgoRepository
     {
-        public FlexAlgoRepository() { }
-        public Map<Integer, FlexAlgoProperties> mapFlexAlgoId2FlexAlgoProperties = new LinkedHashMap<>();
+        public Map<Integer, FlexAlgoProperties> mapFlexAlgoId2FlexAlgoProperties;
+        public FlexAlgoRepository() { mapFlexAlgoId2FlexAlgoProperties = new LinkedHashMap<>(); }
+
 
         /* Checkers */
         public boolean containsKey(int key) { return mapFlexAlgoId2FlexAlgoProperties.containsKey(key); }
@@ -44,7 +45,7 @@ public class WFlexAlgo
         }
     }
 
-    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
     public static class FlexAlgoProperties
     {
         /* Properties */
