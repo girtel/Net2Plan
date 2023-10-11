@@ -86,6 +86,12 @@ public class GUINetworkDesignConstants
         	}
             return null;
         }
+
+
+        public boolean isExcludedFromNetworkElements()
+        {
+            return this == FORWARDINGRULES || this == FLEXALGO;
+        }
     }    
     
     public static Color YELLOW_BRANCH_COLOR = Color.YELLOW;

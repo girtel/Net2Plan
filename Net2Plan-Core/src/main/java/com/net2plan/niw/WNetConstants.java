@@ -25,8 +25,9 @@ public class WNetConstants
 	public static final String ipLayerName = "IP";
 	public static final String wdmLayerName = "WDM";
 	
-	public static final String ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED = "isSegmentRoutedElement";
-	public static final String ATTRIBUTE_DEMAND_SR_SID = "ifSegmentRouted_sid";
+	public static final String ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED = WAbstractNetworkElement.NIWNAMEPREFIX + "isSegmentRoutedElement";
+	public static final String ATTRIBUTE_DEMAND_SR_SID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_sid";
+	public static final String ATTRIBUTE_FLEXALGOINFO = WAbstractNetworkElement.NIWNAMEPREFIX + "flexAlgoInfo";
 	
 
 	public static final String TAG_NETPLAN_ISNIWDESIGN = WAbstractNetworkElement.NIWNAMEPREFIX + "isNiwDesign";

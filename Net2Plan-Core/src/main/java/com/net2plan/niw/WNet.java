@@ -59,7 +59,6 @@ public class WNet extends WAbstractNetworkElement
     private static final String ATTNAME_VNFTYPELIST = NIWNAMEPREFIX + "VnfTypeListMatrix";
     private static final String ATTNAME_USERSERVICELIST = NIWNAMEPREFIX + "userServiceListMatrix";
     private static final String ATTNAME_WDMOPTICALSLOTSIZEGHZ = NIWNAMEPREFIX + "wdmOpticalSlotSizeGhz";
-    private static final String ATTNAME_FLEXALGOINFO = NIWNAMEPREFIX + "flexAlgoInfo";
 
 
     /**
@@ -1484,14 +1483,14 @@ public class WNet extends WAbstractNetworkElement
         try
         {
             String stringedMap = mapper.writeValueAsString(new WFlexAlgo.FlexAlgoRepository());
-            getNe().setAttribute(ATTNAME_FLEXALGOINFO, stringedMap);
+            getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO, stringedMap);
         } catch (JsonProcessingException e)
         {
             throw new RuntimeException(e);
         }
     }
 
-    public boolean isSrInitialized() { return getNe().getAttributes().containsKey(ATTNAME_FLEXALGOINFO); }
+    public boolean isSrInitialized() { return getNe().getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOINFO); }
 
 
 
@@ -1563,7 +1562,7 @@ public class WNet extends WAbstractNetworkElement
     public Optional<WFlexAlgo.FlexAlgoRepository> readFlexAlgoRepository()
     {
         // Get the FlexAlgo repo from the attribute map
-        String stringedMap = getNe().getAttribute(ATTNAME_FLEXALGOINFO);
+        String stringedMap = getNe().getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO);
         ObjectMapper mapper = new ObjectMapper();
 
 
@@ -1587,7 +1586,7 @@ public class WNet extends WAbstractNetworkElement
             String stringedMap = mapper.writeValueAsString(repository.get());
 
             // Write stringed repository to the attribute map
-            getNe().setAttribute(ATTNAME_FLEXALGOINFO, stringedMap);
+            getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO, stringedMap);
 
         } catch (JsonProcessingException e) { throw new RuntimeException(e); }
     }
@@ -1595,5 +1594,20 @@ public class WNet extends WAbstractNetworkElement
 
     /* SR wrappers */
 
+    public static Optional<WFlexAlgo.FlexAlgoRepository> readFlexAlgoRepositoryInNetPlan(NetPlan np)
+    {
+        if(!np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOINFO)) return Optional.empty();
+
+        String stringedMap = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO);
+        ObjectMapper mapper = new ObjectMapper();
+
+        try
+        {
+            // Convert from text to object
+            WFlexAlgo.FlexAlgoRepository repo = mapper.readValue(stringedMap, WFlexAlgo.FlexAlgoRepository.class);
+            return Optional.of(repo);
+
+        } catch (JsonProcessingException e) { return Optional.empty(); }
+    }
 
 }

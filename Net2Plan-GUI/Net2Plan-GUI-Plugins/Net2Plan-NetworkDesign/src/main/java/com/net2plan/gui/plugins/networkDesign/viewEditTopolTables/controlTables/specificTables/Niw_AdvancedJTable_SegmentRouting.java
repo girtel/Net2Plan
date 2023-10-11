@@ -77,11 +77,13 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         // TODO buscar como seleccionar los enlaces incuidos en la lista. WNode -> outIpLinks
 
         res.add(new AjtColumnInfo<>(this, Integer.class, null, "ID (k)", "The flexible algo identifier", null, WFlexAlgo.FlexAlgoProperties::getK, AGTYPE.NOAGGREGATION, null));
+        res.add(new AjtColumnInfo<>(this, String.class, null, "--", "---", null, f -> "--", AGTYPE.NOAGGREGATION, null));
         res.add(new AjtColumnInfo<>(this, String.class, null, "Calculation", "The flexible algo calculation type", null, WFlexAlgo.FlexAlgoProperties::getCalculationString, AGTYPE.NOAGGREGATION, null));
         res.add(new AjtColumnInfo<>(this, String.class, null, "Weight", "The flexible algo weight type", null, WFlexAlgo.FlexAlgoProperties::getWeightTypeString, AGTYPE.NOAGGREGATION, null));
 
         res.add(new AjtColumnInfo<>(this, Collection.class, null, "Links", "List of links that the flex algo can go through", null, f -> f.getLinksIncluded(np), AGTYPE.SUMCOLLECTIONCOUNT, null));
-        res.add(new AjtColumnInfo<>(this, Collection.class, null, "Nodes", "List of nodes that are using this flex algo", null, f -> f.getNodesAssociated(np), AGTYPE.SUMCOLLECTIONCOUNT, null));
+        res.add(new AjtColumnInfo<>(this, Collection.class, null, "Nodes", "List of nodes that are using this flex algo", null, f -> f.getNodesIncluded(np), AGTYPE.SUMCOLLECTIONCOUNT, null));
+        res.add(new AjtColumnInfo<>(this, String.class, null, "SID's", "List of SID's assigned to this node", null , f -> f.getAssociatedSidsAsNiceLookingString(), AGTYPE.NOAGGREGATION, null));
 
 
         return res;
@@ -102,6 +104,21 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         final List<AjtRcMenu> res = new ArrayList<>();
 
         res.add(new AjtRcMenu("Add FlexAlgo", e -> createFlexAlgoFromGUI(callback, layer), (a, b) -> true, null));
+        res.add(new AjtRcMenu("Remove selected FlexAlgo", e -> {}, (a, b) -> true, null));
+        res.add(new AjtRcMenu("Change FlexAlgo identifier (k)", e -> {}, (a, b) -> true, null));
+        res.add(new AjtRcMenu("Set calculation type to selected FlexAlgo", e -> {}, (a, b) -> true, Arrays.asList(
+                new AjtRcMenu("As ShortestPathFirst", e -> {}, (a,b) -> true, null),
+                new AjtRcMenu("As Heuristic", e -> {}, (a,b) -> true, null)
+        )));
+        res.add(new AjtRcMenu("Set weight type to selected FlexAlgo", e -> {}, (a, b) -> true, Arrays.asList(
+                new AjtRcMenu("As TE", e -> {}, (a,b) -> true, null),
+                new AjtRcMenu("As IGP", e -> {}, (a,b) -> true, null),
+                new AjtRcMenu("As Latency", e -> {}, (a,b) -> true, null)
+        )));
+        res.add(new AjtRcMenu("Set nodes and links to selected FlexAlgo", e -> {}, (a,b) -> true, null));
+        res.add(new AjtRcMenu("Remove nodes and links to selected FlexAlgo", e -> {}, (a,b) -> true, null));
+
+
 
         // TODO the remaining actions
 
@@ -277,7 +294,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
 
 
                 /* Create the FlexAlgoProperties */
-                WFlexAlgo.FlexAlgoProperties wFlex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(virtualLinksIdList), Optional.of(selectedNodesSid));
+                WFlexAlgo.FlexAlgoProperties wFlex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(virtualLinksIdList), Optional.of(selectedNodesId), Optional.of(selectedNodesSid));
                 wNet.performOperationOnFlexAlgoRepository(repo -> repo.mapFlexAlgoId2FlexAlgoProperties.put(k, wFlex));
 
                 // Temporally show flexAlgoList, up to showing FlexAlgoProperties on the tables
@@ -291,6 +308,16 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
 
 
     }
+
+    public void selectNodesAndLinksFromGUI(GUINetworkDesign callback)
+    {
+
+    }
+
+
+
+
+
 
     private static Set<WIpLink> recomputeVirtualLinkList(WNet wNet, Set<Long> selectedNodes)
     {

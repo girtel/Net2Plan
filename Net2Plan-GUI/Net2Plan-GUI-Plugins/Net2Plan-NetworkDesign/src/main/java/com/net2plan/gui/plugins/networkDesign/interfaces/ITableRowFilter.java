@@ -85,7 +85,7 @@ public abstract class ITableRowFilter
 		case RESOURCE: return np.getResources();
 		case ROUTE: return np.getRoutes(layer);
 		case SRG: return np.getSRGs();
-		case FLEXALGO: return new ArrayList<>(); // TODO
+		case FLEXALGO: return np.getFlexAlgoProperties();
 		default: throw new RuntimeException();
 		}
 	}
@@ -101,9 +101,8 @@ public abstract class ITableRowFilter
 	public final List<Resource> getVisibleResources (NetworkLayer layer) { return Collections.unmodifiableList(vResources.get(layer)); }
 	public final List<Route> getVisibleRoutes (NetworkLayer layer) { return Collections.unmodifiableList(vRoutes.get(layer)); }
 	public final List<SharedRiskGroup> getVisibleSRGs (NetworkLayer layer) { return Collections.unmodifiableList(vSRGs.get(layer)); }
-	public final List<WFlexAlgo.FlexAlgoProperties> getVisibleFlexAlgos (NetworkLayer layer) {
-		return new ArrayList<>();
-	}
+	public final List<WFlexAlgo.FlexAlgoProperties> getVisibleFlexAlgos (NetworkLayer layer) { return Collections.unmodifiableList(vFlexAlgoProperties.get(layer)); }
+
 
 	public final boolean hasDemands (NetworkLayer layer) { return !vDemands.get(layer).isEmpty(); }
 	public final boolean hasLinks (NetworkLayer layer) { return !vLinks.get(layer).isEmpty(); }
@@ -114,6 +113,7 @@ public abstract class ITableRowFilter
 	public final boolean hasResources (NetworkLayer layer) { return !vResources.get(layer).isEmpty(); }
 	public final boolean hasRoutes (NetworkLayer layer) { return !vRoutes.get(layer).isEmpty(); }
 	public final boolean hasSRGs (NetworkLayer layer) { return !vSRGs.get(layer).isEmpty(); }
+	public final boolean hasFlexAlgos (NetworkLayer layer) { return !vFlexAlgoProperties.get(layer).isEmpty(); }
 
 	public final int getNumberOfDemands (NetworkLayer layer) { return vDemands.get(layer).size(); }
 	public final int getNumberOfLinks (NetworkLayer layer) { return vLinks.get(layer).size(); }
@@ -124,6 +124,7 @@ public abstract class ITableRowFilter
 	public final int getNumberOfResources (NetworkLayer layer) { return vResources.get(layer).size(); }
 	public final int getNumberOfRoutes (NetworkLayer layer) { return vRoutes.get(layer).size(); }
 	public final int getNumberOfSRGs (NetworkLayer layer) { return vSRGs.get(layer).size(); }
+	public final int getNumberofFlexAlgos (NetworkLayer layer) { return vFlexAlgoProperties.get(layer).size(); }
 
 	public final void recomputeApplyingShowIf_ThisAndThat (ITableRowFilter that)
 	{
@@ -140,6 +141,7 @@ public abstract class ITableRowFilter
 			vResources.put(layer , (List<Resource>) filterAnd(this.vResources.get(layer) , that.vResources.get(layer)));
 			vRoutes.put(layer , (List<Route>) filterAnd(this.vRoutes.get(layer) , that.vRoutes.get(layer)));
 			vSRGs.put(layer , (List<SharedRiskGroup>) filterAnd(this.vSRGs.get(layer) , that.vSRGs.get(layer)));
+			vFlexAlgoProperties.put(layer , (List<WFlexAlgo.FlexAlgoProperties>) filterAnd(this.vFlexAlgoProperties.get(layer) , that.vFlexAlgoProperties.get(layer)));
 		}
 		chainOfDescriptionsPreviousFiltersComposingThis.add(that.getDescription());
 	}
@@ -159,6 +161,7 @@ public abstract class ITableRowFilter
 			vResources.put(layer , (List<Resource>) filterOr(this.vResources.get(layer) , that.vResources.get(layer)));
 			vRoutes.put(layer , (List<Route>) filterOr(this.vRoutes.get(layer) , that.vRoutes.get(layer)));
 			vSRGs.put(layer , (List<SharedRiskGroup>) filterOr(this.vSRGs.get(layer) , that.vSRGs.get(layer)));
+			vFlexAlgoProperties.put(layer , (List<WFlexAlgo.FlexAlgoProperties>) filterOr(this.vFlexAlgoProperties.get(layer) , that.vFlexAlgoProperties.get(layer)));
 		}
 		chainOfDescriptionsPreviousFiltersComposingThis.add(that.getDescription());
 	}
@@ -178,6 +181,7 @@ public abstract class ITableRowFilter
 		case RESOURCE: return vResources.get(layer);
 		case ROUTE: return vRoutes.get(layer);
 		case SRG: return vSRGs.get(layer);
+		case FLEXALGO: return vFlexAlgoProperties.get(layer);
 		default:
 			throw new RuntimeException();
 		}

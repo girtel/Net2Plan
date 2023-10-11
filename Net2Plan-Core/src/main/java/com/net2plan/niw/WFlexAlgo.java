@@ -12,25 +12,26 @@ import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Pair;
 
 
-public class WFlexAlgo 
+public class WFlexAlgo
 {
     /**
      * Creates a WNet object from a NetPlan object. Does not check its consistency as a valid NIW design
      *
      * @param np see above
      */
-    public WFlexAlgo(NetPlan np) {  }
+    public WFlexAlgo(NetPlan np) {}
 
 
     @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
     public static class FlexAlgoRepository
     {
-        public Map<Integer, FlexAlgoProperties> mapFlexAlgoId2FlexAlgoProperties;
-        public FlexAlgoRepository() { mapFlexAlgoId2FlexAlgoProperties = new LinkedHashMap<>(); }
+        public Map<Integer, FlexAlgoProperties> mapFlexAlgoId2FlexAlgoProperties = new LinkedHashMap<>();
+
+        public FlexAlgoRepository() {}
 
 
         /* Checkers */
-        public boolean containsKey(int key) { return mapFlexAlgoId2FlexAlgoProperties.containsKey(key); }
+        public boolean containsKey(int key) {return mapFlexAlgoId2FlexAlgoProperties.containsKey(key);}
 
         /* Modifiers */
         public FlexAlgoProperties getFlexAlgoPropertiesFromID(int id)
@@ -38,6 +39,7 @@ public class WFlexAlgo
             assert containsKey(id);
             return mapFlexAlgoId2FlexAlgoProperties.get(id);
         }
+
         public void removeFlexAlgoPropertiesFromID(int id)
         {
             assert containsKey(id);
@@ -46,13 +48,14 @@ public class WFlexAlgo
     }
 
     @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, isGetterVisibility = Visibility.NONE)
-    public static class FlexAlgoProperties
+    public static class FlexAlgoProperties implements Comparable
     {
         /* Properties */
         public int calculationType;
         public int weightType;
         public int flexAlgoIndentifier;
         public SortedSet<String> associatedSids = new TreeSet<>();
+        public SortedSet<Long> nodeIdsIncluded = new TreeSet<>();
         public SortedSet<Long> linkIdsIncluded = new TreeSet<>();
 
 
@@ -65,7 +68,7 @@ public class WFlexAlgo
 
 
         /* Constructors */
-        public FlexAlgoProperties() { }
+        public FlexAlgoProperties() {}
 
         public FlexAlgoProperties(int flexAlgoIndentifier, int calculationType, int weightType)
         {
@@ -76,7 +79,7 @@ public class WFlexAlgo
             this.weightType = weightType;
         }
 
-        public FlexAlgoProperties(int flexAlgoIndentifier, int calculationType, int weightType, Optional<Set<Long>> ipLinkListIds, Optional<Set<String>> nodeSidList)
+        public FlexAlgoProperties(int flexAlgoIndentifier, int calculationType, int weightType, Optional<Set<Long>> ipLinkListIds, Optional<Set<Long>> nodeListIds, Optional<Set<String>> nodeSidList)
         {
             assert flexAlgoIndentifier > 0;
 
@@ -84,35 +87,65 @@ public class WFlexAlgo
             this.calculationType = calculationType;
             this.weightType = weightType;
             ipLinkListIds.ifPresent(longs -> this.linkIdsIncluded = new TreeSet<>(longs));
+            nodeListIds.ifPresent(longs -> this.nodeIdsIncluded = new TreeSet<>(longs));
             nodeSidList.ifPresent(strings -> this.associatedSids = new TreeSet<>(strings));
         }
 
         /* Checkers */
-        public boolean isLinkIncluded(Link e) { return linkIdsIncluded.contains(e.getId()); }
-        public boolean isSidIncluded(String s) { return associatedSids.contains(s); }
+        public boolean isLinkIncluded(Link e) {return linkIdsIncluded.contains(e.getId());}
 
-        public boolean isIgpWeighted() { return weightType == weight_igp; }
-        public boolean isLatencyWeighted() { return weightType == weight_latency; }
-        public boolean isTeWeighted() { return weightType == weight_te; }
+        public boolean isSidIncluded(String s) {return associatedSids.contains(s);}
+        public boolean isNodeIncluded(Node n) { return nodeIdsIncluded.contains(n.getId()); }
+
+        public boolean isIgpWeighted() {return weightType == weight_igp;}
+
+        public boolean isLatencyWeighted() {return weightType == weight_latency;}
+
+        public boolean isTeWeighted() {return weightType == weight_te;}
 
 
         /* Modify properties content */
-        public FlexAlgoProperties addLink(Link e) { linkIdsIncluded.add(e.getId()); return this; }
-        public FlexAlgoProperties removeLink(Link e) { linkIdsIncluded.remove(e.getId()); return this; }
-        public FlexAlgoProperties addSid(String sid) { associatedSids.add(sid); return this; }
-        public FlexAlgoProperties removeSid(String sid) { associatedSids.remove(sid); return this; }
+        public FlexAlgoProperties addLink(Link e)
+        {
+            linkIdsIncluded.add(e.getId());
+            return this;
+        }
 
+        public FlexAlgoProperties removeLink(Link e)
+        {
+            linkIdsIncluded.remove(e.getId());
+            return this;
+        }
+
+        public FlexAlgoProperties addSid(String sid)
+        {
+            associatedSids.add(sid);
+            return this;
+        }
+
+        public FlexAlgoProperties removeSid(String sid)
+        {
+            associatedSids.remove(sid);
+            return this;
+        }
 
 
         /* Get properties content */
-        public SortedSet<Link> getLinksIncluded(NetPlan np) { return linkIdsIncluded.stream().map(np::getLinkFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new)); }
-        public SortedSet<Node> getNodesAssociated(NetPlan np) { return linkIdsIncluded.stream().map(np::getNodeFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new)); }
+        public SortedSet<Link> getLinksIncluded(NetPlan np) {return linkIdsIncluded.stream().map(np::getLinkFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
+        public SortedSet<Node> getNodesIncluded(NetPlan np) {return nodeIdsIncluded.stream().map(np::getNodeFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
 
+        public String getAssociatedSidsAsNiceLookingString()
+        {
+            StringBuilder sb = new StringBuilder();
+            associatedSids.forEach(sid -> sb.append(sid).append(" "));
+            return sb.toString();
+        }
 
-        public int getK() { return this.flexAlgoIndentifier; }
-        public int getCalculationType() { return this.calculationType; }
-        public int getWeightType() { return this.weightType; }
+        public int getK() {return this.flexAlgoIndentifier;}
 
+        public int getCalculationType() {return this.calculationType;}
+
+        public int getWeightType() {return this.weightType;}
 
 
         /* Content for tables */
@@ -120,19 +153,27 @@ public class WFlexAlgo
         {
             switch (calculationType)
             {
-                case calculation_spf: return "SPF";
-                case calculation_heuristic: return "Heuristic";
-                default: return "Not recognized";
+                case calculation_spf:
+                    return "SPF";
+                case calculation_heuristic:
+                    return "Heuristic";
+                default:
+                    return "Not recognized";
             }
         }
+
         public String getWeightTypeString()
         {
             switch (weightType)
             {
-                case weight_igp: return "IGP";
-                case weight_te: return "TE";
-                case weight_latency: return "Latency";
-                default: return "Not recognized";
+                case weight_igp:
+                    return "IGP";
+                case weight_te:
+                    return "TE";
+                case weight_latency:
+                    return "Latency";
+                default:
+                    return "Not recognized";
             }
         }
 
@@ -142,32 +183,24 @@ public class WFlexAlgo
         {
             return Arrays.asList(Pair.of("SPF", calculation_spf), Pair.of("Heuristic", calculation_heuristic));
         }
+
         public static List<Pair<String, Integer>> getWeightOptions()
         {
             return Arrays.asList(Pair.of("IGP", weight_igp), Pair.of("TE", weight_te), Pair.of("Latency", weight_latency));
         }
 
 
+        @Override
+        public int compareTo(Object o)
+        {
+            FlexAlgoProperties flex = (FlexAlgoProperties) o;
+            if(this.getK() == (flex.getK())) return 0;
+            if(this.getWeightType() == flex.getWeightType()) return 0;
+            if(this.getCalculationType() == flex.getCalculationType()) return 0;
 
+            return -1;
+        }
     }
 
 
-    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-    public enum WeightTypes
-    {
-        IGP, LATENCY, TE;
-
-        boolean isIGP() { return this == IGP; }
-        boolean isTE() { return this == TE; }
-        boolean isLatency() { return this == LATENCY; }
-    }
-
-    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-    public enum CalculationTypes
-    {
-        SPF, HEURISTIC;
-
-        boolean isSPF() { return this == SPF; }
-        boolean isHeuristic() { return this == HEURISTIC; }
-    }
 }
