@@ -21,6 +21,27 @@ public class WFlexAlgo
      */
     public WFlexAlgo(NetPlan np) {}
 
+    /* Constants */
+    public static final int calculation_spf = 0;
+    public static final int calculation_heuristic = 1;
+    public static final int weight_igp = 0;
+    public static final int weight_te = 1;
+    public static final int weight_latency = 2;
+
+    public static final String[] calculationNames = new String[] {"SPF", "Heuristic"};
+    public static final String[] weightNames = new String[] {"IGP", "TE", "Latency"};
+
+    /* Content for right click options */
+    public static List<Pair<String, Integer>> getCalculationOptions()
+    {
+        return Arrays.asList(Pair.of("SPF", calculation_spf), Pair.of("Heuristic", calculation_heuristic));
+    }
+
+    public static List<Pair<String, Integer>> getWeightOptions()
+    {
+        return Arrays.asList(Pair.of("IGP", weight_igp), Pair.of("TE", weight_te), Pair.of("Latency", weight_latency));
+    }
+
 
     @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
     public static class FlexAlgoRepository
@@ -59,14 +80,6 @@ public class WFlexAlgo
         public SortedSet<Long> linkIdsIncluded = new TreeSet<>();
 
 
-        /* Constants */
-        public static final int calculation_spf = 0;
-        public static final int calculation_heuristic = 1;
-        public static final int weight_igp = 0;
-        public static final int weight_te = 1;
-        public static final int weight_latency = 2;
-
-
         /* Constructors */
         public FlexAlgoProperties() {}
 
@@ -95,7 +108,8 @@ public class WFlexAlgo
         public boolean isLinkIncluded(Link e) {return linkIdsIncluded.contains(e.getId());}
 
         public boolean isSidIncluded(String s) {return associatedSids.contains(s);}
-        public boolean isNodeIncluded(Node n) { return nodeIdsIncluded.contains(n.getId()); }
+
+        public boolean isNodeIncluded(Node n) {return nodeIdsIncluded.contains(n.getId());}
 
         public boolean isIgpWeighted() {return weightType == weight_igp;}
 
@@ -129,15 +143,24 @@ public class WFlexAlgo
             return this;
         }
 
+        public FlexAlgoProperties removeNodesAndLinks() { linkIdsIncluded.clear(); nodeIdsIncluded.clear(); return this; }
+        public void setK(int k, FlexAlgoRepository repo) { if(k >= 128 && k <= 255 && !repo.containsKey(k)) this.flexAlgoIndentifier = k; }
+        public void setCalculationType(int calculationType) {this.calculationType = calculationType;}
+        public void setWeightType(int weightType) {this.weightType = weightType;}
+        public void setLinkIdsIncluded(Set<Long> linkIdSet) { this.linkIdsIncluded = new TreeSet<>(linkIdSet); }
+        public void setAssociatedSids(Set<String> sidSet) { this.associatedSids = new TreeSet<>(sidSet); }
+        public void setNodeIdsIncluded(Set<Long> nodeIdSet) { this.nodeIdsIncluded = new TreeSet<>(nodeIdSet); }
+
 
         /* Get properties content */
         public SortedSet<Link> getLinksIncluded(NetPlan np) {return linkIdsIncluded.stream().map(np::getLinkFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
+
         public SortedSet<Node> getNodesIncluded(NetPlan np) {return nodeIdsIncluded.stream().map(np::getNodeFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
 
         public String getAssociatedSidsAsNiceLookingString()
         {
             StringBuilder sb = new StringBuilder();
-            associatedSids.forEach(sid -> sb.append(sid).append(" "));
+            associatedSids.forEach(sid -> sb.append(sid).append(", "));
             return sb.toString();
         }
 
@@ -149,33 +172,9 @@ public class WFlexAlgo
 
 
         /* Content for tables */
-        public String getCalculationString()
-        {
-            switch (calculationType)
-            {
-                case calculation_spf:
-                    return "SPF";
-                case calculation_heuristic:
-                    return "Heuristic";
-                default:
-                    return "Not recognized";
-            }
-        }
+        public String getCalculationString() { return calculationNames[calculationType]; }
 
-        public String getWeightTypeString()
-        {
-            switch (weightType)
-            {
-                case weight_igp:
-                    return "IGP";
-                case weight_te:
-                    return "TE";
-                case weight_latency:
-                    return "Latency";
-                default:
-                    return "Not recognized";
-            }
-        }
+        public String getWeightTypeString() { return weightNames[weightType]; }
 
 
         /* Content for right click options */
@@ -194,9 +193,9 @@ public class WFlexAlgo
         public int compareTo(Object o)
         {
             FlexAlgoProperties flex = (FlexAlgoProperties) o;
-            if(this.getK() == (flex.getK())) return 0;
-            if(this.getWeightType() == flex.getWeightType()) return 0;
-            if(this.getCalculationType() == flex.getCalculationType()) return 0;
+            if (this.getK() == (flex.getK())) return 0;
+            if (this.getWeightType() == flex.getWeightType()) return 0;
+            if (this.getCalculationType() == flex.getCalculationType()) return 0;
 
             return -1;
         }

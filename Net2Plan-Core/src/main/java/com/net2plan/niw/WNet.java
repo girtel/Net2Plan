@@ -1504,26 +1504,26 @@ public class WNet extends WAbstractNetworkElement
      */
     public void performOperationOnFlexAlgoProperties(int flexAlgoId, Consumer<FlexAlgoProperties> whatToDoInFlexAlgo)
     {
-        // read the attribute and extract the lex aglo
-        // apply the consumer function to the flex algo
-        // write the attribute again with the full flex algo repo
-
-        // Read the flex algo repository from the attribute map
         Optional<WFlexAlgo.FlexAlgoRepository> repository = readFlexAlgoRepository();
 
-        // Check that everything is ok
         assert repository.isPresent();
         assert repository.get().containsKey(flexAlgoId);
 
-        // Get the desired flex algo
         WFlexAlgo.FlexAlgoProperties flexAlgo = repository.get().getFlexAlgoPropertiesFromID(flexAlgoId);
-
-        // Perform the operation
         whatToDoInFlexAlgo.accept(flexAlgo);
-
-        // Once the desired operation is finished, and may have modified the flex algo object, write the modified
-        // flex algo repository to the attribute map
         writeFlexAlgoRepository(repository);
+    }
+
+    public void performBatchOperationOnFlexAlgoProperties(Set<Integer> kSet, Consumer<FlexAlgoProperties> whatToDo)
+    {
+        Optional<WFlexAlgo.FlexAlgoRepository> repository = readFlexAlgoRepository();
+        assert repository.isPresent();
+        WFlexAlgo.FlexAlgoRepository repo = repository.get();
+
+        for(int k: kSet)
+            whatToDo.accept(repo.getFlexAlgoPropertiesFromID(k));
+
+        writeFlexAlgoRepository(Optional.of(repo));
     }
 
     /**
@@ -1535,40 +1535,24 @@ public class WNet extends WAbstractNetworkElement
      */
     public void performOperationOnFlexAlgoRepository(Consumer<WFlexAlgo.FlexAlgoRepository> whatToDoInFlexAlgo)
     {
-        // read the attribute and extract the flex algo
-        // apply the consumer function to the flex algo
-        // write the attribute again with the full flex algo repo
-
-        // Read the flex algo repository from the attribute map
         Optional<WFlexAlgo.FlexAlgoRepository> optionalRepository = readFlexAlgoRepository();
-
-        // Check that everything is ok
-//        assert optionalRepository.isPresent();
         if(!optionalRepository.isPresent()) return;
 
-
-        // Get the desired flex algo
         WFlexAlgo.FlexAlgoRepository repository = optionalRepository.get();
-
-        // Perform the operation
         whatToDoInFlexAlgo.accept(repository);
-
-        // Once the desired operation is finished, and may have modified the flex algo object, write the modified
-        // flex algo repository to the attribute map
         writeFlexAlgoRepository(Optional.of(repository));
     }
 
 
+
+
     public Optional<WFlexAlgo.FlexAlgoRepository> readFlexAlgoRepository()
     {
-        // Get the FlexAlgo repo from the attribute map
         String stringedMap = getNe().getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO);
         ObjectMapper mapper = new ObjectMapper();
 
-
         try
         {
-            // Convert from text to object
             WFlexAlgo.FlexAlgoRepository repo = mapper.readValue(stringedMap, WFlexAlgo.FlexAlgoRepository.class);
             return Optional.of(repo);
 
@@ -1578,14 +1562,11 @@ public class WNet extends WAbstractNetworkElement
     public void writeFlexAlgoRepository(Optional<WFlexAlgo.FlexAlgoRepository> repository)
     {
         assert repository.isPresent();
-
         try
         {
-            // Convert repository to String
             ObjectMapper mapper = new ObjectMapper();
             String stringedMap = mapper.writeValueAsString(repository.get());
 
-            // Write stringed repository to the attribute map
             getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO, stringedMap);
 
         } catch (JsonProcessingException e) { throw new RuntimeException(e); }
@@ -1600,14 +1581,8 @@ public class WNet extends WAbstractNetworkElement
 
         String stringedMap = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO);
         ObjectMapper mapper = new ObjectMapper();
-
-        try
-        {
-            // Convert from text to object
-            WFlexAlgo.FlexAlgoRepository repo = mapper.readValue(stringedMap, WFlexAlgo.FlexAlgoRepository.class);
-            return Optional.of(repo);
-
-        } catch (JsonProcessingException e) { return Optional.empty(); }
+        try { return Optional.of(mapper.readValue(stringedMap, WFlexAlgo.FlexAlgoRepository.class)); }
+        catch (JsonProcessingException e) { return Optional.empty(); }
     }
 
 }
