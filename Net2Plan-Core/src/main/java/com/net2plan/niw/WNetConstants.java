@@ -27,6 +27,7 @@ public class WNetConstants
 	
 	public static final String ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED = WAbstractNetworkElement.NIWNAMEPREFIX + "isSegmentRoutedElement";
 	public static final String ATTRIBUTE_DEMAND_SR_SID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_sid";
+	public static final String ATTRIBUTE_DEMAND_SR_KID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_kId";
 	public static final String ATTRIBUTE_LINK_SR_SID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_sid";
 	public static final String ATTRIBUTE_LINK_SR_CARRIED_SIDS = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_carriedSids";
 	public static final String ATTRIBUTE_FLEXALGOINFO = WAbstractNetworkElement.NIWNAMEPREFIX + "flexAlgoInfo";

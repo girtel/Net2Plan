@@ -11,34 +11,24 @@ package com.net2plan.niw;
  *******************************************************************************/
 
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Route;
+import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.IPUtils;
+import com.net2plan.utils.Constants;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
 import cern.colt.function.tdouble.DoubleDoubleFunction;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import org.apache.commons.math3.geometry.partitioning.AbstractRegion;
 
 /** 
  * Implements a subset of the reactions of an IP network, where demands of the hop-bu-hop routing type are routed according to 
@@ -86,10 +76,147 @@ public class DefaultStatelessSimulator implements IAlgorithm
 		if (net.isWithIpLayer())
 		{
 			final NetworkLayer ipLayer = net.getIpLayer().get().getNe();
+			final Function<Demand, WIpUnicastDemand> toWIpUnicast = d -> (WIpUnicastDemand) net.getWElement(d).get();
+			final Function<Node, WNode> toWnode = n ->  (WNode) net.getWElement(n).get();
 
-			final SortedSet<Demand> ospfRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpHopByHopRouted()).map(d->d.getNe()).collect(Collectors.toCollection(TreeSet::new));
+			final SortedSet<Demand> ospfRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpHopByHopRouted()).filter(d-> !d.isSegmentRoutingActive()).map(d->d.getNe()).collect(Collectors.toCollection(TreeSet::new));
 			final List<Demand> mplsTeRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpSourceRouted()).map(d->d.getNe()).collect(Collectors.toList());
-			
+			final List<WIpUnicastDemand> srRoutedDemands = net.getIpUnicastDemands().stream().filter(WIpUnicastDemand::isIpHopByHopRouted).filter(WIpUnicastDemand::isSegmentRoutingActive).map(WAbstractIpUnicastOrAnycastDemand::getNe).map(toWIpUnicast).collect(Collectors.toList());
+
+
+
+
+
+
+			/* Routing according to SegmentRouting */
+
+			// For each flex algo -> get links & nodes -> virtual topology -> set metric weight type for each link
+			// then get demands at nodes -> the ones with sid re-path with virtual topology
+			// ip layer?
+
+//			IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
+//			IPUtils.computeECMPRoutingTableMatrix_fte
+
+
+			// FlexAlgo routing
+			// for each demand ->
+
+			if(!srRoutedDemands.isEmpty())
+			{
+
+				Optional<WFlexAlgo.FlexAlgoRepository> optionalFlexRepo = net.readFlexAlgoRepository();
+				if(!optionalFlexRepo.isPresent())
+				{
+					srRoutedDemands.forEach(d -> d.setFlexAlgoId(Optional.of("0")));
+					net.initializeFlexAlgoAttributes();
+					optionalFlexRepo = net.readFlexAlgoRepository();
+				}
+
+				assert optionalFlexRepo.isPresent();
+
+
+				// Check that all demands have assigned a FlexAlgo that is present on both origin and destination -> if not -> set to default flex algo (0)
+				for(WIpUnicastDemand demand: srRoutedDemands)
+				{
+					WNode na = demand.getA(), nb = demand.getB();
+					int flexAlgoAssignedId = Integer.parseInt(demand.getSrFlexAlgoId().orElse("0"));
+					if(!optionalFlexRepo.get().containsKey(flexAlgoAssignedId))
+					{
+						demand.setFlexAlgoId(Optional.of("0"));
+						continue;
+					}
+
+					WFlexAlgo.FlexAlgoProperties flexAlgo = optionalFlexRepo.get().getFlexAlgoPropertiesFromID( flexAlgoAssignedId );
+					if(!flexAlgo.isNodeIncluded(na.getNe()) || !flexAlgo.isNodeIncluded(nb.getNe()) ) demand.setFlexAlgoId(Optional.of("0"));
+				}
+
+
+				// When corrected all errors, for each flex algo route all demands creating a Forwarding Rule and removing the demand from srRoutedDemands
+
+
+
+				for(WFlexAlgo.FlexAlgoProperties flexAlgo : optionalFlexRepo.get().mapFlexAlgoId2FlexAlgoProperties.values())
+				{
+					final Set<WIpUnicastDemand> demands2Route4ThisFlexAlgo = srRoutedDemands.stream().filter(d -> d.getSrFlexAlgoId().isPresent() && d.getSrFlexAlgoId().get().equals( String.valueOf(flexAlgo.getK()) )).collect(Collectors.toSet());
+
+					if(demands2Route4ThisFlexAlgo.isEmpty()) continue;
+
+					final Set<Demand> routingDemands = demands2Route4ThisFlexAlgo.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toSet());
+
+					List<Link> allLinks = net.getNe().getLinks();
+					Set<Link> linksIncluded = flexAlgo.getLinksIncluded(np);
+					Set<Link> linksExcluded = new TreeSet<>(allLinks);
+					linksExcluded.removeAll(linksIncluded);
+
+					DoubleMatrix1D linkWeightVector = DoubleFactory1D.dense.make(allLinks.size());
+					for(Link link: linksIncluded)
+					{
+						double finalWeight = Double.MAX_VALUE;
+						switch (flexAlgo.getWeightType())
+						{
+							case WFlexAlgo.weight_igp: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
+							case WFlexAlgo.weight_latency: { finalWeight = link.getPropagationDelayInMs(); break; }
+							case WFlexAlgo.weight_te: { finalWeight = 1 / link.getCapacity(); /* TODO this is really fake, do not know what are TE metrics */ break; }
+						}
+						linkWeightVector.set(allLinks.indexOf(link), finalWeight);
+					}
+
+					if(!linksExcluded.isEmpty())
+						for(Link link: linksExcluded) linkWeightVector.set(allLinks.indexOf(link), Double.MAX_VALUE);
+							// every link not included must not be taken in consideration to calculate SPF -> max restriction possible
+
+
+					IPUtils.setECMPForwardingRulesFromLinkWeights(np, linkWeightVector, routingDemands, ipLayer);
+					assert net.getIpLinks().stream().filter(WIpLink::isBundleMember).map(WIpLink::getNe).allMatch(e->e.getDemandsWithNonZeroForwardingRules().isEmpty());
+
+					// Remove the routed demands from the list of srDemands to represent that it is not pending routing
+					srRoutedDemands.removeAll(demands2Route4ThisFlexAlgo);
+
+
+
+
+
+
+
+					// CLAVE: enrutar de esta forma
+//				IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
+					// como se enruta con toda la topologia, a los enlaces que no se usan poner IGP como Double.MAX
+
+
+					// TODO find how to route the selected demands among the flex algo -> how to route the demands in the selected nodes and links
+					// plus, recover the weight for each link given by if its igp, latency, te, and include to the path calculation
+
+
+				}
+
+
+
+
+				// The remaining  demands after the process could not be routed through SR, so convert them into classic OSPF and route them through its process
+				ospfRoutedDemands.addAll(srRoutedDemands.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toSet()));
+
+
+
+			}
+
+
+
+//				if(optionalFlexRepo.isPresent())
+//				{
+//					WFlexAlgo.FlexAlgoRepository flexRepo = optionalFlexRepo.get();
+//
+//					for(WFlexAlgo.FlexAlgoProperties flexAlgo: flexRepo.mapFlexAlgoId2FlexAlgoProperties.values())
+//					{
+//						List<Node> nodesIncluded = new ArrayList<>(flexAlgo.getNodesIncluded(np));
+//						List<Link> linksIncluded = new ArrayList<>(flexAlgo.getLinksIncluded(np));
+//						DoubleMatrix1D weighMetrics = net.getWeightVectorBasedOnWeightType(flexAlgo);
+//						DoubleMatrix2D flexAlgoRoutingMatrix = IPUtils.computeECMPRoutingTableMatrix_fte(nodesIncluded, linksIncluded, weighMetrics);
+//
+//						np.setTrafficMatrix(flexAlgoRoutingMatrix, Constants.RoutingType.HOP_BY_HOP_ROUTING, ipLayer); //todo no vale
+//					}
+//				}
+
+
 			/* IP route according to MPLS-TE the demands that are like that */
 			if (!ospfRoutedDemands.isEmpty())
 			{
@@ -104,7 +231,11 @@ public class DefaultStatelessSimulator implements IAlgorithm
 				IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
 				assert net.getIpLinks().stream().filter(e->e.isBundleMember()).map(e->e.getNe()).allMatch(e->e.getDemandsWithNonZeroForwardingRules().isEmpty());
 			}
-			
+
+
+
+
+
 			/* To account for the occupation of IP links because of MPLS-TE tunnels */
 			final int E = np.getNumberOfLinks(ipLayer);
 			final double [] occupiedBwPerLinks = new double [E]; 

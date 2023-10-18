@@ -10,6 +10,7 @@ import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Pair;
+import sun.nio.ch.Net;
 
 
 public class WFlexAlgo
@@ -154,13 +155,18 @@ public class WFlexAlgo
 
         /* Get properties content */
         public SortedSet<Link> getLinksIncluded(NetPlan np) {return linkIdsIncluded.stream().map(np::getLinkFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
-
         public SortedSet<Node> getNodesIncluded(NetPlan np) {return nodeIdsIncluded.stream().map(np::getNodeFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
-
+        public SortedSet<String> getAssociatedSids() { return new TreeSet<>(associatedSids); }
         public String getAssociatedSidsAsNiceLookingString()
         {
             StringBuilder sb = new StringBuilder();
             associatedSids.forEach(sid -> sb.append(sid).append(", "));
+            return sb.toString();
+        }
+        public String getIncludedNodesAsNiceLookingString(NetPlan np)
+        {
+            StringBuilder sb = new StringBuilder();
+            getNodesIncluded(np).forEach(n -> sb.append(n.getName()).append(" "));
             return sb.toString();
         }
 

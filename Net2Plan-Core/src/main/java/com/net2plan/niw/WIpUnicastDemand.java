@@ -17,11 +17,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.jgrapht.graph.DirectedAcyclicGraph;
-
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.WNetConstants.WTYPE;
@@ -330,32 +327,27 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 
 	public boolean isSegmentRoutingActive() // if present set as segment routed, if not, do not set as SR
 	{
-		return getNe().getAttributes().containsKey(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED);
-//		return getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , "").equals(Boolean.valueOf(true).toString());
+		return getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , "").equals(Boolean.valueOf(true).toString());
 	}
 	
-	public void setDemandAsSegmentRouted(Optional<String> sid) // if present set as segment routed, if not, do not set as SR
+	public void setDemandAsSegmentRouted() // if present set as segment routed, if not, do not set as SR
 	{
-		if (sid.isPresent())
-		{
-			getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(true).toString());
-			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID , sid.get());
-		}
-		else
-		{
-			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(false).toString());
-			getNe().removeAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID);
-		}
+		getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+		getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(true).toString());
 	}
 
 	public void notSetDemandAsSegmentRouted()
 	{
-		setDemandAsSegmentRouted(Optional.empty());
+		getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(false).toString());
+		getNe().removeAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID);
+		getNe().removeAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID);
 	}
 
 	public Optional<String> getSrSid () { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID)); }
-	public String getSrSidBeauty() { Optional<String> srSid = getSrSid(); return srSid.isPresent() ? srSid.get() : ""; }
+	public String getSrSidBeauty() { Optional<String> srSid = getSrSid(); return srSid.orElse(""); }
 	public void setSrSid (Optional<String> sid) { assert sid.isPresent(); getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID, sid.get());}
+	public Optional<String> getSrFlexAlgoId() { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID)); }
+	public String getSrFlexAlgoBeauty() { Optional<String> kId = getSrFlexAlgoId(); return kId.orElse(""); }
+	public void setFlexAlgoId (Optional<String> kId) { assert kId.isPresent(); getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID, kId.get()); }
 	
 }

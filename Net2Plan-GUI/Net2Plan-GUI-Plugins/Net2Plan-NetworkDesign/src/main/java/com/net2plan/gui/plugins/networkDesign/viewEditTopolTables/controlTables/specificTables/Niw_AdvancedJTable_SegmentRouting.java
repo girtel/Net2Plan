@@ -22,15 +22,10 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.niw.*;
 import com.net2plan.utils.Pair;
-import com.net2plan.utils.Triple;
-import com.sun.xml.internal.ws.api.pipe.helper.PipeAdapter;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;

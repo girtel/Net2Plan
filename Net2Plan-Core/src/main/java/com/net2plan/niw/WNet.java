@@ -41,6 +41,7 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
+import com.net2plan.libraries.IPUtils;
 import com.net2plan.niw.WFlexAlgo.FlexAlgoProperties;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
@@ -1482,7 +1483,15 @@ public class WNet extends WAbstractNetworkElement
         ObjectMapper mapper = new ObjectMapper();
         try
         {
-            String stringedMap = mapper.writeValueAsString(new WFlexAlgo.FlexAlgoRepository());
+            WFlexAlgo.FlexAlgoRepository newRepo = new WFlexAlgo.FlexAlgoRepository();
+
+            Optional<Set<Long>> allNodesId = Optional.of(getNodes().stream().map(WNode::getId).collect(Collectors.toSet()));
+            Optional<Set<Long>> allLinksId = Optional.of(getIpLinks().stream().map(WIpLink::getId).collect(Collectors.toSet()));
+            FlexAlgoProperties flexAlgo0 = new WFlexAlgo.FlexAlgoProperties(0, WFlexAlgo.calculation_spf, WFlexAlgo.weight_igp, allLinksId, allNodesId, Optional.empty());
+
+            newRepo.mapFlexAlgoId2FlexAlgoProperties.put(0, flexAlgo0);
+
+            String stringedMap = mapper.writeValueAsString(newRepo);
             getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO, stringedMap);
         } catch (JsonProcessingException e)
         {
@@ -1583,6 +1592,33 @@ public class WNet extends WAbstractNetworkElement
         ObjectMapper mapper = new ObjectMapper();
         try { return Optional.of(mapper.readValue(stringedMap, WFlexAlgo.FlexAlgoRepository.class)); }
         catch (JsonProcessingException e) { return Optional.empty(); }
+    }
+
+
+    public DoubleMatrix1D getWeightVectorBasedOnWeightType(FlexAlgoProperties flexAlgo)
+    {
+        DoubleMatrix1D weightVector = DoubleFactory1D.dense.make(flexAlgo.getLinksIncluded(np).size());
+        for(Link l: flexAlgo.getLinksIncluded(np))
+        {
+            switch (flexAlgo.weightType)
+            {
+                case WFlexAlgo.weight_latency:
+                {
+                    weightVector.set(l.getIndex(), l.getPropagationDelayInMs()); break;
+                }
+                case WFlexAlgo.weight_igp:
+                {
+                    weightVector.set(l.getIndex(), IPUtils.getLinkWeight(l)); break;
+                }
+                case WFlexAlgo.weight_te:
+                {
+                    // TODO what is TE metrics
+                    weightVector.set(l.getIndex(), Double.MAX_VALUE); break;
+                }
+                default: weightVector.set(l.getIndex(), Double.MAX_VALUE);
+            }
+        }
+        return weightVector;
     }
 
 }

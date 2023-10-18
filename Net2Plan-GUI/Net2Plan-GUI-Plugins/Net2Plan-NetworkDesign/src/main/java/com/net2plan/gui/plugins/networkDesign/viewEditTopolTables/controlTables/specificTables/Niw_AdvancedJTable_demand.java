@@ -14,20 +14,7 @@ package com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables
 
 import java.awt.Color;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,30 +29,14 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.monitoring.MonitoringUtils;
-import com.net2plan.interfaces.networkDesign.Configuration;
-import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.IMonitorizableElement;
-import com.net2plan.interfaces.networkDesign.Link;
-import com.net2plan.interfaces.networkDesign.Net2PlanException;
-import com.net2plan.interfaces.networkDesign.NetworkElement;
-import com.net2plan.interfaces.networkDesign.NetworkLayer;
-import com.net2plan.interfaces.networkDesign.Node;
-import com.net2plan.niw.OpticalSpectrumManager;
-import com.net2plan.niw.OsmLightpathOccupationInfo;
-import com.net2plan.niw.WAbstractIpUnicastOrAnycastDemand;
-import com.net2plan.niw.WAbstractNetworkElement;
-import com.net2plan.niw.WFiber;
-import com.net2plan.niw.WIpLink;
-import com.net2plan.niw.WIpUnicastDemand;
-import com.net2plan.niw.WLightpath;
-import com.net2plan.niw.WLightpathRequest;
-import com.net2plan.niw.WNet;
-import com.net2plan.niw.WNetConstants;
+import com.net2plan.gui.utils.WiderJComboBox;
+import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.niw.*;
 import com.net2plan.niw.WNetConstants.WTYPE;
-import com.net2plan.niw.WNode;
-import com.net2plan.niw.WServiceChainRequest;
-import com.net2plan.niw.WVnfInstance;
 import com.net2plan.utils.Pair;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
 
 /**
  *
@@ -147,6 +118,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             /* Segment Routing */
             res.add(new AjtColumnInfo<Demand>(this, Boolean.class, null, "SegmentRouted", "Shows whether the demand is being routed via SegmentRouting protocol", null, demand -> (toWIpUnicast.apply(demand)).isSegmentRoutingActive() , AGTYPE.NOAGGREGATION, null));
             res.add(new AjtColumnInfo<Demand>(this, String.class, null, "SID", "Shows the demand associated SID", null, demand -> (toWIpUnicast.apply(demand)).getSrSidBeauty() , AGTYPE.NOAGGREGATION, null));
+            res.add(new AjtColumnInfo<Demand>(this, String.class, null, "FlexAlgo", "Shows the FlexAlgo that will carry the demand", null, demand -> (toWIpUnicast.apply(demand)).getSrFlexAlgoBeauty() , AGTYPE.NOAGGREGATION, null));
         } else
         {
             res.add(new AjtColumnInfo<Demand>(this, Node.class, null, "A", "Lighptath request origin", null, d -> d.getIngressNode(), AGTYPE.NOAGGREGATION, null));
@@ -363,24 +335,29 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                 );
             }, (a,b) -> b>0, null));
 
+//            asdjghagfsjhdg
             /* Set as segment routing */
             res.add(new AjtRcMenu("Set as Segment Routed", null, (a, b) -> true, Arrays.asList(
-                    new AjtRcMenu("True", items -> {
-                        DialogBuilder.launch(
-                                "Set selected demands SID for Source Routing",
-                                "Please introduce the SID.",
-                                "",
-                                this,
-                                Arrays.asList(InputForDialog.inputTfInt ("SID", "Introduce the SID of the demands" , 1 , -1)),
-                                (list)->
-                                {
-                                    final String sid = Integer.toString((Integer) list.get(0).get());
-                                    getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(wdem -> wdem.setDemandAsSegmentRouted(Optional.of(sid)));
-                                }
-                        );
-                    }, (a, b) -> true, null),
+                    new AjtRcMenu("True", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::setDemandAsSegmentRouted); }, (a, b) -> true, null),
                     new AjtRcMenu("False", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::notSetDemandAsSegmentRouted); }, (a, b) -> true, null)
             )));
+
+            res.add(new AjtRcMenu("Set FlexAlgo to the selected demands", f -> selectFlexAlgos( wNet.getNe(), getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).collect(Collectors.toSet())), (a, b) -> true, null));
+
+            res.add(new AjtRcMenu("Set associated SID to the selected demands", e ->{
+                    DialogBuilder.launch(
+                            "Set selected demands SID for Source Routing",
+                            "Please introduce the SID.",
+                            "",
+                            this,
+                            Arrays.asList(InputForDialog.inputTfInt ("SID", "Introduce the SID of the demands" , 1 , -1)),
+                            (list)->
+                            {
+                                final String sid = Integer.toString((Integer) list.get(0).get());
+                                getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(wdem -> wdem.setSrSid(Optional.of(sid)));
+                            }
+                    );
+                    }, (a, b) -> true, null));
 
 
             res.add(new AjtRcMenu("Set maximum e2e limit to selected unicast demands", e -> {
@@ -651,6 +628,54 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
         res.add(new AjtColumnInfo<IMonitorizableElement>(table, String.class, null, "Forecast type", "Indicates the type of forecast information applied, if any", null, d -> d.getTrafficPredictor().isPresent() ? d.getTrafficPredictor().get().getTpType().getName() : "None", AGTYPE.NOAGGREGATION, null));
         res.add(new AjtColumnInfo<IMonitorizableElement>(table, Double.class, null, "Variance explained", "Indicates the fraction of the variance explained by the predictor (1 means perfectly accurate predictor, 0 means as good as picking the average)", null, d -> d.getTrafficPredictor().isPresent() ? (d.getTrafficPredictor().get().getStatistics() == null ? "--" : d.getTrafficPredictor().get().getStatistics().getRsquared()) : "--", AGTYPE.NOAGGREGATION, null));
         return res;
+    }
+
+
+    public static void selectFlexAlgos(NetPlan np, Set<WIpUnicastDemand> selectedLinks)
+    {
+        /* Calculation selector */
+        Map<String, Integer> selectorMapToFlexId = new TreeMap<>();
+        JComboBox<String> selectionBox = new WiderJComboBox<>();
+        for(WFlexAlgo.FlexAlgoProperties flexAlgo : np.getFlexAlgoProperties())
+        {
+            String nodesView = flexAlgo.getIncludedNodesAsNiceLookingString(np);
+            String infoString = "Flex Algo " + flexAlgo.getK() + ", weight type: " + flexAlgo.getWeightTypeString() + ", calculation type: " + flexAlgo.getCalculationString() + "(" + nodesView + ")";
+            selectionBox.addItem(infoString);
+            selectorMapToFlexId.put( infoString, flexAlgo.getK());
+        }
+
+        // If there are no flex algos, use default flex algo
+        if(np.getFlexAlgoProperties().isEmpty())
+        {
+            String infoString = "Flex Algo 0";
+            selectorMapToFlexId.put(infoString, 0);
+            selectionBox.addItem(infoString);
+        }
+
+
+
+        JPanel mainPanel = new JPanel(new MigLayout("fill", "[][grow]", "[][][][][]"));
+        mainPanel.add(new JLabel("Select the Flex Algo to use"));
+        mainPanel.add(selectionBox, "wrap");
+
+
+        while (true)
+        {
+            /* Launch the dialog */
+            int result = JOptionPane.showConfirmDialog(null, mainPanel, "Please enter information for the new flex algo", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (result != JOptionPane.OK_OPTION) return;
+
+            try
+            {
+
+                int k  = selectorMapToFlexId.get( (String) selectionBox.getSelectedItem() );
+                selectedLinks.forEach(dem -> { dem.setDemandAsSegmentRouted(); dem.setFlexAlgoId(Optional.of("" + k));});
+
+            } catch (Exception e) {continue;}
+
+
+            break;
+        }
     }
 
 
