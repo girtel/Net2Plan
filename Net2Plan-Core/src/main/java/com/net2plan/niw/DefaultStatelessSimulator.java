@@ -18,17 +18,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import cern.colt.matrix.tdouble.DoubleFactory1D;
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.IPUtils;
-import com.net2plan.utils.Constants;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
-import cern.colt.function.tdouble.DoubleDoubleFunction;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import org.apache.commons.math3.geometry.partitioning.AbstractRegion;
 
 /** 
  * Implements a subset of the reactions of an IP network, where demands of the hop-bu-hop routing type are routed according to 
@@ -89,27 +85,15 @@ public class DefaultStatelessSimulator implements IAlgorithm
 
 
 			/* Routing according to SegmentRouting */
-
-			// For each flex algo -> get links & nodes -> virtual topology -> set metric weight type for each link
-			// then get demands at nodes -> the ones with sid re-path with virtual topology
-			// ip layer?
-
-//			IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
-//			IPUtils.computeECMPRoutingTableMatrix_fte
-
-
-			// FlexAlgo routing
-			// for each demand ->
-
 			if(!srRoutedDemands.isEmpty())
 			{
 
-				Optional<WFlexAlgo.FlexAlgoRepository> optionalFlexRepo = net.readFlexAlgoRepository();
+				Optional<WFlexAlgo.FlexAlgoRepository> optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
 				if(!optionalFlexRepo.isPresent())
 				{
 					srRoutedDemands.forEach(d -> d.setFlexAlgoId(Optional.of("0")));
 					net.initializeFlexAlgoAttributes();
-					optionalFlexRepo = net.readFlexAlgoRepository();
+					optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
 				}
 
 				assert optionalFlexRepo.isPresent();
@@ -130,10 +114,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 					if(!flexAlgo.isNodeIncluded(na.getNe()) || !flexAlgo.isNodeIncluded(nb.getNe()) ) demand.setFlexAlgoId(Optional.of("0"));
 				}
 
-
 				// When corrected all errors, for each flex algo route all demands creating a Forwarding Rule and removing the demand from srRoutedDemands
-
-
 
 				for(WFlexAlgo.FlexAlgoProperties flexAlgo : optionalFlexRepo.get().mapFlexAlgoId2FlexAlgoProperties.values())
 				{
@@ -154,9 +135,9 @@ public class DefaultStatelessSimulator implements IAlgorithm
 						double finalWeight = Double.MAX_VALUE;
 						switch (flexAlgo.getWeightType())
 						{
-							case WFlexAlgo.weight_igp: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
-							case WFlexAlgo.weight_latency: { finalWeight = link.getPropagationDelayInMs(); break; }
-							case WFlexAlgo.weight_te: { finalWeight = 1 / link.getCapacity(); /* TODO this is really fake, do not know what are TE metrics */ break; }
+							case WFlexAlgo.WEIGHT_IGP: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
+							case WFlexAlgo.WEIGHT_LATENCY: { finalWeight = link.getPropagationDelayInMs(); break; }
+							case WFlexAlgo.WEIGHT_SSP: { finalWeight = 1 / link.getCapacity(); /* TODO this is really fake, do not know what are TE metrics */ break; }
 						}
 						linkWeightVector.set(allLinks.indexOf(link), finalWeight);
 					}
@@ -172,49 +153,12 @@ public class DefaultStatelessSimulator implements IAlgorithm
 					// Remove the routed demands from the list of srDemands to represent that it is not pending routing
 					srRoutedDemands.removeAll(demands2Route4ThisFlexAlgo);
 
-
-
-
-
-
-
-					// CLAVE: enrutar de esta forma
-//				IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
-					// como se enruta con toda la topologia, a los enlaces que no se usan poner IGP como Double.MAX
-
-
-					// TODO find how to route the selected demands among the flex algo -> how to route the demands in the selected nodes and links
-					// plus, recover the weight for each link given by if its igp, latency, te, and include to the path calculation
-
-
 				}
-
-
-
 
 				// The remaining  demands after the process could not be routed through SR, so convert them into classic OSPF and route them through its process
 				ospfRoutedDemands.addAll(srRoutedDemands.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toSet()));
+			} // end of segment routing
 
-
-
-			}
-
-
-
-//				if(optionalFlexRepo.isPresent())
-//				{
-//					WFlexAlgo.FlexAlgoRepository flexRepo = optionalFlexRepo.get();
-//
-//					for(WFlexAlgo.FlexAlgoProperties flexAlgo: flexRepo.mapFlexAlgoId2FlexAlgoProperties.values())
-//					{
-//						List<Node> nodesIncluded = new ArrayList<>(flexAlgo.getNodesIncluded(np));
-//						List<Link> linksIncluded = new ArrayList<>(flexAlgo.getLinksIncluded(np));
-//						DoubleMatrix1D weighMetrics = net.getWeightVectorBasedOnWeightType(flexAlgo);
-//						DoubleMatrix2D flexAlgoRoutingMatrix = IPUtils.computeECMPRoutingTableMatrix_fte(nodesIncluded, linksIncluded, weighMetrics);
-//
-//						np.setTrafficMatrix(flexAlgoRoutingMatrix, Constants.RoutingType.HOP_BY_HOP_ROUTING, ipLayer); //todo no vale
-//					}
-//				}
 
 
 			/* IP route according to MPLS-TE the demands that are like that */
@@ -230,7 +174,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 				}
 				IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
 				assert net.getIpLinks().stream().filter(e->e.isBundleMember()).map(e->e.getNe()).allMatch(e->e.getDemandsWithNonZeroForwardingRules().isEmpty());
-			}
+			} // end of osp routing
 
 
 
@@ -243,6 +187,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 			final BiConsumer<Collection<Link> , Double> reserveBwInLinks = (l,t)->{ for (Link e : l) occupiedBwPerLinks[e.getIndex ()] += t; }; 
 			final boolean isCspf = mplsTeTunnelType.getString().equals("cspf-dynamic");
 			final boolean is11FrrLinkDisjoint = !isCspf;
+
 			/* Routing of MPLS-TE traffic */
 			for (Demand d : mplsTeRoutedDemands)
 			{
@@ -305,7 +250,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 						r2.setCarriedTraffic(0, bwtoReserve);
 					}
 				} else throw new RuntimeException ();
-			}
+			} // end of mpls routing
 		}
 		
 		return "";

@@ -2619,51 +2619,11 @@ public class NetPlan extends NetworkElement
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-    public Optional<SortedMap<Integer, WFlexAlgo.FlexAlgoProperties>> getFlexAlgoPropertiesMap()
-    {
-        // Get the IP Layer
-        Optional<WFlexAlgo.FlexAlgoRepository> optionalRepo = WNet.readFlexAlgoRepositoryInNetPlan(this);
-        if(!optionalRepo.isPresent()) return Optional.empty();
-
-        Map<Integer, WFlexAlgo.FlexAlgoProperties> mapOfKtoFlexAlgoProperty = optionalRepo.get().mapFlexAlgoId2FlexAlgoProperties;
-        SortedMap<Integer, WFlexAlgo.FlexAlgoProperties> sortedFlexAlgoProperties = new TreeMap<>(mapOfKtoFlexAlgoProperty);
-
-        return Optional.of(sortedFlexAlgoProperties);
-    }
-
     public List<WFlexAlgo.FlexAlgoProperties> getFlexAlgoProperties()
     {
-        Optional<SortedMap<Integer, WFlexAlgo.FlexAlgoProperties>> map = getFlexAlgoPropertiesMap();
-        if(!map.isPresent()) return new ArrayList<>();
-
-        List<WFlexAlgo.FlexAlgoProperties> flexAlgos = new ArrayList<>(map.get().values());
-
-        return flexAlgos;
+        Optional<WFlexAlgo.FlexAlgoRepository> repositoryInsideNP = WNet.readFlexAlgoRepositoryInNetPlan(this);
+        return repositoryInsideNP.isPresent() ? repositoryInsideNP.get().getAll() : new ArrayList<>();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     /**

@@ -41,7 +41,6 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.libraries.IPUtils;
 import com.net2plan.niw.WFlexAlgo.FlexAlgoProperties;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
@@ -1472,12 +1471,11 @@ public class WNet extends WAbstractNetworkElement
 
 
 
-    /* Segment Routing information */
-    // TODO should this be introduced inside WFlexAlgo instead WNet?
+    /* Segment Routing utilities */
+    public boolean isSrInitialized() { return getNe().getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY); }
 
-    /**
-     * Create flex algo manager inside the attribute map
-     */
+
+    /** Create flex algo manager inside the attribute map */
     public void initializeFlexAlgoAttributes()
     {
         ObjectMapper mapper = new ObjectMapper();
@@ -1487,138 +1485,60 @@ public class WNet extends WAbstractNetworkElement
 
             Optional<Set<Long>> allNodesId = Optional.of(getNodes().stream().map(WNode::getId).collect(Collectors.toSet()));
             Optional<Set<Long>> allLinksId = Optional.of(getIpLinks().stream().map(WIpLink::getId).collect(Collectors.toSet()));
-            FlexAlgoProperties flexAlgo0 = new WFlexAlgo.FlexAlgoProperties(0, WFlexAlgo.calculation_spf, WFlexAlgo.weight_igp, allLinksId, allNodesId, Optional.empty());
+            FlexAlgoProperties flexAlgo0 = new WFlexAlgo.FlexAlgoProperties(0, WFlexAlgo.CALCULATION_SPF, WFlexAlgo.WEIGHT_IGP, allLinksId, allNodesId, Optional.empty());
 
-            newRepo.mapFlexAlgoId2FlexAlgoProperties.put(0, flexAlgo0);
-
+            newRepo.addFlexAlgo(0, Optional.of(flexAlgo0));
             String stringedMap = mapper.writeValueAsString(newRepo);
-            getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO, stringedMap);
-        } catch (JsonProcessingException e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public boolean isSrInitialized() { return getNe().getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOINFO); }
-
-
-
-    /**
-     * Generic function to perform an operation to a flex algo. Reads the FlexAlgo manager from the attribute map,
-     * get the FlexAlgo properties if present, performs the desired operation, and writes modified repo inside the
-     * attribute map.
-     *
-     * @param flexAlgoId         - identifier (k) of the FlexAlgo
-     * @param whatToDoInFlexAlgo - function to be performed over the FlexAlgo(k)
-     */
-    public void performOperationOnFlexAlgoProperties(int flexAlgoId, Consumer<FlexAlgoProperties> whatToDoInFlexAlgo)
-    {
-        Optional<WFlexAlgo.FlexAlgoRepository> repository = readFlexAlgoRepository();
-
-        assert repository.isPresent();
-        assert repository.get().containsKey(flexAlgoId);
-
-        WFlexAlgo.FlexAlgoProperties flexAlgo = repository.get().getFlexAlgoPropertiesFromID(flexAlgoId);
-        whatToDoInFlexAlgo.accept(flexAlgo);
-        writeFlexAlgoRepository(repository);
-    }
-
-    public void performBatchOperationOnFlexAlgoProperties(Set<Integer> kSet, Consumer<FlexAlgoProperties> whatToDo)
-    {
-        Optional<WFlexAlgo.FlexAlgoRepository> repository = readFlexAlgoRepository();
-        assert repository.isPresent();
-        WFlexAlgo.FlexAlgoRepository repo = repository.get();
-
-        for(int k: kSet)
-            whatToDo.accept(repo.getFlexAlgoPropertiesFromID(k));
-
-        writeFlexAlgoRepository(Optional.of(repo));
-    }
-
-    /**
-     * Generic function to perform an operation to a flex algo. Reads the FlexAlgo manager from the attribute map,
-     * get the FlexAlgo properties if present, performs the desired operation, and writes modified repo inside the
-     * attribute map.
-     *
-     * @param whatToDoInFlexAlgo - function to be performed over the FlexAlgo(k)
-     */
-    public void performOperationOnFlexAlgoRepository(Consumer<WFlexAlgo.FlexAlgoRepository> whatToDoInFlexAlgo)
-    {
-        Optional<WFlexAlgo.FlexAlgoRepository> optionalRepository = readFlexAlgoRepository();
-        if(!optionalRepository.isPresent()) return;
-
-        WFlexAlgo.FlexAlgoRepository repository = optionalRepository.get();
-        whatToDoInFlexAlgo.accept(repository);
-        writeFlexAlgoRepository(Optional.of(repository));
-    }
-
-
-
-
-    public Optional<WFlexAlgo.FlexAlgoRepository> readFlexAlgoRepository()
-    {
-        String stringedMap = getNe().getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO);
-        ObjectMapper mapper = new ObjectMapper();
-
-        try
-        {
-            WFlexAlgo.FlexAlgoRepository repo = mapper.readValue(stringedMap, WFlexAlgo.FlexAlgoRepository.class);
-            return Optional.of(repo);
-
-        } catch (JsonProcessingException e) { return Optional.empty(); }
-    }
-
-    public void writeFlexAlgoRepository(Optional<WFlexAlgo.FlexAlgoRepository> repository)
-    {
-        assert repository.isPresent();
-        try
-        {
-            ObjectMapper mapper = new ObjectMapper();
-            String stringedMap = mapper.writeValueAsString(repository.get());
-
-            getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO, stringedMap);
-
+            getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY, stringedMap);
         } catch (JsonProcessingException e) { throw new RuntimeException(e); }
     }
 
+    /** This method reads the FlexAlgoRepository stored inside this WNet, performs the desired operation (resulting
+     * in a modified repo, and finally stores it again inside this WNet */
+    public static void performOperationOnRepository(NetPlan np, Consumer<WFlexAlgo.FlexAlgoRepository> operation)
+    {
+        assert np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
+        String stringedOriginalRepository = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
+        ObjectMapper mapper = new ObjectMapper();
+        try
+        {
+            WFlexAlgo.FlexAlgoRepository repo = mapper.readValue(stringedOriginalRepository, WFlexAlgo.FlexAlgoRepository.class);
+            operation.accept(repo);
 
-    /* SR wrappers */
+            String stringedNewRepository = mapper.writeValueAsString(repo);
+            np.setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY, stringedNewRepository);
 
+        } catch (JsonProcessingException e) { System.out.println("Error while parsing flex algo repository"); e.printStackTrace(); }
+    }
+
+
+
+    public static void performOperationOnFlexAlgo(NetPlan np, List<Integer> selectedFlexId, Consumer<WFlexAlgo.FlexAlgoProperties> operation)
+    {
+        assert np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
+        String stringedOriginalRepository = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
+        ObjectMapper mapper = new ObjectMapper();
+        try
+        {
+            WFlexAlgo.FlexAlgoRepository repo = mapper.readValue(stringedOriginalRepository, WFlexAlgo.FlexAlgoRepository.class);
+            repo.performBatchOperation(selectedFlexId, operation);
+
+            String stringedNewRepository = mapper.writeValueAsString(repo);
+            np.setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY, stringedNewRepository);
+
+        } catch (JsonProcessingException e) { System.out.println("Error while parsing flex algo repository"); e.printStackTrace(); }
+    }
+
+    /** <b>Important!<i> The return object is read only, that is, modifications done to the repository wont be stored and so will be lost. If there is a need to do changes on the repository see <link> </i></b> */
     public static Optional<WFlexAlgo.FlexAlgoRepository> readFlexAlgoRepositoryInNetPlan(NetPlan np)
     {
-        if(!np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOINFO)) return Optional.empty();
-
-        String stringedMap = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO);
+        if(!np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY)) return Optional.empty();
+        String stringedMap = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
         ObjectMapper mapper = new ObjectMapper();
         try { return Optional.of(mapper.readValue(stringedMap, WFlexAlgo.FlexAlgoRepository.class)); }
         catch (JsonProcessingException e) { return Optional.empty(); }
     }
 
 
-    public DoubleMatrix1D getWeightVectorBasedOnWeightType(FlexAlgoProperties flexAlgo)
-    {
-        DoubleMatrix1D weightVector = DoubleFactory1D.dense.make(flexAlgo.getLinksIncluded(np).size());
-        for(Link l: flexAlgo.getLinksIncluded(np))
-        {
-            switch (flexAlgo.weightType)
-            {
-                case WFlexAlgo.weight_latency:
-                {
-                    weightVector.set(l.getIndex(), l.getPropagationDelayInMs()); break;
-                }
-                case WFlexAlgo.weight_igp:
-                {
-                    weightVector.set(l.getIndex(), IPUtils.getLinkWeight(l)); break;
-                }
-                case WFlexAlgo.weight_te:
-                {
-                    // TODO what is TE metrics
-                    weightVector.set(l.getIndex(), Double.MAX_VALUE); break;
-                }
-                default: weightVector.set(l.getIndex(), Double.MAX_VALUE);
-            }
-        }
-        return weightVector;
-    }
 
 }

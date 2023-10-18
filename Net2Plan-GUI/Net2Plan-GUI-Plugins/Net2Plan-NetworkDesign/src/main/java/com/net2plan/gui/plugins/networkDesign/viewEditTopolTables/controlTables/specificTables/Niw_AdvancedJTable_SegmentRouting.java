@@ -18,6 +18,7 @@ import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtColumnInfo;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.controlTables.AjtRcMenu;
 import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.DialogBuilder;
+import com.net2plan.gui.plugins.networkDesign.viewEditTopolTables.dialogs.InputForDialog;
 import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.niw.*;
@@ -50,6 +51,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         return nn;
     };
     public static final Function<Pair<Link, WNet>, WIpLink> toWIpLink = pair -> (WIpLink) pair.getSecond().getWElement(pair.getFirst()).get();
+    public List<Integer> getSelectedKs() { return getSelectedElements().stream().map(WFlexAlgo.FlexAlgoProperties::getK).collect(Collectors.toList()); }
 
 
     /* Properties table */
@@ -89,24 +91,41 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         assert callback.getNiwInfo().getFirst();
         final WNet wNet = callback.getNiwInfo().getSecond();
 
-        Consumer<Integer> setWeightToSelected = integer -> wNet.performBatchOperationOnFlexAlgoProperties(   getSelectedElements().stream().map( f -> f.getK() ).collect(Collectors.toSet()), flexProp -> flexProp.setWeightType(integer)   );
-        Consumer<Integer> setCalculationToSelected = integer -> wNet.performBatchOperationOnFlexAlgoProperties(   getSelectedElements().stream().map( f -> f.getK() ).collect(Collectors.toSet()), flexProp -> flexProp.setCalculationType(integer)   );
-        // TODO -> fix changing multiple flex algos at the same time
+        Consumer<Integer> setWeightToSelectedFlex = weight -> {
+            WNet.performOperationOnRepository(np, repo -> {
+                repo.performBatchOperation(getSelectedKs(), flex -> flex.setWeightType(weight));
+            });
+        };
+        Consumer<Integer> setCalculationToSelectedFlex = calculation -> {
+            WNet.performOperationOnRepository(np, repo -> {
+                repo.performBatchOperation(getSelectedKs(), flex -> flex.setCalculationType(calculation));
+            });
+        };
+
 
         final List<AjtRcMenu> res = new ArrayList<>();
 
         res.add(new AjtRcMenu("Add FlexAlgo", e -> createEditFlexAlgoFromGUI(callback, layer, Optional.empty()), (a, b) -> true, null));
-        res.add(new AjtRcMenu("Remove selected FlexAlgo", e -> getSelectedElements().forEach(flexAlgo -> wNet.performOperationOnFlexAlgoRepository(repo -> repo.removeFlexAlgoPropertiesFromID(flexAlgo.getK()))), (a, b) -> true, null));
-        res.add(new AjtRcMenu("Change FlexAlgo identifier (k)", e -> { /*TODO implement set k*/}, (a, b) -> true, null));
-        res.add(new AjtRcMenu("Set calculation type to selected FlexAlgo", e -> {}, (a, b) -> true, Arrays.asList(
-                new AjtRcMenu("As ShortestPathFirst", e -> setCalculationToSelected.accept(WFlexAlgo.calculation_spf), (a, b) -> true, null),
-                new AjtRcMenu("As Heuristic", e -> setCalculationToSelected.accept(WFlexAlgo.calculation_heuristic), (a, b) -> true, null))));
-        res.add(new AjtRcMenu("Set weight type to selected FlexAlgo", e -> {}, (a, b) -> true, Arrays.asList(
-                new AjtRcMenu("As TE", e -> setWeightToSelected.accept(WFlexAlgo.weight_te), (a, b) -> true, null),
-                new AjtRcMenu("As IGP", e -> setWeightToSelected.accept(WFlexAlgo.weight_igp), (a, b) -> true, null),
-                new AjtRcMenu("As Latency", e -> setWeightToSelected.accept(WFlexAlgo.weight_latency), (a, b) -> true, null))));
+        res.add(new AjtRcMenu("Remove selected FlexAlgo", e -> getSelectedElements().forEach(flexAlgo -> WNet.performOperationOnRepository(np, repo -> repo.removeFlexAlgoPropertiesFromID(flexAlgo.getK()))), (a, b) -> true, null));
+        res.add(new AjtRcMenu("Change FlexAlgo identifier (k)", e ->
+        {
+            DialogBuilder.launch("Change identifier of last selected FlexAlgo", "Please introduce the new id.", "", this, Arrays.asList(InputForDialog.inputTfInt("FlexAlgo id", "Introduce the new id for the FlexAlgo" , 1, 0)),  list ->
+                    {
+                        final int newKId = (Integer) list.get(0).get();
+                        final int selectedKId = getSelectedElements().last().getK();
+                        WNet.performOperationOnRepository(np, repo -> repo.changeFlexAlgoK(selectedKId, newKId));
+                    });
+        }, (a, b) -> true, null));
+        res.add(new AjtRcMenu("Set calculation type to selected FlexAlgo", null, (a, b) -> true, Arrays.asList(
+                new AjtRcMenu("As ShortestPathFirst (SPF)", e -> setCalculationToSelectedFlex.accept(WFlexAlgo.CALCULATION_SPF), (a, b) -> true, null),
+                new AjtRcMenu("As StrictShortestPath (SSP)", e -> setCalculationToSelectedFlex.accept(WFlexAlgo.CALCULATION_SSP), (a, b) -> true, null))));
+        res.add(new AjtRcMenu("Set weight type to selected FlexAlgo", null, (a, b) -> true, Arrays.asList(
+                new AjtRcMenu("As TE", e -> setWeightToSelectedFlex.accept(WFlexAlgo.WEIGHT_SSP), (a, b) -> true, null),
+                new AjtRcMenu("As IGP", e -> setWeightToSelectedFlex.accept(WFlexAlgo.WEIGHT_IGP), (a, b) -> true, null),
+                new AjtRcMenu("As Latency", e -> setWeightToSelectedFlex.accept(WFlexAlgo.WEIGHT_LATENCY), (a, b) -> true, null))));
         res.add(new AjtRcMenu("Set nodes and links to selected FlexAlgo", e -> createEditFlexAlgoFromGUI(callback, layer, Optional.of(getSelectedElements())), (a, b) -> true, null));
-        res.add(new AjtRcMenu("Remove nodes and links to selected FlexAlgo", e -> { wNet.performBatchOperationOnFlexAlgoProperties(getSelectedElements().stream().map(f->f.getK()).collect(Collectors.toSet()), f -> f.removeNodesAndLinks());}, (a, b) -> true, null));
+        res.add(new AjtRcMenu("Remove nodes and links to selected FlexAlgo", e -> WNet.performOperationOnRepository(np, repo ->
+            repo.performBatchOperation(getSelectedKs(), WFlexAlgo.FlexAlgoProperties::removeNodesAndLinks)), (a, b) -> true, null));
 
 
 
@@ -131,12 +150,12 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         JTextField idTextField = new JTextField(6);
 
         /* Calculation selector */
-        List<Pair<String, Integer>> calculationTypes = WFlexAlgo.FlexAlgoProperties.getCalculationOptions();
+        List<Pair<String, Integer>> calculationTypes = WFlexAlgo.getCalculationOptions();
         JComboBox<String> calculationSelector = new WiderJComboBox<>();
         calculationTypes.forEach(pair -> calculationSelector.addItem(pair.getFirst()));
 
         /* Weight selector */
-        List<Pair<String, Integer>> weightTypes = WFlexAlgo.FlexAlgoProperties.getWeightOptions();
+        List<Pair<String, Integer>> weightTypes = WFlexAlgo.getWeightOptions();
         JComboBox<String> weightSelector = new WiderJComboBox<>();
         weightTypes.forEach(pair -> weightSelector.addItem(pair.getFirst()));
 
@@ -176,20 +195,15 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         /* Event listeners */
         /* Listener for identifier checker. ID must belong to [128, 255] and not be already in use */
         idTextField.addActionListener(e -> {
-            if(isNew) return;
+            if(!isNew) return;
 
             String text = idTextField.getText();
             try
             {
                 int id = Integer.parseInt(text);
-
-                // Check range
-                if (id < 128 || id > 255) throw new NumberFormatException();
-
-                // Check that it is not already in use
-                wNet.performOperationOnFlexAlgoRepository(repo -> {
-                    if (repo.containsKey(id)) throw new NumberFormatException();
-                });
+                WFlexAlgo.FlexAlgoRepository repo = WNet.readFlexAlgoRepositoryInNetPlan(netPlan).get();
+                if(!repo.isGoodK(id)) throw new NumberFormatException();
+//                WNet.performOperationOnRepository(netPlan, repo -> { if(!repo.isGoodK(id)) throw new NumberFormatException(); });
 
                 // If correct
                 idTextField.setBorder(BorderFactory.createLineBorder(Color.GREEN));
@@ -212,6 +226,20 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
             @Override
             public void setValueIsAdjusting(boolean isAdjusting) {if (!isAdjusting) gestureStarted = false;}
 
+        });
+        linkList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel(value.getA().getName() + " -> " + value.getB().getName());
+            label.setOpaque(true);
+
+            if (isSelected) {
+                label.setBackground(Color.BLUE);
+                label.setForeground(Color.WHITE);
+            }
+            else {
+                label.setBackground(Color.WHITE);
+                label.setForeground(Color.BLACK);
+            }
+            return label;
         });
         nodeList.setSelectionModel(new DefaultListSelectionModel()
         {
@@ -257,20 +285,6 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         });
 
 
-        linkList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel(value.getA().getName() + " -> " + value.getB().getName());
-            label.setOpaque(true);
-
-            if (isSelected) {
-                label.setBackground(Color.BLUE);
-                label.setForeground(Color.WHITE);
-            }
-            else {
-                label.setBackground(Color.WHITE);
-                label.setForeground(Color.BLACK);
-            }
-            return label;
-        });
 
 
 
@@ -292,6 +306,8 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                 if(isNew)
                 {
                     k = Integer.parseInt(idTextField.getText());
+                    WFlexAlgo.FlexAlgoRepository repo = WNet.readFlexAlgoRepositoryInNetPlan(netPlan).get();
+                    if(!repo.isGoodK(k)) continue;
                     calculation = calculationTypes.stream().filter(pair -> pair.getFirst().equals(calculationSelector.getSelectedItem())).findFirst().get().getSecond();
                     weight = weightTypes.stream().filter(pair -> pair.getFirst().equals(weightSelector.getSelectedItem())).findFirst().get().getSecond();
                 } else { k = 0; }
@@ -314,24 +330,22 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                 if(isNew)
                 {
                     WFlexAlgo.FlexAlgoProperties wFlex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(selectedLinksId), Optional.of(selectedNodesId), Optional.of(selectedNodesSid));
-                    wNet.performOperationOnFlexAlgoRepository(repo -> repo.mapFlexAlgoId2FlexAlgoProperties.put(k, wFlex));
+                    WNet.performOperationOnRepository(netPlan, repo -> repo.addFlexAlgo(k, Optional.of(wFlex)));
                 }
                 else
                 {
-                    Set<Integer> kSet = editingFlexAlgo.get().stream().map(WFlexAlgo.FlexAlgoProperties::getK).collect(Collectors.toSet());
-                    wNet.performBatchOperationOnFlexAlgoProperties(kSet, flexAlgo -> {
+                    List<Integer> kSet = editingFlexAlgo.get().stream().map(WFlexAlgo.FlexAlgoProperties::getK).collect(Collectors.toList());
+                    WNet.performOperationOnFlexAlgo(netPlan, kSet, flexAlgo -> {
                         flexAlgo.setAssociatedSids(selectedNodesSid);
                         flexAlgo.setNodeIdsIncluded(selectedNodesId);
                         flexAlgo.setLinkIdsIncluded(selectedLinksId);
                     });
                 }
 
-                // Temporally show flexAlgoList, up to showing FlexAlgoProperties on the tables
-                wNet.readFlexAlgoRepository().ifPresent(repo -> System.out.println(repo.mapFlexAlgoId2FlexAlgoProperties.toString()));
-                System.out.println(wNet.getNe().getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOINFO));
+                WNet.readFlexAlgoRepositoryInNetPlan(netPlan).ifPresent(repo -> System.out.println(Arrays.toString(repo.getAll().toArray())));
 
 
-            } catch (Exception e) {continue;}
+            } catch (Exception e) { continue; }
 
 
             break;
@@ -364,21 +378,5 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
             }
 
         return links;
-    }
-
-
-    private static class NoSelectionModel extends DefaultListSelectionModel
-    {
-        @Override
-        public void setAnchorSelectionIndex(final int anchorIndex) {}
-
-        @Override
-        public void setLeadAnchorNotificationEnabled(final boolean flag) {}
-
-        @Override
-        public void setLeadSelectionIndex(final int leadIndex) {}
-
-        @Override
-        public void setSelectionInterval(final int index0, final int index1) {}
     }
 }
