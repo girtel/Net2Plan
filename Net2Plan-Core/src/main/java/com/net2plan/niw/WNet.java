@@ -1493,8 +1493,11 @@ public class WNet extends WAbstractNetworkElement
         } catch (JsonProcessingException e) { throw new RuntimeException(e); }
     }
 
-    /** This method reads the FlexAlgoRepository stored inside this WNet, performs the desired operation (resulting
-     * in a modified repo, and finally stores it again inside this WNet */
+    /** This method reads the FlexAlgoRepository stored inside the NetPlan, performs the desired operation (resulting
+     * in a modified repo, and finally stores it again inside the NetPlan
+     * @param np - NetPlan containing the FlexAlgoRepository
+     * @param operation - Operation to be performed on the FlexAlgoRepository
+     * */
     public static void performOperationOnRepository(NetPlan np, Consumer<WFlexAlgo.FlexAlgoRepository> operation)
     {
         assert np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
@@ -1512,7 +1515,12 @@ public class WNet extends WAbstractNetworkElement
     }
 
 
-
+    /** This method reads the FlexAlgoRepository stored inside the NetPlan, performs the desired operation (resulting
+     * in a modified repo, and finally stores it again inside the NetPlan
+     * @param np {@link NetPlan NetPlan} containing the FlexAlgoRepository
+     * @param selectedFlexId List of identifier of the FlexAlgo that want to get used in the operation
+     * @param operation Operation to be performed on the FlexAlgoRepository
+     * */
     public static void performOperationOnFlexAlgo(NetPlan np, List<Integer> selectedFlexId, Consumer<WFlexAlgo.FlexAlgoProperties> operation)
     {
         assert np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
@@ -1529,7 +1537,11 @@ public class WNet extends WAbstractNetworkElement
         } catch (JsonProcessingException e) { System.out.println("Error while parsing flex algo repository"); e.printStackTrace(); }
     }
 
-    /** <b>Important!<i> The return object is read only, that is, modifications done to the repository wont be stored and so will be lost. If there is a need to do changes on the repository see <link> </i></b> */
+    /** <b>Important!<i> The return object is read only, that is, modifications done to the repository wont be stored and so will be lost. If there is a need to do changes on the repository see {@link WNet#performOperationOnFlexAlgo(NetPlan, List, Consumer)}
+     * or {@link WNet#performOperationOnRepository(NetPlan, Consumer)} </i></b>
+     * @param np NetPlan containing the FlexAlgoRepository
+     * @return an Optional of the FlexAlgoRepository, if the given NetPlan contains any. If the NetPlan does not contain any, return an empty Optional
+     * */
     public static Optional<WFlexAlgo.FlexAlgoRepository> readFlexAlgoRepositoryInNetPlan(NetPlan np)
     {
         if(!np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY)) return Optional.empty();

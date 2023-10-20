@@ -27,7 +27,7 @@ public class WFlexAlgo
     public static final int CALCULATION_SPF = 0;
     public static final int CALCULATION_SSP = 1;
     public static final int WEIGHT_IGP = 0;
-    public static final int WEIGHT_SSP = 1;
+    public static final int WEIGHT_TE = 1;
     public static final int WEIGHT_LATENCY = 2;
 
     public static final String[] calculationNames = new String[] {"SPF", "SSP"};
@@ -35,7 +35,7 @@ public class WFlexAlgo
 
     /* Content for right click options */
     public static List<Pair<String, Integer>> getCalculationOptions() { return Arrays.asList(Pair.of("SPF", CALCULATION_SPF), Pair.of("SSP", CALCULATION_SSP)); }
-    public static List<Pair<String, Integer>> getWeightOptions() { return Arrays.asList(Pair.of("IGP", WEIGHT_IGP), Pair.of("TE", WEIGHT_SSP), Pair.of("Latency", WEIGHT_LATENCY)); }
+    public static List<Pair<String, Integer>> getWeightOptions() { return Arrays.asList(Pair.of("IGP", WEIGHT_IGP), Pair.of("TE", WEIGHT_TE), Pair.of("Latency", WEIGHT_LATENCY)); }
 
 
 
@@ -168,7 +168,7 @@ public class WFlexAlgo
         public boolean isNodeIncluded(Node n) {return nodeIdsIncluded.contains(n.getId());}
         public boolean isIgpWeighted() {return weightType == WEIGHT_IGP;}
         public boolean isLatencyWeighted() {return weightType == WEIGHT_LATENCY;}
-        public boolean isTeWeighted() {return weightType == WEIGHT_SSP;}
+        public boolean isTeWeighted() {return weightType == WEIGHT_TE;}
 
 
         /* Modify properties content */

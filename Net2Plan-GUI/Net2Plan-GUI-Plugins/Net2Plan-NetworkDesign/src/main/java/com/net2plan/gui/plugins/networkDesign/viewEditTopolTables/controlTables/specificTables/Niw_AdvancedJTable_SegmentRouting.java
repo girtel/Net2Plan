@@ -120,7 +120,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                 new AjtRcMenu("As ShortestPathFirst (SPF)", e -> setCalculationToSelectedFlex.accept(WFlexAlgo.CALCULATION_SPF), (a, b) -> true, null),
                 new AjtRcMenu("As StrictShortestPath (SSP)", e -> setCalculationToSelectedFlex.accept(WFlexAlgo.CALCULATION_SSP), (a, b) -> true, null))));
         res.add(new AjtRcMenu("Set weight type to selected FlexAlgo", null, (a, b) -> true, Arrays.asList(
-                new AjtRcMenu("As TE", e -> setWeightToSelectedFlex.accept(WFlexAlgo.WEIGHT_SSP), (a, b) -> true, null),
+                new AjtRcMenu("As TE", e -> setWeightToSelectedFlex.accept(WFlexAlgo.WEIGHT_TE), (a, b) -> true, null),
                 new AjtRcMenu("As IGP", e -> setWeightToSelectedFlex.accept(WFlexAlgo.WEIGHT_IGP), (a, b) -> true, null),
                 new AjtRcMenu("As Latency", e -> setWeightToSelectedFlex.accept(WFlexAlgo.WEIGHT_LATENCY), (a, b) -> true, null))));
         res.add(new AjtRcMenu("Set nodes and links to selected FlexAlgo", e -> createEditFlexAlgoFromGUI(callback, layer, Optional.of(getSelectedElements())), (a, b) -> true, null));
@@ -203,8 +203,6 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                 int id = Integer.parseInt(text);
                 WFlexAlgo.FlexAlgoRepository repo = WNet.readFlexAlgoRepositoryInNetPlan(netPlan).get();
                 if(!repo.isGoodK(id)) throw new NumberFormatException();
-//                WNet.performOperationOnRepository(netPlan, repo -> { if(!repo.isGoodK(id)) throw new NumberFormatException(); });
-
                 // If correct
                 idTextField.setBorder(BorderFactory.createLineBorder(Color.GREEN));
             } catch (NumberFormatException nfe) { idTextField.setBorder(BorderFactory.createLineBorder(Color.RED)); }

@@ -137,7 +137,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 						{
 							case WFlexAlgo.WEIGHT_IGP: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
 							case WFlexAlgo.WEIGHT_LATENCY: { finalWeight = link.getPropagationDelayInMs(); break; }
-							case WFlexAlgo.WEIGHT_SSP: { finalWeight = 1 / link.getCapacity(); /* TODO this is really fake, do not know what are TE metrics */ break; }
+							case WFlexAlgo.WEIGHT_TE: { finalWeight = 1 / link.getCapacity(); /* TODO this is really fake, do not know what are TE metrics */ break; }
 						}
 						linkWeightVector.set(allLinks.indexOf(link), finalWeight);
 					}
