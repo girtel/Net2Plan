@@ -99,6 +99,9 @@ public class DefaultStatelessSimulator implements IAlgorithm
 				assert optionalFlexRepo.isPresent();
 
 
+
+				List<WIpUnicastDemand> demandsToBeRemoved = new ArrayList<>();
+
 				// Check that all demands have assigned a FlexAlgo that is present on both origin and destination -> if not -> set to default flex algo (0)
 				for(WIpUnicastDemand demand: srRoutedDemands)
 				{
@@ -111,11 +114,22 @@ public class DefaultStatelessSimulator implements IAlgorithm
 					}
 
 					WFlexAlgo.FlexAlgoProperties flexAlgo = optionalFlexRepo.get().getFlexAlgoPropertiesFromID( flexAlgoAssignedId );
-					if(!flexAlgo.isNodeIncluded(na.getNe()) || !flexAlgo.isNodeIncluded(nb.getNe()) ) demand.setFlexAlgoId(Optional.of("0"));
+					if(!flexAlgo.isNodeIncluded(na.getNe()) || !flexAlgo.isNodeIncluded(nb.getNe()) )
+					{
+						// remove from sr list, add to ospf list, remove sr attributes (maybe show message)
+						demandsToBeRemoved.add(demand);
+						System.out.println("Demand #" + demand.getId() + " " + demand.getA().getName() +"->" + demand.getB().getName()  + " could not be routed with SR because either origin or destination do not support FlexAlgo #" + demand.getSrFlexAlgoId().get());
+					}
 				}
 
-				// When corrected all errors, for each flex algo route all demands creating a Forwarding Rule and removing the demand from srRoutedDemands
+				// Remove the demands that cannot be routed with sr and add them to standard ospf routing
+				demandsToBeRemoved.forEach(WIpUnicastDemand::notSetDemandAsSegmentRouted);
+				srRoutedDemands.removeAll(demandsToBeRemoved);
+				ospfRoutedDemands.addAll(demandsToBeRemoved.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toList()));
 
+
+
+				// When corrected all errors, for each flex algo route all demands creating a Forwarding Rule and removing the demand from srRoutedDemands
 				for(WFlexAlgo.FlexAlgoProperties flexAlgo : optionalFlexRepo.get().mapFlexAlgoId2FlexAlgoProperties.values())
 				{
 					final Set<WIpUnicastDemand> demands2Route4ThisFlexAlgo = srRoutedDemands.stream().filter(d -> d.getSrFlexAlgoId().isPresent() && d.getSrFlexAlgoId().get().equals( String.valueOf(flexAlgo.getK()) )).collect(Collectors.toSet());
@@ -137,7 +151,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 						{
 							case WFlexAlgo.WEIGHT_IGP: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
 							case WFlexAlgo.WEIGHT_LATENCY: { finalWeight = link.getPropagationDelayInMs(); break; }
-							case WFlexAlgo.WEIGHT_TE: { finalWeight = 1 / link.getCapacity(); /* TODO this is really fake, do not know what are TE metrics */ break; }
+							case WFlexAlgo.WEIGHT_TE: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getTeWeight(); break; }
 						}
 						linkWeightVector.set(allLinks.indexOf(link), finalWeight);
 					}
