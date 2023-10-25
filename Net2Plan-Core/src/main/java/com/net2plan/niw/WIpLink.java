@@ -11,6 +11,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import com.ctc.wstx.evt.WEntityDeclaration;
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
 import com.net2plan.interfaces.networkDesign.Link;
@@ -108,7 +109,9 @@ public class WIpLink extends WAbstractNetworkElement
 	{
 		IPUtils.setLinkWeight(getNe () , newWeight);
 	}
-	
+	public double getTeWeight() { return getNe().getAttributeAsDouble(WNetConstants.ATTRIBUTE_LINK_TE_WEIGHT, 0d);}
+	public void setTeWeight (double newWeight) { assert newWeight > 0; getNe().setAttribute(WNetConstants.ATTRIBUTE_LINK_TE_WEIGHT, String.valueOf(newWeight)); }
+
 	
 	/**
 	 * If the IP link is part of a pair of IP bidirectional links, returns the opposite link pair. If not returns null.
