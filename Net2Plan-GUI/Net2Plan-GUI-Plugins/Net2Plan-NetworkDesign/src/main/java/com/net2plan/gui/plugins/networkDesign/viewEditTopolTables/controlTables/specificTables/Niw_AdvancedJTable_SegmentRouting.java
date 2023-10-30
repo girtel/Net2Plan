@@ -55,7 +55,6 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
 
 
         final List<AjtColumnInfo<WFlexAlgo.FlexAlgoProperties>> res = new LinkedList<>();
-        // TODO buscar como seleccionar los enlaces incuidos en la lista. WNode -> outIpLinks
 
         res.add(new AjtColumnInfo<>(this, Integer.class, null, "ID (k)", "The flexible algo identifier", null, WFlexAlgo.FlexAlgoProperties::getK, AGTYPE.NOAGGREGATION, null));
         res.add(new AjtColumnInfo<>(this, String.class, null, "--", "---", null, f -> "--", AGTYPE.NOAGGREGATION, null));
@@ -271,8 +270,6 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                         flexAlgo.setLinkIdsIncluded(selectedLinksId);
                     });
                 }
-
-                WNet.readFlexAlgoRepositoryInNetPlan(netPlan).ifPresent(repo -> System.out.println(Arrays.toString(repo.getAll().toArray()))); // TODO remove
 
 
             } catch (Exception e) { continue; }
