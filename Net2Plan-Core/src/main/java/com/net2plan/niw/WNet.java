@@ -41,7 +41,6 @@ import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.interfaces.networkDesign.SharedRiskGroup;
 import com.net2plan.libraries.GraphUtils;
-import com.net2plan.niw.WFlexAlgo.FlexAlgoProperties;
 import com.net2plan.niw.WNetConstants.WTYPE;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
@@ -1472,7 +1471,7 @@ public class WNet extends WAbstractNetworkElement
 
 
     /* Segment Routing utilities */
-    public boolean isSrInitialized() { return getNe().getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY); }
+    public boolean isSrInitialized() { return getNe().getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY); }
 
 
     /** Create flex algo manager inside the attribute map */
@@ -1481,15 +1480,8 @@ public class WNet extends WAbstractNetworkElement
         ObjectMapper mapper = new ObjectMapper();
         try
         {
-            WFlexAlgo.FlexAlgoRepository newRepo = new WFlexAlgo.FlexAlgoRepository();
-
-            Optional<Set<Long>> allNodesId = Optional.of(getNodes().stream().map(WNode::getId).collect(Collectors.toSet()));
-            Optional<Set<Long>> allLinksId = Optional.of(getIpLinks().stream().map(WIpLink::getId).collect(Collectors.toSet()));
-            FlexAlgoProperties flexAlgo0 = new WFlexAlgo.FlexAlgoProperties(0, WFlexAlgo.CALCULATION_SPF, WFlexAlgo.WEIGHT_IGP, allLinksId, allNodesId, Optional.empty());
-
-            newRepo.addFlexAlgo(0, Optional.of(flexAlgo0));
-            String stringedMap = mapper.writeValueAsString(newRepo);
-            getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY, stringedMap);
+            String stringedMap = mapper.writeValueAsString(new WFlexAlgo.FlexAlgoRepository());
+            getNe().setAttribute(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY, stringedMap);
         } catch (JsonProcessingException e) { throw new RuntimeException(e); }
     }
 
@@ -1500,8 +1492,8 @@ public class WNet extends WAbstractNetworkElement
      * */
     public static void performOperationOnRepository(NetPlan np, Consumer<WFlexAlgo.FlexAlgoRepository> operation)
     {
-        assert np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
-        String stringedOriginalRepository = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
+        assert np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY);
+        String stringedOriginalRepository = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY);
         ObjectMapper mapper = new ObjectMapper();
         try
         {
@@ -1509,7 +1501,7 @@ public class WNet extends WAbstractNetworkElement
             operation.accept(repo);
 
             String stringedNewRepository = mapper.writeValueAsString(repo);
-            np.setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY, stringedNewRepository);
+            np.setAttribute(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY, stringedNewRepository);
 
         } catch (JsonProcessingException e) { System.out.println("Error while parsing flex algo repository"); e.printStackTrace(); }
     }
@@ -1523,8 +1515,8 @@ public class WNet extends WAbstractNetworkElement
      * */
     public static void performOperationOnFlexAlgo(NetPlan np, List<Integer> selectedFlexId, Consumer<WFlexAlgo.FlexAlgoProperties> operation)
     {
-        assert np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
-        String stringedOriginalRepository = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
+        assert np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY);
+        String stringedOriginalRepository = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY);
         ObjectMapper mapper = new ObjectMapper();
         try
         {
@@ -1532,7 +1524,7 @@ public class WNet extends WAbstractNetworkElement
             repo.performBatchOperation(selectedFlexId, operation);
 
             String stringedNewRepository = mapper.writeValueAsString(repo);
-            np.setAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY, stringedNewRepository);
+            np.setAttribute(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY, stringedNewRepository);
 
         } catch (JsonProcessingException e) { System.out.println("Error while parsing flex algo repository"); e.printStackTrace(); }
     }
@@ -1544,8 +1536,8 @@ public class WNet extends WAbstractNetworkElement
      * */
     public static Optional<WFlexAlgo.FlexAlgoRepository> readFlexAlgoRepositoryInNetPlan(NetPlan np)
     {
-        if(!np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY)) return Optional.empty();
-        String stringedMap = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGOREPOSITORY);
+        if(!np.getAttributes().containsKey(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY)) return Optional.empty();
+        String stringedMap = np.getAttribute(WNetConstants.ATTRIBUTE_FLEXALGO_REPOSITORY);
         ObjectMapper mapper = new ObjectMapper();
         try { return Optional.of(mapper.readValue(stringedMap, WFlexAlgo.FlexAlgoRepository.class)); }
         catch (JsonProcessingException e) { return Optional.empty(); }

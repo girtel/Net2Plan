@@ -23,14 +23,12 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.niw.*;
 import com.net2plan.utils.Pair;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -43,14 +41,6 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         super(callback, AJTableType.FLEXALGO, null, layerThisTable, false, null);
     }
 
-
-    /* Helping functions */
-    public static final Function<Node, WNode> toWNode = n -> {
-        final WNode nn = new WNode(n);
-        assert !nn.isVirtualNode();
-        return nn;
-    };
-    public static final Function<Pair<Link, WNet>, WIpLink> toWIpLink = pair -> (WIpLink) pair.getSecond().getWElement(pair.getFirst()).get();
     public List<Integer> getSelectedKs() { return getSelectedElements().stream().map(WFlexAlgo.FlexAlgoProperties::getK).collect(Collectors.toList()); }
 
 
@@ -71,10 +61,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         res.add(new AjtColumnInfo<>(this, String.class, null, "--", "---", null, f -> "--", AGTYPE.NOAGGREGATION, null));
         res.add(new AjtColumnInfo<>(this, String.class, null, "Calculation", "The flexible algo calculation type", null, WFlexAlgo.FlexAlgoProperties::getCalculationString, AGTYPE.NOAGGREGATION, null));
         res.add(new AjtColumnInfo<>(this, String.class, null, "Weight", "The flexible algo weight type", null, WFlexAlgo.FlexAlgoProperties::getWeightTypeString, AGTYPE.NOAGGREGATION, null));
-
         res.add(new AjtColumnInfo<>(this, Collection.class, null, "Links", "List of links that the flex algo can go through", null, f -> f.getLinksIncluded(np), AGTYPE.SUMCOLLECTIONCOUNT, null));
-        res.add(new AjtColumnInfo<>(this, Collection.class, null, "Nodes", "List of nodes that are using this flex algo", null, f -> f.getNodesIncluded(np), AGTYPE.SUMCOLLECTIONCOUNT, null));
-        res.add(new AjtColumnInfo<>(this, String.class, null, "SID's", "List of SID's assigned to this node", null, f -> f.getAssociatedSidsAsNiceLookingString(), AGTYPE.NOAGGREGATION, null));
 
 
         return res;
@@ -125,7 +112,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                 new AjtRcMenu("As Latency", e -> setWeightToSelectedFlex.accept(WFlexAlgo.WEIGHT_LATENCY), (a, b) -> true, null))));
         res.add(new AjtRcMenu("Set nodes and links to selected FlexAlgo", e -> createEditFlexAlgoFromGUI(callback, layer, Optional.of(getSelectedElements())), (a, b) -> true, null));
         res.add(new AjtRcMenu("Remove nodes and links to selected FlexAlgo", e -> WNet.performOperationOnRepository(np, repo ->
-            repo.performBatchOperation(getSelectedKs(), WFlexAlgo.FlexAlgoProperties::removeNodesAndLinks)), (a, b) -> true, null));
+            repo.performBatchOperation(getSelectedKs(), WFlexAlgo.FlexAlgoProperties::removeAllLinks)), (a, b) -> true, null));
 
 
 
@@ -141,52 +128,58 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         if (!wNet.isSrInitialized()) wNet.initializeFlexAlgoAttributes();
 
         final boolean isNew = !editingFlexAlgo.isPresent();
-        ArrayList<Pair<JComponent, JComponent>> panelComponentsPairs = new ArrayList<>();
-
 
 
 
         /* ID Selector */
         JTextField idTextField = new JTextField(6);
+        JPanel textPanel = new JPanel();
+        textPanel.add(idTextField);
+        textPanel.add(new JLabel("Identifier (k) of FlexAlgo. [128, 255]"));
 
         /* Calculation selector */
         List<Pair<String, Integer>> calculationTypes = WFlexAlgo.getCalculationOptions();
         JComboBox<String> calculationSelector = new WiderJComboBox<>();
         calculationTypes.forEach(pair -> calculationSelector.addItem(pair.getFirst()));
+        JPanel calculationPanel = new JPanel();
+        calculationPanel.add(calculationSelector);
+        calculationPanel.add(new JLabel("Calculation type (no use yet)"));
 
         /* Weight selector */
         List<Pair<String, Integer>> weightTypes = WFlexAlgo.getWeightOptions();
         JComboBox<String> weightSelector = new WiderJComboBox<>();
         weightTypes.forEach(pair -> weightSelector.addItem(pair.getFirst()));
+        JPanel weightPanel = new JPanel();
+        weightPanel.add(weightSelector);
+        weightPanel.add(new JLabel("Weight type"));
 
         /* Link selector */
-        DefaultListModel<WIpLink> linkListModel = new DefaultListModel<>();
-        JList<WIpLink> linkList = new JList<>(linkListModel);
+        Map<String, WIpLink> stringRepresentative = new TreeMap<>();
+        Set<WIpLink> uniLinks = computeUnidiLinks(wNet);
+        uniLinks.forEach(l -> {
+            String representative = l.getA().getName() + " <-> " + l.getB().getName();
+            stringRepresentative.put(representative, l);
+        });
+        JList<String> linkList = new JList<>(stringRepresentative.keySet().toArray(new String[0]));
         linkList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION); linkList.setLayoutOrientation(JList.VERTICAL); linkList.setVisibleRowCount(-1);
         JScrollPane linkListScroller = new JScrollPane(linkList);
         linkListScroller.setPreferredSize(new Dimension(500, 700));
 
-        /* Node selector */
-        Map<String, Pair<Long, String>> candidateNodeMap = new TreeMap<>();
-        wNet.getNodes().forEach(node -> { node.getSidList().ifPresent(sidList -> sidList.forEach(sid -> candidateNodeMap.put(node.getName() + " (" + sid.trim() + ")", Pair.of(node.getId(), sid)))); });
-        JList<String> nodeList = new JList(candidateNodeMap.keySet().toArray());
-        nodeList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION); nodeList.setLayoutOrientation(JList.VERTICAL); nodeList.setVisibleRowCount(-1);
-        JScrollPane nodeListScroller = new JScrollPane(nodeList);
-        nodeListScroller.setPreferredSize(new Dimension(500, 700));
-
-
-        /* Set the order to show the components */
-        if(isNew) panelComponentsPairs.add(Pair.of(new JLabel("Identifier (k) of FlexAlgo. [128, 255]"), idTextField));
-        if(isNew) panelComponentsPairs.add(Pair.of(new JLabel("Calculation type"), calculationSelector));
-        if(isNew) panelComponentsPairs.add(Pair.of(new JLabel("Calculation type"), weightSelector));
-        panelComponentsPairs.add(Pair.of( new JLabel("Nodes - (SID) -> (optional)"),new JLabel("Links that will be added to the FlexAlgo.")));
-        panelComponentsPairs.add(Pair.of( nodeListScroller, linkListScroller));
-        panelComponentsPairs.add(Pair.of( new JLabel(""), new JLabel("Links are added if two selected nodes have link between them")));
 
 
         /* Main panel construction */
-        JPanel mainPanel = new JPanel(new MigLayout("fill", "[][grow]", "[][][][][]"));
-        panelComponentsPairs.forEach(pair -> { mainPanel.add(pair.getFirst()); mainPanel.add(pair.getSecond(), "wrap"); });
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
+        mainPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        if(isNew)
+        {
+            mainPanel.add(textPanel);
+            mainPanel.add(calculationPanel);
+            mainPanel.add(weightPanel);
+        }
+
+        mainPanel.add(new JLabel("IpLinks included in the FlexAlgo (bidirectional links)"));
+        mainPanel.add(linkListScroller);
 
 
 
@@ -225,62 +218,7 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
             public void setValueIsAdjusting(boolean isAdjusting) {if (!isAdjusting) gestureStarted = false;}
 
         });
-        linkList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel(value.getA().getName() + " -> " + value.getB().getName());
-            label.setOpaque(true);
 
-            if (isSelected) {
-                label.setBackground(Color.BLUE);
-                label.setForeground(Color.WHITE);
-            }
-            else {
-                label.setBackground(Color.WHITE);
-                label.setForeground(Color.BLACK);
-            }
-            return label;
-        });
-        nodeList.setSelectionModel(new DefaultListSelectionModel()
-        {
-            boolean gestureStarted = false;
-
-            @Override
-            public void setSelectionInterval(int index0, int index1) {
-                if (!gestureStarted) {
-                    if (isSelectedIndex(index0)) super.removeSelectionInterval(index0, index1);
-                    else super.addSelectionInterval(index0, index1);
-                }
-                gestureStarted = true;
-                recomputeLinkList();
-            }
-            @Override
-            public void setValueIsAdjusting(boolean isAdjusting) {if (!isAdjusting) gestureStarted = false;}
-            private void recomputeLinkList()
-            {
-                List<String> selectedNodesRepresentative = nodeList.getSelectedValuesList();
-                List<Pair<Long, String>> selectedNodesInformation = selectedNodesRepresentative.stream().map(candidateNodeMap::get).collect(Collectors.toList());
-                Set<Long> selectedNodesId = selectedNodesInformation.stream().map(Pair::getFirst).collect(Collectors.toSet());
-
-                Set<WIpLink> links = recomputeVirtualLinkList(wNet, selectedNodesId);
-
-                if (links.isEmpty()) return;
-                linkListModel.clear();
-
-                final Set<Long> containedLinks = new HashSet<>();
-                final int N = netPlan.getNumberOfNodes();
-                for(WIpLink l: links)
-                {
-                    WNode n1 = l.getA(), n2 = l.getB();
-                    final long rAB = n1.getId() + N * n2.getId();
-                    final long rBA = n2.getId() + N * n1.getId();
-
-                    if(containedLinks.contains(rAB) || containedLinks.contains(rBA)) continue;
-
-                    containedLinks.add(rAB);
-                    linkListModel.addElement(l);
-                }
-
-            }
-        });
 
 
 
@@ -311,70 +249,49 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
                 } else { k = 0; }
 
 
-                List<String> nodeRepresentatives = nodeList.getSelectedValuesList();
-                List<Pair<Long, String>> selectedNodesInformation = nodeRepresentatives.stream().map(candidateNodeMap::get).collect(Collectors.toList());
-                Set<Long> selectedNodesId = selectedNodesInformation.stream().map(Pair::getFirst).collect(Collectors.toSet());
-                Set<String> selectedNodesSid = selectedNodesInformation.stream().map(Pair::getSecond).collect(Collectors.toSet());
-
 
                 Set<Long> selectedLinksId = new TreeSet<>();
-                linkList.getSelectedValuesList().forEach(l -> {
+                linkList.getSelectedValuesList().forEach(s -> {
+                    WIpLink l = stringRepresentative.get(s);
                     selectedLinksId.add(l.getId());
-                    selectedLinksId.add(wNet.getNodePairIpLinks(l.getB(), l.getA()).first().getId()); // selected links are unidirectional -> get the other pair
+                    selectedLinksId.add(wNet.getNodePairIpLinks( l.getB(),l.getA() ).first().getId()); // selected links are unidirectional -> get the other pair
                 });
 
 
                 /* Create the FlexAlgoProperties */
                 if(isNew)
                 {
-                    WFlexAlgo.FlexAlgoProperties wFlex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(selectedLinksId), Optional.of(selectedNodesId), Optional.of(selectedNodesSid));
+                    WFlexAlgo.FlexAlgoProperties wFlex = new WFlexAlgo.FlexAlgoProperties(k, calculation, weight, Optional.of(selectedLinksId));
                     WNet.performOperationOnRepository(netPlan, repo -> repo.addFlexAlgo(k, Optional.of(wFlex)));
                 }
                 else
                 {
                     List<Integer> kSet = editingFlexAlgo.get().stream().map(WFlexAlgo.FlexAlgoProperties::getK).collect(Collectors.toList());
                     WNet.performOperationOnFlexAlgo(netPlan, kSet, flexAlgo -> {
-                        flexAlgo.setAssociatedSids(selectedNodesSid);
-                        flexAlgo.setNodeIdsIncluded(selectedNodesId);
                         flexAlgo.setLinkIdsIncluded(selectedLinksId);
                     });
                 }
 
-                WNet.readFlexAlgoRepositoryInNetPlan(netPlan).ifPresent(repo -> System.out.println(Arrays.toString(repo.getAll().toArray())));
+                WNet.readFlexAlgoRepositoryInNetPlan(netPlan).ifPresent(repo -> System.out.println(Arrays.toString(repo.getAll().toArray()))); // TODO remove
 
 
             } catch (Exception e) { continue; }
-
-
             break;
         }
 
 
     }
 
-
-    private static Set<WIpLink> recomputeVirtualLinkList(WNet wNet, Set<Long> selectedNodes)
+    private static Set<WIpLink> computeUnidiLinks(WNet net)
     {
-        if (selectedNodes.size() <= 1) return new TreeSet<>();
+        List<WIpLink> links = net.getIpLinks();
+        Set<WIpLink> linksOneDirectional = new HashSet<>();
 
-        Set<WIpLink> links = new HashSet<>();
-        for (long n1 : selectedNodes)
-            for (long n2 : selectedNodes)
-            {
-                if (n1 <= n2) continue;
-
-                final Optional<WNode> n1p = wNet.getNodeFromId(n1), n2p = wNet.getNodeFromId(n2);
-                assert n1p.isPresent();
-                assert n2p.isPresent();
-
-                final Set<WIpLink> linkAB = wNet.getNodePairIpLinks(n1p.get(), n2p.get());
-                final Set<WIpLink> linkBA = wNet.getNodePairIpLinks(n2p.get(), n1p.get());
-                if (linkBA.isEmpty() || linkAB.size() != linkBA.size()) continue;
-
-                links.addAll(linkAB);
-                links.addAll(linkBA);
-            }
-
-        return links;
+        for(WIpLink link : links)
+        {
+            if(linksOneDirectional.contains(link)) continue;
+            linksOneDirectional.add(net.getNodePairIpLinks(link.getB(), link.getA()).first());
+        }
+        return linksOneDirectional;
     }
 }

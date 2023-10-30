@@ -133,8 +133,6 @@ public class WFlexAlgo
         public int calculationType;
         public int weightType;
         public int flexAlgoIndentifier;
-        public SortedSet<String> associatedSids = new TreeSet<>();
-        public SortedSet<Long> nodeIdsIncluded = new TreeSet<>();
         public SortedSet<Long> linkIdsIncluded = new TreeSet<>();
 
 
@@ -150,7 +148,7 @@ public class WFlexAlgo
             this.weightType = weightType;
         }
 
-        public FlexAlgoProperties(int flexAlgoIndentifier, int calculationType, int weightType, Optional<Set<Long>> ipLinkListIds, Optional<Set<Long>> nodeListIds, Optional<Set<String>> nodeSidList)
+        public FlexAlgoProperties(int flexAlgoIndentifier, int calculationType, int weightType, Optional<Set<Long>> ipLinkListIds)
         {
             assert flexAlgoIndentifier > 0;
 
@@ -158,14 +156,10 @@ public class WFlexAlgo
             this.calculationType = calculationType;
             this.weightType = weightType;
             ipLinkListIds.ifPresent(longs -> this.linkIdsIncluded = new TreeSet<>(longs));
-            nodeListIds.ifPresent(longs -> this.nodeIdsIncluded = new TreeSet<>(longs));
-            nodeSidList.ifPresent(strings -> this.associatedSids = new TreeSet<>(strings));
         }
 
         /* Checkers */
         public boolean isLinkIncluded(Link e) {return linkIdsIncluded.contains(e.getId());}
-        public boolean isSidIncluded(String s) {return associatedSids.contains(s);}
-        public boolean isNodeIncluded(Node n) {return nodeIdsIncluded.contains(n.getId());}
         public boolean isIgpWeighted() {return weightType == WEIGHT_IGP;}
         public boolean isLatencyWeighted() {return weightType == WEIGHT_LATENCY;}
         public boolean isTeWeighted() {return weightType == WEIGHT_TE;}
@@ -174,26 +168,18 @@ public class WFlexAlgo
         /* Modify properties content */
         /* Add */
         public FlexAlgoProperties addLink(Link e) { linkIdsIncluded.add(e.getId()); return this; }
-        public FlexAlgoProperties addSid(String sid) { associatedSids.add(sid); return this; }
-
-        /* Remove */
-        public FlexAlgoProperties removeLink(Link e) { linkIdsIncluded.remove(e.getId()); return this; }
-        public FlexAlgoProperties removeSid(String sid) { associatedSids.remove(sid); return this; }
-        public FlexAlgoProperties removeNodesAndLinks() { linkIdsIncluded.clear(); nodeIdsIncluded.clear(); return this; }
+        public FlexAlgoProperties removeLink(Link e) { if(isLinkIncluded(e)) linkIdsIncluded.remove(e.getId()); return this; }
+        public FlexAlgoProperties removeAllLinks() { linkIdsIncluded.clear(); return this; }
 
         /* Set properties content */
-        public FlexAlgoProperties setK(int k, FlexAlgoRepository repo) { if(k >= 128 && k <= 255 && !repo.containsKey(k)) this.flexAlgoIndentifier = k; return this; }
+        public FlexAlgoProperties setK(int k) { if(k >= 128 && k <= 255) this.flexAlgoIndentifier = k; return this; }
         public FlexAlgoProperties setCalculationType(int calculationType) {this.calculationType = calculationType; return this; }
         public FlexAlgoProperties setWeightType(int weightType) {this.weightType = weightType; return this; }
-        public FlexAlgoProperties setLinkIdsIncluded(Set<Long> linkIdSet) { this.linkIdsIncluded = new TreeSet<>(linkIdSet); return this; }
-        public FlexAlgoProperties setAssociatedSids(Set<String> sidSet) { this.associatedSids = new TreeSet<>(sidSet); return this; }
-        public FlexAlgoProperties setNodeIdsIncluded(Set<Long> nodeIdSet) { this.nodeIdsIncluded = new TreeSet<>(nodeIdSet); return this; }
+        public FlexAlgoProperties setLinkIdsIncluded(Set<Long> linksIdsSet) { this.linkIdsIncluded = new TreeSet<>(linksIdsSet); return this; }
 
 
         /* Get properties content */
         public SortedSet<Link> getLinksIncluded(NetPlan np) {return linkIdsIncluded.stream().map(np::getLinkFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
-        public SortedSet<Node> getNodesIncluded(NetPlan np) {return nodeIdsIncluded.stream().map(np::getNodeFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
-        public SortedSet<String> getAssociatedSids() { return new TreeSet<>(associatedSids); }
         public int getK() {return this.flexAlgoIndentifier;}
         public int getCalculationType() {return this.calculationType;}
         public int getWeightType() {return this.weightType;}
@@ -201,18 +187,6 @@ public class WFlexAlgo
 
 
         /* Visual content */
-        public String getAssociatedSidsAsNiceLookingString()
-        {
-            StringBuilder sb = new StringBuilder();
-            associatedSids.forEach(sid -> sb.append(sid).append(", "));
-            return sb.toString();
-        }
-        public String getIncludedNodesAsNiceLookingString(NetPlan np)
-        {
-            StringBuilder sb = new StringBuilder();
-            getNodesIncluded(np).forEach(n -> sb.append(n.getName()).append(" "));
-            return sb.toString();
-        }
         public String getCalculationString() { return calculationNames[calculationType]; }
         public String getWeightTypeString() { return weightNames[weightType]; }
 
@@ -223,8 +197,7 @@ public class WFlexAlgo
         {
             FlexAlgoProperties a = (FlexAlgoProperties) o;
             FlexAlgoProperties b = this;
-            return a.getK() == b.getK() && a.getWeightType() == b.getWeightType() && a.getCalculationType() == b.getCalculationType()
-            && a.getAssociatedSids().equals(b.getAssociatedSids()) ? 0 : 1;
+            return a.getK() == b.getK() && a.getWeightType() == b.getWeightType() && a.getCalculationType() == b.getCalculationType() ? 0 : 1;
 
         }
     }

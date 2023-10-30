@@ -25,12 +25,9 @@ public class WNetConstants
 	public static final String ipLayerName = "IP";
 	public static final String wdmLayerName = "WDM";
 	
-	public static final String ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED = WAbstractNetworkElement.NIWNAMEPREFIX + "isSegmentRoutedElement";
-	public static final String ATTRIBUTE_DEMAND_SR_SID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_sid";
-	public static final String ATTRIBUTE_DEMAND_SR_KID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_kId";
-	public static final String ATTRIBUTE_LINK_SR_SID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_sid";
-	public static final String ATTRIBUTE_LINK_SR_CARRIED_SIDS = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSegmentRouted_carriedSids";
-	public static final String ATTRIBUTE_FLEXALGOREPOSITORY = WAbstractNetworkElement.NIWNAMEPREFIX + "flexAlgoInfo";
+	public static final String ATTRIBUTE_DEMAND_SR_ENABLED = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSr_enabled";
+	public static final String ATTRIBUTE_DEMAND_SR_KID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSr_kId";
+	public static final String ATTRIBUTE_FLEXALGO_REPOSITORY = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSr_flexAlgoInfo";
 	public static final String ATTRIBUTE_LINK_TE_WEIGHT = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSr_teMetric";
 	
 

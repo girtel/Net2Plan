@@ -91,41 +91,12 @@ public class DefaultStatelessSimulator implements IAlgorithm
 				Optional<WFlexAlgo.FlexAlgoRepository> optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
 				if(!optionalFlexRepo.isPresent())
 				{
-					srRoutedDemands.forEach(d -> d.setFlexAlgoId(Optional.of("0")));
+//					srRoutedDemands.forEach(d -> d.setFlexAlgoId(Optional.of("0")));
 					net.initializeFlexAlgoAttributes();
 					optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
 				}
 
 				assert optionalFlexRepo.isPresent();
-
-
-
-				List<WIpUnicastDemand> demandsToBeRemoved = new ArrayList<>();
-
-				// Check that all demands have assigned a FlexAlgo that is present on both origin and destination -> if not -> set to default flex algo (0)
-				for(WIpUnicastDemand demand: srRoutedDemands)
-				{
-					WNode na = demand.getA(), nb = demand.getB();
-					int flexAlgoAssignedId = Integer.parseInt(demand.getSrFlexAlgoId().orElse("0"));
-					if(!optionalFlexRepo.get().containsKey(flexAlgoAssignedId))
-					{
-						demand.setFlexAlgoId(Optional.of("0"));
-						continue;
-					}
-
-					WFlexAlgo.FlexAlgoProperties flexAlgo = optionalFlexRepo.get().getFlexAlgoPropertiesFromID( flexAlgoAssignedId );
-					if(!flexAlgo.isNodeIncluded(na.getNe()) || !flexAlgo.isNodeIncluded(nb.getNe()) )
-					{
-						// remove from sr list, add to ospf list, remove sr attributes (maybe show message)
-						demandsToBeRemoved.add(demand);
-						System.out.println("Demand #" + demand.getId() + " " + demand.getA().getName() +"->" + demand.getB().getName()  + " could not be routed with SR because either origin or destination do not support FlexAlgo #" + demand.getSrFlexAlgoId().get());
-					}
-				}
-
-				// Remove the demands that cannot be routed with sr and add them to standard ospf routing
-				demandsToBeRemoved.forEach(WIpUnicastDemand::notSetDemandAsSegmentRouted);
-				srRoutedDemands.removeAll(demandsToBeRemoved);
-				ospfRoutedDemands.addAll(demandsToBeRemoved.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toList()));
 
 
 
@@ -164,13 +135,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 					IPUtils.setECMPForwardingRulesFromLinkWeights(np, linkWeightVector, routingDemands, ipLayer);
 					assert net.getIpLinks().stream().filter(WIpLink::isBundleMember).map(WIpLink::getNe).allMatch(e->e.getDemandsWithNonZeroForwardingRules().isEmpty());
 
-					// Remove the routed demands from the list of srDemands to represent that it is not pending routing
-					srRoutedDemands.removeAll(demands2Route4ThisFlexAlgo);
-
 				}
-
-				// The remaining  demands after the process could not be routed through SR, so convert them into classic OSPF and route them through its process
-				ospfRoutedDemands.addAll(srRoutedDemands.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toSet()));
 			} // end of segment routing
 
 

@@ -325,29 +325,25 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
 
 	/* Segment Routing information */
 
-	public boolean isSegmentRoutingActive() // if present set as segment routed, if not, do not set as SR
+	public boolean isSegmentRoutingActive() { return getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ENABLED, "").equals(String.valueOf(true)); }
+	public void setSegmentRoutingEnabled(boolean enable) // if present set as segment routed, if not, do not set as SR
 	{
-		return getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , "").equals(Boolean.valueOf(true).toString());
-	}
-	
-	public void setDemandAsSegmentRouted() // if present set as segment routed, if not, do not set as SR
-	{
-		getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
-		getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(true).toString());
+		if(enable)
+		{
+			getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ENABLED, String.valueOf(true));
+		}
+		else
+		{
+			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ENABLED, String.valueOf(false));
+			getNe().removeAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID);
+		}
+
 	}
 
-	public void notSetDemandAsSegmentRouted()
-	{
-		getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ISSEGMENTROUTED , Boolean.valueOf(false).toString());
-		getNe().removeAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID);
-		getNe().removeAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID);
-	}
 
-	public Optional<String> getSrSid () { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID)); }
-	public String getSrSidBeauty() { Optional<String> srSid = getSrSid(); return srSid.orElse(""); }
-	public void setSrSid (Optional<String> sid) { assert sid.isPresent(); getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_SID, sid.get());}
 	public Optional<String> getSrFlexAlgoId() { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID)); }
-	public String getSrFlexAlgoBeauty() { Optional<String> kId = getSrFlexAlgoId(); return kId.orElse(""); }
 	public void setFlexAlgoId (Optional<String> kId) { assert kId.isPresent(); getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID, kId.get()); }
+	public String getSrFlexAlgoBeauty() { Optional<String> kId = getSrFlexAlgoId(); return kId.orElse(""); }
 	
 }

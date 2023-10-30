@@ -117,7 +117,6 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             res.addAll(Niw_AdvancedJTable_demand.getMonitoringAndTrafficEstimationColumns(this).stream().map(c -> (AjtColumnInfo<Demand>) (AjtColumnInfo<?>) c).collect(Collectors.toList()));
             /* Segment Routing */
             res.add(new AjtColumnInfo<Demand>(this, Boolean.class, null, "SegmentRouted", "Shows whether the demand is being routed via SegmentRouting protocol", null, demand -> (toWIpUnicast.apply(demand)).isSegmentRoutingActive() , AGTYPE.NOAGGREGATION, null));
-            res.add(new AjtColumnInfo<Demand>(this, String.class, null, "SID", "Shows the demand associated SID", null, demand -> (toWIpUnicast.apply(demand)).getSrSidBeauty() , AGTYPE.NOAGGREGATION, null));
             res.add(new AjtColumnInfo<Demand>(this, String.class, null, "FlexAlgo", "Shows the FlexAlgo that will carry the demand", null, demand -> (toWIpUnicast.apply(demand)).getSrFlexAlgoBeauty() , AGTYPE.NOAGGREGATION, null));
         } else
         {
@@ -314,9 +313,9 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             }, (a, b) -> b > 0, null));
 
 
-            res.add(new AjtRcMenu("Set routing type of seleted IP unicast demands", null , (a,b)->b>0, Arrays.asList(
-                    new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e-> getSelectedElements().stream().filter(d->isWIpUnicast.apply(d)).forEach(dd->toWIpUnicast.apply (dd).setAsHopByHopRouted ()), (a,b)->b>0, null),
-                    new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e-> getSelectedElements().stream().filter(d->isWIpUnicast.apply(d)).forEach(dd->toWIpUnicast.apply (dd).setAsSourceRouted ()), (a,b)->b>0, null)
+            res.add(new AjtRcMenu("Set routing type of selected IP unicast demands", null , (a,b)->b>0, Arrays.asList(
+                    new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e-> getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(dd -> { dd.setSegmentRoutingEnabled(false); dd.setAsHopByHopRouted(); }), (a, b)->b>0, null),
+                    new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e-> getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(dd -> { dd.setSegmentRoutingEnabled(false); dd.setAsSourceRouted(); }), (a, b)->b>0, null)
             )));
 
             res.add(new AjtRcMenu("Set QoS type to selected elements", e->
@@ -335,29 +334,15 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                 );
             }, (a,b) -> b>0, null));
 
-//            asdjghagfsjhdg
+
             /* Set as segment routing */
-            res.add(new AjtRcMenu("Set as Segment Routed", null, (a, b) -> true, Arrays.asList(
-                    new AjtRcMenu("True", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::setDemandAsSegmentRouted); }, (a, b) -> true, null),
-                    new AjtRcMenu("False", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(WIpUnicastDemand::notSetDemandAsSegmentRouted); }, (a, b) -> true, null)
+            res.add(new AjtRcMenu("Segment Routing", null, (a, b) -> true, Arrays.asList(
+                    new AjtRcMenu("Enable", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(d -> { d.setSegmentRoutingEnabled(true); }); }, (a, b) -> true, null),
+                    new AjtRcMenu("Disable", items -> { getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(d -> { d.setSegmentRoutingEnabled(false); }); }, (a, b) -> true, null)
             )));
 
             res.add(new AjtRcMenu("Set FlexAlgo to the selected demands", f -> selectFlexAlgos( wNet.getNe(), getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).collect(Collectors.toSet())), (a, b) -> true, null));
 
-            res.add(new AjtRcMenu("Set associated SID to the selected demands", e ->{
-                    DialogBuilder.launch(
-                            "Set selected demands SID for Source Routing",
-                            "Please introduce the SID.",
-                            "",
-                            this,
-                            Arrays.asList(InputForDialog.inputTfInt ("SID", "Introduce the SID of the demands" , 1 , -1)),
-                            (list)->
-                            {
-                                final String sid = Integer.toString((Integer) list.get(0).get());
-                                getSelectedElements().stream().filter(isWIpUnicast::apply).map(toWIpUnicast).forEach(wdem -> wdem.setSrSid(Optional.of(sid)));
-                            }
-                    );
-                    }, (a, b) -> true, null));
 
 
             res.add(new AjtRcMenu("Set maximum e2e limit to selected unicast demands", e -> {
@@ -631,15 +616,14 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
     }
 
 
-    public static void selectFlexAlgos(NetPlan np, Set<WIpUnicastDemand> selectedLinks)
+    public static void selectFlexAlgos(NetPlan np, Set<WIpUnicastDemand> selectedDemands)
     {
         /* Calculation selector */
         Map<String, Integer> selectorMapToFlexId = new TreeMap<>();
         JComboBox<String> selectionBox = new WiderJComboBox<>();
         for(WFlexAlgo.FlexAlgoProperties flexAlgo : np.getFlexAlgoProperties())
         {
-            String nodesView = flexAlgo.getIncludedNodesAsNiceLookingString(np);
-            String infoString = "Flex Algo " + flexAlgo.getK() + ", weight type: " + flexAlgo.getWeightTypeString() + ", calculation type: " + flexAlgo.getCalculationString() + "(" + nodesView + ")";
+            String infoString = "Flex Algo " + flexAlgo.getK() + ", weight type: " + flexAlgo.getWeightTypeString() + ", calculation type: " + flexAlgo.getCalculationString();
             selectionBox.addItem(infoString);
             selectorMapToFlexId.put( infoString, flexAlgo.getK());
         }
@@ -669,7 +653,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             {
 
                 int k  = selectorMapToFlexId.get( (String) selectionBox.getSelectedItem() );
-                selectedLinks.forEach(dem -> { dem.setDemandAsSegmentRouted(); dem.setFlexAlgoId(Optional.of("" + k));});
+                selectedDemands.forEach(dem -> { dem.setSegmentRoutingEnabled(true); dem.setFlexAlgoId(Optional.of("" + k));});
 
             } catch (Exception e) {continue;}
 

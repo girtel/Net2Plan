@@ -109,7 +109,7 @@ public class WIpLink extends WAbstractNetworkElement
 	{
 		IPUtils.setLinkWeight(getNe () , newWeight);
 	}
-	public double getTeWeight() { return getNe().getAttributeAsDouble(WNetConstants.ATTRIBUTE_LINK_TE_WEIGHT, 0d);}
+	public double getTeWeight() { return getNe().getAttributeAsDouble(WNetConstants.ATTRIBUTE_LINK_TE_WEIGHT, 1d);}
 	public void setTeWeight (double newWeight) { assert newWeight > 0; getNe().setAttribute(WNetConstants.ATTRIBUTE_LINK_TE_WEIGHT, String.valueOf(newWeight)); }
 
 	
