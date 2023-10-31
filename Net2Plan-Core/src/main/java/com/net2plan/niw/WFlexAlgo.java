@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
-import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.utils.Pair;
 
 
@@ -76,7 +75,7 @@ public class WFlexAlgo
         {
             assert containsKey(oldK); assert !containsKey(newK);
             FlexAlgoProperties flex = mapFlexAlgoId2FlexAlgoProperties.get(oldK);
-            flex.flexAlgoIndentifier = newK;
+            flex.flexAlgoId = newK;
             addFlexAlgo(newK, Optional.of(flex));
             removeFlexAlgoPropertiesFromID(oldK);
         }
@@ -132,7 +131,7 @@ public class WFlexAlgo
         /* Properties */
         public int calculationType;
         public int weightType;
-        public int flexAlgoIndentifier;
+        public int flexAlgoId;
         public SortedSet<Long> linkIdsIncluded = new TreeSet<>();
 
 
@@ -143,7 +142,7 @@ public class WFlexAlgo
         {
             assert flexAlgoIndentifier > 0;
 
-            this.flexAlgoIndentifier = flexAlgoIndentifier;
+            this.flexAlgoId = flexAlgoIndentifier;
             this.calculationType = calculationType;
             this.weightType = weightType;
         }
@@ -152,10 +151,20 @@ public class WFlexAlgo
         {
             assert flexAlgoIndentifier > 0;
 
-            this.flexAlgoIndentifier = flexAlgoIndentifier;
+            this.flexAlgoId = flexAlgoIndentifier;
             this.calculationType = calculationType;
             this.weightType = weightType;
             ipLinkListIds.ifPresent(longs -> this.linkIdsIncluded = new TreeSet<>(longs));
+        }
+
+        public FlexAlgoProperties(FlexAlgoProperties flexA)
+        {
+            if(flexA == null) return;
+
+            this.flexAlgoId = flexA.flexAlgoId;
+            this.calculationType = flexA.calculationType;
+            this.weightType = flexA.weightType;
+            this.linkIdsIncluded = new TreeSet<>(flexA.linkIdsIncluded);
         }
 
         /* Checkers */
@@ -168,11 +177,13 @@ public class WFlexAlgo
         /* Modify properties content */
         /* Add */
         public FlexAlgoProperties addLink(Link e) { linkIdsIncluded.add(e.getId()); return this; }
+        public FlexAlgoProperties addLinkId(Long linkId) { this.linkIdsIncluded.add(linkId); return this; }
         public FlexAlgoProperties removeLink(Link e) { if(isLinkIncluded(e)) linkIdsIncluded.remove(e.getId()); return this; }
+        public FlexAlgoProperties removeLinkId(Long linkId) { linkIdsIncluded.remove(linkId); return this; }
         public FlexAlgoProperties removeAllLinks() { linkIdsIncluded.clear(); return this; }
 
         /* Set properties content */
-        public FlexAlgoProperties setK(int k) { if(k >= 128 && k <= 255) this.flexAlgoIndentifier = k; return this; }
+        public FlexAlgoProperties setK(int k) { if(k >= 128 && k <= 255) this.flexAlgoId = k; return this; }
         public FlexAlgoProperties setCalculationType(int calculationType) {this.calculationType = calculationType; return this; }
         public FlexAlgoProperties setWeightType(int weightType) {this.weightType = weightType; return this; }
         public FlexAlgoProperties setLinkIdsIncluded(Set<Long> linksIdsSet) { this.linkIdsIncluded = new TreeSet<>(linksIdsSet); return this; }
@@ -180,7 +191,7 @@ public class WFlexAlgo
 
         /* Get properties content */
         public SortedSet<Link> getLinksIncluded(NetPlan np) {return linkIdsIncluded.stream().map(np::getLinkFromId).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));}
-        public int getK() {return this.flexAlgoIndentifier;}
+        public int getK() {return this.flexAlgoId;}
         public int getCalculationType() {return this.calculationType;}
         public int getWeightType() {return this.weightType;}
 
