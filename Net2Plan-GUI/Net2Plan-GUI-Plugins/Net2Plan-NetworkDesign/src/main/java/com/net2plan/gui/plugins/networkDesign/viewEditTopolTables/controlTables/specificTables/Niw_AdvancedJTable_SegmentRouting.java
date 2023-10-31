@@ -154,15 +154,17 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
 
         /* Link selector */
         Map<String, WIpLink> stringRepresentative = new TreeMap<>();
-        Set<WIpLink> uniLinks = computeUnidiLinks(wNet);
-        uniLinks.forEach(l -> {
-            String representative = l.getA().getName() + " <-> " + l.getB().getName();
+        ArrayList<WIpLink> linkIndexes = new ArrayList<>(wNet.getIpLinks());
+        wNet.getIpLinks().forEach(l -> {
+            String representative = l.getA().getName() + "\t -> \t" + l.getB().getName();
             stringRepresentative.put(representative, l);
         });
         JList<String> linkList = new JList<>(stringRepresentative.keySet().toArray(new String[0]));
         linkList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION); linkList.setLayoutOrientation(JList.VERTICAL); linkList.setVisibleRowCount(-1);
         JScrollPane linkListScroller = new JScrollPane(linkList);
         linkListScroller.setPreferredSize(new Dimension(500, 700));
+
+
 
 
 
@@ -177,8 +179,9 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
             mainPanel.add(weightPanel);
         }
 
-        mainPanel.add(new JLabel("IpLinks included in the FlexAlgo (bidirectional links)"));
+        mainPanel.add(new JLabel("IpLinks included in the FlexAlgo"));
         mainPanel.add(linkListScroller);
+        mainPanel.add(new JLabel("Selecting one direction of the link will automatically add the other direction"));
 
 
 
@@ -217,6 +220,12 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
             public void setValueIsAdjusting(boolean isAdjusting) {if (!isAdjusting) gestureStarted = false;}
 
         });
+
+        if(!isNew)
+        {
+            SortedSet<Link> linksSelected = editingFlexAlgo.get().first().getLinksIncluded(netPlan);
+            linksSelected.stream().map(wNet::getWElement).map(linkIndexes::indexOf).forEach(linkList::setSelectedIndex);
+        }
 
 
 
@@ -277,18 +286,5 @@ public class Niw_AdvancedJTable_SegmentRouting extends AdvancedJTable_networkEle
         }
 
 
-    }
-
-    private static Set<WIpLink> computeUnidiLinks(WNet net)
-    {
-        List<WIpLink> links = net.getIpLinks();
-        Set<WIpLink> linksOneDirectional = new HashSet<>();
-
-        for(WIpLink link : links)
-        {
-            if(linksOneDirectional.contains(link)) continue;
-            linksOneDirectional.add(net.getNodePairIpLinks(link.getB(), link.getA()).first());
-        }
-        return linksOneDirectional;
     }
 }
