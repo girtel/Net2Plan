@@ -65,6 +65,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 	{
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
+		System.out.println(algorithmParameters.toString());
 		
 		final WNet net = new WNet (np);
 		net.updateNetPlanObjectInternalState();
@@ -77,65 +78,78 @@ public class DefaultStatelessSimulator implements IAlgorithm
 
 			final SortedSet<Demand> ospfRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpHopByHopRouted()).filter(d-> !d.isSegmentRoutingActive()).map(d->d.getNe()).collect(Collectors.toCollection(TreeSet::new));
 			final List<Demand> mplsTeRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpSourceRouted()).map(d->d.getNe()).collect(Collectors.toList());
-			final List<WIpUnicastDemand> srRoutedDemands = net.getIpUnicastDemands().stream().filter(WIpUnicastDemand::isIpHopByHopRouted).filter(WIpUnicastDemand::isSegmentRoutingActive).map(WAbstractIpUnicastOrAnycastDemand::getNe).map(toWIpUnicast).collect(Collectors.toList());
+			final List<WIpUnicastDemand> srRoutedDemands = net.getIpUnicastDemands().stream().filter(WIpUnicastDemand::isSegmentRoutingActive).collect(Collectors.toList());
 
 
 
-
-
-
-			/* Routing according to SegmentRouting */
+			/* Routing according to SegmentRouting & Flexible Algorithms */
 			if(!srRoutedDemands.isEmpty())
 			{
-
 				Optional<WFlexAlgo.FlexAlgoRepository> optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
-				if(!optionalFlexRepo.isPresent())
-				{
-//					srRoutedDemands.forEach(d -> d.setFlexAlgoId(Optional.of("0")));
-					net.initializeFlexAlgoAttributes();
-					optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
-				}
-
 				assert optionalFlexRepo.isPresent();
 
+				// Previous work to ensure demands are not routed through links to virtual nodes of NIW
+				List<Link> allLinks = new ArrayList<>(net.getNe().getLinks());
+				List<Long> allIpLinks = net.getIpLinks().stream().map(WIpLink::getId).collect(Collectors.toList());
+				List<Link> niwVirtualLinks =  allLinks.stream().filter(l -> !allIpLinks.contains(l.getId())).collect(Collectors.toList());
 
 
-				// When corrected all errors, for each flex algo route all demands creating a Forwarding Rule and removing the demand from srRoutedDemands
-				for(WFlexAlgo.FlexAlgoProperties flexAlgo : optionalFlexRepo.get().mapFlexAlgoId2FlexAlgoProperties.values())
+				// Map all the flex algos that a link can support. By default, all links support all flex algos, except the case
+				// where a FlexAlgo explicitly contains a link. In that case, link should only support those flex algos that have
+				// explicitly associated them.
+				Map<Link, List<Integer>> associatedFlexToLinks = new HashMap<>();
+				for(WFlexAlgo.FlexAlgoProperties flex: optionalFlexRepo.get().getAll())
 				{
-					final Set<WIpUnicastDemand> demands2Route4ThisFlexAlgo = srRoutedDemands.stream().filter(d -> d.getSrFlexAlgoId().isPresent() && d.getSrFlexAlgoId().get().equals( String.valueOf(flexAlgo.getK()) )).collect(Collectors.toSet());
+					List<WIpLink> linksForFlexAlgo = flex.getLinksIncluded(net.getNe()) .stream().map(d -> (WIpLink) net.getWElement(d).get()) .collect(Collectors.toList());
+					for(WIpLink l: linksForFlexAlgo)
+					{
+						if(!associatedFlexToLinks.containsKey(l.getNe())) associatedFlexToLinks.put(l.getNe(), new ArrayList<>());
+						associatedFlexToLinks.get(l.getNe()).add(flex.getK());
+					}
+				}
 
+
+				// Obtain link vector weight for each flex algo
+				Map<Integer, DoubleMatrix1D> flexAlgoWeightVector = new HashMap<>();
+				for(WFlexAlgo.FlexAlgoProperties flexAlgo: optionalFlexRepo.get().getAll())
+				{
+					DoubleMatrix1D linkWeightVector = DoubleFactory1D.dense.make(allLinks.size());
+					for(Link link: allLinks)
+					{
+						double finalWeight = Double.MAX_VALUE;
+
+						final boolean linkIsVirtual = niwVirtualLinks.contains(link);
+						final boolean linkIsRestricted = associatedFlexToLinks.containsKey(link) && !associatedFlexToLinks.get(link).contains(flexAlgo.getK());
+
+						if(!linkIsVirtual && !linkIsRestricted)
+						{
+							switch (flexAlgo.getWeightType())
+							{
+								case WFlexAlgo.WEIGHT_IGP: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
+								case WFlexAlgo.WEIGHT_LATENCY: { finalWeight = link.getPropagationDelayInMs(); break; }
+								case WFlexAlgo.WEIGHT_TE: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getTeWeight(); break; }
+							}
+						}
+
+						linkWeightVector.set(allLinks.indexOf(link), finalWeight);
+					}
+					flexAlgoWeightVector.put(flexAlgo.getK(), linkWeightVector);
+				}
+
+
+				// Routing indeed
+				for(WFlexAlgo.FlexAlgoProperties flex: optionalFlexRepo.get().getAll())
+				{
+					final Set<WIpUnicastDemand> demands2Route4ThisFlexAlgo = srRoutedDemands.stream().filter(d -> d.getSrFlexAlgoId().isPresent() && d.getSrFlexAlgoId().get().equals( String.valueOf(flex.getK()) )).collect(Collectors.toSet());
 					if(demands2Route4ThisFlexAlgo.isEmpty()) continue;
 
 					final Set<Demand> routingDemands = demands2Route4ThisFlexAlgo.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toSet());
-
-					List<Link> allLinks = net.getNe().getLinks();
-					Set<Link> linksIncluded = flexAlgo.getLinksIncluded(np);
-					Set<Link> linksExcluded = new TreeSet<>(allLinks);
-					linksExcluded.removeAll(linksIncluded);
-
-					DoubleMatrix1D linkWeightVector = DoubleFactory1D.dense.make(allLinks.size());
-					for(Link link: linksIncluded)
-					{
-						double finalWeight = Double.MAX_VALUE;
-						switch (flexAlgo.getWeightType())
-						{
-							case WFlexAlgo.WEIGHT_IGP: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
-							case WFlexAlgo.WEIGHT_LATENCY: { finalWeight = link.getPropagationDelayInMs(); break; }
-							case WFlexAlgo.WEIGHT_TE: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getTeWeight(); break; }
-						}
-						linkWeightVector.set(allLinks.indexOf(link), finalWeight);
-					}
-
-					if(!linksExcluded.isEmpty())
-						for(Link link: linksExcluded) linkWeightVector.set(allLinks.indexOf(link), Double.MAX_VALUE);
-							// every link not included must not be taken in consideration to calculate SPF -> max restriction possible
-
+					final DoubleMatrix1D linkWeightVector = flexAlgoWeightVector.get(flex.getK());
 
 					IPUtils.setECMPForwardingRulesFromLinkWeights(np, linkWeightVector, routingDemands, ipLayer);
 					assert net.getIpLinks().stream().filter(WIpLink::isBundleMember).map(WIpLink::getNe).allMatch(e->e.getDemandsWithNonZeroForwardingRules().isEmpty());
-
 				}
+
 			} // end of segment routing
 
 

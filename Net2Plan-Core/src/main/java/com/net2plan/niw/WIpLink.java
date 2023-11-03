@@ -486,4 +486,9 @@ public class WIpLink extends WAbstractNetworkElement
 	@Override
 	public WTYPE getWType() { return WTYPE.WIpLink; }
 
+
+
+	/* Segment Routing information */
+
+
 }
