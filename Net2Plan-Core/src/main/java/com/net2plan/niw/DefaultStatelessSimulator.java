@@ -65,7 +65,6 @@ public class DefaultStatelessSimulator implements IAlgorithm
 	{
 		/* Initialize all InputParameter objects defined in this object (this uses Java reflection) */
 		InputParameter.initializeAllInputParameterFieldsOfObject(this, algorithmParameters);
-		System.out.println(algorithmParameters.toString());
 		
 		final WNet net = new WNet (np);
 		net.updateNetPlanObjectInternalState();
@@ -253,7 +252,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 	{
 		final DefaultStatelessSimulator alg = new DefaultStatelessSimulator(); 
 		final Map<String,String> params = InputParameter.getDefaultParameters(alg.getParameters());
-		if (mplsTeTunnelType.isPresent()) params.put("mplsTeTunnelType", mplsTeTunnelType.get());
+        mplsTeTunnelType.ifPresent(s -> params.put("mplsTeTunnelType", s));
 		alg.executeAlgorithm(wNet.getNe(), params , new HashMap<> ());
 	}
 	

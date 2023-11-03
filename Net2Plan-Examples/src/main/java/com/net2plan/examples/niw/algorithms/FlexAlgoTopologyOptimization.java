@@ -28,9 +28,6 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
         final double costPerMs = Double.parseDouble(algorithmParameters.get("costPerMs"));
 
 
-
-
-
         final WNet net = new WNet (netPlan);
 
 
@@ -107,6 +104,7 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
             final List<WIpUnicastDemand> demands = net.getIpUnicastDemands();
             final List<WIpUnicastDemand> demandsOfSrWithTmax = net.getIpUnicastDemands().stream().filter(WIpUnicastDemand::isSegmentRoutingActive).filter(d -> d.getMaximumAcceptableE2EWorstCaseLatencyInMs() != Double.MAX_VALUE).collect(Collectors.toList());
 
+            if(demandsOfSrWithTmax.isEmpty()) cost = Double.MAX_VALUE; // assert that solutions that do not have demands with SR are not selected as good ones
 
             /* Calculate the main objective function cost */
             for(WIpUnicastDemand d: demandsOfSrWithTmax) cost += d.getWorstCaseEndtoEndLatencyMs()*costPerMs;
