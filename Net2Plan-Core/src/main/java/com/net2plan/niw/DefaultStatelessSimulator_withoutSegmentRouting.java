@@ -11,19 +11,33 @@ package com.net2plan.niw;
  *******************************************************************************/
 
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import cern.colt.matrix.tdouble.DoubleFactory1D;
-import com.net2plan.interfaces.networkDesign.*;
+import com.net2plan.interfaces.networkDesign.Configuration;
+import com.net2plan.interfaces.networkDesign.Demand;
+import com.net2plan.interfaces.networkDesign.IAlgorithm;
+import com.net2plan.interfaces.networkDesign.Link;
+import com.net2plan.interfaces.networkDesign.NetPlan;
+import com.net2plan.interfaces.networkDesign.NetworkLayer;
+import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
+import cern.colt.function.tdouble.DoubleDoubleFunction;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 
 /** 
@@ -42,7 +56,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  * See the technology conventions used in Net2Plan built-in algorithms and libraries to represent IP/OSPF networks. 
  * @author Pablo Pavon-Marino
  */
-public class DefaultStatelessSimulator implements IAlgorithm
+public class DefaultStatelessSimulator_withoutSegmentRouting implements IAlgorithm
 {
 	private InputParameter mplsTeTunnelType = new InputParameter ("mplsTeTunnelType", "#select# cspf-dynamic 1+1-FRR-link-disjoint" , "The type of path computation for MPLS-TE tunnels");
 
@@ -72,87 +86,10 @@ public class DefaultStatelessSimulator implements IAlgorithm
 		if (net.isWithIpLayer())
 		{
 			final NetworkLayer ipLayer = net.getIpLayer().get().getNe();
-			final Function<Demand, WIpUnicastDemand> toWIpUnicast = d -> (WIpUnicastDemand) net.getWElement(d).get();
-			final Function<Node, WNode> toWnode = n ->  (WNode) net.getWElement(n).get();
 
-			final SortedSet<Demand> ospfRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpHopByHopRouted()).filter(d-> !d.isSegmentRoutingActive()).map(d->d.getNe()).collect(Collectors.toCollection(TreeSet::new));
+			final SortedSet<Demand> ospfRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpHopByHopRouted()).map(d->d.getNe()).collect(Collectors.toCollection(TreeSet::new));
 			final List<Demand> mplsTeRoutedDemands = net.getIpUnicastDemands().stream().filter(d->d.isIpSourceRouted()).map(d->d.getNe()).collect(Collectors.toList());
-			final List<WIpUnicastDemand> srRoutedDemands = net.getIpUnicastDemands().stream().filter(WIpUnicastDemand::isSegmentRoutingActive).collect(Collectors.toList());
-
-
-
-			/* Routing according to SegmentRouting & Flexible Algorithms */
-			if(!srRoutedDemands.isEmpty())
-			{
-				Optional<WFlexAlgo.FlexAlgoRepository> optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
-				assert optionalFlexRepo.isPresent();
-
-				// Previous work to ensure demands are not routed through links to virtual nodes of NIW
-				List<Link> allLinks = new ArrayList<>(net.getNe().getLinks());
-				List<Long> allIpLinks = net.getIpLinks().stream().map(WIpLink::getId).collect(Collectors.toList());
-				List<Link> niwVirtualLinks =  allLinks.stream().filter(l -> !allIpLinks.contains(l.getId())).collect(Collectors.toList());
-
-
-				// Map all the flex algos that a link can support. By default, all links support all flex algos, except the case
-				// where a FlexAlgo explicitly contains a link. In that case, link should only support those flex algos that have
-				// explicitly associated them.
-				Map<Link, List<Integer>> associatedFlexToLinks = new HashMap<>();
-				for(WFlexAlgo.FlexAlgoProperties flex: optionalFlexRepo.get().getAll())
-				{
-					List<WIpLink> linksForFlexAlgo = flex.getLinksIncluded(net.getNe()) .stream().map(d -> (WIpLink) net.getWElement(d).get()) .collect(Collectors.toList());
-					for(WIpLink l: linksForFlexAlgo)
-					{
-						if(!associatedFlexToLinks.containsKey(l.getNe())) associatedFlexToLinks.put(l.getNe(), new ArrayList<>());
-						associatedFlexToLinks.get(l.getNe()).add(flex.getK());
-					}
-				}
-
-
-				// Obtain link vector weight for each flex algo
-				Map<Integer, DoubleMatrix1D> flexAlgoWeightVector = new HashMap<>();
-				for(WFlexAlgo.FlexAlgoProperties flexAlgo: optionalFlexRepo.get().getAll())
-				{
-					DoubleMatrix1D linkWeightVector = DoubleFactory1D.dense.make(allLinks.size());
-					for(Link link: allLinks)
-					{
-						double finalWeight = Double.MAX_VALUE;
-
-						final boolean linkIsVirtual = niwVirtualLinks.contains(link);
-						final boolean linkIsRestricted = associatedFlexToLinks.containsKey(link) && !associatedFlexToLinks.get(link).contains(flexAlgo.getK());
-
-						if(!linkIsVirtual && !linkIsRestricted)
-						{
-							switch (flexAlgo.getWeightType())
-							{
-								case WFlexAlgo.WEIGHT_IGP: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
-								case WFlexAlgo.WEIGHT_LATENCY: { finalWeight = link.getPropagationDelayInMs(); break; }
-								case WFlexAlgo.WEIGHT_TE: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getTeWeight(); break; }
-							}
-						}
-
-						linkWeightVector.set(allLinks.indexOf(link), finalWeight);
-					}
-					flexAlgoWeightVector.put(flexAlgo.getK(), linkWeightVector);
-				}
-
-
-				// Routing indeed
-				for(WFlexAlgo.FlexAlgoProperties flex: optionalFlexRepo.get().getAll())
-				{
-					final Set<WIpUnicastDemand> demands2Route4ThisFlexAlgo = srRoutedDemands.stream().filter(d -> d.getSrFlexAlgoId().isPresent() && d.getSrFlexAlgoId().get().equals( String.valueOf(flex.getK()) )).collect(Collectors.toSet());
-					if(demands2Route4ThisFlexAlgo.isEmpty()) continue;
-
-					final Set<Demand> routingDemands = demands2Route4ThisFlexAlgo.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toSet());
-					final DoubleMatrix1D linkWeightVector = flexAlgoWeightVector.get(flex.getK());
-
-					IPUtils.setECMPForwardingRulesFromLinkWeights(np, linkWeightVector, routingDemands, ipLayer);
-					assert net.getIpLinks().stream().filter(WIpLink::isBundleMember).map(WIpLink::getNe).allMatch(e->e.getDemandsWithNonZeroForwardingRules().isEmpty());
-				}
-
-			} // end of segment routing
-
-
-
+			
 			/* IP route according to MPLS-TE the demands that are like that */
 			if (!ospfRoutedDemands.isEmpty())
 			{
@@ -166,12 +103,8 @@ public class DefaultStatelessSimulator implements IAlgorithm
 				}
 				IPUtils.setECMPForwardingRulesFromLinkWeights(np , linkIGPWeightSetting  , ospfRoutedDemands , ipLayer);
 				assert net.getIpLinks().stream().filter(e->e.isBundleMember()).map(e->e.getNe()).allMatch(e->e.getDemandsWithNonZeroForwardingRules().isEmpty());
-			} // end of osp routing
-
-
-
-
-
+			}
+			
 			/* To account for the occupation of IP links because of MPLS-TE tunnels */
 			final int E = np.getNumberOfLinks(ipLayer);
 			final double [] occupiedBwPerLinks = new double [E]; 
@@ -179,7 +112,6 @@ public class DefaultStatelessSimulator implements IAlgorithm
 			final BiConsumer<Collection<Link> , Double> reserveBwInLinks = (l,t)->{ for (Link e : l) occupiedBwPerLinks[e.getIndex ()] += t; }; 
 			final boolean isCspf = mplsTeTunnelType.getString().equals("cspf-dynamic");
 			final boolean is11FrrLinkDisjoint = !isCspf;
-
 			/* Routing of MPLS-TE traffic */
 			for (Demand d : mplsTeRoutedDemands)
 			{
@@ -242,7 +174,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
 						r2.setCarriedTraffic(0, bwtoReserve);
 					}
 				} else throw new RuntimeException ();
-			} // end of mpls routing
+			}
 		}
 		
 		return "";
@@ -250,9 +182,9 @@ public class DefaultStatelessSimulator implements IAlgorithm
 
 	public static void run (WNet wNet , Optional<String> mplsTeTunnelType)
 	{
-		final DefaultStatelessSimulator alg = new DefaultStatelessSimulator(); 
+		final DefaultStatelessSimulator_withoutSegmentRouting alg = new DefaultStatelessSimulator_withoutSegmentRouting(); 
 		final Map<String,String> params = InputParameter.getDefaultParameters(alg.getParameters());
-        mplsTeTunnelType.ifPresent(s -> params.put("mplsTeTunnelType", s));
+		if (mplsTeTunnelType.isPresent()) params.put("mplsTeTunnelType", mplsTeTunnelType.get());
 		alg.executeAlgorithm(wNet.getNe(), params , new HashMap<> ());
 	}
 	

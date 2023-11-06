@@ -25,8 +25,12 @@ import java.awt.*;
  * @author Pablo Pavon-Marino, Jose-Luis Izquierdo-Zaragoza
  * @since 0.2.0
  */
-public class WiderJComboBox extends JComboBox {
+public class WiderJComboBox<T> extends JComboBox<T> {
     private boolean layingOut = false;
+
+
+    public WiderJComboBox() {}
+    public WiderJComboBox(T[] list) { super(list); }
 
     @Override
     public void doLayout() {

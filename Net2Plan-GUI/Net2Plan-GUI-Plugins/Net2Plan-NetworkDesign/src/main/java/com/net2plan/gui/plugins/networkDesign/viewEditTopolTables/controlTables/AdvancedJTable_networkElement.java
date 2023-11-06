@@ -89,13 +89,14 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     }
 
     public boolean isForwardingRulesTable () { return ajtType == AJTableType.FORWARDINGRULES; }
+	public boolean isNetworkElement () { return !ajtType.isExcludedFromNetworkElements(); }
     
     @Override
     protected void addExtendedKeyboardActions()
     {
         final InputMap inputMap = this.getInputMap();
         final ActionMap actionMap = this.getActionMap();
-        if (!isForwardingRulesTable())
+        if (isNetworkElement())
         {
 	        final AbstractAction pickElementAction = new AbstractAction()
 	        {
@@ -363,7 +364,7 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
         final List<T> visibleElementsInTable = this.getAllAbstractElementsInTable();
         final List<AjtRcMenu> allPopupMenusButView = new ArrayList<> ();
         if (viewMenu.isPresent()) allPopupMenusButView.add(viewMenu.get());
-        if (!isForwardingRulesTable())
+		if (isNetworkElement())
         {
 	        allPopupMenusButView.add(new AjtRcMenu("Pick selection", e-> SwingUtilities.invokeLater(() -> pickSelection(this.getSelectedElements())), (a,b)->b>0, null));
 	        allPopupMenusButView.addAll(getFilterMenuOption ());
@@ -389,8 +390,8 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 	        allPopupMenusButView.add(AjtRcMenu.createMenuSeparator());
         }
         allPopupMenusButView.addAll(getNonBasicRightClickMenusInfo());
-        
-        if (!isForwardingRulesTable())
+
+		if (isNetworkElement())
         {
             allPopupMenusButView.add(AjtRcMenu.createMenuSeparator());
             allPopupMenusButView.add(getMenuAttributes());
@@ -459,14 +460,14 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
     {
     	final boolean isNiwOk = callback.getVisualizationState().isNiwDesignButtonActive() && callback.isNiwValidCurrentDesign();
         final List<AjtColumnInfo<T>> completeListIncludingCommonColumns = new ArrayList<> ();
-        if (!this.isForwardingRulesTable())
+		if (isNetworkElement())
         {
             completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, Long.class, null, "Id", "Unique identifier (never repeated in any other network element)", null , e->((NetworkElement)e).getId() , AGTYPE.NOAGGREGATION , null));
             completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, Integer.class, null , "Index", "Index (consecutive integer starting in zero)", null , e->((NetworkElement)e).getIndex () , AGTYPE.NOAGGREGATION , null));
         }
         completeListIncludingCommonColumns.addAll(getNonBasicUserDefinedColumnsVisibleOrNot());
 
-        if (!this.isForwardingRulesTable())
+		if (isNetworkElement())
         {
     		if (isNiwOk)
     			completeListIncludingCommonColumns.add(new AjtColumnInfo<T>(this, String.class, null , "Tags", "User-defined tags associated to this element", null , e->((NetworkElement)e).getTags().stream().filter(ee->!ee.startsWith(WAbstractNetworkElement.NIWNAMEPREFIX)).collect(Collectors.joining(",")) , AGTYPE.NOAGGREGATION , null));
@@ -516,9 +517,9 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
         if (value instanceof NetworkElement)
         {
         	/* Add element this row to pick navigator list */
-        	if (!isForwardingRulesTable())
+			if (isNetworkElement())
         		pm.pickElements(pm.new PickStateInfo((NetworkElement) elementThisRow , Optional.of(this.getTableNetworkLayer())));
-        	else
+        	else if(isForwardingRulesTable())
         		pm.pickElements(pm.new PickStateInfo((Pair<Demand,Link>) elementThisRow , Optional.of(this.getTableNetworkLayer())));
 
         	pm.pickElements(pm.new PickStateInfo((NetworkElement) value , Optional.empty()));
@@ -533,9 +534,9 @@ public abstract class AdvancedJTable_networkElement <T> extends AdvancedJTable_a
 			if (firstElement instanceof NetworkElement)
 			{
 	        	/* Add element this row to pick navigator list */
-	        	if (!isForwardingRulesTable())
+				if (isNetworkElement())
 	        		pm.pickElements(pm.new PickStateInfo((NetworkElement) elementThisRow , Optional.of(this.getTableNetworkLayer())));
-	        	else
+	        	else if(isForwardingRulesTable())
 	        		pm.pickElements(pm.new PickStateInfo((Pair<Demand,Link>) elementThisRow , Optional.of(this.getTableNetworkLayer())));
 				
 				final List<NetworkElement> es = new ArrayList<>();

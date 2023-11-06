@@ -55,7 +55,10 @@ public class JNumberField extends JSpinner
 
             double number = Double.parseDouble(value.toString());
 
-            if (!(model.getMaximum().compareTo(number) >= 0 && model.getMinimum().compareTo(number) <= 0))
+            Double max = (Double) model.getMaximum();
+            Double min = (Double) model.getMinimum();
+
+            if (!(max.compareTo(number) >= 0 && min.compareTo(number) <= 0))
                 throw new IllegalArgumentException();
         }
 

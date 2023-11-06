@@ -119,6 +119,7 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
 		      res.add(new AjtColumnInfo<Link>(this , NetworkElement.class, null , "Parent LAG", "If the IP link is member of a LAG, indicates the parent LAG IP link.", null , d->toWIpLink.apply(d).isBundleMember()? toWIpLink.apply(d).getBundleParentIfMember().getNe () : "--" , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "LAG members", "If the IP link is a LAG bundle, this column links to the LAG members.", null , d->toWIpLink.apply(d).isBundleOfIpLinks()? toWIpLink.apply(d).getBundledIpLinks().stream().map(e->e.getNe()).collect (Collectors.toList()) : "--" , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "IGP weight", "The strictly positive weight to be used for IGP routing calculations", (d,val)->toWIpLink.apply(d).setIgpWeight((Double) val) , d->toWIpLink.apply(d).isBundleMember()? "--" : toWIpLink.apply(d).getIgpWeight() , AGTYPE.NOAGGREGATION, null));
+		      res.add(new AjtColumnInfo<Link>(this , Double.class, null , "TE weight", "The strictly positive weight to be used as TE metric for routing calculations", (d,val)->toWIpLink.apply(d).setTeWeight((Double) val) , d->toWIpLink.apply(d).isBundleMember()? "--" : toWIpLink.apply(d).getTeWeight() , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. Unicast demands", "Unicast demands routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingIpUnicastDemands().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. IP connections", "IP source routed connections routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingIpUnicastDemands().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
 		      res.add(new AjtColumnInfo<Link>(this , Collection.class, null , "Trav. SCs", "Service chains routed through this IP link (empty for bundle members)", null , d->toWIpLink.apply(d).getTraversingServiceChains().stream().map(e->e.getNe()).collect(Collectors.toList()) , AGTYPE.NOAGGREGATION, null));
@@ -570,6 +571,87 @@ public class Niw_AdvancedJTable_link extends AdvancedJTable_networkElement<Link>
                                 	}
                                 );
                     } , (a,b)->b>0, null) 
+            		)));
+
+
+
+			res.add(new AjtRcMenu("Set TE link weights of selected links", null , (a, b)->true, Arrays.asList(
+            		new AjtRcMenu("as constant value", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set TE weight as constant value" ,
+                                "Please introduce the TE weight for the selected links. Non-positive values are not allowed.",
+                                "",
+                                this,
+                                Arrays.asList(InputForDialog.inputTfDouble("TE weight", "Introduce the TE weight for selected links", 10, 1.0)),
+                                (list)->
+                                	{
+                                		final double newLinWeight = (Double) list.get(0).get();
+                                		if (newLinWeight <= 0) throw new Net2PlanException ("IGP weights must be strictly positive");
+                                		getSelectedElements().stream().map(ee->toWIpLink.apply(ee)).forEach(ee->ee.setTeWeight(newLinWeight));
+                                	}
+                                );
+                    } , (a,b)->b>0, null) ,
+            		new AjtRcMenu("proportional to link latency", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set TE weight proportional to latency" ,
+                                "Please introduce the information required for computing the TE weight.",
+                                "",
+                                this,
+                                Arrays.asList(
+                                		InputForDialog.inputTfDouble("TE weight to links of minimum latency", "Introduce the TE weight to assign to the links of the minimum latency among the selected ones. TE weight must be strictly positive.", 10, 1.0),
+                                		InputForDialog.inputTfDouble("TE weight to links of maximum latency", "Introduce the TE weight to assign to the links of the maximum latency among the selected ones, TE weight must be strictly positive.", 10, 10.0),
+                                		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
+                                		),
+                                (list)->
+                                	{
+                                    	final double minLatency = getSelectedElements().stream().mapToDouble(ee->toWIpLink.apply(ee).getWorstCasePropagationDelayInMs()).min().orElse(0.0);
+                                    	final double maxLatency = getSelectedElements().stream().mapToDouble(ee->toWIpLink.apply(ee).getWorstCasePropagationDelayInMs()).max().orElse(0.0);
+                                    	final double difLatency = maxLatency - minLatency;
+                                		final double minLatencyWeight = (Double) list.get(0).get();
+                                		final double maxLatencyWeight = (Double) list.get(1).get();
+                                		final boolean roundToInteger = (Boolean) list.get(2).get();
+                                		final double difWeight = maxLatencyWeight - minLatencyWeight;
+                                		if (minLatencyWeight <= 0 || maxLatencyWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                            			for (Link linkNp : getSelectedElements())
+                            			{
+                            				final WIpLink ee = toWIpLink.apply(linkNp);
+                            				double linkWeight = difLatency == 0? minLatencyWeight : minLatencyWeight + difWeight * (ee.getWorstCasePropagationDelayInMs() - minLatency) / difLatency;
+                            				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
+                            				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                            				ee.setTeWeight(linkWeight);
+                            			}
+                                	}
+                                );
+                    } , (a,b)->b>0, null) ,
+            		new AjtRcMenu("inversely proportional to capacity", e->
+                    {
+                        DialogBuilder.launch(
+                                "Set TE weight inversely proportional to link capacity" ,
+                                "Please introduce the information required for computing the TE weight.",
+                                "",
+                                this,
+                                Arrays.asList(
+                                		InputForDialog.inputTfDouble("Reference bandwidth (to assign TE weight one)", "Introduce the reference bandwidth (REFBW), measured in the same units as the traffic. TE weight of link of capacity c is REFBW/c. REFBW must be positive", 10, 0.1),
+                                		InputForDialog.inputCheckBox("Round the weights to closest integer?", "If cheked, the weights will be rounded to the closest integer, with a minimum value of one.", true, null)
+                                		),
+                                (list)->
+                                	{
+                                		final double refBw = (Double) list.get(0).get();
+                                		final boolean roundToInteger = (Boolean) list.get(1).get();
+                                		if (refBw <= 0) throw new Net2PlanException ("The reference bandwidth must be positive");
+                            			for (Link eeNp : getSelectedElements())
+                            			{
+                            				final WIpLink ee = toWIpLink.apply(eeNp);
+                            				double linkWeight = ee.getCurrentCapacityGbps() == 0? Double.MAX_VALUE : refBw / ee.getCurrentCapacityGbps();
+                            				if (roundToInteger) linkWeight = Math.max(1, Math.round(linkWeight));
+                            				if (linkWeight <= 0) throw new Net2PlanException ("Weights must be positive");
+                            				ee.setTeWeight(linkWeight);
+                            			}
+                                	}
+                                );
+                    } , (a,b)->b>0, null)
             		)));
             
             res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(

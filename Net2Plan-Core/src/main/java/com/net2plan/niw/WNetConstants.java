@@ -25,6 +25,11 @@ public class WNetConstants
 	public static final String ipLayerName = "IP";
 	public static final String wdmLayerName = "WDM";
 	
+	public static final String ATTRIBUTE_DEMAND_SR_ENABLED = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSr_enabled";
+	public static final String ATTRIBUTE_DEMAND_SR_KID = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSr_kId";
+	public static final String ATTRIBUTE_FLEXALGO_REPOSITORY = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSr_flexAlgoInfo";
+	public static final String ATTRIBUTE_LINK_TE_WEIGHT = WAbstractNetworkElement.NIWNAMEPREFIX + "ifSr_teMetric";
+	
 
 	public static final String TAG_NETPLAN_ISNIWDESIGN = WAbstractNetworkElement.NIWNAMEPREFIX + "isNiwDesign";
 	

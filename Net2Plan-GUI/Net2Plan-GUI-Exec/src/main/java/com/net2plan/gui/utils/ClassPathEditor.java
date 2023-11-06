@@ -174,6 +174,8 @@ public class ClassPathEditor {
                     throw new RuntimeException(ex);
                 }
 
+                System.out.println("Path: " + path);
+
                 path = path.replace(currentPath.toString(), "");
                 path = path.replace("/", SystemUtils.getDirectorySeparator());
 

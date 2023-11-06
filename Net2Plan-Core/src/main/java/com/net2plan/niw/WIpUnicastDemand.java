@@ -17,11 +17,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.jgrapht.graph.DirectedAcyclicGraph;
-
 import com.net2plan.interfaces.networkDesign.Configuration;
 import com.net2plan.interfaces.networkDesign.Demand;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.Net2PlanException;
 import com.net2plan.interfaces.networkDesign.Route;
 import com.net2plan.niw.WNetConstants.WTYPE;
@@ -320,6 +317,33 @@ public class WIpUnicastDemand extends WAbstractIpUnicastOrAnycastDemand
                 return longestPathSoFarIngressToNode.apply(egressNode , costFunction);
         } while (true);
     }
-	
+
+
+
+
+
+
+	/* Segment Routing information */
+
+	public boolean isSegmentRoutingActive() { return getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ENABLED, "").equals(String.valueOf(true)); }
+	public void setSegmentRoutingEnabled(boolean enable) // if present set as segment routed, if not, do not set as SR
+	{
+		if(enable)
+		{
+			getNe().setRoutingType(RoutingType.HOP_BY_HOP_ROUTING);
+			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ENABLED, String.valueOf(true));
+		}
+		else
+		{
+			getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_ENABLED, String.valueOf(false));
+			getNe().removeAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID);
+		}
+
+	}
+
+
+	public Optional<String> getSrFlexAlgoId() { return Optional.ofNullable(getNe().getAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID)); }
+	public void setFlexAlgoId (Optional<String> kId) { assert kId.isPresent(); getNe().setAttribute(WNetConstants.ATTRIBUTE_DEMAND_SR_KID, kId.get()); }
+	public String getSrFlexAlgoBeauty() { Optional<String> kId = getSrFlexAlgoId(); return kId.orElse(""); }
 	
 }

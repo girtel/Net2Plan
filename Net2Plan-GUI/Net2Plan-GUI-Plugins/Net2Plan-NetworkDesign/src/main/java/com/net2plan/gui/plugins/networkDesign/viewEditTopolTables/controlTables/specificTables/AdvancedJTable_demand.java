@@ -68,6 +68,7 @@ import com.net2plan.interfaces.networkDesign.NetworkLayer;
 import com.net2plan.interfaces.networkDesign.Node;
 import com.net2plan.interfaces.networkDesign.Resource;
 import com.net2plan.internal.Constants.NetworkElementType;
+import com.net2plan.niw.WIpUnicastDemand;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
 import com.net2plan.utils.Pair;
@@ -436,7 +437,9 @@ public class AdvancedJTable_demand extends AdvancedJTable_networkElement<Demand>
             }
 		}
 		, (a, b) -> b>0, null));
-    
+
+
+
         res.add(new AjtRcMenu("Monitor/forecast...",  null , (a,b)->true, Arrays.asList(
                 MonitoringUtils.getMenuAddSyntheticMonitoringInfo (this),
                 MonitoringUtils.getMenuExportMonitoringInfo(this),

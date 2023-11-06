@@ -22,6 +22,10 @@ import com.google.common.collect.Sets;
 import com.net2plan.internal.*;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.SRGUtils;
+import com.net2plan.niw.WFlexAlgo;
+import com.net2plan.niw.WLayerIp;
+import com.net2plan.niw.WNet;
+import com.net2plan.niw.WNetConstants;
 import com.net2plan.utils.*;
 import com.net2plan.utils.Constants.RoutingCycleType;
 import com.net2plan.utils.Constants.RoutingType;
@@ -31,6 +35,7 @@ import org.codehaus.stax2.XMLOutputFactory2;
 import org.codehaus.stax2.XMLStreamReader2;
 import org.codehaus.stax2.XMLStreamWriter2;
 import org.jgrapht.graph.DirectedAcyclicGraph;
+import sun.nio.ch.Net;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
@@ -2612,6 +2617,14 @@ public class NetPlan extends NetworkElement
         NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         return layer.demandTrafficUnitsName;
     }
+
+
+    public List<WFlexAlgo.FlexAlgoProperties> getFlexAlgoProperties()
+    {
+        Optional<WFlexAlgo.FlexAlgoRepository> repositoryInsideNP = WNet.readFlexAlgoRepositoryInNetPlan(this);
+        return repositoryInsideNP.isPresent() ? repositoryInsideNP.get().getAll() : new ArrayList<>();
+    }
+
 
     /**
      * <p>Returns the traffic that is carried using a forwarding rule, in the given layer. If no layer is provided, the default layer is assumed.</p>
