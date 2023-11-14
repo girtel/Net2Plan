@@ -208,7 +208,7 @@ public class WFlexAlgo
         {
             FlexAlgoProperties a = (FlexAlgoProperties) o;
             FlexAlgoProperties b = this;
-            return a.getK() == b.getK() && a.getWeightType() == b.getWeightType() && a.getCalculationType() == b.getCalculationType() ? 0 : 1;
+            return a.getWeightType() == b.getWeightType() && a.getCalculationType() == b.getCalculationType() && a.linkIdsIncluded.equals(b.linkIdsIncluded) ? 0 : Integer.compare(a.getK(), b.getK());
 
         }
     }
