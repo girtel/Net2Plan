@@ -7068,32 +7068,13 @@ public class NetPlan extends NetworkElement
         checkMatrixDestinationLinkCarriedTrafficFlowConservationConstraints(x_te, layer);
 
         if (removeCycles)
-            x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver"), null, 100);
+            x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver"), null, 10);
 
         final DoubleMatrix2D f_te = GraphUtils.convert_xte2fte(nodes, layer.links, x_te);
         final Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> xdeInfo = GraphUtils.convert_fte2xde(nodes.size(), layer.demands.size() , layer.links, new TreeSet<> (layer.demands) , f_te);
         final DoubleMatrix2D x_de = xdeInfo.getFirst();
         setRoutingFromDemandLinkCarriedTraffic(x_de, false , false , new TreeSet<> (layer.demands) , layer);
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-
-
-
-
-        /* supposed to work, but haven't tested it
-
-        //netPlan.setRoutingFromDestinationLinkCarriedTraffic(x_te, true);
-        int D = netPlan.getNumberOfDemands();
-        DoubleMatrix2D new_x_te = GraphUtils.removeCyclesFrom_xte(netPlan.getNodes(), netPlan.getLinks(), h_nt, solucion_x_te, "glpk", "glpk_4_48", 100);
-        final DoubleMatrix2D f_te = GraphUtils.convert_xte2fte(netPlan.getNodes(), netPlan.getLinks(), new_x_te);
-        SortedSet sortedDemands = new TreeSet(netPlan.getDemands());
-        final Quadruple> xdeInfo = GraphUtils.convert_fte2xde(N, D, netPlan.getLinks(), sortedDemands , f_te);
-        final DoubleMatrix2D x_de = xdeInfo.getFirst();
-        Set demands = new HashSet(netPlan.getDemands());
-        netPlan.setRoutingFromDemandLinkCarriedTraffic(x_de, false , false, demands);
-        //if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
-
-        */
-
 
     }
 
