@@ -7063,12 +7063,33 @@ public class NetPlan extends NetworkElement
      */
     public void setRoutingFromDestinationLinkCarriedTraffic(DoubleMatrix2D x_te, boolean removeCycles, NetworkLayer... optionalLayerParameter)
     {
+        setRoutingFromDestinationLinkCarriedTraffic(x_te, removeCycles, Configuration.getOption("defaultILPSolver"), null, 10, optionalLayerParameter);
+    }
+
+    /**
+     * <p>Adds traffic routes (or forwarding rules, depending on the routing type) from destination-link routing at the given layer.
+     * If no layer is provided, default layer is assumed. If the routing is SOURCE-ROUTING, the new routing will have no closed nor open loops. If the routing is
+     * HOP-BY-HOP routing, the new routing can have open loops. However, if the routing has closed loops (which were not removed), a {@code ClosedCycleRoutingException}
+     * will be thrown </p>
+     *
+     * @param x_te                   For each destination node <i>t</i> (rows), and each link <i>e</i> (columns), {@code f_te[t][e]} represents the traffic targeted to node <i>t</i> that arrives (or is generated
+     *                               in) node a(e) (the origin node of link e), that is forwarded through link e
+     * @param removeCycles           If true, the open and closed loops are eliminated from the routing before any processing is done. The form in which this is done guarantees that the resulting
+     *                               routing uses the same or less traffic in the links for each destination than the original routing. For removing the cycles,
+     *                               the method calls to {@code removeCyclesFrom_xte} using the default ILP solver defined in Net2Plan, and no limit in the maximum solver running time.
+     * @param optionalLayerParameter Network layer (optional)
+     * @param solver                 Solver name to be used by the ILP solver (e.g. "glpk")
+     * @param solverLibraryName      Solver library absolute path (e.g. "glpk_4_2")
+     * @param maxTimeInSecondsPerDestination Maximum time in seconds granted to solve the LP problem for each destination
+     */
+    public void setRoutingFromDestinationLinkCarriedTraffic(DoubleMatrix2D x_te, boolean removeCycles, String solver, String solverLibraryName, double maxTimeInSecondsPerDestination, NetworkLayer... optionalLayerParameter)
+    {
         checkIsModifiable();
         final NetworkLayer layer = checkInThisNetPlanOptionalLayerParameter(optionalLayerParameter);
         checkMatrixDestinationLinkCarriedTrafficFlowConservationConstraints(x_te, layer);
 
         if (removeCycles)
-            x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, Configuration.getOption("defaultILPSolver"), null, 10);
+            x_te = GraphUtils.removeCyclesFrom_xte(nodes, layer.links, getMatrixNode2NodeOfferedTraffic(layer), x_te, solver, solverLibraryName, maxTimeInSecondsPerDestination);
 
         final DoubleMatrix2D f_te = GraphUtils.convert_xte2fte(nodes, layer.links, x_te);
         final Quadruple<DoubleMatrix2D, DoubleMatrix1D, DoubleMatrix1D, List<RoutingCycleType>> xdeInfo = GraphUtils.convert_fte2xde(nodes.size(), layer.demands.size() , layer.links, new TreeSet<> (layer.demands) , f_te);
@@ -7077,6 +7098,9 @@ public class NetPlan extends NetworkElement
         if (ErrorHandling.isDebugEnabled()) this.checkCachesConsistency();
 
     }
+
+
+
 
     /**
      * <p>Sets the routing type at the given layer. If there is some previous routing information, it
