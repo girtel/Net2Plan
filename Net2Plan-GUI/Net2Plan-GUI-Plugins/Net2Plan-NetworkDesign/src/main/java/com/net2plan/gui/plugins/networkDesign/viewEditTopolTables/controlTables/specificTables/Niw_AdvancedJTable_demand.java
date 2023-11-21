@@ -180,7 +180,7 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                         throw new Net2PlanException("Unkown node name. " + (a == null ? aName : bName));
                     wNet.addIpUnicastDemand(a, b, upstream, true);
                 });
-            }, (a, b) -> b > 0, null));
+            }, (a, b) -> true, null));
             res.add(new AjtRcMenu("Add one IP unicast demand per selected node pair (all if none selected)", null, (a, b) -> true, Arrays.asList(new AjtRcMenu("as hop-by-hop routing (e.g. for OSPF routing)", e -> rcMenuFullMeshTraffic(true), (a, b) -> true, null), new AjtRcMenu("as source-routing (e.g. for MPLS-TE routing)", e -> rcMenuFullMeshTraffic(false), (a, b) -> true, null))));
 
             res.add(new AjtRcMenu("Add anycast service chain request", e -> {

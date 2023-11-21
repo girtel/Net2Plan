@@ -13,7 +13,7 @@
 
     <groupId>com.net2plan</groupId>
     <artifactId>net2plan</artifactId>
-    <version>0.7.0.0-SNAPSHOT</version>
+    <version>0.7.0.1</version>
     <packaging>pom</packaging>
     <url>http://www.net2plan.com</url>
 
@@ -306,6 +306,8 @@
 
 
             <!-- Build helper: Net2Plan version controller -->
+            <!-- run: mvn versions:set -DnewVersion="whatever" -DprocessAllModules -->
+            <!-- run: mvn clean package -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>

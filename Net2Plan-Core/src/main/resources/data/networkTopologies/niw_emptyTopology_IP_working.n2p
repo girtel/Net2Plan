@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<network description="" name="" currentDate="1572254668695" currentPlotNodeLayout="" cache_definedPlotNodeLayouts="" version="6" nextElementId="84">
+	<node id="3" description="" name="ANYCASTORIGIN," xCoord="0.0" yCoord="0.0" mapLayout2NodeXYPositionMap=" 0.0 0.0" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="$$$TAGNODE_INDICATIONVIRTUALORIGINNODE"/>
+	</node>
+	<node id="4" description="" name="ANYCASTDESTINATION," xCoord="0.0" yCoord="0.0" mapLayout2NodeXYPositionMap=" 0.0 0.0" population="0.0" isUp="true" layersWithIconsDefined="">
+		<tag value="$$$TAGNODE_INDICATIONVIRTUALDESTINATIONNODE"/>
+	</node>
+	<layer id="2" description="IP" name="IP" isDefaultLayer="true" linkCapacityUnitsName="" demandTrafficUnitsName="">
+		<sourceRouting>
+		</sourceRouting>
+		<hopByHopRouting>
+		</hopByHopRouting>
+	</layer>
+</network>

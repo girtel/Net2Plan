@@ -67,7 +67,7 @@ public class GUIConfiguration extends JDialog implements ActionListener
         buttonBar.add(btn_cancel);
 
         add(tabbedPane, BorderLayout.CENTER);
-        add(buttonBar, BorderLayout.SOUTH);
+//        add(buttonBar, BorderLayout.SOUTH);
 
         JPanel pane_generalOptions = new JPanel(new BorderLayout());
         tabbedPane.addTab("General options", pane_generalOptions);
@@ -77,6 +77,7 @@ public class GUIConfiguration extends JDialog implements ActionListener
 
         ParameterValueDescriptionPanel generalParameterPanel = new ParameterValueDescriptionPanel();
         pane_generalOptions.add(generalParameterPanel, BorderLayout.CENTER);
+        pane_generalOptions.add(buttonBar, BorderLayout.SOUTH);
 
         List<Triple<String, String, String>> net2planParameters = new LinkedList<Triple<String, String, String>>(Configuration.getNet2PlanParameters());
         Iterator<Triple<String, String, String>> it = net2planParameters.iterator();
