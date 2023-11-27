@@ -11,20 +11,19 @@ package com.net2plan.niw;
  *******************************************************************************/
 
 
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import cern.colt.matrix.tdouble.DoubleFactory1D;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.libraries.GraphUtils;
 import com.net2plan.libraries.IPUtils;
 import com.net2plan.utils.InputParameter;
 import com.net2plan.utils.Triple;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /** 
  * Implements a subset of the reactions of an IP network, where demands of the hop-bu-hop routing type are routed according to 
@@ -42,13 +41,15 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
  * See the technology conventions used in Net2Plan built-in algorithms and libraries to represent IP/OSPF networks. 
  * @author Pablo Pavon-Marino
  */
-public class DefaultStatelessSimulator implements IAlgorithm
+public class DefaultStatelessSimulator_FlexAlgoLessRestricted implements IAlgorithm
 {
 	private InputParameter mplsTeTunnelType = new InputParameter ("mplsTeTunnelType", "#select# cspf-dynamic 1+1-FRR-link-disjoint" , "The type of path computation for MPLS-TE tunnels");
-	private InputParameter flexAlgoRoutingFlexibility = new InputParameter ("flexAlgoRoutingFlexibility", "#select# strict wide" , "The paths are computed strictly to the Flex-Algo links (strict), or can use any link not used in other Flex-Algo (wide)");
 
 	@Override
-	public String getDescription() { return "Implements the reactions of an IP network governed by OSPF/SR/MPLS-TE forwarding policies, for given link metrics and Flex-Algo. "; }
+	public String getDescription()
+	{
+		return "Implements the reactions of an IP network governed by the OSPF/ECMP forwarding policies, for given link weigths";
+	}
 
 	@Override
 	public List<Triple<String, String, String>> getParameters()
@@ -89,8 +90,6 @@ public class DefaultStatelessSimulator implements IAlgorithm
 				List<Link> allLinks = new ArrayList<>(net.getNe().getLinks());
 				List<Long> allIpLinks = net.getIpLinks().stream().map(WIpLink::getId).collect(Collectors.toList());
 				List<Link> niwVirtualLinks =  allLinks.stream().filter(l -> !allIpLinks.contains(l.getId())).collect(Collectors.toList());
-				List<Link> iterableLinks = new ArrayList<>(allLinks);
-				iterableLinks.removeAll(niwVirtualLinks);
 
 
 				// Map all the flex algos that a link can support. By default, all links support all flex algos, except the case
@@ -108,44 +107,32 @@ public class DefaultStatelessSimulator implements IAlgorithm
 				}
 
 
-				// Obtain link vector weight for each flex algo, depending on the Flex-Algo flexibility
+				// Obtain link vector weight for each flex algo
 				Map<Integer, DoubleMatrix1D> flexAlgoWeightVector = new HashMap<>();
-				final boolean strictMode = flexAlgoRoutingFlexibility.getString().equals("strict");
-
 				for(WFlexAlgo.FlexAlgoProperties flexAlgo: optionalFlexRepo.get().getAll())
 				{
 					DoubleMatrix1D linkWeightVector = DoubleFactory1D.dense.make(allLinks.size());
-					niwVirtualLinks.forEach(l -> linkWeightVector.set(allLinks.indexOf(l), Double.MAX_VALUE));
-
-					for(Link link: iterableLinks)
+					for(Link link: allLinks)
 					{
-
-						final boolean linkHasFlexAlgo = associatedFlexToLinks.containsKey(link);
-						final boolean linkHashThisFlexAlgo = linkHasFlexAlgo && associatedFlexToLinks.get(link).contains(flexAlgo.getK());
-						final boolean linkIsWideAllowed = !linkHasFlexAlgo || linkHashThisFlexAlgo; // the link does not have any flex algo, or it has this one (the iterated)
-
-						final boolean strictModeAccomplished = strictMode && linkHashThisFlexAlgo;
-						final boolean wideModeAccomplished = !strictMode && linkIsWideAllowed;
-
 						double finalWeight = Double.MAX_VALUE;
-						if(strictModeAccomplished || wideModeAccomplished)
+
+						final boolean linkIsVirtual = niwVirtualLinks.contains(link);
+						final boolean linkIsRestricted = associatedFlexToLinks.containsKey(link) && !associatedFlexToLinks.get(link).contains(flexAlgo.getK());
+
+						if(!linkIsVirtual && !linkIsRestricted)
 						{
 							switch (flexAlgo.getWeightType())
 							{
-								case WFlexAlgo.WEIGHT_IGP: { finalWeight = ((WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
+								case WFlexAlgo.WEIGHT_IGP: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getIgpWeight(); break; }
 								case WFlexAlgo.WEIGHT_LATENCY: { finalWeight = link.getPropagationDelayInMs(); break; }
-								case WFlexAlgo.WEIGHT_TE: { finalWeight = ((WIpLink) net.getWElement(link).get()).getTeWeight(); break; }
+								case WFlexAlgo.WEIGHT_TE: { finalWeight = ( (WIpLink) net.getWElement(link).get()).getTeWeight(); break; }
 							}
 						}
+
 						linkWeightVector.set(allLinks.indexOf(link), finalWeight);
-
 					}
-
 					flexAlgoWeightVector.put(flexAlgo.getK(), linkWeightVector);
 				}
-
-
-
 
 
 				// Routing indeed
@@ -262,10 +249,9 @@ public class DefaultStatelessSimulator implements IAlgorithm
 
 	public static void run (WNet wNet , Optional<String> mplsTeTunnelType)
 	{
-		final DefaultStatelessSimulator alg = new DefaultStatelessSimulator(); 
+		final DefaultStatelessSimulator_FlexAlgoLessRestricted alg = new DefaultStatelessSimulator_FlexAlgoLessRestricted();
 		final Map<String,String> params = InputParameter.getDefaultParameters(alg.getParameters());
         mplsTeTunnelType.ifPresent(s -> params.put("mplsTeTunnelType", s));
-		params.put("flexAlgoRoutingFlexibility", "wide"); // TODO this has to be changed to be selected on the go
 		alg.executeAlgorithm(wNet.getNe(), params , new HashMap<> ());
 	}
 	
