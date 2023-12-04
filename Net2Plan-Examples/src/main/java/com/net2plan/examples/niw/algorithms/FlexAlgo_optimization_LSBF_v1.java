@@ -1,7 +1,6 @@
 package com.net2plan.examples.niw.algorithms;
 
 import com.net2plan.interfaces.networkDesign.IAlgorithm;
-import com.net2plan.interfaces.networkDesign.Link;
 import com.net2plan.interfaces.networkDesign.NetPlan;
 import com.net2plan.niw.*;
 import com.net2plan.utils.Triple;
@@ -11,7 +10,7 @@ import java.util.stream.Collectors;
 
 /* FlexAlgo simulator */
 
-public class FlexAlgoTopologyOptimization implements IAlgorithm
+public class FlexAlgo_optimization_LSBF_v1 implements IAlgorithm
 {
     public static final String CONTENT_SEPARATOR = "----<  >--------<  >--------<  >--------<  >--------<  >--------<  >--------<  >----";
     @Override
