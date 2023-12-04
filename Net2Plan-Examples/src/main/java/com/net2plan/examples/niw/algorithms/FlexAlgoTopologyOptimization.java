@@ -321,7 +321,7 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
     /* --------------------------------------------------------------------------- */
     /* ########################################################################### */
     /* #                                                                         # */
-    /* #                                SOLUTION                                 # */
+    /* #                           SOLUTION ABSTRACTION                          # */
     /* #                                                                         # */
     /* ########################################################################### */
     /* --------------------------------------------------------------------------- */
@@ -331,11 +331,8 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
         static final int FLEX_OFFSET = 128;
         private final List<SortedSet<WIpLink>> solution_perFlexAlgoLinks = new ArrayList<> ();
         private final List<Integer> solution_perDemandFlexAlgo = new ArrayList<> ();
-
         private final SortedMap<WIpLink , Set<WFlexAlgo.FlexAlgoProperties>> cacheSolution_mapLink2AssignedFlexAlgos = new TreeMap<>();
         private final List<SortedSet<WIpUnicastDemand>> cacheSolution_perFlexAlgoAssignedDemands = new ArrayList<> ();
-
-
         public Solution(WNet net, List<WFlexAlgo.FlexAlgoProperties> flexAlgoProperties)
         {
             /* Import the desired routing information to the component, that is, the links of each flex-algo and the flex-algo of each demand */
@@ -351,9 +348,6 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
                 cacheSolution_perFlexAlgoAssignedDemands.get(flexId).add(d);
             } );
         }
-
-
-
         @Override
         public int hashCode() { return Objects.hash(solution_perDemandFlexAlgo, solution_perFlexAlgoLinks); }
         @Override
@@ -368,10 +362,6 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
         }
         @Override
         public int compareTo(Solution o) { return Integer.compare(this.hashCode(), o.hashCode()); }
-
-
-
-
         public void printComponent()
         {
             System.out.println("Solution hash=" + this.hashCode() + ": ");
@@ -381,7 +371,6 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
                 solution_perFlexAlgoLinks.get(i).forEach(l -> System.out.print(l.getId() + " "));
                 System.out.println();
             }
-
             for (int i = 0; i < solution_perDemandFlexAlgo.size(); i++)
                 System.out.println("    Flex-Algo of demand " + i + " : " + solution_perDemandFlexAlgo.get(i));
         }
@@ -391,17 +380,15 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
             ArrayList<Integer> indexes = new ArrayList<>();
             for (int i = 0; i < solution_perFlexAlgoLinks.size(); i++) indexes.add(i + FLEX_OFFSET);
 
-            WNet.performOperationOnFlexAlgo(netToApply.getNe(), indexes, flexAlgoProperties -> {
-                if (!flexAlgoProperties.linkIdsIncluded.isEmpty()) flexAlgoProperties.removeAllLinks();
-                flexAlgoProperties.setLinkIdsIncluded(solution_perFlexAlgoLinks.get(flexAlgoProperties.getK() - FLEX_OFFSET).stream().map(WIpLink::getId).collect(Collectors.toSet()));
+            WNet.performOperationOnFlexAlgo(netToApply.getNe(), indexes, flexAlgo -> {
+                if (!flexAlgo.linkIdsIncluded.isEmpty()) flexAlgo.removeAllLinks();
+                flexAlgo.setLinkIdsIncluded(solution_perFlexAlgoLinks.get(flexAlgo.getK() - FLEX_OFFSET).stream().map(WIpLink::getId).collect(Collectors.toSet()));
             });
 
             for (int i = 0; i < cacheSolution_perFlexAlgoAssignedDemands.size(); i++)
                 for (WIpUnicastDemand d : cacheSolution_perFlexAlgoAssignedDemands.get(i))
                     d.setFlexAlgoId(Optional.of(String.valueOf(i + FLEX_OFFSET)));
         }
-
-
     } /* End of Solution */
 
 
@@ -423,9 +410,6 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
         final Map<WIpUnicastDemand, Integer> flexAlgosOfDemands = new HashMap<>();
         final Set<WIpLink> tabooLinks = new HashSet<>();
         final Map<Solution, Double> evaluationOfSolutions = new TreeMap<>();
-
-
-
         final Set<WIpUnicastDemand> cache_demandsWithLatencyRestriction = new HashSet<>();
         final Set<WIpUnicastDemand> cache_demandsWithoutLatencyRestriction = new HashSet<>();
         final List<Set<WIpLink>> linkAdjacencies = new ArrayList<>();
@@ -478,7 +462,6 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
             for(WFlexAlgo.FlexAlgoProperties flexAlgo: flexAlgos)
                 for(WIpLink simpleLink: tabooLinks)
                     flexAlgo.addLink(simpleLink.getNe());
-
         }
 
 
@@ -493,7 +476,6 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
         /* Modify parameters */
         public boolean isSolutionAlreadyIterated(Solution sol) { return evaluationOfSolutions.containsKey(sol); }
         public void addSolutionToIterated(Solution sol, double cost) { evaluationOfSolutions.put(sol, cost); }
-
 
         /* Random */
         public WIpLink getRandomLink() { return bidiLinks.get(rng.nextInt(L)); }
@@ -581,7 +563,5 @@ public class FlexAlgoTopologyOptimization implements IAlgorithm
             }
         }
     } /* End of DataCache */
-
-
 
 } /* End of FlexAlgoTopologyOptimization */
