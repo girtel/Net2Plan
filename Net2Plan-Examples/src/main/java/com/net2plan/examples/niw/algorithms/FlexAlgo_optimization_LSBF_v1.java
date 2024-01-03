@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class FlexAlgo_optimization_LSBF_v1 implements IAlgorithm
 {
-    public static final String CONTENT_SEPARATOR = "----<  >--------<  >--------<  >--------<  >--------<  >--------<  >--------<  >----";
+    public static final String CONTENT_SPLITTER = "----<  >--------<  >--------<  >--------<  >--------<  >--------<  >--------<  >----";
     @Override
     public String getDescription()
     {
@@ -194,7 +194,7 @@ public class FlexAlgo_optimization_LSBF_v1 implements IAlgorithm
         double meanIterationTime = 0; for(Double d: iterationTimes) meanIterationTime += d; meanIterationTime /= iterationTimes.size();
 
 
-        System.out.println(CONTENT_SEPARATOR);
+        System.out.println(CONTENT_SPLITTER);
         System.out.println("Mean time finding in taboo list:\t" + meanFindingInTabooList + " ms");
         System.out.println("Mean time calculating cost:\t\t" + meanCalculatingCost + " ms");
         System.out.println("Mean time per iteration:\t\t" + meanIterationTime + " ms");
@@ -208,9 +208,9 @@ public class FlexAlgo_optimization_LSBF_v1 implements IAlgorithm
         /* Create a new evaluation from the best solution, to show extra data */
         bestSolutionFound.applyComponentToNet(net);
         TopologyEvaluation bestSolutionEvaluation = new TopologyEvaluation(bestSolutionFound);
-        System.out.println(CONTENT_SEPARATOR);
+        System.out.println(CONTENT_SPLITTER);
         bestSolutionEvaluation.printEvaluationData();
-        System.out.println(CONTENT_SEPARATOR);
+        System.out.println(CONTENT_SPLITTER);
 
         /* Set the NetPlan from the Net2Plan GUI to the form of the best solution found */
         netPlan.assignFrom(net.getNe());
