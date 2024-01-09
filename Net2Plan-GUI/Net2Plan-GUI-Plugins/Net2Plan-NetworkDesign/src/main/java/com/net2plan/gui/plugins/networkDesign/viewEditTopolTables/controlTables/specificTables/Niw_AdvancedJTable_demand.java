@@ -33,6 +33,7 @@ import com.net2plan.gui.utils.WiderJComboBox;
 import com.net2plan.interfaces.networkDesign.*;
 import com.net2plan.niw.*;
 import com.net2plan.niw.WNetConstants.WTYPE;
+import com.net2plan.utils.Constants;
 import com.net2plan.utils.Pair;
 import net.miginfocom.swing.MigLayout;
 
@@ -269,6 +270,107 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
             }, (a, b) -> true, null))));
 
             res.add(new AjtRcMenu("Remove selected demands", e -> getSelectedElements().forEach(dd -> toAbsIp.apply(dd).remove()), (a, b) -> b > 0, null));
+
+            /* Demands grouping */
+            res.add(new AjtRcMenu("Manage split demands", null, (a,b) -> true, Arrays.asList(
+                    // Split demands
+                    new AjtRcMenu("Split in 2 demands, one with delay constrain and one without", event -> {
+                        DialogBuilder.launch(
+                                "Set splitting factor for new demands" ,
+                                "Please introduce the information required for computing the splitting factor.",
+                                "",
+                                this,
+                                Arrays.asList(
+                                        InputForDialog.inputTfInt("Percentage of traffic for first demand", "Introduce percentage of traffic for the first demand as a hundred percent (1 ~ 100).", 10, 50),
+                                        InputForDialog.inputTfDouble("Maximum allowed e2e latency for the first demand", "Introduce the maximum allowed latency from end to end for the first demand. If lower or equal to 0 no maximum delay will be set.", 10, 0.0)
+                                ),
+                                (list)->
+                                {
+                                    final double splittingFactor = (Integer) list.get(0).get() / 100.0;
+                                    final double maxLatency = (Double) list.get(1).get();
+
+                                    Set<Demand> alreadyRemovedDemands = new HashSet<>();
+
+                                    for (Demand originalDemand: getSelectedElements())
+                                    {
+                                        if(alreadyRemovedDemands.contains(originalDemand)) continue;
+                                        alreadyRemovedDemands.add(originalDemand); // just a tweak for the bidirectional pair
+
+                                        final Demand bidirectionalPairDemand = originalDemand.getBidirectionalPair();
+                                        alreadyRemovedDemands.add(bidirectionalPairDemand);
+
+
+                                        final Node ingressNode = originalDemand.getIngressNode();
+                                        final Node egressNode = originalDemand.getEgressNode();
+                                        final Constants.RoutingType routingType = originalDemand.getRoutingType();
+                                        final Map<String, String> attributes = originalDemand.getAttributes();
+                                        final Map<String, String> attributesBidiPair = bidirectionalPairDemand.getAttributes();
+
+                                        // Create the two split demands, with its bidirectional pairs. Offered traffic is not the same
+                                        // in both directions, needs to be manually inserted
+                                        Pair<Demand, Demand> restrictedLatencyDemand = wNet.getNe().addDemandBidirectional(ingressNode, egressNode, 0, routingType, null, layerThisTable);
+                                        Pair<Demand, Demand> commonDemand = wNet.getNe().addDemandBidirectional(ingressNode, egressNode, 0, routingType, null, layerThisTable);
+
+
+                                        // Obtain the split traffic for the original demand
+                                        final double originalDemandOfferedTraffic = originalDemand.getOfferedTraffic();
+                                        final double originRestrictedDemandTraffic = originalDemandOfferedTraffic * splittingFactor;
+                                        restrictedLatencyDemand.getFirst().setOfferedTraffic(originRestrictedDemandTraffic);
+                                        final double originCommonDemandTraffic = originalDemandOfferedTraffic * (1 - splittingFactor);
+                                        commonDemand.getFirst().setOfferedTraffic(originCommonDemandTraffic);
+
+
+                                        // Obtain the split traffic for the bidirectional pair demand
+                                        final double bidiDemandOfferedTraffic = originalDemand.getOfferedTraffic();
+                                        final double bidiRestrictedDemandTraffic = bidiDemandOfferedTraffic * splittingFactor;
+                                        restrictedLatencyDemand.getSecond().setOfferedTraffic(bidiRestrictedDemandTraffic);
+                                        final double bidiCommonDemandTraffic = bidiDemandOfferedTraffic * (1 - splittingFactor);
+                                        commonDemand.getSecond().setOfferedTraffic(bidiCommonDemandTraffic);
+
+
+                                        if(maxLatency > 0)
+                                        {
+                                            restrictedLatencyDemand.getFirst().setMaximumAcceptableE2EWorstCaseLatencyInMs(maxLatency);
+                                            restrictedLatencyDemand.getSecond().setMaximumAcceptableE2EWorstCaseLatencyInMs(maxLatency);
+                                        }
+
+
+                                        // Set the information of attributes for one direction
+                                        restrictedLatencyDemand.getFirst().setAttributeMap(attributes);
+                                        commonDemand.getFirst().setAttributeMap(attributes);
+
+                                        // Set the information of attributes for the bidirectional pair direction
+                                        restrictedLatencyDemand.getSecond().setAttributeMap(attributesBidiPair);
+                                        commonDemand.getSecond().setAttributeMap(attributesBidiPair);
+
+
+                                        // Remove the original demands
+                                        originalDemand.remove();
+                                        bidirectionalPairDemand.remove();
+                                    }
+                                }
+                        );
+                    }, (a, b) -> true, null),
+                    // Merge demands from node2node
+                    new AjtRcMenu("Replace maxE2Elatency to demands that already have", event -> {
+                        DialogBuilder.launch("Set new maximumEndToEndAllowedLatency",
+                                "Set new maximumEndToEndAllowedLatency to all the demands that already have.",
+                                "",
+                                this,
+                                Collections.singletonList(
+                                        InputForDialog.inputTfDouble("Maximum allowed e2e latency (ms)", "Introduce the maximum allowed latency from end to end", 10, 0.0)
+                                ),
+                                (list) ->
+                                {
+                                    final double maxe2elat = (Double) list.get(0).get();
+                                    wNet.getIpUnicastDemands().stream().map(WIpUnicastDemand::getNe).filter(d -> d.getMaximumAcceptableE2EWorstCaseLatencyInMs() != Double.MAX_VALUE).forEach(d -> d.setMaximumAcceptableE2EWorstCaseLatencyInMs(maxe2elat));
+                                }
+                        );
+
+                    }, (a,b) -> true, null)
+            )));
+
+
 
             res.add(new AjtRcMenu("Arrange selected IP unicast demands in bidirectional pairs", e -> {
                 final SortedSet<WIpUnicastDemand> nonBidiDemands = getSelectedElements().stream().filter(ee -> isWIpUnicast.apply(ee)).map(ee -> toWIpUnicast.apply(ee)).filter(ee -> !ee.isBidirectional()).collect(Collectors.toCollection(TreeSet::new));
