@@ -85,11 +85,15 @@ public class DefaultStatelessSimulator implements IAlgorithm
 			if(!srRoutedDemands.isEmpty())
 			{
 				Optional<WFlexAlgo.FlexAlgoRepository> optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
-				assert optionalFlexRepo.isPresent();
+				if(!optionalFlexRepo.isPresent())
+				{
+					net.initializeFlexAlgoAttributes();
+					optionalFlexRepo = WNet.readFlexAlgoRepositoryInNetPlan(np);
+				}
 
 
 				/* Remove previous routing information for all demands */
-				srRoutedDemands.stream().map(WIpUnicastDemand::getNe).forEach(Demand::removeAllRoutes);
+				srRoutedDemands.stream().map(WIpUnicastDemand::getNe).forEach(Demand::removeAllForwardingRules);
 
 
 
@@ -148,6 +152,7 @@ public class DefaultStatelessSimulator implements IAlgorithm
                 /* Fallback routing */
                 // Search for demands that have been blocked in the routing and try to reroute them with the default flex algo
                 Set<WIpUnicastDemand> demandsToFallBack =  srRoutedDemands.stream().filter(demand -> demand.getCurrentBlockedTraffic() > 0).collect(Collectors.toSet());
+				srRoutedDemands.stream().filter(Objects::nonNull).forEach(demand -> demand.setFlexAlgoId(Optional.of("0")));
                 if(!demandsToFallBack.isEmpty())
                 {
                     final Set<Demand> routingDemands = demandsToFallBack.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toSet());

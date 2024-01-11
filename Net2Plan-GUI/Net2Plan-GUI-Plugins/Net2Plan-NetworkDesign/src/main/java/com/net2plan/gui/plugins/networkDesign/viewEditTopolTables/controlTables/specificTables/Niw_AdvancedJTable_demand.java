@@ -281,72 +281,57 @@ public class Niw_AdvancedJTable_demand extends AdvancedJTable_networkElement<Dem
                                 "",
                                 this,
                                 Arrays.asList(
-                                        InputForDialog.inputTfInt("Percentage of traffic for first demand", "Introduce percentage of traffic for the first demand as a hundred percent (1 ~ 100).", 10, 50),
+                                        InputForDialog.inputTfDouble("Percentage of traffic for first demand", "Introduce percentage of traffic for the first demand as a factor (0.001 ~ 0.999).", 10, 0.1),
                                         InputForDialog.inputTfDouble("Maximum allowed e2e latency for the first demand", "Introduce the maximum allowed latency from end to end for the first demand. If lower or equal to 0 no maximum delay will be set.", 10, 0.0)
                                 ),
                                 (list)->
                                 {
-                                    final double splittingFactor = (Integer) list.get(0).get() / 100.0;
+                                    final double splittingFactor = (Double) list.get(0).get();
+                                    assert splittingFactor > 0 && splittingFactor < 1;
                                     final double maxLatency = (Double) list.get(1).get();
 
-                                    Set<Demand> alreadyRemovedDemands = new HashSet<>();
+                                    List<WIpUnicastDemand> selectedDemands = getSelectedElements().stream().map(toWIpUnicast).collect(Collectors.toList());
+                                    Set<Demand> alreadyIteratedDemands = new HashSet<>();
 
-                                    for (Demand originalDemand: getSelectedElements())
+                                    for(Demand demand: getSelectedElements())
                                     {
-                                        if(alreadyRemovedDemands.contains(originalDemand)) continue;
-                                        alreadyRemovedDemands.add(originalDemand); // just a tweak for the bidirectional pair
+                                        if (alreadyIteratedDemands.contains(demand)) continue;
+                                        alreadyIteratedDemands.add(demand);
 
-                                        final Demand bidirectionalPairDemand = originalDemand.getBidirectionalPair();
-                                        alreadyRemovedDemands.add(bidirectionalPairDemand);
+                                        /* Compute the original demand info */
+                                        final double currentOfferedTraffic = demand.getOfferedTraffic();
+                                        final boolean isSegmentRouted = toWIpUnicast.apply(demand).isSegmentRoutingActive();
+                                        final Constants.RoutingType routingType = demand.getRoutingType();
+                                        final boolean isUpstream = toWIpUnicast.apply(demand).isUpstream();
 
+                                        demand.setOfferedTraffic(currentOfferedTraffic * (1 - splittingFactor)); // splitting -> [0,1]
 
-                                        final Node ingressNode = originalDemand.getIngressNode();
-                                        final Node egressNode = originalDemand.getEgressNode();
-                                        final Constants.RoutingType routingType = originalDemand.getRoutingType();
-                                        final Map<String, String> attributes = originalDemand.getAttributes();
-                                        final Map<String, String> attributesBidiPair = bidirectionalPairDemand.getAttributes();
-
-                                        // Create the two split demands, with its bidirectional pairs. Offered traffic is not the same
-                                        // in both directions, needs to be manually inserted
-                                        Pair<Demand, Demand> restrictedLatencyDemand = wNet.getNe().addDemandBidirectional(ingressNode, egressNode, 0, routingType, null, layerThisTable);
-                                        Pair<Demand, Demand> commonDemand = wNet.getNe().addDemandBidirectional(ingressNode, egressNode, 0, routingType, null, layerThisTable);
+                                        final Demand latencyDemand = wNet.getNe().addDemand(demand.getIngressNode(), demand.getEgressNode(), currentOfferedTraffic * splittingFactor, routingType, demand.getAttributes(), layerThisTable);
+                                        if (maxLatency > 0) latencyDemand.setMaximumAcceptableE2EWorstCaseLatencyInMs(maxLatency);
+                                        toWIpUnicast.apply(latencyDemand).setSegmentRoutingEnabled(isSegmentRouted);
 
 
-                                        // Obtain the split traffic for the original demand
-                                        final double originalDemandOfferedTraffic = originalDemand.getOfferedTraffic();
-                                        final double originRestrictedDemandTraffic = originalDemandOfferedTraffic * splittingFactor;
-                                        restrictedLatencyDemand.getFirst().setOfferedTraffic(originRestrictedDemandTraffic);
-                                        final double originCommonDemandTraffic = originalDemandOfferedTraffic * (1 - splittingFactor);
-                                        commonDemand.getFirst().setOfferedTraffic(originCommonDemandTraffic);
+                                        /* Compute the bidirectional pair demand, if exists */
+                                        final Demand bidirectionalPairDemand = demand.getBidirectionalPair();
+                                        if(bidirectionalPairDemand == null) continue; // if there is no bidirectional pair, do nothing
 
+                                        // Bidirectional pair exists, obtain its related info
+                                        alreadyIteratedDemands.add(bidirectionalPairDemand);
 
-                                        // Obtain the split traffic for the bidirectional pair demand
-                                        final double bidiDemandOfferedTraffic = originalDemand.getOfferedTraffic();
-                                        final double bidiRestrictedDemandTraffic = bidiDemandOfferedTraffic * splittingFactor;
-                                        restrictedLatencyDemand.getSecond().setOfferedTraffic(bidiRestrictedDemandTraffic);
-                                        final double bidiCommonDemandTraffic = bidiDemandOfferedTraffic * (1 - splittingFactor);
-                                        commonDemand.getSecond().setOfferedTraffic(bidiCommonDemandTraffic);
+                                        final double currentOfferedTrafficBidirectionalPair = bidirectionalPairDemand.getOfferedTraffic();
+                                        final boolean isSegmentRoutedBidirectionalPair = toWIpUnicast.apply(bidirectionalPairDemand).isSegmentRoutingActive();
+                                        final Constants.RoutingType routingTypeBidirectionalPair = bidirectionalPairDemand.getRoutingType();
+                                        final boolean isUpstreamBidirectionalPair = toWIpUnicast.apply(bidirectionalPairDemand).isUpstream();
 
+                                        bidirectionalPairDemand.setOfferedTraffic(currentOfferedTrafficBidirectionalPair * (1 - splittingFactor)); // splitting -> [0,1]
 
-                                        if(maxLatency > 0)
-                                        {
-                                            restrictedLatencyDemand.getFirst().setMaximumAcceptableE2EWorstCaseLatencyInMs(maxLatency);
-                                            restrictedLatencyDemand.getSecond().setMaximumAcceptableE2EWorstCaseLatencyInMs(maxLatency);
-                                        }
+                                        final Demand latencyDemandBidirectionalPair = wNet.getNe().addDemand(bidirectionalPairDemand.getIngressNode(), bidirectionalPairDemand.getEgressNode(), currentOfferedTrafficBidirectionalPair * splittingFactor, routingTypeBidirectionalPair, bidirectionalPairDemand.getAttributes(), layerThisTable);
+                                        if (maxLatency > 0) latencyDemandBidirectionalPair.setMaximumAcceptableE2EWorstCaseLatencyInMs(maxLatency);
+                                        toWIpUnicast.apply(latencyDemandBidirectionalPair).setSegmentRoutingEnabled(isSegmentRoutedBidirectionalPair);
 
+                                        /* Set the bidirectional pair */
+                                        latencyDemand.setBidirectionalPair(latencyDemandBidirectionalPair);
 
-                                        // Set the information of attributes for one direction
-                                        restrictedLatencyDemand.getFirst().setAttributeMap(attributes);
-                                        commonDemand.getFirst().setAttributeMap(attributes);
-
-                                        // Set the information of attributes for the bidirectional pair direction
-                                        restrictedLatencyDemand.getSecond().setAttributeMap(attributesBidiPair);
-                                        commonDemand.getSecond().setAttributeMap(attributesBidiPair);
-
-
-                                        // Remove the original demands
-                                        originalDemand.remove();
-                                        bidirectionalPairDemand.remove();
                                     }
                                 }
                         );
