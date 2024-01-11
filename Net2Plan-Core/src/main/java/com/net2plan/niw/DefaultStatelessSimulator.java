@@ -151,8 +151,8 @@ public class DefaultStatelessSimulator implements IAlgorithm
 
                 /* Fallback routing */
                 // Search for demands that have been blocked in the routing and try to reroute them with the default flex algo
-                Set<WIpUnicastDemand> demandsToFallBack =  srRoutedDemands.stream().filter(demand -> demand.getCurrentBlockedTraffic() > 0).collect(Collectors.toSet());
-				srRoutedDemands.stream().filter(Objects::nonNull).forEach(demand -> demand.setFlexAlgoId(Optional.of("0")));
+                Set<WIpUnicastDemand> demandsToFallBack =  srRoutedDemands.stream().filter(demand -> demand.getCurrentCarriedTrafficGbps() <= 0).collect(Collectors.toSet());
+				demandsToFallBack.stream().filter(Objects::nonNull).forEach(demand -> demand.setFlexAlgoId(Optional.of("0")));
                 if(!demandsToFallBack.isEmpty())
                 {
                     final Set<Demand> routingDemands = demandsToFallBack.stream().map(WIpUnicastDemand::getNe).collect(Collectors.toSet());
