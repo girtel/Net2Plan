@@ -14,7 +14,7 @@
     <parent>
         <artifactId>net2plan</artifactId>
         <groupId>com.net2plan</groupId>
-        <version>0.7.0.1</version>
+        <version>0.7.0.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -26,13 +26,13 @@
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-core</artifactId>
-            <version>0.7.0.1</version>
+            <version>0.7.0.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.net2plan</groupId>
             <artifactId>net2plan-examples</artifactId>
-            <version>0.7.0.1</version>
+            <version>0.7.0.2</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -117,8 +117,12 @@
                                 <include>com/net2plan/research/**</include>
                                 <include>com/net2plan/niw/**</include>
                             </sourceFileIncludes>
-                            <!-- Output directory -->
-                            <additionalparam>-d ${project.build.directory}/apidocs/api</additionalparam>
+                            <!-- Default javadoc output is under target/site/apidocs; -d in additionalparam is not applied
+                                 reliably for offline -link resolution. reportOutputDirectory + destDir matches assembly
+                                 (target/apidocs) and ../parallelcolt next to api/ and examples/. -->
+                            <reportOutputDirectory>${project.build.directory}/apidocs</reportOutputDirectory>
+                            <destDir>api</destDir>
+                            <additionalparam>-Xdoclint:none</additionalparam>
                         </configuration>
                     </execution>
                     <execution>
@@ -149,25 +153,7 @@
                                 <link>../parallelcolt</link>
                             </links>
                             <detectOfflineLinks>false</detectOfflineLinks>
-                            <tagletArtifact>
-                                <groupId>com.net2plan</groupId>
-                                <artifactId>net2plan-javadoc</artifactId>
-                                <version>${project.version}</version>
-                            </tagletArtifact>
-                            <taglets>
-                                <taglet>
-                                    <tagletClass>com.net2plan.documentation.Taglet_Description</tagletClass>
-                                </taglet>
-                                <taglet>
-                                    <tagletClass>com.net2plan.documentation.Taglet_Keywords</tagletClass>
-                                </taglet>
-                                <taglet>
-                                    <tagletClass>com.net2plan.documentation.Taglet_InputParameters</tagletClass>
-                                </taglet>
-                                <taglet>
-                                    <tagletClass>com.net2plan.documentation.Taglet_BookSections</tagletClass>
-                                </taglet>
-                            </taglets>
+                            <!-- Legacy taglets implement com.sun.tools.doclets.Taglet; JDK 10+ javadoc expects jdk.javadoc.doclet.Taglet (ClassCastException). -->
                             <includeDependencySources>true</includeDependencySources>
                             <dependencySourceIncludes>
                                 <!-- Net2Plan Examples-->
@@ -186,77 +172,9 @@
                             <sourceFileExcludes>
                                 <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
                             </sourceFileExcludes>
-                            <additionalparam>
-                                -d ${project.build.directory}/apidocs/examples
-                            </additionalparam>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>keywordTable</id>
-                        <goals>
-                            <goal>javadoc</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <useStandardDocletOptions>false</useStandardDocletOptions>
-                            <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
-                            <docletArtifact>
-                                <groupId>com.net2plan</groupId>
-                                <artifactId>net2plan-javadoc</artifactId>
-                                <version>${project.version}</version>
-                            </docletArtifact>
-                            <detectOfflineLinks>false</detectOfflineLinks>
-                            <includeDependencySources>true</includeDependencySources>
-                            <dependencySourceIncludes>
-                                <!-- Net2Plan Examples-->
-                                <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
-                            </dependencySourceIncludes>
-                            <sourceFileIncludes>
-                                <include>com/net2plan/examples/general/offline/**</include>
-                                <include>com/net2plan/examples/general/onlineSim/**</include>
-                                <include>com/net2plan/examples/general/reports/**</include>
-                                <include>com/net2plan/examples/ocnbook/offline/**</include>
-                                <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
-                                <include>com/net2plan/examples/ocnbook/reports/**</include>
-                            </sourceFileIncludes>
-                            <sourceFileExcludes>
-                                <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
-                            </sourceFileExcludes>
-                            <additionalparam>-outputFolder ${project.build.directory}/apidocs/examples</additionalparam>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>bookSectionsTable</id>
-                        <goals>
-                            <goal>javadoc</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <useStandardDocletOptions>false</useStandardDocletOptions>
-                            <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
-                            <docletArtifact>
-                                <groupId>com.net2plan</groupId>
-                                <artifactId>net2plan-javadoc</artifactId>
-                                <version>${project.version}</version>
-                            </docletArtifact>
-                            <detectOfflineLinks>false</detectOfflineLinks>
-                            <includeDependencySources>true</includeDependencySources>
-                            <dependencySourceIncludes>
-                                <!-- Net2Plan Examples-->
-                                <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
-                            </dependencySourceIncludes>
-                            <sourceFileIncludes>
-                                <include>com/net2plan/examples/general/offline/**</include>
-                                <include>com/net2plan/examples/general/onlineSim/**</include>
-                                <include>com/net2plan/examples/general/reports/**</include>
-                                <include>com/net2plan/examples/ocnbook/offline/**</include>
-                                <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
-                                <include>com/net2plan/examples/ocnbook/reports/**</include>
-                            </sourceFileIncludes>
-                            <sourceFileExcludes>
-                                <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
-                            </sourceFileExcludes>
-                            <additionalparam>-outputFolder ${project.build.directory}/apidocs/examples</additionalparam>
+                            <reportOutputDirectory>${project.build.directory}/apidocs</reportOutputDirectory>
+                            <destDir>examples</destDir>
+                            <additionalparam>-Xdoclint:none</additionalparam>
                         </configuration>
                     </execution>
                 </executions>
@@ -285,4 +203,91 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- CreateHTMLKeywords / CreateBookSectionsTable use com.sun.javadoc (removed in JDK 13+). -->
+    <profiles>
+        <profile>
+            <id>javadoc-legacy-custom-doclets</id>
+            <activation>
+                <jdk>(,13)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.10.3</version>
+                        <executions>
+                            <execution>
+                                <id>keywordTable</id>
+                                <goals>
+                                    <goal>javadoc</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <useStandardDocletOptions>false</useStandardDocletOptions>
+                                    <doclet>com.net2plan.documentation.CreateHTMLKeywords</doclet>
+                                    <docletArtifact>
+                                        <groupId>com.net2plan</groupId>
+                                        <artifactId>net2plan-javadoc</artifactId>
+                                        <version>${project.version}</version>
+                                    </docletArtifact>
+                                    <detectOfflineLinks>false</detectOfflineLinks>
+                                    <includeDependencySources>true</includeDependencySources>
+                                    <dependencySourceIncludes>
+                                        <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                                    </dependencySourceIncludes>
+                                    <sourceFileIncludes>
+                                        <include>com/net2plan/examples/general/offline/**</include>
+                                        <include>com/net2plan/examples/general/onlineSim/**</include>
+                                        <include>com/net2plan/examples/general/reports/**</include>
+                                        <include>com/net2plan/examples/ocnbook/offline/**</include>
+                                        <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
+                                        <include>com/net2plan/examples/ocnbook/reports/**</include>
+                                    </sourceFileIncludes>
+                                    <sourceFileExcludes>
+                                        <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
+                                    </sourceFileExcludes>
+                                    <additionalparam>-outputFolder ${project.build.directory}/apidocs/examples</additionalparam>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>bookSectionsTable</id>
+                                <goals>
+                                    <goal>javadoc</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <useStandardDocletOptions>false</useStandardDocletOptions>
+                                    <doclet>com.net2plan.documentation.CreateBookSectionsTable</doclet>
+                                    <docletArtifact>
+                                        <groupId>com.net2plan</groupId>
+                                        <artifactId>net2plan-javadoc</artifactId>
+                                        <version>${project.version}</version>
+                                    </docletArtifact>
+                                    <detectOfflineLinks>false</detectOfflineLinks>
+                                    <includeDependencySources>true</includeDependencySources>
+                                    <dependencySourceIncludes>
+                                        <dependencySourceInclude>com.net2plan:net2plan-examples</dependencySourceInclude>
+                                    </dependencySourceIncludes>
+                                    <sourceFileIncludes>
+                                        <include>com/net2plan/examples/general/offline/**</include>
+                                        <include>com/net2plan/examples/general/onlineSim/**</include>
+                                        <include>com/net2plan/examples/general/reports/**</include>
+                                        <include>com/net2plan/examples/ocnbook/offline/**</include>
+                                        <include>com/net2plan/examples/ocnbook/onlineSim/**</include>
+                                        <include>com/net2plan/examples/ocnbook/reports/**</include>
+                                    </sourceFileIncludes>
+                                    <sourceFileExcludes>
+                                        <exclude>com/net2plan/examples/general/reports/robustness/**</exclude>
+                                    </sourceFileExcludes>
+                                    <additionalparam>-outputFolder ${project.build.directory}/apidocs/examples</additionalparam>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
