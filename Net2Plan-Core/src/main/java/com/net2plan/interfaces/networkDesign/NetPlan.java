@@ -35,9 +35,10 @@ import org.codehaus.stax2.XMLOutputFactory2;
 import org.codehaus.stax2.XMLStreamReader2;
 import org.codehaus.stax2.XMLStreamWriter2;
 import org.jgrapht.graph.DirectedAcyclicGraph;
-import sun.nio.ch.Net;
 
 import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
 import java.awt.geom.Point2D;
@@ -240,7 +241,7 @@ public class NetPlan extends NetworkElement
 
         try
         {
-            XMLInputFactory2 xmlInputFactory = (XMLInputFactory2) XMLInputFactory2.newInstance();
+            XMLInputFactory2 xmlInputFactory = (XMLInputFactory2) XMLInputFactory.newFactory();
             XMLStreamReader2 xmlStreamReader = (XMLStreamReader2) xmlInputFactory.createXMLStreamReader(inputStream);
 
             while (xmlStreamReader.hasNext())
@@ -969,7 +970,7 @@ public class NetPlan extends NetworkElement
 
         checkIsModifiable();
         checkInThisNetPlan(demand);
-        Pair<List<Link>, List<Resource>> listLinksAndListResources = checkPathValidityForDemand(sequenceOfLinksAndResources, demand);
+        checkPathValidityForDemand(sequenceOfLinksAndResources, demand);
         demand.checkRoutingType(RoutingType.SOURCE_ROUTING);
         if (carriedTraffic < 0) throw new Net2PlanException("Carried traffic must be non-negative");
         if (occupiedLinkAndResourceCapacities.size() != sequenceOfLinksAndResources.size())
@@ -6058,7 +6059,7 @@ public class NetPlan extends NetworkElement
         XMLStreamWriter2 writer = null;
         try
         {
-            XMLOutputFactory2 output = (XMLOutputFactory2) XMLOutputFactory2.newFactory();
+            XMLOutputFactory2 output = (XMLOutputFactory2) XMLOutputFactory.newFactory();
             writer = (XMLStreamWriter2) output.createXMLStreamWriter(outputStream);
 
             writer.writeStartDocument("UTF-8", "1.0");
@@ -8014,7 +8015,7 @@ public class NetPlan extends NetworkElement
         return true;
     }
 
-    private NetworkElement getFromId(long id, Class e)
+    private NetworkElement getFromId(long id, Class<?> e)
     {
         if (e.equals(Link.class)) return cache_id2LinkMap.get(id);
         else if (e.equals(Demand.class)) return cache_id2DemandMap.get(id);
@@ -8028,21 +8029,7 @@ public class NetPlan extends NetworkElement
         else throw new RuntimeException("Bad");
 
     }
-    private NetworkElement getFromId(long id)
-    {
-    	if (this.id == id) return this;
-    	NetworkElement el = cache_id2LinkMap.get(id); if (el != null) return el;
-    	el = cache_id2DemandMap.get(id); if (el != null) return el;
-    	el = cache_id2MulticastDemandMap.get(id); if (el != null) return el;
-    	el = cache_id2LayerMap.get(id); if (el != null) return el;
-    	el = cache_id2NodeMap.get(id); if (el != null) return el;
-    	el = cache_id2ResourceMap.get(id); if (el != null) return el;
-    	el = cache_id2RouteMap.get(id); if (el != null) return el;
-    	el = cache_id2srgMap.get(id); if (el != null) return el;
-    	el = cache_id2MulticastTreeMap.get(id); if (el != null) return el;
-        return null;
-    }
-    
+
     SortedSet<Long> getAllIds () 
     { 
     	final SortedSet<Long> res = new TreeSet<>();
