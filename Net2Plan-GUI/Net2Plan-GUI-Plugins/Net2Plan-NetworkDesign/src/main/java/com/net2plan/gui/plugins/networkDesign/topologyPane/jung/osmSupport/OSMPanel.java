@@ -11,7 +11,6 @@
 package com.net2plan.gui.plugins.networkDesign.topologyPane.jung.osmSupport;
 
 import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactoryInfo;
@@ -21,19 +20,28 @@ import org.jxmapviewer.viewer.TileFactoryInfo;
  */
 public class OSMPanel extends JXMapViewer
 {
-    private static final int NUMBER_OF_THREADS = 8;
+    /**
+     * Keep concurrent tile fetches low to respect OSMF capacity guidance; see
+     * https://operations.osmfoundation.org/policies/tiles/
+     */
+    private static final int NUMBER_OF_THREADS = 2;
+
+    /**
+     * OSMF requires a non-generic User-Agent naming the application (library defaults are blocked).
+     */
+    private static final String OSM_TILE_USER_AGENT =
+            "Net2Plan/0.7.0.2 (+https://www.net2plan.com; +https://github.com/girtel/Net2Plan)";
     private static final GeoPosition europe = new GeoPosition(47.20, 25.2);
     private static final int defaultZoom = 16;
 
     public OSMPanel()
     {
-        // Create a TileFactoryInfo for OpenStreetMap
-        final TileFactoryInfo info = new OSMTileFactoryInfo();
+        final TileFactoryInfo info = new Net2PlanOSMTileFactoryInfo();
         final DefaultTileFactory tileFactory = new DefaultTileFactory(info);
+        tileFactory.setUserAgent(OSM_TILE_USER_AGENT);
 
         this.setTileFactory(tileFactory);
 
-        // Use 8 threads in parallel to load the tiles
         tileFactory.setThreadPoolSize(NUMBER_OF_THREADS);
     }
 
